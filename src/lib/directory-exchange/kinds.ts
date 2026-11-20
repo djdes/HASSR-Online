@@ -150,11 +150,18 @@ export function normalizeExchangeName(value: unknown): string {
  * других участников. `parentGroupId` — группа родителя (объекта помещения,
  * цеха оборудования, должности сотрудника). null — запись не обменивается:
  * пустое имя или обязательный родитель сам не участвует в обмене.
+ *
+ * `owner` — чья это запись (аккаунт организации); его передаёт обмен, в
+ * котором участвует организация другого аккаунта. Тогда люди сопоставляются
+ * по ФИО только внутри своего аккаунта: «Иванов Иван» одной компании и
+ * «Иванов Иван» другой — разные люди, и связывать их нельзя. Должности,
+ * объекты, цеха, оборудование и продукты совпадают по названию у всех.
  */
 export function naturalKey(
   entity: ExchangeEntity,
   fields: ExchangeFields,
   parentGroupId: string | null = null,
+  owner: string | null = null,
 ): string | null {
   const name = normalizeExchangeName(fields.name);
   if (!name) return null;
@@ -163,8 +170,9 @@ export function naturalKey(
   switch (entity) {
     case "product":
       return `${normalizeExchangeName(fields.kind) || "raw"}|${name}`;
-    case "position":
     case "staff":
+      return owner ? `${owner}|${name}` : name;
+    case "position":
     case "building":
       return name;
     case "room":

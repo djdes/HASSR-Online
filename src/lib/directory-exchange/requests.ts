@@ -11,8 +11,15 @@ import type { AccountPhase } from "@/lib/org-trial";
  *     создаёт только оплаченный аккаунт (Р1);
  *   • письмами владельцу кабинета можно засыпать — один открытый запрос на
  *     пару «кабинет — организация» и не больше пяти запросов в сутки на
- *     аккаунт (Р2), считая отменённые и отклонённые;
- *   • владелец кабинета не может разрешить больше, чем просили (Р3).
+ *     аккаунт (Р2), считая отменённые и отклонённые; после отказа тот же
+ *     аккаунт неделю не может повторить запрос в этот кабинет;
+ *   • владелец кабинета не может разрешить больше, чем просили (Р3);
+ *   • списки расходятся по всем участникам кабинета — поэтому чужая компания
+ *     у кабинета одна: вторую связь подтвердить нельзя, пока есть первая
+ *     (иначе две компании, не договаривавшиеся друг с другом, получили бы
+ *     записи друг друга). Разовому переносу это не мешает;
+ *   • тариф заявителя мог закончиться, пока запрос ждал, — при подтверждении
+ *     он проверяется ещё раз.
  */
 
 export const REQUEST_MODES = ["link", "transfer"] as const;
@@ -28,6 +35,9 @@ export const REQUEST_TTL_MS = REQUEST_TTL_DAYS * 24 * 60 * 60 * 1000;
 /** Сколько запросов аккаунт может создать за сутки. */
 export const REQUESTS_PER_DAY = 5;
 export const REQUEST_DAY_MS = 24 * 60 * 60 * 1000;
+/** Сколько дней после отказа аккаунт не может повторить запрос в тот же кабинет. */
+export const REQUEST_DECLINE_COOLDOWN_DAYS = 7;
+export const REQUEST_DECLINE_COOLDOWN_MS = REQUEST_DECLINE_COOLDOWN_DAYS * REQUEST_DAY_MS;
 
 export function isRequestMode(value: unknown): value is RequestMode {
   return typeof value === "string" && (REQUEST_MODES as readonly string[]).includes(value);
@@ -40,6 +50,16 @@ export function isRequestStatus(value: unknown): value is RequestStatus {
 /** До какого момента по запросу можно принять решение. */
 export function requestExpiresAt(now: Date): Date {
   return new Date(now.getTime() + REQUEST_TTL_MS);
+}
+
+/** С какого момента после отказа запрос в тот же кабинет можно повторить. */
+export function requestRetryAt(declinedAt: Date): Date {
+  return new Date(declinedAt.getTime() + REQUEST_DECLINE_COOLDOWN_MS);
+}
+
+/** «27 ноября 2026 г.» — дата по Москве для текстов отказа. */
+function refusalDate(date: Date): string {
+  return date.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long", year: "numeric" });
 }
 
 /** Открытый запрос, срок которого вышел: при чтении он становится `expired`. */
@@ -61,7 +81,9 @@ export type RequestCreationRefusal =
   /** Организация уже участвует в обмене этого кабинета. */
   | "already_member"
   /** Запрос в этот кабинет уже отправлен и ждёт решения. */
-  | "open_request";
+  | "open_request"
+  /** Владелец этого кабинета недавно отклонил запрос аккаунта. */
+  | "declined_recently";
 
 export type RequestCreationDecision =
   | { ok: true; kinds: ExchangeKind[] }
@@ -84,6 +106,8 @@ const CREATION_REFUSALS: Record<RequestCreationRefusal, { status: number; messag
   },
   already_member: { status: 409, message: "Организация уже участвует в обмене этого мастер-кабинета" },
   open_request: { status: 409, message: "Запрос в этот мастер-кабинет уже отправлен и ждёт подтверждения" },
+  // Дату в текст добавляет `decideRequestCreation`.
+  declined_recently: { status: 409, message: "Владелец отклонил запрос. Повторить можно позже." },
 };
 
 /**
@@ -105,8 +129,17 @@ export function decideRequestCreation(input: {
   /** Сколько запросов аккаунт создал за последние сутки (в любом статусе). */
   requestsToday: number;
   kinds: unknown;
+  /** Когда владелец этого кабинета последний раз отклонил запрос аккаунта заявителя; null — не отклонял. */
+  lastDeclinedAt?: Date | null;
+  /** Текущий момент — для срока после отказа. */
+  now?: Date;
 }): RequestCreationDecision {
-  const refuse = (reason: RequestCreationRefusal): RequestCreationDecision => ({ ok: false, reason, ...CREATION_REFUSALS[reason] });
+  const refuse = (reason: RequestCreationRefusal, message?: string): RequestCreationDecision => ({
+    ok: false,
+    reason,
+    ...CREATION_REFUSALS[reason],
+    ...(message ? { message } : {}),
+  });
   const kinds = normalizeExchangeKinds(input.kinds);
   if (kinds.length === 0) return refuse("no_kinds");
   if (input.phase !== "paid") return refuse("not_paid");
@@ -114,6 +147,12 @@ export function decideRequestCreation(input: {
   if (input.sameAccount) return refuse("own_cabinet");
   if (input.alreadyMember) return refuse("already_member");
   if (input.hasOpenRequest) return refuse("open_request");
+  if (input.lastDeclinedAt) {
+    const retryAt = requestRetryAt(input.lastDeclinedAt);
+    if (retryAt.getTime() > (input.now ?? new Date()).getTime()) {
+      return refuse("declined_recently", `Владелец отклонил запрос. Повторить можно после ${refusalDate(retryAt)}.`);
+    }
+  }
   return { ok: true, kinds };
 }
 
@@ -159,6 +198,64 @@ export function decideRequestDecision(input: {
   if (input.status === "expired" || isRequestStale(input.status, input.expiresAt, input.now)) return refuse("expired");
   if (input.status === "cancelled") return refuse("cancelled");
   if (input.status !== "pending") return refuse("decided");
+  return { ok: true };
+}
+
+/* ───────────────────────── подтверждение ───────────────────────── */
+
+export type RequestApprovalRefusal =
+  /** Заявитель больше не на платном тарифе или его организация закрыта до оплаты. */
+  | "requester_not_paid"
+  /** Кабинет уже связан с другой компанией. */
+  | "cabinet_busy";
+
+export type RequestApprovalVerdict =
+  | { ok: true }
+  | { ok: false; reason: RequestApprovalRefusal; status: number; message: string };
+
+/**
+ * Можно ли подтвердить запрос прямо сейчас — сверх `decideRequestDecision`.
+ * Отказ запрос не закрывает: он ждёт дальше, владелец может повторить.
+ *
+ * Заявитель проверяется заново: тариф мог закончиться, пока запрос ждал
+ * (правило Р1 — данные получает только оплаченный аккаунт). Связь (`link`)
+ * не подтверждается, пока кабинет связан с организацией ДРУГОЙ компании;
+ * вторая организация той же компании и разовый перенос этим не ограничены.
+ */
+export function decideRequestApproval(input: {
+  mode: RequestMode;
+  /** Тариф аккаунта заявителя сейчас. */
+  requesterPhase: AccountPhase;
+  /** Организация заявителя закрыта после своих 14 дней. */
+  requesterLocked: boolean;
+  requesterName: string;
+  /** Организация другой компании, уже связанная с кабинетом; null — такой нет. */
+  linkedCompany: string | null;
+}): RequestApprovalVerdict {
+  if (input.requesterPhase !== "paid") {
+    return {
+      ok: false,
+      reason: "requester_not_paid",
+      status: 409,
+      message: `Компания «${input.requesterName}» сейчас не на платном тарифе — подтвердить запрос нельзя. Он остаётся открытым до конца срока.`,
+    };
+  }
+  if (input.requesterLocked) {
+    return {
+      ok: false,
+      reason: "requester_not_paid",
+      status: 409,
+      message: `Организация «${input.requesterName}» сейчас закрыта до оплаты и не может принять данные. Запрос остаётся открытым до конца срока.`,
+    };
+  }
+  if (input.mode === "link" && input.linkedCompany) {
+    return {
+      ok: false,
+      reason: "cabinet_busy",
+      status: 409,
+      message: `Кабинет уже связан с компанией «${input.linkedCompany}». Отключите её или отклоните этот запрос.`,
+    };
+  }
   return { ok: true };
 }
 

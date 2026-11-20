@@ -602,6 +602,31 @@ export function decisionView(response: ExchangeResponse, now: number): DecisionV
   return { kind: "form", data };
 }
 
+/**
+ * Отказы подтверждения, после которых запрос по-прежнему ждёт решения: к
+ * кабинету уже подключена другая компания (её сначала отключают) или у
+ * заявителя закончился платный тариф. Текст сервера показываем в форме.
+ */
+const OPEN_REFUSAL_CODES: readonly string[] = ["request_cabinet_busy", "request_requester_not_paid"];
+
+/** Отказ в подтверждении, после которого форма остаётся рабочей: запрос не закрыт и перечитывать его незачем. */
+export function keepsRequestOpen(response: ExchangeResponse): boolean {
+  return response.status === 409 && OPEN_REFUSAL_CODES.includes(asText(response.json?.code));
+}
+
+/**
+ * Как показать отказ в отправке запроса в чужой кабинет: `plan` — нужен
+ * платный тариф или организация закрыта до оплаты (текст и ссылка на тариф
+ * в блоке); `inline` — этот кабинет недавно отклонил запрос, новый принимает
+ * только через 7 дней (текст остаётся в блоке, пока человек не сменит код);
+ * `toast` — всё остальное, как раньше.
+ */
+export function creationRefusal(response: ExchangeResponse): "plan" | "inline" | "toast" {
+  if (response.status === 402 || typeof response.json?.payUrl === "string") return "plan";
+  if (response.status === 409 && asText(response.json?.code) === "request_declined_recently") return "inline";
+  return "toast";
+}
+
 /** Запросы, которые ещё ждут решения владельца кабинета. */
 export function pendingRequests(state: Pick<ForeignState, "outgoing">): ForeignRequest[] {
   return state.outgoing.filter((request) => request.status === "pending");

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import {
   EXCHANGE_KINDS,
   EXCHANGE_REQUESTS_PATH,
+  creationRefusal,
   exchangeError,
   exchangeRequest,
   loadForeignState,
@@ -39,8 +40,12 @@ import {
  *
  * Заявитель вводит код мастер-кабинета другой компании и ждёт решения её
  * владельца; о той стороне он видит только название кабинета, которое вернул
- * сервер. Владелец кабинета видит входящие запросы (решение — по ссылке из
- * письма) и участников из других аккаунтов.
+ * сервер. Владелец кабинета видит входящие запросы (открывает их отсюда или
+ * по ссылке из письма) и участников из других аккаунтов.
+ *
+ * Что обещаем заявителю — ровно то, что делает сервер: списки разрешает
+ * владелец кабинета; новые записи появляются у обеих компаний, а правки идут
+ * только от организаций владельца; людей с одинаковым ФИО не объединяют.
  */
 
 // Тот же вид, что у окна и карточки обмена (`exchange-dialog.tsx`, `exchange-card.tsx`).
@@ -113,6 +118,20 @@ export function ConfirmStep({
   );
 }
 
+/** Короткий список правил обмена: по строке на правило. */
+function RuleList({ rules, className }: { rules: readonly string[]; className?: string }) {
+  return (
+    <ul className={cn("space-y-1 text-[12.5px] leading-[1.45] text-[#6f7282]", className)}>
+      {rules.map((rule, index) => (
+        <li key={index} className="flex items-start gap-2">
+          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#9b9fb3]" aria-hidden />
+          <span className="min-w-0 flex-1">{rule}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Запрос ждёт решения владельца кабинета: кому отправлен, до какого числа, «Отменить запрос». */
 function PendingRow({
   request,
@@ -158,6 +177,10 @@ function PendingRow({
             </p>
             <p className="mt-0.5 text-[12.5px] leading-[1.45] text-[#6f7282]">
               {request.mode === "link" ? t("foreign.requestedLink", { lists }) : t("foreign.requestedTransfer", { lists })}
+            </p>
+            {/* Запрошенное — ещё не разрешённое: решает владелец кабинета. */}
+            <p className="mt-0.5 text-[12.5px] leading-[1.45] text-[#6f7282]">
+              {request.mode === "link" ? t("foreign.rules.decides") : t("foreign.rules.transferDecides")}
             </p>
           </div>
         </div>
@@ -237,6 +260,16 @@ function LinkedRow({
           </button>
         )}
       </div>
+      {/* Как идёт обмен с кабинетом другой компании: правки — только от его владельца. */}
+      <RuleList
+        className="mt-2"
+        rules={[
+          t("foreign.rules.newRecords"),
+          t("foreign.rules.edits"),
+          ...(link.kinds.includes("staff") ? [t("foreign.rules.staff")] : []),
+          t("foreign.rules.leave"),
+        ]}
+      />
       {confirming ? (
         <ConfirmStep
           text={t("foreign.leaveConfirm", { name: link.cabinetName })}
@@ -322,8 +355,9 @@ export function ForeignBlock({
   const [failed, setFailed] = useState(false);
   const [code, setCode] = useState("");
   const [sending, setSending] = useState(false);
-  // Отказ из-за тарифа: текст сервера остаётся в блоке вместе со ссылкой на страницу тарифа.
-  const [planNote, setPlanNote] = useState<string | null>(null);
+  // Отказ, который остаётся в блоке: из-за тарифа (со ссылкой на страницу тарифа)
+  // или потому, что этот кабинет недавно отклонил запрос (новый — через 7 дней).
+  const [refusal, setRefusal] = useState<{ text: string; pay: boolean } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -371,21 +405,26 @@ export function ForeignBlock({
       return;
     }
     setSending(true);
-    setPlanNote(null);
+    setRefusal(null);
     try {
-      const { ok, status, json } = await exchangeRequest(EXCHANGE_REQUESTS_PATH, {
+      const response = await exchangeRequest(EXCHANGE_REQUESTS_PATH, {
         method: "POST",
         body: { code: normalized, mode, kinds: chosen },
       });
-      if (!ok) {
-        // Нужен платный тариф (402) или организация закрыта до оплаты: сервер прикладывает ссылку на оплату.
-        if (status === 402 || typeof json?.payUrl === "string") {
-          setPlanNote(exchangeError(json, t("foreign.paidOnly")));
+      const { json } = response;
+      if (!response.ok) {
+        const shown = creationRefusal(response);
+        if (shown === "plan") {
+          // Нужен платный тариф или организация закрыта до оплаты: сервер прикладывает ссылку на оплату.
+          setRefusal({ text: exchangeError(json, t("foreign.paidOnly")), pay: true });
+        } else if (shown === "inline") {
+          // Кабинет недавно отклонил запрос этой организации: срок назван в тексте сервера.
+          setRefusal({ text: exchangeError(json, t("foreign.sendFailed")), pay: false });
         } else {
           toast.error(exchangeError(json, t("foreign.sendFailed")));
         }
         // 409 — в том числе «запрос уже отправлен»: перечитываем, чтобы строка ожидания появилась.
-        if (status === 409) setAttempt((value) => value + 1);
+        if (response.status === 409) setAttempt((value) => value + 1);
         return;
       }
       const request = parseForeignRequest(json?.request);
@@ -449,7 +488,11 @@ export function ForeignBlock({
                   enterKeyHint="send"
                   maxLength={24}
                   value={code}
-                  onChange={(event) => setCode(event.target.value)}
+                  onChange={(event) => {
+                    setCode(event.target.value);
+                    // Отказ относился к прежнему коду; отказ из-за тарифа от кода не зависит.
+                    setRefusal((current) => (current?.pay ? current : null));
+                  }}
                   onKeyDown={(event) => {
                     if (event.key !== "Enter") return;
                     // Enter отправляет запрос, а не форму окна: её действие не отменить.
@@ -480,17 +523,17 @@ export function ForeignBlock({
               {typed && chosen.length === 0 ? (
                 <p className="mt-1.5 text-[12.5px] leading-[1.45] text-[#7a4a00]">{t("foreign.needList")}</p>
               ) : null}
-              {chosen.includes("staff") ? (
-                // Р5: между аккаунтами у сотрудников идут только ФИО и должность.
-                <p className="mt-1.5 text-[12.5px] leading-[1.45] text-[#6f7282]">{t("foreign.staffNote")}</p>
-              ) : null}
-              {planNote ? (
-                <div className={cn(WARNING, "mt-2")} role="alert" data-testid="exchange-foreign-plan-note">
+              {refusal ? (
+                <div
+                  className={cn(WARNING, "mt-2")}
+                  role="alert"
+                  data-testid={refusal.pay ? "exchange-foreign-plan-note" : "exchange-foreign-refusal"}
+                >
                   <TriangleAlert className="mt-0.5 size-4 shrink-0 text-[#b25e00]" aria-hidden />
                   <span className="min-w-0 flex-1">
-                    {planNote}
+                    {refusal.text}
                     {/* В приложении WeSetup к оплате не зовём (правила сторов) — там только текст. */}
-                    {isInsideMobileApp() ? null : (
+                    {!refusal.pay || isInsideMobileApp() ? null : (
                       <>
                         {" "}
                         <Link
@@ -505,6 +548,29 @@ export function ForeignBlock({
                   </span>
                 </div>
               ) : null}
+              {/* Что получит заявитель — теми же словами, что делает сервер: решает владелец
+                  кабинета, правки идут только от него, людей по ФИО не объединяют. */}
+              <div className={cn(ROW_BOX, "mt-2")} data-testid="exchange-foreign-rules" data-mode={mode}>
+                <RuleList
+                  className="text-[#3c4053]"
+                  rules={
+                    mode === "link"
+                      ? [
+                          t("foreign.rules.decides"),
+                          t("foreign.rules.newRecords"),
+                          t("foreign.rules.edits"),
+                          t("foreign.rules.staff"),
+                          t("foreign.rules.leave"),
+                        ]
+                      : [
+                          t("foreign.rules.transferDecides"),
+                          t("foreign.rules.transferOnce"),
+                          t("foreign.rules.transferDuplicates"),
+                          t("foreign.rules.staff"),
+                        ]
+                  }
+                />
+              </div>
             </div>
           )}
         </>
@@ -513,7 +579,11 @@ export function ForeignBlock({
   );
 }
 
-/** Входящие запросы в карточке владельца кабинета: кто, что просит и до какого числа. */
+/**
+ * Входящие запросы в карточке владельца кабинета: кто, что просит и до какого
+ * числа. «Открыть запрос» ведёт на страницу решения по id запроса — сервер
+ * отдаёт её владельцу аккаунта кабинета и без токена из письма.
+ */
 export function IncomingRequests({ incoming, className }: { incoming: IncomingRequest[]; className?: string }) {
   const t = useTranslations("dashboardUi.directoryExchange");
   const dayLabel = useDayLabel();
@@ -532,22 +602,31 @@ export function IncomingRequests({ incoming, className }: { incoming: IncomingRe
           return (
             <li
               key={request.id}
-              className="flex items-start gap-3 px-4 py-3"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
               data-testid="exchange-incoming-request"
               data-request-id={request.id}
             >
               <span className={ROW_ICON}>
                 <Building2 className="size-4" aria-hidden />
               </span>
-              <span className="min-w-0 flex-1">
+              <span className="min-w-0 flex-1 basis-[220px]">
                 <span className="block break-words text-[14px] font-medium text-[#0b1024]">{request.requesterName}</span>
                 <span className="mt-0.5 block text-[12.5px] leading-[1.45] text-[#6f7282]">{details.join(" · ")}</span>
-                {/* Открыть запрос отсюда нельзя: токен ссылки есть только в письме. */}
-                <span className="mt-1 flex items-center gap-1.5 text-[12.5px] leading-[1.45] text-[#3c4053]">
+                <span className="mt-1 flex items-center gap-1.5 text-[12.5px] leading-[1.45] text-[#6f7282]">
                   <Mail className="size-3.5 shrink-0 text-[#5566f6]" aria-hidden />
                   {t("foreign.card.incomingEmailNote")}
                 </span>
               </span>
+              <Link
+                href={`/exchange-request/${encodeURIComponent(request.id)}`}
+                // Страница решения вне кабинета: заранее её не подгружаем.
+                prefetch={false}
+                aria-label={`${t("foreign.card.incomingOpen")}: ${request.requesterName}`}
+                className={cn(SMALL_OUTLINE, "shrink-0")}
+                data-testid="exchange-incoming-open"
+              >
+                {t("foreign.card.incomingOpen")}
+              </Link>
             </li>
           );
         })}

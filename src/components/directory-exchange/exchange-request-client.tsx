@@ -22,6 +22,7 @@ import {
   type DecisionState,
   type DecisionView,
   type ExchangeKind,
+  keepsRequestOpen,
 } from "./exchange-api";
 import { ExchangeSummaryView } from "./exchange-result";
 
@@ -313,6 +314,13 @@ export function DecisionForm({
         onView(decisionView(response, Date.now()));
         return;
       }
+      if (keepsRequestOpen(response)) {
+        // Кабинет уже связан с другой компанией или заявитель больше не на платном
+        // тарифе: запрос ждёт дальше, форма остаётся — текст сервера объясняет, что делать.
+        setNotice(exchangeError(response.json, t("foreign.page.decisionFailed")));
+        setConfirming(null);
+        return;
+      }
       if (response.status === 404 || response.status === 409) {
         // Отказ не всегда значит «ссылка недействительна» или «уже решён»: 404 —
         // это и пропавшая организация-источник, 409 — и кабинет, занятый другим
@@ -433,12 +441,27 @@ export function DecisionForm({
         </fieldset>
       )}
 
-      <div className={cn(NOTE, "mt-5")}>
+      <div className={cn(NOTE, "mt-5")} data-testid="exchange-request-rules">
         <Info className="mt-0.5 size-4 shrink-0 text-[#5566f6]" aria-hidden />
         <span className="min-w-0 flex-1 break-words">
           {link
             ? t("foreign.page.linkNote", { name: request.requesterName, cabinet: cabinet.name })
             : t("foreign.page.transferNote", { name: request.requesterName })}
+          {/* Что будет дальше — теми же правилами, по которым работает обмен (спека, уточнения 2026-11-20). */}
+          <ul className="mt-1.5 list-disc space-y-1 pl-4">
+            {(link
+              ? [
+                  t("foreign.page.ruleNewRecords"),
+                  t("foreign.page.ruleEdits", { name: request.requesterName }),
+                  t("foreign.page.staffRule"),
+                  t("foreign.page.ruleOneCompany"),
+                  t("foreign.page.ruleDisconnect"),
+                ]
+              : [t("foreign.page.staffRule")]
+            ).map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
         </span>
       </div>
       <div className={cn(NOTE, "mt-2")}>

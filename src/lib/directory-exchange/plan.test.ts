@@ -19,11 +19,12 @@ function world(participants: string[], rows: Record<string, ExchangeRow[]> = {})
 
 const row = (id: string, key: string | null, hash: string, updatedAt: Date | null = null): ExchangeRow => ({ id, key, hash, updatedAt });
 
-function plan(w: World): ExchangeOp[] {
+function plan(w: World, passive: string[] = []): ExchangeOp[] {
   return planEntityExchange({
     participants: w.participants,
     rows: w.rows,
     links: w.links,
+    passive,
     newGroupId: () => `g${(w.seq += 1)}`,
   });
 }
@@ -473,4 +474,71 @@ test("rebaseLinks: tombstones, missing rows and current links are left alone", (
   const aligned = rebaseLinks({ rows, links, isCurrent: (hash) => hashScope("staff", hash) === "foreign", hashLike: () => null });
   assert.deepEqual(aligned.rebased, []);
   assert.deepEqual(aligned.links, links);
+});
+
+/* ── passive participant: an organization of another company (part 3, 2026-11-20) ── */
+
+/** Owner's organization A and the other company's organization F, one linked product each. */
+function linkedPair() {
+  const w = world(["A", "F"], { A: [row("a1", "milk", "h0", at(0))], F: [] });
+  apply(w, plan(w, ["F"]));
+  const f1 = w.rows.F[0];
+  assert.ok(f1, "F received the owner's product");
+  return { w, f1 };
+}
+
+test("passive: an edit of the other company alone is not an edit — empty plan, twice in a row", () => {
+  const { w, f1 } = linkedPair();
+  Object.assign(f1, { hash: "hF", updatedAt: at(5) });
+  assert.deepEqual(plan(w, ["F"]), []);
+  assert.deepEqual(plan(w, ["F"]), [], "nothing builds up on later runs");
+  assert.equal(w.rows.A[0].hash, "h0", "the owner's record is untouched");
+});
+
+test("passive: an edit of the owner reaches the other company even when its own edit is later", () => {
+  const { w, f1 } = linkedPair();
+  Object.assign(f1, { hash: "hF", updatedAt: at(9) });
+  Object.assign(w.rows.A[0], { hash: "hA", updatedAt: at(5) });
+  const ops = plan(w, ["F"]);
+  assert.deepEqual(
+    ops.filter((op) => op.type === "update").map((op) => [op.organizationId, op.type === "update" ? op.fromOrganizationId : ""]),
+    [["F", "A"]],
+  );
+  apply(w, ops);
+  assert.equal(f1.hash, "hA");
+  assert.deepEqual(plan(w, ["F"]), []);
+});
+
+test("passive: a new record of the other company is still created at the owner", () => {
+  const { w } = linkedPair();
+  w.rows.F.push(row("f2", "cream", "hC", at(7)));
+  const ops = plan(w, ["F"]);
+  assert.deepEqual(
+    ops.filter((op) => op.type === "create").map((op) => [op.organizationId, op.type === "create" ? op.fromEntityId : ""]),
+    [["A", "f2"]],
+  );
+  apply(w, ops);
+  assert.deepEqual(plan(w, ["F"]), []);
+});
+
+test("passive: a record the other company deleted is not re-created there, the owner keeps it", () => {
+  const { w } = linkedPair();
+  w.rows.F = [];
+  const ops = plan(w, ["F"]);
+  assert.deepEqual(ops.map((op) => [op.type, op.organizationId]), [["tombstone", "F"]]);
+  apply(w, ops);
+  assert.deepEqual(plan(w, ["F"]), []);
+  assert.equal(w.rows.A.length, 1);
+});
+
+test("passive: two owner organizations and the other company — the owner's edit wins over both", () => {
+  const w = world(["A", "B", "F"], { A: [row("a1", "milk", "h0", at(0))], B: [], F: [] });
+  apply(w, plan(w, ["F"]));
+  const b1 = w.rows.B[0];
+  const f1 = w.rows.F[0];
+  Object.assign(f1, { hash: "hF", updatedAt: at(10) });
+  Object.assign(b1, { hash: "hB", updatedAt: at(3) });
+  apply(w, plan(w, ["F"]));
+  assert.deepEqual([w.rows.A[0].hash, b1.hash, f1.hash], ["hB", "hB", "hB"]);
+  assert.deepEqual(plan(w, ["F"]), []);
 });

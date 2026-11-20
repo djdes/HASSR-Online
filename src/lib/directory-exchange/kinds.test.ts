@@ -178,3 +178,13 @@ test("rule Р5: the restricted fingerprint is marked, the fingerprint inside an 
   assert.equal(hashScope("product", rowHash("product", product, null, "foreign")), "account");
   assert.equal(hashScope("product", "f:whatever"), "account");
 });
+
+test("naturalKey: with an owner, people of two companies never share a key; other records still match by name", () => {
+  const person = { name: "Иванов Иван" };
+  assert.equal(naturalKey("staff", person, "cook"), naturalKey("staff", { name: " иванов  иван " }, "cook"));
+  assert.notEqual(naturalKey("staff", person, "cook", "account-1"), naturalKey("staff", person, "cook", "account-2"));
+  assert.equal(naturalKey("staff", person, "cook", "account-1"), naturalKey("staff", person, "cook", "account-1"));
+  for (const entity of ["position", "building", "product"] as const) {
+    assert.equal(naturalKey(entity, { name: "Кухня" }, null, "account-1"), naturalKey(entity, { name: "Кухня" }, null, "account-2"), entity);
+  }
+});

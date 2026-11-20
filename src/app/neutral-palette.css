@@ -5,7 +5,7 @@
  * Light theme only: the old brand indigo classes (#141821, #5566f6, #4a5bf0, #3848c7, #3343cf, #4c5ae0, #f5f6ff, #eef1ff, #eef0ff, #eef0fe, #e8ebff, #dfe3ff, #5563ff, #4554ff, #4b57ff, #5863f8, #7a5cff, #1f3a8a, #0b1024, #3c4053, #5b6170, #6f7282, #73738a, #7a7c8e, #9b9fb3, #c7ccea, #c8cbe0, #d8dae6, #dcdfed, #dfe1ec, #ececf4, #eef0f6, #f1f2f8, #f2f3f8, #f3f4fb, #f4f5fb, #fafbff)
  * are repainted to black, graphite and greys. Dark theme, partner accent
  * and the Mini App keep their own colours.
- * 308 rules from 945 files (src/).
+ * 308 rules from 946 files (src/).
  */
 
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .app-shell, html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) body {

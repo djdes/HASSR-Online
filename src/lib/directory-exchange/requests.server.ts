@@ -16,6 +16,7 @@ import {
 import {
   REQUEST_DAY_MS,
   REQUEST_NOT_OWNER_MESSAGE,
+  decideRequestApproval,
   decideRequestCreation,
   decideRequestDecision,
   exchangeKindsLabel,
@@ -29,8 +30,10 @@ import {
 } from "@/lib/directory-exchange/requests";
 import {
   EXCHANGE_BUSY_CODE,
+  exchangeAccountKey,
   runDirectoryExchange,
   transferOnce,
+  withExchangeLock,
   type ExchangeActor,
   type TransferSelection,
 } from "@/lib/directory-exchange/run.server";
@@ -65,6 +68,11 @@ import { isTechnicalEmail } from "@/lib/technical-email";
  *   • обе стороны могут закончить связь; каждое действие — в журнале обеих
  *     сторон (`directory_exchange.request_*`), имя человека из другого
  *     аккаунта в чужой журнал не пишется;
+ *   • заявителю и после подтверждения известно только название кабинета:
+ *     ни названий, ни id организаций владельца (и самого кабинета) нет ни в
+ *     журнале его организации, ни в письме, ни в уведомлении;
+ *   • у кабинета одна чужая компания: связь со второй подтвердить нельзя,
+ *     пока есть первая (`decideRequestApproval`);
  *   • письма и уведомления — после записи, в try/catch (`notify`).
  */
 
@@ -164,18 +172,21 @@ type RequestParties = {
 /**
  * Действие — в журнал обеих сторон (Р7). Имя и id того, кто действовал,
  * пишутся только в журнал его стороны: другой стороне он чужой человек.
+ * В журнал заявителя не попадает ничего об организациях владельца кабинета,
+ * кроме названия кабинета: ни id кабинета, ни то, что передано в
+ * `cabinetOnly` (например, из какой организации владелец разрешил перенос).
  */
 async function auditBoth(
   action: string,
   request: RequestParties,
   by: { side: "requester" | "cabinet"; actor: ExchangeActor },
   extra: Prisma.InputJsonObject = {},
+  cabinetOnly: Prisma.InputJsonObject = {},
 ): Promise<void> {
-  const details: Prisma.InputJsonObject = {
+  const shared: Prisma.InputJsonObject = {
     requestId: request.id,
     mode: request.mode,
     kinds: [...request.kinds],
-    masterOrganizationId: request.masterOrganizationId,
     cabinetName: request.cabinetName,
     requesterOrganizationId: request.requesterOrganizationId,
     requesterName: request.requesterName,
@@ -183,8 +194,12 @@ async function auditBoth(
     ...extra,
   };
   const sides = [
-    { organizationId: request.requesterOrganizationId, own: by.side === "requester" },
-    { organizationId: request.masterOrganizationId, own: by.side === "cabinet" },
+    { organizationId: request.requesterOrganizationId, own: by.side === "requester", details: shared },
+    {
+      organizationId: request.masterOrganizationId,
+      own: by.side === "cabinet",
+      details: { ...shared, masterOrganizationId: request.masterOrganizationId, ...cabinetOnly },
+    },
   ];
   for (const side of sides) {
     try {
@@ -196,7 +211,7 @@ async function auditBoth(
           action: `directory_exchange.${action}`,
           entity: "directory_exchange_request",
           entityId: request.id,
-          details,
+          details: side.details,
         },
       });
     } catch (error) {
@@ -333,7 +348,7 @@ const REQUEST_SELECT = {
   masterOrganization: {
     select: { id: true, name: true, accountId: true, kind: true, account: { select: { ownerUserId: true } } },
   },
-  requesterOrganization: { select: { id: true, name: true, inn: true, isDemo: true, kind: true } },
+  requesterOrganization: { select: { id: true, name: true, inn: true, isDemo: true, kind: true, accountId: true } },
 } as const satisfies Prisma.DirectoryExchangeRequestSelect;
 
 type RequestRow = Prisma.DirectoryExchangeRequestGetPayload<{ select: typeof REQUEST_SELECT }>;
@@ -455,6 +470,29 @@ export async function loadExchangeRequests(
 /* ───────────────────────── создание ───────────────────────── */
 
 /**
+ * Аккаунт, которому принадлежит мастер-кабинет с таким кодом. Код кабинета —
+ * его собственный (`serviceCode`) либо, у кабинетов постарше, код пула, к
+ * которому он подключён (`linkedServiceCode`): именно его такой кабинет и
+ * показывает своему владельцу. Только организации вида «мастер-кабинет»:
+ * обычная организация с тем же кодом пула кабинетом не считается. Код пула
+ * не уникален — если им пользуются кабинеты разных аккаунтов, адресат
+ * неясен, и это «не найден».
+ */
+async function cabinetAccountByCode(code: string): Promise<string | null> {
+  const cabinets = { kind: MASTER_ORG_KIND, isDemo: false, accountId: { not: null } } as const;
+  const own = await db.organization.findFirst({ where: { ...cabinets, serviceCode: code }, select: { accountId: true } });
+  if (own?.accountId) return own.accountId;
+  const linked = await db.organization.findMany({
+    where: { ...cabinets, linkedServiceCode: code },
+    select: { accountId: true },
+    take: 20,
+  });
+  const accounts = new Set(linked.map((organization) => organization.accountId));
+  const [only] = accounts;
+  return accounts.size === 1 && only ? only : null;
+}
+
+/**
  * Кабинет по коду. Адресат запроса — кабинет обмена аккаунта (самый ранний,
  * тот же, что в `settings.server.ts`): в нём участвуют организации владельца,
  * и только с ним связь имеет смысл; код любого кабинета аккаунта ведёт к нему.
@@ -464,12 +502,9 @@ export async function loadExchangeRequests(
 async function findCabinetByCode(rawCode: unknown) {
   const code = normalizeServiceCode(rawCode);
   if (!code) return null;
-  const byCode = await db.organization.findFirst({
-    where: { serviceCode: code, kind: MASTER_ORG_KIND, isDemo: false, accountId: { not: null } },
-    select: { accountId: true },
-  });
-  if (!byCode?.accountId) return null;
-  const exchange = await findExchangeCabinet(byCode.accountId);
+  const cabinetAccountId = await cabinetAccountByCode(code);
+  if (!cabinetAccountId) return null;
+  const exchange = await findExchangeCabinet(cabinetAccountId);
   if (!exchange) return null;
   const cabinet = await db.organization.findUnique({
     where: { id: exchange.id },
@@ -485,7 +520,8 @@ async function findCabinetByCode(rawCode: unknown) {
  * Отказы — `DirectoryExchangeError`: 400 — не выбраны списки или режим,
  * 402 — аккаунт не на платном тарифе, 403 — не владелец аккаунта, 404 — кабинет
  * не найден, 409 — свой кабинет, уже участник, уже есть открытый запрос,
- * организация закрыта; 429 — суточный лимит.
+ * владелец кабинета недавно отклонил запрос аккаунта, организация закрыта;
+ * 429 — суточный лимит.
  */
 export async function createExchangeRequest(input: {
   organizationId: string;
@@ -543,12 +579,18 @@ export async function createExchangeRequest(input: {
     async () => {
       const pair = { masterOrganizationId: cabinet.id, requesterOrganizationId: requester.id };
       await expireStale(pair, now);
-      const [requestsToday, open, member] = await Promise.all([
+      const [requestsToday, open, member, declined] = await Promise.all([
         countToday(),
         db.directoryExchangeRequest.findFirst({ where: { ...pair, status: "pending" }, select: { id: true } }),
         db.directoryExchangeMember.findUnique({
           where: { masterOrganizationId_organizationId: { masterOrganizationId: cabinet.id, organizationId: requester.id } },
           select: { id: true },
+        }),
+        // Последний отказ этого кабинета любой организации аккаунта заявителя.
+        db.directoryExchangeRequest.findFirst({
+          where: { masterOrganizationId: cabinet.id, status: "declined", decidedAt: { not: null }, ...accountRequests },
+          orderBy: { decidedAt: "desc" },
+          select: { decidedAt: true },
         }),
       ]);
       const decision = decideRequestCreation({
@@ -558,6 +600,8 @@ export async function createExchangeRequest(input: {
         sameAccount: cabinet.accountId === accountId,
         hasOpenRequest: Boolean(open),
         alreadyMember: Boolean(member),
+        lastDeclinedAt: declined?.decidedAt ?? null,
+        now,
       });
       if (!decision.ok) throw refuse(decision);
 
@@ -616,14 +660,21 @@ export async function createExchangeRequest(input: {
 
 /** Убрать участника из другого аккаунта из обмена кабинета вместе с его соответствиями. Данные остаются у обеих сторон. */
 async function removeForeignMember(masterOrganizationId: string, organizationId: string): Promise<boolean> {
-  return db.$transaction(async (tx) => {
-    const members = await tx.directoryExchangeMember.deleteMany({ where: { masterOrganizationId, organizationId, foreign: true } });
-    // Соответствия уходят только вместе с участником: у участника своего
-    // аккаунта (не `foreign`) этот путь не трогает ничего.
-    if (members.count === 0) return false;
-    await tx.directoryExchangeLink.deleteMany({ where: { masterOrganizationId, organizationId } });
-    return true;
-  });
+  // Под замком обмена кабинета: идущий обмен дописывает свои связи, и только
+  // потом участник уходит — связи не остаются «сиротами».
+  return withExchangeLock(
+    masterOrganizationId,
+    () =>
+      db.$transaction(async (tx) => {
+        const members = await tx.directoryExchangeMember.deleteMany({ where: { masterOrganizationId, organizationId, foreign: true } });
+        // Соответствия уходят только вместе с участником: у участника своего
+        // аккаунта (не `foreign`) этот путь не трогает ничего.
+        if (members.count === 0) return false;
+        await tx.directoryExchangeLink.deleteMany({ where: { masterOrganizationId, organizationId } });
+        return true;
+      }),
+    { waitMs: 30_000 },
+  );
 }
 
 /**
@@ -838,6 +889,44 @@ export async function loadExchangeRequestByToken(input: {
 /* ───────────────────────── решение ───────────────────────── */
 
 /**
+ * Организация другой компании, уже связанная с кабинетом (её название — для
+ * текста владельцу); null — кабинет свободен. Вторая организация той же
+ * компании, что и заявитель, кабинет не занимает.
+ */
+async function linkedCompanyOf(request: RequestRow): Promise<string | null> {
+  const cabinetAccountId = request.masterOrganization.accountId;
+  const requesterKey = exchangeAccountKey(request.requesterOrganization);
+  const foreign = await db.directoryExchangeMember.findMany({
+    where: { masterOrganizationId: request.masterOrganizationId, foreign: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { organization: { select: { id: true, name: true, accountId: true } } },
+  });
+  const other = foreign.find(
+    ({ organization }) => organization.accountId !== cabinetAccountId && exchangeAccountKey(organization) !== requesterKey,
+  );
+  return other?.organization.name ?? null;
+}
+
+/** Можно ли подтвердить запрос сейчас (`decideRequestApproval`); нет — `DirectoryExchangeError`. */
+async function assertApprovable(request: RequestRow, mode: RequestMode, now: Date): Promise<void> {
+  const requester = request.requesterOrganization;
+  const [billing, locked, linkedCompany] = await Promise.all([
+    loadAccountBilling(requester.id, now).catch(() => null),
+    isOrganizationLocked(requester.id, now),
+    mode === "link" ? linkedCompanyOf(request) : Promise.resolve(null),
+  ]);
+  const verdict = decideRequestApproval({
+    mode,
+    // Тариф не прочитался — считаем неоплаченным: данные получает только платный аккаунт.
+    requesterPhase: billing ? phaseOfKind(billing.state.kind) : "free",
+    requesterLocked: locked,
+    requesterName: requester.name,
+    linkedCompany,
+  });
+  if (!verdict.ok) throw new DirectoryExchangeError(verdict.message, verdict.status, `request_${verdict.reason}`);
+}
+
+/**
  * Подтверждённая связь (Р4): организация-заявитель — участник обмена кабинета
  * с разрешёнными списками и пометкой `foreign`; обмен запускается сразу.
  * К общим меню и сырью кабинета она НЕ подключается — это другой доступ.
@@ -849,18 +938,33 @@ async function approveLink(
   now: Date,
 ): Promise<ExchangeSummary> {
   const masterOrganizationId = request.masterOrganizationId;
-  await db.directoryExchangeMember.upsert({
-    where: {
-      masterOrganizationId_organizationId: { masterOrganizationId, organizationId: request.requesterOrganizationId },
-    },
-    create: {
-      masterOrganizationId,
-      organizationId: request.requesterOrganizationId,
-      kinds: allowed,
-      foreign: true,
-      createdByUserId: actor.userId,
-    },
-    update: { kinds: allowed, foreign: true },
+  // Проверка «кабинет свободен» и запись участника — под замком обмена
+  // кабинета: два одновременных подтверждения разных компаний не пройдут оба.
+  await withExchangeLock(masterOrganizationId, async () => {
+    const linkedCompany = await linkedCompanyOf(request);
+    if (linkedCompany) {
+      const verdict = decideRequestApproval({
+        mode: "link",
+        requesterPhase: "paid",
+        requesterLocked: false,
+        requesterName: request.requesterOrganization.name,
+        linkedCompany,
+      });
+      if (!verdict.ok) throw new DirectoryExchangeError(verdict.message, verdict.status, `request_${verdict.reason}`);
+    }
+    await db.directoryExchangeMember.upsert({
+      where: {
+        masterOrganizationId_organizationId: { masterOrganizationId, organizationId: request.requesterOrganizationId },
+      },
+      create: {
+        masterOrganizationId,
+        organizationId: request.requesterOrganizationId,
+        kinds: allowed,
+        foreign: true,
+        createdByUserId: actor.userId,
+      },
+      update: { kinds: allowed, foreign: true },
+    });
   });
 
   try {
@@ -935,9 +1039,9 @@ export async function decideExchangeRequest(input: {
   if (requester.isDemo || requester.kind === MASTER_ORG_KIND) {
     throw new DirectoryExchangeError("Организация заявителя больше не может участвовать в обмене", 409);
   }
-  if (await isOrganizationLocked(requester.id, now)) {
-    throw new DirectoryExchangeError("Организация заявителя сейчас не может принять данные. Запрос остаётся открытым до конца срока.", 409);
-  }
+  // Заявитель сейчас: на платном ли тарифе и не закрыт ли; кабинет — не связан
+  // ли уже с другой компанией. Отказ запрос не закрывает — он ждёт дальше.
+  await assertApprovable(request, mode, now);
 
   let sourceOrganizationId: string | null = null;
   if (mode === "transfer") {
@@ -995,10 +1099,14 @@ export async function decideExchangeRequest(input: {
   await db.directoryExchangeRequest
     .update({ where: { id: request.id }, data: { resultJson: summary as unknown as Prisma.InputJsonObject } })
     .catch((error) => console.error("[directory-exchange] request result not saved", { id: request.id, error }));
-  await auditBoth("request_approved", parties, { side: "cabinet", actor }, {
-    allowedKinds: allowed,
-    ...(sourceOrganizationId ? { sourceOrganizationId } : {}),
-  });
+  await auditBoth(
+    "request_approved",
+    parties,
+    { side: "cabinet", actor },
+    { allowedKinds: allowed },
+    // Из какой своей организации владелец разрешил перенос — только в его журнал.
+    sourceOrganizationId ? { sourceOrganizationId } : {},
+  );
   return {
     status: "approved",
     summary,

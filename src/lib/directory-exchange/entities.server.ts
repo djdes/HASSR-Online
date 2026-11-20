@@ -123,12 +123,13 @@ function makeRow(
     detail?: string | null;
   },
   scope: ExchangeScope = "account",
+  owner: string | null = null,
 ): EntityRow {
   const fields = pickExchangeFields(entity, input.fields, scope);
   const parentGroupId = input.parentGroupId ?? null;
   return {
     id: input.id,
-    key: naturalKey(entity, fields, parentGroupId),
+    key: naturalKey(entity, fields, parentGroupId, owner),
     hash: rowHash(entity, fields, parentGroupId, scope),
     updatedAt: input.updatedAt ?? null,
     name: typeof fields.name === "string" ? fields.name : "",
@@ -145,12 +146,15 @@ function makeRow(
  * Строки сущности у организации, старые раньше. Родитель переводится в
  * группу родителя по текущим связям (`parentGroupOf`). `scope` — состав
  * полей: в `foreign` у сотрудника читаются только ФИО и должность.
+ * `owner` — аккаунт организации: в составе `foreign` он входит в ключ
+ * сотрудника, и люди разных компаний по ФИО не сопоставляются.
  */
 export async function loadEntityRows(
   entity: ExchangeEntity,
   organizationId: string,
   parentGroupOf: ParentGroupLookup = () => null,
   scope: ExchangeScope = "account",
+  owner: string | null = null,
 ): Promise<EntityRow[]> {
   switch (entity) {
     case "position": {
@@ -199,6 +203,8 @@ export async function loadEntityRows(
               detail: row.jobPosition?.name ?? null,
             },
             scope,
+            // Внутри аккаунта ключ прежний — одно ФИО, одна запись.
+            full ? null : owner,
           ),
         );
     }

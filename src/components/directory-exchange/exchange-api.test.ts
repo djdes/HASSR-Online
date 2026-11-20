@@ -3,10 +3,12 @@ import { test } from "node:test";
 
 import {
   approvalBody,
+  creationRefusal,
   decisionView,
   exchangeParticipants,
   isEmptyResult,
   isExpired,
+  keepsRequestOpen,
   linkMembers,
   narrowKinds,
   ownParticipants,
@@ -397,4 +399,36 @@ test("decision page: the server answer picks the form, a refusal or the way the 
   assert.deepEqual(decisionView(answer(0, null), now), { kind: "failed" });
   assert.deepEqual(decisionView(answer(500, { error: "Ошибка" }), now), { kind: "failed" });
   assert.deepEqual(decisionView(answer(200, { request: { id: "r1" } }), now), { kind: "failed" });
+});
+
+test("refusals: a busy cabinet and an unpaid requester keep the form, a recent decline stays in the block", () => {
+  const answer = (status: number, json: Record<string, unknown> | null) => ({ ok: status >= 200 && status < 300, status, json });
+  const now = Date.parse("2026-11-20T09:00:00.000Z");
+
+  // Подтверждение: к кабинету уже подключена другая компания или у заявителя нет платного тарифа —
+  // запрос по-прежнему ждёт решения, форму не закрываем и запрос не перечитываем.
+  const busy = answer(409, { error: "К кабинету уже подключена «Юг»", code: "request_cabinet_busy" });
+  const unpaid = answer(409, { error: "У заявителя закончился тариф", code: "request_requester_not_paid" });
+  assert.equal(keepsRequestOpen(busy), true);
+  assert.equal(keepsRequestOpen(unpaid), true);
+  // Сам по себе такой отказ исход запроса не называет.
+  assert.deepEqual(decisionView(busy, now), { kind: "closed", status: null });
+  // Запрос закрыт, код неизвестен или тот же код пришёл не с 409 — прежнее поведение.
+  assert.equal(keepsRequestOpen(answer(409, { error: "Срок истёк", code: "request_expired" })), false);
+  assert.equal(keepsRequestOpen(answer(409, { error: "Решение принято", code: "request_decided" })), false);
+  assert.equal(keepsRequestOpen(answer(409, { error: "Обмен уже идёт", code: "exchange_busy" })), false);
+  assert.equal(keepsRequestOpen(answer(409, { error: "Без кода" })), false);
+  assert.equal(keepsRequestOpen(answer(400, { error: "Странно", code: "request_cabinet_busy" })), false);
+  assert.equal(keepsRequestOpen(answer(0, null)), false);
+
+  // Отправка запроса: тариф — со ссылкой на оплату, недавний отказ — строкой в блоке, остальное — уведомлением.
+  assert.equal(creationRefusal(answer(402, { error: "Нужен платный тариф", payUrl: "/settings/subscription" })), "plan");
+  assert.equal(creationRefusal(answer(402, { error: "Нужен платный тариф" })), "plan");
+  assert.equal(creationRefusal(answer(409, { error: "Организация закрыта", code: "org_locked", payUrl: "/settings/subscription" })), "plan");
+  assert.equal(creationRefusal(answer(409, { error: "Запрос отклонён, повторите через 7 дней", code: "request_declined_recently" })), "inline");
+  assert.equal(creationRefusal(answer(409, { error: "Запрос уже отправлен", code: "request_open" })), "toast");
+  assert.equal(creationRefusal(answer(409, { error: "Это ваш кабинет" })), "toast");
+  assert.equal(creationRefusal(answer(404, { error: "Мастер-кабинет с таким кодом не найден" })), "toast");
+  assert.equal(creationRefusal(answer(429, { error: "Не больше 5 запросов в сутки", code: "request_declined_recently" })), "toast");
+  assert.equal(creationRefusal(answer(0, null)), "toast");
 });

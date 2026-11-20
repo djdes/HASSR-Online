@@ -7,6 +7,8 @@ import {
   REQUEST_STATUSES,
   REQUEST_TTL_DAYS,
   REQUEST_TTL_MS,
+  REQUEST_DECLINE_COOLDOWN_DAYS,
+  decideRequestApproval,
   decideRequestCreation,
   decideRequestDecision,
   exchangeKindsLabel,
@@ -193,4 +195,32 @@ test("list names for letters", () => {
   assert.equal(exchangeKindsLabel(["staff", "products"]), "Продукция, Сотрудники");
   assert.equal(exchangeKindsLabel(["equipment", "objects"]), "Объекты, Оборудование");
   assert.equal(exchangeKindsLabel(["nope"]), "");
+});
+
+test("creation: after a decline the same company waits seven days, the date is named", () => {
+  assert.equal(REQUEST_DECLINE_COOLDOWN_DAYS, 7);
+  const refused = creation({ lastDeclinedAt: days(-2), now: NOW });
+  assert.ok(!refused.ok && refused.reason === "declined_recently" && refused.status === 409);
+  assert.match(!refused.ok ? refused.message : "", /Повторить можно после 24 ноября 2026/);
+  assert.equal(creation({ lastDeclinedAt: days(-8), now: NOW }).ok, true);
+  assert.equal(creation({ lastDeclinedAt: null, now: NOW }).ok, true);
+  // Other refusals keep their order: the plan is checked first.
+  const unpaid = creation({ phase: "free", lastDeclinedAt: days(-1), now: NOW });
+  assert.ok(!unpaid.ok && unpaid.reason === "not_paid");
+});
+
+test("approval: the requester must still be paid and open, the cabinet free of another company", () => {
+  const base = { mode: "link" as const, requesterPhase: "paid" as AccountPhase, requesterLocked: false, requesterName: "Кафе", linkedCompany: null };
+  assert.deepEqual(decideRequestApproval(base), { ok: true });
+  for (const phase of ["trial", "free", "open"] as AccountPhase[]) {
+    const verdict = decideRequestApproval({ ...base, requesterPhase: phase });
+    assert.ok(!verdict.ok && verdict.reason === "requester_not_paid" && verdict.status === 409, phase);
+  }
+  const locked = decideRequestApproval({ ...base, requesterLocked: true });
+  assert.ok(!locked.ok && locked.reason === "requester_not_paid");
+  const busy = decideRequestApproval({ ...base, linkedCompany: "Другая компания" });
+  assert.ok(!busy.ok && busy.reason === "cabinet_busy");
+  assert.match(!busy.ok ? busy.message : "", /«Другая компания»/);
+  // A one-off transfer does not occupy the cabinet.
+  assert.deepEqual(decideRequestApproval({ ...base, mode: "transfer", linkedCompany: "Другая компания" }), { ok: true });
 });
