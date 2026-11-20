@@ -22,6 +22,7 @@ import { resolveAutomationStaff } from "@/lib/journal-automation-staff";
 import { resolveDayStart } from "@/lib/today-compliance";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -314,7 +315,9 @@ async function handle(request: Request) {
   // Ключ для отчёта и алерта — по зоне процесса; у каждой организации
   // внутри прогона свой день (см. runForOrganization).
   const todayKey = toDateKey(now);
-  const orgs = await db.organization.findMany({
+  // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+  const locked = await lockedOrganizationIds(now);
+  const orgs = (await db.organization.findMany({
     // Пауза за неактивность обещает «автозаполнение остановится» —
     // выполняем обещание: приостановленные и отменённые не трогаем.
     where: { subscriptionPlan: { notIn: ["paused", "cancelled"] }, ...NOT_DIRECTORY_ORG_WHERE },
@@ -326,7 +329,7 @@ async function handle(request: Request) {
       autoJournalCodes: true,
       disabledJournalCodes: true,
     },
-  });
+  })).filter((org) => !locked.has(org.id));
 
   const settled = await Promise.allSettled(
     orgs.map((org) => runForOrganization(org, now))

@@ -15,6 +15,7 @@ import { loadBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { runAllDirectoryExchanges, type ExchangeBatchResult } from "@/lib/directory-exchange/run.server";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +62,7 @@ async function handle(request: Request) {
       disabledJournalCodes: true,
     },
   });
+  const locked = await lockedOrganizationIds();
 
   let totalCurrentCreated = 0;
   let totalNextCreated = 0;
@@ -71,6 +73,8 @@ async function handle(request: Request) {
   const restoredCodes = new Set<string>();
 
   for (const org of orgs) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(org.id)) continue;
     if (!automationOn(await getJournalControls(org.id), "autoCreate")) continue;
     // Точки: документы создаются на каждую точку организации (или один
     // общий, если точки не включены).

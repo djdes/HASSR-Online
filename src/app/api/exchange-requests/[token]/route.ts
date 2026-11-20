@@ -76,11 +76,12 @@ export async function GET(_request: Request, ctx: Ctx) {
 
 /**
  * POST /api/exchange-requests/[token] `{ decision: "approve" | "decline",
- * allowedKinds?, sourceOrganizationId?, organizationIds? }` → `{ ok: true, status, summary? }`.
- * Подтверждение связи делает организацию-заявителя участником обмена кабинета
- * и сразу запускает обмен; подтверждение переноса разово переносит данные из
+ * allowedKinds?, sourceOrganizationId?, organizationIds? }` → `{ ok: true, status,
+ * running?, summary? }`. Подтверждение связи делает организацию-заявителя
+ * участником обмена кабинета и сразу запускает обмен (дольше 8 секунд —
+ * `running: true`, обмен доходит в фоне); подтверждение переноса разово переносит данные из
  * выбранной своей организации. Повторное решение, отменённый и истёкший
- * запрос — 409. Заявителю — письмо и уведомление, после ответа.
+ * запрос — 409. Заявителю — письмо и уведомление, после ответа (и после обмена).
  */
 export async function POST(request: Request, ctx: Ctx) {
   const owner = await requireOwnerSession();
@@ -107,6 +108,7 @@ export async function POST(request: Request, ctx: Ctx) {
     return NextResponse.json({
       ok: true,
       status: decided.status,
+      ...(decided.running ? { running: true } : {}),
       ...(decided.summary ? { summary: decided.summary } : {}),
     });
   } catch (error) {

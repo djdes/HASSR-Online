@@ -8,6 +8,7 @@ import {
 } from "@/lib/telegram";
 import { tasksflowClientFor, TasksFlowError } from "@/lib/tasksflow-client";
 import { filterRecipientsByPlace, placeOfEvent } from "@/lib/place-recipients";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,7 +80,9 @@ async function handle(request: Request) {
     },
   });
 
-  const enabledLinks = links.filter((l) => l.integration.enabled);
+  // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+  const locked = await lockedOrganizationIds(now);
+  const enabledLinks = links.filter((l) => l.integration.enabled && !locked.has(l.integration.organizationId));
   let escalatedL1 = 0;
   let escalatedL2 = 0;
   let skipped = 0;

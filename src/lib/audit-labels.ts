@@ -216,6 +216,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "billing.order-held": { label: "Оплата ждёт ручного разбора", variant: "destructive" },
   "billing.order-resolved": { label: "Оплата разобрана вручную", variant: "secondary" },
   "billing.trial.reminder": { label: "Напоминание: пробный период заканчивается", variant: "outline" },
+  "billing.org_trial_reminder": { label: "Напоминание: бесплатные дни организации заканчиваются", variant: "outline" },
   "billing.trial.updated": { label: "Настройки пробного периода", variant: "secondary" },
   "billing.plan.scheduled": { label: "Запланирован переход на тариф", variant: "secondary" },
   "billing.plan.schedule_cancelled": { label: "Переход на тариф отменён", variant: "outline" },

@@ -15,6 +15,7 @@ import { journalDisplayName, parseCustomNames } from "@/lib/custom-names";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { isWithinNewcomerQuietWindow, skipComplianceReminder } from "@/lib/newcomer-scope";
 import { organizationHasEntries } from "@/lib/org-activity.server";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
@@ -74,6 +75,7 @@ async function handle(request: Request) {
       where: NOT_DIRECTORY_ORG_WHERE,
       select: { id: true, name: true, disabledJournalCodes: true, customNamesJson: true, locale: true, isDemo: true, createdAt: true },
     });
+    const locked = await lockedOrganizationIds(now);
 
     // Get all mandatory journal templates
     const mandatoryTemplates = await db.journalTemplate.findMany({
@@ -90,6 +92,8 @@ async function handle(request: Request) {
     const results: { org: string; missing: string[] }[] = [];
 
     for (const org of organizations) {
+      // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+      if (locked.has(org.id)) continue;
       // Демо и новичок без единой записи в первые 48 часов — без напоминаний:
       // «СРОЧНО» на второй день после регистрации отпугивает, а не помогает.
       const hasEntries = isWithinNewcomerQuietWindow(org.createdAt, now)

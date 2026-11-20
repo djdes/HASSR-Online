@@ -22690,6 +22690,24 @@
       "show": "Kengaytirilgan rejim",
       "hide": "Kengaytirilgan rejimni yashirish",
       "hint": "Xat konstruktori, foydalanuvchi va kontaktlarni qo‘lda tanlash, bloklanganlar ro‘yxati"
+    },
+    "exchangeLetters": {
+      "label": "Xatlarni tekshirish",
+      "title": "Ma’lumotnomalar almashinuvi xatlari",
+      "description": "Boshqa kompaniya bilan ma’lumotnomalar almashinuvi xatlarining namunalarini — master-kabinet egasiga so‘rov va so‘rovchiga qaror — o‘z pochtangizga yuboring va pochta ularni qabul qilishini tekshiring. Namunalardagi ma’lumotlar o‘ylab topilgan, mavzuda «[Проверка]» belgisi bor.",
+      "send": "Xat namunalarini o‘zimga yuborish",
+      "sending": "Yuborilmoqda…",
+      "sentTo": "{email} manziliga yuborildi",
+      "kinds": {
+        "request": "Kabinet egasiga so‘rov",
+        "decision": "So‘rovchiga qaror"
+      },
+      "delivered": "pochta qabul qildi",
+      "notDelivered": "qabul qilinmadi",
+      "logged": "server jurnaliga yozildi",
+      "notConfigured": "Serverda pochta sozlanmagan — xatlar yuborilmadi, faqat server jurnaliga yozildi.",
+      "noEmail": "Hisobingizda ish pochtasi yo‘q — namunalarni yuborish uchun manzil yo‘q.",
+      "failed": "Xat namunalarini yuborib bo‘lmadi"
     }
   },
   "settingsProductImport": {
@@ -26935,7 +26953,8 @@
         "linkFailed": "Ma’lumotnomalarni bog‘lab bo‘lmadi",
         "transferFailed": "Ma’lumotlarni ko‘chirib bo‘lmadi",
         "left": "«{name}» endi ma’lumotnomalar almashinuvida qatnashmaydi",
-        "linkCommonNote": "Almashinuv barcha ishtirokchilar uchun umumiy: tashkilotda ro‘yxat allaqachon yoqilgan bo‘lsa, bu yerda belgi qo‘yilmasa ham u ro‘yxatni oladi. Tashkilotni almashinuvdan chiqarish uchun uning oynasida «Almashinuvni o‘chirish» tugmasini bosing."
+        "linkCommonNote": "Almashinuv barcha ishtirokchilar uchun umumiy: tashkilotda ro‘yxat allaqachon yoqilgan bo‘lsa, bu yerda belgi qo‘yilmasa ham u ro‘yxatni oladi. Tashkilotni almashinuvdan chiqarish uchun uning oynasida «Almashinuvni o‘chirish» tugmasini bosing.",
+        "menuSeparate": "Almashinuv master-kabinetning menyusi va xomashyosini ulamaydi — bu alohida, «Master-kabinet» bo‘limida qilinadi."
       },
       "result": {
         "linkTitle": "Ma’lumotnomalar bog‘landi",
@@ -26947,7 +26966,8 @@
         "noChanges": "O‘zgarishlar yo‘q — ma’lumotlar allaqachon mos",
         "limitNote": "Tarif limitlari amal qiladi: yozuvlarning bir qismi qo‘shilmadi — o‘rinlar yoki nuqtalar yetmadi.",
         "limitLink": "Tarifni ochish",
-        "done": "Tayyor"
+        "done": "Tayyor",
+        "running": "Almashinuv davom etmoqda — natija «Ma’lumotnomalar almashinuvi» kartochkasida paydo bo‘ladi."
       },
       "card": {
         "title": "Ma’lumotnomalar almashinuvi",
@@ -26965,7 +26985,8 @@
         "syncDone": "Almashinuv bajarildi: yaratildi {created}, yangilandi {updated}",
         "syncNoChanges": "Almashinuv bajarildi — o‘zgarishlar yo‘q",
         "syncSkippedLimit": "Tarif tufayli qo‘shilmadi: {count}",
-        "syncFailed": "Almashinuvni bajarib bo‘lmadi"
+        "syncFailed": "Almashinuvni bajarib bo‘lmadi",
+        "syncRunning": "Almashinuv davom etmoqda — natija kartochkada paydo bo‘ladi"
       },
       "organizationSetup": {
         "title": "Yangi tashkilot",
@@ -27102,7 +27123,8 @@
           "own": "Qaysi tashkilotlaringiz almashinuvda ishtirok etadi",
           "ownHint": "Belgilangan tashkilotlar ruxsat etilgan ro‘yxatlarni bu kompaniya bilan va o‘zaro almashadi.",
           "needOwn": "Kamida bitta tashkilotingizni belgilang",
-          "noOwn": "Akkauntingizda ma’lumot almashishi mumkin bo‘lgan tashkilot yo‘q. So‘rovni faqat rad etish mumkin."
+          "noOwn": "Akkauntingizda ma’lumot almashishi mumkin bo‘lgan tashkilot yo‘q. So‘rovni faqat rad etish mumkin.",
+          "approvedRunning": "Almashinuv davom etmoqda — natija «Ma’lumotnomalar almashinuvi» kartochkasida paydo bo‘ladi, u tugagach kompaniya xat oladi."
         }
       }
     }

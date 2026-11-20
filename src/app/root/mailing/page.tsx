@@ -8,7 +8,10 @@ import { mailingKindOptionsWithData } from "@/lib/mailing/kinds";
 import { listMailingBases } from "@/lib/mailing/quick.server";
 import { emailSendStats, readMailingSettings } from "@/lib/mailing/settings.server";
 import { marketingSenderInfo } from "@/lib/mailing/transport.server";
+import { canAccessPlatformPath } from "@/lib/platform-access";
+import { platformViewerForSession } from "@/lib/platform-access.server";
 
+import { ExchangeLettersCard } from "./exchange-letters-card";
 import { MailingClient } from "./mailing-client";
 import { MAILING_TABS, type MailingPageData, type MailingTab } from "./types";
 
@@ -32,8 +35,14 @@ export default async function RootMailingPage({
 }: {
   searchParams: Promise<{ tab?: string; draft?: string }>;
 }) {
-  await requireRoot();
+  const session = await requireRoot();
   const params = await searchParams;
+  // Образцы писем обмена справочниками — тем, кому открыт их маршрут (только владелец платформы).
+  const canSendSampleLetters = canAccessPlatformPath(
+    await platformViewerForSession(session),
+    "/api/root/directory-exchange/test-letters",
+    "POST"
+  );
   const [campaigns, settings, stats, draftRaw, kinds, bases] = await Promise.all([
     listCampaigns(),
     readMailingSettings(),
@@ -85,6 +94,7 @@ export default async function RootMailingPage({
         </p>
       </div>
       <MailingClient data={data} />
+      {canSendSampleLetters ? <ExchangeLettersCard /> : null}
     </div>
     </MailingFeedbackProvider>
     </DomainMessagesBoundary>

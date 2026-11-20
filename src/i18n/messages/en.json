@@ -22690,6 +22690,24 @@
       "show": "Advanced mode",
       "hide": "Hide advanced mode",
       "hint": "Email builder, manual selection of users and contacts, and the suppression list"
+    },
+    "exchangeLetters": {
+      "label": "Letter check",
+      "title": "Directory exchange letters",
+      "description": "Send yourself sample letters of the directory exchange with another company — the request to the master cabinet owner and the decision to the requester — and check that the mail server accepts them. The samples use made-up data, and the subject is marked “[Проверка]”.",
+      "send": "Send me sample letters",
+      "sending": "Sending…",
+      "sentTo": "Sent to {email}",
+      "kinds": {
+        "request": "Request to the cabinet owner",
+        "decision": "Decision to the requester"
+      },
+      "delivered": "accepted by the mail server",
+      "notDelivered": "not accepted",
+      "logged": "written to the server log",
+      "notConfigured": "Mail is not configured on the server — the letters were not sent, only written to the server log.",
+      "noEmail": "Your account has no work e-mail, so there is nowhere to send the samples.",
+      "failed": "Could not send the sample letters"
     }
   },
   "settingsProductImport": {
@@ -26935,7 +26953,8 @@
         "linkFailed": "Could not link the directories",
         "transferFailed": "Could not transfer the data",
         "left": "“{name}” no longer takes part in the directory exchange",
-        "linkCommonNote": "The exchange is shared by all participants: an organisation that already has a list switched on receives it too, even without a tick here. To remove an organisation from the exchange, open this window in it and press “Turn off the exchange”."
+        "linkCommonNote": "The exchange is shared by all participants: an organisation that already has a list switched on receives it too, even without a tick here. To remove an organisation from the exchange, open this window in it and press “Turn off the exchange”.",
+        "menuSeparate": "The exchange does not connect the master cabinet’s menu and raw materials — that is done separately, in the “Master cabinet” section."
       },
       "result": {
         "linkTitle": "Directories linked",
@@ -26947,7 +26966,8 @@
         "noChanges": "No changes — the data already matches",
         "limitNote": "Plan limits apply: some records were not added — not enough seats or locations.",
         "limitLink": "Open the plan",
-        "done": "Done"
+        "done": "Done",
+        "running": "The exchange is in progress — the result will appear in the “Directory exchange” card."
       },
       "card": {
         "title": "Directory exchange",
@@ -26965,7 +26985,8 @@
         "syncDone": "Exchange complete: created {created}, updated {updated}",
         "syncNoChanges": "Exchange complete — no changes",
         "syncSkippedLimit": "Not added because of the plan: {count}",
-        "syncFailed": "Could not run the exchange"
+        "syncFailed": "Could not run the exchange",
+        "syncRunning": "The exchange is in progress — the result will appear in the card"
       },
       "organizationSetup": {
         "title": "New organisation",
@@ -27102,7 +27123,8 @@
           "own": "Which of your organisations will take part",
           "ownHint": "The ticked organisations will exchange the allowed lists with this company and with each other.",
           "needOwn": "Tick at least one of your organisations",
-          "noOwn": "Your account has no organisation that can exchange data. The request can only be declined."
+          "noOwn": "Your account has no organisation that can exchange data. The request can only be declined.",
+          "approvedRunning": "The exchange is in progress — the result will appear in the “Directory exchange” card, and the company will get an e-mail when it finishes."
         }
       }
     }

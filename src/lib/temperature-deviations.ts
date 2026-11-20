@@ -447,16 +447,18 @@ export function clampEscalationMinutes(value: number | null | undefined): number
  * отвалился, повар перестал заполнять), а отклонение при этом висит.
  */
 export async function escalateOpenIncidents(
-  args?: { now?: Date },
+  /** `skipOrganizationIds` — организации, которым эскалации не нужны (закрытые после своих 14 дней). */
+  args?: { now?: Date; skipOrganizationIds?: ReadonlySet<string> },
   overrides?: Partial<Deps> & {
     listOpenIncidents?: () => Promise<DeviationIncident[]>;
   }
 ): Promise<{ checked: number; escalated: number }> {
   const deps = { ...defaultDeps(), ...overrides };
-  const listOpen = overrides?.listOpenIncidents ?? defaultListOpenIncidents;
+  const skip = args?.skipOrganizationIds ?? new Set<string>();
+  const listOpen = overrides?.listOpenIncidents ?? (() => defaultListOpenIncidents(skip));
   const now = args?.now ?? new Date();
 
-  const incidents = await listOpen();
+  const incidents = (await listOpen()).filter((incident) => !skip.has(incident.organizationId));
   let escalated = 0;
   for (const incident of incidents) {
     try {
@@ -475,9 +477,14 @@ export async function escalateOpenIncidents(
  * Реальные зависимости (Prisma + Telegram + e-mail)
  * -------------------------------------------------------------------- */
 
-async function defaultListOpenIncidents(): Promise<DeviationIncident[]> {
+async function defaultListOpenIncidents(skip: ReadonlySet<string>): Promise<DeviationIncident[]> {
   const rows = await db.temperatureDeviationIncident.findMany({
-    where: { resolvedAt: null, escalatedAt: null, notifiedAt: { not: null } },
+    where: {
+      resolvedAt: null,
+      escalatedAt: null,
+      notifiedAt: { not: null },
+      ...(skip.size > 0 ? { organizationId: { notIn: [...skip] } } : {}),
+    },
     take: 500,
   });
   return rows.map(toIncident);

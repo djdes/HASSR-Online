@@ -15,6 +15,7 @@ import {
 } from "@/lib/telegram-obligation-digests";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { buildingTargets } from "@/lib/building-targets";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
 
@@ -52,6 +53,8 @@ type MiniDigestDeps = {
 type RunMiniDigestArgs = {
   miniAppBaseUrl: string | null;
   now?: Date;
+  /** Организации, которым ни синхронизации задач, ни сводок. */
+  skipOrganizationIds?: ReadonlySet<string>;
 };
 
 function resolveMiniBaseUrl(): string {
@@ -146,7 +149,9 @@ export async function runMiniDigestCron(
 }> {
   const deps = resolveDeps(overrides);
   const requestNow = args.now ?? new Date();
-  const linkedUsers = await deps.listLinkedTelegramUsers();
+  const linkedUsers = (await deps.listLinkedTelegramUsers()).filter(
+    (user) => !args.skipOrganizationIds?.has(user.organizationId)
+  );
   const organizationIds = uniqueOrganizationIds(linkedUsers);
   const organizations = await deps.listOrganizationsByIds(organizationIds);
   const organizationNameById = new Map(
@@ -381,9 +386,12 @@ export async function runMiniDigestCron(
 async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
+  const now = new Date();
   const result = await runMiniDigestCron({
     miniAppBaseUrl: resolveMiniBaseUrl(),
-    now: new Date(),
+    now,
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    skipOrganizationIds: await lockedOrganizationIds(now),
   });
 
   return NextResponse.json(result);

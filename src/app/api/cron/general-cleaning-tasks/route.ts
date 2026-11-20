@@ -5,6 +5,7 @@ import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-jour
 import { SANITATION_DAY_TEMPLATE_CODE } from "@/lib/sanitation-day-document";
 import { sanitationDayAdapter } from "@/lib/tasksflow-adapters/sanitation-day";
 import { orgTodayKey } from "@/lib/timezone";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
       organization: { select: { timezone: true, disabledJournalCodes: true } },
     },
   });
+  const locked = await lockedOrganizationIds();
 
   let documents = 0;
   let queuedCreate = 0;
@@ -47,6 +49,8 @@ export async function GET(request: Request) {
   const errors: Array<{ documentId: string; error: string }> = [];
 
   for (const integration of integrations) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(integration.organizationId)) continue;
     const disabled = parseDisabledCodes(integration.organization.disabledJournalCodes);
     if (disabled.has(SANITATION_DAY_TEMPLATE_CODE)) continue;
     const todayKey = orgTodayKey(integration.organization.timezone ?? undefined);

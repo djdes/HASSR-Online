@@ -9,6 +9,7 @@ import {
 } from "@/lib/telegram";
 import { notifySilentOfflineDevices } from "@/lib/offline/devices.server";
 import { placeOfEvent } from "@/lib/place-recipients";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,10 +40,12 @@ async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
   const now = new Date();
+  // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+  const locked = await lockedOrganizationIds(now);
   // Работа без связи (2026-11): устройство, с которого приходят записи без
   // интернета, молчит больше суток — руководству одно уведомление. Живёт
   // здесь, чтобы не заводить на сервере ещё одно расписание.
-  await notifySilentOfflineDevices(now).catch((error) => {
+  await notifySilentOfflineDevices(now, locked).catch((error) => {
     console.error("[shift-watcher] offline devices check failed", error);
     return 0;
   });
@@ -85,6 +88,8 @@ async function handle(request: Request) {
 
   for (const shift of shifts) {
     if (!shift.user.isActive || shift.user.archivedAt) continue;
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(shift.organizationId)) continue;
 
     // Активность с начала суток.
     const [fieldEntry, docEntry] = await Promise.all([

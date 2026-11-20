@@ -10,6 +10,7 @@ import {
   decisionNotificationLabel,
   decisionTitle,
   ownerRequestLetter,
+  ownerRequestNotice,
   requesterDecisionLetter,
   type RequestLetter,
 } from "@/lib/directory-exchange/request-letters";
@@ -31,10 +32,11 @@ import {
 import {
   EXCHANGE_BUSY_CODE,
   exchangeAccountKey,
-  runDirectoryExchange,
+  runDirectoryExchangeWithin,
   transferOnce,
   withExchangeLock,
   type ExchangeActor,
+  type ExchangeRunOutcome,
   type TransferSelection,
 } from "@/lib/directory-exchange/run.server";
 import { findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
@@ -84,6 +86,8 @@ const LINK_ENDED_MESSAGE = "Связь с этим мастер-кабинето
 const CREATE_BUSY_MESSAGE = "Не удалось отправить запрос — попробуйте ещё раз";
 const EXCHANGE_PAGE_HREF = "/settings/master-cabinet";
 const NOTIFICATION_KIND = "directory_exchange.request";
+/** Колокольчик и Telegram владельцу кабинета о новом запросе — один раз на запрос. */
+const OWNER_NOTIFICATION_KIND = "directory_exchange.request_incoming";
 
 const APP_URL = (process.env.NEXTAUTH_URL || process.env.APP_URL || "https://wesetup.ru").replace(/\/+$/, "");
 
@@ -155,7 +159,14 @@ export type CreateRequestResult = {
   notify: Notify;
 };
 
-export type DecideRequestResult = { status: "approved" | "declined"; summary?: ExchangeSummary; notify: Notify };
+export type DecideRequestResult = {
+  status: "approved" | "declined";
+  summary?: ExchangeSummary;
+  /** Первый обмен не уложился в ожидание и идёт в фоне: итог — в карточке, письмо заявителю — после него. */
+  running?: boolean;
+  /** Письмо и уведомление заявителю; при `running` сначала дожидается обмена. Вызывать в `after()`. */
+  notify: Notify;
+};
 export type EndRequestResult = { action: "cancelled" | "left" | "disconnected" };
 
 const notFound = () => new DirectoryExchangeError(REQUEST_NOT_FOUND_MESSAGE, 404);
@@ -247,8 +258,15 @@ async function deliver(to: string, letter: RequestLetter): Promise<void> {
   await sendRawEmail(to, letter.subject, renderEmailLayout(letter.title, letter.body));
 }
 
-/** Письмо владельцу аккаунта кабинета: кто просит, что именно, кнопка «Открыть запрос» (Р3). */
+/**
+ * Владельцу аккаунта кабинета о новом запросе: письмо с кнопкой «Открыть
+ * запрос» (Р3), колокольчик в его домашней организации и Telegram (Р4 серии
+ * A). Ссылки колокольчика и Telegram — по номеру запроса (страница откроет его
+ * только владельцу), токен живёт только в письме. Каждый канал — отдельно:
+ * сбой одного не мешает остальным и не ломает запрос.
+ */
 function ownerRequestNotify(args: {
+  requestId: string;
   ownerUserId: string;
   token: string;
   mode: RequestMode;
@@ -268,6 +286,52 @@ function ownerRequestNotify(args: {
       await deliver(to, ownerRequestLetter({ ...args, url: `${APP_URL}/exchange-request/${encodeURIComponent(args.token)}` }));
     } catch (error) {
       console.error("[directory-exchange] request letter failed", error);
+    }
+
+    const notice = ownerRequestNotice(args);
+    const href = `/exchange-request/${encodeURIComponent(args.requestId)}`;
+    const dedupeKey = `${OWNER_NOTIFICATION_KIND}:${args.requestId}`;
+    let homeOrganizationId: string | null = null;
+    try {
+      const owner = await db.user.findUnique({
+        where: { id: args.ownerUserId },
+        select: { organizationId: true, isActive: true, archivedAt: true },
+      });
+      if (owner?.isActive && !owner.archivedAt) {
+        homeOrganizationId = owner.organizationId;
+        const { upsertNotification } = await import("@/lib/notifications");
+        await upsertNotification({
+          organizationId: owner.organizationId,
+          userId: args.ownerUserId,
+          kind: OWNER_NOTIFICATION_KIND,
+          dedupeKey,
+          title: notice.title,
+          linkHref: href,
+          linkLabel: "Открыть запрос",
+          items: [{ id: args.requestId, label: notice.label, hint: notice.hint }],
+        });
+      }
+    } catch (error) {
+      console.error("[directory-exchange] request notification failed", error);
+    }
+    if (!homeOrganizationId) return;
+    try {
+      const { notifyEmployee } = await import("@/lib/telegram");
+      // Без привязанного Telegram `notifyEmployee` молча ничего не шлёт; push
+      // в приложение уже ушёл вместе с колокольчиком.
+      await notifyEmployee(
+        args.ownerUserId,
+        notice.telegramText,
+        { label: "Открыть запрос", miniAppUrl: `${APP_URL}${href}` },
+        {
+          appPush: false,
+          delivery: { organizationId: homeOrganizationId, kind: OWNER_NOTIFICATION_KIND, dedupeKey },
+          // Об одном запросе — одно сообщение, даже если отправка повторится.
+          policy: { skipOnRerun: true },
+        },
+      );
+    } catch (error) {
+      console.error("[directory-exchange] request telegram failed", error);
     }
   };
 }
@@ -649,6 +713,7 @@ export async function createExchangeRequest(input: {
     request: requestView({ ...created, masterOrganization: { name: cabinet.name } }),
     token,
     notify: ownerRequestNotify({
+      requestId: created.id,
       ownerUserId: cabinet.ownerUserId,
       token,
       mode,
@@ -983,7 +1048,8 @@ async function approveLink(
   ownOrganizationIds: readonly string[],
   actor: ExchangeActor,
   now: Date,
-): Promise<ExchangeSummary> {
+  waitMs?: number,
+): Promise<ExchangeRunOutcome> {
   const masterOrganizationId = request.masterOrganizationId;
   // Проверка «кабинет свободен» и запись участника — под замком обмена
   // кабинета: два одновременных подтверждения разных компаний не пройдут оба.
@@ -1028,20 +1094,24 @@ async function approveLink(
     }
   });
 
+  // Связь уже установлена: не удавшийся первый обмен пройдёт при следующей синхронизации.
+  const failed = (busyMessage: string | null): ExchangeSummary => ({
+    ...emptySummary(),
+    notes: [
+      busyMessage
+        ? `Связь установлена. ${busyMessage}`
+        : "Связь установлена. Первый обмен не удался — он повторится при следующей синхронизации.",
+    ],
+  });
   try {
-    return await runDirectoryExchange(masterOrganizationId, { actor, now });
+    const outcome = await runDirectoryExchangeWithin(masterOrganizationId, { actor, now, waitMs });
+    if (!outcome.running) return outcome;
+    // Сбой в фоне уже записан в лог (`runDirectoryExchangeWithin`).
+    return { running: true, done: outcome.done.then((summary) => summary ?? failed(null)) };
   } catch (error) {
-    // Связь уже установлена: обмен пройдёт при следующей синхронизации.
     const busy = error instanceof DirectoryExchangeError && error.code === EXCHANGE_BUSY_CODE;
     if (!busy) console.error("[directory-exchange] first exchange with a foreign member failed", { masterOrganizationId, error });
-    return {
-      ...emptySummary(),
-      notes: [
-        busy
-          ? `Связь установлена. ${(error as Error).message}`
-          : "Связь установлена. Первый обмен не удался — он повторится при следующей синхронизации.",
-      ],
-    };
+    return { running: false, summary: failed(busy ? (error as Error).message : null) };
   }
 }
 
@@ -1066,6 +1136,8 @@ export async function decideExchangeRequest(input: {
    */
   organizationIds?: readonly string[] | null;
   now?: Date;
+  /** Сколько ждать первого обмена связи до ухода в фон (по умолчанию 8 с; проверки ставят меньше). */
+  waitMs?: number;
 }): Promise<DecideRequestResult> {
   const now = input.now ?? new Date();
   const { actor } = input;
@@ -1139,10 +1211,13 @@ export async function decideExchangeRequest(input: {
   });
   if (claimed.count === 0) throw alreadyDecided();
 
-  let summary: ExchangeSummary;
+  let summary: ExchangeSummary | null = null;
+  let background: Promise<ExchangeSummary | null> | null = null;
   try {
     if (mode === "link") {
-      summary = await approveLink(request, allowed, ownOrganizationIds, actor, now);
+      const outcome = await approveLink(request, allowed, ownOrganizationIds, actor, now, input.waitMs);
+      if (outcome.running) background = outcome.done;
+      else summary = outcome.summary;
     } else {
       const selection: TransferSelection = {};
       for (const kind of allowed) selection[kind] = "all";
@@ -1168,9 +1243,12 @@ export async function decideExchangeRequest(input: {
     throw error;
   }
 
-  await db.directoryExchangeRequest
-    .update({ where: { id: request.id }, data: { resultJson: summary as unknown as Prisma.InputJsonObject } })
-    .catch((error) => console.error("[directory-exchange] request result not saved", { id: request.id, error }));
+  const saveResult = (result: ExchangeSummary) =>
+    db.directoryExchangeRequest
+      .update({ where: { id: request.id }, data: { resultJson: result as unknown as Prisma.InputJsonObject } })
+      .then(() => undefined)
+      .catch((error) => console.error("[directory-exchange] request result not saved", { id: request.id, error }));
+  if (summary) await saveResult(summary);
   await auditBoth(
     "request_approved",
     parties,
@@ -1179,9 +1257,21 @@ export async function decideExchangeRequest(input: {
     // Из какой своей организации владелец разрешил перенос — только в его журнал.
     sourceOrganizationId ? { sourceOrganizationId } : {},
   );
-  return {
-    status: "approved",
-    summary,
-    notify: requesterDecisionNotify({ ...notifyBase, status: "approved", allowedKinds: allowed, summary }),
-  };
+  const notifyWith = (result: ExchangeSummary) =>
+    requesterDecisionNotify({ ...notifyBase, status: "approved", allowedKinds: allowed, summary: result });
+  if (background) {
+    const pending = background;
+    return {
+      status: "approved",
+      running: true,
+      // Заявитель узнаёт итог, когда обмен дошёл: письмо — с тем, что он получил.
+      notify: async () => {
+        const result = (await pending) ?? emptySummary();
+        await saveResult(result);
+        await notifyWith(result)();
+      },
+    };
+  }
+  const result = summary ?? emptySummary();
+  return { status: "approved", summary: result, notify: notifyWith(result) };
 }

@@ -1,0 +1,9 @@
+PASS lockedOrganizationIds returns the organization whose own 14 days ended
+PASS lockedOrganizationIds does not return the organization in the tariff
+PASS agrees with isOrganizationLocked
+PASS auto-create-journals answers 200
+documents: open organization 1, locked organization 0
+PASS open organization got journal documents
+PASS locked organization got none
+cleanup: organizations left 0
+TOTAL: 6 PASS, 0 FAIL

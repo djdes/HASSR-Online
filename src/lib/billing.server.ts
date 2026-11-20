@@ -28,6 +28,7 @@ import {
   checkStorage,
   computeAccountBilling,
   daysLabel,
+  daysLeft,
   decideTransitionAction,
   formatMskDay,
   journalsLabel,
@@ -56,9 +57,14 @@ import {
   accountPhase,
   ORG_LOCKED_CODE,
   ORG_LOCKED_MESSAGE,
+  orgTrialClosesAtEnd,
+  orgTrialReminderDue,
+  orgTrialReminderStage,
+  orgTrialReminderSubject,
   orgTrialStatuses,
   paidPointLimit,
   type AccountPhase,
+  type OrgTrialReminderStage,
   type OrgTrialStatus,
 } from "@/lib/org-trial";
 import { masterCabinetSeatsByOrg, NOT_MASTER_CABINET_STAFF_WHERE } from "@/lib/master-cabinet-seats";
@@ -120,6 +126,8 @@ export const AUDIT_ACTIONS = {
   reminder: "billing.transition.reminder",
   trialReminder: "billing.trial.reminder",
   paidReminder: "billing.paid.reminder",
+  /** Свои 14 дней дополнительной организации кончаются (серия A, Р2); детали — `{ organizationId, trialEndsAt, stage }`. */
+  orgTrialReminder: "billing.org_trial_reminder",
   settings: "billing.trial.updated",
   scheduled: "billing.plan.scheduled",
   scheduleCancelled: "billing.plan.schedule_cancelled",
@@ -278,6 +286,8 @@ export type OrgTrialEntry = {
   organizationId: string;
   name: string;
   status: OrgTrialStatus;
+  /** Порядок раздачи оплаченных точек — по созданию (`orgTrialStatuses`). */
+  createdAt: Date;
   trialEndsAt: Date;
   /** Точек тарифа, которые займёт организация. */
   points: number;
@@ -380,6 +390,7 @@ export async function loadBillingUnit(
           organizationId: o.id,
           name: o.name,
           status,
+          createdAt: o.createdAt,
           trialEndsAt: o.trialEndsAt,
           points: Math.max(1, o._count.buildings),
           deleting: Boolean(o.deletionRequestedAt),
@@ -1357,7 +1368,8 @@ export async function sendOwnerNotice(args: {
       await notifyEmployee(
         owner.userId,
         args.telegramText,
-        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: BILLING_PAY_HREF },
+        // Кнопка web_app в Telegram принимает только полный https-адрес.
+        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: `${APP_URL}${BILLING_PAY_HREF}` },
         { delivery: { organizationId: args.organizationId, kind: args.kind } }
       );
       telegram = true;
@@ -1640,6 +1652,41 @@ export async function sendTrialReminderNow(organizationId: string, now: Date = n
   return { sent, stage };
 }
 
+/**
+ * Напоминание владельцу аккаунта: свои бесплатные дни дополнительной
+ * организации кончаются (серия A, Р2). Письмо всегда, Telegram — если привязан.
+ */
+async function sendOrgTrialReminder(
+  unit: BillingUnit,
+  entry: OrgTrialEntry,
+  stage: OrgTrialReminderStage,
+): Promise<{ telegram: boolean; email: boolean }> {
+  const { escapeHtml } = await import("@/lib/html-escape");
+  const name = escapeHtml(entry.name);
+  const last = formatMskDay(lastDayBefore(entry.trialEndsAt));
+  const when = stage === 1 ? "завтра" : "через 3 дня";
+  const payUrl = `${APP_URL}${BILLING_PAY_HREF}`;
+  const after =
+    "После него организация закроется, пока для неё не добавлена точка в тарифе. Остальные организации аккаунта работают как обычно.";
+  return sendOwnerNotice({
+    organizationId: unit.organizationId,
+    kind: `billing.org_trial_reminder.${stage}`,
+    telegramText: `⏳ Бесплатные дни организации «${name}» закончатся ${when}: последний бесплатный день — ${last}. ${after}`,
+    email: {
+      subject: orgTrialReminderSubject(stage, entry.name),
+      title: stage === 1 ? "Бесплатные дни организации заканчиваются завтра" : "Бесплатные дни организации заканчиваются",
+      html:
+        `<p ${P}>Здравствуйте!</p>` +
+        `<p ${P}>Бесплатные дни организации <strong>${name}</strong> закончатся ${when}. Последний бесплатный день — <strong>${last}</strong> включительно.</p>` +
+        `<div ${BOX}>${after}</div>` +
+        `<a href="${payUrl}" ${BUTTON}>Добавить точку</a>` +
+        `<p style="margin:20px 0 0;color:#3f3f46;line-height:1.6">Вопросы — звоните ${COMPANY_PHONE.display} или пишите ${COMPANY_TELEGRAM.handle}.</p>`,
+    },
+    emailOnlyWithoutTelegram: false,
+    buttonLabel: "Добавить точку",
+  });
+}
+
 // ------------------------------------------------------------ daily job
 
 type UnitRow = BillingUnit & { orgIds: string[] };
@@ -1766,7 +1813,15 @@ export async function listBillingUnits(options?: { now?: Date; settings?: TrialS
     unit.orgTrials = rows.flatMap((row) => {
       const status = statuses.get(row.id);
       return status && row.trialEndsAt
-        ? [{ organizationId: row.id, name: row.name, status, trialEndsAt: row.trialEndsAt, points: row.points, deleting: row.deleting }]
+        ? [{
+            organizationId: row.id,
+            name: row.name,
+            status,
+            createdAt: row.createdAt,
+            trialEndsAt: row.trialEndsAt,
+            points: row.points,
+            deleting: row.deleting,
+          }]
         : [];
     });
     unit.orgTrial = unit.orgTrials.find((entry) => entry.organizationId === unit.organizationId) ?? null;
@@ -1790,12 +1845,93 @@ export type BillingJobReport = {
   autoRenewed: number;
   /** Автопродление включено, но на балансе не хватает. */
   autoRenewShort: number;
+  /** Напоминания о конце своих 14 дней дополнительной организации (в dryRun — ушли бы). */
+  orgTrialReminded: number;
   silentFree: number;
   reminded: number;
   autoFree: number;
   failed: number;
-  results: Array<{ unit: string; organizationId: string; action: TransitionAction | "auto_renew"; activeUsers: number; outcome: string }>;
+  results: Array<{
+    unit: string;
+    organizationId: string;
+    action: TransitionAction | "auto_renew" | "org_trial_reminder";
+    activeUsers: number;
+    outcome: string;
+  }>;
 };
+
+/**
+ * Свои 14 дней дополнительной организации кончаются (серия A, Р2): за 3 дня и
+ * за 1 день — владельцу аккаунта письмо и Telegram, по разу на организацию,
+ * срок и ступень (отметка `billing.org_trial_reminder` на этой организации).
+ * Только на оплаченном аккаунте, где без свободной точки организация после
+ * срока закроется. Отдельный проход: шаги тарифа аккаунта пропускают единицу
+ * (`continue`), этот шаг от них не зависит.
+ */
+async function remindOrgTrials(
+  units: readonly UnitRow[],
+  now: Date,
+  dryRun: boolean,
+  report: BillingJobReport,
+): Promise<void> {
+  for (const unit of units) {
+    if (unit.phase !== "paid") continue;
+    const pointLimit = paidPointLimit(unit.plan, unit.planPoints);
+    for (const entry of unit.orgTrials) {
+      if (entry.status !== "trial" || entry.deleting) continue;
+      const stage = orgTrialReminderStage(daysLeft(entry.trialEndsAt, now));
+      if (!stage) continue;
+      const closes = orgTrialClosesAtEnd({
+        phase: unit.phase,
+        pointLimit,
+        pointsInUse: unit.pointsInUse,
+        trials: unit.orgTrials,
+        organizationId: entry.organizationId,
+      });
+      let outcome = dryRun ? `org trial reminder ${stage}d planned` : "planned";
+      try {
+        if (!closes) {
+          outcome = "org trial ends with a free paid point — no reminder";
+        } else {
+          const sent = await db.auditLog.findMany({
+            where: { organizationId: entry.organizationId, action: AUDIT_ACTIONS.orgTrialReminder },
+            select: { details: true },
+          });
+          if (!orgTrialReminderDue(sent.map((row) => row.details), entry.organizationId, entry.trialEndsAt, stage)) {
+            outcome = `org trial reminder ${stage}d already sent`;
+          } else {
+            if (!dryRun) {
+              const delivered = await sendOrgTrialReminder(unit, entry, stage);
+              await db.auditLog.create({
+                data: {
+                  organizationId: entry.organizationId,
+                  userName: "WeSetup",
+                  action: AUDIT_ACTIONS.orgTrialReminder,
+                  entity: "organization",
+                  entityId: entry.organizationId,
+                  details: { organizationId: entry.organizationId, trialEndsAt: entry.trialEndsAt.toISOString(), stage },
+                },
+              });
+              outcome = `org trial reminder ${stage}d sent (telegram: ${delivered.telegram}, email: ${delivered.email})`;
+            }
+            report.orgTrialReminded += 1;
+          }
+        }
+      } catch (error) {
+        report.failed += 1;
+        outcome = `error: ${error instanceof Error ? error.message : String(error)}`;
+        console.error("[billing] job: org trial reminder failed", { unit: unit.key, organizationId: entry.organizationId, error });
+      }
+      report.results.push({
+        unit: unit.key,
+        organizationId: entry.organizationId,
+        action: "org_trial_reminder",
+        activeUsers: unit.activeUsers,
+        outcome,
+      });
+    }
+  }
+}
 
 /** Цены «от» для писем: месячная цена при оплате за год, одна точка. */
 async function pricesFrom(): Promise<PlanPricesFrom> {
@@ -1811,8 +1947,9 @@ async function pricesFrom(): Promise<PlanPricesFrom> {
 /**
  * Ежедневная задача: напоминание за 3 дня до конца пробного, тихий `free`
  * для аккаунтов в пределах бесплатного, одно предупреждение «выберите
- * до …» сверх него, автопереход по истечении грейса. Идемпотентна:
- * повторный запуск ничего не меняет.
+ * до …» сверх него, автопереход по истечении грейса; за 3 дня и за 1 день
+ * до конца своих 14 дней дополнительной организации — напоминание владельцу
+ * (`remindOrgTrials`). Идемпотентна: повторный запуск ничего не меняет.
  */
 export async function runBillingTransitionJob(options: { now?: Date; dryRun?: boolean } = {}): Promise<BillingJobReport> {
   const now = options.now ?? new Date();
@@ -1828,6 +1965,7 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     paidReminded: 0,
     autoRenewed: 0,
     autoRenewShort: 0,
+    orgTrialReminded: 0,
     silentFree: 0,
     reminded: 0,
     autoFree: 0,
@@ -1836,8 +1974,11 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
   };
 
   const prices = await pricesFrom();
-  const units = await listBillingUnits();
+  const units = await listBillingUnits({ now, settings });
   report.scanned = units.length;
+  // Свои 14 дней дополнительных организаций — до шагов тарифа аккаунта: их
+  // `continue` этот шаг не пропускают.
+  await remindOrgTrials(units, now, dryRun, report);
   // С 2026-11-09 о конце пробного пишет сценарий «пробный и оплата»
   // (`src/lib/lifecycle`): за 4 и 2 рабочих дня, со счётом. Напоминания за
   // 5, 2 и 1 день идут всегда; в день письма сценария — без второго письма.
@@ -2023,6 +2164,7 @@ export async function runBillingTransitionJob(options: { now?: Date; dryRun?: bo
     paidReminded: report.paidReminded,
     autoRenewed: report.autoRenewed,
     autoRenewShort: report.autoRenewShort,
+    orgTrialReminded: report.orgTrialReminded,
     silentFree: report.silentFree,
     reminded: report.reminded,
     autoFree: report.autoFree,
