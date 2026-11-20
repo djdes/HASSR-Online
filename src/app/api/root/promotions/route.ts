@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { invalidatePromotionCache } from "@/lib/promo/offer";
 import { describePromotion, mskInputToDate, validatePromotionInput } from "@/lib/promo/promotions";
 import {
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
     },
   });
   invalidatePromotionCache();
+  await refreshPromoDataset("promotions").catch((error) =>
+    console.error("[promo] promo snapshot refresh failed", error),
+  );
   const summary = `${describePromotion(row)}${row.active ? "" : " · выключена"}`;
   console.info(
     `[promo] promotion created ${row.id} «${row.title}» ${summary} by ${session.user.email ?? session.user.id}`

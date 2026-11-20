@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { schedulePromoDatasetRefresh } from "@/lib/promo-cache/datasets";
 import { hasReviewStats } from "@/lib/review-stats";
 import { loadReviewStats } from "@/lib/review-stats.server";
 
@@ -202,7 +203,7 @@ export async function approveReview(input: {
   const rewardRub = reviewRewardFor(kind, review.anonymous);
 
   try {
-    return await db.$transaction(async (tx) => {
+    const approved = await db.$transaction(async (tx) => {
       const claimed = await tx.customerReview.updateMany({
         where: { id: input.id, status: "pending" },
         data: {
@@ -231,6 +232,8 @@ export async function approveReview(input: {
       invalidatePublicReviewsCache();
       return { rewardRub, organizationId: review.organizationId, anonymous: review.anonymous, kind };
     });
+    if (approved) schedulePromoDatasetRefresh("public-reviews");
+    return approved;
   } catch (error) {
     if (error instanceof DuplicateBalanceChangeError) return null;
     throw error;
@@ -255,6 +258,7 @@ export async function rejectReview(input: {
   });
   if (claimed.count > 0) {
     invalidatePublicReviewsCache();
+    schedulePromoDatasetRefresh("public-reviews");
     console.info(`[balance] review rejected id=${input.id} by=${input.actorUserId}`);
   }
   return claimed.count > 0;
@@ -273,6 +277,7 @@ export async function setReviewOnLanding(id: string, show: boolean): Promise<voi
     data: { showOnLanding: show },
   });
   invalidatePublicReviewsCache();
+  schedulePromoDatasetRefresh("public-reviews");
 }
 
 export async function getReview(id: string): Promise<ReviewView | null> {

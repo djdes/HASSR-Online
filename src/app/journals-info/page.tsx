@@ -7,13 +7,24 @@ import { getSiteLocale } from "@/i18n/site-locale-server";
 import { loadMessages } from "@/i18n/messages";
 import { publicJournalIndexMetadata } from "@/i18n/public-journal-index-metadata";
 import { presentPublicJournalIndex } from "@/i18n/public-journal-index-presentation";
+import { localizedHref } from "@/i18n/site-locale";
+import { alternateMarkdownPath } from "@/lib/promo-cache";
 import { JournalsInfoCatalog } from "./journals-info-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function generateMetadata() {
-  return publicJournalIndexMetadata(await getSiteLocale());
+  const locale = await getSiteLocale();
+  const meta = await publicJournalIndexMetadata(locale);
+  const mdHref = `https://wesetup.ru${alternateMarkdownPath(localizedHref("/journals-info", locale))}`;
+  return {
+    ...meta,
+    alternates: {
+      ...meta.alternates,
+      types: { ...meta.alternates?.types, "text/markdown": mdHref },
+    },
+  };
 }
 
 /** Журналы, у которых есть готовое превью образца. */
@@ -70,6 +81,7 @@ export default async function JournalsInfoListPage() {
       />
       <PublicHeader activeSection="journals-info" />
 
+      <main id="main-content">
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-10 text-white sm:px-6 sm:py-14 md:px-12 md:py-20">
@@ -200,6 +212,7 @@ export default async function JournalsInfoListPage() {
           </Link>
         </div>
       </section>
+      </main>
 
       <PublicFooter />
     </div>

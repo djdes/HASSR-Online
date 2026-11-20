@@ -1,0 +1,39 @@
+{
+  "task": "promo-pages-query-cache-2026-11",
+  "spec": ".agent/tasks/promo-pages-query-cache-2026-11/spec.md",
+  "base": "master f30c8cfe",
+  "verdict": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": "src/lib/promo-cache/store.ts; src/lib/promo-cache/store.test.ts (7/7); .gitignore (/.cache/); raw/promo-cache-tests.log"
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": "src/lib/promo-cache/datasets.ts; src/lib/public-session-badge.ts; src/lib/promo-cache/blog-preview.ts; src/lib/translations/overrides.server.ts; datasets.test.ts + public-session-badge.test.ts + promo-pages-zero-db.test.ts"
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": "scripts/refresh-promo-cache.ts; scripts/prewarm-routes.sh; scripts/telegram-poller.ts; mutation refresh hooks verified in promo-pages-zero-db.test.ts"
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": "<header>, <main id=\"main-content\">, <time dateTime> across public promo pages; verified in promo-pages-zero-db.test.ts"
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": "src/lib/promo-cache/ai-markdown.ts; src/app/promo-md/route.ts; src/app/llms.txt/route.ts; src/app/llms-full.txt/route.ts; src/proxy.ts; src/lib/robots-txt.ts; ai-markdown.test.ts + promo-markdown-proxy.test.ts + robots-txt.test.ts"
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "evidence": "npm run typecheck clean; eslint 0 errors; raw/promo-cache-tests.log (29/29 pass); reverse-import targeted tests (16 files, 100/100 pass)"
+    }
+  ],
+  "deploy": "no schema change; prewarm-routes.sh populates /var/www/wesetupru/data/promo-cache via scripts/refresh-promo-cache.ts"
+}

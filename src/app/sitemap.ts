@@ -1,7 +1,6 @@
 import { JOURNAL_PAGES_UPDATED } from "@/content/journal-page-content";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import type { MetadataRoute } from "next";
-import { db } from "@/lib/db";
 import { JOURNAL_INFO } from "@/content/journal-info";
 import { FEATURES_ORDER } from "@/content/features";
 import { NICHES } from "@/components/landing/niche-landing";
@@ -12,7 +11,8 @@ import { GLOSSARY } from "@/content/glossary";
 import { KB_ARTICLES } from "@/content/kb/articles";
 import { publicLocaleRoute, publicLocalesForPath, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
 import { articleLanguageAlternates } from "@/lib/article-language-alternates";
-import { articleLastModified, newestArticleDate, publishedArticleWhere } from "@/lib/article-visibility";
+import { articleLastModified, newestArticleDate } from "@/lib/article-visibility";
+import { readPromoSitemapArticles } from "@/lib/promo-cache";
 
 /**
  * Dynamic sitemap for crawlers. Combines:
@@ -36,13 +36,7 @@ export const revalidate = 0;
 const SITE = "https://wesetup.ru";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const articles = await db.article
-    .findMany({
-      where: publishedArticleWhere(new Date()),
-      select: { slug: true, publishedAt: true, updatedAt: true, title: true, excerpt: true, body: true, tags: true, translations: true },
-      orderBy: { publishedAt: "desc" },
-    })
-    .catch(() => []);
+  const articles = await readPromoSitemapArticles(new Date()).catch(() => []);
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${SITE}/`, changeFrequency: "weekly", priority: 1.0 },

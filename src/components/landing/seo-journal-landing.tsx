@@ -59,7 +59,10 @@ export function getSeoMetadata(c: SeoJournalConfig) {
     title: c.metaTitle,
     description: c.metaDescription,
     ...(c.keywords && c.keywords.length > 0 ? { keywords: [...c.keywords] } : {}),
-    alternates: { canonical: `https://wesetup.ru/${c.slug}` },
+    alternates: {
+      canonical: `https://wesetup.ru/${c.slug}`,
+      types: { "text/markdown": `https://wesetup.ru/${c.slug}.md` },
+    },
     openGraph: {
       type: "website",
       locale: "ru_RU",
@@ -117,6 +120,7 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
       />
       <PublicHeader />
 
+      <main id="main-content">
       {/* HERO */}
       <section className="mx-auto max-w-[1100px] px-4 pt-10 sm:px-6 sm:pt-16">
         <div className="rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-10">
@@ -414,6 +418,7 @@ export function SeoJournalLanding({ config }: { config: SeoJournalConfig }) {
           </div>
         </div>
       </section>
+      </main>
 
       <PublicFooter />
     </div>

@@ -26,9 +26,12 @@ import { JOURNAL_PAGES_PUBLISHED, JOURNAL_PAGES_UPDATED, journalPageContent } fr
 import { journalFaqExtra } from "@/content/journal-faq-extra";
 import { NICHES } from "@/content/niches";
 import { defaultEnabledCodesFor, rulesFor } from "@/lib/sphere-journal-rules";
-import { listPublicReviews } from "@/lib/balance/reviews";
+import {
+  alternateMarkdownPath,
+  readPromoJournalUsageCount,
+  readPromoPublicReviews,
+} from "@/lib/promo-cache";
 import { Testimonials } from "@/components/landing/testimonials";
-import { journalUsageCount } from "@/lib/journal-usage-count.server";
 import { JournalStickyBar } from "@/components/public/journal-sticky-bar";
 import { CallbackButton } from "@/components/public/callback-button";
 import { BlankConstructor } from "@/components/public/blank-constructor";
@@ -62,7 +65,18 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }) {
-  return publicJournalDetailMetadata(await getSiteLocale(), (await params).code);
+  const locale = await getSiteLocale();
+  const { code } = await params;
+  const meta = await publicJournalDetailMetadata(locale, code);
+  if (!meta.alternates) return meta;
+  const mdHref = `https://wesetup.ru${alternateMarkdownPath(localizedHref(`/journals-info/${code}`, locale))}`;
+  return {
+    ...meta,
+    alternates: {
+      ...meta.alternates,
+      types: { ...meta.alternates.types, "text/markdown": mdHref },
+    },
+  };
 }
 
 /** Журналы с публичным образцом — страница серверная, импорт безопасен. */
@@ -107,8 +121,8 @@ export default async function JournalInfoDetailPage({
           .map((niche) => ({ slug: niche.slug, label: niche.navLabel }))
       : [];
   const [reviews, usage] = await Promise.all([
-    listPublicReviews(6).catch(() => []),
-    journalUsageCount(code).catch(() => 0),
+    readPromoPublicReviews(6).catch(() => []),
+    readPromoJournalUsageCount(code).catch(() => 0),
   ]);
   const registerHref = blankRegisterHref({ target: { kind: "code", code } });
   // «Вам также пригодятся» в окне после скачивания (п. 20).
@@ -199,6 +213,7 @@ export default async function JournalInfoDetailPage({
       />
       <PublicHeader activeSection="journals-info" />
 
+      <main id="main-content">
       <section className="mx-auto max-w-[1200px] px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-10 text-white sm:px-6 sm:py-14 md:px-12 md:py-16">
           <div className="pointer-events-none absolute inset-0">
@@ -685,6 +700,7 @@ export default async function JournalInfoDetailPage({
           <ArrowRight className="size-4" />
         </Link>
       </JournalStickyBar>
+      </main>
 
       <PublicFooter />
     </div>

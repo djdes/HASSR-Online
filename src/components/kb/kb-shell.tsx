@@ -81,7 +81,7 @@ export function KbShell({ current = null, toc = [], children }: { current?: stri
             <KbNav current={current} />
           </div>
         </aside>
-        <main className="min-w-0 flex-1 py-8 sm:py-10">{children}</main>
+        <main id="main-content" className="min-w-0 flex-1 py-8 sm:py-10">{children}</main>
         {toc.length ? (
           <aside className="hidden w-[210px] shrink-0 xl:block">
             <div className="sticky top-24 py-10">
