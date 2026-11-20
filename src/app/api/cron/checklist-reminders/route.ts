@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 import { buildMiniAppUrl, getMiniAppBaseUrlFromEnv } from "@/lib/journal-obligation-links";
 import { checklistReminderMessage, formatMinutes, localClock, reminderPlan } from "@/lib/checklist-assignments";
 import {
@@ -46,6 +47,7 @@ async function handle(request: Request) {
       },
       include: { template: { select: { title: true } } },
     });
+    const locked = await lockedOrganizationIds(now);
 
     const contexts = new Map<string, AssignmentContext>();
     const miniBase = getMiniAppBaseUrlFromEnv();
@@ -65,6 +67,8 @@ async function handle(request: Request) {
     let skippedClaimed = 0;
 
     for (const assignment of assignments) {
+      // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+      if (locked.has(assignment.organizationId)) continue;
       try {
         let context = contexts.get(assignment.organizationId);
         if (!context) {

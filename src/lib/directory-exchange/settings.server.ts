@@ -4,12 +4,9 @@ import { countExchangeRecords } from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { emptyKindRecord, normalizeExchangeKinds, type ExchangeKind } from "@/lib/directory-exchange/kinds";
 import { parseExchangeSummary, type ExchangeSummary } from "@/lib/directory-exchange/summary";
-import { ensureBuildingServiceCode, ensureServiceCode } from "@/lib/dish-pool";
-import { MasterCorrectionError } from "@/lib/master-brakerage-correction";
+import { ensureServiceCode } from "@/lib/dish-pool";
 import { createAccountMasterCabinet, MasterCabinetError } from "@/lib/master-cabinet";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
-import { connectPoolObjectByCode, type PoolActor } from "@/lib/master-pool-connect";
-import { loadOrgMasterCabinets } from "@/lib/org-master-cabinets";
 import { isOrganizationLocked } from "@/lib/org-trial.server";
 
 /**
@@ -217,53 +214,20 @@ export async function loadExchangeState(
 }
 
 /**
- * Список «Продукция» дополнительно подключает организацию к кабинету как
- * объект (меню, сырьё, бракераж) — так же, как кнопка «Добавить точку» на
- * странице «Мастер-кабинет». Best-effort: отказ кабинета — пояснение в
- * итоге, а не ошибка настройки.
- */
-async function connectToCabinetPool(cabinet: ExchangeCabinet, organizationId: string, actor: PoolActor): Promise<string[]> {
-  const notes: string[] = [];
-  try {
-    const view = await loadOrgMasterCabinets(organizationId, actor.userId);
-    for (const target of view.connectable) {
-      if (target.cabinetId === cabinet.id) continue;
-      if (target.cabinetId) {
-        notes.push(
-          `«${target.name}» уже получает меню и сырьё из кабинета «${target.cabinetName}» — к кабинету «${cabinet.name}» не подключена.`,
-        );
-        continue;
-      }
-      try {
-        const code = target.buildingId
-          ? await ensureBuildingServiceCode(target.buildingId)
-          : await ensureServiceCode(organizationId);
-        await connectPoolObjectByCode({ masterOrgId: cabinet.id, code, confirm: true, actor });
-      } catch (error) {
-        if (!(error instanceof MasterCorrectionError)) throw error;
-        notes.push(`«${target.name}» не подключена к мастер-кабинету для меню и сырья: ${error.message}`);
-      }
-    }
-  } catch (error) {
-    console.error("[directory-exchange] pool connect failed", { organizationId, cabinetId: cabinet.id, error });
-    notes.push("Не удалось подключить организацию к мастер-кабинету для меню и сырья — обмен справочниками это не затрагивает.");
-  }
-  return notes;
-}
-
-/**
  * Сохранить участников обмена. `organizationId` — активная организация
  * владельца (по ней определяется аккаунт); `members` — только те
  * организации, которые меняются: непустые `kinds` — участвует этими
  * списками, пустые — выходит из обмена (её соответствия удаляются).
  * Остальные участники не затрагиваются. Кабинет создаётся, когда нужен.
+ * К меню и сырью мастер-кабинета организация этим не подключается: это
+ * отдельное явное действие в разделе «Мастер-кабинет».
  */
 export async function saveExchangeMembers(input: {
   ownerUserId: string;
   ownerName?: string | null;
   organizationId: string;
   members: ReadonlyArray<{ organizationId: string; kinds: readonly string[] }>;
-}): Promise<{ cabinet: ExchangeCabinet | null; notes: string[] }> {
+}): Promise<{ cabinet: ExchangeCabinet | null }> {
   const active = await db.organization.findUnique({
     where: { id: input.organizationId },
     select: { id: true, accountId: true, isDemo: true, kind: true, account: { select: { ownerUserId: true } } },
@@ -286,10 +250,8 @@ export async function saveExchangeMembers(input: {
   const cabinet: ExchangeCabinet | null = joins
     ? await ensureExchangeCabinet(input.ownerUserId, accountId).then(({ id, name }) => ({ id, name }))
     : await findExchangeCabinet(accountId);
-  if (!cabinet) return { cabinet: null, notes: [] };
+  if (!cabinet) return { cabinet: null };
 
-  const actor: PoolActor = { userId: input.ownerUserId, userName: input.ownerName ?? "" };
-  const notes: string[] = [];
   for (const [organizationId, kinds] of wanted) {
     if (kinds.length === 0) {
       await db.$transaction([
@@ -303,7 +265,6 @@ export async function saveExchangeMembers(input: {
       create: { masterOrganizationId: cabinet.id, organizationId, kinds, createdByUserId: input.ownerUserId },
       update: { kinds },
     });
-    if (kinds.includes("products")) notes.push(...(await connectToCabinetPool(cabinet, organizationId, actor)));
   }
 
   try {
@@ -328,5 +289,5 @@ export async function saveExchangeMembers(input: {
   } catch (error) {
     console.error("[directory-exchange] audit failed", { organizationId: active.id, error });
   }
-  return { cabinet, notes };
+  return { cabinet };
 }

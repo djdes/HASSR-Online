@@ -15,6 +15,7 @@ import {
 import { buildPpkReminderKeyboard, collectPpkReminders, collectReviewReminders, ppkReminderMessage } from "@/lib/ppk/reminders";
 import { moscowToday } from "@/lib/ppk/plan-done";
 import { escapeHtml } from "@/lib/html-escape";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,12 +95,15 @@ async function handle(request: Request) {
     }
 
     const miniBase = getMiniAppBaseUrlFromEnv();
+    const locked = await lockedOrganizationIds();
     let organizations = 0;
     let itemsTotal = 0;
     let recipientsTotal = 0;
 
     for (const plans of byOrg.values()) {
       const orgId = plans.organizationId;
+      // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+      if (locked.has(orgId)) continue;
       try {
         const items = [
           ...collectPpkReminders({ lab: plans.lab, pest: plans.pest, today }),

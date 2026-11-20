@@ -13,6 +13,7 @@ import { sendFunnelDigest } from "@/lib/funnel-digest.server";
 import { runAbandonedOrderReminders } from "@/lib/abandoned-orders.server";
 import { sendRootHealthEmail } from "@/lib/root-health-email";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,8 +88,15 @@ async function handle(request: Request) {
   let sent = 0;
   let skipped = 0;
   let errors = 0;
+  const locked = await lockedOrganizationIds(now);
 
   for (const org of orgs) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(org.id)) {
+      skipped += 1;
+      results.push({ orgId: org.id, reason: "org-locked" });
+      continue;
+    }
     const decision = shouldSendWeeklyDigest({ now, timeZone: org.timezone, lastSentAt: org.weeklyDigestSentAt, force });
     if (!decision.send) {
       skipped += 1;

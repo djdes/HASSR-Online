@@ -1,0 +1,17 @@
+profile: 200
+second organization created: 200
+menu note in the window: Меню и сырьё мастер-кабинета обмен не подключает — это делается отдельно, в разделе «Мастер-кабинет».
+result in the window: Обед на Арбате | Товары и блюда | создано: 2
+after saving: organizations connected to the cabinet menu (linkedServiceCode set): 0
+after saving: products of the second organization: Курица охлаждённая, Молоко 3,2 %
+window, exchange running: Обмен идёт — итог появится в карточке «Обмен справочниками».
+card, sync running (toast): Обмен идёт — итог появится в карточке
+requester pays the tariff: 200
+request sent: 200
+bell row for the cabinet owner: {"title":"Запрос на обмен справочниками","linkHref":"/exchange-request/cmwong0fa001tn87dkxcnsxa4","items":[{"id":"cmwong0fa001tn87dkxcnsxa4","label":"«Кафе Сосед» просит связать справочники — мастер-кабинет «Мастер-кабинет»","hint":"Продукция; ответить до 27 ноября 2026 г."}]}
+telegram attempt logged (owner has no Telegram here — expected none): 0
+letter to the cabinet owner in the dev log: true
+confirmation page, exchange running: Обмен идёт — итог появится в карточке «Обмен справочниками», а компания получит письмо, когда он закончится.
+ROOT sample letters result: Отправлено на root@local.test | Запрос владельцу кабинета | записано в журнал сервера | Решение заявителю | записано в журнал сервера | Почта на сервере не настроена — письма не отправлены, а записаны в журнал сервера.
+dev log has both sample subjects: [true,true]
+non-root calling the ROOT route: 404

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkCronSecret } from "@/lib/cron-auth";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 import { escalateOpenIncidents } from "@/lib/temperature-deviations";
 import { expirePointAssignments } from "@/lib/point-assignments.server";
 
@@ -34,7 +35,8 @@ async function handle(request: Request) {
     console.error("[cron/deviation-escalations] point assignments", error);
     return { expired: 0, error: error instanceof Error ? error.message : String(error) };
   });
-  const result = await escalateOpenIncidents();
+  // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+  const result = await escalateOpenIncidents({ skipOrganizationIds: await lockedOrganizationIds() });
   return NextResponse.json({ ok: true, ...result, pointAssignments });
 }
 

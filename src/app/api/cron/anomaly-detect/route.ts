@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { notifyOrganization, escapeTelegramHtml as esc } from "@/lib/telegram";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,9 +32,12 @@ async function handle(request: Request) {
     where: { subscriptionPlan: { notIn: ["paused", "cancelled"] }, ...NOT_DIRECTORY_ORG_WHERE },
     select: { id: true, name: true },
   });
+  const locked = await lockedOrganizationIds(now);
 
   let alerted = 0;
   for (const org of orgs) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(org.id)) continue;
     const [todayLosses, hist7Losses] = await Promise.all([
       db.lossRecord.findMany({
         where: { organizationId: org.id, date: { gte: todayStart } },

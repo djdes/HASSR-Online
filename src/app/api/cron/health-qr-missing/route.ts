@@ -10,6 +10,7 @@ import { loadQrPointScope } from "@/lib/qr-point-roster";
 import { STAFF_ABSENCE_LABEL, loadStaffAbsenceForDay } from "@/lib/staff-absence";
 import { orgTodayKey } from "@/lib/timezone";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,9 +46,12 @@ async function handle(request: Request) {
     where: { healthQrRequired: true, ...NOT_DIRECTORY_ORG_WHERE },
     select: { id: true, name: true, timezone: true, shiftEndHour: true, disabledJournalCodes: true },
   });
+  const locked = await lockedOrganizationIds();
   const report: Array<{ orgId: string; missing: number; suspended: number; sent: boolean; skipped?: string }> = [];
 
   for (const org of orgs) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(org.id)) continue;
     const tz = org.timezone || "Europe/Moscow";
     const checkHour = org.shiftEndHour > 0 ? org.shiftEndHour : DEFAULT_HEALTH_CHECK_HOUR;
     if (!force && localHour(tz) !== checkHour) {

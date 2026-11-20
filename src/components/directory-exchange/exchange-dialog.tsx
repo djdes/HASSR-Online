@@ -12,6 +12,7 @@ import {
   EXCHANGE_KINDS,
   exchangeError,
   exchangeRequest,
+  isExchangeRunning,
   linkMembers,
   loadExchangeState,
   parseSummary,
@@ -112,7 +113,8 @@ export function ExchangeDialog({
   const [picked, setPicked] = useState<Record<ExchangeKind, string[]>>(NO_PICKS);
   const [expanded, setExpanded] = useState<ExchangeKind | null>(null);
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ mode: ExchangeMode; summary: ExchangeSummary } | null>(null);
+  // `running` — обмен не уложился в ожидание и идёт в фоне: итог появится в карточке.
+  const [result, setResult] = useState<{ mode: ExchangeMode; summary: ExchangeSummary; running: boolean } | null>(null);
   // Запрос в чужой кабинет отправлен или отменён, связь разорвана — карточку и строку стоит перечитать.
   const [foreignChanged, setForeignChanged] = useState(false);
   // В поле кода другой компании есть неотправленный текст.
@@ -275,7 +277,7 @@ export function ExchangeDialog({
           onClose();
           return;
         }
-        setResult({ mode, summary: parseSummary(json?.summary) ?? EMPTY_SUMMARY });
+        setResult({ mode, summary: parseSummary(json?.summary) ?? EMPTY_SUMMARY, running: isExchangeRunning(json) });
         return;
       }
       const { ok, json } = await exchangeRequest("/transfer", {
@@ -286,7 +288,7 @@ export function ExchangeDialog({
         toast.error(exchangeError(json, t("dialog.transferFailed")));
         return;
       }
-      setResult({ mode, summary: parseSummary(json?.summary) ?? EMPTY_SUMMARY });
+      setResult({ mode, summary: parseSummary(json?.summary) ?? EMPTY_SUMMARY, running: false });
     } finally {
       setBusy(false);
     }
@@ -346,7 +348,14 @@ export function ExchangeDialog({
         {result ? (
           <>
             <div className={BODY} data-testid="exchange-result">
-              <ExchangeSummaryView summary={result.summary} />
+              {result.running ? (
+                <div className={STATUS} data-testid="exchange-running">
+                  <Info className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+                  {t("result.running")}
+                </div>
+              ) : (
+                <ExchangeSummaryView summary={result.summary} />
+              )}
               {summaryTotals(result.summary).skippedLimit > 0 ? (
                 <ExchangeLimitNote className="mt-3" onNavigate={close} />
               ) : null}
@@ -638,6 +647,12 @@ export function ExchangeDialog({
                     );
                   })}
                 </ul>
+                {mode === "link" && kinds.includes("products") ? (
+                  // Меню и сырьё кабинета — только явным подключением в «Мастер-кабинете», не обменом.
+                  <p className="mt-2 text-[12px] leading-[1.5] text-[#6f7282]" data-testid="exchange-menu-note">
+                    {t("dialog.menuSeparate")}
+                  </p>
+                ) : null}
               </div>
 
               {leaving ? (

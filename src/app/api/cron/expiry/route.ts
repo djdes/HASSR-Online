@@ -9,6 +9,7 @@ import { buildingTargets } from "@/lib/building-targets";
 import { filterRecipientsByPlace } from "@/lib/place-recipients";
 import { placeBuildingOfUser } from "@/lib/point-assignments";
 import { groupByPoint, liveEventPoint, pointHeading } from "@/lib/point-notify";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ async function handle(request: Request) {
 
     const now = new Date();
     const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const locked = await lockedOrganizationIds(now);
 
     // Find entries with expiryDate approaching
     const entries = await db.journalEntry.findMany({
@@ -84,6 +86,8 @@ async function handle(request: Request) {
 
     // Send notifications per org
     for (const [orgId, orgProducts] of byOrg) {
+      // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+      if (locked.has(orgId)) continue;
       const targets = await buildingTargets(orgId);
       const names = await pointNames(orgId);
       for (const [pointId, products] of groupByPoint(orgProducts, (p) => liveEventPoint(p.pointId, targets))) {
@@ -204,6 +208,8 @@ async function handle(request: Request) {
 
     let staffAlerts = 0;
     for (const [orgId, orgItems] of staffByOrg) {
+      // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+      if (locked.has(orgId)) continue;
       const targets = await buildingTargets(orgId);
       const names = await pointNames(orgId);
       for (const [pointId, items] of groupByPoint(orgItems, (item) => liveEventPoint(item.place, targets))) {

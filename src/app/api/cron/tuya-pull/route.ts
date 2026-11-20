@@ -12,6 +12,7 @@ import { buildingWhere } from "@/lib/building-scope";
 import { pickPointSigner, pickSensorDocuments, sensorRowKeys } from "@/lib/sensor-point";
 import { hasPlanFeature } from "@/lib/billing.server";
 import { loadOrgJournalOverrides, withOrgJournalOverride, type OrgJournalOverride } from "@/lib/org-journal-settings";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -152,10 +153,13 @@ async function handle(request: Request) {
   // IoT-датчики — возможность «Премиума» (и пробного): без неё не опрашиваем.
   const connectByOrg = new Map<string, boolean>();
   const overridesByOrg = new Map<string, Map<string, OrgJournalOverride>>();
+  const locked = await lockedOrganizationIds(now);
 
   for (const eq of equipments) {
     const orgId = eq.area.organizationId;
     if (!eq.tuyaDeviceId) continue;
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(orgId)) continue;
     if (!connectByOrg.has(orgId)) connectByOrg.set(orgId, await hasPlanFeature(orgId, "equipmentConnect"));
     if (!connectByOrg.get(orgId)) {
       report.lockedByPlan += 1;

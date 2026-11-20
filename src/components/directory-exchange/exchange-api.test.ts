@@ -13,6 +13,7 @@ import {
   linkMembers,
   narrowKinds,
   ownParticipants,
+  isExchangeRunning,
   parseDecisionResult,
   parseDecisionState,
   parseForeignRequest,
@@ -352,11 +353,25 @@ test("decision: the answer keeps the server status, a summary belongs to an appr
   const approved = parseDecisionResult({ ok: true, status: "approved", summary }, "approve");
   assert.equal(approved.status, "approved");
   assert.deepEqual(summaryTotals(approved.summary), { created: 2, updated: 0, skippedLimit: 0, skippedConflict: 0 });
-  assert.deepEqual(parseDecisionResult({ ok: true, status: "approved" }, "approve"), { status: "approved", summary: null });
-  assert.deepEqual(parseDecisionResult({ ok: true, status: "declined", summary }, "decline"), { status: "declined", summary: null });
+  assert.deepEqual(parseDecisionResult({ ok: true, status: "approved" }, "approve"), { status: "approved", summary: null, running: false });
+  assert.deepEqual(parseDecisionResult({ ok: true, status: "declined", summary }, "decline"), { status: "declined", summary: null, running: false });
   // Статус не пришёл — он следует из самого решения.
-  assert.deepEqual(parseDecisionResult({ ok: true }, "decline"), { status: "declined", summary: null });
-  assert.deepEqual(parseDecisionResult(null, "approve"), { status: "approved", summary: null });
+  assert.deepEqual(parseDecisionResult({ ok: true }, "decline"), { status: "declined", summary: null, running: false });
+  assert.deepEqual(parseDecisionResult(null, "approve"), { status: "approved", summary: null, running: false });
+});
+
+test("decision and save, series A Р5: a long first exchange is reported as running", () => {
+  assert.deepEqual(parseDecisionResult({ ok: true, status: "approved", running: true }, "approve"), {
+    status: "approved",
+    summary: null,
+    running: true,
+  });
+  // Отказ не бывает «в фоне», даже если сервер так сказал.
+  assert.equal(parseDecisionResult({ ok: true, status: "declined", running: true }, "decline").running, false);
+  assert.equal(isExchangeRunning({ ok: true, running: true }), true);
+  assert.equal(isExchangeRunning({ ok: true, running: "true" }), false);
+  assert.equal(isExchangeRunning({ ok: true, summary: { organizations: [] } }), false);
+  assert.equal(isExchangeRunning(null), false);
 });
 
 test("dates: an unreadable moment is null, an unknown term is not treated as expired", () => {

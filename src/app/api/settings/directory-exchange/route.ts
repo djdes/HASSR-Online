@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 import { getActiveOrgId, isImpersonating, requireApiAuth } from "@/lib/auth-helpers";
 import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { EXCHANGE_KINDS } from "@/lib/directory-exchange/kinds";
-import { EXCHANGE_BUSY_CODE, runDirectoryExchange } from "@/lib/directory-exchange/run.server";
+import { EXCHANGE_BUSY_CODE, runDirectoryExchangeWithin } from "@/lib/directory-exchange/run.server";
 import { loadExchangeState, saveExchangeMembers } from "@/lib/directory-exchange/settings.server";
 import { emptySummary } from "@/lib/directory-exchange/summary";
 import { isPointScoped } from "@/lib/point-scope";
@@ -65,8 +65,9 @@ export async function GET() {
  * PUT /api/settings/directory-exchange `{ members: [{ organizationId, kinds }] }`
  * — сохранить участников (пустые `kinds` — выход из обмена), при
  * необходимости создать мастер-кабинет и сразу запустить обмен →
- * `{ ok: true, summary }`. Только владелец аккаунта и только организации
- * его аккаунта (чужая — 404).
+ * `{ ok: true, summary }`; обмен дольше 8 секунд — `{ ok: true, running:
+ * true, summary }` (пустой), он доходит в фоне, итог — в карточке. Только
+ * владелец аккаунта и только организации его аккаунта (чужая — 404).
  */
 export async function PUT(request: Request) {
   const owner = await requireExchangeOwner();
@@ -90,14 +91,18 @@ export async function PUT(request: Request) {
     });
     if (!saved.cabinet) return NextResponse.json({ ok: true, summary: emptySummary() });
     try {
-      const summary = await runDirectoryExchange(saved.cabinet.id, { actor });
-      return NextResponse.json({ ok: true, summary: { ...summary, notes: [...saved.notes, ...summary.notes] } });
+      const outcome = await runDirectoryExchangeWithin(saved.cabinet.id, { actor });
+      if (outcome.running) {
+        after(outcome.done);
+        return NextResponse.json({ ok: true, running: true, summary: emptySummary() });
+      }
+      return NextResponse.json({ ok: true, summary: outcome.summary });
     } catch (error) {
       // Настройки уже сохранены; кабинет занят другим обменом — не ошибка сохранения.
       if (error instanceof DirectoryExchangeError && error.code === EXCHANGE_BUSY_CODE) {
         return NextResponse.json({
           ok: true,
-          summary: { ...emptySummary(), notes: [...saved.notes, `Настройки сохранены. ${error.message}`] },
+          summary: { ...emptySummary(), notes: [`Настройки сохранены. ${error.message}`] },
         });
       }
       throw error;
