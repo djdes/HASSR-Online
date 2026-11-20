@@ -10071,7 +10071,44 @@
         "credit": "Kredit",
         "debit": "Debet",
         "creditTotal": "Tushdi: {amount}",
-        "debitTotal": "Yechildi: {amount}"
+        "debitTotal": "Yechildi: {amount}",
+        "kinds": {
+          "transfer_out": "Boshqa tashkilotga o‘tkazma",
+          "transfer_in": "Boshqa tashkilotdan o‘tkazma"
+        }
+      },
+      "account": {
+        "title": "Akkaunt bo‘yicha balans",
+        "subtitle": "Akkauntingizdagi barcha tashkilotlarning balanslari. Pulni ular o‘rtasida o‘tkazish mumkin — o‘tkazma ikkala tashkilot tarixida ko‘rinadi.",
+        "current": "joriy",
+        "total": "Akkaunt bo‘yicha jami",
+        "transfer": "O‘tkazish",
+        "from": "Qayerdan",
+        "to": "Qayerga",
+        "amount": "Summa, ₽",
+        "amountPlaceholder": "Masalan, 1 000",
+        "comment": "Izoh",
+        "commentPlaceholder": "Ixtiyoriy",
+        "submit": "{amount} o‘tkazish",
+        "cancel": "Bekor qilish",
+        "confirmTitle": "{amount} o‘tkazilsinmi?",
+        "confirmDescription": "«{from}» dan «{to}» ga. Pulni qaytarish uchun teskari o‘tkazma qiling.",
+        "success": "{amount} o‘tkazildi: «{from}» → «{to}»",
+        "duplicate": "Bu o‘tkazma allaqachon bajarilgan — pul ikki marta yechilmadi",
+        "failed": "O‘tkazib bo‘lmadi. Qayta urinib ko‘ring.",
+        "errors": {
+          "amountRequired": "O‘tkazma summasini kiriting",
+          "amountNumeric": "Summani raqam bilan, rublda kiriting",
+          "amountWhole": "Faqat butun rubl, tiyinsiz",
+          "amountMinimum": "Eng kam summa — 1 ₽",
+          "amountMaximum": "O‘tkazma summasi juda katta",
+          "overBalance": "«{name}» balansida faqat {amount}",
+          "sameOrg": "Ikki xil tashkilotni tanlang",
+          "notFound": "Tashkilot akkauntingizda topilmadi",
+          "notOwner": "O‘tkazmalar faqat akkaunt egasiga ochiq",
+          "tooMany": "Juda ko‘p o‘tkazma ketma-ket. Bir daqiqa kuting.",
+          "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring — pul ikki marta yechilmaydi."
+        }
       }
     },
     "balanceTopup": {
@@ -17493,7 +17530,9 @@
       "manual_adjust": "Tuzatish",
       "topup": "To‘ldirish",
       "subscription_charge": "Tarif to‘lovi",
-      "unknown": "Operatsiya"
+      "unknown": "Operatsiya",
+      "transfer_out": "Boshqa tashkilotga o‘tkazma",
+      "transfer_in": "Boshqa tashkilotdan o‘tkazma"
     },
     "orders": {
       "paid": "to‘langan",
@@ -17680,6 +17719,40 @@
         "title": "Sinov haqida fikr",
         "hint": "«Elektron jurnallarni baholay oldingizmi?» — sinov raqamlari bilan. Avtomatik — to‘lovsiz sinov tugagach."
       }
+    },
+    "orgTrial": {
+      "title": "Tashkilotning o‘z 14 kuni",
+      "term": "Muddat",
+      "state": "Holat",
+      "states": {
+        "trial": "o‘z 14 kunida",
+        "locked": "yopilgan",
+        "none": "belgi yo‘q",
+        "inactive": "belgi amal qilmaydi"
+      },
+      "grants": "Akkaunt bo‘yicha berilgan",
+      "grantsValue": "{count} / {max}",
+      "suspicions": "Takroriy sinov davri shubhalari",
+      "suspicionsEmpty": "Shubhalar yo‘q",
+      "suspicionFlag": "shubha",
+      "suspicionEnded": "sinov davri tugatilgan",
+      "suspicionInn": "STIR {inn}",
+      "suspicionPhone": "egasining telefoni",
+      "suspicionWith": "«{name}» bilan mos keldi",
+      "extendDays": "Kun",
+      "extend": "Uzaytirish",
+      "extendTitle": "O‘z 14 kuni {days, plural, other {# kunga}} uzaytirilsinmi?",
+      "extendDescription": "Yangi muddat — {date}. Bugun va joriy muddatdan kechrog‘idan hisoblanadi. Yopilgan tashkilot darhol ochiladi.",
+      "clear": "Belgini olib tashlash",
+      "clearTitle": "O‘z 14 kuni belgisi olib tashlansinmi?",
+      "clearDescription": "Tashkilot oddiy bo‘ladi: akkaunt tarifidan bitta nuqtani egallaydi va muddat bo‘yicha boshqa yopilmaydi.",
+      "reset": "Hisoblagichni nollash",
+      "resetTitle": "Berilgan 14 kunlar hisoblagichi nollansinmi?",
+      "resetDescription": "Akkaunt yana ikkita yangi tashkilot uchun o‘z 14 kunini olishi mumkin bo‘ladi.",
+      "noMark": "Tashkilotda o‘z 14 kuni belgisi yo‘q",
+      "daysInvalid": "1 dan 60 gacha kun kiriting",
+      "done": "Saqlandi",
+      "failed": "Saqlab bo‘lmadi"
     }
   },
   "miniHome": {
@@ -27052,7 +27125,11 @@
           "codeCopy": "Nusxalash",
           "codeCopied": "Nusxalandi",
           "codeGet": "Kodni olish",
-          "codeFailed": "Kodni olib bo‘lmadi"
+          "codeFailed": "Kodni olib bo‘lmadi",
+          "codeRenew": "Yangi kod berish",
+          "codeRenewConfirm": "Eski kod yangi so‘rovlar uchun ishlamay qoladi. Ulangan kompaniyalar va menyu o‘zgarmaydi.",
+          "codeRenewed": "Yangi kod berildi",
+          "codeRenewFailed": "Yangi kod berib bo‘lmadi"
         },
         "kindHints": {
           "products": "Mahsulotlar ma’lumotnomasi: nomi, yetkazib beruvchi, saqlash sharoiti va muddati",
@@ -27126,6 +27203,60 @@
           "noOwn": "Akkauntingizda ma’lumot almashishi mumkin bo‘lgan tashkilot yo‘q. So‘rovni faqat rad etish mumkin.",
           "approvedRunning": "Almashinuv davom etmoqda — natija «Ma’lumotnomalar almashinuvi» kartochkasida paydo bo‘ladi, u tugagach kompaniya xat oladi."
         }
+      },
+      "transfers": {
+        "title": "So‘nggi ko‘chirishlar",
+        "hint": "Ko‘chirishni 7 kun ichida bekor qilish mumkin. Faqat u yaratgan va shundan beri ishlatilmagan hamda o‘zgartirilmagan narsalar bekor qilinadi.",
+        "foreignSource": "Boshqa kompaniya",
+        "count": "{kind}: {count}",
+        "undo": "Bekor qilish",
+        "undoConfirm": "Ko‘chirish bekor qilinsinmi? U yaratgan tovarlar o‘chirib qo‘yiladi, xodimlar arxivga o‘tadi, qolgan yozuvlar o‘chiriladi. Allaqachon ishlatilayotgan yoki ko‘chirishdan keyin o‘zgartirilgan narsalar qoladi.",
+        "undoDone": "Ko‘chirish bekor qilindi",
+        "undoFailed": "Ko‘chirishni bekor qilib bo‘lmadi",
+        "undoUntil": "{date} gacha bekor qilish mumkin",
+        "undoneAt": "{date} bekor qilingan",
+        "expired": "bekor qilish muddati o‘tgan",
+        "resultUndone": "Bekor qilindi: {count}",
+        "resultKept": "Qoldi: {count}",
+        "resultNothing": "Bekor qiladigan narsa yo‘q: yaratilgan yozuvlar allaqachon o‘chirilgan yoki o‘chirib qo‘yilgan.",
+        "more": "yana {count} ta",
+        "keptItem": "{entity} «{name}» — {reason}",
+        "keptItemNoName": "{entity} — {reason}",
+        "entities": {
+          "position": "Lavozim",
+          "staff": "Xodim",
+          "building": "Obyekt",
+          "room": "Xona",
+          "area": "Sex",
+          "equipment": "Uskuna",
+          "product": "Mahsulot"
+        },
+        "reasons": {
+          "edited": "ko‘chirishdan keyin o‘zgartirilgan",
+          "used": "ishlatilmoqda: jurnal yozuvlari, datchiklar yoki tayinlovlar",
+          "not_empty": "ichida boshqa yozuvlar qolgan",
+          "has_staff": "lavozimda xodimlar bor",
+          "linked": "bog‘langan xona yoki sex qoladi"
+        }
+      },
+      "skips": {
+        "count": "O‘tkazib yuborildi: {count}",
+        "review": "Ko‘rib chiqish",
+        "title": "O‘tkazib yuborilgan yozuvlar",
+        "description": "Almashinuv bu yozuvlarni tashkilotlarga qo‘shmadi. Ularni mavjud yozuvlar bilan bog‘lang yoki ko‘chirishdan voz keching.",
+        "reasonLimit": "tarifda bo‘sh joy yo‘q",
+        "reasonConflict": "bunday nom allaqachon bor",
+        "limitRetry": "Tarifda joy paydo bo‘lgach, yozuv keyingi almashinuvda qo‘shiladi.",
+        "openPlan": "Tarifni ochish",
+        "ignore": "Ko‘chirmaslik",
+        "link": "«{name}» bilan bog‘lash",
+        "linkChosen": "Bog‘lash",
+        "chooseLabel": "Qaysi yozuv bilan bog‘lash",
+        "ignored": "Yozuv endi ko‘chirilmaydi",
+        "linked": "Yozuvlar bog‘landi",
+        "failed": "Saqlab bo‘lmadi — qayta urinib ko‘ring",
+        "empty": "Hammasi ko‘rib chiqildi — o‘tkazib yuborilgan yozuvlar yo‘q.",
+        "done": "Tayyor"
       }
     }
   },

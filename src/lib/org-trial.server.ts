@@ -132,6 +132,20 @@ export async function isOrganizationLocked(organizationId: string, now: Date = n
 }
 
 /**
+ * Забыть ответ `isOrganizationLocked` — после правки своих 14 дней у ROOT
+ * (продлили, сняли отметку): организация открывается сразу, а не через
+ * полминуты. Статус зависит от всех организаций аккаунта (точки раздаются
+ * по порядку), поэтому сбрасывают обычно весь аккаунт; без списка — всё.
+ */
+export function invalidateOrganizationLock(organizationIds?: readonly string[]): void {
+  if (!organizationIds) {
+    lockCache.clear();
+    return;
+  }
+  for (const id of organizationIds) lockCache.delete(id);
+}
+
+/**
  * Все закрытые после своих 14 дней организации — для ежедневных задач,
  * которые создают документы, задачи, напоминания и сводки: закрытой они ни к
  * чему, записать в журнал она всё равно не может.

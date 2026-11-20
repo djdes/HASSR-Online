@@ -39,7 +39,7 @@ import {
   type ExchangeRunOutcome,
   type TransferSelection,
 } from "@/lib/directory-exchange/run.server";
-import { findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
+import { acceptsLegacyExchangeCode, findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
 import { emptySummary, summaryTotals, type ExchangeCounters, type ExchangeSummary } from "@/lib/directory-exchange/summary";
 import { normalizeServiceCode } from "@/lib/dish-pool-code";
 import { generateInviteToken, hashInviteToken } from "@/lib/invite-tokens";
@@ -539,18 +539,21 @@ export async function loadExchangeRequests(
 /* ───────────────────────── создание ───────────────────────── */
 
 /**
- * Аккаунт, которому принадлежит мастер-кабинет с таким кодом. Код кабинета —
- * его собственный (`serviceCode`) либо, у кабинетов постарше, код пула, к
- * которому он подключён (`linkedServiceCode`): именно его такой кабинет и
- * показывает своему владельцу. Только организации вида «мастер-кабинет»:
- * обычная организация с тем же кодом пула кабинетом не считается. Код пула
- * не уникален — если им пользуются кабинеты разных аккаунтов, адресат
- * неясен, и это «не найден».
+ * Аккаунт, которому принадлежит мастер-кабинет с таким кодом. Код для
+ * запросов — `exchangeCode` кабинета (серия B, Р13). Прежние коды действуют,
+ * пока владелец не выдал новый (`acceptsLegacyExchangeCode`): собственный код
+ * кабинета (`serviceCode`) либо, у кабинетов постарше, код пула, к которому он
+ * подключён (`linkedServiceCode`): именно его такой кабинет и показывал своему
+ * владельцу. Только организации вида «мастер-кабинет»: обычная организация с
+ * тем же кодом пула кабинетом не считается. Код пула не уникален — если им
+ * пользуются кабинеты разных аккаунтов, адресат неясен, и это «не найден».
  */
 async function cabinetAccountByCode(code: string): Promise<string | null> {
   const cabinets = { kind: MASTER_ORG_KIND, isDemo: false, accountId: { not: null } } as const;
+  const current = await db.organization.findFirst({ where: { ...cabinets, exchangeCode: code }, select: { accountId: true } });
+  if (current?.accountId) return current.accountId;
   const own = await db.organization.findFirst({ where: { ...cabinets, serviceCode: code }, select: { accountId: true } });
-  if (own?.accountId) return own.accountId;
+  if (own?.accountId) return (await acceptsLegacyExchangeCode(own.accountId)) ? own.accountId : null;
   const linked = await db.organization.findMany({
     where: { ...cabinets, linkedServiceCode: code },
     select: { accountId: true },
@@ -558,7 +561,7 @@ async function cabinetAccountByCode(code: string): Promise<string | null> {
   });
   const accounts = new Set(linked.map((organization) => organization.accountId));
   const [only] = accounts;
-  return accounts.size === 1 && only ? only : null;
+  return accounts.size === 1 && only && (await acceptsLegacyExchangeCode(only)) ? only : null;
 }
 
 /**
@@ -741,6 +744,7 @@ async function removeForeignMember(masterOrganizationId: string, organizationId:
         // аккаунта (не `foreign`) этот путь не трогает ничего.
         if (members.count === 0) return false;
         await tx.directoryExchangeLink.deleteMany({ where: { masterOrganizationId, organizationId } });
+        await tx.directoryExchangeSkip.deleteMany({ where: { masterOrganizationId, organizationId } });
         return true;
       }),
     { waitMs: 30_000 },
@@ -1229,6 +1233,8 @@ export async function decideExchangeRequest(input: {
         // Единственное место, где перенос между аккаунтами разрешён: его
         // только что подтвердил владелец источника.
         crossAccount: true,
+        // Перенос запоминается с запросом: заявитель может его отменить (п. 12).
+        requestId: request.id,
         now,
       });
     }

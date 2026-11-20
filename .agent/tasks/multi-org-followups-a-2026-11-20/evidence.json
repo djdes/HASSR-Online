@@ -4,13 +4,46 @@
   "base": "master 02d0bcc6e",
   "verdict": "PASS",
   "criteria": [
-    { "id": "AC1", "status": "PASS", "evidence": "org-trial.test.ts; temperature-deviations.test.ts; raw/locked-check.log 6/6; route list in evidence.md" },
-    { "id": "AC2", "status": "PASS", "evidence": "org-trial.test.ts; raw/reminder-check.log 7/7" },
-    { "id": "AC3", "status": "PASS", "evidence": "sample-letters.test.ts, platform-access.test.ts; raw/series-a-live.log; raw/06-root-sample-letters.jpg; raw/next-dev-letters.log" },
-    { "id": "AC4", "status": "PASS", "evidence": "request-letters.test.ts; raw/part3-foreign-check.log section series A AC4; raw/04-owner-bell.jpg" },
-    { "id": "AC5", "status": "PASS", "evidence": "exchange-api.test.ts; raw/background-check.log 14/14; raw/02, 03, 05 screenshots (server answer substituted in the browser)" },
-    { "id": "AC6", "status": "PASS", "evidence": "raw/part2-exchange-check.log series A AC6; raw/series-a-live.log linkedServiceCode 0; raw/01-dialog-menu-note.jpg" },
-    { "id": "AC7", "status": "PASS", "evidence": "typecheck clean; i18n:check 98/98; eslint 0 errors; test:gate full 6739 pass + palette regenerated; part 2 88/88; part 3 179/179" }
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": "org-trial.test.ts; temperature-deviations.test.ts; raw/locked-check.log 6/6; route list in evidence.md"
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": "org-trial.test.ts; raw/reminder-check.log 7/7"
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": "sample-letters.test.ts, platform-access.test.ts; raw/series-a-live.log; raw/06-root-sample-letters.jpg; raw/next-dev-letters.log"
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": "request-letters.test.ts; raw/part3-foreign-check.log section series A AC4; raw/04-owner-bell.jpg"
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": "exchange-api.test.ts; raw/background-check.log 14/14; raw/02, 03, 05 screenshots (server answer substituted in the browser)"
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "evidence": "raw/part2-exchange-check.log series A AC6; raw/series-a-live.log linkedServiceCode 0; raw/01-dialog-menu-note.jpg"
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "evidence": "typecheck clean; i18n:check 98/98; eslint 0 errors; test:gate full 6739 pass + palette regenerated; part 2 88/88; part 3 179/179"
+    }
   ],
-  "deploy": "no schema change"
+  "deploy": "no schema change",
+  "shipped": "djdes/HASSR-Online#272 (f30c8cfea), deploy run 2372 success",
+  "reviewFixes": {
+    "status": "PASS",
+    "evidence": "evidence.md section after the independent review; org-trial.test.ts same-day case; raw/reminder-check.log 7/7"
+  }
 }

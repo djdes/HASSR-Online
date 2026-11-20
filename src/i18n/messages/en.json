@@ -10071,7 +10071,44 @@
         "credit": "Credit",
         "debit": "Debit",
         "creditTotal": "Added: {amount}",
-        "debitTotal": "Charged: {amount}"
+        "debitTotal": "Charged: {amount}",
+        "kinds": {
+          "transfer_out": "Transfer to another organization",
+          "transfer_in": "Transfer from another organization"
+        }
+      },
+      "account": {
+        "title": "Account balance",
+        "subtitle": "Balances of all organizations in your account. You can move money between them — the transfer shows in the history of both organizations.",
+        "current": "current",
+        "total": "Account total",
+        "transfer": "Transfer",
+        "from": "From",
+        "to": "To",
+        "amount": "Amount, ₽",
+        "amountPlaceholder": "For example, 1,000",
+        "comment": "Comment",
+        "commentPlaceholder": "Optional",
+        "submit": "Transfer {amount}",
+        "cancel": "Cancel",
+        "confirmTitle": "Transfer {amount}?",
+        "confirmDescription": "From “{from}” to “{to}”. To return the money, make a transfer back.",
+        "success": "Transferred {amount}: “{from}” → “{to}”",
+        "duplicate": "This transfer has already been made — the money was not debited twice",
+        "failed": "Transfer failed. Please try again.",
+        "errors": {
+          "amountRequired": "Enter the transfer amount",
+          "amountNumeric": "Enter the amount as a number, in rubles",
+          "amountWhole": "Whole rubles only, no kopecks",
+          "amountMinimum": "The minimum is 1 ₽",
+          "amountMaximum": "The transfer amount is too large",
+          "overBalance": "Only {amount} on the “{name}” balance",
+          "sameOrg": "Choose two different organizations",
+          "notFound": "Organization not found in your account",
+          "notOwner": "Only the account owner can make transfers",
+          "tooMany": "Too many transfers in a row. Wait a minute.",
+          "network": "No connection to the server. Try again — the money will not be debited twice."
+        }
       }
     },
     "balanceTopup": {
@@ -17493,7 +17530,9 @@
       "manual_adjust": "Adjustment",
       "topup": "Top-up",
       "subscription_charge": "Plan payment",
-      "unknown": "Transaction"
+      "unknown": "Transaction",
+      "transfer_out": "Transfer to another organization",
+      "transfer_in": "Transfer from another organization"
     },
     "orders": {
       "paid": "paid",
@@ -17680,6 +17719,40 @@
         "title": "Trial feedback",
         "hint": "“Did you manage to evaluate electronic journals?” with trial numbers. Automatically after an unpaid trial ends."
       }
+    },
+    "orgTrial": {
+      "title": "Organization’s own 14 days",
+      "term": "Ends",
+      "state": "Status",
+      "states": {
+        "trial": "in its own 14 days",
+        "locked": "locked",
+        "none": "no mark",
+        "inactive": "mark not in effect"
+      },
+      "grants": "Granted in the account",
+      "grantsValue": "{count} of {max}",
+      "suspicions": "Suspected repeat trials",
+      "suspicionsEmpty": "No suspicions",
+      "suspicionFlag": "suspected",
+      "suspicionEnded": "trial ended",
+      "suspicionInn": "TIN {inn}",
+      "suspicionPhone": "owner phone number",
+      "suspicionWith": "matched “{name}”",
+      "extendDays": "Days",
+      "extend": "Extend",
+      "extendTitle": "Extend the own 14 days by {days, plural, one {# day} other {# days}}?",
+      "extendDescription": "New end — {date}. Counted from the later of today and the current end. A locked organization opens immediately.",
+      "clear": "Remove mark",
+      "clearTitle": "Remove the own 14 days mark?",
+      "clearDescription": "The organization becomes a regular one: it takes a paid location of the account plan and will no longer lock by date.",
+      "reset": "Reset counter",
+      "resetTitle": "Reset the granted 14 days counter?",
+      "resetDescription": "The account can again get own 14 days for two new organizations.",
+      "noMark": "The organization has no own 14 days mark",
+      "daysInvalid": "Enter 1 to 60 days",
+      "done": "Saved",
+      "failed": "Could not save"
     }
   },
   "miniHome": {
@@ -27052,7 +27125,11 @@
           "codeCopy": "Copy",
           "codeCopied": "Copied",
           "codeGet": "Get the code",
-          "codeFailed": "Could not get the code"
+          "codeFailed": "Could not get the code",
+          "codeRenew": "Issue a new code",
+          "codeRenewConfirm": "The old code will stop working for new requests. Connected companies and the menu will not change.",
+          "codeRenewed": "A new code has been issued",
+          "codeRenewFailed": "Could not issue a new code"
         },
         "kindHints": {
           "products": "Product directory: name, supplier, storage conditions and shelf life",
@@ -27126,6 +27203,60 @@
           "noOwn": "Your account has no organisation that can exchange data. The request can only be declined.",
           "approvedRunning": "The exchange is in progress — the result will appear in the “Directory exchange” card, and the company will get an e-mail when it finishes."
         }
+      },
+      "transfers": {
+        "title": "Recent transfers",
+        "hint": "A transfer can be undone within 7 days. Only what it created and what has not been used or changed since is undone.",
+        "foreignSource": "Another company",
+        "count": "{kind}: {count}",
+        "undo": "Undo",
+        "undoConfirm": "Undo the transfer? Goods it created will be turned off, staff moved to the archive, other records deleted. Anything already in use or changed after the transfer stays.",
+        "undoDone": "Transfer undone",
+        "undoFailed": "Could not undo the transfer",
+        "undoUntil": "can be undone until {date}",
+        "undoneAt": "undone {date}",
+        "expired": "the undo period is over",
+        "resultUndone": "Undone: {count}",
+        "resultKept": "Kept: {count}",
+        "resultNothing": "Nothing to undo: the created records are already deleted or turned off.",
+        "more": "and {count} more",
+        "keptItem": "{entity} “{name}” — {reason}",
+        "keptItemNoName": "{entity} — {reason}",
+        "entities": {
+          "position": "Position",
+          "staff": "Employee",
+          "building": "Location",
+          "room": "Room",
+          "area": "Workshop",
+          "equipment": "Equipment",
+          "product": "Product"
+        },
+        "reasons": {
+          "edited": "changed after the transfer",
+          "used": "in use: journal records, sensors or assignments",
+          "not_empty": "other records remain inside",
+          "has_staff": "the position has staff",
+          "linked": "the linked room or workshop stays"
+        }
+      },
+      "skips": {
+        "count": "Skipped: {count}",
+        "review": "Review",
+        "title": "Skipped records",
+        "description": "The exchange did not add these records to the organizations. Link them to existing records or stop transferring them.",
+        "reasonLimit": "no free places in the plan",
+        "reasonConflict": "this name already exists",
+        "limitRetry": "The record will be added at the next exchange once the plan has room.",
+        "openPlan": "Open the plan",
+        "ignore": "Don't transfer",
+        "link": "Link to “{name}”",
+        "linkChosen": "Link",
+        "chooseLabel": "Record to link to",
+        "ignored": "The record will no longer be transferred",
+        "linked": "Records linked",
+        "failed": "Could not save — please try again",
+        "empty": "All done — no skipped records.",
+        "done": "Done"
       }
     }
   },

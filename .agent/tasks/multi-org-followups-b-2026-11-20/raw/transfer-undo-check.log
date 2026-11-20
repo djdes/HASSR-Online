@@ -1,0 +1,54 @@
+--- transfer records what it created
+PASS T0: a single-product transfer is recorded
+PASS T1: the transfer row exists
+PASS T1: from A to B, actor = owner, no request
+PASS T1: created products (Хлеб already there — not recorded)
+PASS T1: created position and staff
+PASS T1: created buildings
+PASS T1: rooms include the mirror rooms of the created areas
+PASS T1: areas include the mirror area of the created room
+PASS T1: created equipment
+PASS T1: every created id is a record of B (nothing pre-existing recorded)
+PASS T1: the summary is stored and matches the returned one
+PASS list: T1 shown from A to B, undoable, with counts
+--- access
+PASS another account: undo of T1 → 404
+PASS unknown id → 404
+PASS another account: its list does not show T1
+PASS a non-owner user id: the account list is empty
+PASS a transfer older than 7 days → 409
+PASS an old transfer is not listed
+PASS the refused old transfer changed nothing
+--- undo
+PASS undo: undone — unused products off, unused staff archived, unused equipment/areas/rooms/building deleted
+PASS undo: kept with reasons — used, edited, non-empty, linked mirror, position with staff
+PASS B: active products — the edited one and the one from T0
+PASS B: products turned off, not deleted
+PASS B: Петрова archived, Иванов active
+PASS B: equipment left — the used fridge
+PASS B: areas left — Кухня (mirror) and Склад
+PASS B: rooms left — Кухня and Склад (mirror)
+PASS B: buildings left — Кафе на Ленина; Пекарня deleted
+PASS B: position Повар stays (Иванов is on it)
+PASS B: the journal entry survived
+PASS undoJson stored = returned result
+PASS undoneAt and undoneByUserId stored
+PASS audit: transfer_undone in the target organization with kept reasons
+PASS list: T1 now undone, not undoable, with the result
+PASS second undo → 409
+--- cross-account transfer by an approved request
+PASS request approved
+PASS T2: recorded with the request id, from the foreign source
+PASS T2: created ids recorded (product, position, staff, building, rooms, areas, equipment)
+PASS requester list: T2 from the other company shown by the cabinet name, never the source organization
+PASS cabinet owner list: T2 not shown (it is not their organization)
+PASS cabinet owner (source side): undo of T2 → 404
+PASS concurrent undo: exactly one succeeds, the other is 409
+PASS T2 undo: nothing kept
+PASS T2 undo: everything undone
+PASS C after undo: product off, staff archived, no positions, buildings, rooms, areas or equipment
+PASS the source S is untouched
+PASS audit in C: transfer_undone, cross-account, without the source organization's name
+cleanup: organizations left 0, users left 0, transfers left 0
+TOTAL: 47 PASS, 0 FAIL
+RESULT: all checks passed

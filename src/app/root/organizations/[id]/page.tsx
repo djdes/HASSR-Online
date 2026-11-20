@@ -27,6 +27,8 @@ import { ClientRequisitesCard } from "./client-requisites-card";
 import { readLegalOverrides, registryDefaults } from "@/lib/document-org-block";
 import { PanelAccessButton } from "./panel-access-button";
 import { AccountManagerControl } from "./account-manager-control";
+import { OrgTrialControl } from "./org-trial-control";
+import { loadOrgTrialAdminView } from "@/lib/org-trial-admin.server";
 import { loadAccountManagerView } from "@/lib/account-manager.server";
 import { isTopupOrder } from "@/lib/balance/topup-core";
 import { ClientDocumentsSection } from "@/components/root/client-documents-section";
@@ -107,6 +109,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
     clientEmailHistory(id),
   ]);
   const canBill = canUsePlatformSection(viewer, "billing");
+  // Свои 14 дней организации (серия B, Р11): только у организаций с аккаунтом.
+  const orgTrial = org.accountId
+    ? await loadOrgTrialAdminView(org.id).catch((error) => {
+        console.error("[root] org trial view failed", error);
+        return null;
+      })
+    : null;
   // «В ЭДО» (Saby) — у кого есть раздел ЭДО.
   const canEdo = canUsePlatformSection(viewer, "edo");
   // «Переписки» — лента CRM (письма, звонки с записью, мессенджеры): у кого есть раздел CRM.
@@ -438,6 +447,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               <p className="mt-5 border-t border-[#eef0f6] pt-4 text-[12.5px] text-[#9b9fb3]">{t("readOnly")}</p>
             )}
           </div>
+
+          {orgTrial ? <OrgTrialControl view={orgTrial} canEdit={canBill} /> : null}
 
           {canBill ? (
             <BalanceCard
