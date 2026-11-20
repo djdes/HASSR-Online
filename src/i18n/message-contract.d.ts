@@ -2709,8 +2709,8 @@ export type MessageContract = {
       "openOfferTitle": "Открыть оферту?",
       "openConsentTitle": "Открыть согласие на обработку персональных данных?",
       "openHint": "Документ откроется в новой вкладке, форма останется на месте.",
-      "openYes": "Да",
-      "openNo": "Нет"
+      "openYes": "Всё равно перейти",
+      "openNo": "Не переходить"
     },
     "challenge": {
       "websiteLabel": "Ваш сайт"
@@ -5918,7 +5918,9 @@ export type MessageContract = {
     "hero": {
       "title": "Электронные журналы <highlight>СанПиН и ХАССП</highlight>",
       "consultationNote": "Разработан при консультации специалистов Роспотребнадзора и ведущих аудиторов ХАССП",
-      "trialUntil": "До <strong>{date}</strong> всё бесплатно, далее только 1 журнал. <link>Подробнее</link>"
+      "trialUntil": "<strong>{trialDays, number} {trialDays, plural, one {день} few {дня} many {дней} other {дня}}</strong> всё бесплатно (до {date}). <link>Подробнее</link>",
+      "sealTitle": "ХАССП",
+      "sealCaption": "СЕРТИФИЦИРОВАНО"
     },
     "openGraph": {
       "title": "Электронные журналы ХАССП и СанПиН",

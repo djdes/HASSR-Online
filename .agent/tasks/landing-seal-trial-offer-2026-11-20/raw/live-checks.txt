@@ -1,0 +1,42 @@
+Live checks 2026-11-20, `next dev` on 127.0.0.1:3100 (working tree of claude/hopeful-euler-lb6cie),
+Playwright Chromium. The local DB has no schema (prisma db push needs the owner's consent), the
+landing renders from its cached snapshots anyway (GET / 200). Page font in this container: Inter
+(the site stack "Segoe UI", "Helvetica Neue", Arial falls back to it); Inter is as wide as
+Helvetica Neue on iPhone, so "one line here" means one line there.
+
+§1 Trial line (light theme), ru «/»
+  text: «14 дней всё бесплатно (до 04.12.2026). Подробнее» (today 20.11.2026 + TRIAL_DAYS 14, Moscow)
+  width  font       lines  scrollWidth
+  320    13px       2      320   (balanced; narrower than any current iPhone)
+  360    13px       1      360
+  375    13.40px    1      375
+  390    13.98px    1      390
+  393    14.10px    1      393
+  402    14.45px    1      402
+  430    15px       1      430
+  440    15px       1      440   (owner's phone: 440 pt, see IMG_3929)
+  1440   14px       1      -
+  en «/en»: «Free for 14 days (until 04/12/2026). Details» — 1 line at 360, 375, 390, 440 (the first
+  draft «Everything is free for…» wrapped at 375/390 and was shortened).
+  uz «/uz»: «14 kun hammasi bepul (04/12/2026 gacha). Batafsil» — 1 line at 360, 375, 390, 440.
+
+§2 Open-document window (440 px, iPhone UA, light and dark)
+  title «Открыть оферту?»; buttons, top to bottom:
+    legal-open-no  «Не переходить»      390×56 at y=809, bg rgb(85,102,246) light / rgb(112,129,248) dark, white text, focused
+    legal-open-yes «Всё равно перейти»  390×56 at y=875, bg rgb(241,242,248) light / rgb(50,47,75) dark, text rgb(111,114,130) / rgb(169,172,192)
+  «Не переходить»: window detached, URL stays «/», no new tab — for «оферту» and for «согласие на обработку…»
+  («Открыть согласие на обработку персональных данных?»).
+  «Всё равно перейти»: new tab http://127.0.0.1:3100/oferta, window closed, consent checkbox untouched.
+
+§3 Gold seal
+  ru «ХАССП» / «СЕРТИФИЦИРОВАНО», en «HACCP» / «CERTIFIED», uz «HACCP» / «SERTIFIKATLANGAN»; no Cyrillic
+  in the en/uz seal. Size 84×92 px below 400 px width, 92×101 px from 400 px and on desktop; card
+  358×118 at 390, 408×127 at 440, 574×131 at 1440; no horizontal scroll at any width.
+  Screenshots (gitignored): hero-390/440/1440, seal-light-rest, seal-light-shine, trust-dark-390,
+  trust-en-390, trust-uz-390.
+
+§4 Motion (computed style, 390 px)
+  normal:   svg.gold-seal animation gold-seal-stamp; .gold-seal-shine gold-seal-shine; .gold-seal-sparkle gold-seal-sparkle
+  reduced (prefers-reduced-motion: reduce): all three «none»; seal transform none (visible),
+            shine parked at translateX(-24px) outside the clip, sparkle scale(0)
+  html[data-view-still]: same as reduced
