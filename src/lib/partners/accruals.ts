@@ -22,6 +22,7 @@ import {
   type RewardRule,
 } from "./rewards";
 import { ensurePartnerSchemaExtras, getCurrentRewardRule, toRewardRule } from "./schema-extras";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { PartnerError } from "./errors";
 
 /**
@@ -464,7 +465,11 @@ export async function createRewardRuleVersion(
       comment: meta.comment.trim().slice(0, 500) || null,
     },
   });
-  return toRewardRule(row);
+  const rule = toRewardRule(row);
+  await refreshPromoDataset("partner-reward-rule").catch((error) =>
+    console.error("[partners] promo snapshot refresh failed", error),
+  );
+  return rule;
 }
 
 // ---------------------------------------------------------------------------

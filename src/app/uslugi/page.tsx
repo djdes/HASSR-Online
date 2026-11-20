@@ -11,11 +11,11 @@ import {
 
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
+import { readPromoActiveServices } from "@/lib/promo-cache";
 import {
-  readActiveServices,
   groupServices,
   type PlatformServiceItem,
-} from "@/lib/services/catalog";
+} from "@/lib/services/constants";
 import { ContactUsButton } from "@/components/contact/contact-us-dialog";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { jsonLdSafeString } from "@/lib/json-ld";
@@ -68,7 +68,10 @@ export const metadata: Metadata = {
     "обучение персонала общепита гигиене",
     "услуги ХАССП для общепита",
   ],
-  alternates: { canonical: CANONICAL },
+  alternates: {
+    canonical: CANONICAL,
+    types: { "text/markdown": "https://wesetup.ru/uslugi.md" },
+  },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
@@ -151,10 +154,7 @@ function serviceJsonLd(item: PlatformServiceItem) {
 }
 
 export default async function UslugiPage() {
-  // Каталог сидируется на первом чтении, но если БД недоступна —
-  // страница не должна отдавать 500: шапка, «как мы работаем» и FAQ
-  // ценны сами по себе, а заявку человек оставит через чат поддержки.
-  const services = await readActiveServices().catch(() => []);
+  const services = await readPromoActiveServices().catch(() => []);
   const groups = groupServices(services);
   const telegramUrl = contactTelegramUrl(process.env);
 
@@ -212,6 +212,7 @@ export default async function UslugiPage() {
       />
       <PublicHeader />
 
+      <main id="main-content">
       <section className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-12 text-white sm:px-6 sm:py-16 md:px-12 md:py-20">
           <div className="pointer-events-none absolute inset-0">
@@ -402,6 +403,7 @@ export default async function UslugiPage() {
           </div>
         </div>
       </section>
+      </main>
 
       <PublicFooter />
     </div>

@@ -4,12 +4,15 @@ import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { ArrowRight } from "lucide-react";
 import { RoiCalculator } from "@/components/landing/roi-calculator";
 import { Testimonials } from "@/components/landing/testimonials";
-import { listPublicReviews } from "@/lib/balance/reviews";
 import { HardwareStrip } from "@/components/landing/hardware-strip";
 import { TariffComparison } from "@/components/pricing/tariff-comparison";
 import { DemoRequestButton } from "@/components/public/demo-request-button";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
-import { readPlanPricing } from "@/lib/tariffs";
+import {
+  readPromoActivePromotion,
+  readPromoPlanPricing,
+  readPromoPublicReviews,
+} from "@/lib/promo-cache";
 import {
   DEFAULT_OG_IMAGES,
   DEFAULT_TWITTER_CARD,
@@ -18,7 +21,6 @@ import {
 import { FREE_AFTER_TRIAL_LABEL, FREE_TIER_SHORT, PAID_SEATS_LABEL, PREMIUM_SEATS_LABEL } from "@/lib/plan-catalog";
 import { JOURNALS_TOTAL_LABEL } from "@/lib/journal-catalog";
 import { PromoPrice } from "@/components/pricing/promo-price";
-import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
@@ -37,7 +39,10 @@ const PRICING_DESCRIPTION = `Тарифы WeSetup: ${FREE_TIER_SHORT} без к�
 export const metadata = {
   title: "Цены на электронные журналы СанПиН и ХАССП",
   description: PRICING_DESCRIPTION,
-  alternates: { canonical: "https://wesetup.ru/pricing" },
+  alternates: {
+    canonical: "https://wesetup.ru/pricing",
+    types: { "text/markdown": "https://wesetup.ru/pricing.md" },
+  },
   openGraph: {
     type: "website",
     locale: "ru_RU",
@@ -66,11 +71,9 @@ export default async function PricingPage() {
   // Витрина с кнопками оплаты — не для приложения (правила магазинов).
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
   const [pricing, promotion, publicReviews] = await Promise.all([
-    readPlanPricing(),
-    readActivePromotion().catch(() => null),
-    // Те же отзывы, что на главной: одобренные и разрешённые к публикации,
-    // нет таких — блока нет.
-    listPublicReviews().catch((error) => {
+    readPromoPlanPricing(),
+    readPromoActivePromotion().catch(() => null),
+    readPromoPublicReviews().catch((error) => {
       console.error("[pricing] Failed to load reviews", error);
       return [];
     }),

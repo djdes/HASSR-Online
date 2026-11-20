@@ -4,6 +4,7 @@ import { decode } from "next-auth/jwt";
 import { applyVisitorCookie, pageNavigationGuard } from "@/lib/page-navigation-guard";
 import { publicLocaleRoute, SITE_LOCALE_COOKIE, SITE_LOCALE_HEADER } from "@/i18n/site-locale";
 import { pickSessionCookie } from "@/lib/auth-cookies";
+import { prefersMarkdown, resolvePromoMarkdownTarget } from "@/lib/promo-cache/markdown-negotiation";
 import { isPublicCacheablePage } from "@/lib/robots-txt";
 import {
   canAccessWebPath,
@@ -110,6 +111,7 @@ async function withRequestContext(
     const isMini = isMiniShellValue(req.cookies.get(MINI_SHELL_COOKIE)?.value) || isMobileAppUserAgent(userAgent);
     if (!verifiedUserId && !hasSessionCookie && !isMini && isPublicCacheablePage(pathname)) {
       res.headers.set("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
+      res.headers.set("Vary", "Accept");
     } else {
       res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
       res.headers.set("Pragma", "no-cache");
@@ -225,6 +227,29 @@ export async function proxy(req: NextRequest) {
     const url = new URL(req.url);
     url.pathname = seoTarget;
     return NextResponse.redirect(url, 301);
+  }
+
+  // Markdown для ИИ-агентов: явный суффикс `.md` (`/pricing.md`, `/blog/slug.md`,
+  // `/baza-znaniy/slug.md`) или контент-негоциация `Accept: text/markdown` на
+  // кешируемых промо-страницах. Отдаётся из JSON-кеша без единого SELECT к БД.
+  if (req.method === "GET" || req.method === "HEAD") {
+    const mdTarget = resolvePromoMarkdownTarget(pathname);
+    if (mdTarget) {
+      const rewriteUrl = req.nextUrl.clone();
+      rewriteUrl.pathname = "/promo-md";
+      rewriteUrl.search = "";
+      rewriteUrl.searchParams.set("target", mdTarget);
+      rewriteUrl.searchParams.set("via", "ext");
+      return NextResponse.rewrite(rewriteUrl);
+    }
+    if (isPublicCacheablePage(pathname) && prefersMarkdown(req.headers.get("accept"))) {
+      const rewriteUrl = req.nextUrl.clone();
+      rewriteUrl.pathname = "/promo-md";
+      rewriteUrl.search = "";
+      rewriteUrl.searchParams.set("target", pathname);
+      rewriteUrl.searchParams.set("via", "accept");
+      return NextResponse.rewrite(rewriteUrl);
+    }
   }
 
   // Та же кука, что у `getServerSession` проекта и next-auth: актуальное

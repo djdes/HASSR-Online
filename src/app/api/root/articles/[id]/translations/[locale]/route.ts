@@ -3,6 +3,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { articleSourceHash, isCurrentArticleTranslation } from "@/lib/article-localization";
 import { isArticleBlockArray } from "@/lib/article-blocks";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { translatorFor } from "@/i18n/translator";
 import { resolveLocale } from "@/i18n/locales";
 
@@ -64,5 +65,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     where: { articleId_locale: { articleId: id, locale } },
     create: { articleId: id, ...content }, update: content,
   });
+  await refreshPromoDataset("blog-articles").catch((error) =>
+    console.error("[blog] promo snapshot refresh failed", error),
+  );
   return NextResponse.json({ translation }, { headers: { "Cache-Control": "private, no-store" } });
 }

@@ -3,6 +3,7 @@ import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { isArticleBlockArray } from "@/lib/article-blocks";
 import { announceArticleIfPublished, articlePublishState } from "@/lib/blog-announce";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,6 +55,9 @@ export async function PATCH(
     where: { id },
     data,
   });
+  await refreshPromoDataset("blog-articles").catch((error) =>
+    console.error("[blog] promo snapshot refresh failed", error),
+  );
   // Впервые опубликована — анонс в Telegram-канал (если канал задан).
   await announceArticleIfPublished({ before: before ?? { publishedAt: null }, after: updated }).catch(() => false);
   return NextResponse.json({ article: updated });
@@ -66,5 +70,8 @@ export async function DELETE(
   await requireRoot();
   const { id } = await context.params;
   await db.article.delete({ where: { id } });
+  await refreshPromoDataset("blog-articles").catch((error) =>
+    console.error("[blog] promo snapshot refresh failed", error),
+  );
   return NextResponse.json({ ok: true });
 }

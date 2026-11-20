@@ -17,7 +17,10 @@ const URL = "https://wesetup.ru/baza-znaniy";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: URL },
+  alternates: {
+    canonical: URL,
+    types: { "text/markdown": `${URL}.md` },
+  },
   openGraph: { type: "website", locale: "ru_RU", siteName: "WeSetup", url: URL, title: TITLE, description: DESCRIPTION, images: ogImages({ title: TITLE, subtitle: DESCRIPTION }) },
   twitter: { card: DEFAULT_TWITTER_CARD, title: TITLE, description: DESCRIPTION, images: twitterImages({ title: TITLE }) },
 };

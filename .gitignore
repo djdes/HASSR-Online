@@ -109,6 +109,8 @@ dispatcher/logs/
 
 # приватные данные рантайма (реквизиты, факсимиле) — см. LEGAL_DIR
 /.data/
+# локальный файловый JSON-кеш промо-страниц (на проде — /var/www/wesetupru/data/promo-cache)
+/.cache/
 
 # архивы деплоя — внутри .env/CLAUDE.md
 .agent/**/*.tar

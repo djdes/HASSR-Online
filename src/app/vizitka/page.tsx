@@ -9,11 +9,10 @@ import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { PAYMENT_METHODS_NOTE, REFUND_NOTE } from "@/lib/payment-copy";
 import { CARD_POINTS } from "@/lib/plan-catalog";
 import { CARD_PROMO_CODE, cardOrderHref, cardTierPrice, type CardDiscount, type CardTierPrice } from "@/lib/promo/card-offer";
-import { readActivePromotion } from "@/lib/promo/offer";
+import { readPromoActivePromotion, readPromoPlanPricing } from "@/lib/promo-cache";
 import { readPromoForOffer } from "@/lib/promo/personal-codes";
 import { describeDiscount } from "@/lib/promo/rules";
 import type { PaidTier } from "@/lib/tariff-plans";
-import { readPlanPricing } from "@/lib/tariffs";
 
 import styles from "./vizitka.module.css";
 
@@ -44,8 +43,8 @@ export default async function VizitkaPromoPage() {
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
 
   const [pricing, promotion, promo, t] = await Promise.all([
-    readPlanPricing(),
-    readActivePromotion().catch((error) => {
+    readPromoPlanPricing(),
+    readPromoActivePromotion().catch((error) => {
       console.error("[promo] vizitka: active promotion read failed", error);
       return null;
     }),
