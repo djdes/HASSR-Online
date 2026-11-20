@@ -61,6 +61,8 @@ export type ExchangeState = {
   counts: ExchangeCounts;
   siblings: ExchangeSibling[];
   cabinet: { id: string; name: string } | null;
+  /** Код мастер-кабинета для запросов от других компаний — только владельцу аккаунта; null — кабинета ещё нет. */
+  cabinetCode: string | null;
   members: ExchangeMember[];
   lastSync: ExchangeSummary | null;
 };
@@ -175,6 +177,7 @@ export function parseState(value: unknown): ExchangeState | null {
     counts: parseCounts(source.counts),
     siblings,
     cabinet: cabinet ? { id: asText(cabinet.id), name: asText(cabinet.name) } : null,
+    cabinetCode: asText(source.cabinetCode) || null,
     members,
     lastSync: parseSummary(source.lastSync),
   };

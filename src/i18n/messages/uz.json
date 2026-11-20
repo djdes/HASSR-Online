@@ -27013,7 +27013,13 @@
           "disconnect": "Uzish",
           "disconnectConfirm": "«{name}» almashinuvdan uzilsinmi? Uzatilgan ma’lumotlar ikkala kompaniyada qoladi, yangi o‘zgarishlar uzatilmay qo‘yadi.",
           "disconnected": "«{name}» bilan almashinuv uzildi",
-          "disconnectFailed": "Ishtirokchini uzib bo‘lmadi"
+          "disconnectFailed": "Ishtirokchini uzib bo‘lmadi",
+          "codeTitle": "Boshqa kompaniyalar uchun master-kabinet kodi",
+          "codeHint": "Kodni siz bilan ma’lumotnomalarni almashmoqchi bo‘lgan kompaniyaga bering. U so‘rov yuboradi — so‘rov pochtangizga keladi, sizning tasdig‘ingizsiz hech narsa uzatilmaydi.",
+          "codeCopy": "Nusxalash",
+          "codeCopied": "Nusxalandi",
+          "codeGet": "Kodni olish",
+          "codeFailed": "Kodni olib bo‘lmadi"
         },
         "kindHints": {
           "products": "Mahsulotlar ma’lumotnomasi: nomi, yetkazib beruvchi, saqlash sharoiti va muddati",

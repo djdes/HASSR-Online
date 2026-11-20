@@ -51,6 +51,12 @@ export type ExchangeState = {
   /** Остальные рабочие организации аккаунта. */
   siblings: ExchangeSibling[];
   cabinet: ExchangeCabinet | null;
+  /**
+   * Код мастер-кабинета — его владелец передаёт другой компании, чтобы та
+   * прислала запрос на обмен (часть 3). Только владельцу аккаунта; null —
+   * кабинета ещё нет (`POST /api/settings/directory-exchange/cabinet` заведёт).
+   */
+  cabinetCode: string | null;
   members: ExchangeMemberState[];
   lastSync: ExchangeSummary | null;
 };
@@ -103,6 +109,14 @@ export async function ensureExchangeCabinet(
   return locked.value;
 }
 
+/** Код кабинета для запросов от других компаний; заводится, если его ещё нет. */
+export async function exchangeCabinetCode(cabinetId: string): Promise<string | null> {
+  return ensureServiceCode(cabinetId).catch((error) => {
+    console.error("[directory-exchange] cabinet code failed", { cabinetId, error });
+    return null;
+  });
+}
+
 /** Рабочие организации аккаунта: без демо и без самих кабинетов. */
 async function accountOrganizations(accountId: string) {
   return db.organization.findMany({
@@ -144,7 +158,7 @@ export async function loadExchangeState(
     organization.kind !== MASTER_ORG_KIND;
   const base = { canManage, organization: { id: organization.id, name: organization.name } };
   if (!canManage || !accountId) {
-    return { ...base, canManage: false, locked: false, counts: zeroCounts(), siblings: [], cabinet: null, members: [], lastSync: null };
+    return { ...base, canManage: false, locked: false, counts: zeroCounts(), siblings: [], cabinet: null, cabinetCode: null, members: [], lastSync: null };
   }
 
   const [counts, locked, organizations, cabinet] = await Promise.all([
@@ -190,6 +204,8 @@ export async function loadExchangeState(
     counts,
     siblings,
     cabinet,
+    // Сюда доходит только владелец аккаунта (выше — ранний выход для остальных).
+    cabinetCode: cabinet ? await exchangeCabinetCode(cabinet.id) : null,
     members: rows.map((row) => ({
       organizationId: row.organizationId,
       name: row.organization.name,

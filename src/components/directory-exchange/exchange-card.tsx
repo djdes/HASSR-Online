@@ -21,6 +21,7 @@ import {
   type ExchangeState,
   type ForeignState,
 } from "./exchange-api";
+import { ExchangeCabinetCode } from "./exchange-cabinet-code";
 import { ExchangeDialog } from "./exchange-dialog";
 import { ForeignMemberRow, ForeignOutgoing, IncomingRequests } from "./exchange-foreign";
 import { ExchangeLimitNote, useResultParts } from "./exchange-result";
@@ -216,6 +217,12 @@ export function ExchangeCard({
           ) : null}
           {/* Владельцу кабинета: кто просит обмен. Решение — по ссылке из письма. */}
           <IncomingRequests incoming={incoming} className="mt-4" />
+          {/* Код, по которому другая компания присылает запрос на обмен. */}
+          <ExchangeCabinetCode
+            code={state.cabinetCode}
+            className="mt-4"
+            onCode={() => setVersion((value) => value + 1)}
+          />
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {state.siblings.length === 0 && exchanging === 0 ? (

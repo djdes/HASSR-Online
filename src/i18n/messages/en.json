@@ -27013,7 +27013,13 @@
           "disconnect": "Disconnect",
           "disconnectConfirm": "Disconnect “{name}” from the exchange? Data already passed stays with both companies; new changes will stop being passed.",
           "disconnected": "The exchange with “{name}” is disconnected",
-          "disconnectFailed": "Could not disconnect the participant"
+          "disconnectFailed": "Could not disconnect the participant",
+          "codeTitle": "Master cabinet code for other companies",
+          "codeHint": "Give this code to a company that wants to exchange directories with you. It sends a request — you receive it by e-mail, and nothing is passed without your approval.",
+          "codeCopy": "Copy",
+          "codeCopied": "Copied",
+          "codeGet": "Get the code",
+          "codeFailed": "Could not get the code"
         },
         "kindHints": {
           "products": "Product directory: name, supplier, storage conditions and shelf life",
