@@ -23,6 +23,7 @@ import { ensureExchangeCabinet, saveExchangeMembers } from "@/lib/directory-exch
 import type { ExchangeSummary } from "@/lib/directory-exchange/summary";
 import { ensureServiceCode, getDishPoolInfo } from "@/lib/dish-pool";
 import { MasterCorrectionError } from "@/lib/master-brakerage-correction";
+import { FOREIGN_POOL_CABINET_MESSAGE, MasterCabinetError, createOrInviteMasterCabinet } from "@/lib/master-cabinet";
 import { listPoolOrganizations, listPoolSharedItems, masterPoolCode, poolObjectId, replaceSharedItems } from "@/lib/master-directory";
 import { connectPoolObjectByCode, disconnectPoolObject } from "@/lib/master-pool-connect";
 import { listNameSuggestions, rememberNames } from "@/lib/name-suggestions-db";
@@ -243,6 +244,36 @@ async function main() {
     aPoolInfo.linkedOrganizationName === cabinet.name && aPoolInfo.poolSize === 3,
     aPoolInfo,
   );
+  // Точка C, подключённая к этому пулу своим кодом: в пуле — кабинет, O, A, B и сама точка.
+  const cPoint = await db.building.create({ data: { organizationId: c.id, name: `Точка C ${TAG}`, linkedServiceCode: poolCode } });
+  const cPointInfo = await getDishPoolInfo(c.id, cPoint.id);
+  check(
+    "a point connected by its own code: the panel counts only its company's and the cabinet's objects (cabinet, O, the point)",
+    cPointInfo.linkedOrganizationName === cabinet.name && cPointInfo.poolSize === 3,
+    cPointInfo,
+  );
+  await db.building.delete({ where: { id: cPoint.id } });
+
+  // «Создать кабинет / пригласить оператора» без кабинета из A: кабинет пула — владельца, другой компании.
+  const membersBefore = await db.organizationMember.count({ where: { organizationId: cabinet.id } });
+  let foreignInvite: unknown = null;
+  try {
+    await createOrInviteMasterCabinet({ organizationId: a.id, actorUserId: ao.owner.id, name: "Оператор А", email: `${TAG}-a-operator@example.test` });
+  } catch (error) {
+    foreignInvite = error;
+  }
+  check(
+    "A's manager cannot create a cabinet in / invite into the owner's pool: 409, no membership, no invited person",
+    foreignInvite instanceof MasterCabinetError &&
+      foreignInvite.status === 409 &&
+      foreignInvite.message === FOREIGN_POOL_CABINET_MESSAGE &&
+      (await db.organizationMember.count({ where: { organizationId: cabinet.id } })) === membersBefore &&
+      (await db.organizationMember.count({ where: { userId: ao.owner.id, organizationId: cabinet.id } })) === 0 &&
+      (await db.user.count({ where: { email: `${TAG}-a-operator@example.test` } })) === 0 &&
+      (await db.organization.count({ where: { kind: "directory", accountId: ao.account.id } })) === 0,
+    foreignInvite instanceof Error ? foreignInvite.message : foreignInvite,
+  );
+  check("…the settings route refuses it too: A's page lists the cabinet as another company's", aView.cabinets.some((item) => item.limited));
 
   /* ── выход компании ── */
   console.log("--- leave and disconnect");
@@ -253,13 +284,15 @@ async function main() {
   const aPointAfter = await db.building.findUnique({ where: { id: aPoint.id } });
   const aOtherAfter = await db.building.findUnique({ where: { id: aOtherPoint.id } });
   check(
-    "A leaves: the organization and its point leave this pool; another pool's point is untouched",
-    (await member(cabinet.id, a.id)) === null && (await linkedCode(a.id)) === null && aPointAfter?.linkedServiceCode === null && aOtherAfter?.linkedServiceCode === "OTHER-POOL1",
+    "A leaves: the organization leaves this pool; its point connected by hand and another pool's point are untouched",
+    (await member(cabinet.id, a.id)) === null && (await linkedCode(a.id)) === null && aPointAfter?.linkedServiceCode === poolCode && aOtherAfter?.linkedServiceCode === "OTHER-POOL1",
     { org: await linkedCode(a.id), point: aPointAfter?.linkedServiceCode, other: aOtherAfter?.linkedServiceCode },
   );
   const leftAudit = await db.auditLog.findFirst({ where: { organizationId: cabinet.id, action: "directory_exchange.request_left" }, orderBy: { createdAt: "desc" } });
   check("…the leave is journaled with poolDisconnected", JSON.stringify(leftAudit?.details).includes('"poolDisconnected":true'), leftAudit?.details);
-  check("…the cabinet's menu no longer resolves for A", (await listPoolSharedItems(a.id, "dish")).length === 0);
+  check("…A's hand-connected point still gets the cabinet's menu", (await listPoolSharedItems(a.id, "dish", aPoint.id)).some((item) => item.name === `Плов кабинета ${TAG}`));
+  await db.building.update({ where: { id: aPoint.id }, data: { linkedServiceCode: null } });
+  check("…once that point is unlinked by hand, the cabinet's menu no longer resolves for A", (await listPoolSharedItems(a.id, "dish")).length === 0);
 
   // Отключение владельцем.
   const bMember = await member(cabinet.id, b.id);
@@ -306,7 +339,13 @@ async function main() {
   await approve(eReq.token, { allowPool: true });
   check("E is connected by the exchange", (await linkedCode(e.id)) === poolCode && (await member(cabinet.id, e.id))?.poolConnected === true);
   await disconnectPoolObject({ masterOrgId: cabinet.id, objectId: poolObjectId(e.id, null), actor: owner.actor });
-  check("…the cabinet disconnected E on «Подключённые объекты»", (await linkedCode(e.id)) === null);
+  check(
+    "…the cabinet disconnected E on «Подключённые объекты»: the exchange mark is dropped",
+    (await linkedCode(e.id)) === null && (await member(cabinet.id, e.id))?.poolConnected === false,
+  );
+  // …и подключил снова вручную: это уже не подключение обмена.
+  await connectPoolObjectByCode({ masterOrgId: cabinet.id, code: await ensureServiceCode(e.id), confirm: true, actor: owner.actor });
+  check("…then reconnected E by hand: no exchange mark", (await linkedCode(e.id)) === poolCode && (await member(cabinet.id, e.id))?.poolConnected === false);
   let eLeft = true;
   try {
     await leave(e.id, eo);
@@ -316,8 +355,8 @@ async function main() {
   }
   const eAudit = await db.auditLog.findFirst({ where: { organizationId: cabinet.id, action: "directory_exchange.request_left", entityId: eReq.request.id } });
   check(
-    "…then E leaves: nothing breaks, nothing to release",
-    eLeft && (await member(cabinet.id, e.id)) === null && (await linkedCode(e.id)) === null && !JSON.stringify(eAudit?.details).includes("poolDisconnected"),
+    "…then E leaves: nothing breaks, the hand-made connection stays",
+    eLeft && (await member(cabinet.id, e.id)) === null && (await linkedCode(e.id)) === poolCode && !JSON.stringify(eAudit?.details).includes("poolDisconnected"),
     eAudit?.details,
   );
 

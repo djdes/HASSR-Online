@@ -8,7 +8,12 @@ import { checkSeatsForActivation, seatLimitResponse, type SeatGuard } from "@/li
 import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { recordAuditLog } from "@/lib/audit-log";
 import { sendInviteTokenEmail } from "@/lib/email";
-import { createOrInviteMasterCabinet, MasterCabinetError, renameMasterCabinet } from "@/lib/master-cabinet";
+import {
+  createOrInviteMasterCabinet,
+  FOREIGN_POOL_CABINET_MESSAGE,
+  MasterCabinetError,
+  renameMasterCabinet,
+} from "@/lib/master-cabinet";
 import { inviteMasterCabinetEmployee } from "@/lib/master-cabinet-staff";
 import { loadOrgMasterCabinets } from "@/lib/org-master-cabinets";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -235,6 +240,13 @@ export async function POST(request: Request) {
   }
 
   // Кабинетов нет — создать кабинет из организации и пригласить первого оператора.
+  // Организация (или её точка) в пуле кабинета другой компании — ни своего
+  // кабинета в этом пуле, ни людей в тот (серия C1; `createOrInviteMasterCabinet`
+  // проверяет то же по пулу самой организации).
+  const current = await loadOrgMasterCabinets(auth.organizationId, auth.session.user.id);
+  if (current.cabinets.some((cabinet) => cabinet.limited)) {
+    return NextResponse.json({ error: FOREIGN_POOL_CABINET_MESSAGE }, { status: 409 });
+  }
   let result;
   try {
     result = await createOrInviteMasterCabinet({

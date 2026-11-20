@@ -25,6 +25,7 @@ import {
   emptyKindRecord,
   entityScope,
   hashScope,
+  naturalKey,
   normalizeExchangeKinds,
   rowHash,
   type ExchangeEntity,
@@ -33,11 +34,13 @@ import {
   normalizeExchangeName,
 } from "@/lib/directory-exchange/kinds";
 import {
+  MIXED_ORIGIN,
   companyReceivesGroup,
   pendingGroupOrigins,
   planEntityExchange,
   rebaseLinks,
   unmarkedGroupRecords,
+  type DatedLinkRow,
   type ExchangeCompanies,
   type ExchangeLinkRow,
 } from "@/lib/directory-exchange/plan";
@@ -158,8 +161,8 @@ async function recordsCreatedAt(entity: string, entityIds: readonly string[]): P
   return created;
 }
 
-/** Отметки групп до C1 по датам их записей (`pendingGroupOrigins`); `links` — связи одной сущности. */
-async function legacyOriginsOf(entity: string, links: readonly ExchangeLinkRow[], companies: ExchangeCompanies): Promise<Map<string, string>> {
+/** Отметки групп до C1 (`pendingGroupOrigins`: по времени связей, в одном обмене — по датам записей); `links` — связи одной сущности. */
+async function legacyOriginsOf(entity: string, links: readonly DatedLinkRow[], companies: ExchangeCompanies): Promise<Map<string, string>> {
   const created = await recordsCreatedAt(entity, unmarkedGroupRecords(links));
   return pendingGroupOrigins(links, companies, (entityId) => created.get(entityId) ?? null);
 }
@@ -580,10 +583,9 @@ async function settleStaffBeforeForeign(params: {
 /**
  * Отметка «чья запись начала группу» у связей без неё (Р6.2, Р6.4): группы,
  * начатые до C1, и связи, записанные без отметки. В группе есть связь с
- * отметкой — та же; нет — организация самой старой живой записи группы
- * (`legacyGroupOrigin`; без дат — осторожное правило по связям). Под замком
- * обмена, до плана; дописываются только пустые отметки, поэтому повторный
- * обмен ничего не меняет.
+ * отметкой — та же; нет — по времени связей: кто был в группе раньше
+ * (`legacyGroupOrigin`). Под замком обмена, до плана; дописываются только
+ * пустые отметки, поэтому повторный обмен ничего не меняет.
  */
 async function settleGroupOrigins(masterOrganizationId: string, ownerCompany: string): Promise<void> {
   const unmarked = await db.directoryExchangeLink.findFirst({
@@ -594,13 +596,13 @@ async function settleGroupOrigins(masterOrganizationId: string, ownerCompany: st
   const links = await db.directoryExchangeLink.findMany({
     where: { masterOrganizationId },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    select: { entity: true, groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true },
+    select: { entity: true, groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true, createdAt: true },
   });
   const companies = {
     owner: ownerCompany,
     of: companyLookup(await loadCompanies(links.map((link) => link.organizationId))),
   };
-  const byEntity = new Map<string, ExchangeLinkRow[]>();
+  const byEntity = new Map<string, DatedLinkRow[]>();
   for (const link of links) {
     const list = byEntity.get(link.entity);
     if (list) list.push(link);
@@ -958,44 +960,80 @@ async function matchTransferEntity(
 type WithheldRows = Record<ExchangeEntity, Set<string>>;
 
 /**
- * Записи источника, которые другой компании не передаются (Р6.5): их группа
- * в обмене кабинета начата не владельцем кабинета и не самой этой компанией
- * (`companyReceivesGroup`), а у группы до C1 без отметки — по тем же
- * правилам, что и при обмене (`legacyOriginsOf`, только для чтения).
+ * Записи источника, которые другой компании не передаются (Р6.5):
+ *   • связанные в обмене кабинета с группой, начатой не владельцем кабинета и
+ *     не самой этой компанией (`companyReceivesGroup`); у группы до C1 без
+ *     отметки — по тем же правилам, что и при обмене (`legacyOriginsOf`,
+ *     только для чтения);
+ *   • о которых связи кабинета молчат (организация вышла из обмена — её связи
+ *     удалены, а копии остались; запись не связана): по естественному ключу
+ *     совпадают с живой записью другой компании в группе этой компании или
+ *     «смешанной». Ключ — как в обмене, но родитель любой, а сотрудник — по
+ *     ФИО: групп у такой организации нет. Своя запись владельца с тем же
+ *     названием тоже не передаётся — лучше лишний отказ, чем чужая запись.
  * Запись, чей обязательный родитель не передаётся, тоже не передаётся.
  */
-async function withheldTransferRows(masterOrganizationId: string, fromOrganizationId: string, toCompany: string): Promise<WithheldRows> {
+async function withheldTransferRows(
+  masterOrganizationId: string,
+  fromOrganizationId: string,
+  toCompany: string,
+  scope: ExchangeScope,
+): Promise<WithheldRows> {
   const result = Object.fromEntries(EXCHANGE_ENTITIES.map((entity) => [entity, new Set<string>()])) as WithheldRows;
   const cabinet = await db.organization.findUnique({ where: { id: masterOrganizationId }, select: { id: true, accountId: true } });
   if (!cabinet) return result;
-  const own = await db.directoryExchangeLink.findMany({
-    where: { masterOrganizationId, organizationId: fromOrganizationId, entityId: { not: null } },
-    select: { entity: true, groupId: true, entityId: true, originOrganizationId: true },
+  const links = await db.directoryExchangeLink.findMany({
+    where: { masterOrganizationId },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { entity: true, groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true, createdAt: true },
   });
-  if (own.length === 0) return result;
-  const legacyGroups = [...new Set(own.filter((link) => !link.originOrganizationId).map((link) => link.groupId))];
-  const legacyLinks = legacyGroups.length
-    ? await db.directoryExchangeLink.findMany({
-        where: { masterOrganizationId, groupId: { in: legacyGroups } },
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-        select: { entity: true, groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true },
-      })
-    : [];
+  if (links.length === 0) return result;
   const known = await loadCompanies([
-    ...own.map((link) => link.originOrganizationId).filter((id): id is string => Boolean(id)),
-    ...legacyLinks.map((link) => link.organizationId),
+    ...links.map((link) => link.organizationId),
+    ...links.map((link) => link.originOrganizationId).filter((id): id is string => Boolean(id)),
   ]);
   const companies: ExchangeCompanies = { owner: exchangeAccountKey(cabinet), of: companyLookup(known) };
-  const legacyOrigin = new Map<string, string>();
+  const looseKey = (entity: ExchangeEntity, row: EntityRow) => naturalKey(entity, row.fields, ENTITY_PARENT[entity] ? "*" : null, null);
+
   for (const entity of EXCHANGE_ENTITIES) {
-    const links = legacyLinks.filter((link) => link.entity === entity);
-    if (links.length === 0) continue;
-    for (const [groupId, origin] of await legacyOriginsOf(entity, links, companies)) legacyOrigin.set(`${entity}|${groupId}`, origin);
-  }
-  for (const link of own) {
-    const origin = link.originOrganizationId ?? legacyOrigin.get(`${link.entity}|${link.groupId}`) ?? null;
-    if (link.entityId && (EXCHANGE_ENTITIES as readonly string[]).includes(link.entity) && !companyReceivesGroup(origin, toCompany, companies)) {
-      result[link.entity as ExchangeEntity].add(link.entityId);
+    const entityLinks = links.filter((link) => link.entity === entity);
+    if (entityLinks.length === 0) continue;
+    const originOf = new Map<string, string>();
+    for (const link of entityLinks) if (link.originOrganizationId && !originOf.has(link.groupId)) originOf.set(link.groupId, link.originOrganizationId);
+    for (const [groupId, origin] of await legacyOriginsOf(entity, entityLinks, companies)) if (!originOf.has(groupId)) originOf.set(groupId, origin);
+
+    const linkedSource = new Set<string>();
+    /** Записи другой компании в группах этой компании или «смешанных»: организация → id. */
+    const foreignRecords = new Map<string, Set<string>>();
+    for (const link of entityLinks) {
+      if (!link.entityId) continue;
+      const origin = originOf.get(link.groupId) ?? null;
+      if (link.organizationId === fromOrganizationId) {
+        linkedSource.add(link.entityId);
+        if (!companyReceivesGroup(origin, toCompany, companies)) result[entity].add(link.entityId);
+        continue;
+      }
+      const company = companies.of(link.organizationId);
+      if (company === companies.owner || company === toCompany) continue;
+      if (origin !== MIXED_ORIGIN && (origin === null || companies.of(origin) !== company)) continue;
+      const ids = foreignRecords.get(link.organizationId);
+      if (ids) ids.add(link.entityId);
+      else foreignRecords.set(link.organizationId, new Set([link.entityId]));
+    }
+    if (foreignRecords.size === 0) continue;
+
+    const keys = new Set<string>();
+    for (const [organizationId, ids] of foreignRecords) {
+      for (const row of await loadEntityRows(entity, organizationId, undefined, scope)) {
+        const key = ids.has(row.id) ? looseKey(entity, row) : null;
+        if (key) keys.add(key);
+      }
+    }
+    if (keys.size === 0) continue;
+    for (const row of await loadEntityRows(entity, fromOrganizationId, undefined, scope)) {
+      if (linkedSource.has(row.id)) continue;
+      const key = looseKey(entity, row);
+      if (key && keys.has(key)) result[entity].add(row.id);
     }
   }
   return result;
@@ -1029,7 +1067,7 @@ export async function transferPreview(input: {
   });
   const withheld =
     input.crossAccount && input.masterOrganizationId
-      ? await withheldTransferRows(input.masterOrganizationId, input.fromOrganizationId, exchangeAccountKey(to))
+      ? await withheldTransferRows(input.masterOrganizationId, input.fromOrganizationId, exchangeAccountKey(to), scope)
       : null;
   const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
   const byEntity = new Map<ExchangeEntity, TransferItem[]>();
@@ -1137,7 +1175,7 @@ export async function transferOnce(input: {
       const record = await startTransferRecord(toOrganizationId);
       const withheld =
         input.crossAccount && input.masterOrganizationId
-          ? await withheldTransferRows(input.masterOrganizationId, fromOrganizationId, exchangeAccountKey(to))
+          ? await withheldTransferRows(input.masterOrganizationId, fromOrganizationId, exchangeAccountKey(to), scope)
           : null;
       const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
       /** Не созданные записи источника → причина (для потомков). */

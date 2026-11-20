@@ -30,7 +30,7 @@ export type MasterCabinetUser = { id: string; name: string; email: string; invit
 async function findMasterInPool(poolIds: string[]) {
   return db.organization.findFirst({
     where: { id: { in: poolIds }, kind: MASTER_ORG_KIND },
-    select: { id: true, name: true },
+    select: { id: true, name: true, accountId: true },
     orderBy: { createdAt: "asc" },
   });
 }
@@ -68,6 +68,10 @@ async function allJournalCodes(): Promise<string[]> {
   const templates = await db.journalTemplate.findMany({ select: { code: true } });
   return [...new Set([...ACTIVE_JOURNAL_CATALOG.map((item) => item.code), ...templates.map((t) => t.code)])];
 }
+
+/** Организация получает меню и сырьё из кабинета другой компании (серия C1). */
+export const FOREIGN_POOL_CABINET_MESSAGE =
+  "Организация получает меню и сырьё из мастер-кабинета другой компании: пригласить в него сотрудника или создать в нём свой кабинет нельзя. Операторов этого кабинета добавляет его владелец.";
 
 export type CreateMasterCabinetResult = {
   created: boolean;
@@ -117,6 +121,11 @@ export async function createOrInviteMasterCabinet(input: {
 
   const poolIds = await resolveDishPoolOrgIds(org.id);
   const existingMaster = await findMasterInPool(poolIds);
+  // Кабинет пула — другой компании (организацию к его меню и сырью подключил
+  // обмен, серия C1): ни людей в него, ни своего кабинета в этом пуле.
+  if (existingMaster && org.accountId && existingMaster.accountId && existingMaster.accountId !== org.accountId) {
+    throw new MasterCabinetError(FOREIGN_POOL_CABINET_MESSAGE, 409);
+  }
 
   // 2. Email занят другим человеком — отказ до создания кабинета (подробные
   //    правила повтора — в inviteMasterCabinetEmployee).

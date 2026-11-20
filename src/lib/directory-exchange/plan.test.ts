@@ -10,6 +10,7 @@ import {
   planEntityExchange,
   rebaseLinks,
   unmarkedGroupRecords,
+  type DatedLinkRow,
   type ExchangeCompanies,
   type ExchangeLinkRow,
   type ExchangeOp,
@@ -698,41 +699,64 @@ test("C1: a mixed group (before C1) — the owner still gets it, companies get n
   assert.ok(!withC.some((op) => op.organizationId === "C" && op.groupId === "g0"));
 });
 
-test("C1: legacy origin by record dates — the organization of the oldest live record founded the group", () => {
-  const rec = (organizationId: string, entityId: string | null) => ({ organizationId, entityId });
-  const dates: Record<string, Date> = { o1: at(0), a1: at(5), a2: at(-5), b2: at(-2), o3: at(1), ox: at(3), ax: at(3), bx: at(3) };
-  const createdAt = (entityId: string) => dates[entityId] ?? null;
-  // The owner's record is older than A's copy → the owner's group.
-  assert.equal(legacyGroupOrigin([rec("A", "a1"), rec("O1", "o1")], companies, createdAt), "O1");
-  // A's record is older than the owner's copy → A's group.
-  assert.equal(legacyGroupOrigin([rec("O1", "o3"), rec("A", "a2")], companies, createdAt), "A");
-  // Two companies, A's record the oldest → A (not mixed).
-  assert.equal(legacyGroupOrigin([rec("O1", "o1"), rec("B", "b2"), rec("A", "a2")], companies, createdAt), "A");
-  // Same moment — the smaller organization id.
-  assert.equal(legacyGroupOrigin([rec("O1", "ox"), rec("B", "bx"), rec("A", "ax")], companies, createdAt), "A");
-  // Tombstones and records without a readable date do not count.
-  assert.equal(legacyGroupOrigin([rec("A", null), rec("B", "gone"), rec("O1", "o1")], companies, createdAt), "O1");
-  // No date at all (areas, equipment) — the cautious rule below.
-  assert.equal(legacyGroupOrigin([rec("O1", "e1"), rec("A", "e2"), rec("B", "e3")], companies, createdAt), MIXED_ORIGIN);
+test("C1: legacy origin by link time — whoever was in the group earlier; one run — record dates, cautiously", () => {
+  /** A link written at minute `linked`; its record created at minute `created` (undefined — unreadable). */
+  const records: Record<string, Date> = {};
+  let seq = 0;
+  const rec = (organizationId: string, linked: number, created?: number, live = true) => {
+    const entityId = `${organizationId.toLowerCase()}${(seq += 1)}`;
+    if (created !== undefined) records[entityId] = at(created);
+    return { organizationId, entityId: live ? entityId : null, createdAt: at(linked) };
+  };
+  const createdAt = (entityId: string) => records[entityId] ?? null;
+  const origin = (...links: ReturnType<typeof rec>[]) => legacyGroupOrigin(links, companies, createdAt);
 
-  const links: ExchangeLinkRow[] = [
-    { groupId: "g1", organizationId: "O1", entityId: "o3", hash: "h", originOrganizationId: null },
-    { groupId: "g1", organizationId: "A", entityId: "a2", hash: "h", originOrganizationId: null },
-    { groupId: "g2", organizationId: "O1", entityId: "o1", hash: "h", originOrganizationId: "O1" },
-    { groupId: "g2", organizationId: "B", entityId: "b9", hash: "h", originOrganizationId: null },
+  // The owner was linked in an earlier run → the owner's group, even though A's record is older.
+  assert.equal(origin(rec("O1", 0, 5), rec("A", 60, -100)), "O1");
+  // A was linked earlier → A's group.
+  assert.equal(origin(rec("A", 0, -10), rec("O1", 60, 30)), "A");
+  // A deleted and re-created its record (newer than everything) under its old link: still decided by links.
+  assert.equal(origin(rec("A", 0, 500), rec("O1", 60, 30)), "A");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60, 500)), "O1");
+  // One run linked both: the owner only when its oldest record is strictly older than every record of A…
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 0, -5)), "O1");
+  // …A's record is older, or a record cannot be read → A.
+  assert.equal(origin(rec("O1", 0, -5), rec("A", 0, -10)), "A");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 0)), "A");
+  assert.equal(origin(rec("O1", 0), rec("A", 0, -5)), "A");
+  // …A's record was re-created after its link (A founded the group, the owner got a copy in that run) → A.
+  assert.equal(origin(rec("A", 0, 500), rec("O1", 0, -1)), "A");
+  // A record hard-deleted while its link is live: decided by links; in one run — A.
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60)), "O1");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 0)), "A");
+  // A company that only has a tombstone is still present, at its link time.
+  assert.equal(origin(rec("A", 0, undefined, false), rec("O1", 60, 30)), "A");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60, undefined, false)), "O1");
+  // Two companies → mixed, whatever the dates; no company → the owner's earliest link (equal — smaller id).
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60, 5), rec("B", 90, 6)), MIXED_ORIGIN);
+  assert.equal(origin(rec("O2", 0, 1), rec("O1", 0, 2)), "O1");
+  assert.equal(origin(rec("O2", 10, 1), rec("O1", 20, 2)), "O2");
+
+  const links: DatedLinkRow[] = [
+    { groupId: "g1", organizationId: "O1", entityId: "o3", hash: "h", originOrganizationId: null, createdAt: at(0) },
+    { groupId: "g1", organizationId: "A", entityId: "a2", hash: "h", originOrganizationId: null, createdAt: at(0) },
+    { groupId: "g2", organizationId: "O1", entityId: "o1", hash: "h", originOrganizationId: "O1", createdAt: at(0) },
+    { groupId: "g2", organizationId: "B", entityId: "b9", hash: "h", originOrganizationId: null, createdAt: at(0) },
   ];
-  // Only records of groups with no origin at all need a date.
+  // Only records of groups with no origin at all may need a date.
   assert.deepEqual(unmarkedGroupRecords(links), ["o3", "a2"]);
-  assert.deepEqual([...pendingGroupOrigins(links, companies, createdAt)], [["g1", "A"], ["g2", "O1"]]);
+  const dates: Record<string, Date> = { o3: at(-10), a2: at(-5) };
+  assert.deepEqual([...pendingGroupOrigins(links, companies, (id) => dates[id] ?? null)], [["g1", "O1"], ["g2", "O1"]]);
+  assert.deepEqual([...pendingGroupOrigins(links, companies)], [["g1", "A"], ["g2", "O1"]]);
 });
 
-test("C1: legacy origin without record dates — one company → its organization, several → mixed, none → the owner's earliest", () => {
+test("C1: legacy origin without any dates — one company → it (cautious), several → mixed, none → the owner's first", () => {
   const live = (organizationId: string, entityId: string | null = "x") => ({ organizationId, entityId });
   assert.equal(legacyGroupOrigin([live("O1"), live("A2"), live("A"), live("O2")], companies), "A2");
   assert.equal(legacyGroupOrigin([live("O1"), live("A"), live("B")], companies), MIXED_ORIGIN);
   assert.equal(legacyGroupOrigin([live("O2"), live("O1")], companies), "O2");
-  // A tombstone of a company does not count while live links exist.
-  assert.equal(legacyGroupOrigin([live("B", null), live("O1"), live("A")], companies), "A");
+  // A company that only has a tombstone still counts: with another company — mixed.
+  assert.equal(legacyGroupOrigin([live("B", null), live("O1"), live("A")], companies), MIXED_ORIGIN);
   assert.equal(legacyGroupOrigin([live("B", null), live("O1", null)], companies), "B");
   assert.equal(legacyGroupOrigin([], companies), null);
   // An organization that no longer exists is a company of its own.

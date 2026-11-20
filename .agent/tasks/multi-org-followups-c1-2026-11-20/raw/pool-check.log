@@ -33,10 +33,14 @@ PASS A's «Мастер-кабинет» page: the cabinet's name only — no op
 PASS …A's own organization is listed in that cabinet (it may disconnect itself)
 PASS the owner's page is unchanged: count of objects (O, A, B) and not limited
 PASS A's dish pool panel names the cabinet and counts only organizations whose dishes it sees
+PASS a point connected by its own code: the panel counts only its company's and the cabinet's objects (cabinet, O, the point)
+PASS A's manager cannot create a cabinet in / invite into the owner's pool: 409, no membership, no invited person
+PASS …the settings route refuses it too: A's page lists the cabinet as another company's
 --- leave and disconnect
-PASS A leaves: the organization and its point leave this pool; another pool's point is untouched
+PASS A leaves: the organization leaves this pool; its point connected by hand and another pool's point are untouched
 PASS …the leave is journaled with poolDisconnected
-PASS …the cabinet's menu no longer resolves for A
+PASS …A's hand-connected point still gets the cabinet's menu
+PASS …once that point is unlinked by hand, the cabinet's menu no longer resolves for A
 PASS the owner disconnects B: B leaves the pool too
 --- a refused pool connection
 PASS C is already in another cabinet's pool: the link exists, the pool is not changed, a note explains
@@ -47,10 +51,11 @@ PASS D was connected by hand: approval is idempotent (connected, no error), pool
 PASS …D leaves the exchange: the hand-made pool link is kept
 --- the cabinet disconnected the object meanwhile
 PASS E is connected by the exchange
-PASS …the cabinet disconnected E on «Подключённые объекты»
-PASS …then E leaves: nothing breaks, nothing to release
+PASS …the cabinet disconnected E on «Подключённые объекты»: the exchange mark is dropped
+PASS …then reconnected E by hand: no exchange mark
+PASS …then E leaves: nothing breaks, the hand-made connection stays
 --- the mark is written with the connection
 PASS a failing mark (the company already left) rolls the connection back
 cleanup: organizations left 0, users left 0, accounts left 0, requests left 0, members left 0
-TOTAL: 44 PASS, 0 FAIL
+TOTAL: 49 PASS, 0 FAIL
 RESULT: all checks passed

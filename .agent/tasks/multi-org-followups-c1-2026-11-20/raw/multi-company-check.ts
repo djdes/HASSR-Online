@@ -6,8 +6,8 @@
  * accounts) are linked by approved requests. Both get the owner's records; neither gets the
  * other's — by creation, by edit or by name match; a company's edit does not change the
  * owner's record; the owner's edit reaches both; a one-off transfer requested by B does not
- * give B records that came from A. Legacy groups without an origin get the organization of
- * their oldest record (without record dates — the cautious rule by links).
+ * give B records that came from A — also from an own organization that left the exchange.
+ * Legacy groups without an origin get one by link time (one run — cautiously by record dates).
  */
 import "dotenv/config";
 
@@ -20,6 +20,7 @@ import { MIXED_ORIGIN } from "@/lib/directory-exchange/plan";
 import { createExchangeRequest, decideExchangeRequest } from "@/lib/directory-exchange/requests.server";
 import { runDirectoryExchange, transferPreview } from "@/lib/directory-exchange/run.server";
 import { ensureExchangeCabinet, saveExchangeMembers } from "@/lib/directory-exchange/settings.server";
+import { listExchangeSkips } from "@/lib/directory-exchange/skips.server";
 import { summaryTotals, type ExchangeSummary } from "@/lib/directory-exchange/summary";
 
 const TAG = `mchk${Date.now().toString(36)}`;
@@ -232,6 +233,15 @@ async function main() {
     o1BreadLink?.groupId === aBreadLink?.groupId && o1Bread?.supplier === "Пекарня A" && bBread?.supplier === "Пекарня B" && aBread?.supplier === "Пекарня A",
     { o1: o1Bread?.supplier, b: bBread?.supplier },
   );
+  // У владельца нет своего «Общего хлеба»: у него копия A, а запись B — пропуск «название занято», связать не с чем (звезда).
+  const breadSkips = (await listExchangeSkips({ accountId: owner.account.id })).organizations.flatMap((organization) =>
+    organization.items.filter((item) => item.entity === "product" && item.name === "Общий хлеб").map((item) => ({ org: organization.organizationId, ...item })),
+  );
+  check(
+    "…B's «Общий хлеб» stays a conflict skip at both owner organizations with no candidate to link",
+    breadSkips.length === 2 && breadSkips.every((item) => item.reason === "conflict" && item.candidates.length === 0) && new Set(breadSkips.map((item) => item.org)).size === 2,
+    breadSkips.map((item) => [item.org === o1.id ? "O1" : item.org === o2.id ? "O2" : item.org, item.reason, item.candidates.length]),
+  );
   const [aMilk, bMilk, o1Milk] = await Promise.all([product(a1.id, "Молоко"), product(b1.id, "Молоко"), product(o1.id, "Молоко")]);
   const milkLinks = await Promise.all([linkOf(a1.id, aMilk!.id), linkOf(b1.id, bMilk!.id), linkOf(o1.id, o1Milk!.id)]);
   check(
@@ -328,56 +338,108 @@ async function main() {
     b2Areas.map((area) => area.equipment.map((item) => item.tempMin)),
   );
 
-  /* ── AC2: группы без отметки (до C1): основатель — организация самой старой записи ── */
+  /* ── своя организация вышла из обмена: её копии записей A не уходят B (Р6.5, по ключу) ── */
+  console.log("--- transfer from an own organization that left the exchange");
+  const o3 = await makeOrg("Владелец-O3", owner.account.id);
+  await join(owner.owner.id, o3.id);
+  const setO3 = (kinds: string[]) =>
+    saveExchangeMembers({ ownerUserId: owner.owner.id, ownerName: owner.owner.name, organizationId: o1.id, members: [{ organizationId: o3.id, kinds }] });
+  await setO3([...EXCHANGE_KINDS]);
+  await runDirectoryExchange(cabinet.id, { actor: owner.actor });
+  const o3Had = await all(o3.id);
+  check("O3 took part in the exchange and received A's records", missing(o3Had, [...A_RECORDS, "Общий хлеб"]).length === 0, missing(o3Had, A_RECORDS));
+  await setO3([]);
+  check(
+    "O3 left the exchange: its links are gone, the copies stay",
+    (await db.directoryExchangeLink.count({ where: { masterOrganizationId: cabinet.id, organizationId: o3.id } })) === 0 && missing(await all(o3.id), A_RECORDS).length === 0,
+  );
+  await db.product.create({ data: { name: "Квас O3", kind: "raw", unit: "l", supplier: "Квасная O3", organizationId: o3.id } });
+  const o3Preview = await transferPreview({ fromOrganizationId: o3.id, toOrganizationId: b2.id, crossAccount: true, masterOrganizationId: cabinet.id });
+  const o3PreviewNames = EXCHANGE_KINDS.flatMap((kind) => o3Preview.items[kind].map((item) => item.name));
+  check(
+    "transfer preview O3 → B: O3's own product offered, none of A's names",
+    o3PreviewNames.includes("Квас O3") && present(o3PreviewNames, [...A_RECORDS, "Общий хлеб"]).length === 0,
+    o3PreviewNames,
+  );
+  const fromO3 = await createExchangeRequest({ organizationId: b2.id, actor: b.actor, code, mode: "transfer", kinds: [...EXCHANGE_KINDS] });
+  await decideExchangeRequest({ token: fromO3.token, actor: owner.actor, decision: "approve", allowedKinds: [...EXCHANGE_KINDS], sourceOrganizationId: o3.id });
+  const b2AfterO3 = await all(b2.id);
+  check("transfer O3 → B by an approved request: O3's own product arrived", b2AfterO3.includes("Квас O3"));
+  check(
+    "…and none of A's records (O3's copies are withheld by name)",
+    present(b2AfterO3, [...A_RECORDS, "Общий хлеб"]).length === 0,
+    present(b2AfterO3, [...A_RECORDS, "Общий хлеб"]),
+  );
+
+  /* ── AC2: группы без отметки (до C1): по времени связей, в одном обмене — осторожно по датам записей ── */
   console.log("--- legacy groups without an origin");
-  const daysAgo = (days: number) => new Date(Date.now() - days * DAY);
-  /** Группа до C1: записи с заданной датой создания и связи без отметки. */
-  const legacy = async (entity: "product" | "area", name: string, records: Array<[string, number]>) => {
+  // Одна точка отсчёта: связи «одного обмена» должны получить одну и ту же дату.
+  const legacyBase = Date.now();
+  const daysAgo = (days: number) => new Date(legacyBase - days * DAY);
+  /** Группа до C1: записи (с датой создания) и связи без отметки, записанные `linked` дней назад. */
+  const legacy = async (entity: "product" | "area", name: string, records: Array<{ org: string; linked: number; created?: number }>) => {
     const groupId = randomUUID();
-    for (const [organizationId, age] of records) {
+    for (const { org, linked, created } of records) {
       const id =
         entity === "product"
-          ? (await db.product.create({ data: { name, kind: "raw", unit: "kg", supplier: "Старый", organizationId, createdAt: daysAgo(age) } })).id
-          : (await db.area.create({ data: { name, organizationId } })).id;
-      const row = (await loadEntityRows(entity, organizationId, () => null, entityScope(entity, "foreign"))).find((item) => item.id === id)!;
+          ? (await db.product.create({ data: { name, kind: "raw", unit: "kg", supplier: "Старый", organizationId: org, createdAt: daysAgo(created ?? linked) } })).id
+          : (await db.area.create({ data: { name, organizationId: org } })).id;
+      const row = (await loadEntityRows(entity, org, () => null, entityScope(entity, "foreign"))).find((item) => item.id === id)!;
       await db.directoryExchangeLink.create({
-        data: { masterOrganizationId: cabinet.id, entity, groupId, organizationId, entityId: id, hash: row.hash, originOrganizationId: null },
+        data: { masterOrganizationId: cabinet.id, entity, groupId, organizationId: org, entityId: id, hash: row.hash, originOrganizationId: null, createdAt: daysAgo(linked) },
       });
     }
     return groupId;
   };
-  const ownerCopiedToA = await legacy("product", "Легаси O→A", [[o1.id, 10], [a1.id, 5]]);
-  const aCopiedToOwner = await legacy("product", "Легаси A→O", [[a1.id, 10], [o1.id, 5]]);
-  const twoCompanies = await legacy("product", "Легаси AB", [[b1.id, 8], [o1.id, 5], [a1.id, 10]]);
-  const ownerOnly = await legacy("product", "Легаси O", [[o1.id, 5], [o2.id, 10]]);
-  // У цехов даты создания нет — осторожное правило: связи двух компаний → «смешанная».
-  const undated = await legacy("area", "Легаси цех", [[o1.id, 0], [a1.id, 0], [b1.id, 0]]);
+  // Владелец был в группе раньше A (A получила копию позже) — даже если запись A старше.
+  const ownerFirst = await legacy("product", "Легаси O→A", [{ org: o1.id, linked: 10, created: 12 }, { org: a1.id, linked: 5, created: 30 }]);
+  // A была в группе раньше владельца.
+  const aFirst = await legacy("product", "Легаси A→O", [{ org: a1.id, linked: 10, created: 12 }, { org: o1.id, linked: 5 }]);
+  // Один обмен: A начала группу, владелец получил копию, позже A удалила запись и завела снова.
+  const aRecreated = await legacy("product", "Легаси A заново", [{ org: o1.id, linked: 10, created: 10 }, { org: a1.id, linked: 10, created: 1 }]);
+  // Один обмен: обе записи были до него, запись владельца старше.
+  const sameRunOwnerOlder = await legacy("product", "Легаси вместе", [{ org: o1.id, linked: 10, created: 20 }, { org: a1.id, linked: 10, created: 15 }]);
+  const twoCompanies = await legacy("product", "Легаси AB", [{ org: a1.id, linked: 10 }, { org: b1.id, linked: 8 }, { org: o1.id, linked: 5 }]);
+  const ownerOnly = await legacy("product", "Легаси O", [{ org: o1.id, linked: 5 }, { org: o2.id, linked: 10 }]);
+  // У цехов даты создания нет: один обмен — осторожно, группа компании.
+  const undated = await legacy("area", "Легаси цех", [{ org: o1.id, linked: 10 }, { org: a1.id, linked: 10 }]);
   const origins = async (groupId: string) =>
     [...new Set((await db.directoryExchangeLink.findMany({ where: { masterOrganizationId: cabinet.id, groupId } })).map((row) => row.originOrganizationId))];
+  const same = async (groupId: string, expected: string) => JSON.stringify(await origins(groupId)) === JSON.stringify([expected]);
   const legacyRun = await runDirectoryExchange(cabinet.id, { actor: owner.actor });
-  check("owner's record older than A's copy → the owner's group", JSON.stringify(await origins(ownerCopiedToA)) === JSON.stringify([o1.id]), await origins(ownerCopiedToA));
-  check("A's record older than the owner's copy → A's group", JSON.stringify(await origins(aCopiedToOwner)) === JSON.stringify([a1.id]), await origins(aCopiedToOwner));
-  check("two companies, A's record the oldest → A's group (not mixed)", JSON.stringify(await origins(twoCompanies)) === JSON.stringify([a1.id]), await origins(twoCompanies));
-  check("owner's records only → the organization of the oldest one (O2)", JSON.stringify(await origins(ownerOnly)) === JSON.stringify([o2.id]), await origins(ownerOnly));
-  check("no record dates (areas), two companies' links → «mixed»", JSON.stringify(await origins(undated)) === JSON.stringify([MIXED_ORIGIN]), await origins(undated));
+  check("owner linked earlier than A (A's record older) → the owner's group", await same(ownerFirst, o1.id), await origins(ownerFirst));
+  check("A linked earlier than the owner → A's group", await same(aFirst, a1.id), await origins(aFirst));
+  check("one run, A's record re-created after its link → A's group (cautious)", await same(aRecreated, a1.id), await origins(aRecreated));
+  check("one run, the owner's record strictly older than A's → the owner's group", await same(sameRunOwnerOlder, o1.id), await origins(sameRunOwnerOlder));
+  check("two companies → «mixed»", await same(twoCompanies, MIXED_ORIGIN), await origins(twoCompanies));
+  check("owner's links only → the organization of the earliest link (O2)", await same(ownerOnly, o2.id), await origins(ownerOnly));
+  check("no record dates (areas), one run → the company's group", await same(undated, a1.id), await origins(undated));
   const [o2Now, aNow, bNow] = await Promise.all([all(o2.id), all(a1.id), all(b1.id)]);
-  check("B receives the owner-founded legacy group already copied to A", bNow.includes("Легаси O→A"), bNow.filter((name) => name.startsWith("Легаси")));
-  check("B does not receive the A-founded legacy group", !bNow.includes("Легаси A→O"));
-  check("both companies received the owner's legacy group", aNow.includes("Легаси O") && bNow.includes("Легаси O"));
+  check(
+    "B receives the owner's legacy groups (incl. one already copied to A)",
+    missing(bNow, ["Легаси O→A", "Легаси вместе", "Легаси O"]).length === 0,
+    bNow.filter((name) => name.startsWith("Легаси")),
+  );
+  check(
+    "B receives none of A's legacy groups",
+    present(bNow, ["Легаси A→O", "Легаси A заново", "Легаси цех"]).length === 0,
+    bNow.filter((name) => name.startsWith("Легаси")),
+  );
+  check("A received the owner's legacy group", aNow.includes("Легаси O"));
   check(
     "the owner's O2 received every legacy group",
-    missing(o2Now, ["Легаси O→A", "Легаси A→O", "Легаси AB", "Легаси цех"]).length === 0,
+    missing(o2Now, ["Легаси O→A", "Легаси A→O", "Легаси A заново", "Легаси вместе", "Легаси AB", "Легаси цех"]).length === 0,
     { o2: o2Now.filter((name) => name.startsWith("Легаси")), notes: legacyRun.notes },
   );
   check(
     "the origin is saved: no link of the cabinet without one",
     (await db.directoryExchangeLink.count({ where: { masterOrganizationId: cabinet.id, originOrganizationId: null } })) === 0,
   );
-  // Группа A, в которой есть запись B: правка владельца доходит до O2 и A, но не до B.
+  // В «смешанной» группе компании правок не получают, владелец — получает.
   await db.product.update({ where: { id: (await product(o1.id, "Легаси AB"))!.id }, data: { supplier: "Новый" } });
   await runDirectoryExchange(cabinet.id, { actor: owner.actor });
-  const edited = await Promise.all([o2.id, a1.id, b1.id].map(async (id) => (await product(id, "Легаси AB"))?.supplier));
-  check("A's legacy group: the owner's edit reaches O2 and A, not B", JSON.stringify(edited) === JSON.stringify(["Новый", "Новый", "Старый"]), edited);
+  const mixed = await Promise.all([o2.id, a1.id, b1.id].map(async (id) => (await product(id, "Легаси AB"))?.supplier));
+  check("a mixed group: the owner's edit reaches O2, not the companies", JSON.stringify(mixed) === JSON.stringify(["Новый", "Старый", "Старый"]), mixed);
   const before = await db.directoryExchangeLink.findMany({ where: { masterOrganizationId: cabinet.id }, orderBy: { id: "asc" }, select: { id: true, originOrganizationId: true, hash: true, entityId: true } });
   const again = await runDirectoryExchange(cabinet.id, { actor: owner.actor });
   const afterLinks = await db.directoryExchangeLink.findMany({ where: { masterOrganizationId: cabinet.id }, orderBy: { id: "asc" }, select: { id: true, originOrganizationId: true, hash: true, entityId: true } });

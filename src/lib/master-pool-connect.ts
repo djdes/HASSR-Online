@@ -157,6 +157,7 @@ export async function disconnectPoolObject(input: {
           await tx.building.updateMany({ where: { id: { in: others.map((building) => building.id) } }, data: { linkedServiceCode: poolCode } });
         }
         await tx.organization.update({ where: { id: org.id }, data: { linkedServiceCode: null } });
+        await forgetExchangePool(tx, poolCode, org.id);
       }
       if (point.linkedServiceCode === poolCode) {
         await tx.building.update({ where: { id: point.id }, data: { linkedServiceCode: null } });
@@ -166,6 +167,7 @@ export async function disconnectPoolObject(input: {
     }
     if (org.linkedServiceCode !== poolCode) throw new MasterCorrectionError(ownerError);
     await tx.organization.update({ where: { id: org.id }, data: { linkedServiceCode: null } });
+    await forgetExchangePool(tx, poolCode, org.id);
     await audit(tx, { masterOrgId, organizationId: org.id, ...actor, action: "master_directory.object_disconnected", entity: "Organization", entityId: org.id, name: object.name });
   });
   return { name: object.name };
@@ -185,13 +187,29 @@ export async function lockCabinetPool(tx: Tx, masterOrgId: string): Promise<stri
 }
 
 /**
- * Снять подключение организации и её точек к пулу `poolCode` — только там,
- * где привязка указывает именно на него (серия C1, Р7.3: компания вышла из
- * обмена или её отключили). Вызывать под `lockCabinetPool`. Журнал пишет
- * вызывающий. `true` — что-то снято.
+ * Снять подключение организации к пулу `poolCode` — только если её привязка
+ * указывает именно на него (серия C1, Р7.3: компания вышла из обмена или её
+ * отключили). Обмен подключает организацию целиком, поэтому и снимает только
+ * её: точки, подключённые своим кодом вручную, остаются. Вызывать под
+ * `lockCabinetPool`. Журнал пишет вызывающий. `true` — подключение снято.
  */
 export async function releaseOrganizationPool(tx: Tx, poolCode: string, organizationId: string): Promise<boolean> {
   const organization = await tx.organization.updateMany({ where: { id: organizationId, linkedServiceCode: poolCode }, data: { linkedServiceCode: null } });
-  const points = await tx.building.updateMany({ where: { organizationId, linkedServiceCode: poolCode }, data: { linkedServiceCode: null } });
-  return organization.count + points.count > 0;
+  return organization.count > 0;
+}
+
+/**
+ * Организацию отключили от пула вручную («Подключённые объекты»): пометка
+ * обмена `poolConnected` снимается — подключение, сделанное потом снова
+ * вручную, выход компании из обмена уже не снимет (серия C1).
+ */
+function forgetExchangePool(tx: Tx, poolCode: string, organizationId: string) {
+  return tx.directoryExchangeMember.updateMany({
+    where: {
+      organizationId,
+      poolConnected: true,
+      masterOrganization: { OR: [{ linkedServiceCode: poolCode }, { serviceCode: poolCode, linkedServiceCode: null }] },
+    },
+    data: { poolConnected: false },
+  });
 }

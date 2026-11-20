@@ -88,44 +88,81 @@ export function companyReceivesGroup(origin: string | null | undefined, company:
 export type RecordCreatedAt = (entityId: string) => Date | null | undefined;
 
 /**
- * Отметка группы, начатой до C1 (Р6.4). Основатель — организация самой
- * старой живой записи группы (`createdAt`, при равенстве — меньший id
- * организации): копии, сделанные обменом, всегда моложе оригинала, а у
- * совпавших по названию записей образцом и так была запись владельца
- * (компании пассивны). Основатель — организация владельца → группа
- * владельца; организация компании → этой компании.
- *
- * Дату не прочитать ни у одной живой записи (у цехов и оборудования её нет) —
- * осторожное правило по связям в порядке создания: живые связи ровно одной
- * компании другого аккаунта — её ранняя организация; нескольких —
- * «смешанная»; ни одной — ранняя организация с живой связью (владельца).
- * Живых связей нет — так же по всем связям; связей нет — null.
+ * Связь с датой, когда её записали (`createdAt` строки связи). Обмен эту дату
+ * не меняет: правка, надгробие и «ожившая» запись обновляют связь на месте,
+ * поэтому по ней видно, кто был в группе раньше.
+ */
+export type DatedLinkRow = ExchangeLinkRow & { createdAt?: Date | null };
+
+/**
+ * Отметка группы, начатой до C1 (Р6.4) — по времени связей, а не записей:
+ * запись можно удалить и завести снова (она вернётся в группу под старой
+ * связью), а копию — сделать много позже оригинала. Компании — по всем
+ * связям группы, с надгробиями (компания, удалившая свою запись, могла её и
+ * начать):
+ *   • компаний нет — группа владельца (его самая ранняя живая связь);
+ *   • компаний несколько — «смешанная»;
+ *   • одна компания C — сравниваются самые ранние живые связи владельца и C
+ *     (у C только надгробия — её связи): владелец раньше — группа была у него
+ *     до прихода C, она его; C раньше — её. Связи из одного обмена (одна
+ *     дата) — группа владельца, только если записи читаются, самая старая
+ *     запись владельца строго старше каждой записи C и ни одна запись C не
+ *     заведена позже своей связи (не создана заново); иначе — C. Без дат (цеха,
+ *     оборудование, связи без даты) — C: осторожно.
+ * Связей нет — null.
  */
 export function legacyGroupOrigin(
-  links: readonly Pick<ExchangeLinkRow, "organizationId" | "entityId">[],
+  links: readonly Pick<DatedLinkRow, "organizationId" | "entityId" | "createdAt">[],
   companies: ExchangeCompanies,
   createdAtOf?: RecordCreatedAt,
 ): string | null {
-  const live = links.filter((link) => link.entityId !== null);
-  let founder: { organizationId: string; time: number } | null = null;
-  for (const link of live) {
-    const time = createdAtOf?.(link.entityId!)?.getTime();
-    if (time === undefined || !Number.isFinite(time)) continue;
-    if (!founder || time < founder.time || (time === founder.time && link.organizationId < founder.organizationId)) {
-      founder = { organizationId: link.organizationId, time };
-    }
-  }
-  if (founder) return founder.organizationId;
+  type Link = (typeof links)[number];
+  if (links.length === 0) return null;
+  const linkTime = (link: Link) => link.createdAt?.getTime() ?? Number.NaN;
+  const recordTime = (link: Link) => (link.entityId ? createdAtOf?.(link.entityId)?.getTime() : undefined) ?? Number.NaN;
+  /** Самая ранняя связь (при равенстве — меньший id организации); без дат — первая по порядку. */
+  const earliest = (list: readonly Link[]) =>
+    list.reduce((best, link) => {
+      const time = linkTime(link);
+      const bestTime = linkTime(best);
+      if (Number.isNaN(time)) return best;
+      if (Number.isNaN(bestTime) || time < bestTime || (time === bestTime && link.organizationId < best.organizationId)) return link;
+      return best;
+    }, list[0]);
+  const isLive = (link: Link) => link.entityId !== null;
+  const isOwner = (link: Link) => companies.of(link.organizationId) === companies.owner;
 
-  const pool = live.length > 0 ? live : links;
-  if (pool.length === 0) return null;
-  const foreign = new Map<string, string>();
-  for (const link of pool) {
+  const foreign = new Map<string, Link[]>();
+  for (const link of links) {
+    if (isOwner(link)) continue;
     const company = companies.of(link.organizationId);
-    if (company !== companies.owner && !foreign.has(company)) foreign.set(company, link.organizationId);
+    const list = foreign.get(company);
+    if (list) list.push(link);
+    else foreign.set(company, [link]);
   }
   if (foreign.size > 1) return MIXED_ORIGIN;
-  return foreign.size === 1 ? [...foreign.values()][0] : pool[0].organizationId;
+  const ownerLive = links.filter((link) => isLive(link) && isOwner(link));
+  if (foreign.size === 0) return earliest(ownerLive.length > 0 ? ownerLive : links).organizationId;
+
+  const companyLinks = [...foreign.values()][0];
+  const companyLive = companyLinks.filter(isLive);
+  const companyFirst = earliest(companyLive.length > 0 ? companyLive : companyLinks);
+  if (ownerLive.length === 0) return companyFirst.organizationId;
+  const ownerFirst = earliest(ownerLive);
+  const ownerTime = linkTime(ownerFirst);
+  const companyTime = linkTime(companyFirst);
+  if (Number.isNaN(ownerTime) || Number.isNaN(companyTime)) return companyFirst.organizationId;
+  if (ownerTime !== companyTime) return ownerTime < companyTime ? ownerFirst.organizationId : companyFirst.organizationId;
+
+  // Один обмен связал обе стороны: решают даты записей — осторожно.
+  const ownerRecords = ownerLive.map(recordTime).filter((time) => Number.isFinite(time));
+  if (ownerRecords.length === 0 || companyLive.length === 0) return companyFirst.organizationId;
+  const ownerOldest = Math.min(...ownerRecords);
+  const ownerFounded = companyLive.every((link) => {
+    const time = recordTime(link);
+    return Number.isFinite(time) && time > ownerOldest && time <= linkTime(link);
+  });
+  return ownerFounded ? ownerFirst.organizationId : companyFirst.organizationId;
 }
 
 /**
@@ -134,7 +171,7 @@ export function legacyGroupOrigin(
  * `legacyGroupOrigin`. Группы, где отметка у всех связей, сюда не попадают.
  */
 export function pendingGroupOrigins(
-  links: readonly ExchangeLinkRow[],
+  links: readonly DatedLinkRow[],
   companies: ExchangeCompanies,
   createdAtOf?: RecordCreatedAt,
 ): Map<string, string> {
@@ -147,7 +184,7 @@ export function pendingGroupOrigins(
   return pending;
 }
 
-/** Записи групп без отметки ни у одной связи: им отметку вычисляет `legacyGroupOrigin` по дате записей. */
+/** Записи групп без отметки ни у одной связи: их даты нужны `legacyGroupOrigin`, когда связи из одного обмена. */
 export function unmarkedGroupRecords(links: readonly ExchangeLinkRow[]): string[] {
   const ids: string[] = [];
   for (const list of linksByGroup(links).values()) {
@@ -157,8 +194,8 @@ export function unmarkedGroupRecords(links: readonly ExchangeLinkRow[]): string[
   return ids;
 }
 
-function linksByGroup(links: readonly ExchangeLinkRow[]): Map<string, ExchangeLinkRow[]> {
-  const groups = new Map<string, ExchangeLinkRow[]>();
+function linksByGroup<Link extends ExchangeLinkRow>(links: readonly Link[]): Map<string, Link[]> {
+  const groups = new Map<string, Link[]>();
   for (const link of links) {
     const list = groups.get(link.groupId);
     if (list) list.push(link);

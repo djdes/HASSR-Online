@@ -126,10 +126,22 @@ export async function getDishPoolInfo(organizationId: string, buildingId?: strin
     const code = building.linkedServiceCode;
     const [owner, orgs, buildings] = await Promise.all([
       db.organization.findFirst({ where: { serviceCode: code }, select: { name: true, accountId: true } }),
-      db.organization.count({ where: { OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }] } }),
-      db.building.count({ where: { linkedServiceCode: code } }),
+      db.organization.findMany({
+        where: { OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }] },
+        select: { id: true },
+        take: POOL_MAX_ORGS,
+      }),
+      db.building.findMany({ where: { linkedServiceCode: code }, select: { organizationId: true }, take: POOL_MAX_ORGS * 4 }),
     ]);
-    return { ownCode, linkedCode: code, linkedOrganizationName: await poolOwnerName(organizationId, code, owner), poolSize: orgs + buildings, pointName };
+    // Объекты пула точки — только организаций, чьи блюда видны этой (Р7.4: без других компаний).
+    const ids = [...new Set([...orgs.map((org) => org.id), ...buildings.map((point) => point.organizationId)])];
+    const rows = await db.organization.findMany({
+      where: { id: { in: [organizationId, ...ids] } },
+      select: { id: true, accountId: true, kind: true, serviceCode: true, linkedServiceCode: true },
+    });
+    const visible = new Set(dishShareOrgIds(organizationId, ids, rows, code));
+    const poolSize = orgs.filter((org) => visible.has(org.id)).length + buildings.filter((point) => visible.has(point.organizationId)).length;
+    return { ownCode, linkedCode: code, linkedOrganizationName: await poolOwnerName(organizationId, code, owner), poolSize, pointName };
   }
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { linkedServiceCode: true } });
   const linkedCode = org?.linkedServiceCode ?? null;

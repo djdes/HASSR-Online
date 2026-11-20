@@ -29,16 +29,22 @@ const companyOf = (org: Pick<DishShareOrg, "id" | "accountId">) => org.accountId
  * Организации из `poolIds` (своя — всегда), чьи блюда видит `selfId`: своей
  * компании и компании кабинета (мастер-кабинеты пула и хозяин кода пула).
  * `orgs` — сведения об организациях пула; кого нет в `orgs`, тот не виден
- * (кроме себя).
+ * (кроме себя). `poolCode` — код пула, если он не код самой организации
+ * (точка, подключённая к пулу своим кодом).
  */
-export function dishShareOrgIds(selfId: string, poolIds: readonly string[], orgs: readonly DishShareOrg[]): string[] {
+export function dishShareOrgIds(
+  selfId: string,
+  poolIds: readonly string[],
+  orgs: readonly DishShareOrg[],
+  poolCode?: string | null,
+): string[] {
   const ids = poolIds.includes(selfId) ? [...poolIds] : [selfId, ...poolIds];
   const byId = new Map(orgs.map((org) => [org.id, org]));
   const self = byId.get(selfId);
   const pool = ids.map((id) => byId.get(id)).filter((org): org is DishShareOrg => Boolean(org));
   const cabinets = pool.filter((org) => org.kind === CABINET_KIND);
   if (!self || cabinets.length === 0) return ids;
-  const code = self.linkedServiceCode ?? self.serviceCode;
+  const code = poolCode ?? self.linkedServiceCode ?? self.serviceCode;
   const root = code ? pool.find((org) => org.serviceCode === code && !org.linkedServiceCode) : undefined;
   const allowed = new Set([companyOf(self), ...cabinets.map(companyOf), ...(root ? [companyOf(root)] : [])]);
   return ids.filter((id) => {

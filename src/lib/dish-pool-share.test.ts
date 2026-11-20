@@ -53,3 +53,13 @@ test("пул без мастер-кабинета и пул из одной ор
   // Своя организация — всегда первой, если пул её не вернул.
   assert.deepEqual(dishShareOrgIds("solo", [], []), ["solo"]);
 });
+
+test("точка, подключённая к пулу своим кодом: сторона кабинета — по коду пула точки", () => {
+  // Организация точки сама в другом пуле (или без него); пул — по коду точки.
+  const pointOrg = org("pointOrg", "acc-a", { serviceCode: "OWNCD-00000", linkedServiceCode: null });
+  const pool = [cabinet, ownerA, companyB, pointOrg];
+  const poolIds = ["cabinet", "ownerA", "companyB"];
+  assert.deepEqual(dishShareOrgIds("pointOrg", poolIds, pool, CODE), ["pointOrg", "cabinet", "ownerA"]);
+  // Без кода пула точки хозяин кода не находится, но кабинет пула всё равно — сторона кабинета.
+  assert.deepEqual(dishShareOrgIds("pointOrg", poolIds, pool), ["pointOrg", "cabinet", "ownerA"]);
+});
