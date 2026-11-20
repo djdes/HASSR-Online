@@ -79,10 +79,15 @@ export async function recordOfflineHeartbeat(params: {
  * a day: management gets one notification per silence. Called from an
  * existing cron (`/api/cron/shift-watcher`), so no new schedule is needed.
  */
-export async function notifySilentOfflineDevices(now: Date = new Date()): Promise<number> {
+export async function notifySilentOfflineDevices(
+  now: Date = new Date(),
+  /** Организации, которым уведомления не нужны (закрытые после своих 14 дней). */
+  skipOrganizationIds: ReadonlySet<string> = new Set(),
+): Promise<number> {
   const candidates = await db.offlineDevice.findMany({
     where: {
       deliveredCount: { gt: 0 },
+      ...(skipOrganizationIds.size > 0 ? { organizationId: { notIn: [...skipOrganizationIds] } } : {}),
       lastSeenAt: { lte: new Date(now.getTime() - OFFLINE_DEVICE_STALE_MS), gte: new Date(now.getTime() - OFFLINE_DEVICE_FORGET_MS) },
     },
     select: { id: true, organizationId: true, label: true, lastSeenAt: true, deliveredCount: true, staleNotifiedAt: true, user: { select: { name: true } } },

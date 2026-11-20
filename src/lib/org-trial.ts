@@ -178,8 +178,9 @@ export function orgTrialReminderDue(
  * только на оплаченном аккаунте с лимитом точек и только когда свободной
  * оплаченной точки ей не достанется (владелец мог уже доплатить за точку —
  * тогда пугать закрытием нельзя). Точки сначала у организаций в тарифе
- * (`pointsInUse`), затем у пробующих, чей срок кончается раньше, — как в
- * `orgTrialStatuses` (там порядок по созданию, сроки идут в том же порядке).
+ * (`pointsInUse`), затем — как в `orgTrialStatuses` — у тех, чей срок к её
+ * концу тоже вышел, по порядку создания (затем по id): две организации,
+ * созданные в один день, кончаются одновременно, и точку берёт старшая.
  */
 export function orgTrialClosesAtEnd(input: {
   phase: AccountPhase | null;
@@ -187,7 +188,7 @@ export function orgTrialClosesAtEnd(input: {
   pointLimit: number | null;
   /** Точек в тарифе сейчас (без пробующих и закрытых). */
   pointsInUse: number;
-  trials: ReadonlyArray<{ organizationId: string; status: OrgTrialStatus; trialEndsAt: Date; points: number }>;
+  trials: ReadonlyArray<{ organizationId: string; status: OrgTrialStatus; createdAt: Date; trialEndsAt: Date; points: number }>;
   organizationId: string;
 }): boolean {
   if (input.phase !== "paid" || input.pointLimit === null) return false;
@@ -196,14 +197,17 @@ export function orgTrialClosesAtEnd(input: {
   const limit = Math.max(1, Math.floor(Number(input.pointLimit) || 1));
   const points = (value: number) => Math.max(1, Math.floor(Number(value) || 0));
   let used = Math.max(0, Math.floor(Number(input.pointsInUse) || 0));
+  const order = (a: { createdAt: Date; organizationId: string }, b: { createdAt: Date; organizationId: string }) =>
+    a.createdAt.getTime() - b.createdAt.getTime() || a.organizationId.localeCompare(b.organizationId);
   const earlier = input.trials
     .filter(
       (entry) =>
         entry.status === "trial" &&
         entry.organizationId !== target.organizationId &&
-        entry.trialEndsAt.getTime() < target.trialEndsAt.getTime()
+        entry.trialEndsAt.getTime() <= target.trialEndsAt.getTime() &&
+        order(entry, target) < 0
     )
-    .sort((a, b) => a.trialEndsAt.getTime() - b.trialEndsAt.getTime());
+    .sort(order);
   for (const entry of earlier) {
     if (used + points(entry.points) <= limit) used += points(entry.points);
   }

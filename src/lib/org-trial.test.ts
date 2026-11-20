@@ -247,9 +247,11 @@ test("orgTrialReminderDue: same organization, same end date and same stage close
 });
 
 test("orgTrialClosesAtEnd: only a paid account with a point limit and no free point left", () => {
+  // Создана за 14 дней до своего срока — порядок создания совпадает с порядком сроков.
   const trial = (organizationId: string, endInDays: number, points = 1) => ({
     organizationId,
     status: "trial" as const,
+    createdAt: days(endInDays - 14),
     trialEndsAt: days(endInDays),
     points,
   });
@@ -286,12 +288,44 @@ test("orgTrialClosesAtEnd agrees with orgTrialStatuses at the end moment", () =>
         phase: "paid",
         pointLimit,
         pointsInUse: 1,
-        trials: [{ organizationId: "second", status: "trial", trialEndsAt: days(3), points: buildings }],
+        trials: [{ organizationId: "second", status: "trial", createdAt: days(-11), trialEndsAt: days(3), points: buildings }],
         organizationId: "second",
       });
       assert.equal(predicted, lockedThen, `limit=${pointLimit} buildings=${buildings}`);
     }
   }
+});
+
+test("orgTrialClosesAtEnd: two organizations created the same day end together — the older one takes the point", () => {
+  // Обе созданы в один день: срок у обеих — одна и та же полночь по Москве.
+  const end = days(3);
+  const same = (organizationId: string, createdAt: Date) => ({ organizationId, status: "trial" as const, createdAt, trialEndsAt: end, points: 1 });
+  const trials = [same("b", new Date(days(-11).getTime() + 60_000)), same("a", days(-11))];
+  const input = { phase: "paid" as const, pointLimit: 2, pointsInUse: 1, trials };
+  assert.equal(orgTrialClosesAtEnd({ ...input, organizationId: "a" }), false, "the older one gets the paid point");
+  assert.equal(orgTrialClosesAtEnd({ ...input, organizationId: "b" }), true, "the younger one closes — it must be reminded");
+
+  // Тот же ответ, что даст orgTrialStatuses в момент конца срока.
+  const statuses = orgTrialStatuses({
+    phase: "paid",
+    pointLimit: 2,
+    orgs: [
+      org("home", 300, null),
+      { id: "a", createdAt: trials[1].createdAt, trialEndsAt: end, points: 1 },
+      { id: "b", createdAt: trials[0].createdAt, trialEndsAt: end, points: 1 },
+    ],
+    now: end,
+  });
+  assert.equal(statuses.get("a"), undefined);
+  assert.equal(statuses.get("b"), "locked");
+
+  // Срок одной продлён (ROOT): кто раньше создан, тот и раньше в очереди, если к её концу срок обеих вышел.
+  const extended = [
+    { organizationId: "a", status: "trial" as const, createdAt: days(-11), trialEndsAt: days(10), points: 1 },
+    { organizationId: "b", status: "trial" as const, createdAt: days(-10), trialEndsAt: days(4), points: 1 },
+  ];
+  assert.equal(orgTrialClosesAtEnd({ ...input, trials: extended, organizationId: "b" }), false, "at b's end, a still has its own days");
+  assert.equal(orgTrialClosesAtEnd({ ...input, trials: extended, organizationId: "a" }), false, "a is older: b does not take its point");
 });
 
 test("orgTrialReminderSubject: exact wording, name on one line", () => {

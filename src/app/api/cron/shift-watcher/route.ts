@@ -40,10 +40,12 @@ async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
   const now = new Date();
+  // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+  const locked = await lockedOrganizationIds(now);
   // Работа без связи (2026-11): устройство, с которого приходят записи без
   // интернета, молчит больше суток — руководству одно уведомление. Живёт
   // здесь, чтобы не заводить на сервере ещё одно расписание.
-  await notifySilentOfflineDevices(now).catch((error) => {
+  await notifySilentOfflineDevices(now, locked).catch((error) => {
     console.error("[shift-watcher] offline devices check failed", error);
     return 0;
   });
@@ -83,7 +85,6 @@ async function handle(request: Request) {
   let notified = 0;
   let markedAbsent = 0;
   let staffCheckIns = 0;
-  const locked = await lockedOrganizationIds(now);
 
   for (const shift of shifts) {
     if (!shift.user.isActive || shift.user.archivedAt) continue;

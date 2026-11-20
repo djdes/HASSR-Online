@@ -286,6 +286,8 @@ export type OrgTrialEntry = {
   organizationId: string;
   name: string;
   status: OrgTrialStatus;
+  /** Порядок раздачи оплаченных точек — по созданию (`orgTrialStatuses`). */
+  createdAt: Date;
   trialEndsAt: Date;
   /** Точек тарифа, которые займёт организация. */
   points: number;
@@ -388,6 +390,7 @@ export async function loadBillingUnit(
           organizationId: o.id,
           name: o.name,
           status,
+          createdAt: o.createdAt,
           trialEndsAt: o.trialEndsAt,
           points: Math.max(1, o._count.buildings),
           deleting: Boolean(o.deletionRequestedAt),
@@ -1365,7 +1368,8 @@ export async function sendOwnerNotice(args: {
       await notifyEmployee(
         owner.userId,
         args.telegramText,
-        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: BILLING_PAY_HREF },
+        // Кнопка web_app в Telegram принимает только полный https-адрес.
+        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: `${APP_URL}${BILLING_PAY_HREF}` },
         { delivery: { organizationId: args.organizationId, kind: args.kind } }
       );
       telegram = true;
@@ -1809,7 +1813,15 @@ export async function listBillingUnits(options?: { now?: Date; settings?: TrialS
     unit.orgTrials = rows.flatMap((row) => {
       const status = statuses.get(row.id);
       return status && row.trialEndsAt
-        ? [{ organizationId: row.id, name: row.name, status, trialEndsAt: row.trialEndsAt, points: row.points, deleting: row.deleting }]
+        ? [{
+            organizationId: row.id,
+            name: row.name,
+            status,
+            createdAt: row.createdAt,
+            trialEndsAt: row.trialEndsAt,
+            points: row.points,
+            deleting: row.deleting,
+          }]
         : [];
     });
     unit.orgTrial = unit.orgTrials.find((entry) => entry.organizationId === unit.organizationId) ?? null;

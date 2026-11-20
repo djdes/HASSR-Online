@@ -93,9 +93,9 @@ export function ExchangeCard({
       const totals = summaryTotals(parseSummary(json?.summary));
       if (isExchangeRunning(json)) {
         // Обмен дольше 8 секунд идёт в фоне: итог появится здесь же, в карточке —
-        // перечитаем её ещё раз через полминуты.
+        // перечитаем её через полминуту и ещё раз через две.
         toast.info(t("card.syncRunning"));
-        window.setTimeout(() => setVersion((value) => value + 1), 30_000);
+        for (const delayMs of [30_000, 120_000]) window.setTimeout(() => setVersion((value) => value + 1), delayMs);
       } else if (totals.created + totals.updated + totals.skippedLimit === 0) {
         toast.success(t("card.syncNoChanges"));
       } else {

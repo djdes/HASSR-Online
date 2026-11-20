@@ -37,7 +37,7 @@ export default async function RootMailingPage({
 }) {
   const session = await requireRoot();
   const params = await searchParams;
-  // Образцы писем обмена справочниками — тем, кому открыт их маршрут (владелец и администратор).
+  // Образцы писем обмена справочниками — тем, кому открыт их маршрут (только владелец платформы).
   const canSendSampleLetters = canAccessPlatformPath(
     await platformViewerForSession(session),
     "/api/root/directory-exchange/test-letters",
