@@ -2708,8 +2708,8 @@
       "openOfferTitle": "Open the Offer?",
       "openConsentTitle": "Open the consent to personal data processing?",
       "openHint": "The document opens in a new tab; the form stays where it is.",
-      "openYes": "Yes",
-      "openNo": "No"
+      "openYes": "Open anyway",
+      "openNo": "Don't open"
     },
     "challenge": {
       "websiteLabel": "Your website"
@@ -5917,7 +5917,9 @@
     "hero": {
       "title": "Digital logs for <highlight>SanPiN and HACCP</highlight>",
       "consultationNote": "Developed in consultation with Rospotrebnadzor specialists and leading HACCP auditors",
-      "trialUntil": "Everything is free until <strong>{date}</strong>, then 1 log only. <link>Details</link>"
+      "trialUntil": "Free for <strong>{trialDays, number} {trialDays, plural, one {day} other {days}}</strong> (until {date}). <link>Details</link>",
+      "sealTitle": "HACCP",
+      "sealCaption": "CERTIFIED"
     },
     "openGraph": {
       "title": "Digital HACCP & SanPiN logs",

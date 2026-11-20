@@ -1,0 +1,18 @@
+
+/home/user/HASSR-Online/src/app/page.tsx
+  340:41  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/user/HASSR-Online/src/app/page.tsx:340:41
+  338 |   // формой — «14 дней всё бесплатно (до даты)». Дата = сегодня по Москве плюс
+  339 |   // пробный период; страница динамическая, поэтому дата всегда свежая.
+> 340 |   const trialUntil = formatDate(locale, Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000, "Europe/Moscow", {
+      |                                         ^^^^^^^^^^ Cannot call impure function
+  341 |     day: "2-digit",
+  342 |     month: "2-digit",
+  343 |     year: "numeric",  react-hooks/purity
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0

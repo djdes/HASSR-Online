@@ -1,0 +1,44 @@
+{
+  "task": "landing-seal-trial-offer-2026-11-20",
+  "date": "2026-11-20",
+  "base": "fdc7890b0",
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS"
+  },
+  "commands": [
+    {
+      "cmd": "npm run typecheck",
+      "exit": 0,
+      "raw": "raw/typecheck.txt"
+    },
+    {
+      "cmd": "npm run test:changed",
+      "exit": 0,
+      "result": "64 files, pass=266, fail=0",
+      "raw": "raw/test-changed.txt"
+    },
+    {
+      "cmd": "npx eslint src/app/page.tsx src/components/landing/haccp-gold-seal.tsx src/components/landing/haccp-gold-seal.test.ts src/components/legal/legal-consent-checkbox.tsx",
+      "exit": 0,
+      "result": "0 errors, 1 pre-existing warning (react-hooks/purity on Date.now)",
+      "raw": "raw/lint.txt"
+    },
+    {
+      "cmd": "npm run palette:neutral",
+      "exit": 0,
+      "result": "no diff in src/app/neutral-palette.css"
+    }
+  ],
+  "live": "raw/live-checks.txt",
+  "notes": [
+    "screenshots are gitignored (.agent/**/*.png) and stay in the local raw/ folder",
+    "local DB had no schema: prisma db push needs the owner's consent; the landing renders from snapshots",
+    "fonts measured in Inter (as wide as Helvetica Neue on iPhone); no real device"
+  ]
+}
