@@ -2708,8 +2708,8 @@
       "openOfferTitle": "Ofertani ochaymi?",
       "openConsentTitle": "Shaxsiy ma’lumotlarni qayta ishlashga rozilikni ochaymi?",
       "openHint": "Hujjat yangi varaqda ochiladi, shakl joyida qoladi.",
-      "openYes": "Ha",
-      "openNo": "Yo‘q"
+      "openYes": "Baribir ochish",
+      "openNo": "Ochmaslik"
     },
     "challenge": {
       "websiteLabel": "Veb-saytingiz"
@@ -5921,7 +5921,9 @@
     "hero": {
       "title": "<highlight>SanPiN va HACCP</highlight> uchun elektron jurnallar",
       "consultationNote": "Rospotrebnadzor mutaxassislari va yetakchi HACCP auditorlari maslahatlari asosida ishlab chiqilgan",
-      "trialUntil": "<strong>{date}</strong> gacha hammasi bepul, keyin faqat 1 ta jurnal. <link>Batafsil</link>"
+      "trialUntil": "<strong>{trialDays, number} {trialDays, plural, other {kun}}</strong> hammasi bepul ({date} gacha). <link>Batafsil</link>",
+      "sealTitle": "HACCP",
+      "sealCaption": "SERTIFIKATLANGAN"
     },
     "openGraph": {
       "title": "Elektron HACCP va SanPiN jurnallari",
