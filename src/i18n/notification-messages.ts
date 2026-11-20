@@ -1,8 +1,8 @@
-import type { Locale } from "./locales";
+import { formatDate, type Locale } from "./locales";
 import { translatorFor } from "./translator";
 import { IDEA_STATUSES, IDEA_STATUS_LABEL, describeIdeaStatusChange, isIdeaStatus } from "@/lib/ideas/rules";
 
-const MESSAGE_KEYS = ["staffJournal", "trainingPlan", "openJournal", "openTrainingPlan", "feedbackReply", "pinRequests", "reviewPinRequests", "pinRequestItem", "fromQrPage", "hygieneAdmission", "hygieneSigned", "hygieneComplaints", "ideaStatus", "ideaStatusLabel", "openIdeas", "open"] as const;
+const MESSAGE_KEYS = ["staffJournal", "trainingPlan", "openJournal", "openTrainingPlan", "feedbackReply", "pinRequests", "reviewPinRequests", "pinRequestItem", "fromQrPage", "hygieneAdmission", "hygieneSigned", "hygieneComplaints", "ideaStatus", "ideaStatusLabel", "openIdeas", "open", "orgTrialEnding", "orgTrialLastDay", "addPoint"] as const;
 export type NotificationMessageKey = typeof MESSAGE_KEYS[number];
 export type NotificationMessageParams = Record<string, string | number>;
 
@@ -69,6 +69,17 @@ function legacyKeys(row: Row): NotificationMessageMetadata {
   return {};
 }
 
+/** День «2026-11-23» (по Москве, без времени) → «23 ноября» на языке читателя; не день — null. */
+export function formatNoticeDay(day: unknown, locale: Locale): string | null {
+  if (typeof day !== "string") return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!match) return null;
+  const value = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const date = new Date(value);
+  if (Number.isNaN(value) || date.getUTCDate() !== Number(match[3])) return null;
+  return formatDate(locale, date, "UTC", { day: "numeric", month: "long" });
+}
+
 export function shortIdeaTitle(title: string): string {
   return title.length > 60 ? `${title.slice(0, 57)}…` : title;
 }
@@ -108,6 +119,14 @@ export async function notificationPresenter(locale: Locale) {
           ? t("notifications.messages.ideaStatus", { status: params.status, title: params.title }) : fallback;
       case "ideaStatusLabel":
         return isIdeaStatus(params?.status) ? t("notifications.messages.ideaStatusLabel", { status: params.status }) : fallback;
+      case "orgTrialEnding":
+        // Свои 14 дней организации кончаются (серия D, Р12): название — как есть.
+        return typeof params?.name === "string"
+          ? t("notifications.messages.orgTrialEnding", { name: params.name, stage: params.stage === "tomorrow" ? "tomorrow" : "soon" }) : fallback;
+      case "orgTrialLastDay": {
+        const date = formatNoticeDay(params?.day, locale);
+        return date ? t("notifications.messages.orgTrialLastDay", { date }) : fallback;
+      }
       default:
         return t(`notifications.messages.${key}`);
     }

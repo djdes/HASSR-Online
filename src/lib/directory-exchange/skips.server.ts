@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { loadEntityRows, type ParentGroupLookup } from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
+import { EXCHANGE_PAUSED_MESSAGE, isExchangePaused } from "@/lib/directory-exchange/pause";
 import {
   ENTITY_KIND,
   ENTITY_PARENT,
@@ -369,6 +370,8 @@ async function cabinetIdOf(accountId: string): Promise<string> {
  * не создаёт; строка разбора уходит. Связь, которая уже есть, не меняется.
  */
 export async function ignoreExchangeSkip(owner: ExchangeSkipOwner, id: string): Promise<{ ok: true }> {
+  // Пауза обмена (откат версий отпечатка): связи не пишем — `pause.ts`.
+  if (isExchangePaused()) throw new DirectoryExchangeError(EXCHANGE_PAUSED_MESSAGE, 409);
   const masterOrganizationId = await cabinetIdOf(owner.accountId);
   const skip = await withExchangeLock(masterOrganizationId, async () => {
     const { skip } = await ownSkip(masterOrganizationId, owner.accountId, id);
@@ -409,6 +412,8 @@ export async function ignoreExchangeSkip(owner: ExchangeSkipOwner, id: string): 
  * цех). Если запись одна в своей прежней группе, та группа освобождается.
  */
 export async function linkExchangeSkip(owner: ExchangeSkipOwner, id: string, entityId: string): Promise<{ ok: true }> {
+  // Пауза обмена (откат версий отпечатка): связи не пишем — `pause.ts`.
+  if (isExchangePaused()) throw new DirectoryExchangeError(EXCHANGE_PAUSED_MESSAGE, 409);
   const masterOrganizationId = await cabinetIdOf(owner.accountId);
   const linked = await withExchangeLock(masterOrganizationId, async () => {
     const { skip, members } = await ownSkip(masterOrganizationId, owner.accountId, id);

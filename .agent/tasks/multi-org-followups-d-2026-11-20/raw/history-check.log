@@ -1,0 +1,113 @@
+--- AC2: exchange runs
+PASS AC2 (manual): one row, trigger manual, status ok
+PASS AC2 (manual): counters are the summary totals, finished, duration recorded, no error
+PASS AC2 (background): the exchange went to the background
+PASS AC2 (background): the row of the save is completed when the exchange ends (ok, counters, finished)
+PASS AC2 (busy): the exchange refused with 409 exchange_busy
+PASS AC2 (busy): row with trigger schedule, status busy, no counters, finished
+PASS AC2 (error): the exchange's own error is thrown (404)
+PASS AC2 (error): row with status error and a one-line message, no stack
+[directory-exchange] run not recorded {
+  masterOrganizationId: 'missing-hchkmwpfvu9z',
+  trigger: 'manual',
+  error: PrismaClientKnownRequestError: 
+  Invalid `db.directoryExchangeRun.create()` invocation in
+  /home/user/HASSR-Online/src/lib/directory-exchange/runs.server.ts:30:47
+  
+    27 export async function startExchangeRun(masterOrganizationId: string, trigger: ExchangeTrigger): Promise<ExchangeRunHandle | null> {
+    28   const startedAt = new Date();
+    29   try {
+  → 30     const row = await db.directoryExchangeRun.create(
+  Foreign key constraint violated on the constraint: `DirectoryExchangeRun_masterOrganizationId_fkey`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async startExchangeRun (/home/user/HASSR-Online/src/lib/directory-exchange/runs.server.ts:30:17)
+      at async runDirectoryExchange (/home/user/HASSR-Online/src/lib/directory-exchange/run.server.ts:880:15)
+      at async refused (/home/user/HASSR-Online/.agent/tasks/multi-org-followups-d-2026-11-20/raw/history-check.ts:90:5)
+      at async main (/home/user/HASSR-Online/.agent/tasks/multi-org-followups-d-2026-11-20/raw/history-check.ts:199:17) {
+    code: 'P2003',
+    meta: {
+      modelName: 'DirectoryExchangeRun',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS AC2 (recorder failure): an unknown cabinet — no row, the exchange's own 404
+PASS AC2 (ROOT): recent runs list our four rows with the cabinet name and the owner
+PASS AC2 (ROOT): «only errors» keeps only error rows, ours among them
+PASS AC2 (ROOT): the cabinet is listed as «last run — error»
+PASS AC2 (ROOT): after a successful run the cabinet is no longer a problem
+PASS AC2 (ROOT): access — «Клиенты», not for the «own clients» scope, not for other sections
+--- AC5: history
+PASS AC5: every create in B is a history row (products, position, employee, building, room)
+PASS AC5: create rows — source A, the first run, no «before», «after» with the fields
+PASS AC5: nothing recorded for A (it only gave)
+PASS AC5: the update (from the background save) — fields before and after
+PASS AC5: A's edit reached B
+PASS AC5: list — newest first, the update of «Молоко» from A by name
+PASS AC5: list is sorted newest first
+PASS AC5 (owner only): a manager of B who does not own the account — 404
+PASS AC5: undo of the update — restored
+PASS AC5: B's «Молоко» is back to «Ферма», A keeps «Ферма-2»
+PASS AC5: B's link carries the restored record's own fingerprint
+PASS AC5: repeat undo — 409 change_undone
+PASS AC5: the next exchange does not push the restored value back (nothing updated, A and B keep their values)
+PASS AC5: a later edit of the source comes again
+PASS AC5: the change is marked undone by the owner
+PASS AC5: audit «directory_exchange.change_undone» in B
+PASS AC5: an update edited afterwards stays (409 change_kept «edited»), not marked undone
+PASS AC5 (journals): A's journals reached B
+PASS AC5 (journals): the settings update is in B's history (no name, list «journals»)
+PASS AC5 (journals): undo — B's previous settings back, A unchanged
+PASS AC5 (journals): the next exchange keeps B's restored settings
+PASS AC5 (create): a position with an employee stays (409 change_kept «has_staff»), not marked undone
+PASS AC5 (create): the employee is archived
+PASS review #2: the room's create records the mirror workshop its creation made (afterJson.mirrorId)
+PASS AC5 (create): the room is deleted together with its mirror workshop
+PASS AC5 (create): the room's link in B is a tombstone
+PASS AC5 (create): a product edited after the exchange stays («edited»)
+PASS AC5 (create): the next exchange creates nothing again in B (room, employee)
+PASS AC5 (create): the cheese product is still active
+--- AC5: a company of another account
+PASS AC2 (approval): approved
+PASS AC2 (approval): the approval exchange is recorded with trigger approval
+PASS AC5 (foreign): F's history — the owner's products, source only «мастер-кабинет «…»»
+PASS AC5 (foreign): no name or id of the owner's organizations in F's history
+PASS AC5 (foreign): the cabinet owner cannot undo F's change — 404
+PASS AC5 (foreign): F's owner undoes the create in F — the product is turned off, A and B keep theirs
+PASS AC5 (foreign): F's audit has no cabinet id or owner's organizations
+PASS AC5 (foreign): the next exchange does not create «Молоко» in F again
+--- review #2: only the mirror the creation made is removed
+PASS review #2: a room matched to a hand-made same-name workshop records no mirror; a new mirror is recorded
+PASS review #2: undo of that room deletes the room but keeps B's hand-made workshop
+PASS review #2: an old change without a recorded mirror deletes the room only, the workshop stays
+--- review #1/#2: an organization in two cabinets; an area's mirror room
+PASS review #2: Y got the workshop on its only point with a mirror room, recorded in the change
+PASS review #2: undo of the created workshop removes its mirror room too (both unused)
+PASS review #2: the workshop is not created in Y again
+PASS review #1: X joined company Q's cabinet CB
+PASS review #1: Q's edit reached X through CB
+PASS review #1: CA spread it from X to Y
+PASS review #1: X's history has the update from CB (cabinet label)
+PASS review #1: undo at X restores «Пекарня» in X only
+PASS review #1: X's links in both cabinets carry the restored record's fingerprint
+PASS review #1: the next CA and CB exchanges push nothing — Y keeps «Пекарня-2», X «Пекарня», Q «Пекарня-2»
+--- AC2: pruning
+PASS AC2/AC5: runs older than 90 days and changes older than 30 days are deleted, newer ones stay
+PASS AC5: a change older than 30 days is not undone (409)
+PASS AC5: a change older than 30 days is not listed
+--- AC6: journals transfer undo
+PASS AC6: the transfer replaced C's journal settings
+PASS AC6: the transfer keeps a snapshot of C's previous settings
+PASS AC6: listed as «Журналы: replaced», undoable, not «cannot be undone»
+PASS AC6: undo restores C's previous settings
+PASS AC6: edited after the transfer — kept with «edited», D's own edit stays
+PASS AC6: an old transfer without a snapshot — «cannot be undone», no undo
+PASS AC6: an old transfer without a snapshot — undo refused 409
+cleanup: organizations left 0, users left 0, runs left 0, changes left 0
+TOTAL: 74 PASS, 0 FAIL
+RESULT: all checks passed

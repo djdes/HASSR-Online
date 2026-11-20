@@ -98,6 +98,7 @@ test("recent transfers: tolerant parsing, an undone transfer is never undoable",
     to: { id: "o2", name: "Кафе на Мира" },
     counts: { products: 3, staff: 2, objects: 0, equipment: 0, journals: 0, checklists: 0 },
     fixedKinds: [],
+    replacedKinds: [],
     onlyFixed: false,
     undoUntil: "2026-11-27T10:00:00.000Z",
     undoable: true,
@@ -117,6 +118,29 @@ test("recent transfers: tolerant parsing, an undone transfer is never undoable",
   assert.deepEqual(kept?.kept, [{ entity: "journal_settings", id: "o2", name: "", reason: "not_undoable" }]);
   assert.deepEqual(parseRecentTransfers(null), []);
   assert.deepEqual(parseRecentTransfers({ transfers: "x" }), []);
+});
+
+test("Р10: journal settings replaced with a snapshot are listed as replaced (undoable), the result can say «restored»", () => {
+  const [transfer] = parseRecentTransfers({
+    transfers: [
+      {
+        id: "t5",
+        from: { name: "Кафе на Ленина", foreign: false },
+        to: { id: "o2", name: "Кафе на Мира" },
+        counts: {},
+        fixedKinds: [],
+        replacedKinds: ["journals", "nope"],
+        onlyFixed: false,
+        undoable: true,
+      },
+    ],
+  });
+  assert.deepEqual([transfer.replacedKinds, transfer.fixedKinds, transfer.onlyFixed, transfer.undoable], [["journals"], [], false, true]);
+  assert.deepEqual(parseTransferUndo({ undone: [{ entity: "journal_settings", id: "o2", name: "", action: "restored" }], kept: [] })?.undone, [
+    { entity: "journal_settings", id: "o2", name: "", action: "restored" },
+  ]);
+  // Ответ без поля (старый сервер) — пусто.
+  assert.deepEqual(parseRecentTransfers({ transfers: [{ id: "t6", counts: {}, from: {}, to: {} }] })[0].replacedKinds, []);
 });
 
 test("after undo the transfer shows its result at once", () => {

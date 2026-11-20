@@ -23,6 +23,8 @@ import { invoiceRequisitesReady } from "@/lib/invoices/build";
 import { orderStatusLabel } from "@/lib/order-status";
 import { ResumePausedCard } from "@/components/settings/resume-paused-card";
 import { CabinetTariffs, CancelScheduleButton } from "@/components/settings/cabinet-tariffs";
+import { AddPointsOpener } from "@/components/settings/add-points-opener";
+import { ADD_POINTS_PARAM, addPointsTarget, isAddPointsRequest } from "@/lib/add-points";
 import { EquipmentDeliveryCard } from "@/components/settings/equipment-delivery-card";
 import { formatBytes, formatMskDayAuto, hasFeature, lastDayBefore, voluntaryDowngradeCheck, type AccountBillingState } from "@/lib/billing-period";
 import { ORG_TRIAL_MAX_GRANTS } from "@/lib/org-trial";
@@ -242,6 +244,14 @@ export default async function SubscriptionPage({
   // из cookie ссылки. Пустой `?promo=` — явно без кода. Скидку (код или
   // скидка навсегда аккаунта — выгоднейшая) считает сервер, как при оплате.
   const params = await searchParams;
+  // «Добавить точку» из напоминания о своих 14 днях организации (серия D,
+  // Р12): выбор тарифа открывается сразу с точкой больше оплаченного. Не
+  // оплачено или тариф без лимита точек — страница как обычно.
+  const addPointsFrom = addPointsTarget({
+    requested: isAddPointsRequest(params[ADD_POINTS_PARAM]),
+    paidPoints: current && current.tier !== "legacy" ? current.points : null,
+    pointsInUse,
+  });
   const promoParam = Array.isArray(params.promo) ? params.promo[0] : params.promo;
   const cookieCode = promoParam === undefined ? ((await cookies()).get(PROMO_COOKIE)?.value ?? null) : null;
   const promoRaw = (promoParam ?? cookieCode ?? "").trim() || null;
@@ -638,6 +648,17 @@ export default async function SubscriptionPage({
           <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">
             {cabinetStatus === "paid" ? t("tariffsChange") : t("tariffsChoose")}
           </h2>
+          {addPointsFrom ? (
+            <>
+              <AddPointsOpener targetId="tariffs" />
+              <p
+                data-testid="subscription-add-points"
+                className="rounded-2xl bg-[#eef1ff] px-4 py-3 text-[13.5px] leading-[1.5] text-[#3848c7]"
+              >
+                {t("addPointsNote", { count: addPointsFrom })}
+              </p>
+            </>
+          ) : null}
           <CabinetTariffs
             rates={pricing.rates}
             available={pricing.available}
@@ -655,6 +676,7 @@ export default async function SubscriptionPage({
               trialDaysLeft: state?.trialDaysLeft ?? null,
               pointsInUse,
               suggestedPoints: pointsNeeded,
+              ...(addPointsFrom ? { initialPoints: addPointsFrom } : {}),
               scheduled: scheduled
                 ? {
                     tier: scheduled.tier,

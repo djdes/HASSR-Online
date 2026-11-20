@@ -18,7 +18,8 @@ export const EXCHANGE_KINDS = ["products", "staff", "objects", "equipment", "jou
 
 /**
  * Список из одной записи на организацию — настройки журналов (Р8.1): в окне
- * без счётчиков и позиций; разовый перенос заменяет настройки и не отменяется.
+ * без счётчиков и позиций; разовый перенос заменяет настройки, а отмена
+ * переноса возвращает прежние, если их не меняли (серия D, Р10).
  */
 export const SINGLE_RECORD_KINDS: readonly ExchangeKind[] = ["journals"];
 
@@ -808,12 +809,14 @@ export type TransferEntity = (typeof TRANSFER_ENTITIES)[number];
 
 /**
  * Почему запись осталась после отмены: правили, используется, внутри что-то
- * есть, на должности люди, пара помещение ↔ цех, замена не отменяется.
+ * есть, на должности люди, пара помещение ↔ цех, замена не отменяется
+ * (перенос настроек журналов до серии D — без снимка прежних).
  */
 export const TRANSFER_KEEP_REASONS = ["edited", "used", "not_empty", "has_staff", "linked", "not_undoable"] as const;
 export type TransferKeepReason = (typeof TRANSFER_KEEP_REASONS)[number];
 
-export type TransferUndoAction = "deactivated" | "archived" | "deleted";
+/** Продукт выключен, сотрудник в архиве, запись удалена; настройки журналов возвращены (`restored`, Р10). */
+export type TransferUndoAction = "deactivated" | "archived" | "deleted" | "restored";
 
 export type TransferUndoResult = {
   undone: Array<{ entity: TransferEntity; id: string; name: string; action: TransferUndoAction }>;
@@ -829,8 +832,10 @@ export type RecentTransfer = {
   to: { id: string; name: string };
   /** Сколько записей создано по спискам. */
   counts: ExchangeCounts;
-  /** Списки, где перенос заменил данные без отмены (настройки журналов). */
+  /** Списки, где перенос заменил данные без отмены (настройки журналов переносов до серии D). */
   fixedKinds: ExchangeKind[];
+  /** Списки, где перенос заменил данные и отмена их вернёт (настройки журналов со снимком, Р10). */
+  replacedKinds: ExchangeKind[];
   /** Кроме незаменимого (`fixedKinds`), отменять нечего — срок отмены не показываем. */
   onlyFixed: boolean;
   undoUntil: string | null;
@@ -839,7 +844,7 @@ export type RecentTransfer = {
   undo: TransferUndoResult | null;
 };
 
-const UNDO_ACTIONS: readonly TransferUndoAction[] = ["deactivated", "archived", "deleted"];
+const UNDO_ACTIONS: readonly TransferUndoAction[] = ["deactivated", "archived", "deleted", "restored"];
 
 function parseTransferEntity(value: unknown): TransferEntity | null {
   return TRANSFER_ENTITIES.find((entity) => entity === value) ?? null;
@@ -885,6 +890,7 @@ export function parseRecentTransfers(value: unknown): RecentTransfer[] {
       to: { id: asText(to?.id), name: asText(to?.name) },
       counts: parseCounts(row.counts),
       fixedKinds: parseKinds(row.fixedKinds),
+      replacedKinds: parseKinds(row.replacedKinds),
       onlyFixed: row.onlyFixed === true,
       undoUntil: asMoment(row.undoUntil),
       // Уже отменённый перенос второй раз не отменяется, что бы ни сказал сервер.
@@ -922,6 +928,95 @@ export async function loadRecentTransfers(): Promise<RecentTransfer[] | null> {
 /** Отменить перенос: `json.result` — что отменено и что осталось (`parseTransferUndo`). */
 export async function undoTransferRequest(id: string): Promise<ExchangeResponse> {
   return exchangeRequest(`${EXCHANGE_TRANSFERS_PATH}/${encodeURIComponent(id)}/undo`, { method: "POST" });
+}
+
+/* ───────── История обмена с отменой (серия D, Р5) ───────── */
+
+/** `GET …/history`, `POST …/history/<id>/undo`. */
+export const EXCHANGE_HISTORY_PATH = "/history";
+
+export type HistoryOp = "create" | "update";
+
+/** Строка «Истории»: что обмен создал или изменил у организации. */
+export type ExchangeHistoryItem = {
+  id: string;
+  createdAt: string | null;
+  entity: TransferEntity;
+  kind: ExchangeKind;
+  op: HistoryOp;
+  /** Название записи; у настроек журналов — пусто. */
+  name: string;
+  /** Откуда: своя организация (`cabinet: false`) или только мастер-кабинет (`cabinet: true`). */
+  from: { name: string; cabinet: boolean; foreign: boolean };
+  undoneAt: string | null;
+  undoable: boolean;
+};
+
+/** Итог «Отменить»: сделано (что именно) или запись осталась (почему). */
+export type HistoryUndoOutcome =
+  | { kind: "done"; op: HistoryOp; action: TransferUndoAction | "none" }
+  | { kind: "kept"; reason: TransferKeepReason };
+
+const HISTORY_OPS: readonly HistoryOp[] = ["create", "update"];
+
+/** Ответ `GET …/history`; строка без id, вида записи, списка или действия пропускается. */
+export function parseExchangeHistory(value: unknown): ExchangeHistoryItem[] {
+  const items: ExchangeHistoryItem[] = [];
+  for (const entry of asList(asObject(value)?.changes)) {
+    const row = asObject(entry);
+    const id = asText(row?.id);
+    const entity = parseTransferEntity(row?.entity);
+    const kind = EXCHANGE_KINDS.find((item) => item === row?.kind);
+    const op = HISTORY_OPS.find((item) => item === row?.op);
+    if (!row || !id || !entity || !kind || !op) continue;
+    const from = asObject(row.from);
+    const undoneAt = asMoment(row.undoneAt);
+    items.push({
+      id,
+      createdAt: asMoment(row.createdAt),
+      entity,
+      kind,
+      op,
+      name: asText(row.name),
+      from: { name: asText(from?.name), cabinet: from?.cabinet === true, foreign: from?.foreign === true },
+      undoneAt,
+      // Отменённое второй раз не отменяется, что бы ни сказал сервер.
+      undoable: row.undoable === true && !undoneAt,
+    });
+  }
+  return items;
+}
+
+/**
+ * Ответ `POST …/history/<id>/undo`: `{ ok, result: { op, action } }` — сделано;
+ * 409 `change_kept` с `reason` — запись осталась. Остальное — `null` (ошибка в тосте).
+ */
+export function parseHistoryUndo(response: Pick<ExchangeResponse, "ok" | "json">): HistoryUndoOutcome | null {
+  const json = response.json;
+  if (!response.ok) {
+    const reason = TRANSFER_KEEP_REASONS.find((item) => item === json?.reason);
+    return json?.code === "change_kept" && reason ? { kind: "kept", reason } : null;
+  }
+  const result = asObject(json?.result);
+  const op = HISTORY_OPS.find((item) => item === result?.op);
+  const action = result?.action === "none" ? "none" : UNDO_ACTIONS.find((item) => item === result?.action);
+  return op && action ? { kind: "done", op, action } : null;
+}
+
+/** Строка после отмены: отменена сейчас — карточка показывает её, не дожидаясь перечитывания. */
+export function withChangeUndone(items: readonly ExchangeHistoryItem[], id: string, at: string): ExchangeHistoryItem[] {
+  return items.map((item) => (item.id === id ? { ...item, undoable: false, undoneAt: item.undoneAt ?? at } : item));
+}
+
+/** История обмена активной организации за 30 дней; `null` — не удалось получить. */
+export async function loadExchangeHistory(): Promise<ExchangeHistoryItem[] | null> {
+  const { ok, json } = await exchangeRequest(EXCHANGE_HISTORY_PATH);
+  return ok ? parseExchangeHistory(json) : null;
+}
+
+/** Отменить одно изменение обмена (`parseHistoryUndo` разбирает ответ). */
+export async function undoExchangeChangeRequest(id: string): Promise<ExchangeResponse> {
+  return exchangeRequest(`${EXCHANGE_HISTORY_PATH}/${encodeURIComponent(id)}/undo`, { method: "POST" });
 }
 
 /** «Выдать новый код» мастер-кабинета: `json.code` — новый код. */

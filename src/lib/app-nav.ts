@@ -72,6 +72,12 @@ export type NavFacts = {
    * режима нет (точки выключены).
    */
   journalsPointMode?: boolean;
+  /**
+   * «Сеть» (серия D, Р4): владелец аккаунта активной организации, в аккаунте
+   * две рабочие организации и больше, не «войти как» и не руководитель точки
+   * (`loadAccountNetworkFact`). Не задано — пункта нет.
+   */
+  accountNetwork?: boolean;
 };
 
 /**
@@ -248,6 +254,8 @@ const ADMIN = anyOf("admin.full");
 // Страницы прав и иерархии пускают по праву `settings.permissions` из БД.
 const PERMISSIONS_FACT: NavAccess = { kind: "fact", fact: "settingsPermissions" };
 const CHECKLISTS_FACT: NavAccess = { kind: "fact", fact: "checklists" };
+// «Сеть» — владельцу аккаунта с двумя организациями и больше (страница — `forbidden()` остальным).
+const NETWORK_FACT: NavAccess = { kind: "fact", fact: "accountNetwork" };
 // `/dashboard` без `journals.view` уводит на панель контроля.
 const JOURNALS_TODAY: NavAccess = { kind: "all", rules: [anyOf("journals.view"), FULL_ACCESS] };
 // «Журналы точек» и «Все журналы» — страницы всей организации: при выбранной
@@ -297,13 +305,15 @@ function ppkMenu(): NavMenuGroup[] {
  * Подписки, Настройки и оформление) и «Пришла проверка» внизу.
  */
 const COMPANY_MENU: NavMenuGroup[] = [
-  // Офис ›, Объекты ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним
-  // и тихим (владелец, 2026-11-11): там всё, что нужно редко.
+  // Офис ›, Объекты ›, Мастер-кабинет (PRO), Сеть (владельцу аккаунта с
+  // двумя организациями и больше), Реквизиты; «Ещё» — последним и тихим
+  // (владелец, 2026-11-11): там всё, что нужно редко.
   {
     label: null,
     sections: ["office", "points"],
     items: [
       { id: "master", icon: "Library", href: "/settings/master-cabinet", access: FULL_ACCESS, badge: "pro" },
+      { id: "network", icon: "Map", href: "/settings/network", access: NETWORK_FACT },
       {
         // Реквизиты, блок сведений «в любом документе» и контакты — вкладки одного пункта.
         id: "organization",

@@ -1,0 +1,19 @@
+{
+  "task": "multi-org-followups-d-2026-11-20",
+  "spec": ".agent/tasks/multi-org-followups-d-2026-11-20/spec.md",
+  "base": "master fdc7890b0 (+ merge 330b983a1)",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "hash-downgrade.test.ts, pause.test.ts; raw/downgrade-check.log 37/37" },
+    { "id": "AC2", "status": "PASS", "evidence": "runs tests; raw/history-check.log; raw/04-root-exchange-runs.jpg; non-root 404" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/e2e-run-all.log and raw/e2e-ci-simulation.log 14/14, 702/0" },
+    { "id": "AC4", "status": "PASS", "evidence": "network-summary.test.ts; raw/network-check.log 33/33; raw/01-network-summary.jpg" },
+    { "id": "AC5", "status": "PASS", "evidence": "history.test.ts; raw/history-check.log 74/74; raw/series-d-live.log; raw/02-history-dialog.jpg" },
+    { "id": "AC6", "status": "PASS", "evidence": "raw/regress-seriesc2-new-lists-check.log; scripts/e2e/new-lists-check.ts" },
+    { "id": "AC7", "status": "PASS", "evidence": "raw/uz-review.md (263 keys, 18 fixes); i18n:check 100/100" },
+    { "id": "AC8", "status": "PASS", "evidence": "add-points.test.ts; raw/network-check.log; raw/03-subscription-add-points.jpg" },
+    { "id": "AC9", "status": "PASS", "evidence": "additive schema; typecheck clean; eslint 0 errors; full suite 6871/0" }
+  ],
+  "reviewFixes": { "status": "PASS", "evidence": "evidence.md section after the independent review (6 findings)" },
+  "deploy": "apply-safe-schema adds DirectoryExchangeRun, DirectoryExchangeChange; new nightly-e2e workflow"
+}

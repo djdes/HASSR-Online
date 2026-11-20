@@ -88,7 +88,12 @@ export type EntityRow = ExchangeRow & {
 /** Группа родителя по его id в этой организации; null — родитель не обменивается. */
 export type ParentGroupLookup = (parentId: string) => string | null;
 
-export type CreateOutcome = { status: "created"; id: string } | { status: "limit" } | { status: "conflict" };
+/**
+ * `mirrorId` — зеркало, которое создание завело само (цех нового помещения,
+ * помещение нового цеха); уже существовавшее одноимённое зеркало сюда не
+ * попадает. По нему отмена из истории обмена убирает только своё зеркало.
+ */
+export type CreateOutcome = { status: "created"; id: string; mirrorId?: string } | { status: "limit" } | { status: "conflict" };
 /** `limit` — правка не помещается в тариф получателя (настройки журналов: включённых журналов больше, чем можно). */
 export type UpdateOutcome = { status: "updated" } | { status: "conflict" } | { status: "missing" } | { status: "limit" };
 
@@ -539,6 +544,19 @@ function makeRow(
   };
 }
 
+/**
+ * Строка обмена из сохранённых полей — снимка истории обмена или переноса
+ * (серия D, Р5 и Р10): образец для `updateEntityRow`, когда запись
+ * возвращают к прежним значениям. Поля берутся в составе `scope`.
+ */
+export function exchangeRowFromFields(
+  entity: ExchangeEntity,
+  input: { id: string; fields: ExchangeFields; parentId?: string | null },
+  scope: ExchangeScope = "account",
+): EntityRow {
+  return makeRow(entity, { id: input.id, fields: input.fields, parentId: input.parentId ?? null }, scope);
+}
+
 /* ───────────────────────── чтение ───────────────────────── */
 
 /**
@@ -965,10 +983,16 @@ export async function createEntityRow(
           select: { id: true },
         });
         // Цех-зеркало — как в POST /api/settings/rooms (best-effort).
-        await ensureRoomMirrorArea({
+        const mirrorAreaId = await ensureRoomMirrorArea({
           organizationId,
           room: { id: created.id, name: roomName, buildingId: building.id },
         }).catch(() => undefined);
+        // Своё зеркало — новый цех с id этого помещения в служебном описании; найденный одноимённый цех — не своё.
+        const ownMirror = mirrorAreaId
+          ? await db.area
+              .findFirst({ where: { id: mirrorAreaId, organizationId, description: { contains: created.id } }, select: { id: true } })
+              .catch(() => null)
+          : null;
         // Пункты уборки из графика — как при правке карточки помещения (best-effort:
         // помещение уже есть, сбой пунктов не должен оставить его без связи).
         if (schedule.currentScope.length > 0 || schedule.generalScope.length > 0) {
@@ -979,7 +1003,7 @@ export async function createEntityRow(
             generalScope: scopeLabels(schedule.generalScope),
           }).catch((error) => console.error("[directory-exchange] room checklist sync failed", error));
         }
-        return { status: "created", id: created.id };
+        return { status: "created", id: created.id, ...(ownMirror ? { mirrorId: ownMirror.id } : {}) };
       }
       case "area": {
         // Объект образца у организации есть — цех его; иначе единственный
@@ -1002,6 +1026,7 @@ export async function createEntityRow(
           select: { id: true, name: true },
         });
         // Помещение-зеркало — как в POST /api/areas (best-effort).
+        let mirrorRoomId: string | undefined;
         if (building && options.mirrorRoom !== false) {
           try {
             const sameRoom = await db.room.findFirst({
@@ -1009,15 +1034,17 @@ export async function createEntityRow(
               select: { id: true },
             });
             if (!sameRoom) {
-              await db.room.create({
+              const mirror = await db.room.create({
                 data: { buildingId: building.id, name: created.name.slice(0, 120), kind: guessRoomKind(created.name) },
+                select: { id: true },
               });
+              mirrorRoomId = mirror.id;
             }
           } catch (error) {
             console.error("[directory-exchange] area → room mirror failed", error);
           }
         }
-        return { status: "created", id: created.id };
+        return { status: "created", id: created.id, ...(mirrorRoomId ? { mirrorId: mirrorRoomId } : {}) };
       }
       case "equipment": {
         const area = parentId

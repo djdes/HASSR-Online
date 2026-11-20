@@ -109,6 +109,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/root/correspondence", gate: "clients" },
   { pattern: "/api/root/correspondence", gate: "clients" },
   { pattern: "/root/health", gate: "clients", allScope: true },
+  // Обмен справочниками кабинетов клиентов (серия D): журнал обменов всех клиентов сразу — как «Здоровье».
+  { pattern: "/root/directory-exchange", gate: "clients", allScope: true },
   // Воронка регистраций — про клиентов: продажи и аналитика её видят.
   { pattern: "/root/funnel", gate: "clients", allScope: true },
   // Закрепить клиента за менеджером — тот, кто видит всех (РОП, директор).

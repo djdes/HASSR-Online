@@ -1,0 +1,49 @@
+PASS summary lists the three working organizations of the account
+PASS summary excludes the demo organization and the master cabinet
+PASS summary total = 5 000 + 1 000 + 0 = 6 000
+PASS summary total equals the sum of listed balances
+PASS active organization is marked
+PASS page block: shown to the owner with 2+ organizations
+PASS page block: hidden from a manager who is not the owner
+PASS transfer A → B 1 500 ₽ succeeds (not a duplicate)
+PASS A balance 5 000 → 3 500
+PASS B balance 1 000 → 2 500
+PASS account total unchanged after transfer (6 000)
+PASS history A: transfer_out −1 500 with its label
+PASS history B: transfer_in +1 500 with its label
+PASS history rows name the other organization and carry the comment
+PASS history rows record the actor
+PASS audit balance.transfer written in both organizations
+PASS audit details: actor, from/to, amount, comment
+PASS same key again → the earlier result, duplicate: true
+PASS same key with another destination, amount or direction → 409 idempotency_mismatch
+PASS route mapper: 409 { code: idempotency_mismatch }
+PASS balances unchanged by repeats (A 3 500, B 2 500, C 0)
+PASS still exactly two ledger rows and two audit rows for the key
+PASS three parallel requests with one key → one transfer, two duplicates
+PASS parallel: B debited once (2 500 → 2 000), C credited once (0 → 500)
+PASS to a foreign organization → 404
+PASS from a foreign organization → 404
+PASS demo organization and master cabinet → 404
+PASS foreign balance untouched (100)
+PASS manager who is not the owner: summary → 403
+PASS manager who is not the owner: transfer → 403
+PASS owner of another account, active in this one → 403
+PASS more than the balance (3 501 > 3 500) → 409 insufficient
+PASS balances unchanged after the refusal
+PASS same organization and fractional amount → 400
+PASS route mapper: 409 { code: insufficient, params }
+PASS route mapper: 404 and 403 statuses
+PASS summary flags the organization whose deletion is requested (others not)
+PASS transfer INTO an organization being deleted → 409 deleting with its name
+PASS refused: balances unchanged (A 3 500, closing 300)
+PASS route mapper: 409 { code: deleting, params: { name } }
+PASS transfer OUT of an organization being deleted is allowed (closing 300 → 0, A 3 500 → 3 800)
+PASS 4 × (A→B and B→A) at once: all 8 transfers succeed
+PASS opposite transfers: A and B balances back where they were
+PASS ledger invariant for Кафе А balchkmwpeiwx9
+PASS ledger invariant for Бар Б balchkmwpeiwx9
+PASS ledger invariant for Столовая В balchkmwpeiwx9
+PASS ledger invariant for Закрывается balchkmwpeiwx9
+cleanup: organizations left 0, ledger rows left 0, audit rows left 0
+TOTAL: 47 PASS, 0 FAIL

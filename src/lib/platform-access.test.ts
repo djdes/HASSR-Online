@@ -51,6 +51,11 @@ test("gates: clients card, billing mutations, owner-only actions, unknown paths"
   assert.equal(platformGateFor("/root"), "clients");
   assert.equal(platformGateFor("/root/organizations/org-1"), "clients");
   assert.equal(platformGateFor("/root/correspondence"), "clients");
+  // Журнал обменов справочниками всех клиентов (серия D) — «Клиенты» с охватом «все».
+  assert.equal(platformGateFor("/root/directory-exchange"), "clients");
+  assert.equal(platformGateFor("/root/directory-exchange?errors=1"), "clients");
+  assert.equal(matchPlatformRule("/root/directory-exchange")?.allScope, true);
+  assert.equal(platformGateFor("/api/root/directory-exchange/test-letters", "POST"), "superadmin");
   assert.equal(platformGateFor("/api/root/correspondence/recipients"), "clients");
   assert.equal(platformGateFor("/api/root/correspondence/preview", "POST"), "clients");
   assert.equal(platformGateFor("/api/root/organizations/org-1/activity"), "clients");
