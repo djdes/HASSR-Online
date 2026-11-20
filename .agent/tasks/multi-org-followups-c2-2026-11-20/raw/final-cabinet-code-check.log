@@ -1,0 +1,45 @@
+PASS setup: the cabinet has a menu code and no exchange code yet
+--- before the first display
+PASS old code (serviceCode) works before the first display
+PASS old code typed in lower case with spaces works
+PASS another cabinet's menu code of the account still leads to it (legacy path, not regenerated)
+--- first display
+PASS first display returns the old code
+PASS first display stores it in exchangeCode; serviceCode unchanged
+PASS second display returns the same code
+PASS card state shows the same code
+PASS old code works after the first display
+PASS a link request approved
+PASS not the account owner: regenerate refused (403)
+--- regenerate
+PASS new code differs from the old one and looks like a code
+PASS exchangeCode = new code; serviceCode (menu code) unchanged
+PASS the new code collides with no organization or point code
+PASS display now returns the new code
+PASS card state shows the new code
+PASS audit: code_regenerated in the owner's organization, without the codes
+PASS old code after regenerate → the common 404
+PASS another cabinet's menu code after regenerate → the common 404
+PASS new code works
+PASS new code typed in lower case works
+--- nothing else changed
+PASS the pending request made with the old code is still pending for the same cabinet
+PASS the approved link is still there
+PASS connected organization keeps linkedServiceCode = the cabinet menu code
+PASS connected point keeps linkedServiceCode = the cabinet menu code
+PASS menu pool of the connected organization still includes the cabinet
+PASS menu pool info still points to the cabinet's menu code
+PASS regenerate again gives yet another code
+PASS the previous new code stops working
+PASS the latest code works
+PASS two regenerations — two audit rows
+--- legacy cabinet linked to a pool code
+PASS legacy: the pool code the cabinet is linked to works
+PASS legacy: the display stores the cabinet's own code
+PASS legacy: the pool code still works after the first display (not regenerated)
+PASS legacy: after regenerate the pool code → the common 404
+PASS legacy: after regenerate the cabinet's own menu code → the common 404
+PASS legacy: the cabinet's pool link is untouched
+cleanup: organizations left 0, users left 0, requests left 0
+TOTAL: 37 PASS, 0 FAIL
+RESULT: all checks passed
