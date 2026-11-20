@@ -1,0 +1,61 @@
+PASS setup: the owner's organization is in the cabinet's pool
+--- a request without the menu and raw materials
+PASS the tick is off by default: the request stores withPool = false
+PASS …the owner letter does not mention the menu and raw materials
+PASS …the confirmation page shows no pool line
+PASS approved (a stray allowPool is ignored): link without the pool, poolAllowed false, no pool note
+PASS …the requester's letter says nothing about the menu and raw materials
+PASS …A leaves: nothing about the pool changes
+--- asked for, not allowed
+PASS a transfer never asks for the pool even with withPool: true
+PASS the request stores withPool = true
+PASS …the owner letter mentions the menu and raw materials
+PASS …the owner's bell names it too
+PASS …the confirmation page shows the pool line
+PASS approved without ticking the pool: the link exists, the organization is not in the pool
+PASS …the requester's letter: the owner did not connect the menu and raw materials
+PASS …the requester's journal records the pool was asked for and not allowed
+--- asked for and allowed
+PASS allowed: A's organization is in the cabinet's pool, poolConnected, poolAllowed stored
+PASS …the result says the menu and raw materials are connected
+PASS …the requester's letter says they are connected
+PASS …the cabinet lists A among its objects
+PASS …the cabinet's shared menu resolves for A
+PASS …A's journal: approval with poolConnected, no pool entry with the owner's name, no cabinet id
+PASS …the cabinet's journal has the object connection
+PASS B is connected to the same pool
+--- isolation in the pool
+PASS A sees its own dishes, the owner's and the cabinet's menu — not B's
+PASS B does not see A's dishes
+PASS the owner gets no dish names of the companies
+PASS the organization directory (dishes) keeps the same isolation
+PASS A's «Мастер-кабинет» page: the cabinet's name only — no operators, no object count
+PASS …A's own organization is listed in that cabinet (it may disconnect itself)
+PASS the owner's page is unchanged: count of objects (O, A, B) and not limited
+PASS A's dish pool panel names the cabinet and counts only organizations whose dishes it sees
+PASS a point connected by its own code: the panel counts only its company's and the cabinet's objects (cabinet, O, the point)
+PASS A's manager cannot create a cabinet in / invite into the owner's pool: 409, no membership, no invited person
+PASS …the settings route refuses it too: A's page lists the cabinet as another company's
+--- leave and disconnect
+PASS A leaves: the organization leaves this pool; its point connected by hand and another pool's point are untouched
+PASS …the leave is journaled with poolDisconnected
+PASS …A's hand-connected point still gets the cabinet's menu
+PASS …once that point is unlinked by hand, the cabinet's menu no longer resolves for A
+PASS the owner disconnects B: B leaves the pool too
+--- a refused pool connection
+PASS C is already in another cabinet's pool: the link exists, the pool is not changed, a note explains
+PASS …the requester's letter: not connected, without the reason
+PASS …C leaves: its own cabinet's pool stays
+--- a pool link made by hand
+PASS D was connected by hand: approval is idempotent (connected, no error), poolConnected stays false
+PASS …D leaves the exchange: the hand-made pool link is kept
+--- the cabinet disconnected the object meanwhile
+PASS E is connected by the exchange
+PASS …the cabinet disconnected E on «Подключённые объекты»: the exchange mark is dropped
+PASS …then reconnected E by hand: no exchange mark
+PASS …then E leaves: nothing breaks, the hand-made connection stays
+--- the mark is written with the connection
+PASS a failing mark (the company already left) rolls the connection back
+cleanup: organizations left 0, users left 0, accounts left 0, requests left 0, members left 0
+TOTAL: 49 PASS, 0 FAIL
+RESULT: all checks passed

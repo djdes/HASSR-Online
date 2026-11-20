@@ -26968,13 +26968,17 @@
         "products": "Tovarlar va taomlar",
         "staff": "Xodimlar",
         "objects": "Obyektlar",
-        "equipment": "Uskunalar"
+        "equipment": "Uskunalar",
+        "journals": "Jurnallar",
+        "checklists": "Chek-listlar"
       },
       "kindHints": {
         "products": "Mahsulotlar ma’lumotnomasi: nomi, yetkazib beruvchi, saqlash sharoiti va muddati",
         "staff": "Tizimga kirmaydigan xodimlar: F.I.Sh., lavozim va telefon; lavozimlar jurnallarga kirish huquqi bilan. Rahbarlar ko‘chirilmaydi",
         "objects": "Manzilli obyektlar va ularning xonalari tozalash jadvallari va iqlim me’yorlari bilan. Ofis ko‘chirilmaydi",
-        "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi nusxalanmaydi"
+        "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi nusxalanmaydi",
+        "journals": "Qaysi jurnallar yoqilgan va ularning avtomatlashtirilishi: avtomatik yaratish, avtomatik to‘ldirish. Nuqtalar sozlamalari va mas’ullar ko‘chirilmaydi",
+        "checklists": "Chek-list shablonlari: nomi va savollari. Tayinlovlar va namuna fayllar ko‘chirilmaydi"
       },
       "offer": {
         "available": "Sizda «{name}» allaqachon bor — ma’lumotnomalarni bog‘lang yoki ma’lumotlarni undan ko‘chiring",
@@ -27028,7 +27032,9 @@
         "transferFailed": "Ma’lumotlarni ko‘chirib bo‘lmadi",
         "left": "«{name}» endi ma’lumotnomalar almashinuvida qatnashmaydi",
         "linkCommonNote": "Almashinuv barcha ishtirokchilar uchun umumiy: tashkilotda ro‘yxat allaqachon yoqilgan bo‘lsa, bu yerda belgi qo‘yilmasa ham u ro‘yxatni oladi. Tashkilotni almashinuvdan chiqarish uchun uning oynasida «Almashinuvni o‘chirish» tugmasini bosing.",
-        "menuSeparate": "Almashinuv master-kabinetning menyusi va xomashyosini ulamaydi — bu alohida, «Master-kabinet» bo‘limida qilinadi."
+        "menuSeparate": "Almashinuv master-kabinetning menyusi va xomashyosini ulamaydi — bu alohida, «Master-kabinet» bo‘limida qilinadi.",
+        "journalsSame": "Jurnal sozlamalari «{name}»dagi bilan allaqachon bir xil",
+        "journalsReplace": "«{source}» jurnal sozlamalari «{name}» sozlamalarini almashtiradi. Bu ko‘chirishni bekor qilib bo‘lmaydi."
       },
       "result": {
         "linkTitle": "Ma’lumotnomalar bog‘landi",
@@ -27045,7 +27051,7 @@
       },
       "card": {
         "title": "Ma’lumotnomalar almashinuvi",
-        "description": "Tovarlar va taomlar, xodimlar, obyektlar va uskunalar akkaunt tashkilotlari uchun umumiy: biridagi o‘zgarish qolganlarida paydo bo‘ladi.",
+        "description": "Tovarlar va taomlar, xodimlar, obyektlar, uskunalar, jurnallar va chek-listlar akkaunt tashkilotlari uchun umumiy: biridagi o‘zgarish qolganlarida paydo bo‘ladi.",
         "loading": "Almashinuv holati yuklanmoqda…",
         "noSiblings": "Almashinuv akkauntda ikkinchi tashkilot paydo bo‘lganda ochiladi: uning ma’lumotnomalarini shu tashkilot bilan bog‘lash yoki bir marta ko‘chirish mumkin.",
         "notConfigured": "Almashinuv sozlanmagan. Ma’lumotnomalarni akkauntning boshqa tashkilotlari bilan bog‘lang yoki ma’lumotlarni bir marta ko‘chiring.",
@@ -27136,7 +27142,9 @@
           "products": "Mahsulotlar ma’lumotnomasi: nomi, yetkazib beruvchi, saqlash sharoiti va muddati",
           "staff": "Tizimga kirmaydigan xodimlar: faqat F.I.Sh. va lavozim. Telefonlar, lavozim jurnallari va rahbarlar uzatilmaydi",
           "objects": "Manzilli obyektlar va ularning xonalari tozalash jadvallari va iqlim me’yorlari bilan. Ofis uzatilmaydi",
-          "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi uzatilmaydi"
+          "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi uzatilmaydi",
+          "journals": "Qaysi jurnallar yoqilgan va ularning avtomatlashtirilishi: avtomatik yaratish, avtomatik to‘ldirish. Nuqtalar sozlamalari va mas’ullar uzatilmaydi",
+          "checklists": "Chek-list shablonlari: nomi va savollari. Tayinlovlar va namuna fayllar uzatilmaydi"
         },
         "page": {
           "metaTitle": "Ma’lumotnomalar almashinuvi so‘rovi",
@@ -27235,15 +27243,19 @@
           "room": "Xona",
           "area": "Sex",
           "equipment": "Uskuna",
-          "product": "Mahsulot"
+          "product": "Mahsulot",
+          "journal_settings": "Jurnal sozlamalari",
+          "checklist_template": "Chek-list"
         },
         "reasons": {
           "edited": "ko‘chirishdan keyin o‘zgartirilgan",
           "used": "ishlatilmoqda: jurnal yozuvlari, datchiklar yoki tayinlovlar",
           "not_empty": "ichida boshqa yozuvlar qolgan",
           "has_staff": "lavozimda xodimlar bor",
-          "linked": "bog‘langan xona yoki sex qoladi"
-        }
+          "linked": "bog‘langan xona yoki sex qoladi",
+          "not_undoable": "almashtirilgan sozlamalarni qaytarib bo‘lmaydi"
+        },
+        "fixed": "{kind}: bekor qilib bo‘lmaydi"
       },
       "skips": {
         "count": "O‘tkazib yuborildi: {count}",

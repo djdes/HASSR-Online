@@ -18,6 +18,8 @@ import {
   hashScope,
   hashTag,
   isCurrentHash,
+  isSingleRecordEntity,
+  JOURNAL_SETTINGS_KEY,
   naturalKey,
   normalizeExchangeKinds,
   normalizeExchangeName,
@@ -28,7 +30,7 @@ import {
 import { emptySummary, parseExchangeSummary, summaryTotals } from "@/lib/directory-exchange/summary";
 
 test("lists and entities: every entity belongs to one list, parents come first", () => {
-  assert.deepEqual([...EXCHANGE_KINDS], ["products", "staff", "objects", "equipment"]);
+  assert.deepEqual([...EXCHANGE_KINDS], ["products", "staff", "objects", "equipment", "journals", "checklists"]);
   assert.deepEqual(EXCHANGE_KINDS.flatMap((kind) => [...KIND_ENTITIES[kind]]).sort(), [...EXCHANGE_ENTITIES].sort());
   for (const entity of EXCHANGE_ENTITIES) {
     assert.ok(KIND_ENTITIES[ENTITY_KIND[entity]].includes(entity), entity);
@@ -67,6 +69,28 @@ test("natural keys by entity", () => {
   assert.equal(naturalKey("equipment", { name: "Холодильник №1", type: "refrigerator" }, "g2"), "g2|refrigerator|холодильник №1");
   // Одинаковые названия в разных объектах и цехах — разные записи.
   assert.notEqual(naturalKey("room", { name: "Кухня" }, "g1"), naturalKey("room", { name: "Кухня" }, "g2"));
+});
+
+test("Р8.1, Р8.4: journal settings — one record with a constant key; a checklist template matches by title", () => {
+  assert.equal(naturalKey("journal_settings", {}), JOURNAL_SETTINGS_KEY);
+  assert.equal(naturalKey("journal_settings", { disabledJournalCodes: '["hygiene"]' }, null, "acc-1"), JOURNAL_SETTINGS_KEY);
+  assert.ok(isSingleRecordEntity("journal_settings"));
+  assert.ok(!isSingleRecordEntity("checklist_template"));
+  assert.equal(naturalKey("checklist_template", { name: "  Проверка   кухни " }), "проверка кухни");
+  assert.equal(naturalKey("checklist_template", { name: " " }), null);
+  assert.deepEqual([...KIND_ENTITIES.journals], ["journal_settings"]);
+  assert.deepEqual([...KIND_ENTITIES.checklists], ["checklist_template"]);
+  // Только коды и флаги — без людей; между аккаунтами состав тот же.
+  assert.deepEqual([...exchangedFields("journal_settings", "foreign")], ["disabledJournalCodes", "autoJournalCodes", "journalAutomation", "automation"]);
+  assert.deepEqual([...exchangedFields("checklist_template", "foreign")], ["name", "definition"]);
+  assert.equal(entityScope("checklist_template", "foreign"), "account");
+  // Новые сущности — версия 1: отпечаток без меток.
+  assert.equal(currentFieldVersion("journal_settings"), 1);
+  assert.match(rowHash("checklist_template", { name: "Кухня", definition: "{}" }), /^[0-9a-f]+$/);
+  assert.notEqual(
+    rowHash("journal_settings", { disabledJournalCodes: '["hygiene"]', automation: "{}" }),
+    rowHash("journal_settings", { disabledJournalCodes: '["health_check"]', automation: "{}" }),
+  );
 });
 
 test("no key — no exchange: empty name or a required parent outside the exchange", () => {

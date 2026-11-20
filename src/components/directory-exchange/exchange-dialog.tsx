@@ -10,9 +10,11 @@ import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { cn } from "@/lib/utils";
 import {
   EXCHANGE_KINDS,
+  SINGLE_RECORD_KINDS,
   exchangeError,
   exchangeRequest,
   isExchangeRunning,
+  kindRecord,
   linkMembers,
   loadExchangeState,
   parseSummary,
@@ -48,8 +50,8 @@ const WARNING =
 const BODY = "min-h-0 flex-1 overflow-y-auto px-5 pb-5";
 const FOOTER = "shrink-0 border-t border-[#ececf4] px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4";
 
-const NO_COUNTS: ExchangeCounts = { products: 0, staff: 0, objects: 0, equipment: 0 };
-const NO_PICKS: Record<ExchangeKind, string[]> = { products: [], staff: [], objects: [], equipment: [] };
+const NO_COUNTS: ExchangeCounts = kindRecord(() => 0);
+const NO_PICKS: Record<ExchangeKind, string[]> = kindRecord<string[]>(() => []);
 const EMPTY_SUMMARY: ExchangeSummary = { organizations: [], notes: [] };
 
 /** Поиск по позициям появляется, когда список не помещается на экран целиком. */
@@ -164,12 +166,7 @@ export function ExchangeDialog({
       const items = parseTransferItems(json);
       setPreview({ sourceId, items, error: "" });
       // По умолчанию — всё, чего здесь ещё нет; точечно человек снимает сам.
-      setPicked({
-        products: transferableIds(items.products),
-        staff: transferableIds(items.staff),
-        objects: transferableIds(items.objects),
-        equipment: transferableIds(items.equipment),
-      });
+      setPicked(kindRecord((kind) => transferableIds(items[kind])));
     });
     return () => {
       alive = false;
@@ -561,6 +558,8 @@ export function ExchangeDialog({
                     const items = mode === "transfer" && checked ? (previewItems?.[kind] ?? null) : null;
                     const available = items ? transferableIds(items).length : 0;
                     const open = expanded === kind;
+                    // Настройки журналов — одна запись: ни счётчиков, ни позиций.
+                    const single = SINGLE_RECORD_KINDS.includes(kind);
                     return (
                       <li key={kind}>
                         <label className={cn(ROW, checked && "bg-[#fafbff]")}>
@@ -575,7 +574,7 @@ export function ExchangeDialog({
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-baseline justify-between gap-x-3">
                               <span className="text-[14px] font-medium text-[#0b1024]">{t(`kinds.${kind}`)}</span>
-                              {siblings.length === 0 ? (
+                              {single ? null : siblings.length === 0 ? (
                                 // Соседних организаций нет: сравнивать не с чем, а о чужой компании ничего не известно.
                                 mode === "link" ? (
                                   <span className="text-[12px] tabular-nums text-[#6f7282]">
@@ -606,7 +605,17 @@ export function ExchangeDialog({
                         </label>
                         {items ? (
                           <div className="px-4 pb-3 pl-11">
-                            {items.length === 0 ? (
+                            {single ? (
+                              // Перенос заменяет настройки журналов целиком — и отменить его нельзя.
+                              <p
+                                className={cn("text-[12.5px] leading-[1.45]", available === 0 ? "text-[#6f7282]" : "text-[#7a4a00]")}
+                                data-testid={`exchange-single-${kind}`}
+                              >
+                                {available === 0
+                                  ? t("dialog.journalsSame", { name: ownName })
+                                  : t("dialog.journalsReplace", { source: source?.name ?? "", name: ownName })}
+                              </p>
+                            ) : items.length === 0 ? (
                               <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">{t("dialog.itemsEmpty")}</p>
                             ) : available === 0 ? (
                               <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">

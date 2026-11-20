@@ -81,10 +81,12 @@ const items: TransferItems = {
   staff: [{ id: "s1", name: "Иванова Мария", detail: "Повар", exists: false, parentId: null }],
   objects: [{ id: "o1", name: "Кафе", detail: null, exists: true, parentId: null }],
   equipment: [],
+  journals: [],
+  checklists: [],
 };
 
 test("transfer: everything available goes as «all», a part goes by id, empty lists are not sent", () => {
-  const picked = { products: ["p1", "p2", "p3"], staff: ["s1"], objects: ["o1"], equipment: [] };
+  const picked = { products: ["p1", "p2", "p3"], staff: ["s1"], objects: ["o1"], equipment: [], journals: [], checklists: [] };
   assert.deepEqual(transferSelection(items, ["products", "staff", "objects", "equipment"], picked), {
     products: "all",
     staff: "all",
@@ -125,7 +127,7 @@ test("responses are parsed defensively and totals are summed per organisation", 
   const state = parseState({
     canManage: true,
     organization: { id: "new", name: "Новая" },
-    counts: { products: 3, staff: "7" },
+    counts: { products: 3, staff: "7", journals: 1, checklists: 4 },
     siblings: [{ id: "a", name: "Кафе", counts: { equipment: 2 }, locked: true }, { name: "без id" }],
     cabinet: null,
     members: [
@@ -135,9 +137,9 @@ test("responses are parsed defensively and totals are summed per organisation", 
     lastSync: { organizations: [], notes: ["  ", "Заметка"] },
   });
   if (!state) throw new Error("a complete response must be parsed");
-  assert.deepEqual(state.counts, { products: 3, staff: 0, objects: 0, equipment: 0 });
+  assert.deepEqual(state.counts, { products: 3, staff: 0, objects: 0, equipment: 0, journals: 1, checklists: 4 });
   assert.deepEqual(state.siblings, [
-    { id: "a", name: "Кафе", counts: { products: 0, staff: 0, objects: 0, equipment: 2 }, locked: true },
+    { id: "a", name: "Кафе", counts: { products: 0, staff: 0, objects: 0, equipment: 2, journals: 0, checklists: 0 }, locked: true },
   ]);
   assert.deepEqual(state.members[0].kinds, ["products", "staff"]);
   assert.deepEqual(exchangeParticipants(state).map((entry) => entry.organizationId), ["a"]);
@@ -160,6 +162,8 @@ test("responses are parsed defensively and totals are summed per organisation", 
     ],
     objects: [],
     equipment: [],
+    journals: [],
+    checklists: [],
   });
 
   const summary = parseSummary({

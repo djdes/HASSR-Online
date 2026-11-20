@@ -110,6 +110,24 @@ export async function getJournalControls(organizationId: string): Promise<Journa
   return updateJournalControls(organizationId, {});
 }
 
+/**
+ * Настройки журналов только для чтения (обмен справочниками, 2026-11-20): то
+ * же, что `getJournalControls`, но выбор, решённый правилом для организации
+ * без сохранённого выбора, не записывается — чтение базу не меняет. `savedAt`
+ * — когда настройку сохраняли последний раз (null — не сохраняли).
+ */
+export async function peekJournalControls(organizationId: string): Promise<{ controls: JournalControls; savedAt: Date | null }> {
+  const row = await db.platformSetting.findUnique({ where: { key: settingKey(organizationId) }, select: { value: true, updatedAt: true } });
+  const current = parseJournalControls(row?.value);
+  const stored = readStoredAutomation(row?.value);
+  const savedAt = row?.updatedAt ?? null;
+  if (stored.automation && stored.missing.length === 0) return { controls: current, savedAt };
+  const automation =
+    (stored.automation ? await withAddedFeatures(db, organizationId, stored.automation, stored.missing) : null) ??
+    (await legacyAutomation(db, organizationId, stored.legacySpecialMode));
+  return { controls: automation ? { ...current, automation } : current, savedAt };
+}
+
 export async function updateJournalControls(organizationId: string, patch: Partial<JournalControls>): Promise<JournalControls> {
   return db.$transaction(async (tx) => {
     const key = settingKey(organizationId);

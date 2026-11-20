@@ -10,9 +10,13 @@
  *
  * Чего здесь нет намеренно (правило Р4): почты, пароля, Telegram, роли,
  * привязки датчиков, ответственных, комиссии и офиса — они не переносятся.
+ *
+ * «Журналы» и «Чек-листы» (Р8.1, Р8.4, 2026-11-20) — списки без родителей.
+ * У «Журналов» одна запись на организацию — её настройки журналов
+ * (`SINGLE_RECORD_ENTITIES`): ключ постоянный, создавать и пропускать нечего.
  */
 
-export const EXCHANGE_KINDS = ["products", "staff", "objects", "equipment"] as const;
+export const EXCHANGE_KINDS = ["products", "staff", "objects", "equipment", "journals", "checklists"] as const;
 export type ExchangeKind = (typeof EXCHANGE_KINDS)[number];
 
 export function isExchangeKind(value: unknown): value is ExchangeKind {
@@ -31,7 +35,17 @@ export function normalizeExchangeKinds(raw: unknown): ExchangeKind[] {
  * Цеха идут после помещений: помещение само заводит цех-зеркало, и к обмену
  * цехами оно уже есть — сопоставляется по ключу, а не создаётся вторым.
  */
-export const EXCHANGE_ENTITIES = ["position", "staff", "building", "room", "area", "equipment", "product"] as const;
+export const EXCHANGE_ENTITIES = [
+  "position",
+  "staff",
+  "building",
+  "room",
+  "area",
+  "equipment",
+  "product",
+  "journal_settings",
+  "checklist_template",
+] as const;
 export type ExchangeEntity = (typeof EXCHANGE_ENTITIES)[number];
 
 export function isExchangeEntity(value: unknown): value is ExchangeEntity {
@@ -43,6 +57,8 @@ export const KIND_ENTITIES: Record<ExchangeKind, readonly ExchangeEntity[]> = {
   staff: ["position", "staff"],
   objects: ["building", "room"],
   equipment: ["area", "equipment"],
+  journals: ["journal_settings"],
+  checklists: ["checklist_template"],
 };
 
 export const ENTITY_KIND: Record<ExchangeEntity, ExchangeKind> = {
@@ -53,6 +69,8 @@ export const ENTITY_KIND: Record<ExchangeEntity, ExchangeKind> = {
   area: "equipment",
   equipment: "equipment",
   product: "products",
+  journal_settings: "journals",
+  checklist_template: "checklists",
 };
 
 /**
@@ -68,7 +86,23 @@ export const ENTITY_PARENT: Record<ExchangeEntity, { entity: ExchangeEntity; req
   area: { entity: "building", required: false },
   equipment: { entity: "area", required: true },
   product: null,
+  journal_settings: null,
+  checklist_template: null,
 };
+
+/**
+ * Настройки журналов (Р8.1) — одна запись на организацию, id записи — id
+ * организации. Ключ у всех один (`JOURNAL_SETTINGS_KEY`): запись каждого
+ * участника находит общую группу и только связывается — создавать нечего,
+ * поэтому и пропусков (тариф, дубль названия) у неё нет. Разовый перенос
+ * заменяет настройки получателя образцом и не отменяется.
+ */
+export const SINGLE_RECORD_ENTITIES: ReadonlySet<ExchangeEntity> = new Set<ExchangeEntity>(["journal_settings"]);
+export const JOURNAL_SETTINGS_KEY = "settings";
+
+export function isSingleRecordEntity(entity: ExchangeEntity): boolean {
+  return SINGLE_RECORD_ENTITIES.has(entity);
+}
 
 /**
  * Состав переносимых полей (`FieldSet`): `account` — внутри аккаунта,
@@ -145,6 +179,12 @@ export const ENTITY_FIELD_VERSIONS = {
   ],
   area: [{ account: ["name", "description"] }],
   equipment: [{ account: ["name", "type", "serialNumber", "tempMin", "tempMax", "lampModel", "lampLifetimeHours"] }],
+  // Р8.1: выключенные журналы, легаси-список автосоздания, автоматика по
+  // журналам (только флаги, без ответственных — это люди организации) и общие
+  // переключатели автоматики. Только коды и флаги — другой компании тоже.
+  journal_settings: [{ account: ["disabledJournalCodes", "autoJournalCodes", "journalAutomation", "automation"] }],
+  // Р8.4: название и содержание шаблона без ссылок на файлы-примеры.
+  checklist_template: [{ account: ["name", "definition"] }],
 } as const satisfies Record<ExchangeEntity, readonly [FieldSet, ...FieldSet[]]>;
 
 function fieldVersions(entity: ExchangeEntity): readonly FieldSet[] {
@@ -259,6 +299,8 @@ export function naturalKey(
   parentGroupId: string | null = null,
   owner: string | null = null,
 ): string | null {
+  // Настройки журналов у организации одни: ключ постоянный, имени нет.
+  if (entity === "journal_settings") return JOURNAL_SETTINGS_KEY;
   const name = normalizeExchangeName(fields.name);
   if (!name) return null;
   const parent = ENTITY_PARENT[entity];
@@ -270,6 +312,7 @@ export function naturalKey(
       return owner ? `${owner}|${name}` : name;
     case "position":
     case "building":
+    case "checklist_template":
       return name;
     case "room":
       return `${parentGroupId}|${name}`;
@@ -398,5 +441,5 @@ export function rowHashLike(
 
 /** Пустой счётчик по спискам — основа итогов и счётчиков окна. */
 export function emptyKindRecord<T>(make: () => T): Record<ExchangeKind, T> {
-  return { products: make(), staff: make(), objects: make(), equipment: make() };
+  return { products: make(), staff: make(), objects: make(), equipment: make(), journals: make(), checklists: make() };
 }

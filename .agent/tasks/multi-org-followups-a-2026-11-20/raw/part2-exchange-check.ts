@@ -158,7 +158,9 @@ async function main() {
   );
   const bRoom = await db.room.findFirst({ where: { name: "Кухня", building: { organizationId: b.id } } });
   check("rule Р4: room responsibles not copied, kind copied", bRoom?.cleanerUserIds.length === 0 && bRoom.kind === "kitchen", bRoom);
-  check("summary: B created records in all four lists", EXCHANGE_KINDS.every((kind) => (of(first, b.id)?.[kind].created ?? 0) > 0), of(first, b.id));
+  // Series C2 added «Журналы» (one settings record per organization: linked, never created) and «Чек-листы» (none here).
+  const FOUR_LISTS = ["products", "staff", "objects", "equipment"] as const;
+  check("summary: B created records in all four lists", FOUR_LISTS.every((kind) => (of(first, b.id)?.[kind].created ?? 0) > 0), of(first, b.id));
   const memberRow = await db.directoryExchangeMember.findFirst({ where: { masterOrganizationId: cabinet.id, organizationId: b.id } });
   check("lastSyncedAt and lastSyncJson written", Boolean(memberRow?.lastSyncedAt) && Boolean(memberRow?.lastSyncJson));
   const audit = await db.auditLog.count({ where: { organizationId: b.id, action: "directory_exchange.synced" } });

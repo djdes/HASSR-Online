@@ -1,0 +1,59 @@
+PASS setup: O2 received the owner's records
+--- linking A, then B (several companies at one cabinet)
+PASS A is linked
+PASS B is linked while A stays linked — no «cabinet busy»
+PASS both companies are foreign members of the cabinet
+PASS the cabinet's summary has no «second company did not take part» note
+--- creation
+PASS A received every owner's record
+PASS B received every owner's record
+PASS A has none of B's records
+PASS B has none of A's records
+PASS O1 received the records of both companies
+PASS O2 received the records of both companies
+--- name match
+PASS same-named «Общий хлеб» of A and B: two groups, each started by its own company
+PASS …the owner holds A's version (A linked first), B keeps its own
+PASS …B's «Общий хлеб» stays a conflict skip at both owner organizations with no candidate to link
+PASS «Молоко» equal to the owner's: both companies joined the owner's group, nobody's data overwritten
+PASS same-named area of A and B: separate groups; B's area keeps only its own equipment
+PASS the owner holds both same-named areas, each in its own company's group
+PASS every link of the cabinet has an origin
+--- edits
+PASS a repeated run changes nothing
+PASS A's edits change no record of the owner or of B
+PASS the owner's edit reaches O2, A and B
+PASS the owner's edit of A's records reaches A; B neither gets them nor has its «Общий хлеб» changed
+PASS a new record of B reaches the owner but not A
+PASS …and the next run changes nothing
+--- one-off transfer requested by B
+PASS transfer preview for B: the owner's and B's records, none that came from A
+PASS a transfer inside the owner's account still offers everything
+PASS B's second organization received the owner's records by the transfer
+PASS …and records that came from B itself
+PASS …but nothing that came from A (by creation or by name)
+PASS …of the owner's two same-named areas B got only B's own (with B's equipment norms)
+--- transfer from an own organization that left the exchange
+PASS O3 took part in the exchange and received A's records
+PASS O3 left the exchange: its links are gone, the copies stay
+PASS transfer preview O3 → B: O3's own product offered, none of A's names
+PASS transfer O3 → B by an approved request: O3's own product arrived
+PASS …and none of A's records (O3's copies are withheld by name)
+--- legacy groups without an origin
+PASS owner linked earlier than A (A's record older) → the owner's group
+PASS A linked earlier than the owner → A's group
+PASS one run, A's record re-created after its link → A's group (cautious)
+PASS one run, the owner's record strictly older than A's → the owner's group
+PASS two companies → «mixed»
+PASS owner's links only → the organization of the earliest link (O2)
+PASS no record dates (areas), one run → the company's group
+PASS B receives the owner's legacy groups (incl. one already copied to A)
+PASS B receives none of A's legacy groups
+PASS A received the owner's legacy group
+PASS the owner's O2 received every legacy group
+PASS the origin is saved: no link of the cabinet without one
+PASS a mixed group: the owner's edit reaches O2, not the companies
+PASS a second run changes nothing: no records, no links, no origins
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0
+TOTAL: 49 PASS, 0 FAIL
+RESULT: all checks passed

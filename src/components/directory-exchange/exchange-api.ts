@@ -13,8 +13,14 @@
 
 export const EXCHANGE_ENDPOINT = "/api/settings/directory-exchange";
 
-/** Четыре списка — в порядке показа в окне и в карточке. */
-export const EXCHANGE_KINDS = ["products", "staff", "objects", "equipment"] as const;
+/** Шесть списков — в порядке показа в окне и в карточке. */
+export const EXCHANGE_KINDS = ["products", "staff", "objects", "equipment", "journals", "checklists"] as const;
+
+/**
+ * Список из одной записи на организацию — настройки журналов (Р8.1): в окне
+ * без счётчиков и позиций; разовый перенос заменяет настройки и не отменяется.
+ */
+export const SINGLE_RECORD_KINDS: readonly ExchangeKind[] = ["journals"];
 
 export type ExchangeKind = (typeof EXCHANGE_KINDS)[number];
 
@@ -111,14 +117,14 @@ function parseKinds(value: unknown): ExchangeKind[] {
   return EXCHANGE_KINDS.filter((kind) => list.includes(kind));
 }
 
+/** Пустой набор по спискам — основа счётчиков и выбора в окне. */
+export function kindRecord<T>(make: (kind: ExchangeKind) => T): Record<ExchangeKind, T> {
+  return Object.fromEntries(EXCHANGE_KINDS.map((kind) => [kind, make(kind)])) as Record<ExchangeKind, T>;
+}
+
 function parseCounts(value: unknown): ExchangeCounts {
   const source = asObject(value);
-  return {
-    products: asCount(source?.products),
-    staff: asCount(source?.staff),
-    objects: asCount(source?.objects),
-    equipment: asCount(source?.equipment),
-  };
+  return kindRecord((kind) => asCount(source?.[kind]));
 }
 
 export function parseSummary(value: unknown): ExchangeSummary | null {
@@ -201,7 +207,7 @@ export function parseTransferItems(value: unknown): TransferItems {
     }
     return items;
   };
-  return { products: list("products"), staff: list("staff"), objects: list("objects"), equipment: list("equipment") };
+  return kindRecord(list);
 }
 
 /** Организации, которые сейчас в обмене (хотя бы один список). */
@@ -782,12 +788,29 @@ export async function resolveExchangeSkip(body: ExchangeSkipAction): Promise<Exc
 /** `GET …/transfers`, `POST …/transfers/<id>/undo`. */
 export const EXCHANGE_TRANSFERS_PATH = "/transfers";
 
-/** Сущности, которые создаёт перенос: должность, сотрудник, объект, помещение, цех, оборудование, продукт. */
-export const TRANSFER_ENTITIES = ["position", "staff", "building", "room", "area", "equipment", "product"] as const;
+/**
+ * Сущности, которые создаёт перенос: должность, сотрудник, объект, помещение,
+ * цех, оборудование, продукт, шаблон чек-листа; настройки журналов перенос
+ * заменяет (без отмены).
+ */
+export const TRANSFER_ENTITIES = [
+  "position",
+  "staff",
+  "building",
+  "room",
+  "area",
+  "equipment",
+  "product",
+  "journal_settings",
+  "checklist_template",
+] as const;
 export type TransferEntity = (typeof TRANSFER_ENTITIES)[number];
 
-/** Почему запись осталась после отмены: правили, используется, внутри что-то есть, на должности люди, пара помещение ↔ цех. */
-export const TRANSFER_KEEP_REASONS = ["edited", "used", "not_empty", "has_staff", "linked"] as const;
+/**
+ * Почему запись осталась после отмены: правили, используется, внутри что-то
+ * есть, на должности люди, пара помещение ↔ цех, замена не отменяется.
+ */
+export const TRANSFER_KEEP_REASONS = ["edited", "used", "not_empty", "has_staff", "linked", "not_undoable"] as const;
 export type TransferKeepReason = (typeof TRANSFER_KEEP_REASONS)[number];
 
 export type TransferUndoAction = "deactivated" | "archived" | "deleted";
@@ -806,6 +829,10 @@ export type RecentTransfer = {
   to: { id: string; name: string };
   /** Сколько записей создано по спискам. */
   counts: ExchangeCounts;
+  /** Списки, где перенос заменил данные без отмены (настройки журналов). */
+  fixedKinds: ExchangeKind[];
+  /** Кроме незаменимого (`fixedKinds`), отменять нечего — срок отмены не показываем. */
+  onlyFixed: boolean;
   undoUntil: string | null;
   undoable: boolean;
   undoneAt: string | null;
@@ -857,6 +884,8 @@ export function parseRecentTransfers(value: unknown): RecentTransfer[] {
       from: { name: asText(from?.name), foreign: from?.foreign === true },
       to: { id: asText(to?.id), name: asText(to?.name) },
       counts: parseCounts(row.counts),
+      fixedKinds: parseKinds(row.fixedKinds),
+      onlyFixed: row.onlyFixed === true,
       undoUntil: asMoment(row.undoUntil),
       // Уже отменённый перенос второй раз не отменяется, что бы ни сказал сервер.
       undoable: row.undoable === true && !undoneAt,

@@ -241,7 +241,8 @@ async function main() {
       listedT1!.from.name === a.name &&
       !listedT1!.from.foreign &&
       listedT1!.to.id === b.id &&
-      same(listedT1!.counts, { products: 3, staff: 3, objects: 3, equipment: 5 }),
+      // Series C2: the counts also carry «Журналы» and «Чек-листы» (nothing transferred there).
+      same(listedT1!.counts, { products: 3, staff: 3, objects: 3, equipment: 5, journals: 0, checklists: 0 }),
     listedT1,
   );
 
