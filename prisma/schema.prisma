@@ -12,24 +12,24 @@ datasource db {
 /// организации, но один договор и один лимит сотрудников. Тариф живёт
 /// здесь, на Organization остаются legacy-зеркала на один релиз.
 model Account {
-  id                 String         @id @default(cuid())
-  ownerUserId        String         @unique
+  id                 String                   @id @default(cuid())
+  ownerUserId        String                   @unique
   /// Каскад обязателен: без него удаление организации падало по
   /// внешнему ключу. Организация удаляется каскадом на пользователей,
   /// а на владельце висел аккаунт — и ROOT не мог удалить компанию.
   /// Организации такого аккаунта просто теряют привязку (accountId
   /// становится null) — их всё равно удаляют вместе с ним.
-  owner              User           @relation("AccountOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  owner              User                     @relation("AccountOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
   /// free | standard | premium (тарифы 2026-10); paid — «Подписка» прежнего
   /// тарифа до конца оплаченного срока. Пробный период сюда не пишется —
   /// он выводится из `createdAt`/`trialEndsAt` (src/lib/billing-period.ts).
-  subscriptionPlan   String         @default("free")
+  subscriptionPlan   String                   @default("free")
   subscriptionEnd    DateTime?
   planAutoUpgradedAt DateTime?
   /// Период оплаченного тарифа: month | year. null — прежняя «Подписка» (месяц).
   planCycle          String?
   /// Сколько точек оплачено (цена × точки, от 3 точек −5 % на каждую).
-  planPoints         Int            @default(1)
+  planPoints         Int                      @default(1)
   /// Пробный период до (ROOT продлил). null — 14 дней от создания аккаунта,
   /// но не раньше запуска тарифов 2026-10.
   trialEndsAt        DateTime?
@@ -37,15 +37,15 @@ model Account {
   scheduledPlanJson  Json?
   /// Автопродление с баланса (владелец, 2026-11-09): в конце срока тариф
   /// оплачивается с внутреннего баланса, если там хватает. Карта не списывается.
-  autoRenew          Boolean        @default(true)
+  autoRenew          Boolean                  @default(true)
   /// Когда руководитель последний раз включал/выключал автопродление.
   autoRenewChangedAt DateTime?
   /// Сколько раз аккаунту выдали свои 14 дней для дополнительной организации
   /// (`src/lib/org-trial.ts`). Только растёт: удаление организации выдачу не
   /// возвращает — иначе пробный период получали бы по кругу.
-  orgTrialsGranted   Int            @default(0)
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  orgTrialsGranted   Int                      @default(0)
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
   organizations      Organization[]
   /// Скидка навсегда (lifetime-промокод, привязан первой оплатой).
   lifetimeDiscount   AccountLifetimeDiscount?
@@ -58,17 +58,17 @@ model Account {
 /// приглашённый руководитель — role="manager" там, куда его пустили.
 /// MAX identities are independent of organization chats and Telegram identities.
 model MaxIdentity {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  maxUserId            String   @unique
+  id                   String              @id @default(cuid())
+  userId               String              @unique
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  maxUserId            String              @unique
   privateChatId        String
   displayName          String
   activeOrganizationId String?
   /// Bot dialog state (journal fill wizard); null when idle. See src/lib/max/bot-state.ts.
   botState             Json?
   botStateAt           DateTime?
-  createdAt            DateTime @default(now())
+  createdAt            DateTime            @default(now())
   /// Legacy browser handoffs (mini-site removed 2026-10-26); kept so db push stays additive.
   handoffs             MaxSessionHandoff[]
 }
@@ -85,38 +85,40 @@ model MaxInvite {
   expiresAt       DateTime
   usedAt          DateTime?
   createdAt       DateTime     @default(now())
+
   @@index([userId])
   @@index([expiresAt])
 }
 
 model MaxLinkRequest {
-  id                   String        @id @default(cuid())
-  tokenHash            String        @unique
-  userId               String
-  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organizationId       String?
-  organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  expiresAt            DateTime
-  usedAt               DateTime?
-  claimedMaxUserId     String?
-  claimedChatId        String?
-  claimedDisplayName   String?
-  createdAt            DateTime      @default(now())
+  id                 String        @id @default(cuid())
+  tokenHash          String        @unique
+  userId             String
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId     String?
+  organization       Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  expiresAt          DateTime
+  usedAt             DateTime?
+  claimedMaxUserId   String?
+  claimedChatId      String?
+  claimedDisplayName String?
+  createdAt          DateTime      @default(now())
+
   @@index([userId, createdAt])
   @@index([expiresAt])
 }
 
 model MaxOrganizationIntegration {
-  organizationId String       @id
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  enabled        Boolean      @default(true)
-  chatId         String?      @unique
-  chatTitle      String?
-  linkedByUserId String?
-  linkedAt       DateTime?
+  organizationId      String       @id
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enabled             Boolean      @default(true)
+  chatId              String?      @unique
+  chatTitle           String?
+  linkedByUserId      String?
+  linkedAt            DateTime?
   /// Last «Напомнить не заполнившим» from the bot (30-minute throttle).
-  lastReminderAt DateTime?
-  updatedAt      DateTime     @updatedAt
+  lastReminderAt      DateTime?
+  updatedAt           DateTime     @updatedAt
   /// Последнее напоминание по точкам (2026-11-01): { [buildingId | "org"]: ISO-время } —
   /// пауза между напоминаниями у каждой точки своя.
   lastReminderByPoint Json?
@@ -131,14 +133,16 @@ model MaxSessionHandoff {
   returnPath     String
   expiresAt      DateTime
   usedAt         DateTime?
+
   @@index([expiresAt])
 }
 
 model MaxWebhookReceipt {
-  id              String    @id
-  leaseUntil      DateTime
-  completedAt     DateTime?
-  createdAt       DateTime  @default(now())
+  id          String    @id
+  leaseUntil  DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
   @@index([createdAt])
 }
 
@@ -238,19 +242,19 @@ model OrganizationMember {
 }
 
 model Organization {
-  apiAccessKeys                 ApiAccessKey[]
+  apiAccessKeys                  ApiAccessKey[]
   masterBrakerageBatches         MasterBrakerageBatch[]
-  knowledgeDocuments            KnowledgeDocument[]
-  logo                          OrganizationLogo?
-  qrIcon                        OrganizationQrIcon?
-  ppkRecords                    PpkRecord[]
-  ppkAcknowledgements           PpkAcknowledgement[]
-  checklistTemplates            ChecklistTemplate[]
-  checklistInspections          ChecklistInspection[]
-  checklistAttachments          ChecklistAttachment[]
-  checklistAssignments          ChecklistAssignment[]
+  knowledgeDocuments             KnowledgeDocument[]
+  logo                           OrganizationLogo?
+  qrIcon                         OrganizationQrIcon?
+  ppkRecords                     PpkRecord[]
+  ppkAcknowledgements            PpkAcknowledgement[]
+  checklistTemplates             ChecklistTemplate[]
+  checklistInspections           ChecklistInspection[]
+  checklistAttachments           ChecklistAttachment[]
+  checklistAssignments           ChecklistAssignment[]
   /// Документы, отправленные этой организации по ЭДО (ROOT → /root/edo).
-  edoDocuments                  EdoDocument[]
+  edoDocuments                   EdoDocument[]
   id                             String                         @id @default(cuid())
   /// Автопродление подписки включено.
   ///
@@ -307,6 +311,10 @@ model Organization {
   /// Код чужой базы, к которой организация подключилась («Привязать журнал,
   /// служебный код»). Пусто — своя база.
   linkedServiceCode              String?
+  /// Код мастер-кабинета для запросов другой компании на обмен справочниками
+  /// (серия B, 2026-11-20). Пусто — действует прежний `serviceCode`; владелец
+  /// может выдать новый, не трогая код меню и сырья (`serviceCode`).
+  exchangeCode                   String?                        @unique
   /// "regular" — обычный объект; "directory" — мастер-кабинет справочников
   /// пула служебного кода (см. src/lib/master-directory.ts).
   kind                           String                         @default("regular")
@@ -674,7 +682,7 @@ model Organization {
   staffPairTokens                StaffPairToken[]
   webPushSubscriptions           WebPushSubscription[]
   mobileDevices                  MobileDevice[]
-  offlineDevices                  OfflineDevice[]
+  offlineDevices                 OfflineDevice[]
   paperJournalDocuments          PaperJournalDocument[]
   printAgents                    PrintAgent[]
   printJobs                      PrintJob[]
@@ -697,30 +705,34 @@ model Organization {
   /// сотрудники подписывают записи личным ПИН. `kioskEnabled` — включён ли
   /// режим; `kioskIdleLockSeconds` — через сколько бездействия киоск
   /// перелочивается обратно на список сотрудников.
-  kioskEnabled                   Boolean                        @default(false)
-  kioskIdleLockSeconds           Int                            @default(90)
+  kioskEnabled                 Boolean                      @default(false)
+  kioskIdleLockSeconds         Int                          @default(90)
   /// Фото при входе по ПИН на общем планшете (opt-in руководителя). Кадр с
   /// фронтальной камеры прикладывается к подписи как доказательство «это
   /// был он». Снимается только при согласии сотрудника (User.kioskPhotoConsentAt).
-  kioskPhotoRequired             Boolean                        @default(false)
+  kioskPhotoRequired           Boolean                      @default(false)
   /// Сканы приказов к журналам (2026-09-24, пожелание РПН).
-  journalOrderScans              JournalOrderScan[]
+  journalOrderScans            JournalOrderScan[]
   /// «Пришла проверка» → журнал посещений (2026-10-17).
-  inspectionVisits               InspectionVisit[]
+  inspectionVisits             InspectionVisit[]
   /// Организации, слитые в точки этой (2026-10-26).
-  mergedOrganizations            OrganizationMerge[]
+  mergedOrganizations          OrganizationMerge[]
   /// Свои настройки журналов: распределение, исполнитель, бонус (2026-11-01).
-  journalSettings                OrganizationJournalSetting[]
+  journalSettings              OrganizationJournalSetting[]
   /// Обмен справочниками между организациями аккаунта (2026-11-19): у
   /// мастер-кабинета — его участники и соответствия записей, у организации —
   /// её участие (src/lib/directory-exchange).
-  directoryExchangeMembers       DirectoryExchangeMember[]      @relation("DirectoryExchangeMaster")
-  directoryExchangeMemberships   DirectoryExchangeMember[]      @relation("DirectoryExchangeMember")
-  directoryExchangeLinks         DirectoryExchangeLink[]        @relation("DirectoryExchangeLinkMaster")
+  directoryExchangeMembers     DirectoryExchangeMember[]    @relation("DirectoryExchangeMaster")
+  directoryExchangeMemberships DirectoryExchangeMember[]    @relation("DirectoryExchangeMember")
+  directoryExchangeLinks       DirectoryExchangeLink[]      @relation("DirectoryExchangeLinkMaster")
   /// Запросы на обмен с чужим аккаунтом (часть 3): у мастер-кабинета —
   /// входящие, у организации — её собственные.
-  directoryExchangeRequestsIn    DirectoryExchangeRequest[]     @relation("DirectoryExchangeRequestMaster")
-  directoryExchangeRequestsOut   DirectoryExchangeRequest[]     @relation("DirectoryExchangeRequestRequester")
+  directoryExchangeRequestsIn  DirectoryExchangeRequest[]   @relation("DirectoryExchangeRequestMaster")
+  directoryExchangeRequestsOut DirectoryExchangeRequest[]   @relation("DirectoryExchangeRequestRequester")
+  directoryExchangeSkips       DirectoryExchangeSkip[]      @relation("DirectoryExchangeSkipMaster")
+  directoryExchangeSkipsIn     DirectoryExchangeSkip[]      @relation("DirectoryExchangeSkipTarget")
+  directoryTransfersOut        DirectoryTransfer[]          @relation("DirectoryTransferFrom")
+  directoryTransfersIn         DirectoryTransfer[]          @relation("DirectoryTransferTo")
 
   @@index([isDemo, demoExpiresAt])
 }
@@ -928,43 +940,43 @@ model ChecklistAssignment {
 }
 
 model ChecklistInspection {
-  id             String            @id @default(cuid())
-  organizationId String
-  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  templateId     String
-  template       ChecklistTemplate @relation(fields: [templateId], references: [id])
-  title          String
-  templateVersion Int
-  snapshot       Json
-  answers        Json              @default("{}")
-  evidence       Json              @default("{}")
-  categoryInstances Json           @default("{}")
-  result         Json?
-  status         String            @default("draft")
-  createdById    String
-  createdByName  String
-  completedByName String?
-  completedById  String?
-  completedAt    DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  attachments    ChecklistAttachment[]
+  id                String                @id @default(cuid())
+  organizationId    String
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  templateId        String
+  template          ChecklistTemplate     @relation(fields: [templateId], references: [id])
+  title             String
+  templateVersion   Int
+  snapshot          Json
+  answers           Json                  @default("{}")
+  evidence          Json                  @default("{}")
+  categoryInstances Json                  @default("{}")
+  result            Json?
+  status            String                @default("draft")
+  createdById       String
+  createdByName     String
+  completedByName   String?
+  completedById     String?
+  completedAt       DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  attachments       ChecklistAttachment[]
   /// Проверка по назначению (2026-10-19); удаление назначения историю не трогает.
-  assignmentId   String?
-  assignment     ChecklistAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  assignmentId      String?
+  assignment        ChecklistAssignment?  @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
   /// «Принять результат»: проверяющий по назначению или руководитель.
-  reviewedAt     DateTime?
-  reviewedById   String?
-  reviewedByName String?
+  reviewedAt        DateTime?
+  reviewedById      String?
+  reviewedByName    String?
 
   @@index([organizationId, createdAt])
   @@index([assignmentId])
 }
 
 model ChecklistAttachment {
-  id             String              @id @default(cuid())
+  id             String               @id @default(cuid())
   organizationId String
-  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   templateId     String?
   template       ChecklistTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
   inspectionId   String?
@@ -977,7 +989,7 @@ model ChecklistAttachment {
   sha256         String
   content        Bytes
   createdById    String
-  createdAt      DateTime            @default(now())
+  createdAt      DateTime             @default(now())
 
   @@index([organizationId, inspectionId, questionId])
   @@index([organizationId, templateId])
@@ -988,19 +1000,19 @@ model ChecklistAttachment {
 /// только список сотрудников и ввод ПИН. `secretHash` — хеш device-секрета,
 /// raw показывается один раз при enroll (как EmployeeJoinToken/InspectorToken).
 model KioskDevice {
-  id             String        @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// Точка (здание), если у организации несколько — киоск показывает её штат.
   buildingId     String?
   /// Свободный лейбл для руководителя («Кухня», «Склад №2»).
   label          String
   /// SHA-256 от device-секрета; raw в БД не хранится.
-  secretHash     String        @unique
+  secretHash     String       @unique
   createdById    String
   lastSeenAt     DateTime?
   revokedAt      DateTime?
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime     @default(now())
 
   @@index([organizationId, revokedAt])
 }
@@ -1066,13 +1078,12 @@ model SignatureEvent {
   /// Ссылка на запись: {templateId,entryId} или {documentId,employeeId,date}.
   entryRef       Json?
   createdAt      DateTime     @default(now())
-
-  @@index([organizationId, createdAt])
   /// Подпись члена бракеражной комиссии под строкой документа
   /// (entryKind = "brakerage_row"): документ и id строки в config.rows.
   documentId     String?
   rowId          String?
 
+  @@index([organizationId, createdAt])
   @@index([userId, createdAt])
   @@index([documentId, rowId])
 }
@@ -1117,53 +1128,53 @@ model QrPinRequest {
 /// здание содержит набор Room — это и есть «помещения», по которым
 /// строятся журналы уборки и аналогичные. Settings: /settings/buildings.
 model Building {
-  id                 String              @id @default(cuid())
-  organizationId     String
-  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  name               String
-  address            String?
+  id                          String                 @id @default(cuid())
+  organizationId              String
+  organization                Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name                        String
+  address                     String?
   /// Точки (2026-09-05): реквизиты точки для шапки PDF — у сети КПП и
   /// телефон свои на каждом адресе.
-  kpp                String?
-  phone              String?
+  kpp                         String?
+  phone                       String?
   /// Наименование точки в шапке журналов и PDF — точное юридическое
   /// наименование по месту деятельности. В интерфейсе остаётся короткое
   /// `name`. Пусто — в шапке «название, адрес».
-  journalName        String?
+  journalName                 String?
   /// "point" — торговая точка; "office" — офис организации (2026-10-26):
   /// один на организацию, его сотрудники видят все точки, а работают
   /// (журналы, задачи) только в офисе. Дизайн:
   /// docs/superpowers/specs/2026-10-26-office-and-points-design.md
-  kind               String              @default("point")
-  sortOrder          Int                 @default(0)
-  rooms              Room[]
+  kind                        String                 @default("point")
+  sortOrder                   Int                    @default(0)
+  rooms                       Room[]
   /// Точки (2026-09-05): документы и обязательства, привязанные к этому
   /// зданию как к точке. При удалении здания связь обнуляется —
   /// документы остаются в организации и становятся общими.
-  journalDocuments   JournalDocument[]
-  journalObligations JournalObligation[]
+  journalDocuments            JournalDocument[]
+  journalObligations          JournalObligation[]
   /// Бумажные журналы точки (2026-11-01). Точку удалили — документы общие.
-  paperJournalDocuments PaperJournalDocument[]
+  paperJournalDocuments       PaperJournalDocument[]
   /// Площадки этой точки в ФГИС «Меркурий».
-  mercuryEnterprises MercuryEnterprise[]
+  mercuryEnterprises          MercuryEnterprise[]
   /// Цеха точки (2026-10-17): «точка → помещения → оборудование».
-  areas              Area[]
+  areas                       Area[]
   /// Накладные, потери и этикетки точки (2026-11-01, поставки по точкам).
-  supplyDocuments    SupplyDocument[]
-  lossRecords        LossRecord[]
-  labelPrints        LabelPrint[]
+  supplyDocuments             SupplyDocument[]
+  lossRecords                 LossRecord[]
+  labelPrints                 LabelPrint[]
   /// Свои настройки журналов точки поверх организации (2026-10-26, слияние
   /// организаций в точки): те же поля, что у `Organization`; null — как у
   /// организации. Автоматику читает src/lib/building-settings.ts, комиссию —
   /// src/lib/brakerage-commission-org.ts.
-  autoJournalCodes      Json?
-  journalAutomationJson Json?
-  journalCommissionJson Json?
+  autoJournalCodes            Json?
+  journalAutomationJson       Json?
+  journalCommissionJson       Json?
   /// Журналы, выключенные на точке (как `Organization.disabledJournalCodes`).
   /// Задан — «Сегодня», список журналов, наборы и автоматика точки берут
   /// его; у организации тогда остаются выключенными только журналы,
   /// выключенные на всех точках (src/lib/disabled-journals.ts).
-  disabledJournalCodes  Json?
+  disabledJournalCodes        Json?
   /// Ответственные за журналы на точке (2026-10-31, «ответственные по
   /// точкам»): { [journalCode]: { [slotId]: userId } }, как
   /// `Organization.journalResponsibleUsersJson`. Журнал без записи здесь
@@ -1171,32 +1182,32 @@ model Building {
   /// (src/lib/journal-responsibles-points.ts). null — всё как у организации.
   journalResponsibleUsersJson Json?
   /// Бумажные бланки, скрытые на точке (как `Organization.disabledPaperJournalIds`).
-  disabledPaperJournalIds Json?
+  disabledPaperJournalIds     Json?
   /// Код пула мастер-кабинета, к которому подключена точка (как
   /// `Organization.linkedServiceCode`, но для одной точки): мастер видит
   /// её отдельным объектом и пишет только в её документы.
-  linkedServiceCode     String?
+  linkedServiceCode           String?
   /// Временные назначения сотрудников на эту точку (замена).
-  pointAssignments      UserPointAssignment[]
+  pointAssignments            UserPointAssignment[]
   /// ППК точки (2026-11-01, «ППК на точку»): записи блоков и документы
   /// раздела «Производственный контроль». Точку удалили — её ППК тоже.
-  ppkRecords            PpkRecord[]
-  ppkDocuments          KnowledgeDocument[]
+  ppkRecords                  PpkRecord[]
+  ppkDocuments                KnowledgeDocument[]
   /// Когда точке скопирован ППК организации (первое открытие ППК точки).
   /// null — ещё не открывали: при первом открытии точка получит копию.
-  ppkSeededAt           DateTime?
+  ppkSeededAt                 DateTime?
   /// Код журнала бракеража точки (2026-10-28, владелец: «каждая точка имеет
   /// свой уникальный ID журнала бракеража, независимо от организации»).
   /// Мастер-кабинет подключает по нему одну точку, а не всю организацию.
   /// Выдаётся при первом показе в настройках журнала (src/lib/dish-pool.ts).
-  serviceCode           String?             @unique
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  inspectorTokens       InspectorToken[]
-  printAgents           PrintAgent[]
-  printJobs             PrintJob[]
-  batches               Batch[]
-  capaTickets           CapaTicket[]
+  serviceCode                 String?                @unique
+  createdAt                   DateTime               @default(now())
+  updatedAt                   DateTime               @updatedAt
+  inspectorTokens             InspectorToken[]
+  printAgents                 PrintAgent[]
+  printJobs                   PrintJob[]
+  batches                     Batch[]
+  capaTickets                 CapaTicket[]
 
   @@unique([organizationId, name])
   @@index([organizationId, sortOrder])
@@ -1339,17 +1350,17 @@ model User {
   qrPinLockedUntil            DateTime?
   /// «Уполномочен редактировать в бракеражных журналах список блюд»:
   /// по QR видит блюда за сегодня и правит наименование и время.
-  canEditBrakerageDishes      Boolean                      @default(false)
+  canEditBrakerageDishes      Boolean                  @default(false)
   /// «Ответственный за ведение основных журналов» (гигиена и здоровье):
   /// по QR видит отметки всех за сегодня и правит их, получает сводку
   /// «кто не отметился» в конце дня (2026-09-22).
-  keepsCoreJournals           Boolean                      @default(false)
+  keepsCoreJournals           Boolean                  @default(false)
   /// «Разрешение менять настройки»: одна галка вместо ролей — права
   /// руководителя на настройки кабинета (2026-09-22).
-  canManageSettings           Boolean                      @default(false)
+  canManageSettings           Boolean                  @default(false)
   /// «Переводчик интерфейса»: правит строки каталогов ru/en/uz в
   /// редакторе переводов (/translations). Выдаёт ROOT (2026-10-24).
-  canEditTranslations         Boolean                      @default(false)
+  canEditTranslations         Boolean                  @default(false)
   /// Версия принятых юридических документов (оферта, соглашение, политика,
   /// согласие) — сравнивается с LEGAL_VERSION; история — в LegalConsent.
   legalVersion                String?
@@ -1466,7 +1477,7 @@ model User {
   staffPairToken              StaffPairToken?
   webPushSubscriptions        WebPushSubscription[]
   mobileDevices               MobileDevice[]
-  offlineDevices               OfflineDevice[]
+  offlineDevices              OfflineDevice[]
   workOffDays                 StaffWorkOffDay[]
   vacations                   StaffVacation[]
   sickLeaves                  StaffSickLeave[]
@@ -1534,26 +1545,26 @@ model User {
 /// owner drag positions around; unique (org, category, name) keeps duplicates
 /// out.
 model JobPosition {
-  id              String                     @id @default(cuid())
-  organizationId  String
-  organization    Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id               String                     @id @default(cuid())
+  organizationId   String
+  organization     Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// "management" | "staff"
-  categoryKey     String
-  name            String
-  sortOrder       Int                        @default(0)
+  categoryKey      String
+  name             String
+  sortOrder        Int                        @default(0)
   /// Штатная численность — сколько человек на должности «по штатному
   /// расписанию». null = не задана; «занято N из M» считает
   /// `src/lib/staffing.ts` по активным сотрудникам.
   plannedHeadcount Int?
-  createdAt       DateTime                   @default(now())
-  updatedAt       DateTime                   @updatedAt
-  users           User[]
-  workShifts      WorkShift[]
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  users            User[]
+  workShifts       WorkShift[]
   /// JSON-массив permission-кодов (см. src/lib/permissions.ts). null =
   /// наследовать defaults группы (management/staff). Override для
   /// конкретной должности: «пекари тоже могут редактировать график».
-  permissionsJson Json?
-  journalAccess   JobPositionJournalAccess[]
+  permissionsJson  Json?
+  journalAccess    JobPositionJournalAccess[]
 
   /// Список user.id, которых видят все сотрудники этой должности.
   /// Источник истины для:
@@ -1737,28 +1748,28 @@ model InviteToken {
 /// Like InviteToken — only sha256 digest is persisted, raw token is shown
 /// once on creation.
 model InspectorToken {
-  id             String           @id @default(cuid())
-  organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  tokenHash      String           @unique
+  id               String            @id @default(cuid())
+  organizationId   String
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tokenHash        String            @unique
   /// Free-form description set by admin (visible only in their list).
-  label          String?
+  label            String?
   /// Period the inspector is allowed to view (UTC midnight).
-  periodFrom     DateTime
-  periodTo       DateTime
-  expiresAt      DateTime
+  periodFrom       DateTime
+  periodTo         DateTime
+  expiresAt        DateTime
   /// Bumped on every successful resolve — UI shows last-access stamp.
-  lastAccessedAt DateTime?
+  lastAccessedAt   DateTime?
   /// Total resolve count for usage stats.
-  accessCount    Int              @default(0)
+  accessCount      Int               @default(0)
   /// Once admin clicks «Отозвать», token stops working without removing
   /// the row (audit trail of who/when/why).
-  revokedAt      DateTime?
-  createdAt      DateTime         @default(now())
+  revokedAt        DateTime?
+  createdAt        DateTime          @default(now())
   /// Who issued the token (admin's userId). Helps audits and "кто впустил
   /// инспектора" forensics. Nullable for legacy and ROOT-issued tokens.
-  createdById    String?
-  visits         InspectorVisit[]
+  createdById      String?
+  visits           InspectorVisit[]
   /// Записи журнала посещений, внесённые по этому токену.
   inspectionVisits InspectionVisit[]
   /// Ссылка проверяющего на одну точку (2026-11-01): журналы только этой точки и общие.
@@ -1954,26 +1965,26 @@ model Area {
 }
 
 model Equipment {
-  id             String                   @id @default(cuid())
-  name           String
-  type           String
-  serialNumber   String?
-  tempMin        Float?
-  tempMax        Float?
-  tuyaDeviceId   String?
-  areaId         String
-  area           Area                     @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  journalEntries JournalEntry[]
-  sensorMappings EquipmentSensorMapping[]
+  id                String                   @id @default(cuid())
+  name              String
+  type              String
+  serialNumber      String?
+  tempMin           Float?
+  tempMax           Float?
+  tuyaDeviceId      String?
+  areaId            String
+  area              Area                     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  journalEntries    JournalEntry[]
+  sensorMappings    EquipmentSensorMapping[]
   /// «Кто заполняет»: только эти сотрудники могут отметить оборудование по
   /// QR (даже с верным PIN). Пусто — все (2026-09-22).
-  fillerUserIds  String[]                 @default([])
+  fillerUserIds     String[]                 @default([])
   /// УФ-лампа: модель, ресурс по паспорту, дата установки, наработка.
   lampModel         String?
   lampLifetimeHours Int?
   lampInstalledAt   DateTime?
   /// Часы, накопленные с установки текущей лампы (включая «уже отработала»).
-  lampUsedHours     Float                  @default(0)
+  lampUsedHours     Float                    @default(0)
   /// Лампа сейчас включена: с какого момента и кем.
   runningSince      DateTime?
   runningUserId     String?
@@ -2041,18 +2052,18 @@ model EquipmentSensorMapping {
 /// (paragraph / heading / list / quote) so we never have to ship a Markdown
 /// parser or sanitise arbitrary HTML.
 model Article {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  excerpt     String
+  id           String               @id @default(cuid())
+  slug         String               @unique
+  title        String
+  excerpt      String
   /// ArticleBlock[] — see src/lib/article-blocks.ts
-  body        Json
-  coverIcon   String?
-  tags        String[]  @default([])
-  readMinutes Int       @default(5)
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  body         Json
+  coverIcon    String?
+  tags         String[]             @default([])
+  readMinutes  Int                  @default(5)
+  publishedAt  DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   translations ArticleTranslation[]
 
   @@index([publishedAt])
@@ -2262,15 +2273,15 @@ model JournalObligation {
 }
 
 model JournalTemplate {
-  id                  String                     @id @default(cuid())
-  code                String                     @unique
+  id                  String                       @id @default(cuid())
+  code                String                       @unique
   name                String
   description         String?
   fields              Json
-  isActive            Boolean                    @default(true)
-  sortOrder           Int                        @default(0)
-  isMandatorySanpin   Boolean                    @default(false)
-  isMandatoryHaccp    Boolean                    @default(false)
+  isActive            Boolean                      @default(true)
+  sortOrder           Int                          @default(0)
+  isMandatorySanpin   Boolean                      @default(false)
+  isMandatoryHaccp    Boolean                      @default(false)
   /// Распределение задач из этого журнала между сотрудниками:
   ///   "per-employee" — обязательство каждому подходящему сотруднику
   ///                    (гигиена, журнал здоровья — каждый за себя)
@@ -2279,16 +2290,16 @@ model JournalTemplate {
   ///                    подходящими сотрудниками
   ///   "sensor"       — заполняет IoT-датчик, людям не приходит
   ///                    (Фаза 2, пока заглушка)
-  fillMode            String                     @default("per-employee")
+  fillMode            String                       @default("per-employee")
   /// Используется только при `fillMode == "single"`. Если не null —
   /// обязательство всегда идёт этому пользователю; null → round-robin.
   defaultAssigneeId   String?
-  defaultAssignee     User?                      @relation("DefaultAssignee", fields: [defaultAssigneeId], references: [id], onDelete: SetNull)
+  defaultAssignee     User?                        @relation("DefaultAssignee", fields: [defaultAssigneeId], references: [id], onDelete: SetNull)
   /// Премиальная сумма (в копейках, чтобы не возиться с float-ами)
   /// за выполнение этого журнала. 0 — обычное обязательство без
   /// бонуса. Менеджер активирует через `/settings/journals` → у
   /// обязательств появляется кнопка «Взять с бонусом» (Фаза 3).
-  bonusAmountKopecks  Int                        @default(0)
+  bonusAmountKopecks  Int                          @default(0)
   /// Тип задачи в TasksFlow:
   ///   "personal" — закреплено за одним сотрудником, закрывается один
   ///                раз за смену (hygiene, health_check, cleaning).
@@ -2298,17 +2309,17 @@ model JournalTemplate {
   /// Default "personal" для back-compat. Settings UI в /settings/journals/[code]
   /// позволяет менеджеру переопределить для своей организации (см.
   /// OrgJournalScopeOverride если потребуется per-org override).
-  taskScope           String                     @default("personal")
+  taskScope           String                       @default("personal")
   /// Можно ли в TasksFlow нажать «Не требуется сегодня» вместо
   /// заполнения. False для критичных журналов (health_check —
   /// нельзя отказаться от проверки здоровья).
-  allowNoEvents       Boolean                    @default(true)
+  allowNoEvents       Boolean                      @default(true)
   /// Список стандартных причин для closure без событий. JSON-массив
   /// строк. Менеджер редактирует в /settings/journals/[code].
-  noEventsReasons     Json                       @default("[\"Поставок/событий нет\",\"Заведение закрыто\",\"Оборудование не в работе\",\"Выходной/праздничный день\"]")
+  noEventsReasons     Json                         @default("[\"Поставок/событий нет\",\"Заведение закрыто\",\"Оборудование не в работе\",\"Выходной/праздничный день\"]")
   /// Можно ли вводить свободный текст причины в дополнение к списку.
   /// False — только из готового списка (стандартизация для отчётов).
-  allowFreeTextReason Boolean                    @default(false)
+  allowFreeTextReason Boolean                      @default(false)
   entries             JournalEntry[]
   documents           JournalDocument[]
   journalObligations  JournalObligation[]
@@ -2563,32 +2574,32 @@ model NameSuggestion {
 }
 
 model Product {
-  id             String       @id @default(cuid())
-  name           String
-  supplier       String?
-  barcode        String?
-  unit           String       @default("kg")
-  category       String?
+  id                String       @id @default(cuid())
+  name              String
+  supplier          String?
+  barcode           String?
+  unit              String       @default("kg")
+  category          String?
   /// Вид продукции (05.11.2026): "raw" — продукты (сырьё), "semi" —
   /// полуфабрикаты собственного производства, "finished" — готовая продукция.
   /// По умолчанию сырьё: справочник служил приёмке и входному контролю.
-  kind           String       @default("raw")
+  kind              String       @default("raw")
   /// Температурный режим хранения: «+2…+6 °C».
-  storageTemp    String?
+  storageTemp       String?
   /// Условие хранения словами: «в закрытой таре, вдали от сырья».
   storageConditions String?
   /// Срок годности: в сутках (`shelfLifeDays`) или в часах (`shelfLifeHours`)
   /// — заполнено одно из двух; у блюд и полуфабрикатов срок обычно в часах.
-  shelfLifeDays  Int?
-  shelfLifeHours Int?
+  shelfLifeDays     Int?
+  shelfLifeHours    Int?
   /// Как подаётся готовая продукция: "hot" | "soup" | "cold" — чек-лист
   /// «Контроль температуры готовых блюд на раздаче» берёт отсюда норму.
-  servingTemp    String?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  servingTemp       String?
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   @@index([organizationId, name])
   @@index([organizationId, barcode])
@@ -3363,30 +3374,30 @@ model SupplyConnection {
 /// применять изменения. OData — когда база опубликована на веб-сервере;
 /// иначе обработка в 1С шлёт список на `/api/external/hr/employees`.
 model HrConnection {
-  id                String       @id @default(cuid())
-  organizationId    String       @unique
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id                   String       @id @default(cuid())
+  organizationId       String       @unique
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// Адрес опубликованной базы: https://host/zup; null — только API.
-  odataUrl          String?
+  odataUrl             String?
   /// Логин и пароль OData (JSON), зашифрованы AES-256-GCM.
-  credentialsEnc    String?
+  credentialsEnc       String?
   /// Должность новым сотрудникам, если должности из 1С в WeSetup нет.
-  defaultPositionId String?
+  defaultPositionId    String?
   /// Применять без кнопки: расписание и API из 1С.
-  autoApply         Boolean      @default(false)
-  lastSyncAt        DateTime?
-  lastError         String?
+  autoApply            Boolean      @default(false)
+  lastSyncAt           DateTime?
+  lastError            String?
   /// Итог последнего прогона: { hired, dismissed, updated, linked, problems }.
-  lastResult        Json?
+  lastResult           Json?
   /// Подразделение 1С → точка (2026-10-31): { [ключ подразделения]: buildingId | "*" }.
   /// "*" — «все точки»; нет ключа — не сопоставлено. См. src/lib/hr1c/points.ts.
-  departmentPointsJson Json    @default("{}")
+  departmentPointsJson Json         @default("{}")
   /// Подразделения работающих сотрудников из последнего прогона:
   /// [{ key, name, count }] — для экрана сопоставления.
-  departmentsJson   Json         @default("[]")
-  createdById       String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  departmentsJson      Json         @default("[]")
+  createdById          String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 }
 
 /// Сотрудник WeSetup ↔ сотрудник в 1С (id из 1С). Связь остаётся и после
@@ -3975,26 +3986,26 @@ model PlatformMailSender {
 
 /// Custom correspondence; identity and content are preserved as snapshots.
 model ClientEmail {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requestId      String
-  senderUserId   String?
-  sender         User?        @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
-  senderName     String
-  fromEmail      String
-  to             String
-  subject        String
-  message        String       @db.Text
-  html           String       @db.Text
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestId       String
+  senderUserId    String?
+  sender          User?        @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
+  senderName      String
+  fromEmail       String
+  to              String
+  subject         String
+  message         String       @db.Text
+  html            String       @db.Text
   /// Attachment metadata snapshots; file bytes are sent in memory and not retained.
   attachmentsJson Json?
   /// sending | sent (SMTP accepted) | failed; never retried automatically.
-  status         String       @default("sending")
-  error          String?
-  messageId      String?
-  createdAt      DateTime     @default(now())
-  sentAt         DateTime?
+  status          String       @default("sending")
+  error           String?
+  messageId       String?
+  createdAt       DateTime     @default(now())
+  sentAt          DateTime?
 
   @@unique([organizationId, requestId])
   @@index([organizationId, createdAt, id])
@@ -4869,36 +4880,36 @@ model ClientContract {
 /// применяется к цене подписки (не к оборудованию), проверяется на сервере.
 /// Использования считаются по оплаченным заказам — брошенный заказ лимит не ест.
 model PromoCode {
-  id             String    @id @default(cuid())
+  id               String                    @id @default(cuid())
   /// В верхнем регистре, без пробелов.
-  code           String    @unique
+  code             String                    @unique
   /// "percent" | "fixed"
-  kind           String
+  kind             String
   /// Процент (1..100) или рубли.
-  value          Int
-  active         Boolean   @default(true)
-  startsAt       DateTime?
-  endsAt         DateTime?
+  value            Int
+  active           Boolean                   @default(true)
+  startsAt         DateTime?
+  endsAt           DateTime?
   /// null — без лимита.
-  maxUses        Int?
+  maxUses          Int?
   /// Только организациям без оплаченных заказов.
-  newClientsOnly Boolean   @default(false)
-  note           String?
+  newClientsOnly   Boolean                   @default(false)
+  note             String?
   /// Скидка навсегда: первая оплаченная подписка с этим кодом привязывает
   /// скидку к аккаунту (AccountLifetimeDiscount), дальше она применяется
   /// к каждой оплате сама. Правка кода привязанные скидки не меняет.
-  lifetime       Boolean   @default(false)
+  lifetime         Boolean                   @default(false)
   /// Срок закреплённой скидки в месяцах (только для lifetime-кода): скидка
   /// действует от первой оплаты N месяцев и снимается сама. null — бессрочно.
-  durationMonths Int?
+  durationMonths   Int?
   /// Персональный код: только для этой почты (в нижнем регистре) и/или
   /// организации (lib/promo/rules.ts → personalCodeMatches).
-  personalEmail  String?
-  organizationId String?
+  personalEmail    String?
+  organizationId   String?
   /// Метка рассылки или КП, из которой выдан код. Просто строка, без связи.
-  campaignId     String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  campaignId       String?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
   lifetimeBindings AccountLifetimeDiscount[]
 
   @@index([campaignId])
@@ -5467,51 +5478,50 @@ model EdoCabinet {
 /// `sabyDocId` (наш GUID) сохраняется ДО записи: повтор и потерянный
 /// ответ находят тот же документ, второй не создаётся.
 model EdoDocument {
-  id              String       @id @default(cuid())
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   /// "contract" | "invoice" | "upd" | "other"
-  kind            String
+  kind              String
   /// Источник: номер заказа (PaymentOrder.id) у счёта и УПД, id договора;
   /// null — файл загружен вручную.
-  sourceId        String?
+  sourceId          String?
   /// Тип документа в Saby: "ДоговорДок" | "СчетИсх" | "ДокОтгрИсх".
-  sabyType        String
-  number          String
+  sabyType          String
+  number            String
   /// Дата документа "ГГГГ-ММ-ДД".
-  docDate         String
-  fileName        String
-  sabyDocId       String       @unique
+  docDate           String
+  fileName          String
+  sabyDocId         String       @unique
   /// ID подключения кабинета, куда записан документ: другой кабинет его не видит.
-  cabinetClientId String
-  recipientInn    String
-  recipientKpp    String?
-  recipientName   String
+  cabinetClientId   String
+  recipientInn      String
+  recipientKpp      String?
+  recipientName     String
   /// ID участника ЭДО, если документ адресован по нему (ручное переопределение).
-  recipientEdoId  String?
+  recipientEdoId    String?
   /// Итог проверки получателя перед записью: "saby" | "roaming" | "invited" | "none".
-  recipientEdo    String?
+  recipientEdo      String?
   /// Оператор ЭДО получателя (для роуминга).
   recipientOperator String?
   /// `Состояние.Код` Saby: 0 черновик, 3 отправлен, 4 доставлен, 6 ошибка
   /// доставки, 7 подписан, 9 отклонён, 10 обрабатывается, 22 аннулирован,
   /// 23 ждёт подписи. null — запись ещё не прошла.
-  stateCode       Int?
-  stateName       String?
-  signUrl         String?
-  error           String?
+  stateCode         Int?
+  stateName         String?
+  signUrl           String?
+  error             String?
   /// Черновик удалили в Saby руками — документ больше не мешает новой отправке.
-  deletedAt       DateTime?
-  sentByUserId    String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  refreshedAt     DateTime?
+  deletedAt         DateTime?
+  sentByUserId      String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  refreshedAt       DateTime?
 
   @@index([organizationId, createdAt])
   @@index([kind, sourceId])
   @@index([createdAt])
 }
-
 
 /// Подключение аккаунта GoGetLinks платформы wesetup.ru (одно на платформу).
 /// Логин, пароль и сессионные куки зашифрованы AES-256-GCM (src/lib/integration-crypto.ts).
@@ -5691,25 +5701,25 @@ model GglMessage {
 
 /// План регулярных закупок ссылок (разовый пакет или ежемесячный бюджет).
 model GglSchedulePlan {
-  id                  String           @id @default(cuid())
-  name                String
-  campaignId          String
-  campaign            GglCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  kind                String
-  budgetRub           Int
-  maxPricePerLinkRub  Int
-  startsAt            DateTime
-  scheduleDaysOfWeek  Json
-  minTfCf             Int              @default(10)
-  minTrust            Int              @default(4)
-  minDailyTraffic     Int              @default(100)
-  allowedFormats      Json
-  anchorMixBrandPct   Int              @default(50)
-  isActive            Boolean          @default(true)
-  createdByUserId     String?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  slots               GglPlannedSlot[]
+  id                 String           @id @default(cuid())
+  name               String
+  campaignId         String
+  campaign           GglCampaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  kind               String
+  budgetRub          Int
+  maxPricePerLinkRub Int
+  startsAt           DateTime
+  scheduleDaysOfWeek Json
+  minTfCf            Int              @default(10)
+  minTrust           Int              @default(4)
+  minDailyTraffic    Int              @default(100)
+  allowedFormats     Json
+  anchorMixBrandPct  Int              @default(50)
+  isActive           Boolean          @default(true)
+  createdByUserId    String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  slots              GglPlannedSlot[]
 
   @@index([campaignId, isActive])
 }
@@ -5757,25 +5767,25 @@ model GglPlannedSlot {
 /// наши: matched — счёт отмечен оплаченным, review — нужен разбор, failed —
 /// сопоставили, но отметить не вышло. Чужие поступления на общий счёт не пишем.
 model SberIncomingPayment {
-  id            String   @id @default(cuid())
+  id             String   @id @default(cuid())
   /// operationId Сбера — повторная сверка того же дня его пропускает.
-  operationId   String   @unique
-  operationDate String
-  amountRub     Decimal  @db.Decimal(12, 2)
-  payerInn      String?
-  payerName     String?
-  purpose       String
-  orderId       Int?
+  operationId    String   @unique
+  operationDate  String
+  amountRub      Decimal  @db.Decimal(12, 2)
+  payerInn       String?
+  payerName      String?
+  purpose        String
+  orderId        Int?
   /// Кому зачислено на баланс (status credited), src/lib/sber/balance-credit.ts.
   /// orderId тогда — заказ-пополнение, созданный под это поступление.
   organizationId String?
   /// Открытый счёт, на который платёж похож, но сумма не та: деньги уже на
   /// балансе, «Оплата поступила» по нему не зачисляет их второй раз.
-  reviewOrderId Int?
+  reviewOrderId  Int?
   /// matched | crediting | credited | already | review | failed
-  status        String
-  note          String?
-  createdAt     DateTime @default(now())
+  status         String
+  note           String?
+  createdAt      DateTime @default(now())
 
   @@index([orderId])
   @@index([organizationId])
@@ -5788,41 +5798,41 @@ model SberIncomingPayment {
 /// бот, почта IMAP, ручной ввод из мессенджеров) склеиваются сюда по email,
 /// телефону, Telegram chat id и пользователю платформы.
 model CrmContact {
-  id               String           @id @default(cuid())
-  name             String?
-  company          String?
+  id              String           @id @default(cuid())
+  name            String?
+  company         String?
   /// В нижнем регистре.
-  email            String?
-  phone            String?
+  email           String?
+  phone           String?
   /// Последние 10 цифр телефона — ключ склейки.
-  phoneKey         String?
-  telegramChatId   String?
+  phoneKey        String?
+  telegramChatId  String?
   /// Пользователь и организация платформы, если узнали по почте/телефону.
-  userId           String?
-  organizationId   String?
+  userId          String?
+  organizationId  String?
   /// new | in_work | won | lost | spam
-  stage            String           @default("new")
+  stage           String           @default("new")
   /// Ответственный — пользователь панели с разделом «Продажи».
-  ownerId          String?
+  ownerId         String?
   /// Канал первого обращения (см. CRM_CHANNELS).
-  source           String
+  source          String
   /// Первое касание посетителя на сайте: посадочная, referrer, utm, метка
   /// клика рекламы (`SignupSourceSnapshot`, спека visit-source-2026-11).
-  visitSourceJson  Json?
-  lastInboundAt    DateTime?
-  lastOutboundAt   DateTime?
-  lastActivityAt   DateTime         @default(now())
+  visitSourceJson Json?
+  lastInboundAt   DateTime?
+  lastOutboundAt  DateTime?
+  lastActivityAt  DateTime         @default(now())
   /// С какого входящего ждём нашего ответа; null — ответ не ждётся.
-  awaitingSince    DateTime?
+  awaitingSince   DateTime?
   /// Канал этого входящего: у онлайн-чата свой быстрый сигнал поддержке.
-  awaitingChannel  String?
+  awaitingChannel String?
   /// Следующий шаг: когда напомнить и что сделать.
-  nextActionAt     DateTime?
-  nextActionNote   String?
-  note             String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  interactions     CrmInteraction[]
+  nextActionAt    DateTime?
+  nextActionNote  String?
+  note            String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  interactions    CrmInteraction[]
 
   @@index([email])
   @@index([phoneKey])
@@ -5840,9 +5850,9 @@ model CrmContact {
 /// `externalKey` делает сбор идемпотентным: одно письмо, одна реплика чата,
 /// одна заявка — одна строка, сколько бы раз ни прошёл сбор.
 model CrmInteraction {
-  id             String      @id @default(cuid())
+  id             String            @id @default(cuid())
   contactId      String?
-  contact        CrmContact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact        CrmContact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
   /// email | chat | feedback | telegram | demo | service | invoice | signup |
   /// blank | partner | whatsapp | vk | max | phone | call | other | note | resolved
   channel        String
@@ -5851,7 +5861,7 @@ model CrmInteraction {
   subject        String?
   body           String
   /// "email:<message-id>", "chat:<id>", "service:<id>", "crm:<cuid>" …
-  externalKey    String      @unique
+  externalKey    String            @unique
   /// Ссылка на точечный инструмент панели (чат, заявка, счёт).
   href           String?
   /// Адрес отправителя письма — для отсеянного, где контакта нет.
@@ -5862,7 +5872,7 @@ model CrmInteraction {
   authorUserId   String?
   authorName     String?
   occurredAt     DateTime
-  createdAt      DateTime    @default(now())
+  createdAt      DateTime          @default(now())
   /// Звонок из телефонии: запись и расшифровка.
   call           CrmCallRecording?
 
@@ -6170,6 +6180,64 @@ model DirectoryExchangeLink {
 
   @@unique([masterOrganizationId, entity, groupId, organizationId])
   @@index([masterOrganizationId, entity, organizationId])
+}
+
+/// Запись, которую обмен не смог создать у участника (серия B, 2026-11-20):
+/// не хватило мест или точек тарифа (`limit`) либо такое название уже занято
+/// (`conflict`). Владелец разбирает её в карточке «Обмен справочниками»; строка
+/// уходит, когда запись появилась, связана или отмечена «Не переносить».
+model DirectoryExchangeSkip {
+  id                   String       @id @default(cuid())
+  masterOrganizationId String
+  masterOrganization   Organization @relation("DirectoryExchangeSkipMaster", fields: [masterOrganizationId], references: [id], onDelete: Cascade)
+  /// product | position | staff | building | room | area | equipment
+  entity               String
+  groupId              String
+  /// Организация, у которой запись не создана.
+  organizationId       String
+  organization         Organization @relation("DirectoryExchangeSkipTarget", fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Откуда запись пришла: организация и запись источника.
+  sourceOrganizationId String
+  sourceEntityId       String
+  name                 String
+  /// limit | conflict
+  reason               String
+  firstSeenAt          DateTime     @default(now())
+  lastSeenAt           DateTime     @default(now())
+
+  @@unique([masterOrganizationId, entity, groupId, organizationId])
+  @@index([organizationId])
+}
+
+/// Разовый перенос справочников (серия B, 2026-11-20): что создано — чтобы
+/// владелец аккаунта получателя мог в течение 7 дней отменить перенос.
+model DirectoryTransfer {
+  id                   String        @id @default(cuid())
+  /// Источник; удалили его (бывает, что другая компания) — null, а запись
+  /// получателя и отмена переноса остаются.
+  fromOrganizationId   String?
+  fromOrganization     Organization? @relation("DirectoryTransferFrom", fields: [fromOrganizationId], references: [id], onDelete: SetNull)
+  /// Название источника на момент переноса — только внутри аккаунта: организация
+  /// другой компании получателю не называется.
+  fromOrganizationName String?
+  toOrganizationId     String
+  toOrganization       Organization  @relation("DirectoryTransferTo", fields: [toOrganizationId], references: [id], onDelete: Cascade)
+  actorUserId          String?
+  /// Перенос по подтверждённому запросу другой компании.
+  requestId            String?
+  /// Созданные записи по видам: `{ product: [id…], staff: [id…], … }` и их
+  /// отпечатки на конец переноса: `hashes: { product: { id: hash }, … }`.
+  createdJson          Json
+  /// Итог переноса (`ExchangeSummary`).
+  summaryJson          Json?
+  undoneAt             DateTime?
+  undoneByUserId       String?
+  /// Итог отмены: что отменено и что осталось и почему.
+  undoJson             Json?
+  createdAt            DateTime      @default(now())
+
+  @@index([toOrganizationId, createdAt])
+  @@index([fromOrganizationId, createdAt])
 }
 
 /// Запрос на обмен справочниками с мастер-кабинетом чужого аккаунта (часть 3,

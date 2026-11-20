@@ -1,10 +1,12 @@
 import { Coins } from "lucide-react";
 
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
+import { accountBalancesForPage } from "@/lib/balance/account-transfer.server";
 import { loadBalanceOverview } from "@/lib/balance/overview";
 import { loadTopupBlockConfig } from "@/lib/balance/topup";
 import { BalanceClient } from "@/components/balance/balance-client";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
+import { isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { getTranslations } from "next-intl/server";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -41,6 +43,16 @@ export default async function BalanceSettingsPage() {
         return null;
       })
     : null;
+  // «Баланс по аккаунту» (Р10.1): владельцу аккаунта с двумя организациями и
+  // больше, не в «войти как» и не руководителю точки; в приложении — нет.
+  const account =
+    !inApp &&
+    overview.canSeeBalance &&
+    hasFullWorkspaceAccess(session.user) &&
+    !isImpersonating(session) &&
+    !isPointScoped(session.user)
+      ? await accountBalancesForPage(session.user.id, organizationId)
+      : null;
 
   return (
     <DomainMessagesBoundary namespaces={["settingsManagement"]}>
@@ -61,7 +73,7 @@ export default async function BalanceSettingsPage() {
         </div>
       </div>
 
-      <BalanceClient initial={overview} variant="site" inApp={inApp} topup={topup} />
+      <BalanceClient initial={overview} variant="site" inApp={inApp} topup={topup} account={account} />
     </div>
     </DomainMessagesBoundary>
   );

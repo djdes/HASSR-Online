@@ -741,3 +741,143 @@ export async function decisionRequest(token: string, body?: DecisionBody): Promi
     body ? { method: "POST", body } : undefined,
   );
 }
+
+/* ───────── Разбор пропущенных записей обмена (серия B, пункт 9) ───────── */
+
+/** `GET`/`POST …/skips`; ответ `GET` разбирает `parseExchangeSkips` (`@/lib/directory-exchange/skips`). */
+export const EXCHANGE_SKIPS_PATH = "/skips";
+
+/** «Не переносить» или «Связать с …» для строки разбора. */
+export type ExchangeSkipAction = { id: string; action: "ignore" } | { id: string; action: "link"; entityId: string };
+
+/** Пропущенные записи своих организаций аккаунта. */
+export async function requestExchangeSkips(): Promise<ExchangeResponse> {
+  return exchangeRequest(EXCHANGE_SKIPS_PATH);
+}
+
+export async function resolveExchangeSkip(body: ExchangeSkipAction): Promise<ExchangeResponse> {
+  return exchangeRequest(EXCHANGE_SKIPS_PATH, { method: "POST", body });
+}
+
+/* ───────── Отмена разового переноса (серия B, пункт 12) ───────── */
+
+/** `GET …/transfers`, `POST …/transfers/<id>/undo`. */
+export const EXCHANGE_TRANSFERS_PATH = "/transfers";
+
+/** Сущности, которые создаёт перенос: должность, сотрудник, объект, помещение, цех, оборудование, продукт. */
+export const TRANSFER_ENTITIES = ["position", "staff", "building", "room", "area", "equipment", "product"] as const;
+export type TransferEntity = (typeof TRANSFER_ENTITIES)[number];
+
+/** Почему запись осталась после отмены: правили, используется, внутри что-то есть, на должности люди, пара помещение ↔ цех. */
+export const TRANSFER_KEEP_REASONS = ["edited", "used", "not_empty", "has_staff", "linked"] as const;
+export type TransferKeepReason = (typeof TRANSFER_KEEP_REASONS)[number];
+
+export type TransferUndoAction = "deactivated" | "archived" | "deleted";
+
+export type TransferUndoResult = {
+  undone: Array<{ entity: TransferEntity; id: string; name: string; action: TransferUndoAction }>;
+  kept: Array<{ entity: TransferEntity; id: string; name: string; reason: TransferKeepReason }>;
+};
+
+/** Перенос в карточке «Последние переносы». */
+export type RecentTransfer = {
+  id: string;
+  createdAt: string | null;
+  /** Откуда: своя организация или мастер-кабинет другой компании (`foreign`; название может быть пустым). */
+  from: { name: string; foreign: boolean };
+  to: { id: string; name: string };
+  /** Сколько записей создано по спискам. */
+  counts: ExchangeCounts;
+  undoUntil: string | null;
+  undoable: boolean;
+  undoneAt: string | null;
+  undo: TransferUndoResult | null;
+};
+
+const UNDO_ACTIONS: readonly TransferUndoAction[] = ["deactivated", "archived", "deleted"];
+
+function parseTransferEntity(value: unknown): TransferEntity | null {
+  return TRANSFER_ENTITIES.find((entity) => entity === value) ?? null;
+}
+
+/** Итог отмены; не объект — `null`. Строки без вида, id, действия или причины пропускаются. */
+export function parseTransferUndo(value: unknown): TransferUndoResult | null {
+  const source = asObject(value);
+  if (!source) return null;
+  const undone: TransferUndoResult["undone"] = [];
+  for (const entry of asList(source.undone)) {
+    const row = asObject(entry);
+    const entity = parseTransferEntity(row?.entity);
+    const action = UNDO_ACTIONS.find((item) => item === row?.action);
+    const id = asText(row?.id);
+    if (row && entity && action && id) undone.push({ entity, id, name: asText(row.name), action });
+  }
+  const kept: TransferUndoResult["kept"] = [];
+  for (const entry of asList(source.kept)) {
+    const row = asObject(entry);
+    const entity = parseTransferEntity(row?.entity);
+    const reason = TRANSFER_KEEP_REASONS.find((item) => item === row?.reason);
+    const id = asText(row?.id);
+    if (row && entity && reason && id) kept.push({ entity, id, name: asText(row.name), reason });
+  }
+  return { undone, kept };
+}
+
+/** Ответ `GET …/transfers`; перенос без id не показываем — его нечем отменить. */
+export function parseRecentTransfers(value: unknown): RecentTransfer[] {
+  const transfers: RecentTransfer[] = [];
+  for (const entry of asList(asObject(value)?.transfers)) {
+    const row = asObject(entry);
+    const id = asText(row?.id);
+    if (!row || !id) continue;
+    const from = asObject(row.from);
+    const to = asObject(row.to);
+    const undoneAt = asMoment(row.undoneAt);
+    transfers.push({
+      id,
+      createdAt: asMoment(row.createdAt),
+      from: { name: asText(from?.name), foreign: from?.foreign === true },
+      to: { id: asText(to?.id), name: asText(to?.name) },
+      counts: parseCounts(row.counts),
+      undoUntil: asMoment(row.undoUntil),
+      // Уже отменённый перенос второй раз не отменяется, что бы ни сказал сервер.
+      undoable: row.undoable === true && !undoneAt,
+      undoneAt,
+      undo: parseTransferUndo(row.undo),
+    });
+  }
+  return transfers;
+}
+
+/** Сколько записей создал перенос по всем спискам. */
+export function transferCreatedTotal(transfer: Pick<RecentTransfer, "counts">): number {
+  return EXCHANGE_KINDS.reduce((sum, kind) => sum + transfer.counts[kind], 0);
+}
+
+/** Перенос после отмены: отменён сейчас, с итогом — карточка показывает его, не дожидаясь перечитывания. */
+export function withTransferUndone(
+  transfers: readonly RecentTransfer[],
+  id: string,
+  result: TransferUndoResult,
+  at: string,
+): RecentTransfer[] {
+  return transfers.map((transfer) =>
+    transfer.id === id ? { ...transfer, undoable: false, undoneAt: transfer.undoneAt ?? at, undo: result } : transfer,
+  );
+}
+
+/** Последние переносы в организации аккаунта; `null` — не удалось получить. */
+export async function loadRecentTransfers(): Promise<RecentTransfer[] | null> {
+  const { ok, json } = await exchangeRequest(EXCHANGE_TRANSFERS_PATH);
+  return ok ? parseRecentTransfers(json) : null;
+}
+
+/** Отменить перенос: `json.result` — что отменено и что осталось (`parseTransferUndo`). */
+export async function undoTransferRequest(id: string): Promise<ExchangeResponse> {
+  return exchangeRequest(`${EXCHANGE_TRANSFERS_PATH}/${encodeURIComponent(id)}/undo`, { method: "POST" });
+}
+
+/** «Выдать новый код» мастер-кабинета: `json.code` — новый код. */
+export async function regenerateCabinetCode(): Promise<ExchangeResponse> {
+  return exchangeRequest("/cabinet/code", { method: "POST" });
+}

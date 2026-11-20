@@ -114,3 +114,47 @@ test("top-up parser exposes stable validation codes while preserving legacy erro
     }
   }
 });
+
+test("account balance block and transfer history labels render in RU, EN, and Uzbek", async () => {
+  const account = {
+    accountId: "acc-1",
+    activeOrganizationId: "org-1",
+    organizations: [
+      { id: "org-1", name: "Cafe Example", balanceRub: 12_345, active: true, deletionRequested: false },
+      { id: "org-2", name: "Bar Example", balanceRub: 655, active: false, deletionRequested: false },
+    ],
+    totalRub: 13_000,
+  };
+  const transactions = [
+    { id: "tx-out", amount: -500, kind: "transfer_out", kindLabel: "", description: "Перевод в «Bar Example»", createdAt: "2026-11-20T08:00:00.000Z", paymentOrderId: null },
+    { id: "tx-in", amount: 200, kind: "transfer_in", kindLabel: "", description: "Перевод из «Bar Example»", createdAt: "2026-11-19T08:00:00.000Z", paymentOrderId: null },
+  ];
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const all = await loadMessages(locale);
+    const messages = pickMessages(all, ["settingsManagement", "publicSupport", "journalControls", "common"]);
+    const errors: string[] = [];
+    const html = renderToStaticMarkup(createElement(AppRouterContext.Provider, {
+      value: router,
+      children: createElement(NextIntlClientProvider, {
+        locale, messages, timeZone: "Europe/Moscow", onError: (error) => errors.push(error.message),
+        children: createElement(BalanceClient, { initial: { ...initial, transactions }, variant: "site", inApp: false, topup: null, account }),
+      }),
+    }));
+    assert.deepEqual(errors, [], `${locale}: account block keys resolve`);
+    const t = createTranslator({ locale, messages: all, namespace: "settingsManagement.balanceClient" });
+    assert.match(html, /data-account-balance-list/);
+    assert.ok(html.includes(t("account.title")), `${locale}: block title`);
+    assert.ok(html.includes(t("account.total")), `${locale}: total row`);
+    assert.ok(html.includes("Bar Example"));
+    assert.match(html, /13[,.   ]000/, `${locale}: account total`);
+    assert.ok(html.includes(t("history.kinds.transfer_out")) && html.includes(t("history.kinds.transfer_in")), `${locale}: transfer kinds labelled`);
+    const mini = renderToStaticMarkup(createElement(AppRouterContext.Provider, {
+      value: router,
+      children: createElement(NextIntlClientProvider, {
+        locale, messages, timeZone: "Europe/Moscow",
+        children: createElement(BalanceClient, { initial, variant: "mini", inApp: true, topup: null, account }),
+      }),
+    }));
+    assert.doesNotMatch(mini, /data-account-balance-list/, `${locale}: no transfers in the app`);
+  }
+});

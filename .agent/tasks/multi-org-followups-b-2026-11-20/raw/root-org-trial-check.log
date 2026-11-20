@@ -1,0 +1,27 @@
+PASS view: locked organization → state «закрыта» (locked)
+PASS view: term is the organization's trialEndsAt
+PASS view: grants 2 of 2
+PASS view: both reuse suspicions of the account with INN, phone and the matched organization
+PASS view: organization in the tariff → «нет отметки» (none)
+PASS view: organization without an account → no block
+PASS before extend: isOrganizationLocked = true (now cached for 30 s)
+PASS extend 7 days: counted from now (the end had passed), ≥ now + 7 days
+PASS extend: stored on the organization
+PASS after extend: isOrganizationLocked = false immediately
+PASS audit root.org_trial.extend with before/after and days
+PASS view after extend: «в своих 14 днях» (trial)
+PASS extend again: from the current (later) end, +3 days exactly
+PASS clear: after.trialEndsAt null and stored null
+PASS audit root.org_trial.clear with before/after
+PASS view after clear: «нет отметки» (none); not locked
+PASS extend/clear without a mark → 409 ORG_TRIAL_NO_MARK
+PASS reset_grants: 2 → 0
+PASS audit root.org_trial.reset_grants with before/after
+PASS organization without account → 409 ORG_NO_ACCOUNT; missing → 404
+PASS route body: days 0, 61, 1.5 and unknown action refused; 1 and 60 accepted
+PASS platform-access: POST org-trial is gated by «billing»
+PASS viewer with billing → allowed
+PASS viewer with clients only → refused (requireRoot answers 404)
+PASS card page itself stays on «clients»
+cleanup: organizations left 0, audit rows left 0
+TOTAL: 25 PASS, 0 FAIL

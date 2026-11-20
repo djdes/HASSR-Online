@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -28,10 +28,12 @@ import {
   TOPUP_MIN_RUB,
   balanceDetail,
   formatPoints,
+  isTransferKind,
   reviewKindFromMime,
   reviewRewardFor,
   type ReviewKind,
 } from "@/lib/balance/constants";
+import type { AccountBalances } from "@/lib/balance/account-transfer";
 import type { BalanceOverview } from "@/lib/balance/overview";
 import type { TopupBlockConfig } from "@/lib/balance/topup-core";
 import { useLiveEvents } from "@/lib/use-live-events";
@@ -47,6 +49,7 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "./balance-ui";
+import { AccountBalanceSection } from "./account-balance-section";
 import { TopupSection } from "./topup-section";
 
 /**
@@ -66,6 +69,7 @@ export function BalanceClient({
   variant = "site",
   inApp = false,
   topup = null,
+  account = null,
 }: {
   initial: BalanceOverview;
   variant?: BalanceVariant;
@@ -81,6 +85,11 @@ export function BalanceClient({
    * «войти как», приложение WeSetup). Решает сервер.
    */
   topup?: TopupBlockConfig | null;
+  /**
+   * «Баланс по аккаунту» и перевод между организациями: null — блока нет
+   * (не владелец аккаунта, одна организация, «войти как»). Решает сервер.
+   */
+  account?: AccountBalances | null;
 }) {
   const t = useTranslations("settingsManagement.balanceClient");
   const [data, setData] = useState(initial);
@@ -124,6 +133,10 @@ export function BalanceClient({
   return (
     <div className={mini ? "space-y-4" : "space-y-5"}>
       <HeroCard data={data} mini={mini} inApp={inApp} />
+
+      {data.canSeeBalance && account && !mini && !inApp ? (
+        <AccountBalanceSection initial={account} onTransferred={refresh} />
+      ) : null}
 
       {data.canSeeBalance && topup && !inApp ? (
         <TopupSection config={topup} mini={mini} onPaid={refresh} />
@@ -1047,6 +1060,17 @@ function ReviewForm({
 
 /* ----------------------------------------------------------- история */
 
+/** Подпись перевода между организациями аккаунта над строкой детализации. */
+function TransferKindLabel({ kind, muted }: { kind: string; muted?: CSSProperties }) {
+  const t = useTranslations("settingsManagement.balanceClient");
+  if (!isTransferKind(kind)) return null;
+  return (
+    <span className="block text-[11.5px] font-medium text-[#6f7282]" style={muted}>
+      {t(`history.kinds.${kind}`)}
+    </span>
+  );
+}
+
 function HistorySection({
   data,
   mini,
@@ -1106,6 +1130,7 @@ function HistorySection({
           >
             <div className="flex items-start justify-between gap-3">
               <span className="min-w-0 text-[13.5px] leading-snug" style={mini ? { color: "var(--mini-text)" } : undefined}>
+                <TransferKindLabel kind={transaction.kind} muted={muted} />
                 {transaction.description}
               </span>
               <span className={`shrink-0 tabular-nums text-[14px] font-semibold ${credit > 0 ? "text-[#116b2a]" : "text-[#a13a32]"}`}>
@@ -1158,6 +1183,7 @@ function HistorySection({
                   className="py-2.5 pr-4 align-top"
                   style={mini ? { color: "var(--mini-text)" } : undefined}
                 >
+                  <TransferKindLabel kind={transaction.kind} muted={muted} />
                   {transaction.description}
                 </td>
                 <td className="whitespace-nowrap py-2.5 pl-3 text-right align-top tabular-nums font-medium text-[#116b2a]">

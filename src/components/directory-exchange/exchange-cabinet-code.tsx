@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-import { exchangeError, exchangeRequest } from "./exchange-api";
+import { exchangeError, exchangeRequest, regenerateCabinetCode } from "./exchange-api";
+import { ConfirmStep } from "./exchange-foreign";
 
 const OUTLINE =
   "inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-50";
@@ -16,6 +17,10 @@ const OUTLINE =
  * их запрос придёт ему на почту. Кабинета ещё нет — «Получить код» заводит
  * его. Видит только владелец аккаунта: код приходит в состоянии обмена
  * только ему.
+ *
+ * «Выдать новый код» (серия B, Р13.2), с подтверждением: прежний код
+ * перестаёт приниматься для новых запросов; подключённые компании, ждущие
+ * запросы и подключения к меню и сырью не меняются.
  */
 export function ExchangeCabinetCode({
   code,
@@ -24,14 +29,16 @@ export function ExchangeCabinetCode({
 }: {
   code: string | null;
   className?: string;
-  /** Код появился (кабинет создан) — карточка перечитывает состояние. */
+  /** Код появился (кабинет создан) или сменился — карточка перечитывает состояние. */
   onCode?: () => void;
 }) {
   const t = useTranslations("dashboardUi.directoryExchange.foreign.card");
   const [fresh, setFresh] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  const shown = code ?? fresh;
+  const [renewing, setRenewing] = useState(false);
+  // Только что выданный код важнее пришедшего с прошлым чтением состояния.
+  const shown = fresh ?? code;
 
   async function obtain() {
     if (busy) return;
@@ -46,6 +53,26 @@ export function ExchangeCabinetCode({
         return;
       }
       setFresh(next);
+      onCode?.();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function renew() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const response = await regenerateCabinetCode();
+      const next = typeof response.json?.code === "string" ? response.json.code.trim() : "";
+      if (!response.ok || !next) {
+        toast.error(exchangeError(response.json, t("codeRenewFailed")));
+        return;
+      }
+      setFresh(next);
+      setCopied(false);
+      setRenewing(false);
+      toast.success(t("codeRenewed"));
       onCode?.();
     } finally {
       setBusy(false);
@@ -80,6 +107,12 @@ export function ExchangeCabinetCode({
               {copied ? <Check className="size-4 text-[#1c8a4b]" aria-hidden /> : <Copy className="size-4 text-[#5566f6]" aria-hidden />}
               {copied ? t("codeCopied") : t("codeCopy")}
             </button>
+            {renewing ? null : (
+              <button type="button" onClick={() => setRenewing(true)} className={OUTLINE} data-testid="exchange-cabinet-code-renew">
+                <RefreshCw className="size-4 text-[#5566f6]" aria-hidden />
+                {t("codeRenew")}
+              </button>
+            )}
           </>
         ) : (
           <button type="button" onClick={obtain} disabled={busy} className={OUTLINE} data-testid="exchange-cabinet-code-get">
@@ -92,6 +125,16 @@ export function ExchangeCabinetCode({
           </button>
         )}
       </div>
+      {shown && renewing ? (
+        <ConfirmStep
+          text={t("codeRenewConfirm")}
+          confirmLabel={t("codeRenew")}
+          busy={busy}
+          onConfirm={() => void renew()}
+          onCancel={() => setRenewing(false)}
+          testId="exchange-cabinet-code-renew-confirm"
+        />
+      ) : null}
       <p className="mt-2 max-w-[720px] text-[12.5px] leading-[1.5] text-[#6f7282]">{t("codeHint")}</p>
     </div>
   );

@@ -138,3 +138,23 @@ test("actual impersonation keeps guard, audit/customer values and session claims
   const failed = await POST(req("POST", { organizationId: "org-a" }), context()); assert.equal(failed.status, 500); assert.deepEqual(await failed.json(), { error: "Не удалось обновить сессию: Legacy reason", errorCode: "ROOT_IMPERSONATE_FAILED" });
   rewrite = true; const ok = await POST(req("POST", { organizationId: "org-a" }), context()); assert.deepEqual(await ok.json(), { ok: true, organization: { id: "org-a", name: "Customer" } }); assert.ok(calls.some(c => JSON.stringify(c) === '{"actingAsOrganizationId":"org-a"}'));
 });
+
+test("own 14 days card: state, grants, reuse suspicions and transfer kinds render in all locales; actions only with billing", async () => {
+  const Control = load(folder + "org-trial-control.tsx").OrgTrialControl as ComponentType<Record<string, unknown>>;
+  const helper = load(folder + "organization-presentation.ts") as Record<string, (...args: unknown[]) => string>;
+  const view = {
+    organizationId: "org-a", accountId: "acc-a", trialEndsAt: "2026-11-25T21:00:00.000Z", state: "locked", grantsUsed: 2, grantsMax: 2,
+    suspicions: [{ id: "s1", at: "2026-11-19T08:00:00.000Z", ended: false, inn: "7707083893", phoneMatch: true, usedByOrganizationId: "org-x", usedByName: "Customer twin" }],
+  };
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const catalogs = await messages(locale), t = createTranslator({ locale, messages: catalogs, namespace: "rootOrganizationManagement" });
+    const html = await render(locale, createElement(Control, { view, canEdit: true }));
+    for (const text of [t("orgTrial.title"), t("orgTrial.states.locked"), t("orgTrial.grantsValue", { count: 2, max: 2 }), t("orgTrial.suspicionInn", { inn: "7707083893" }), t("orgTrial.suspicionPhone"), t("orgTrial.extend"), t("orgTrial.clear"), t("orgTrial.reset")]) assert.ok(html.includes(text), `${locale}: ${text}`);
+    assert.ok(html.includes("Customer twin") && html.includes('href="/root/organizations/org-x"'));
+    const readOnly = await render(locale, createElement(Control, { view: { ...view, state: "none", trialEndsAt: null, suspicions: [] }, canEdit: false }));
+    assert.ok(readOnly.includes(t("orgTrial.states.none")) && readOnly.includes(t("orgTrial.suspicionsEmpty")));
+    assert.ok(!readOnly.includes(t("orgTrial.extend")), `${locale}: no actions without billing`);
+    assert.equal(helper.organizationKind("transfer_out", t), t("kinds.transfer_out"));
+    assert.equal(helper.organizationKind("transfer_in", t), t("kinds.transfer_in"));
+  }
+});

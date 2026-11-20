@@ -5,6 +5,7 @@ import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { emptyKindRecord, normalizeExchangeKinds, type ExchangeKind } from "@/lib/directory-exchange/kinds";
 import { parseExchangeSummary, type ExchangeSummary } from "@/lib/directory-exchange/summary";
 import { ensureServiceCode } from "@/lib/dish-pool";
+import { generateServiceCode } from "@/lib/dish-pool-code";
 import { createAccountMasterCabinet, MasterCabinetError } from "@/lib/master-cabinet";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { isOrganizationLocked } from "@/lib/org-trial.server";
@@ -106,12 +107,110 @@ export async function ensureExchangeCabinet(
   return locked.value;
 }
 
-/** Код кабинета для запросов от других компаний; заводится, если его ещё нет. */
+/**
+ * Код кабинета для запросов от других компаний (серия B, Р13.1) —
+ * `exchangeCode`. Пока его нет, действует прежний код — `serviceCode`
+ * кабинета (заводится, если нет и его): первый показ запоминает его в
+ * `exchangeCode`, и код, уже переданный другой компании, продолжает работать.
+ * Сам `serviceCode` — код меню и сырья, по нему подключены объекты — не
+ * меняется никогда.
+ */
 export async function exchangeCabinetCode(cabinetId: string): Promise<string | null> {
-  return ensureServiceCode(cabinetId).catch((error) => {
+  try {
+    const cabinet = await db.organization.findUnique({ where: { id: cabinetId }, select: { exchangeCode: true } });
+    if (!cabinet) return null;
+    if (cabinet.exchangeCode) return cabinet.exchangeCode;
+    const serviceCode = await ensureServiceCode(cabinetId);
+    // Параллельный показ или «Выдать новый код» могли успеть раньше — их код не перезаписываем.
+    await db.organization.updateMany({ where: { id: cabinetId, exchangeCode: null }, data: { exchangeCode: serviceCode } });
+    const current = await db.organization.findUnique({ where: { id: cabinetId }, select: { exchangeCode: true } });
+    return current?.exchangeCode ?? null;
+  } catch (error) {
     console.error("[directory-exchange] cabinet code failed", { cabinetId, error });
     return null;
+  }
+}
+
+/**
+ * Принимает ли аккаунт прежние коды для запросов (Р13.1): код меню своего
+ * кабинета и, у кабинетов постарше, код пула, к которому кабинет подключён.
+ * Да — пока владелец не выдал новый код: `exchangeCode` кабинета обмена пуст
+ * или совпадает с его `serviceCode` (так его запоминает первый показ).
+ */
+export async function acceptsLegacyExchangeCode(accountId: string): Promise<boolean> {
+  const exchange = await findExchangeCabinet(accountId);
+  if (!exchange) return false;
+  const cabinet = await db.organization.findUnique({
+    where: { id: exchange.id },
+    select: { serviceCode: true, exchangeCode: true },
   });
+  return !cabinet?.exchangeCode || cabinet.exchangeCode === cabinet.serviceCode;
+}
+
+/** Код не занят ни одной организацией (код меню, код обмена, подключение) и ни одной точкой. */
+async function isExchangeCodeFree(code: string): Promise<boolean> {
+  const [organization, building] = await Promise.all([
+    db.organization.findFirst({
+      where: { OR: [{ serviceCode: code }, { exchangeCode: code }, { linkedServiceCode: code }] },
+      select: { id: true },
+    }),
+    db.building.findFirst({ where: { OR: [{ serviceCode: code }, { linkedServiceCode: code }] }, select: { id: true } }),
+  ]);
+  return !organization && !building;
+}
+
+/**
+ * «Выдать новый код» (Р13.2): новый `exchangeCode` мастер-кабинета аккаунта.
+ * Прежний код перестаёт приниматься для новых запросов — и прежний путь через
+ * код меню тоже (`acceptsLegacyExchangeCode`); подтверждённые связи, ждущие
+ * запросы и подключения к меню и сырью (`serviceCode`, `linkedServiceCode`)
+ * не меняются. Только владелец аккаунта; в журнале — что код сменился, без
+ * самих кодов.
+ */
+export async function regenerateExchangeCode(input: {
+  ownerUserId: string;
+  ownerName?: string | null;
+  accountId: string;
+  /** Активная организация владельца — в её журнал пишется действие. */
+  organizationId: string;
+}): Promise<{ cabinet: ExchangeCabinet; code: string }> {
+  const account = await db.account.findUnique({ where: { id: input.accountId }, select: { ownerUserId: true } });
+  if (!account || account.ownerUserId !== input.ownerUserId) {
+    throw new DirectoryExchangeError(EXCHANGE_OWNER_ONLY_MESSAGE, 403);
+  }
+  const cabinet = await findExchangeCabinet(input.accountId);
+  if (!cabinet) throw new DirectoryExchangeError("Мастер-кабинет не найден", 404);
+
+  let code: string | null = null;
+  for (let attempt = 0; attempt < 8 && !code; attempt += 1) {
+    const candidate = generateServiceCode();
+    if (!(await isExchangeCodeFree(candidate))) continue;
+    try {
+      await db.organization.update({ where: { id: cabinet.id }, data: { exchangeCode: candidate } });
+      code = candidate;
+    } catch (error) {
+      // Тот же код только что занял другой кабинет (unique) — пробуем другой.
+      if ((error as { code?: string } | null)?.code !== "P2002") throw error;
+    }
+  }
+  if (!code) throw new DirectoryExchangeError("Не удалось выдать новый код — попробуйте ещё раз", 409);
+
+  try {
+    await db.auditLog.create({
+      data: {
+        organizationId: input.organizationId,
+        userId: input.ownerUserId,
+        userName: input.ownerName ?? null,
+        action: "directory_exchange.code_regenerated",
+        entity: "organization",
+        entityId: cabinet.id,
+        details: { masterOrganizationId: cabinet.id, cabinetName: cabinet.name },
+      },
+    });
+  } catch (error) {
+    console.error("[directory-exchange] audit failed", { organizationId: input.organizationId, error });
+  }
+  return { cabinet, code };
 }
 
 /** Рабочие организации аккаунта: без демо и без самих кабинетов. */
@@ -257,6 +356,7 @@ export async function saveExchangeMembers(input: {
       await db.$transaction([
         db.directoryExchangeMember.deleteMany({ where: { masterOrganizationId: cabinet.id, organizationId } }),
         db.directoryExchangeLink.deleteMany({ where: { masterOrganizationId: cabinet.id, organizationId } }),
+        db.directoryExchangeSkip.deleteMany({ where: { masterOrganizationId: cabinet.id, organizationId } }),
       ]);
       continue;
     }

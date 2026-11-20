@@ -117,6 +117,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/organizations/*", gate: "billing", methods: ["PATCH", "PUT"] },
   { pattern: "/api/root/organizations/*", gate: "superadmin", methods: ["DELETE"] },
   { pattern: "/api/root/organizations/*/balance", gate: "billing" },
+  // Свои 14 дней организации: продлить, снять отметку, обнулить счётчик — как правка тарифа.
+  { pattern: "/api/root/organizations/*/org-trial", gate: "billing" },
   // Реквизиты клиента правятся прямо в карточке (автосохранение).
   { pattern: "/api/root/organizations/*/requisites", gate: "clients" },
   // «Документы клиенту»: счёт — деньги, КП — продажи (договор — в разделе «Клиенты»).

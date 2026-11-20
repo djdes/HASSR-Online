@@ -33,12 +33,15 @@ import {
   normalizeExchangeName,
 } from "@/lib/directory-exchange/kinds";
 import { planEntityExchange, rebaseLinks, type ExchangeLinkRow } from "@/lib/directory-exchange/plan";
+import type { ExchangeSkipRecord } from "@/lib/directory-exchange/skips";
+import { recordExchangeSkips } from "@/lib/directory-exchange/skips-record.server";
 import {
   emptyKindCounters,
   summaryTotals,
   type ExchangeCounters,
   type ExchangeSummary,
 } from "@/lib/directory-exchange/summary";
+import { startTransferRecord } from "@/lib/directory-exchange/transfer-undo.server";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { ORG_LOCKED_CODE, ORG_LOCKED_MESSAGE } from "@/lib/org-trial";
 import { isOrganizationLocked } from "@/lib/org-trial.server";
@@ -156,6 +159,22 @@ class Tally {
   kindsOf(organizationId: string): Record<ExchangeKind, ExchangeCounters> {
     return this.counters.get(organizationId) ?? emptyKindCounters();
   }
+}
+
+/** Строка разбора для пропущенного создания (`DirectoryExchangeSkip`). */
+function skipRecord(
+  op: { groupId: string; organizationId: string; fromOrganizationId: string; fromEntityId: string },
+  name: string,
+  reason: SkipReason,
+): ExchangeSkipRecord {
+  return {
+    groupId: op.groupId,
+    organizationId: op.organizationId,
+    sourceOrganizationId: op.fromOrganizationId,
+    sourceEntityId: op.fromEntityId,
+    name,
+    reason,
+  };
 }
 
 function hasCounters(kinds: Record<ExchangeKind, ExchangeCounters>): boolean {
@@ -276,7 +295,21 @@ async function exchangeEntity(params: {
     passive: foreign.map((participant) => participant.organizationId),
     newGroupId: randomUUID,
   });
-  if (ops.length === 0 && aligned.rebased.length === 0) return 0;
+  // Пропуски создания — в строки разбора (Р9.1); то, что проход создал,
+  // связал или сделал надгробием, из разбора уходит.
+  const skipped = new Map<string, ExchangeSkipRecord>();
+  const syncSkips = () =>
+    recordExchangeSkips({
+      masterOrganizationId,
+      entity,
+      organizationIds,
+      groups: [...links.map((link) => link.groupId), ...ops.map((op) => op.groupId)],
+      skipped: [...skipped.values()],
+    });
+  if (ops.length === 0 && aligned.rebased.length === 0) {
+    await syncSkips();
+    return 0;
+  }
 
   const linkKey = (groupId: string, organizationId: string) => `${groupId}\u0000${organizationId}`;
   const stored = new Map<string, ExchangeLinkRow>(links.map((link) => [linkKey(link.groupId, link.organizationId), link]));
@@ -327,6 +360,7 @@ async function exchangeEntity(params: {
           const reason = blocked.get(`${parent.entity}|${parentGroupId}|${op.organizationId}`) ?? "conflict";
           blocked.set(`${skipKey}|${op.organizationId}`, reason);
           tally.skipped(op.organizationId, kind, reason, skipKey);
+          skipped.set(key, skipRecord(op, source.name, reason));
           continue;
         }
         parentId = knownParent;
@@ -354,6 +388,7 @@ async function exchangeEntity(params: {
       } else {
         blocked.set(`${skipKey}|${op.organizationId}`, outcome.status);
         tally.skipped(op.organizationId, kind, outcome.status, skipKey);
+        skipped.set(key, skipRecord(op, source.name, outcome.status));
       }
       continue;
     }
@@ -429,6 +464,7 @@ async function exchangeEntity(params: {
       skipDuplicates: true,
     });
   }
+  await syncSkips();
   return changes;
 }
 
@@ -860,7 +896,9 @@ export async function transferPreview(input: {
  * Разовый перенос выбранных записей из одной организации аккаунта в другую.
  * Связь не сохраняется; запись, которая у получателя уже есть (по
  * естественному ключу), пропускается и в итог не попадает; родители
- * подтягиваются сами. В итоге `updated` всегда 0.
+ * подтягиваются сами. В итоге `updated` всегда 0. Что создано (с зеркалами
+ * помещений и цехов), запоминается в `DirectoryTransfer`: владелец аккаунта
+ * получателя может отменить перенос в течение 7 дней (transfer-undo.server.ts).
  *
  * `crossAccount` — разрешить пару из разных аккаунтов: его передаёт только
  * подтверждение запроса владельцем кабинета. Тогда `actor` — владелец
@@ -873,6 +911,8 @@ export async function transferOnce(input: {
   selection: TransferSelection;
   actor: ExchangeActor;
   crossAccount?: boolean;
+  /** Перенос по подтверждённому запросу другой компании — запоминается вместе с переносом. */
+  requestId?: string | null;
   now?: Date;
 }): Promise<ExchangeSummary> {
   const { fromOrganizationId, toOrganizationId, actor } = input;
@@ -906,6 +946,8 @@ export async function transferOnce(input: {
   const locked = await withAdvisoryTryLock(
     advisoryLockKey(TRANSFER_LOCK_PREFIX, toOrganizationId),
     async () => {
+      // Что перенос создаёт — для отмены в течение 7 дней (серия B, п. 12).
+      const record = await startTransferRecord(toOrganizationId);
       const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
       /** Не созданные записи источника → причина (для потомков). */
       const blocked = new Map<string, SkipReason>();
@@ -948,12 +990,16 @@ export async function transferOnce(input: {
             state.toGroupOf[entity].set(outcome.id, row.id);
             createdKeys.add(row.key);
             tally.created(toOrganizationId, kind);
+            await record.created(entity, outcome.id);
           } else {
             blocked.set(row.id, outcome.status);
             tally.skipped(toOrganizationId, kind, outcome.status, `${entity}|${row.id}`);
           }
         }
       }
+      // Отпечатки созданного — ещё под замком: по ним отмена увидит правку после переноса.
+      await record.fingerprint();
+      return record;
     },
     { attempts: 16, delayMs: 250, timeoutMs: RUN_TIMEOUT_MS },
   );
@@ -964,6 +1010,15 @@ export async function transferOnce(input: {
     organizations: [{ organizationId: to.id, name: to.name, kinds }],
     notes: [...notes],
   };
+  await locked.value.save({
+    fromOrganizationId: from.id,
+    // Название другой компании получателю не запоминается (Р5).
+    fromOrganizationName: scope === "foreign" ? null : from.name,
+    toOrganizationId: to.id,
+    actorUserId: actor.userId,
+    requestId: input.requestId ?? null,
+    summary,
+  });
   const received = {
     toOrganizationId: to.id,
     toOrganizationName: to.name,

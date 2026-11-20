@@ -1,0 +1,196 @@
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+DEBUG rows after first [["B","staff","Иванов Иван","limit"],["B","staff","Петрова Анна","limit"],["B","staff","Сидоров Пётр","conflict"],["B","product","Молоко","conflict"],["B","product","Кефир","conflict"],["B","product","Сметана","conflict"],["A","product","МОЛОКО","conflict"]] B {"products":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":3},"staff":{"created":1,"updated":0,"skippedLimit":2,"skippedConflict":1},"objects":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":0},"equipment":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":0}}
+PASS conflict rows written for B: «Молоко», «Кефир», «Сметана» (inactive or other kind with the same name)
+PASS conflict row written for a person with a login and the same full name
+PASS limit rows written for staff over the seat limit
+PASS rows match the summary counters (B products, B staff, A products)
+PASS row carries source organization and record
+PASS the other direction: A has a conflict row for B's «МОЛОКО»
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS second exchange: same rows, no duplicates
+PASS second exchange: lastSeenAt moved, firstSeenAt kept
+PASS list: grouped by organization with the total
+PASS list: «Молоко» offers B's «МОЛОКО» (visible, same name, other kind)
+PASS list: hidden records are not offered (inactive product, person with a login), limit rows have no candidates
+PASS list: A's «МОЛОКО» offers A's «Молоко»
+PASS link to a record that is not a candidate (inactive product) → 404
+PASS link to a record of another organization → 404
+PASS link on a limit row → 409
+PASS unknown row → 404
+PASS ignore: tombstone link written (entityId null)
+PASS ignore: row removed
+PASS ignore: audit directory_exchange.skip_ignored in B
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS ignore: next exchange does not retry (no row, no second «Кефир», one conflict fewer)
+PASS link: link written to B's «МОЛОКО» with its own fingerprint
+PASS link: row removed
+PASS link: the record's own lonely group is released, A's row for it is gone
+PASS link: audit directory_exchange.skip_linked in B
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS link: next exchange leaves B's record data unchanged
+PASS link: next exchange creates and updates no products, no «Молоко» rows anywhere
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS link: a later edit of the source reaches the linked record
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 6,
+  adding: 1,
+  limit: 1
+}
+PASS re-activated product in B: its row is gone
+PASS employee added in B by hand: the limit row is gone
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 6,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 6,
+  adding: 1,
+  limit: 1
+}
+PASS foreign participant: its own skip rows are written («Творог»)
+PASS foreign participant: not listed for the cabinet owner
+PASS foreign participant's row cannot be ignored by the cabinet owner → 404
+PASS another account sees nothing
+PASS another account: ignore → 404
+PASS another account: link → 404
+PASS rows untouched by refused calls
+PASS foreign member disconnected: its rows are gone
+PASS B leaves the exchange: its rows are gone
+PASS list after B left has no B
+cleanup: organizations left 0, users left 0, accounts left 0, skip rows left 0
+TOTAL: 39 passed, 0 failed
+RESULT: all checks passed

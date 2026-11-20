@@ -26,6 +26,8 @@ import { ExchangeCabinetCode } from "./exchange-cabinet-code";
 import { ExchangeDialog } from "./exchange-dialog";
 import { ForeignMemberRow, ForeignOutgoing, IncomingRequests } from "./exchange-foreign";
 import { ExchangeLimitNote, useResultParts } from "./exchange-result";
+import { ExchangeTransfers } from "./exchange-transfers";
+import { ExchangeSkips } from "./exchange-skips";
 
 const CARD =
   "min-w-0 rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6";
@@ -213,6 +215,8 @@ export function ExchangeCard({
             </ul>
           ) : null}
           {summaryTotals(lastSync).skippedLimit > 0 ? <ExchangeLimitNote className="mt-3" /> : null}
+          {/* Пропущенные записи своих организаций: «Пропущено: N — Разобрать». */}
+          <ExchangeSkips refreshKey={version} className="mt-3" />
 
           {foreign && hasOutgoing ? (
             // Заявителю: запросы в кабинеты других компаний и подтверждённые связи с ними.
@@ -228,6 +232,15 @@ export function ExchangeCard({
             code={state.cabinetCode}
             className="mt-4"
             onCode={() => setVersion((value) => value + 1)}
+          />
+          {/* Разовые переносы последних 7 дней в организации аккаунта — с «Отменить». */}
+          <ExchangeTransfers
+            refreshKey={version}
+            className="mt-4"
+            onUndone={() => {
+              setVersion((value) => value + 1);
+              onChanged?.();
+            }}
           />
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">

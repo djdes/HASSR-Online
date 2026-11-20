@@ -79,7 +79,10 @@ export type BalanceTransactionKind =
   | "manual_adjust"
   | "topup"
   /** Списание за тариф: оплата картой/счётом проходит через баланс, автопродление. */
-  | "subscription_charge";
+  | "subscription_charge"
+  /** Перевод владельцем аккаунта между своими организациями: списание и зачисление. */
+  | "transfer_out"
+  | "transfer_in";
 
 /** Подписи видов транзакций для истории в кабинете и у ROOT. */
 export const TRANSACTION_KIND_LABELS: Record<BalanceTransactionKind, string> = {
@@ -91,7 +94,17 @@ export const TRANSACTION_KIND_LABELS: Record<BalanceTransactionKind, string> = {
   manual_adjust: "Корректировка",
   topup: "Пополнение",
   subscription_charge: "Оплата тарифа",
+  transfer_out: "Перевод в другую организацию",
+  transfer_in: "Перевод из другой организации",
 };
+
+/** Виды перевода между организациями аккаунта (`account-transfer.server.ts`). */
+export const TRANSFER_KINDS = ["transfer_out", "transfer_in"] as const;
+export type TransferKind = (typeof TRANSFER_KINDS)[number];
+
+export function isTransferKind(kind: unknown): kind is TransferKind {
+  return kind === "transfer_out" || kind === "transfer_in";
+}
 
 export function transactionKindLabel(kind: string): string {
   return (
