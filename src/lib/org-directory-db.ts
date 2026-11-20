@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { resolveDishSuggestionOrgIds } from "@/lib/dish-pool";
 import { listPoolSharedItems, type SharedItem } from "@/lib/master-directory";
 import { ORG_DIRECTORY_KINDS, type OrgDirectoryKind } from "@/lib/org-directory";
 
@@ -80,7 +80,7 @@ async function loadOwnOrgDirectory(
   }
 
   // Блюда — с общим справочником по служебному коду (dish-pool.ts).
-  const poolIds = await resolveDishPoolOrgIds(organizationId);
+  const poolIds = await resolveDishSuggestionOrgIds(organizationId);
   const rows = await db.nameSuggestion.findMany({
     where: { organizationId: { in: poolIds }, scope: "dish" },
     select: { value: true },

@@ -165,7 +165,8 @@ test("actual index aliases, metadata and sitemap include translated detail route
   }
   let calls = 0;
   const sitemap = fixture("ru", {
-    "@/lib/db": { db: { article: { findMany: async () => { calls++; return []; } } } },
+    // Статьи карта сайта берёт из файлового кеша (#274) — один раз за построение.
+    "@/lib/promo-cache": { readPromoSitemapArticles: async () => { calls++; return []; } },
     "@/components/landing/niche-landing": { NICHES }, "@/components/landing/seo-journal-landing": { SEO_LANDINGS },
   })<{ default: () => Promise<Array<{ url: string; alternates?: { languages: Record<string, string> } }>> }>("src/app/sitemap.ts");
   const entries = (await sitemap.default()).filter(item => /\/(?:en\/|uz\/)?journals-info(?:\/|$)/.test(item.url));

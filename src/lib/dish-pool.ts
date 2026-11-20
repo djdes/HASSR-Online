@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { generateServiceCode, normalizeServiceCode } from "@/lib/dish-pool-code";
+import { dishShareOrgIds } from "@/lib/dish-pool-share";
 import { journalPointsOf } from "@/lib/master-pool-points";
 
 /**
@@ -82,6 +83,22 @@ export async function resolveDishPoolOrgIds(organizationId: string): Promise<str
   return ids.includes(organizationId) ? ids : [organizationId, ...ids];
 }
 
+/**
+ * Организации пула, чьи названия блюд подсказываются организации (серия C1,
+ * Р7.4): в пуле мастер-кабинета — только своей компании и компании кабинета
+ * (`dish-pool-share.ts`). Состав пула (`resolveDishPoolOrgIds`) не меняется:
+ * кабинет по-прежнему раздаёт меню и сырьё всем своим объектам.
+ */
+export async function resolveDishSuggestionOrgIds(organizationId: string): Promise<string[]> {
+  const ids = await resolveDishPoolOrgIds(organizationId);
+  if (ids.length <= 1) return ids;
+  const orgs = await db.organization.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, accountId: true, kind: true, serviceCode: true, linkedServiceCode: true },
+  });
+  return dishShareOrgIds(organizationId, ids, orgs);
+}
+
 export type DishPoolInfo = {
   ownCode: string;
   linkedCode: string | null;
@@ -108,19 +125,42 @@ export async function getDishPoolInfo(organizationId: string, buildingId?: strin
   if (building?.linkedServiceCode) {
     const code = building.linkedServiceCode;
     const [owner, orgs, buildings] = await Promise.all([
-      db.organization.findFirst({ where: { serviceCode: code }, select: { name: true } }),
+      db.organization.findFirst({ where: { serviceCode: code }, select: { name: true, accountId: true } }),
       db.organization.count({ where: { OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }] } }),
       db.building.count({ where: { linkedServiceCode: code } }),
     ]);
-    return { ownCode, linkedCode: code, linkedOrganizationName: owner?.name ?? null, poolSize: orgs + buildings, pointName };
+    return { ownCode, linkedCode: code, linkedOrganizationName: await poolOwnerName(organizationId, code, owner), poolSize: orgs + buildings, pointName };
   }
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { linkedServiceCode: true } });
   const linkedCode = org?.linkedServiceCode ?? null;
   const owner = linkedCode
-    ? await db.organization.findFirst({ where: { serviceCode: linkedCode }, select: { name: true } })
+    ? await db.organization.findFirst({ where: { serviceCode: linkedCode }, select: { name: true, accountId: true } })
     : null;
-  const pool = await resolveDishPoolOrgIds(organizationId);
-  return { ownCode, linkedCode, linkedOrganizationName: owner?.name ?? null, poolSize: pool.length, pointName };
+  // Сколько организаций в общем списке блюд этой организации (Р7.4: без других компаний).
+  const pool = await resolveDishSuggestionOrgIds(organizationId);
+  return { ownCode, linkedCode, linkedOrganizationName: linkedCode ? await poolOwnerName(organizationId, linkedCode, owner) : null, poolSize: pool.length, pointName };
+}
+
+/**
+ * Название базы, к которой подключена организация, — хозяин кода. Хозяин из
+ * другой компании (компанию к меню и сырью кабинета подключил обмен, серия C1)
+ * — название мастер-кабинета пула: об организациях владельца кабинета
+ * компания знает только его название.
+ */
+async function poolOwnerName(
+  organizationId: string,
+  code: string,
+  owner: { name: string; accountId: string | null } | null
+): Promise<string | null> {
+  if (!owner) return null;
+  const self = await db.organization.findUnique({ where: { id: organizationId }, select: { accountId: true } });
+  if (!self?.accountId || !owner.accountId || owner.accountId === self.accountId) return owner.name;
+  const cabinet = await db.organization.findFirst({
+    where: { kind: "directory", OR: [{ linkedServiceCode: code }, { serviceCode: code, linkedServiceCode: null }] },
+    orderBy: { createdAt: "asc" },
+    select: { name: true },
+  });
+  return cabinet?.name ?? owner.name;
 }
 
 export type LinkPreview = { code: string; organizationName: string; poolSize: number };

@@ -300,6 +300,7 @@ test("decision: the token payload is parsed, the owner can only narrow the lists
       kinds: ["products", "staff"],
       status: "pending",
       expiresAt: "2026-11-26T09:00:00.000Z",
+      withPool: false,
     },
     cabinet: { id: "c1", name: "Мастер-кабинет" },
     sources: [
@@ -337,6 +338,18 @@ test("decision: the token payload is parsed, the owner can only narrow the lists
     organizationIds: ["o1", "o2"],
   });
   assert.equal(approvalBody(link, [], "", ["o1"]), null);
+  // Меню и сырьё (серия C1): уходят, только если компания их просила и владелец отметил их сам.
+  const pooled = { ...link, request: { ...link.request, withPool: true } };
+  assert.deepEqual(approvalBody(pooled, ["products"], "", ["o1"]), { decision: "approve", allowedKinds: ["products"], organizationIds: ["o1"] });
+  assert.deepEqual(approvalBody(pooled, ["products"], "", ["o1"], true), {
+    decision: "approve",
+    allowedKinds: ["products"],
+    organizationIds: ["o1"],
+    allowPool: true,
+  });
+  assert.deepEqual(approvalBody(link, ["products"], "", ["o1"], true), { decision: "approve", allowedKinds: ["products"], organizationIds: ["o1"] }, "not asked — not sent");
+  assert.equal(parseDecisionState({ request: { id: "r3", mode: "link", status: "pending", withPool: true } })?.request.withPool, true);
+  assert.equal(parseDecisionState({ request: { id: "r4", mode: "transfer", status: "pending", withPool: true } })?.request.withPool, false);
   // По умолчанию отмечены уже обменивающиеся; их нет — единственная организация.
   assert.deepEqual(defaultOwnOrganizations({ sources: state.sources, linkedIds: ["o2"] }), ["o2"]);
   assert.deepEqual(defaultOwnOrganizations({ sources: [{ id: "o1", name: "Кафе" }], linkedIds: [] }), ["o1"]);
@@ -434,8 +447,8 @@ test("refusals: a busy cabinet and an unpaid requester keep the form, a recent d
   const answer = (status: number, json: Record<string, unknown> | null) => ({ ok: status >= 200 && status < 300, status, json });
   const now = Date.parse("2026-11-20T09:00:00.000Z");
 
-  // Подтверждение: к кабинету уже подключена другая компания или у заявителя нет платного тарифа —
-  // запрос по-прежнему ждёт решения, форму не закрываем и запрос не перечитываем.
+  // Подтверждение: у заявителя нет платного тарифа (или прежняя версия сервера ответила, что к кабинету
+  // уже подключена другая компания) — запрос по-прежнему ждёт решения, форму не закрываем и не перечитываем.
   const busy = answer(409, { error: "К кабинету уже подключена «Юг»", code: "request_cabinet_busy" });
   const unpaid = answer(409, { error: "У заявителя закончился тариф", code: "request_requester_not_paid" });
   assert.equal(keepsRequestOpen(busy), true);

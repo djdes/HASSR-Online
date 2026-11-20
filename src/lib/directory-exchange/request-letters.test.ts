@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  POOL_REQUEST_NOTE,
   STAFF_LETTER_NOTE,
   countersLine,
   decisionNotificationLabel,
@@ -9,6 +10,7 @@ import {
   letterSubject,
   ownerRequestLetter,
   ownerRequestNotice,
+  poolDecisionLine,
   requesterDecisionLetter,
 } from "@/lib/directory-exchange/request-letters";
 
@@ -175,4 +177,40 @@ test("owner notice, series A Р4: bell line and Telegram text name who asks, wha
   assert.ok(!transfer.label.includes("\n"));
   assert.ok(!transfer.telegramText.includes("<script>"));
   assert.ok(transfer.telegramText.includes("&lt;script&gt;"));
+});
+
+test("series C1 Р7.1: the owner letter and notice name the menu and raw materials only when asked for a link", () => {
+  assert.ok(!ownerLetter().body.includes(POOL_REQUEST_NOTE));
+  assert.ok(ownerLetter({ withPool: true }).body.includes(POOL_REQUEST_NOTE));
+  // A transfer never asks for the pool, whatever the flag says.
+  assert.ok(!ownerLetter({ mode: "transfer", withPool: true }).body.includes(POOL_REQUEST_NOTE));
+
+  const base = { mode: "link" as const, kinds: ["products" as const], cabinetName: "Сеть", requesterName: "ООО Ромашка", expiresAt: EXPIRES };
+  const plain = ownerRequestNotice(base);
+  const pooled = ownerRequestNotice({ ...base, withPool: true });
+  assert.equal(plain.hint, "Продукция; ответить до 26 ноября 2026 г.");
+  assert.equal(pooled.hint, "Продукция; меню и сырьё кабинета; ответить до 26 ноября 2026 г.");
+  assert.ok(!plain.telegramText.includes(POOL_REQUEST_NOTE));
+  assert.ok(pooled.telegramText.includes(POOL_REQUEST_NOTE));
+  assert.ok(!ownerRequestNotice({ ...base, mode: "transfer", withPool: true }).telegramText.includes(POOL_REQUEST_NOTE));
+});
+
+test("series C1: the requester learns how the menu and raw materials ended — without the refusal reason", () => {
+  const base = {
+    url: URL,
+    status: "approved" as const,
+    mode: "link" as const,
+    cabinetName: "Сеть",
+    requesterName: "ООО Ромашка",
+    allowedKinds: ["products" as const],
+    counters: null,
+  };
+  assert.equal(poolDecisionLine(null), null);
+  assert.ok(!requesterDecisionLetter(base).body.includes("Меню и сырьё"));
+  assert.ok(requesterDecisionLetter({ ...base, pool: "connected" }).body.includes(poolDecisionLine("connected")!));
+  assert.ok(requesterDecisionLetter({ ...base, pool: "not_allowed" }).body.includes("владелец не подключил"));
+  const refused = requesterDecisionLetter({ ...base, pool: "refused" }).body;
+  assert.ok(refused.includes("подключить не удалось") && !refused.includes("лимит"));
+  // Отказ в запросе — о меню и сырье ни слова.
+  assert.ok(!requesterDecisionLetter({ ...base, status: "declined", pool: "not_allowed" }).body.includes("Меню и сырьё"));
 });

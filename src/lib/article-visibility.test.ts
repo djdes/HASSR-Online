@@ -37,17 +37,24 @@ describe("видимость статей и даты в sitemap", () => {
     const sitemap = read("src/app/sitemap.ts");
     assert.doesNotMatch(sitemap, /lastModified: now/);
     assert.doesNotMatch(sitemap, /const now = new Date\(\)/);
-    assert.match(sitemap, /where: publishedArticleWhere\(new Date\(\)\)/);
+    // С #274 статьи — из файлового кеша; опубликованность проверяется при чтении.
+    assert.match(sitemap, /readPromoSitemapArticles\(new Date\(\)\)/);
+    assert.match(read("src/lib/promo-cache/datasets.ts"), /readPromoSitemapArticles\([\s\S]*?\.filter\(\(a\) => isArticlePublished\(a\.publishedAt, now\)\)/);
     assert.match(sitemap, /\$\{SITE\}\/blog`, \.\.\.lastModifiedOf\(newestArticleDate\(articles\)\)/);
     assert.match(sitemap, /\.\.\.lastModifiedOf\(articleLastModified\(a\)\)/);
   });
 
   it("список блога, похожие статьи и страница статьи не показывают отложенные; ROOT открывает их без индексации", () => {
-    assert.match(read("src/app/blog/page.tsx"), /where: publishedArticleWhere\(new Date\(\)\)/);
+    // С #274 список, статья и похожие — из файлового кеша (`promo-cache`), фильтр при чтении.
+    const datasets = read("src/lib/promo-cache/datasets.ts");
+    assert.match(read("src/app/blog/page.tsx"), /readPromoPublishedArticles\(locale, new Date\(\)\)/);
+    assert.match(datasets, /readPromoPublishedArticles\([\s\S]*?\.filter\(\(a\) => isArticlePublished\(a\.publishedAt, now\)\)/);
+    assert.match(datasets, /\.filter\(\(r\) => r\.slug !== slug && isArticlePublished\(r\.publishedAt, now\)\)/);
+    assert.match(datasets, /if \(!source \|\| !isArticlePublished\(source\.publishedAt, now\)\) \{\s*return null;/);
     const article = read("src/app/blog/[slug]/page.tsx");
-    assert.match(article, /\.\.\.publishedArticleWhere\(new Date\(\)\),\s*slug: \{ not: slug \}/);
-    assert.match(article, /if \(!source \|\| !\(await canViewArticle\(source\.publishedAt\)\)\) notFound\(\);/);
-    assert.match(article, /return session\?\.user\?\.isRoot === true;/);
+    assert.match(article, /if \(!resolved\) notFound\(\);/);
+    // Отложенную статью открывает только ROOT — уже не из кеша.
+    assert.match(read("src/lib/promo-cache/blog-preview.ts"), /if \(!badge\?\.isRoot\) \{\s*return null;/);
     assert.match(article, /article\.translationMissing \|\| scheduled \? \{ robots: \{ index: false, follow: true \} \}/);
   });
 

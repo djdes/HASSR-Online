@@ -31,11 +31,17 @@ export type OrgMasterCabinet = {
   name: string;
   /** Кабинет аккаунта этой организации (его людьми управляет владелец аккаунта). */
   ownAccount: boolean;
-  /** Сколько объектов (точек и организаций) получают меню и сырьё из кабинета. */
-  objectsCount: number;
+  /**
+   * Кабинет другой компании (аккаунта): организации известно только его
+   * название (серия C1, Р7.4) — ни операторов, ни числа объектов; ни
+   * переименовать его, ни пригласить в него оператора она не может.
+   */
+  limited: boolean;
+  /** Сколько объектов (точек и организаций) получают меню и сырьё из кабинета; null — не показывается (`limited`). */
+  objectsCount: number | null;
   /** Точки этой организации в кабинете. */
   objects: OrgCabinetObject[];
-  /** Операторы — люди кабинета. */
+  /** Операторы — люди кабинета; у кабинета другой компании — пусто. */
   operators: MasterCabinetUser[];
   /** Смотрящий может переключиться в кабинет. */
   viewerCanOpen: boolean;
@@ -139,16 +145,19 @@ export async function loadOrgMasterCabinets(organizationId: string, viewerUserId
   const loaded = await Promise.all(
     cabinets.map(async (cabinet): Promise<OrgMasterCabinet> => {
       const code = poolCodeOf(cabinet);
+      // Кабинет другой компании (её к меню и сырью подключил обмен): только название.
+      const limited = Boolean(org.accountId && cabinet.accountId && cabinet.accountId !== org.accountId);
       const [pool, operators, viewerCanOpen] = await Promise.all([
-        listPoolOrganizations(cabinet.id),
-        listMasterUsers(cabinet.id),
+        limited ? Promise.resolve(null) : listPoolOrganizations(cabinet.id),
+        limited ? Promise.resolve([]) : listMasterUsers(cabinet.id),
         assertOrgMembership(viewerUserId, cabinet.id),
       ]);
       return {
         id: cabinet.id,
         name: cabinet.name,
         ownAccount: Boolean(org.accountId) && cabinet.accountId === org.accountId,
-        objectsCount: pool.length,
+        limited,
+        objectsCount: pool ? pool.length : null,
         objects: orgObjectsInPool(org, org.buildings, code).map((object) => ({
           objectId: poolObjectId(org.id, object.building?.id),
           buildingId: object.building?.id ?? null,

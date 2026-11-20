@@ -65,6 +65,8 @@ const SMALL_OUTLINE =
   "inline-flex h-9 items-center justify-center rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-50";
 const SMALL_DANGER =
   "inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#a13a32] px-3 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#8b3128] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a13a32]/15 disabled:cursor-not-allowed disabled:opacity-50";
+const CHECK_ROW =
+  "mt-2 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#ececf4] px-4 py-3 transition-colors duration-150 hover:bg-[#f5f6ff]";
 const SEND_BUTTON =
   "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#eef1ff] px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#e2e7ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -354,6 +356,8 @@ export function ForeignBlock({
   const [foreign, setForeign] = useState<ForeignState | null>(null);
   const [failed, setFailed] = useState(false);
   const [code, setCode] = useState("");
+  // Связь: ещё и меню и сырьё кабинета (серия C1) — по умолчанию нет, владелец решает отдельно.
+  const [withPool, setWithPool] = useState(false);
   const [sending, setSending] = useState(false);
   // Отказ, который остаётся в блоке: из-за тарифа (со ссылкой на страницу тарифа)
   // или потому, что этот кабинет недавно отклонил запрос (новый — через 7 дней).
@@ -409,7 +413,7 @@ export function ForeignBlock({
     try {
       const response = await exchangeRequest(EXCHANGE_REQUESTS_PATH, {
         method: "POST",
-        body: { code: normalized, mode, kinds: chosen },
+        body: { code: normalized, mode, kinds: chosen, withPool: mode === "link" && withPool },
       });
       const { json } = response;
       if (!response.ok) {
@@ -429,6 +433,7 @@ export function ForeignBlock({
       }
       const request = parseForeignRequest(json?.request);
       setCode("");
+      setWithPool(false);
       toast.success(t("foreign.sent"));
       if (request) {
         setForeign((current) =>
@@ -522,6 +527,23 @@ export function ForeignBlock({
               </div>
               {typed && chosen.length === 0 ? (
                 <p className="mt-1.5 text-[12.5px] leading-[1.45] text-[#7a4a00]">{t("foreign.needList")}</p>
+              ) : null}
+              {/* Меню и сырьё кабинета — только к связи и отдельной галочкой: владелец решает их отдельно от списков. */}
+              {mode === "link" ? (
+                <label className={cn(CHECK_ROW, withPool && "bg-[#fafbff]")}>
+                  <input
+                    type="checkbox"
+                    checked={withPool}
+                    onChange={(event) => setWithPool(event.target.checked)}
+                    disabled={disabled || sending}
+                    className="mt-0.5 size-4 shrink-0 accent-[#5566f6]"
+                    data-testid="exchange-foreign-pool"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13.5px] font-medium text-[#0b1024]">{t("foreign.pool")}</span>
+                    <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#6f7282]">{t("foreign.poolHint")}</span>
+                  </span>
+                </label>
               ) : null}
               {refusal ? (
                 <div

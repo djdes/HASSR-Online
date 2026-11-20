@@ -1,0 +1,50 @@
+PASS setup: O2 received the owner's records
+--- linking A, then B (several companies at one cabinet)
+PASS A is linked
+PASS B is linked while A stays linked — no «cabinet busy»
+PASS both companies are foreign members of the cabinet
+PASS the cabinet's summary has no «second company did not take part» note
+--- creation
+PASS A received every owner's record
+PASS B received every owner's record
+PASS A has none of B's records
+PASS B has none of A's records
+PASS O1 received the records of both companies
+PASS O2 received the records of both companies
+--- name match
+PASS same-named «Общий хлеб» of A and B: two groups, each started by its own company
+PASS …the owner holds A's version (A linked first), B keeps its own
+PASS «Молоко» equal to the owner's: both companies joined the owner's group, nobody's data overwritten
+PASS same-named area of A and B: separate groups; B's area keeps only its own equipment
+PASS the owner holds both same-named areas, each in its own company's group
+PASS every link of the cabinet has an origin
+--- edits
+PASS a repeated run changes nothing
+PASS A's edits change no record of the owner or of B
+PASS the owner's edit reaches O2, A and B
+PASS the owner's edit of A's records reaches A; B neither gets them nor has its «Общий хлеб» changed
+PASS a new record of B reaches the owner but not A
+PASS …and the next run changes nothing
+--- one-off transfer requested by B
+PASS transfer preview for B: the owner's and B's records, none that came from A
+PASS a transfer inside the owner's account still offers everything
+PASS B's second organization received the owner's records by the transfer
+PASS …and records that came from B itself
+PASS …but nothing that came from A (by creation or by name)
+PASS …of the owner's two same-named areas B got only B's own (with B's equipment norms)
+--- legacy groups without an origin
+PASS owner's record older than A's copy → the owner's group
+PASS A's record older than the owner's copy → A's group
+PASS two companies, A's record the oldest → A's group (not mixed)
+PASS owner's records only → the organization of the oldest one (O2)
+PASS no record dates (areas), two companies' links → «mixed»
+PASS B receives the owner-founded legacy group already copied to A
+PASS B does not receive the A-founded legacy group
+PASS both companies received the owner's legacy group
+PASS the owner's O2 received every legacy group
+PASS the origin is saved: no link of the cabinet without one
+PASS A's legacy group: the owner's edit reaches O2 and A, not B
+PASS a second run changes nothing: no records, no links, no origins
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0
+TOTAL: 41 PASS, 0 FAIL
+RESULT: all checks passed

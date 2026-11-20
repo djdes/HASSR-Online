@@ -99,7 +99,8 @@ test("feature aliases, request locale and actual sitemap expose exactly the same
   }
   let calls = 0;
   const sitemap = actualModule<{ default: () => Promise<Array<{ url: string; alternates?: { languages: Record<string, string> } }>> }>("src/app/sitemap.ts", {
-    "@/lib/db": { db: { article: { findMany: async () => { calls++; return []; } } } },
+    // Статьи карта сайта берёт из файлового кеша (#274) — один раз за построение.
+    "@/lib/promo-cache": { readPromoSitemapArticles: async () => { calls++; return []; } },
     "@/components/landing/niche-landing": { NICHES: {} },
     "@/components/landing/seo-journal-landing": { SEO_LANDINGS: {} },
   });

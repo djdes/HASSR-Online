@@ -33,9 +33,10 @@ async function lockPool(tx: Tx, masterOrgId: string): Promise<string> {
   return poolCode;
 }
 
-function audit(tx: Tx, params: PoolActor & { masterOrgId: string; organizationId: string; action: string; entity: string; entityId: string; name: string }) {
+/** `cabinetOnly` — только в журнал кабинета (подключение обменом с другой компанией: её журнал пишет обмен). */
+function audit(tx: Tx, params: PoolActor & { masterOrgId: string; organizationId: string; action: string; entity: string; entityId: string; name: string; cabinetOnly?: boolean }) {
   return tx.auditLog.createMany({
-    data: [params.masterOrgId, params.organizationId].map((organizationId) => ({
+    data: (params.cabinetOnly ? [params.masterOrgId] : [params.masterOrgId, params.organizationId]).map((organizationId) => ({
       organizationId,
       userId: params.userId,
       userName: params.userName,
@@ -56,8 +57,19 @@ export async function connectPoolObjectByCode(input: {
   code: string;
   confirm: boolean;
   actor: PoolActor;
+  /**
+   * Подключение обменом с другой компанией (серия C1, Р7.2): в журнал пишется
+   * только кабинет — в журнал компании обмен пишет сам, без имён людей кабинета.
+   */
+  cabinetAuditOnly?: boolean;
+  /**
+   * В той же транзакции и под тем же замком, только когда объект подключён
+   * этим вызовом (уже подключённый — нет). Ошибка отменяет подключение.
+   */
+  onConnected?: (tx: Tx) => Promise<void>;
 }): Promise<PoolConnectPreview> {
-  const { masterOrgId, code, confirm, actor } = input;
+  const { masterOrgId, code, confirm, actor, onConnected } = input;
+  const cabinetOnly = input.cabinetAuditOnly === true;
   await ensureServiceCode(masterOrgId);
   const poolSize = (await listPoolOrganizations(masterOrgId)).length;
   return db.$transaction(async (tx) => {
@@ -85,7 +97,8 @@ export async function connectPoolObjectByCode(input: {
       const name = poolObjectName(org.name, point.name);
       if (confirm && !connected) {
         await tx.building.update({ where: { id: point.id }, data: { linkedServiceCode: poolCode } });
-        await audit(tx, { masterOrgId, organizationId: org.id, ...actor, action: "master_directory.point_connected", entity: "Building", entityId: point.id, name });
+        await audit(tx, { masterOrgId, organizationId: org.id, ...actor, action: "master_directory.point_connected", entity: "Building", entityId: point.id, name, cabinetOnly });
+        await onConnected?.(tx);
       }
       return { organizationId: org.id, organizationName: name, connected: connected || confirm };
     }
@@ -106,7 +119,8 @@ export async function connectPoolObjectByCode(input: {
     if (!connected && count >= 50) throw new MasterCorrectionError("Достигнут лимит 50 организаций в общем справочнике.");
     if (confirm && !connected) {
       await tx.organization.update({ where: { id: target.id }, data: { linkedServiceCode: poolCode } });
-      await audit(tx, { masterOrgId, organizationId: target.id, ...actor, action: "master_directory.object_connected", entity: "Organization", entityId: target.id, name: target.name });
+      await audit(tx, { masterOrgId, organizationId: target.id, ...actor, action: "master_directory.object_connected", entity: "Organization", entityId: target.id, name: target.name, cabinetOnly });
+      await onConnected?.(tx);
     }
     const name = points.length === 1 ? poolObjectName(target.name, points[0].name) : target.name;
     return { organizationId: target.id, organizationName: name, connected: connected || confirm };
@@ -155,4 +169,29 @@ export async function disconnectPoolObject(input: {
     await audit(tx, { masterOrgId, organizationId: org.id, ...actor, action: "master_directory.object_disconnected", entity: "Organization", entityId: org.id, name: object.name });
   });
   return { name: object.name };
+}
+
+/**
+ * Замок пула кабинета в транзакции вызывающего — тот же, под которым объекты
+ * подключаются и отключаются. Возвращает код пула; null — у кабинета нет кода
+ * (к нему ничего не подключено) или кабинета уже нет.
+ */
+export async function lockCabinetPool(tx: Tx, masterOrgId: string): Promise<string | null> {
+  const master = await tx.organization.findUnique({ where: { id: masterOrgId }, select: { linkedServiceCode: true, serviceCode: true } });
+  const poolCode = master?.linkedServiceCode ?? master?.serviceCode ?? null;
+  if (!poolCode) return null;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`master-pool:${poolCode}`})::bigint)`;
+  return poolCode;
+}
+
+/**
+ * Снять подключение организации и её точек к пулу `poolCode` — только там,
+ * где привязка указывает именно на него (серия C1, Р7.3: компания вышла из
+ * обмена или её отключили). Вызывать под `lockCabinetPool`. Журнал пишет
+ * вызывающий. `true` — что-то снято.
+ */
+export async function releaseOrganizationPool(tx: Tx, poolCode: string, organizationId: string): Promise<boolean> {
+  const organization = await tx.organization.updateMany({ where: { id: organizationId, linkedServiceCode: poolCode }, data: { linkedServiceCode: null } });
+  const points = await tx.building.updateMany({ where: { organizationId, linkedServiceCode: poolCode }, data: { linkedServiceCode: null } });
+  return organization.count + points.count > 0;
 }

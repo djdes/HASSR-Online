@@ -36,6 +36,8 @@ const createSchema = z.object({
     .array(z.enum(EXCHANGE_KINDS))
     .min(1, "Выберите хотя бы один список")
     .max(EXCHANGE_KINDS.length * 2),
+  // Связь: ещё и меню и сырьё кабинета (серия C1); у переноса не учитывается.
+  withPool: z.boolean().optional().default(false),
 });
 
 /**
@@ -67,7 +69,7 @@ export async function GET() {
 }
 
 /**
- * POST /api/settings/directory-exchange/requests `{ code, mode, kinds }` —
+ * POST /api/settings/directory-exchange/requests `{ code, mode, kinds, withPool? }` —
  * запрос в мастер-кабинет другого аккаунта по его коду → `{ ok: true,
  * request }`, где `request = { id, cabinetName, mode, kinds, status,
  * expiresAt, createdAt }`. Владельцу аккаунта кабинета уходит письмо со

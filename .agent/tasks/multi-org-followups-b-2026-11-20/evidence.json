@@ -39,5 +39,6 @@
   "reviewFixes": {
     "status": "PASS",
     "evidence": "evidence.md section after the independent review (8 findings); raw/transfer-undo-check.log 65/65; raw/balance-check.log 47/47"
-  }
+  },
+  "shipped": "djdes/HASSR-Online#273 (0cb78d7ac), deploy run 2374: deploy job success (schema applied); test shard 1/4 red on 5 tests from #274 (red on master before this merge too)"
 }

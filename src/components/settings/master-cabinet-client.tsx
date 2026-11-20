@@ -281,19 +281,22 @@ function CabinetCard({
             <h2 className="min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.01em] text-[#0b1024]" data-testid="master-cabinet-name">
               {cabinet.name}
             </h2>
-            <button
-              type="button"
-              onClick={() => void rename()}
-              className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-              aria-label={t("cabinet.renameLabel")}
-              title={t("cabinet.rename")}
-              data-testid="master-cabinet-rename"
-            >
-              <PenLine className="size-4" />
-            </button>
+            {/* Кабинет другой компании — только название: переименовать его нельзя. */}
+            {cabinet.limited ? null : (
+              <button
+                type="button"
+                onClick={() => void rename()}
+                className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl text-[#6f7282] transition-colors duration-150 hover:bg-[#f5f6ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                aria-label={t("cabinet.renameLabel")}
+                title={t("cabinet.rename")}
+                data-testid="master-cabinet-rename"
+              >
+                <PenLine className="size-4" />
+              </button>
+            )}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-[#6f7282]">
-            <span>{t("cabinet.objects", { count: cabinet.objectsCount })}</span>
+            {cabinet.objectsCount === null ? null : <span>{t("cabinet.objects", { count: cabinet.objectsCount })}</span>}
             {cabinet.ownAccount ? null : (
               <span className="rounded-full bg-[#f5f6ff] px-2.5 py-0.5 text-[12px] font-medium text-[#3848c7]">{t("cabinet.foreign")}</span>
             )}
@@ -395,24 +398,26 @@ function CabinetCard({
         )}
       </div>
 
-      {/* Операторы кабинета */}
-      <div className="mt-6">
-        <div className={EYEBROW}>{t("operators.title")}</div>
-        <div className="mt-3">
-          {accessCabinet && access ? (
-            <CabinetAccessBlock
-              endpoint={SETTINGS_ACCESS_ENDPOINT}
-              cabinet={accessCabinet}
-              candidates={access.candidates}
-              onChange={onAccess}
-              billingToast
-              hideHeader
-            />
-          ) : (
-            <OperatorsList cabinet={cabinet} view={view} onView={onView} />
-          )}
+      {/* Операторы кабинета; у кабинета другой компании их не показываем (серия C1, Р7.4). */}
+      {cabinet.limited ? null : (
+        <div className="mt-6">
+          <div className={EYEBROW}>{t("operators.title")}</div>
+          <div className="mt-3">
+            {accessCabinet && access ? (
+              <CabinetAccessBlock
+                endpoint={SETTINGS_ACCESS_ENDPOINT}
+                cabinet={accessCabinet}
+                candidates={access.candidates}
+                onChange={onAccess}
+                billingToast
+                hideHeader
+              />
+            ) : (
+              <OperatorsList cabinet={cabinet} view={view} onView={onView} />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <ConfirmDialog
         open={disconnecting !== null}
@@ -434,9 +439,9 @@ function CabinetCard({
 }
 
 /**
- * Операторы для руководителя, который не владелец аккаунта (или кабинет
- * чужого аккаунта): список и приглашение по почте в кабинет, к которому
- * подключена организация.
+ * Операторы для руководителя, который не владелец аккаунта: список и
+ * приглашение по почте в кабинет, к которому подключена организация.
+ * У кабинета другой компании (`limited`) этого блока нет.
  */
 function OperatorsList({
   cabinet,

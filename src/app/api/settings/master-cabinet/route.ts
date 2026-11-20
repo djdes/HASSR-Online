@@ -67,7 +67,8 @@ export async function PATCH(request: Request) {
   if ("error" in auth) return auth.error;
   const body = (await request.json().catch(() => null)) as { name?: unknown; cabinetId?: unknown } | null;
   const view = await loadOrgMasterCabinets(auth.organizationId, auth.session.user.id);
-  const cabinet = view.cabinets.find((item) => item.id === body?.cabinetId);
+  // Кабинет другой компании организация не переименовывает: ей известно только его название.
+  const cabinet = view.cabinets.find((item) => item.id === body?.cabinetId && !item.limited);
   if (!cabinet) return NextResponse.json({ error: "Мастер-кабинет не найден" }, { status: 404 });
   try {
     const result = await renameMasterCabinet(cabinet.id, body?.name);
@@ -203,7 +204,8 @@ export async function POST(request: Request) {
   // Оператор в кабинет, к которому подключена организация (или кабинет её аккаунта — владельцу).
   if (parsed.data.cabinetId) {
     const view = await loadOrgMasterCabinets(auth.organizationId, auth.session.user.id);
-    const cabinet = view.cabinets.find((item) => item.id === parsed.data.cabinetId);
+    // В кабинет другой компании операторов приглашает только она сама (серия C1, Р7.4).
+    const cabinet = view.cabinets.find((item) => item.id === parsed.data.cabinetId && !item.limited);
     if (!cabinet || (cabinet.objects.length === 0 && !(view.viewerIsOwner && cabinet.ownAccount))) {
       return NextResponse.json({ error: "Сначала подключите к этому кабинету точку организации" }, { status: 404 });
     }

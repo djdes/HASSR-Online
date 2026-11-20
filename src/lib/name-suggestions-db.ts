@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { resolveDishPoolOrgIds } from "@/lib/dish-pool";
+import { resolveDishSuggestionOrgIds } from "@/lib/dish-pool";
 import { listPoolSharedItems } from "@/lib/master-directory";
 import {
   mergeMasterMenuMeta,
@@ -42,7 +42,7 @@ export async function listNameSuggestions(
   // свои сверху, дальше блюда других организаций пула. Память температур
   // берём только свою — чужая кухня не должна подставлять свои градусы.
   if (scope === "dish") {
-    const poolIds = (await resolveDishPoolOrgIds(organizationId)).filter((id) => id !== organizationId);
+    const poolIds = (await resolveDishSuggestionOrgIds(organizationId)).filter((id) => id !== organizationId);
     if (poolIds.length > 0) {
       const pooled = await db.nameSuggestion.findMany({
         where: { organizationId: { in: poolIds }, scope },

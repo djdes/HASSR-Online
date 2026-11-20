@@ -56,6 +56,10 @@ const EXCEPTIONS: Readonly<Record<string, Exception>> = {
       ...["hygiene", "health_check", "climate_control", "cold_equipment_control", "cleaning", "general_cleaning", "finished_product", "fryer_oil", "med_books", "daily_samples"].map((code) => `publicJournalDetailSeo.${code}.title`),
     ],
   },
+  "src/lib/promo-cache/ai-markdown.ts": {
+    reason: "Markdown-версия страниц продвижения для ИИ (#274): заголовок раздела «Бланки» (/blanki) — то же исключение, что у самого раздела.",
+    only: ["Бланки журналов СанПиН и ХАССП для скачивания (PDF, DOCX) — WeSetup"],
+  },
   "src/app/prikazy/page.tsx": {
     reason:
       "«Бланк приказа» — пустая форма приказа для скачивания, а не журнал; плюс ссылка на раздел «Бланки».",

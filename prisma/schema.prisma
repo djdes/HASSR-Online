@@ -6152,6 +6152,9 @@ model DirectoryExchangeMember {
   /// Участник из другого аккаунта, добавленный подтверждённым запросом
   /// (`DirectoryExchangeRequest`): владелец кабинета разрешил обмен сам.
   foreign              Boolean      @default(false)
+  /// Подключён обменом к меню и сырью кабинета (серия C1): при выходе или
+  /// отключении подключение снимается.
+  poolConnected        Boolean      @default(false)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
@@ -6175,6 +6178,10 @@ model DirectoryExchangeLink {
   /// null — запись в этой организации удалили: заново не создаём.
   entityId             String?
   hash                 String
+  /// Чья запись начала группу (серия C1, 2026-11-20): одинаково у всех связей
+  /// группы. Компания другого аккаунта не получает записи групп, начатых другой
+  /// компанией. "mixed" — группа до C1 со связями нескольких компаний.
+  originOrganizationId String?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
@@ -6264,6 +6271,10 @@ model DirectoryExchangeRequest {
   allowedKinds            String[]     @default([])
   /// Перенос: из какой своей организации владелец кабинета разрешил взять.
   sourceOrganizationId    String?
+  /// Связь: заявитель просит и меню и сырьё кабинета (серия C1, по умолчанию нет).
+  withPool                Boolean      @default(false)
+  /// Владелец кабинета разрешил меню и сырьё (отдельно от списков).
+  poolAllowed             Boolean      @default(false)
   /// Итог обмена или переноса после подтверждения (`ExchangeSummary`).
   resultJson              Json?
   createdAt               DateTime     @default(now())
