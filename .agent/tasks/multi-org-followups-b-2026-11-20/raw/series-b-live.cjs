@@ -6,6 +6,7 @@ const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
+// Run against `next dev` on port 3000 with the repo .env loaded (ROOT_PASSWORD).
 const BASE = "http://localhost:3000";
 const OUT = __dirname;
 const stamp = Date.now().toString(36);

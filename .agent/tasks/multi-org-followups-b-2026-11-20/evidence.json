@@ -1,0 +1,15 @@
+{
+  "task": "multi-org-followups-b-2026-11-20",
+  "spec": ".agent/tasks/multi-org-followups-b-2026-11-20/spec.md",
+  "base": "master f30c8cfea",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "skips.test.ts 11; raw/skips-check.log 39/39; raw/01-02 screenshots" },
+    { "id": "AC2", "status": "PASS", "evidence": "account-transfer.test.ts; raw/balance-check.log 38/38; raw/07-08 screenshots" },
+    { "id": "AC3", "status": "PASS", "evidence": "org-trial-admin.test.ts, platform-access.test.ts; raw/root-org-trial-check.log 25/25; raw/09-10 screenshots" },
+    { "id": "AC4", "status": "PASS", "evidence": "transfer-undo.test.ts 9; raw/transfer-undo-check.log 47/47; raw/05-06 screenshots" },
+    { "id": "AC5", "status": "PASS", "evidence": "raw/cabinet-code-check.log 37/37; raw/03-04 screenshots" },
+    { "id": "AC6", "status": "PASS", "evidence": "additive schema via apply-safe-schema; typecheck clean; i18n:check 99/99; eslint 0 errors; full suite 6776 pass; raw/seriesA-*.log 88/179/14" }
+  ],
+  "deploy": "apply-safe-schema adds tables DirectoryExchangeSkip, DirectoryTransfer and column Organization.exchangeCode (unique, nullable)"
+}
