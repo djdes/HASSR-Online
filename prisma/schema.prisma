@@ -6212,23 +6212,29 @@ model DirectoryExchangeSkip {
 /// Разовый перенос справочников (серия B, 2026-11-20): что создано — чтобы
 /// владелец аккаунта получателя мог в течение 7 дней отменить перенос.
 model DirectoryTransfer {
-  id                 String       @id @default(cuid())
-  fromOrganizationId String
-  fromOrganization   Organization @relation("DirectoryTransferFrom", fields: [fromOrganizationId], references: [id], onDelete: Cascade)
-  toOrganizationId   String
-  toOrganization     Organization @relation("DirectoryTransferTo", fields: [toOrganizationId], references: [id], onDelete: Cascade)
-  actorUserId        String?
+  id                   String        @id @default(cuid())
+  /// Источник; удалили его (бывает, что другая компания) — null, а запись
+  /// получателя и отмена переноса остаются.
+  fromOrganizationId   String?
+  fromOrganization     Organization? @relation("DirectoryTransferFrom", fields: [fromOrganizationId], references: [id], onDelete: SetNull)
+  /// Название источника на момент переноса — только внутри аккаунта: организация
+  /// другой компании получателю не называется.
+  fromOrganizationName String?
+  toOrganizationId     String
+  toOrganization       Organization  @relation("DirectoryTransferTo", fields: [toOrganizationId], references: [id], onDelete: Cascade)
+  actorUserId          String?
   /// Перенос по подтверждённому запросу другой компании.
-  requestId          String?
-  /// Созданные записи по видам: `{ product: [id…], staff: [id…], … }`.
-  createdJson        Json
+  requestId            String?
+  /// Созданные записи по видам: `{ product: [id…], staff: [id…], … }` и их
+  /// отпечатки на конец переноса: `hashes: { product: { id: hash }, … }`.
+  createdJson          Json
   /// Итог переноса (`ExchangeSummary`).
-  summaryJson        Json?
-  undoneAt           DateTime?
-  undoneByUserId     String?
+  summaryJson          Json?
+  undoneAt             DateTime?
+  undoneByUserId       String?
   /// Итог отмены: что отменено и что осталось и почему.
-  undoJson           Json?
-  createdAt          DateTime     @default(now())
+  undoJson             Json?
+  createdAt            DateTime      @default(now())
 
   @@index([toOrganizationId, createdAt])
   @@index([fromOrganizationId, createdAt])

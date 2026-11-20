@@ -5,6 +5,8 @@ import {
   ACCOUNT_TRANSFER_COMMENT_MAX,
   ACCOUNT_TRANSFER_MAX_RUB,
   accountBalanceTotal,
+  isSameTransfer,
+  keepTransferKeyAfter,
   normalizeTransferComment,
   parseAccountTransfer,
   parseTransferAmount,
@@ -85,4 +87,30 @@ test("account total sums balances; transfer kinds have labels", () => {
   assert.equal(isTransferKind("topup"), false);
   assert.equal(transactionKindLabel("transfer_out"), "Перевод в другую организацию");
   assert.equal(transactionKindLabel("transfer_in"), "Перевод из другой организации");
+});
+
+test("same idempotency key: the same transfer only when from, to and amount match", () => {
+  const earlier = { fromId: "org-a", toId: "org-b", amountRub: 1500 };
+  assert.equal(isSameTransfer(earlier, { fromId: "org-a", toId: "org-b", amountRub: 1500 }), true);
+  assert.equal(isSameTransfer(earlier, { fromId: "org-a", toId: "org-c", amountRub: 1500 }), false);
+  assert.equal(isSameTransfer(earlier, { fromId: "org-b", toId: "org-a", amountRub: 1500 }), false);
+  assert.equal(isSameTransfer(earlier, { fromId: "org-a", toId: "org-b", amountRub: 900 }), false);
+});
+
+test("idempotency key: cleared only on 2xx or a 4xx refusal with our body, kept otherwise", () => {
+  // Исход известен — следующий перевод с новым ключом.
+  assert.equal(keepTransferKeyAfter({ status: 200, body: { ok: true } }), false);
+  assert.equal(keepTransferKeyAfter({ status: 409, body: { error: "Недостаточно средств", code: "insufficient" } }), false);
+  assert.equal(keepTransferKeyAfter({ status: 400, body: { error: "Укажите сумму", code: "amount_required" } }), false);
+  assert.equal(keepTransferKeyAfter({ status: 429, body: { error: "Слишком много запросов" } }), false);
+  // Обрыв сети, 5xx, таймаут шлюза, нечитаемое тело — перевод мог пройти, ключ остаётся.
+  assert.equal(keepTransferKeyAfter(null), true);
+  assert.equal(keepTransferKeyAfter({ status: 500, body: { error: "Internal" } }), true);
+  assert.equal(keepTransferKeyAfter({ status: 502, body: null }), true);
+  assert.equal(keepTransferKeyAfter({ status: 504, body: null }), true);
+  assert.equal(keepTransferKeyAfter({ status: 200, body: null }), true);
+  assert.equal(keepTransferKeyAfter({ status: 200, body: [] }), true);
+  // 4xx не от нас (страница шлюза, тело без `error`) — исход неизвестен.
+  assert.equal(keepTransferKeyAfter({ status: 408, body: null }), true);
+  assert.equal(keepTransferKeyAfter({ status: 413, body: {} }), true);
 });

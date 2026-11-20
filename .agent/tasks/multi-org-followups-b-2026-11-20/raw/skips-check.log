@@ -1,5 +1,5 @@
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -8,7 +8,7 @@
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -17,7 +17,7 @@
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -26,7 +26,7 @@
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -42,7 +42,7 @@ PASS rows match the summary counters (B products, B staff, A products)
 PASS row carries source organization and record
 PASS the other direction: A has a conflict row for B's «МОЛОКО»
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -51,7 +51,7 @@ PASS the other direction: A has a conflict row for B's «МОЛОКО»
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -73,7 +73,7 @@ PASS ignore: tombstone link written (entityId null)
 PASS ignore: row removed
 PASS ignore: audit directory_exchange.skip_ignored in B
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -82,7 +82,7 @@ PASS ignore: audit directory_exchange.skip_ignored in B
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -96,7 +96,7 @@ PASS link: row removed
 PASS link: the record's own lonely group is released, A's row for it is gone
 PASS link: audit directory_exchange.skip_linked in B
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -105,7 +105,7 @@ PASS link: audit directory_exchange.skip_linked in B
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -116,7 +116,7 @@ PASS link: audit directory_exchange.skip_linked in B
 PASS link: next exchange leaves B's record data unchanged
 PASS link: next exchange creates and updates no products, no «Молоко» rows anywhere
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -125,7 +125,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -134,7 +134,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -143,7 +143,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -153,7 +153,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
 }
 PASS link: a later edit of the source reaches the linked record
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -164,7 +164,7 @@ PASS link: a later edit of the source reaches the linked record
 PASS re-activated product in B: its row is gone
 PASS employee added in B by hand: the limit row is gone
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -173,7 +173,7 @@ PASS employee added in B by hand: the limit row is gone
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwopgsn900040j7deu4kt40k',
+  organizationId: 'cmwoyx0dl0004by7dc4yurpyc',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',

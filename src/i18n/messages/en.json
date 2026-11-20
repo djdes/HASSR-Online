@@ -10106,6 +10106,7 @@
           "sameOrg": "Choose two different organizations",
           "notFound": "Organization not found in your account",
           "notOwner": "Only the account owner can make transfers",
+          "toDeleting": "“{name}” is being deleted — money cannot be transferred to it",
           "tooMany": "Too many transfers in a row. Wait a minute.",
           "network": "No connection to the server. Try again — the money will not be debited twice."
         }

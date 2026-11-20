@@ -20,8 +20,10 @@ const limiter = createRateLimiter({ tokensPerInterval: 10, intervalMs: 60_000 })
  *
  * Отказы `{ error, code }`: 400 — поля; 403 — не владелец аккаунта, «войти
  * как», руководитель точки; 404 — организация не из аккаунта; 409 — больше
- * остатка (`params: { name, balanceRub }`). Повтор с тем же ключом —
- * прежний перевод с `duplicate: true`, второй раз не списывается.
+ * остатка (`insufficient`, `params: { name, balanceRub }`), удаление
+ * получателя запрошено (`deleting`, `params: { name }`), тот же ключ с другим
+ * переводом (`idempotency_mismatch`). Повтор с тем же ключом — прежний
+ * перевод с `duplicate: true`, второй раз не списывается.
  */
 export async function POST(request: Request) {
   const access = await requireAccountTransferSession();

@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   ACCOUNT_TRANSFER_COMMENT_MAX,
+  keepTransferKeyAfter,
   parseTransferAmount,
   type AccountBalances,
   type TransferAmountCheck,
@@ -22,7 +23,9 @@ import { Section, StatusPill, inputClass, primaryButtonClass, secondaryButtonCla
  * организациями и больше — решает сервер (страница не передаёт сводку).
  *
  * Ключ повтора создаётся один раз на отправку формы: повторное нажатие
- * после обрыва сети уходит с тем же ключом и второй раз не списывает.
+ * после обрыва сети, 5xx или нечитаемого ответа уходит с тем же ключом и
+ * второй раз не списывает (`keepTransferKeyAfter`). Организация, удаление
+ * которой запрошено, в «Куда» не предлагается.
  */
 
 type TransferResponse = {
@@ -53,8 +56,13 @@ function newIdempotencyKey(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
+/** Куда можно перевести из `fromId`: другая организация, удаление которой не запрошено. */
+function destinations(data: AccountBalances, fromId: string) {
+  return data.organizations.filter((org) => org.id !== fromId && !org.deletionRequested);
+}
+
 function otherThan(data: AccountBalances, id: string): string {
-  return data.organizations.find((org) => org.id !== id)?.id ?? "";
+  return destinations(data, id)[0]?.id ?? "";
 }
 
 export function AccountBalanceSection({
@@ -82,7 +90,7 @@ export function AccountBalanceSection({
   const keyRef = useRef<string | null>(null);
 
   const from = data.organizations.find((org) => org.id === fromId) ?? null;
-  const to = data.organizations.find((org) => org.id === toId) ?? null;
+  const to = destinations(data, fromId).find((org) => org.id === toId) ?? null;
   const parsed = parseTransferAmount(amount);
   const amountError: string | null = !parsed.ok
     ? t(AMOUNT_ERROR_KEYS[parsed.code])
@@ -122,12 +130,13 @@ export function AccountBalanceSection({
           idempotencyKey: keyRef.current,
         }),
       });
-      const body = (await response.json().catch(() => ({}))) as TransferResponse;
-      // Сервер ответил — ключ отработал; следующий перевод — с новым.
-      keyRef.current = null;
+      const body = (await response.json().catch(() => null)) as TransferResponse | null;
+      // Исход известен (2xx или отказ 4xx) — следующий перевод с новым ключом;
+      // 5xx и нечитаемый ответ — перевод мог пройти, повтор идёт с этим же.
+      if (!keepTransferKeyAfter({ status: response.status, body })) keyRef.current = null;
       setConfirming(false);
-      if (!response.ok || !body.ok) {
-        setError(refusalText(response.status, body));
+      if (!response.ok || !body?.ok) {
+        setError(refusalText(response.status, body ?? {}));
         return;
       }
       if (body.account) setData(body.account);
@@ -155,6 +164,9 @@ export function AccountBalanceSection({
       const name = typeof body.params?.name === "string" ? body.params.name : (from?.name ?? "");
       const balance = typeof body.params?.balanceRub === "number" ? body.params.balanceRub : 0;
       return t("errors.overBalance", { name, amount: formatPoints(balance) });
+    }
+    if (body.code === "deleting") {
+      return t("errors.toDeleting", { name: typeof body.params?.name === "string" ? body.params.name : (to?.name ?? "") });
     }
     if (body.code === "not_found") return t("errors.notFound");
     if (body.code === "not_owner") return t("errors.notOwner");
@@ -224,13 +236,11 @@ export function AccountBalanceSection({
                   }}
                   disabled={busy}
                 >
-                  {data.organizations
-                    .filter((org) => org.id !== fromId)
-                    .map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name}
-                      </option>
-                    ))}
+                  {destinations(data, fromId).map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="block space-y-1.5">

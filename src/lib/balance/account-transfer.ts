@@ -92,6 +92,31 @@ export function isTransferIdempotencyKey(value: unknown): value is string {
   return typeof value === "string" && IDEMPOTENCY_KEY_RE.test(value);
 }
 
+type TransferParties = { fromId: string; toId: string; amountRub: number };
+
+/**
+ * Повтор с тем же ключом — тот же перевод: откуда, куда и сколько совпадают.
+ * Иначе это другой перевод под старым ключом, и прежний результат ему не ответ.
+ */
+export function isSameTransfer(earlier: TransferParties, input: TransferParties): boolean {
+  return earlier.fromId === input.fromId && earlier.toId === input.toId && earlier.amountRub === input.amountRub;
+}
+
+/**
+ * Оставить ли ключ повтора после ответа на перевод. Сбросить можно, только
+ * когда исход известен: 2xx или отказ 4xx с нашим телом `{ error }`. Обрыв
+ * сети (`null`), 5xx (в том числе таймаут шлюза — перевод мог пройти) и
+ * тело, которое не прочитать, — ключ остаётся: повтор с ним не спишет дважды.
+ */
+export function keepTransferKeyAfter(response: { status: number; body: unknown } | null): boolean {
+  if (!response) return true;
+  const body = response.body;
+  if (!body || typeof body !== "object" || Array.isArray(body)) return true;
+  if (response.status >= 200 && response.status < 300) return false;
+  if (response.status >= 400 && response.status < 500) return typeof (body as { error?: unknown }).error !== "string";
+  return true;
+}
+
 /** Тело `POST /api/balance/transfer` → проверенный перевод или отказ с понятной фразой. */
 export function parseAccountTransfer(body: unknown): AccountTransferCheck {
   const raw = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
@@ -151,6 +176,8 @@ export type AccountBalanceOrganization = {
   balanceRub: number;
   /** Активная организация сессии — «откуда» по умолчанию. */
   active: boolean;
+  /** Запрошено удаление организации: переводить в неё нельзя, из неё — можно. */
+  deletionRequested: boolean;
 };
 
 /** Сводка «Баланс по аккаунту» (`GET /api/balance/account`). */

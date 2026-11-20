@@ -5,6 +5,7 @@ import {
   ACCOUNT_TRANSFER_MAX_RUB,
   accountBalanceTotal,
   type AccountBalances,
+  isSameTransfer,
   isTransferIdempotencyKey,
   normalizeTransferComment,
   transferDedupeKeys,
@@ -19,10 +20,17 @@ import { applyBalanceChange, DuplicateBalanceChangeError, InsufficientBalanceErr
  * Только владелец аккаунта (`Account.ownerUserId`) и только организации
  * его аккаунта, кроме демо и мастер-кабинетов: у них нет своих денег.
  * Закрытая после своих 14 дней организация и отдаёт, и получает — деньги
- * её, а точку тарифа можно оплатить и с другого баланса.
+ * её, а точку тарифа можно оплатить и с другого баланса. Организация, удаление
+ * которой запрошено, только отдаёт: деньги в неё пропали бы вместе с ней.
  */
 
-export type AccountTransferErrorCode = "not_owner" | "not_found" | "invalid" | "insufficient";
+export type AccountTransferErrorCode =
+  | "not_owner"
+  | "not_found"
+  | "invalid"
+  | "insufficient"
+  | "deleting"
+  | "idempotency_mismatch";
 
 /** Отказ с HTTP-статусом: маршруты отдают его как `{ error, code }`. */
 export class AccountTransferError extends Error {
@@ -30,7 +38,7 @@ export class AccountTransferError extends Error {
     readonly status: 400 | 403 | 404 | 409,
     readonly code: AccountTransferErrorCode,
     message: string,
-    /** Для перевода фразы на клиенте: `insufficient` — `{ name, balanceRub }`. */
+    /** Для перевода фразы на клиенте: `insufficient` — `{ name, balanceRub }`, `deleting` — `{ name }`. */
     readonly params: Record<string, string | number> | null = null,
   ) {
     super(message);
@@ -41,6 +49,7 @@ export class AccountTransferError extends Error {
 export type { AccountBalanceOrganization, AccountBalances } from "./account-transfer";
 
 export const ACCOUNT_OWNER_ONLY_MESSAGE = "Баланс по аккаунту и переводы доступны владельцу аккаунта";
+const IDEMPOTENCY_MISMATCH_MESSAGE = "Этот перевод уже проведён с другими данными — обновите страницу и повторите";
 
 const platformOrgId = () => (process.env.PLATFORM_ORG_ID ?? "platform").trim();
 
@@ -72,9 +81,13 @@ export async function loadAccountBalances(ownerUserId: string, activeOrgId: stri
   const rows = await db.organization.findMany({
     where: moneyOrgWhere(accountId),
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    select: { id: true, name: true, balanceRub: true },
+    select: { id: true, name: true, balanceRub: true, deletionRequestedAt: true },
   });
-  const organizations = rows.map((row) => ({ ...row, active: row.id === activeOrgId }));
+  const organizations = rows.map(({ deletionRequestedAt, ...row }) => ({
+    ...row,
+    active: row.id === activeOrgId,
+    deletionRequested: deletionRequestedAt !== null,
+  }));
   return { accountId, activeOrganizationId: activeOrgId, organizations, totalRub: accountBalanceTotal(organizations) };
 }
 
@@ -103,8 +116,15 @@ export type AccountTransferResult = {
   };
 };
 
-/** Перевод, уже проведённый с этими ключами (повтор формы, гонка двух запросов). */
-async function earlierTransfer(keys: { out: string; in: string }): Promise<AccountTransferResult | null> {
+/**
+ * Перевод, уже проведённый с этими ключами (повтор формы, гонка двух
+ * запросов). Ключ тот же, а откуда, куда или сумма другие — 409: прежний
+ * перевод этому запросу не ответ, а новый под старым ключом не проводится.
+ */
+async function earlierTransfer(
+  keys: { out: string; in: string },
+  input: { fromId: string; toId: string; amountRub: number },
+): Promise<AccountTransferResult | null> {
   const rows = await db.balanceTransaction.findMany({
     where: { dedupeKey: { in: [keys.out, keys.in] } },
     select: { organizationId: true, amount: true, dedupeKey: true, createdAt: true },
@@ -112,15 +132,16 @@ async function earlierTransfer(keys: { out: string; in: string }): Promise<Accou
   const out = rows.find((row) => row.dedupeKey === keys.out);
   const incoming = rows.find((row) => row.dedupeKey === keys.in);
   if (!out || !incoming) return null;
-  return {
-    duplicate: true,
-    transfer: {
-      fromId: out.organizationId,
-      toId: incoming.organizationId,
-      amountRub: incoming.amount,
-      createdAt: incoming.createdAt.toISOString(),
-    },
+  const transfer = {
+    fromId: out.organizationId,
+    toId: incoming.organizationId,
+    amountRub: incoming.amount,
+    createdAt: incoming.createdAt.toISOString(),
   };
+  if (!isSameTransfer(transfer, input)) {
+    throw new AccountTransferError(409, "idempotency_mismatch", IDEMPOTENCY_MISMATCH_MESSAGE);
+  }
+  return { duplicate: true, transfer };
 }
 
 /**
@@ -129,8 +150,13 @@ async function earlierTransfer(keys: { out: string; in: string }): Promise<Accou
  * действий обеих организаций — в той же транзакции.
  *
  * Отказы: не владелец — 403; организация не из аккаунта (или демо, кабинет)
- * — 404, как будто её нет; больше остатка — 409. Повтор с тем же ключом —
- * прежний результат с `duplicate: true`, деньги не двигаются.
+ * — 404, как будто её нет; больше остатка — 409 `insufficient`; в
+ * организацию, удаление которой запрошено, — 409 `deleting`. Повтор с тем же
+ * ключом — прежний результат с `duplicate: true`, деньги не двигаются; тот же
+ * ключ с другими «откуда», «куда» или суммой — 409 `idempotency_mismatch`.
+ *
+ * Строки обеих организаций транзакция сразу берёт под замок в одном порядке
+ * (по id): встречные переводы A→B и B→A не ждут друг друга по кругу.
  */
 export async function transferBetweenOwnOrganizations(input: {
   ownerUserId: string;
@@ -166,7 +192,8 @@ export async function transferBetweenOwnOrganizations(input: {
   if (!from || !to) throw new AccountTransferError(404, "not_found", "Организация не найдена");
 
   const keys = transferDedupeKeys(accountId, input.idempotencyKey);
-  const already = await earlierTransfer(keys);
+  const asked = { fromId: from.id, toId: to.id, amountRub };
+  const already = await earlierTransfer(keys, asked);
   if (already) return already;
 
   const descriptions = transferDescriptions({ fromName: from.name, toName: to.name, comment });
@@ -185,6 +212,21 @@ export async function transferBetweenOwnOrganizations(input: {
   let createdAt: Date;
   try {
     createdAt = await db.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<Array<{ id: string; deletionRequestedAt: Date | null }>>`
+        SELECT id, "deletionRequestedAt"
+        FROM "Organization"
+        WHERE id IN (${from.id}, ${to.id})
+        ORDER BY id
+        FOR UPDATE`;
+      // Удаление запрошено — деньги в организацию не идут (проверка под замком строки).
+      if (locked.find((row) => row.id === to.id)?.deletionRequestedAt) {
+        throw new AccountTransferError(
+          409,
+          "deleting",
+          `Организация «${to.name}» удаляется — переводить в неё нельзя`,
+          { name: to.name },
+        );
+      }
       await applyBalanceChange(tx, {
         organizationId: from.id,
         amount: -amountRub,
@@ -221,13 +263,13 @@ export async function transferBetweenOwnOrganizations(input: {
   } catch (error) {
     if (error instanceof DuplicateBalanceChangeError) {
       // Параллельный запрос с тем же ключом успел первым — его итог и отдаём.
-      const earlier = await earlierTransfer(keys);
+      const earlier = await earlierTransfer(keys, asked);
       if (earlier) return earlier;
       throw new AccountTransferError(409, "invalid", "Перевод уже проводится — обновите страницу");
     }
     if (error instanceof InsufficientBalanceError) {
       // Тот же перевод мог пройти параллельно и забрать остаток.
-      const earlier = await earlierTransfer(keys);
+      const earlier = await earlierTransfer(keys, asked);
       if (earlier) return earlier;
       const current = await db.organization.findUnique({ where: { id: from.id }, select: { balanceRub: true } });
       throw new AccountTransferError(

@@ -120,8 +120,8 @@ test("account balance block and transfer history labels render in RU, EN, and Uz
     accountId: "acc-1",
     activeOrganizationId: "org-1",
     organizations: [
-      { id: "org-1", name: "Cafe Example", balanceRub: 12_345, active: true },
-      { id: "org-2", name: "Bar Example", balanceRub: 655, active: false },
+      { id: "org-1", name: "Cafe Example", balanceRub: 12_345, active: true, deletionRequested: false },
+      { id: "org-2", name: "Bar Example", balanceRub: 655, active: false, deletionRequested: false },
     ],
     totalRub: 13_000,
   };

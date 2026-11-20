@@ -9,12 +9,16 @@ import {
   canUndoTransfer,
   decideUndo,
   editedAfter,
+  editedByHash,
   emptyTransferCreated,
+  emptyTransferHashes,
   keepMirrorPartners,
   mirrorPairs,
   parseTransferCreated,
+  parseTransferHashes,
   parseUndoResult,
   transferCreatedCount,
+  transferCreatedJson,
   transferUndoDeadline,
   type UndoDecision,
 } from "@/lib/directory-exchange/transfer-undo";
@@ -34,6 +38,36 @@ test("createdJson: ids by entity, no duplicates, garbage dropped", () => {
   assert.equal(transferCreatedCount(created), 3);
   assert.deepEqual(parseTransferCreated(null), emptyTransferCreated());
   assert.deepEqual(parseTransferCreated(["p1"]), emptyTransferCreated());
+});
+
+test("createdJson with fingerprints: ids read as before, hashes by entity, old rows have none", () => {
+  const created = { ...emptyTransferCreated(), equipment: ["e1", "e2"], area: ["a1"] };
+  const hashes = { ...emptyTransferHashes(), equipment: { e1: "h-e1", e2: "h-e2" }, area: { a1: "h-a1" } };
+  const json = JSON.parse(JSON.stringify(transferCreatedJson(created, hashes)));
+  // Старый разбор id не видит `hashes` — формат совместим.
+  assert.deepEqual(parseTransferCreated(json), created);
+  assert.deepEqual(parseTransferHashes(json), hashes);
+  // Запись до отпечатков и мусор — пусто.
+  assert.deepEqual(parseTransferHashes({ equipment: ["e1"] }), emptyTransferHashes());
+  assert.deepEqual(parseTransferHashes(null), emptyTransferHashes());
+  assert.deepEqual(
+    parseTransferHashes({ hashes: { equipment: { e1: "h", e2: 5, "": "x", e3: "" }, nope: { x: "h" }, area: ["a1"] } }),
+    { ...emptyTransferHashes(), equipment: { e1: "h" } },
+  );
+});
+
+test("edited by fingerprint: a different or missing current hash; no stored hash — unknown", () => {
+  const stored = { ...emptyTransferHashes(), equipment: { e1: "h1", e2: "h2", e3: "h3" }, area: { a1: "ha" } };
+  const current = { ...emptyTransferHashes(), equipment: { e1: "h1", e2: "h2-tempMax", e4: "h4" }, area: { a1: "ha-renamed" } };
+  assert.equal(editedByHash(stored, current, "equipment", "e1"), false);
+  assert.equal(editedByHash(stored, current, "equipment", "e2"), true);
+  assert.equal(editedByHash(stored, current, "area", "a1"), true);
+  // Запись выпала из строк обмена (ушла в офис, сотруднику дали вход) — правка.
+  assert.equal(editedByHash(stored, current, "equipment", "e3"), true);
+  // Отпечатка с переноса нет (старая запись) — решают прежние признаки.
+  assert.equal(editedByHash(stored, current, "equipment", "e4"), false);
+  assert.equal(editedByHash(emptyTransferHashes(), current, "equipment", "e2"), false);
+  assert.equal(editedByHash(stored, current, "equipment", "constructor"), false);
 });
 
 test("undo window: 7 days, once", () => {

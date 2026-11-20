@@ -8,6 +8,8 @@ PASS T1: created buildings
 PASS T1: rooms include the mirror rooms of the created areas
 PASS T1: areas include the mirror area of the created room
 PASS T1: created equipment
+PASS T1: a fingerprint is stored for every created record
+PASS T1: the source name is stored (same account)
 PASS T1: every created id is a record of B (nothing pre-existing recorded)
 PASS T1: the summary is stored and matches the returned one
 PASS list: T1 shown from A to B, undoable, with counts
@@ -20,7 +22,8 @@ PASS a transfer older than 7 days → 409
 PASS an old transfer is not listed
 PASS the refused old transfer changed nothing
 --- undo
-PASS undo: undone — unused products off, unused staff archived, unused equipment/areas/rooms/building deleted
+PASS T1 stored in the old format (no fingerprints)
+PASS undo (old row, fallback): undone — unused products off, unused staff archived, unused equipment/areas/rooms/building deleted
 PASS undo: kept with reasons — used, edited, non-empty, linked mirror, position with staff
 PASS B: active products — the edited one and the one from T0
 PASS B: products turned off, not deleted
@@ -39,6 +42,7 @@ PASS second undo → 409
 --- cross-account transfer by an approved request
 PASS request approved
 PASS T2: recorded with the request id, from the foreign source
+PASS T2: the foreign source's name is not stored
 PASS T2: created ids recorded (product, position, staff, building, rooms, areas, equipment)
 PASS requester list: T2 from the other company shown by the cabinet name, never the source organization
 PASS cabinet owner list: T2 not shown (it is not their organization)
@@ -49,6 +53,22 @@ PASS T2 undo: everything undone
 PASS C after undo: product off, staff archived, no positions, buildings, rooms, areas or equipment
 PASS the source S is untouched
 PASS audit in C: transfer_undone, cross-account, without the source organization's name
+PASS T2 with the foreign source gone: still listed as another company by the cabinet name
+--- fingerprints and references
+PASS T3: 2 buildings, 3 rooms, 3 areas, 4 equipment — each with a fingerprint
+PASS T3: the new fryer is linked in the fryer journal settings by itself
+PASS undo while the account cabinet's exchange holds its lock → 409 exchange_busy
+PASS the refused undo changed nothing
+PASS T3 undo: edited tempMax and area name kept as «правили после переноса»; references keep records as used
+PASS T3 undo: the unused fryer (its automatic journal link does not count) and the unpaired room are undone
+PASS D: equipment left with the edited norm
+PASS D: the renamed area stays
+PASS D: the fryer link left the fryer journal settings
+--- deleted source
+PASS deleting the source keeps the recipient's transfer row (source id null, name kept)
+PASS list: the deleted source is shown by its stored name, same account, undoable
+PASS undo with the source deleted: the product is turned off
+PASS audit: the deleted source named by the stored name, id null
 cleanup: organizations left 0, users left 0, transfers left 0
-TOTAL: 47 PASS, 0 FAIL
+TOTAL: 65 PASS, 0 FAIL
 RESULT: all checks passed

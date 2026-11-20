@@ -16,7 +16,8 @@ PASS history rows record the actor
 PASS audit balance.transfer written in both organizations
 PASS audit details: actor, from/to, amount, comment
 PASS same key again → the earlier result, duplicate: true
-PASS same key with other fields → still the earlier transfer
+PASS same key with another destination, amount or direction → 409 idempotency_mismatch
+PASS route mapper: 409 { code: idempotency_mismatch }
 PASS balances unchanged by repeats (A 3 500, B 2 500, C 0)
 PASS still exactly two ledger rows and two audit rows for the key
 PASS three parallel requests with one key → one transfer, two duplicates
@@ -33,8 +34,16 @@ PASS balances unchanged after the refusal
 PASS same organization and fractional amount → 400
 PASS route mapper: 409 { code: insufficient, params }
 PASS route mapper: 404 and 403 statuses
-PASS ledger invariant for Кафе А balchkmwopgtke
-PASS ledger invariant for Бар Б balchkmwopgtke
-PASS ledger invariant for Столовая В balchkmwopgtke
+PASS summary flags the organization whose deletion is requested (others not)
+PASS transfer INTO an organization being deleted → 409 deleting with its name
+PASS refused: balances unchanged (A 3 500, closing 300)
+PASS route mapper: 409 { code: deleting, params: { name } }
+PASS transfer OUT of an organization being deleted is allowed (closing 300 → 0, A 3 500 → 3 800)
+PASS 4 × (A→B and B→A) at once: all 8 transfers succeed
+PASS opposite transfers: A and B balances back where they were
+PASS ledger invariant for Кафе А balchkmwoywyxj
+PASS ledger invariant for Бар Б balchkmwoywyxj
+PASS ledger invariant for Столовая В balchkmwoywyxj
+PASS ledger invariant for Закрывается balchkmwoywyxj
 cleanup: organizations left 0, ledger rows left 0, audit rows left 0
-TOTAL: 38 PASS, 0 FAIL
+TOTAL: 47 PASS, 0 FAIL

@@ -47,6 +47,49 @@ export function transferCreatedCount(created: TransferCreated): number {
   return EXCHANGE_ENTITIES.reduce((sum, entity) => sum + created[entity].length, 0);
 }
 
+/**
+ * Отпечатки созданных записей на конец переноса — `createdJson.hashes`:
+ * `{ сущность: { id: отпечаток } }`. Отпечаток — `hash` строки обмена
+ * (`loadEntityRows`): переносимые поля и родитель. По нему отмена видит
+ * правку там, где у записи нет `updatedAt` (оборудование, цех). Старые
+ * записи без отпечатков читаются как пустые: правка видна по прежним признакам.
+ */
+export type TransferHashes = Record<ExchangeEntity, Record<string, string>>;
+
+export function emptyTransferHashes(): TransferHashes {
+  return { position: {}, staff: {}, building: {}, room: {}, area: {}, equipment: {}, product: {} };
+}
+
+/** Отпечатки из `createdJson`: только строки по известным сущностям; нет или мусор — пусто. */
+export function parseTransferHashes(raw: unknown): TransferHashes {
+  const hashes = emptyTransferHashes();
+  const source = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as { hashes?: unknown }).hashes : null;
+  if (!source || typeof source !== "object" || Array.isArray(source)) return hashes;
+  for (const [entity, byId] of Object.entries(source as Record<string, unknown>)) {
+    if (!isExchangeEntity(entity) || !byId || typeof byId !== "object" || Array.isArray(byId)) continue;
+    for (const [id, hash] of Object.entries(byId as Record<string, unknown>)) {
+      if (id.trim() !== "" && typeof hash === "string" && hash !== "") hashes[entity][id] = hash;
+    }
+  }
+  return hashes;
+}
+
+/** `createdJson` переноса: id по сущностям (как раньше) и их отпечатки. */
+export function transferCreatedJson(created: TransferCreated, hashes: TransferHashes): TransferCreated & { hashes: TransferHashes } {
+  return { ...created, hashes };
+}
+
+/**
+ * Запись правили после переноса — по отпечатку: при переносе он снят, а
+ * сейчас другой или его нет (запись выпала из обмена: сотруднику дали вход,
+ * оборудование ушло в офис). Отпечатка с переноса нет (старая запись) — не
+ * известно, решают прежние признаки.
+ */
+export function editedByHash(stored: TransferHashes, current: TransferHashes, entity: ExchangeEntity, id: string): boolean {
+  if (!Object.hasOwn(stored[entity], id)) return false;
+  return !Object.hasOwn(current[entity], id) || current[entity][id] !== stored[entity][id];
+}
+
 /** До какого момента перенос можно отменить. */
 export function transferUndoDeadline(createdAt: Date): Date {
   return new Date(createdAt.getTime() + TRANSFER_UNDO_MS);

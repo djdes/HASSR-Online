@@ -2,28 +2,42 @@ import type { Prisma } from "@prisma/client";
 
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
+import { loadEntityRows, type ParentGroupLookup } from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
-import { EXCHANGE_KINDS, emptyKindRecord, type ExchangeEntity, type ExchangeKind } from "@/lib/directory-exchange/kinds";
+import {
+  EXCHANGE_ENTITIES,
+  EXCHANGE_KINDS,
+  emptyKindRecord,
+  type ExchangeEntity,
+  type ExchangeKind,
+} from "@/lib/directory-exchange/kinds";
+import { findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
 import { parseExchangeSummary, type ExchangeSummary } from "@/lib/directory-exchange/summary";
 import {
   canUndoTransfer,
   decideUndo,
   editedAfter,
+  editedByHash,
   emptyTransferCreated,
+  emptyTransferHashes,
   keepMirrorPartners,
   mirrorPairs,
   parseTransferCreated,
+  parseTransferHashes,
   parseUndoResult,
   transferCreatedCount,
+  transferCreatedJson,
   transferUndoDeadline,
   TRANSFER_UNDO_MS,
   TRANSFER_UNDONE_MESSAGE,
   type KeptItem,
   type TransferCreated,
+  type TransferHashes,
   type TransferUndoResult,
   type UndoDecision,
   type UndoneItem,
 } from "@/lib/directory-exchange/transfer-undo";
+import { FRYER_OIL_TEMPLATE_CODE } from "@/lib/fryer-oil-document";
 import { isFryerEquipmentType } from "@/lib/fryer-oil-equipment-link";
 import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
 import { normalizePlaceName } from "@/lib/orphan-areas";
@@ -36,19 +50,47 @@ import { isManagementRole } from "@/lib/user-roles";
  *
  * Отменить может владелец аккаунта организации-получателя в течение 7 дней,
  * один раз. Решение по каждой записи — `decideUndo` (transfer-undo.ts) по
- * фактам из базы: правили ли после переноса (`updatedAt`, где он есть; у
- * сотрудника — вход, Telegram, роль руководителя), используется ли (записи
- * журналов и документов, датчики, смены работы, назначения), остались ли
- * вложенные записи. Порядок — потомки раньше родителей: оборудование,
- * сотрудники, продукты, помещения и цеха, должности, объекты.
+ * фактам из базы: правили ли после переноса (отпечаток записи с переноса
+ * другой, `updatedAt` позже переноса; у сотрудника — ещё вход, Telegram, роль
+ * руководителя), используется ли (записи журналов и документов, настройки
+ * документов, чек-листы, киоски, отклонения температуры, датчики, смены
+ * работы, назначения), остались ли вложенные записи. Порядок — потомки
+ * раньше родителей: оборудование, сотрудники, продукты, помещения и цеха,
+ * должности, объекты.
  *
- * Отмена идёт под тем же замком, что и перенос в эту организацию, одной
- * транзакцией; повтор отсекается атомарным `undoneAt: null → now`.
+ * Отмена идёт под замками обмена кабинетов, в которых участвует организация
+ * (снаружи, по id), и под тем же замком, что и перенос в эту организацию
+ * (внутри), одной транзакцией; повтор отсекается атомарным `undoneAt: null → now`.
  */
 
 const TRANSFER_LOCK_PREFIX = "directory-transfer";
+/** Замок обмена кабинета — тот же ключ, что у `runDirectoryExchange` и `withExchangeLock` (run.server.ts). */
+const EXCHANGE_LOCK_PREFIX = "directory-exchange";
+const EXCHANGE_BUSY_CODE = "exchange_busy";
 const NOT_FOUND_MESSAGE = "Перенос не найден";
 const BUSY_MESSAGE = "Перенос или отмена уже выполняются. Подождите минуту и повторите.";
+const EXCHANGE_BUSY_MESSAGE = "Идёт обмен справочниками. Подождите минуту и повторите отмену.";
+/** Сколько ждать замка и сколько может идти работа под ним. */
+const LOCK_WAIT = { attempts: 16, delayMs: 250, timeoutMs: 180_000 } as const;
+
+/**
+ * Родитель строки — он сам: отпечаток не зависит от групп обмена и одинаков
+ * при переносе и при отмене. Оборудование в другом цехе — тоже правка.
+ */
+const OWN_PARENT: ParentGroupLookup = (parentId) => parentId;
+
+/** Отпечатки записей `ids` организации — как их видит обмен. Запись вне строк обмена — без отпечатка. */
+async function currentHashes(organizationId: string, ids: TransferCreated): Promise<TransferHashes> {
+  const hashes = emptyTransferHashes();
+  for (const entity of EXCHANGE_ENTITIES) {
+    if (ids[entity].length === 0) continue;
+    const wanted = new Set(ids[entity]);
+    for (const row of await loadEntityRows(entity, organizationId, OWN_PARENT)) {
+      if (wanted.has(row.id)) hashes[entity][row.id] = row.hash;
+    }
+  }
+  return hashes;
+}
 const RECENT_LIMIT = 20;
 
 /* ───────────────────────── запись переноса ───────────────────────── */
@@ -56,9 +98,16 @@ const RECENT_LIMIT = 20;
 export type TransferRecorder = {
   /** Перенос создал запись; помещение и цех запоминают и зеркало, которое завело их создание. */
   created(entity: ExchangeEntity, id: string): Promise<void>;
+  /**
+   * Снять отпечатки созданного — в конце переноса, ещё под его замком. Сбой
+   * чтения не ломает перенос: отпечатков тогда нет, отмена решает по прежним признакам.
+   */
+  fingerprint(): Promise<void>;
   /** Сохранить перенос (`DirectoryTransfer`); ничего не создано — строки нет. Не бросает. */
   save(input: {
     fromOrganizationId: string;
+    /** Название источника — только внутри аккаунта; другой компании — null. */
+    fromOrganizationName: string | null;
     toOrganizationId: string;
     actorUserId: string | null;
     requestId: string | null;
@@ -73,6 +122,7 @@ export type TransferRecorder = {
  */
 export async function startTransferRecord(organizationId: string): Promise<TransferRecorder> {
   const created = emptyTransferCreated();
+  let hashes = emptyTransferHashes();
   let before: { rooms: Set<string>; areas: Set<string> } | null = null;
   try {
     const [rooms, areas] = await Promise.all([
@@ -113,16 +163,25 @@ export async function startTransferRecord(organizationId: string): Promise<Trans
         console.error("[directory-exchange] transfer record: mirror not read", { organizationId, entity, error });
       }
     },
+    async fingerprint() {
+      try {
+        hashes = await currentHashes(organizationId, created);
+      } catch (error) {
+        hashes = emptyTransferHashes();
+        console.error("[directory-exchange] transfer record: fingerprints not read", { organizationId, error });
+      }
+    },
     async save(input) {
       if (transferCreatedCount(created) === 0) return null;
       try {
         const row = await db.directoryTransfer.create({
           data: {
             fromOrganizationId: input.fromOrganizationId,
+            fromOrganizationName: input.fromOrganizationName,
             toOrganizationId: input.toOrganizationId,
             actorUserId: input.actorUserId,
             requestId: input.requestId,
-            createdJson: created as unknown as Prisma.InputJsonObject,
+            createdJson: transferCreatedJson(created, hashes) as unknown as Prisma.InputJsonObject,
             summaryJson: input.summary as unknown as Prisma.InputJsonObject,
           },
           select: { id: true },
@@ -162,6 +221,14 @@ function createdCounts(summary: ExchangeSummary | null, organizationId: string):
 }
 
 /**
+ * Перенос от другой компании. Источник удалён — перенос между аккаунтами
+ * всегда идёт по подтверждённому запросу (`requestId`), свой — без него.
+ */
+function isForeignTransfer(source: { accountId: string | null } | null, toAccountId: string | null, requestId: string | null): boolean {
+  return source ? source.accountId !== toAccountId : Boolean(requestId);
+}
+
+/**
  * Переносы последних 7 дней в организации аккаунта, владелец которого —
  * `userId`: новые первыми. Перенос от другой компании (по её подтверждённому
  * запросу) показывается названием её мастер-кабинета — организации другого
@@ -187,6 +254,7 @@ export async function listRecentTransfers(
       undoneAt: true,
       undoJson: true,
       toOrganization: { select: { id: true, name: true, accountId: true } },
+      fromOrganizationName: true,
       fromOrganization: { select: { name: true, accountId: true } },
     },
   });
@@ -203,13 +271,16 @@ export async function listRecentTransfers(
     : new Map<string, string>();
 
   return rows.map((row) => {
-    const foreign = row.fromOrganization.accountId !== row.toOrganization.accountId;
+    const source = row.fromOrganization;
+    const foreign = isForeignTransfer(source, row.toOrganization.accountId, row.requestId);
     const deadline = transferUndoDeadline(row.createdAt);
     return {
       id: row.id,
       createdAt: row.createdAt.toISOString(),
       from: {
-        name: foreign ? (row.requestId ? cabinets.get(row.requestId) ?? "" : "") : row.fromOrganization.name,
+        name: foreign
+          ? (row.requestId ? cabinets.get(row.requestId) ?? "" : "")
+          : (source?.name ?? row.fromOrganizationName ?? ""),
         foreign,
       },
       to: { id: row.toOrganization.id, name: row.toOrganization.name },
@@ -227,23 +298,72 @@ export async function listRecentTransfers(
 type Tx = Prisma.TransactionClient;
 
 /**
- * Из этих id — те, что встречаются в записях документов журналов организации
- * (`JournalDocumentEntry.data`): документ хранит оборудование, цех или
- * помещение строкой внутри JSON, связи по ключу у него нет.
+ * Из этих id — те, что встречаются в журналах организации строкой внутри
+ * JSON (связи по ключу там нет): записи документов (`JournalDocumentEntry.data`),
+ * настройки документов (`JournalDocument.config`: строки холодильников,
+ * помещения уборки…) и старые записи журналов (`JournalEntry.data`). Каждая
+ * таблица читается один раз, текст строки сверяется со всеми id сразу.
+ *
+ * Настройки журнала фритюра не в счёт: фритюрница попадает туда сама при
+ * создании, и отмена снимает эту связь (`syncFryerOilDocumentsSafe`); её
+ * настоящее использование — записи документа.
  */
-async function idsInDocumentEntries(tx: Tx, organizationId: string, ids: readonly string[]): Promise<Set<string>> {
+async function idsInJournalTexts(tx: Tx, organizationId: string, ids: readonly string[]): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
+  // OFFSET 0 — граница для планировщика: текст строки собирается один раз, а не на каждый id.
   const rows = await tx.$queryRaw<Array<{ id: string }>>`
-    SELECT candidate.id
-    FROM unnest(${[...ids]}::text[]) AS candidate(id)
-    WHERE EXISTS (
-      SELECT 1
-      FROM "JournalDocumentEntry" entry
-      JOIN "JournalDocument" document ON document.id = entry."documentId"
-      WHERE document."organizationId" = ${organizationId}
-        AND strpos(entry.data::text, candidate.id) > 0
-    )`;
+    SELECT DISTINCT candidate.id
+    FROM (
+      SELECT texts.body
+      FROM (
+        SELECT entry.data::text AS body
+        FROM "JournalDocumentEntry" entry
+        JOIN "JournalDocument" document ON document.id = entry."documentId"
+        WHERE document."organizationId" = ${organizationId}
+        UNION ALL
+        SELECT document.config::text AS body
+        FROM "JournalDocument" document
+        JOIN "JournalTemplate" template ON template.id = document."templateId"
+        WHERE document."organizationId" = ${organizationId}
+          AND document.config IS NOT NULL
+          AND template.code <> ${FRYER_OIL_TEMPLATE_CODE}
+        UNION ALL
+        SELECT entry.data::text AS body
+        FROM "JournalEntry" entry
+        WHERE entry."organizationId" = ${organizationId}
+      ) texts
+      OFFSET 0
+    ) source
+    JOIN unnest(${[...ids]}::text[]) AS candidate(id) ON strpos(source.body, candidate.id) > 0`;
   return new Set(rows.map((row) => row.id));
+}
+
+/**
+ * Созданное переносом, на что ссылаются журналы и настройки организации:
+ * тексты журналов (`idsInJournalTexts`), чек-листы помещений, киоски объектов,
+ * отклонения температуры оборудования. id — cuid, общий набор не путает сущности.
+ */
+async function referencedIds(tx: Tx, organizationId: string, created: TransferCreated): Promise<Set<string>> {
+  const [texts, checklist, kiosks, incidents] = await Promise.all([
+    idsInJournalTexts(tx, organizationId, [...created.equipment, ...created.area, ...created.room]),
+    created.room.length
+      ? tx.journalChecklistItem.findMany({ where: { organizationId, roomId: { in: created.room } }, select: { roomId: true } })
+      : [],
+    created.building.length
+      ? tx.kioskDevice.findMany({ where: { organizationId, buildingId: { in: created.building } }, select: { buildingId: true } })
+      : [],
+    created.equipment.length
+      ? tx.temperatureDeviationIncident.findMany({
+          where: { organizationId, equipmentId: { in: created.equipment } },
+          select: { equipmentId: true },
+        })
+      : [],
+  ]);
+  const referenced = new Set(texts);
+  for (const row of checklist) if (row.roomId) referenced.add(row.roomId);
+  for (const row of kiosks) if (row.buildingId) referenced.add(row.buildingId);
+  for (const row of incidents) if (row.equipmentId) referenced.add(row.equipmentId);
+  return referenced;
 }
 
 /** Сотрудники, назначенные где-то в настройках: уборка и проверка помещений, «кто заполняет», ответственные, видимость. */
@@ -312,11 +432,19 @@ class UndoLedger {
  */
 async function undoCreated(
   tx: Tx,
-  params: { organizationId: string; created: TransferCreated; transferAt: Date; now: Date },
+  params: {
+    organizationId: string;
+    created: TransferCreated;
+    transferAt: Date;
+    now: Date;
+    /** Отпечатки с переноса и сейчас — правка у записей без `updatedAt`. */
+    hashes: { stored: TransferHashes; current: TransferHashes };
+  },
 ): Promise<UndoOutcome> {
-  const { organizationId, created, transferAt, now } = params;
+  const { organizationId, created, transferAt, now, hashes } = params;
   const ledger = new UndoLedger();
-  const inDocuments = await idsInDocumentEntries(tx, organizationId, [...created.equipment, ...created.area, ...created.room]);
+  const referenced = await referencedIds(tx, organizationId, created);
+  const changed = (entity: ExchangeEntity, id: string) => editedByHash(hashes.stored, hashes.current, entity, id);
 
   // 1. Оборудование: записи журналов и документов, датчики, смены работы УФ-ламп.
   const equipment = await tx.equipment.findMany({
@@ -340,15 +468,15 @@ async function undoCreated(
       equipment.map((row) => [
         row.id,
         decideUndo("equipment", {
-          // Своего `updatedAt` у оборудования нет: правка видна по «кто заполняет».
-          edited: row.fillerUserIds.length > 0,
+          // Своего `updatedAt` у оборудования нет: правка видна по отпечатку и «кто заполняет».
+          edited: row.fillerUserIds.length > 0 || changed("equipment", row.id),
           used:
             row._count.journalEntries + row._count.sensorMappings + row._count.runSessions > 0 ||
             Boolean(row.tuyaDeviceId) ||
             Boolean(row.runningSince) ||
             Boolean(row.lampInstalledAt) ||
             row.lampUsedHours > 0 ||
-            inDocuments.has(row.id),
+            referenced.has(row.id),
         }),
       ]),
     ),
@@ -383,8 +511,12 @@ async function undoCreated(
         row.id,
         decideUndo("staff", {
           inactive: !row.isActive || Boolean(row.archivedAt),
-          // Дали вход, привязали Telegram, сделали руководителем.
-          edited: row.passwordHash !== "" || Boolean(row.telegramChatId) || isManagementRole(row.role),
+          // Дали вход, привязали Telegram, сделали руководителем, поправили ФИО, телефон, выходные, должность.
+          edited:
+            row.passwordHash !== "" ||
+            Boolean(row.telegramChatId) ||
+            isManagementRole(row.role) ||
+            changed("staff", row.id),
           used: row._count.journalEntries + row._count.documentEntries > 0 || assigned.has(row.id),
         }),
       ]),
@@ -405,7 +537,10 @@ async function undoCreated(
     new Map(
       products.map((row) => [
         row.id,
-        decideUndo("product", { inactive: !row.isActive, edited: editedAfter(row.updatedAt, transferAt) }),
+        decideUndo("product", {
+          inactive: !row.isActive,
+          edited: editedAfter(row.updatedAt, transferAt) || changed("product", row.id),
+        }),
       ]),
     ),
   );
@@ -429,14 +564,19 @@ async function undoCreated(
       ...rooms.map(
         (row): [string, UndoDecision] => [
           row.id,
-          decideUndo("room", { edited: editedAfter(row.updatedAt, transferAt), used: inDocuments.has(row.id) }),
+          decideUndo("room", {
+            edited: editedAfter(row.updatedAt, transferAt) || changed("room", row.id),
+            used: referenced.has(row.id),
+          }),
         ],
       ),
       ...areas.map(
         (row): [string, UndoDecision] => [
           row.id,
           decideUndo("area", {
-            used: row._count.journalEntries > 0 || inDocuments.has(row.id),
+            // Своего `updatedAt` у цеха нет: правка видна по отпечатку (название, описание).
+            edited: changed("area", row.id),
+            used: row._count.journalEntries > 0 || referenced.has(row.id),
             hasChildren: row._count.equipment > 0,
           }),
         ],
@@ -468,7 +608,7 @@ async function undoCreated(
       positions.map((row) => [
         row.id,
         decideUndo("position", {
-          edited: editedAfter(row.updatedAt, transferAt),
+          edited: editedAfter(row.updatedAt, transferAt) || changed("position", row.id),
           used: row._count.workShifts + row._count.journalAccess > 0,
           hasChildren: row._count.users > 0,
         }),
@@ -524,8 +664,8 @@ async function undoCreated(
         return [
           row.id,
           decideUndo("building", {
-            edited: editedAfter(row.updatedAt, transferAt),
-            used: Object.values(links).some((count) => count > 0) || peopled.has(row.id),
+            edited: editedAfter(row.updatedAt, transferAt) || changed("building", row.id),
+            used: Object.values(links).some((count) => count > 0) || peopled.has(row.id) || referenced.has(row.id),
             hasChildren: roomCount + areaCount > 0,
           }),
         ];
@@ -538,8 +678,38 @@ async function undoCreated(
 }
 
 /**
+ * Кабинеты, обмен которых пишет в организацию: кабинет её аккаунта и
+ * кабинеты, где она участник (в том числе другой компании). По id — замки
+ * берутся всегда в одном порядке.
+ */
+async function exchangeCabinetsOf(organizationId: string, accountId: string): Promise<string[]> {
+  const [own, memberships] = await Promise.all([
+    findExchangeCabinet(accountId),
+    db.directoryExchangeMember.findMany({ where: { organizationId }, select: { masterOrganizationId: true } }),
+  ]);
+  const ids = new Set(memberships.map((row) => row.masterOrganizationId));
+  if (own) ids.add(own.id);
+  return [...ids].sort();
+}
+
+/**
+ * `fn` под замками обмена этих кабинетов (по одному, по порядку): идущий
+ * обмен не заведёт оборудование в цех, который отмена удаляет. Обмен берёт
+ * только свой замок, перенос — только замок переноса; отмена берёт замки
+ * обмена снаружи, замок переноса — внутри, и круга ожидания нет.
+ */
+async function underExchangeLocks<T>(cabinetIds: readonly string[], fn: () => Promise<T>): Promise<T> {
+  const [first, ...rest] = cabinetIds;
+  if (!first) return fn();
+  const locked = await withAdvisoryTryLock(advisoryLockKey(EXCHANGE_LOCK_PREFIX, first), () => underExchangeLocks(rest, fn), LOCK_WAIT);
+  if (!locked.acquired) throw new DirectoryExchangeError(EXCHANGE_BUSY_MESSAGE, 409, EXCHANGE_BUSY_CODE);
+  return locked.value;
+}
+
+/**
  * Отменить перенос (Р12.2). Только владелец аккаунта организации-получателя:
- * чужое и несуществующее — одно и то же 404. Срок вышел или уже отменён — 409.
+ * чужое и несуществующее — одно и то же 404. Срок вышел или уже отменён — 409;
+ * идёт обмен кабинета организации или другой перенос в неё — 409, ничего не сделано.
  * Возвращает, что отменено и что осталось и почему.
  */
 export async function undoTransfer(input: {
@@ -559,10 +729,13 @@ export async function undoTransfer(input: {
       requestId: true,
       toOrganizationId: true,
       toOrganization: { select: { accountId: true, account: { select: { ownerUserId: true } } } },
-      fromOrganization: { select: { id: true, name: true, accountId: true } },
+      fromOrganizationId: true,
+      fromOrganizationName: true,
+      fromOrganization: { select: { name: true, accountId: true } },
     },
   });
-  if (!transfer || !transfer.toOrganization.accountId || transfer.toOrganization.account?.ownerUserId !== input.ownerUserId) {
+  const accountId = transfer?.toOrganization.accountId;
+  if (!transfer || !accountId || transfer.toOrganization.account?.ownerUserId !== input.ownerUserId) {
     throw new DirectoryExchangeError(NOT_FOUND_MESSAGE, 404);
   }
   const allowed = canUndoTransfer({ createdAt: transfer.createdAt, undoneAt: transfer.undoneAt, now });
@@ -570,35 +743,52 @@ export async function undoTransfer(input: {
 
   const organizationId = transfer.toOrganizationId;
   const created = parseTransferCreated(transfer.createdJson);
-  const locked = await withAdvisoryTryLock(
-    advisoryLockKey(TRANSFER_LOCK_PREFIX, organizationId),
-    () =>
-      db.$transaction(
-        async (tx) => {
-          // Отмена одна: вторая, пришедшая одновременно, здесь получает 0 строк.
-          const claimed = await tx.directoryTransfer.updateMany({
-            where: { id: transfer.id, undoneAt: null },
-            data: { undoneAt: now, undoneByUserId: input.ownerUserId },
-          });
-          if (claimed.count === 0) throw new DirectoryExchangeError(TRANSFER_UNDONE_MESSAGE, 409, "transfer_undone");
-          const outcome = await undoCreated(tx, { organizationId, created, transferAt: transfer.createdAt, now });
-          await tx.directoryTransfer.update({
-            where: { id: transfer.id },
-            data: { undoJson: outcome.result as unknown as Prisma.InputJsonObject },
-          });
-          return outcome;
-        },
-        { maxWait: 10_000, timeout: 120_000 },
-      ),
-    { attempts: 16, delayMs: 250, timeoutMs: 180_000 },
-  );
-  if (!locked.acquired) throw new DirectoryExchangeError(BUSY_MESSAGE, 409, "transfer_busy");
-  const { result, fryersRemoved } = locked.value;
+  const stored = parseTransferHashes(transfer.createdJson);
+  // Отпечатки сейчас — только у записей, для которых они сняты при переносе.
+  const hashed = emptyTransferCreated();
+  for (const entity of EXCHANGE_ENTITIES) hashed[entity] = created[entity].filter((id) => Object.hasOwn(stored[entity], id));
+
+  const cabinetIds = await exchangeCabinetsOf(organizationId, accountId);
+  const { result, fryersRemoved } = await underExchangeLocks(cabinetIds, async () => {
+    const locked = await withAdvisoryTryLock(
+      advisoryLockKey(TRANSFER_LOCK_PREFIX, organizationId),
+      async () => {
+        // Под замками: обмен и перенос записи организации сейчас не меняют.
+        const current = await currentHashes(organizationId, hashed);
+        return db.$transaction(
+          async (tx) => {
+            // Отмена одна: вторая, пришедшая одновременно, здесь получает 0 строк.
+            const claimed = await tx.directoryTransfer.updateMany({
+              where: { id: transfer.id, undoneAt: null },
+              data: { undoneAt: now, undoneByUserId: input.ownerUserId },
+            });
+            if (claimed.count === 0) throw new DirectoryExchangeError(TRANSFER_UNDONE_MESSAGE, 409, "transfer_undone");
+            const outcome = await undoCreated(tx, {
+              organizationId,
+              created,
+              transferAt: transfer.createdAt,
+              now,
+              hashes: { stored, current },
+            });
+            await tx.directoryTransfer.update({
+              where: { id: transfer.id },
+              data: { undoJson: outcome.result as unknown as Prisma.InputJsonObject },
+            });
+            return outcome;
+          },
+          { maxWait: 10_000, timeout: 120_000 },
+        );
+      },
+      LOCK_WAIT,
+    );
+    if (!locked.acquired) throw new DirectoryExchangeError(BUSY_MESSAGE, 409, "transfer_busy");
+    return locked.value;
+  });
 
   // Удалённая фритюрница — связь в журнале фритюра снимается (как при удалении оборудования).
   if (fryersRemoved) await syncFryerOilDocumentsSafe(organizationId);
 
-  const sameAccount = transfer.fromOrganization.accountId === transfer.toOrganization.accountId;
+  const sameAccount = !isForeignTransfer(transfer.fromOrganization, accountId, transfer.requestId);
   try {
     await db.auditLog.create({
       data: {
@@ -613,7 +803,10 @@ export async function undoTransfer(input: {
           transferredAt: transfer.createdAt.toISOString(),
           // Организация другого аккаунта получателю не называется.
           ...(sameAccount
-            ? { fromOrganizationId: transfer.fromOrganization.id, fromOrganizationName: transfer.fromOrganization.name }
+            ? {
+                fromOrganizationId: transfer.fromOrganizationId,
+                fromOrganizationName: transfer.fromOrganization?.name ?? transfer.fromOrganizationName,
+              }
             : { crossAccount: true, ...(transfer.requestId ? { requestId: transfer.requestId } : {}) }),
           undone: result.undone.length,
           kept: result.kept.map((item) => ({ entity: item.entity, name: item.name, reason: item.reason })),

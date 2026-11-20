@@ -10106,6 +10106,7 @@
           "sameOrg": "Ikki xil tashkilotni tanlang",
           "notFound": "Tashkilot akkauntingizda topilmadi",
           "notOwner": "O‘tkazmalar faqat akkaunt egasiga ochiq",
+          "toDeleting": "«{name}» o‘chirilmoqda — unga pul o‘tkazib bo‘lmaydi",
           "tooMany": "Juda ko‘p o‘tkazma ketma-ket. Bir daqiqa kuting.",
           "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring — pul ikki marta yechilmaydi."
         }

@@ -5,6 +5,10 @@
  * the rest is undone (products off, staff archived, equipment/areas/rooms/buildings/
  * positions deleted); a second undo is 409, an old transfer is 409, another account 404;
  * a cross-account transfer by an approved request carries requestId and the requester undoes it.
+ * Review fixes: fingerprints of created records (an edited equipment tempMax and area name stay
+ * as «правили после переноса»; old rows without fingerprints fall back), references from
+ * document settings, checklists, kiosks, temperature incidents and old journal entries keep
+ * records, the undo waits for the cabinet's exchange lock, and a deleted source keeps the row.
  *
  *   npx tsx .agent/tasks/multi-org-followups-b-2026-11-20/raw/transfer-undo-check.ts
  */
@@ -12,12 +16,17 @@ import "dotenv/config";
 
 import { db } from "@/lib/db";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
-import { EXCHANGE_KINDS } from "@/lib/directory-exchange/kinds";
+import { EXCHANGE_ENTITIES, EXCHANGE_KINDS } from "@/lib/directory-exchange/kinds";
 import { createExchangeRequest, decideExchangeRequest } from "@/lib/directory-exchange/requests.server";
-import { transferOnce } from "@/lib/directory-exchange/run.server";
+import { transferOnce, withExchangeLock } from "@/lib/directory-exchange/run.server";
 import { ensureExchangeCabinet, exchangeCabinetCode } from "@/lib/directory-exchange/settings.server";
 import { parseExchangeSummary } from "@/lib/directory-exchange/summary";
-import { parseTransferCreated, parseUndoResult, type TransferUndoResult } from "@/lib/directory-exchange/transfer-undo";
+import {
+  parseTransferCreated,
+  parseTransferHashes,
+  parseUndoResult,
+  type TransferUndoResult,
+} from "@/lib/directory-exchange/transfer-undo";
 import { listRecentTransfers, undoTransfer } from "@/lib/directory-exchange/transfer-undo.server";
 
 const TAG = `tuchk${Date.now().toString(36)}`;
@@ -202,6 +211,17 @@ async function main() {
     await nameOf("area"),
   );
   check("T1: created equipment", same(await nameOf("equipment"), sorted(["Холодильник №1", "Плита", "Печь"])), await nameOf("equipment"));
+  const t1Hashes = parseTransferHashes(t1.createdJson);
+  check(
+    "T1: a fingerprint is stored for every created record",
+    EXCHANGE_ENTITIES.every((entity) => created[entity].every((id) => typeof t1Hashes[entity][id] === "string")),
+    t1Hashes,
+  );
+  check(
+    "T1: the source name is stored (same account)",
+    t1.fromOrganizationName === a.name,
+    t1.fromOrganizationName,
+  );
   check(
     "T1: every created id is a record of B (nothing pre-existing recorded)",
     (await nameOf("room")).length === created.room.length && (await nameOf("area")).length === created.area.length,
@@ -264,11 +284,15 @@ async function main() {
   check("an old transfer is not listed", !(await listRecentTransfers({ accountId: one.account.id, userId: one.owner.id })).some((item) => item.id === t0!.id));
   check("the refused old transfer changed nothing", (await db.product.count({ where: { organizationId: b.id, name: "Хлеб", isActive: true } })) === 1);
 
-  /* ── отмена T1 ── */
+  /* ── отмена T1: запись старого вида (без отпечатков) — прежнее поведение ── */
   console.log("--- undo");
+  await db.directoryTransfer.update({ where: { id: t1.id }, data: { createdJson: parseTransferCreated(t1.createdJson) } });
+  // Без отпечатка правка оборудования не видна — как до них: Плита отменяется.
+  await db.equipment.updateMany({ where: { area: { organizationId: b.id }, name: "Плита" }, data: { tempMax: 99 } });
+  check("T1 stored in the old format (no fingerprints)", Object.keys(parseTransferHashes((await db.directoryTransfer.findUniqueOrThrow({ where: { id: t1.id } })).createdJson).equipment).length === 0);
   const result = await undoTransfer({ id: t1.id, ownerUserId: one.owner.id, ownerName: one.owner.name });
   check(
-    "undo: undone — unused products off, unused staff archived, unused equipment/areas/rooms/building deleted",
+    "undo (old row, fallback): undone — unused products off, unused staff archived, unused equipment/areas/rooms/building deleted",
     same(
       undoneLabel(result),
       sorted([
@@ -350,6 +374,7 @@ async function main() {
   check("request approved", decided.status === "approved", decided.status);
   const t2 = await db.directoryTransfer.findFirst({ where: { toOrganizationId: c.id } });
   check("T2: recorded with the request id, from the foreign source", Boolean(t2) && t2!.requestId === asked.request.id && t2!.fromOrganizationId === s.id, t2);
+  check("T2: the foreign source's name is not stored", t2!.fromOrganizationName === null, t2?.fromOrganizationName);
   if (!t2) throw new Error("no T2 row");
   const t2Created = parseTransferCreated(t2.createdJson);
   check(
@@ -412,6 +437,149 @@ async function main() {
     "audit in C: transfer_undone, cross-account, without the source organization's name",
     Boolean(cAudit) && (cAudit!.details as { crossAccount?: boolean }).crossAccount === true && !JSON.stringify(cAudit!.details).includes(s.name),
     cAudit?.details,
+  );
+  // Источник другой компании удалён (SET NULL): перенос — всё ещё «из другой компании», по названию кабинета.
+  await db.directoryTransfer.update({ where: { id: t2.id }, data: { fromOrganizationId: null } });
+  const t2Orphan = (await listRecentTransfers({ accountId: one.account.id, userId: one.owner.id })).find((item) => item.id === t2.id);
+  check(
+    "T2 with the foreign source gone: still listed as another company by the cabinet name",
+    Boolean(t2Orphan) && t2Orphan!.from.foreign && t2Orphan!.from.name === cabinetRow.name,
+    t2Orphan?.from,
+  );
+
+  /* ── T3: отпечатки и ссылки ── */
+  console.log("--- fingerprints and references");
+  const d = await makeOrg("Получатель-3", one.account.id);
+  await join(one.owner.id, d.id);
+  const cabinetOne = await ensureExchangeCabinet(one.owner.id, one.account.id);
+  orgIds.push(cabinetOne.id);
+  // Фритюрница источника; у получателя журнал фритюра — создание сразу заводит в нём связь.
+  await db.equipment.create({ data: { name: "Фритюрница", type: "fryer", areaId: store.id } });
+  const fryerTemplate = await db.journalTemplate.findFirstOrThrow({ where: { code: "fryer_oil" }, select: { id: true } });
+  const coldTemplate = await db.journalTemplate.findFirstOrThrow({ where: { code: "cold_equipment_control" }, select: { id: true } });
+  const period = { dateFrom: new Date(), dateTo: new Date(Date.now() + DAY) };
+  const fryerDoc = await db.journalDocument.create({
+    data: { templateId: fryerTemplate.id, organizationId: d.id, title: `Фритюр ${TAG}`, status: "active", ...period },
+  });
+  documentIds.push(fryerDoc.id);
+  await transferOnce({ fromOrganizationId: a.id, toOrganizationId: d.id, selection: { objects: "all", equipment: "all" }, actor: one.actor });
+  const t3 = await db.directoryTransfer.findFirstOrThrow({ where: { toOrganizationId: d.id } });
+  const t3Created = parseTransferCreated(t3.createdJson);
+  const t3Hashes = parseTransferHashes(t3.createdJson);
+  check(
+    "T3: 2 buildings, 3 rooms, 3 areas, 4 equipment — each with a fingerprint",
+    t3Created.building.length === 2 && t3Created.room.length === 3 && t3Created.area.length === 3 && t3Created.equipment.length === 4 &&
+      EXCHANGE_ENTITIES.every((entity) => t3Created[entity].every((id) => typeof t3Hashes[entity][id] === "string")),
+    { created: t3Created, hashes: t3Hashes },
+  );
+  const inD = (name: string) => db.equipment.findFirstOrThrow({ where: { area: { organizationId: d.id }, name } });
+  const [dFridge, dStove, dOven, dFryer] = await Promise.all([inD("Холодильник №1"), inD("Плита"), inD("Печь"), inD("Фритюрница")]);
+  const fryerConfig = async () => JSON.stringify((await db.journalDocument.findUniqueOrThrow({ where: { id: fryerDoc.id } })).config ?? null);
+  check("T3: the new fryer is linked in the fryer journal settings by itself", (await fryerConfig()).includes(dFryer.id), await fryerConfig());
+
+  // Правки без `updatedAt`: норма холодильника и название цеха.
+  await db.equipment.update({ where: { id: dFridge.id }, data: { tempMax: 8 } });
+  const dBaking = await db.area.findFirstOrThrow({ where: { organizationId: d.id, name: "Выпечка" } });
+  await db.area.update({ where: { id: dBaking.id }, data: { name: "Выпечка и десерты" } });
+  // Ссылки: настройки журнала холодильников (Плита), отклонение температуры (Печь),
+  // чек-лист помещения (Кухня), старая запись журнала (помещение Склад), киоск (Пекарня).
+  const coldDoc = await db.journalDocument.create({
+    data: {
+      templateId: coldTemplate.id,
+      organizationId: d.id,
+      title: `Холодильники ${TAG}`,
+      ...period,
+      config: { equipment: [{ id: "row-1", name: "Плита", sourceEquipmentId: dStove.id }] },
+    },
+  });
+  documentIds.push(coldDoc.id);
+  await db.temperatureDeviationIncident.create({
+    data: { organizationId: d.id, subjectKey: `equipment:${dOven.id}`, subjectName: "Печь", equipmentId: dOven.id, firstValue: 300, lastValue: 300 },
+  });
+  const dKitchen = await db.room.findFirstOrThrow({ where: { building: { organizationId: d.id }, name: "Кухня" } });
+  const dStoreRoom = await db.room.findFirstOrThrow({ where: { building: { organizationId: d.id }, name: "Склад" } });
+  const dBakery = await db.building.findFirstOrThrow({ where: { organizationId: d.id, name: "Пекарня" } });
+  await db.journalChecklistItem.create({ data: { organizationId: d.id, journalCode: "cleaning", roomId: dKitchen.id, label: "Протереть столы" } });
+  await db.kioskDevice.create({ data: { organizationId: d.id, buildingId: dBakery.id, label: "Пекарня", secretHash: `${TAG}-kiosk`, createdById: one.owner.id } });
+  const legacy = await db.journalEntry.create({
+    data: { templateId: template.id, organizationId: d.id, filledById: one.owner.id, data: { roomId: dStoreRoom.id, note: "старая запись" } },
+  });
+  journalEntryIds.push(legacy.id);
+
+  // Идёт обмен кабинета аккаунта — отмена ждёт замка и отказывает, ничего не меняя.
+  const busy = await withExchangeLock(
+    cabinetOne.id,
+    () => undoTransfer({ id: t3.id, ownerUserId: one.owner.id }).then(() => null, (error: unknown) => error),
+    { waitMs: 4_000 },
+  );
+  check(
+    "undo while the account cabinet's exchange holds its lock → 409 exchange_busy",
+    busy instanceof DirectoryExchangeError && busy.status === 409 && busy.code === "exchange_busy",
+    busy instanceof Error ? { message: busy.message, code: (busy as DirectoryExchangeError).code } : busy,
+  );
+  check(
+    "the refused undo changed nothing",
+    (await db.directoryTransfer.findUniqueOrThrow({ where: { id: t3.id } })).undoneAt === null &&
+      (await db.equipment.count({ where: { area: { organizationId: d.id } } })) === 4,
+  );
+
+  const t3Result = await undoTransfer({ id: t3.id, ownerUserId: one.owner.id, ownerName: one.owner.name });
+  check(
+    "T3 undo: edited tempMax and area name kept as «правили после переноса»; references keep records as used",
+    same(
+      keptLabel(t3Result),
+      sorted([
+        "equipment:Холодильник №1:edited",
+        "area:Выпечка и десерты:edited",
+        "equipment:Плита:used",
+        "equipment:Печь:used",
+        "room:Кухня:used",
+        "room:Склад:used",
+        "building:Пекарня:used",
+        "area:Кухня:linked",
+        "area:Склад:not_empty",
+        "building:Кафе на Ленина:not_empty",
+      ]),
+    ),
+    keptLabel(t3Result),
+  );
+  check(
+    "T3 undo: the unused fryer (its automatic journal link does not count) and the unpaired room are undone",
+    same(undoneLabel(t3Result), sorted(["equipment:Фритюрница:deleted", "room:Выпечка:deleted"])),
+    undoneLabel(t3Result),
+  );
+  const dEquipment = sorted((await db.equipment.findMany({ where: { area: { organizationId: d.id } } })).map((row) => `${row.name}:${row.tempMax}`));
+  check("D: equipment left with the edited norm", same(dEquipment, sorted(["Холодильник №1:8", "Плита:null", "Печь:null"])), dEquipment);
+  check("D: the renamed area stays", (await db.area.count({ where: { id: dBaking.id, name: "Выпечка и десерты" } })) === 1);
+  check("D: the fryer link left the fryer journal settings", !(await fryerConfig()).includes(dFryer.id), await fryerConfig());
+
+  /* ── T4: источник удалён — запись получателя и отмена остаются ── */
+  console.log("--- deleted source");
+  const e = await makeOrg("Источник-удалённый", one.account.id);
+  await db.product.create({ data: { name: "Сметана", kind: "raw", unit: "kg", organizationId: e.id } });
+  await transferOnce({ fromOrganizationId: e.id, toOrganizationId: d.id, selection: { products: "all" }, actor: one.actor });
+  const t4 = await db.directoryTransfer.findFirstOrThrow({ where: { toOrganizationId: d.id, fromOrganizationId: e.id } });
+  await db.organization.delete({ where: { id: e.id } });
+  const t4After = await db.directoryTransfer.findUnique({ where: { id: t4.id } });
+  check(
+    "deleting the source keeps the recipient's transfer row (source id null, name kept)",
+    Boolean(t4After) && t4After!.fromOrganizationId === null && t4After!.fromOrganizationName === e.name,
+    t4After,
+  );
+  const t4Listed = (await listRecentTransfers({ accountId: one.account.id, userId: one.owner.id })).find((item) => item.id === t4.id);
+  check(
+    "list: the deleted source is shown by its stored name, same account, undoable",
+    Boolean(t4Listed) && t4Listed!.from.name === e.name && !t4Listed!.from.foreign && t4Listed!.undoable,
+    t4Listed,
+  );
+  const t4Result = await undoTransfer({ id: t4.id, ownerUserId: one.owner.id, ownerName: one.owner.name });
+  check("undo with the source deleted: the product is turned off", same(undoneLabel(t4Result), ["product:Сметана:deactivated"]), t4Result);
+  const t4Audit = await db.auditLog.findFirst({ where: { organizationId: d.id, action: "directory_exchange.transfer_undone", entityId: t4.id } });
+  check(
+    "audit: the deleted source named by the stored name, id null",
+    (t4Audit?.details as { fromOrganizationName?: string; fromOrganizationId?: string | null } | undefined)?.fromOrganizationName === e.name &&
+      (t4Audit?.details as { fromOrganizationId?: string | null }).fromOrganizationId === null,
+    t4Audit?.details,
   );
 }
 

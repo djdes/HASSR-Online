@@ -997,6 +997,8 @@ export async function transferOnce(input: {
           }
         }
       }
+      // Отпечатки созданного — ещё под замком: по ним отмена увидит правку после переноса.
+      await record.fingerprint();
       return record;
     },
     { attempts: 16, delayMs: 250, timeoutMs: RUN_TIMEOUT_MS },
@@ -1010,6 +1012,8 @@ export async function transferOnce(input: {
   };
   await locked.value.save({
     fromOrganizationId: from.id,
+    // Название другой компании получателю не запоминается (Р5).
+    fromOrganizationName: scope === "foreign" ? null : from.name,
     toOrganizationId: to.id,
     actorUserId: actor.userId,
     requestId: input.requestId ?? null,
