@@ -1,0 +1,15 @@
+{
+  "task": "multi-org-followups-c2-2026-11-20",
+  "spec": ".agent/tasks/multi-org-followups-c2-2026-11-20/spec.md",
+  "base": "master 3e7e07731",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "kinds.test.ts, plan.test.ts; raw/versioning-check.log 41/41 (and fails with the version rebase switched off)" },
+    { "id": "AC2", "status": "PASS", "evidence": "raw/new-lists-check.log 54/54 (journals, own-set points excluded)" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/versioning-check.log position journals" },
+    { "id": "AC4", "status": "PASS", "evidence": "raw/versioning-check.log room schedules and climate norms" },
+    { "id": "AC5", "status": "PASS", "evidence": "raw/new-lists-check.log checklists" },
+    { "id": "AC6", "status": "PASS", "evidence": "typecheck clean; eslint 0 errors; i18n:check 99/99; unit tests pass; raw/final-*.log regressions" }
+  ],
+  "deploy": "no schema change; first exchange moves room/position links to hash v2 without updates; plain revert is unsafe (links must be reset to v1 first)"
+}

@@ -8,6 +8,7 @@ import {
   EXCHANGE_ENTITIES,
   EXCHANGE_KINDS,
   emptyKindRecord,
+  rowHashLike,
   type ExchangeEntity,
   type ExchangeKind,
 } from "@/lib/directory-exchange/kinds";
@@ -20,6 +21,7 @@ import {
   editedByHash,
   emptyTransferCreated,
   emptyTransferHashes,
+  fixedTransferKinds,
   keepMirrorPartners,
   mirrorPairs,
   parseTransferCreated,
@@ -28,6 +30,7 @@ import {
   transferCreatedCount,
   transferCreatedJson,
   transferUndoDeadline,
+  undoableCreatedCount,
   TRANSFER_UNDO_MS,
   TRANSFER_UNDONE_MESSAGE,
   type KeptItem,
@@ -55,8 +58,9 @@ import { isManagementRole } from "@/lib/user-roles";
  * руководителя), используется ли (записи журналов и документов, настройки
  * документов, чек-листы, киоски, отклонения температуры, датчики, смены
  * работы, назначения), остались ли вложенные записи. Порядок — потомки
- * раньше родителей: оборудование, сотрудники, продукты, помещения и цеха,
- * должности, объекты.
+ * раньше родителей: оборудование, сотрудники, продукты, шаблоны чек-листов,
+ * помещения и цеха, должности, объекты. Замена настроек журналов (Р8.1) не
+ * отменяется: в итоге она «осталась» с причиной `not_undoable`.
  *
  * Отмена идёт под замками обмена кабинетов, в которых участвует организация
  * (снаружи, по id), и под тем же замком, что и перенос в эту организацию
@@ -68,6 +72,7 @@ const TRANSFER_LOCK_PREFIX = "directory-transfer";
 const EXCHANGE_LOCK_PREFIX = "directory-exchange";
 const EXCHANGE_BUSY_CODE = "exchange_busy";
 const NOT_FOUND_MESSAGE = "Перенос не найден";
+const NOT_UNDOABLE_MESSAGE = "Этот перенос заменил настройки журналов — его отменить нельзя";
 const BUSY_MESSAGE = "Перенос или отмена уже выполняются. Подождите минуту и повторите.";
 const EXCHANGE_BUSY_MESSAGE = "Идёт обмен справочниками. Подождите минуту и повторите отмену.";
 /** Сколько ждать замка и сколько может идти работа под ним. */
@@ -79,14 +84,21 @@ const LOCK_WAIT = { attempts: 16, delayMs: 250, timeoutMs: 180_000 } as const;
  */
 const OWN_PARENT: ParentGroupLookup = (parentId) => parentId;
 
-/** Отпечатки записей `ids` организации — как их видит обмен. Запись вне строк обмена — без отпечатка. */
-async function currentHashes(organizationId: string, ids: TransferCreated): Promise<TransferHashes> {
+/**
+ * Отпечатки записей `ids` организации — как их видит обмен. Запись вне строк
+ * обмена — без отпечатка. `stored` — отпечатки с переноса: отпечаток записи
+ * снимается в той же версии состава полей, что и сохранённый (Р8.0), — новая
+ * версия сама по себе правкой не считается.
+ */
+async function currentHashes(organizationId: string, ids: TransferCreated, stored?: TransferHashes): Promise<TransferHashes> {
   const hashes = emptyTransferHashes();
   for (const entity of EXCHANGE_ENTITIES) {
     if (ids[entity].length === 0) continue;
     const wanted = new Set(ids[entity]);
     for (const row of await loadEntityRows(entity, organizationId, OWN_PARENT)) {
-      if (wanted.has(row.id)) hashes[entity][row.id] = row.hash;
+      if (!wanted.has(row.id)) continue;
+      const before = stored?.[entity][row.id];
+      hashes[entity][row.id] = (before ? rowHashLike(entity, row.fields, row.parentGroupId, before) : null) ?? row.hash;
     }
   }
   return hashes;
@@ -96,7 +108,10 @@ const RECENT_LIMIT = 20;
 /* ───────────────────────── запись переноса ───────────────────────── */
 
 export type TransferRecorder = {
-  /** Перенос создал запись; помещение и цех запоминают и зеркало, которое завело их создание. */
+  /**
+   * Перенос создал запись; помещение и цех запоминают и зеркало, которое завело
+   * их создание. У настроек журналов — заменил их (id организации, без отмены).
+   */
   created(entity: ExchangeEntity, id: string): Promise<void>;
   /**
    * Снять отпечатки созданного — в конце переноса, ещё под его замком. Сбой
@@ -205,9 +220,13 @@ export type RecentTransfer = {
   to: { id: string; name: string };
   /** Сколько записей создано по спискам (из итога переноса). */
   counts: Record<ExchangeKind, number>;
+  /** Списки, где перенос заменил данные без отмены (настройки журналов, Р8.1). */
+  fixedKinds: ExchangeKind[];
+  /** Отменять нечего, кроме того, что не отменяется (`fixedKinds`): кнопки отмены нет. */
+  onlyFixed: boolean;
   /** До какого момента можно отменить. */
   undoUntil: string;
-  /** Можно отменить сейчас: в срок и ещё не отменён. */
+  /** Можно отменить сейчас: в срок, ещё не отменён и есть что отменять. */
   undoable: boolean;
   undoneAt: string | null;
   undo: TransferUndoResult | null;
@@ -251,6 +270,7 @@ export async function listRecentTransfers(
       createdAt: true,
       requestId: true,
       summaryJson: true,
+      createdJson: true,
       undoneAt: true,
       undoJson: true,
       toOrganization: { select: { id: true, name: true, accountId: true } },
@@ -274,6 +294,8 @@ export async function listRecentTransfers(
     const source = row.fromOrganization;
     const foreign = isForeignTransfer(source, row.toOrganization.accountId, row.requestId);
     const deadline = transferUndoDeadline(row.createdAt);
+    const created = parseTransferCreated(row.createdJson);
+    const onlyFixed = undoableCreatedCount(created) === 0;
     return {
       id: row.id,
       createdAt: row.createdAt.toISOString(),
@@ -285,8 +307,10 @@ export async function listRecentTransfers(
       },
       to: { id: row.toOrganization.id, name: row.toOrganization.name },
       counts: createdCounts(parseExchangeSummary(row.summaryJson), row.toOrganization.id),
+      fixedKinds: fixedTransferKinds(created),
+      onlyFixed,
       undoUntil: deadline.toISOString(),
-      undoable: canUndoTransfer({ createdAt: row.createdAt, undoneAt: row.undoneAt, now }).ok,
+      undoable: !onlyFixed && canUndoTransfer({ createdAt: row.createdAt, undoneAt: row.undoneAt, now }).ok,
       undoneAt: row.undoneAt?.toISOString() ?? null,
       undo: parseUndoResult(row.undoJson),
     };
@@ -342,12 +366,17 @@ async function idsInJournalTexts(tx: Tx, organizationId: string, ids: readonly s
  * Созданное переносом, на что ссылаются журналы и настройки организации:
  * тексты журналов (`idsInJournalTexts`), чек-листы помещений, киоски объектов,
  * отклонения температуры оборудования. id — cuid, общий набор не путает сущности.
+ * Пункты уборки, которые перенос сам собрал из графика помещения (Р8.3), —
+ * не использование: в счёт идут только заведённые после переноса.
  */
-async function referencedIds(tx: Tx, organizationId: string, created: TransferCreated): Promise<Set<string>> {
+async function referencedIds(tx: Tx, organizationId: string, created: TransferCreated, transferAt: Date): Promise<Set<string>> {
   const [texts, checklist, kiosks, incidents] = await Promise.all([
     idsInJournalTexts(tx, organizationId, [...created.equipment, ...created.area, ...created.room]),
     created.room.length
-      ? tx.journalChecklistItem.findMany({ where: { organizationId, roomId: { in: created.room } }, select: { roomId: true } })
+      ? tx.journalChecklistItem.findMany({
+          where: { organizationId, roomId: { in: created.room }, createdAt: { gt: transferAt } },
+          select: { roomId: true },
+        })
       : [],
     created.building.length
       ? tx.kioskDevice.findMany({ where: { organizationId, buildingId: { in: created.building } }, select: { buildingId: true } })
@@ -443,7 +472,7 @@ async function undoCreated(
 ): Promise<UndoOutcome> {
   const { organizationId, created, transferAt, now, hashes } = params;
   const ledger = new UndoLedger();
-  const referenced = await referencedIds(tx, organizationId, created);
+  const referenced = await referencedIds(tx, organizationId, created, transferAt);
   const changed = (entity: ExchangeEntity, id: string) => editedByHash(hashes.stored, hashes.current, entity, id);
 
   // 1. Оборудование: записи журналов и документов, датчики, смены работы УФ-ламп.
@@ -548,6 +577,42 @@ async function undoCreated(
     await tx.product.updateMany({ where: { id: { in: productIds }, organizationId }, data: { isActive: false } });
   }
 
+  // 3a. Шаблоны чек-листов (Р8.4): удаляются, если их не правили, по ним не
+  // проводили проверок, их никому не назначили и файлов-примеров к ним не добавили.
+  const templates = await tx.checklistTemplate.findMany({
+    where: { id: { in: created.checklist_template }, organizationId },
+    select: {
+      id: true,
+      title: true,
+      archived: true,
+      updatedAt: true,
+      _count: { select: { inspections: true, assignments: true, attachments: true } },
+    },
+  });
+  const templateIds = ledger.settle(
+    "checklist_template",
+    templates.map((row) => ({ id: row.id, name: row.title })),
+    new Map(
+      templates.map((row) => [
+        row.id,
+        decideUndo("checklist_template", {
+          // В архиве — шаблон уже убран руками.
+          inactive: row.archived,
+          edited: editedAfter(row.updatedAt, transferAt) || changed("checklist_template", row.id),
+          used: row._count.inspections + row._count.assignments + row._count.attachments > 0,
+        }),
+      ]),
+    ),
+  );
+  if (templateIds.length > 0) await tx.checklistTemplate.deleteMany({ where: { id: { in: templateIds }, organizationId } });
+
+  // 3b. Настройки журналов (Р8.1): замену не отменяем — прежних настроек перенос не хранит.
+  ledger.settle(
+    "journal_settings",
+    created.journal_settings.filter((id) => id === organizationId).map((id) => ({ id, name: "" })),
+    new Map(created.journal_settings.map((id) => [id, decideUndo("journal_settings", {})])),
+  );
+
   // 4. Помещения и цеха — после оборудования: цех пуст, только если его оборудование ушло.
   const [rooms, areas] = await Promise.all([
     tx.room.findMany({
@@ -590,6 +655,8 @@ async function undoCreated(
   if (areaIds.length > 0) await tx.area.deleteMany({ where: { id: { in: areaIds }, organizationId } });
 
   // 5. Должности — после сотрудников: без действующих сотрудников, смен и настроек доступа.
+  // Журналы, с которыми должность пришла (Р8.2), — не настройка получателя:
+  // в счёт идут строки доступа, заведённые после переноса.
   const positions = await tx.jobPosition.findMany({
     where: { id: { in: created.position }, organizationId },
     select: {
@@ -597,7 +664,11 @@ async function undoCreated(
       name: true,
       updatedAt: true,
       _count: {
-        select: { users: { where: { isActive: true, archivedAt: null } }, workShifts: true, journalAccess: true },
+        select: {
+          users: { where: { isActive: true, archivedAt: null } },
+          workShifts: true,
+          journalAccess: { where: { createdAt: { gt: transferAt } } },
+        },
       },
     },
   });
@@ -743,6 +814,8 @@ export async function undoTransfer(input: {
 
   const organizationId = transfer.toOrganizationId;
   const created = parseTransferCreated(transfer.createdJson);
+  // Перенос только заменил настройки журналов (Р8.1): отменять нечего.
+  if (undoableCreatedCount(created) === 0) throw new DirectoryExchangeError(NOT_UNDOABLE_MESSAGE, 409, "transfer_not_undoable");
   const stored = parseTransferHashes(transfer.createdJson);
   // Отпечатки сейчас — только у записей, для которых они сняты при переносе.
   const hashed = emptyTransferCreated();
@@ -754,7 +827,7 @@ export async function undoTransfer(input: {
       advisoryLockKey(TRANSFER_LOCK_PREFIX, organizationId),
       async () => {
         // Под замками: обмен и перенос записи организации сейчас не меняют.
-        const current = await currentHashes(organizationId, hashed);
+        const current = await currentHashes(organizationId, hashed, stored);
         return db.$transaction(
           async (tx) => {
             // Отмена одна: вторая, пришедшая одновременно, здесь получает 0 строк.

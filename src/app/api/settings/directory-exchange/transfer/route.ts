@@ -22,14 +22,17 @@ const transferSchema = z.object({
     staff: chosen.optional(),
     objects: chosen.optional(),
     equipment: chosen.optional(),
+    journals: chosen.optional(),
+    checklists: chosen.optional(),
   }),
 });
 
 /**
  * GET /api/settings/directory-exchange/transfer?from=<organizationId> — что
  * можно перенести из организации аккаунта в активную: `{ items: { products,
- * staff, objects, equipment } }`, у записи `{ id, name, detail, exists,
- * entity, parentId }`; `exists` — у активной организации такая уже есть.
+ * staff, objects, equipment, journals, checklists } }`, у записи `{ id, name,
+ * detail, exists, entity, parentId }`; `exists` — у активной организации такая
+ * уже есть (у настроек журналов — такие же).
  */
 export async function GET(request: Request) {
   const owner = await requireExchangeOwner();

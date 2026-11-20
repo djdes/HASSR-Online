@@ -13,17 +13,24 @@ import {
   entityScope,
   exchangedFields,
   hashFields,
+  ENTITY_FIELD_VERSIONS,
+  currentFieldVersion,
   hashScope,
+  hashTag,
+  isCurrentHash,
+  isSingleRecordEntity,
+  JOURNAL_SETTINGS_KEY,
   naturalKey,
   normalizeExchangeKinds,
   normalizeExchangeName,
   pickExchangeFields,
   rowHash,
+  rowHashLike,
 } from "@/lib/directory-exchange/kinds";
 import { emptySummary, parseExchangeSummary, summaryTotals } from "@/lib/directory-exchange/summary";
 
 test("lists and entities: every entity belongs to one list, parents come first", () => {
-  assert.deepEqual([...EXCHANGE_KINDS], ["products", "staff", "objects", "equipment"]);
+  assert.deepEqual([...EXCHANGE_KINDS], ["products", "staff", "objects", "equipment", "journals", "checklists"]);
   assert.deepEqual(EXCHANGE_KINDS.flatMap((kind) => [...KIND_ENTITIES[kind]]).sort(), [...EXCHANGE_ENTITIES].sort());
   for (const entity of EXCHANGE_ENTITIES) {
     assert.ok(KIND_ENTITIES[ENTITY_KIND[entity]].includes(entity), entity);
@@ -62,6 +69,28 @@ test("natural keys by entity", () => {
   assert.equal(naturalKey("equipment", { name: "Холодильник №1", type: "refrigerator" }, "g2"), "g2|refrigerator|холодильник №1");
   // Одинаковые названия в разных объектах и цехах — разные записи.
   assert.notEqual(naturalKey("room", { name: "Кухня" }, "g1"), naturalKey("room", { name: "Кухня" }, "g2"));
+});
+
+test("Р8.1, Р8.4: journal settings — one record with a constant key; a checklist template matches by title", () => {
+  assert.equal(naturalKey("journal_settings", {}), JOURNAL_SETTINGS_KEY);
+  assert.equal(naturalKey("journal_settings", { disabledJournalCodes: '["hygiene"]' }, null, "acc-1"), JOURNAL_SETTINGS_KEY);
+  assert.ok(isSingleRecordEntity("journal_settings"));
+  assert.ok(!isSingleRecordEntity("checklist_template"));
+  assert.equal(naturalKey("checklist_template", { name: "  Проверка   кухни " }), "проверка кухни");
+  assert.equal(naturalKey("checklist_template", { name: " " }), null);
+  assert.deepEqual([...KIND_ENTITIES.journals], ["journal_settings"]);
+  assert.deepEqual([...KIND_ENTITIES.checklists], ["checklist_template"]);
+  // Только коды и флаги — без людей; между аккаунтами состав тот же.
+  assert.deepEqual([...exchangedFields("journal_settings", "foreign")], ["disabledJournalCodes", "autoJournalCodes", "journalAutomation", "automation"]);
+  assert.deepEqual([...exchangedFields("checklist_template", "foreign")], ["name", "definition"]);
+  assert.equal(entityScope("checklist_template", "foreign"), "account");
+  // Новые сущности — версия 1: отпечаток без меток.
+  assert.equal(currentFieldVersion("journal_settings"), 1);
+  assert.match(rowHash("checklist_template", { name: "Кухня", definition: "{}" }), /^[0-9a-f]+$/);
+  assert.notEqual(
+    rowHash("journal_settings", { disabledJournalCodes: '["hygiene"]', automation: "{}" }),
+    rowHash("journal_settings", { disabledJournalCodes: '["health_check"]', automation: "{}" }),
+  );
 });
 
 test("no key — no exchange: empty name or a required parent outside the exchange", () => {
@@ -120,18 +149,22 @@ test("rowHash: a workshop's object is not part of its fingerprint, other parents
   assert.notEqual(rowHash("equipment", { name: "Плита", type: "oven" }, "a1"), rowHash("equipment", { name: "Плита", type: "oven" }, "a2"));
 });
 
-test("rule Р5: between accounts an employee is a name and a position, nothing else", () => {
-  assert.deepEqual(FOREIGN_ENTITY_FIELDS, { staff: ["name"] });
+test("rule Р5: between accounts an employee is a name and a position, a position is its name only", () => {
+  assert.deepEqual(FOREIGN_ENTITY_FIELDS, { position: ["name"], staff: ["name"] });
   assert.deepEqual([...exchangedFields("staff", "foreign")], ["name"]);
   assert.deepEqual([...exchangedFields("staff", "account")], ["name", "phone", "weeklyDaysOff"]);
   assert.deepEqual([...exchangedFields("staff")], ["name", "phone", "weeklyDaysOff"]);
-  // Every other entity has one field set, whoever takes part.
+  // Р8.2: the position's journals stay inside the account, like the phones.
+  assert.deepEqual([...exchangedFields("position", "foreign")], ["name"]);
+  assert.deepEqual([...exchangedFields("position")], ["name", "journals"]);
+  // Every other entity has one field set, whoever takes part (rooms with their schedules too, Р8.3).
   for (const entity of EXCHANGE_ENTITIES) {
-    if (entity === "staff") continue;
+    if (entity === "staff" || entity === "position") continue;
     assert.deepEqual([...exchangedFields(entity, "foreign")], [...ENTITY_FIELDS[entity]], entity);
     assert.equal(entityScope(entity, "foreign"), "account", entity);
   }
   assert.equal(entityScope("staff", "foreign"), "foreign");
+  assert.equal(entityScope("position", "foreign"), "foreign");
   assert.equal(entityScope("staff", "account"), "account");
   assert.equal(entityScope("staff"), "account");
   // The restricted set is a subset of the full one and holds nothing private.
@@ -174,9 +207,14 @@ test("rule Р5: the restricted fingerprint is marked, the fingerprint inside an 
   // Other entities have no restricted variant: the same fingerprint, no mark.
   const product = { name: "Сыр", kind: "raw", unit: "kg" };
   assert.equal(rowHash("product", product, null, "foreign"), rowHash("product", product));
-  assert.equal(rowHash("position", { name: "Повар" }, null, "foreign"), rowHash("position", { name: "Повар" }));
   assert.equal(hashScope("product", rowHash("product", product, null, "foreign")), "account");
   assert.equal(hashScope("product", "f:whatever"), "account");
+  // A position has one since Р8.2 (version 2): name only, marked.
+  assert.match(rowHash("position", { name: "Повар", journals: '["cleaning"]' }, null, "foreign"), /^f:v2:[0-9a-f]{28}$/);
+  assert.equal(
+    rowHash("position", { name: "Повар", journals: '["cleaning"]' }, null, "foreign"),
+    rowHash("position", { name: "Повар" }, null, "foreign"),
+  );
 });
 
 test("naturalKey: with an owner, people of two companies never share a key; other records still match by name", () => {
@@ -187,4 +225,103 @@ test("naturalKey: with an owner, people of two companies never share a key; othe
   for (const entity of ["position", "building", "product"] as const) {
     assert.equal(naturalKey(entity, { name: "Кухня" }, null, "account-1"), naturalKey(entity, { name: "Кухня" }, null, "account-2"), entity);
   }
+});
+
+/* ── Р8.0: field-set versions in the fingerprint ── */
+
+const ROOM_V1 = { name: "Кухня", kind: "kitchen", sortOrder: 1 };
+const ROOM_V2 = {
+  ...ROOM_V1,
+  currentScope: JSON.stringify([{ label: "Полы" }]),
+  generalScope: null,
+  currentDays: 127,
+  generalDays: 0,
+  currentScheduleType: "weekly",
+  generalScheduleType: "weekly",
+  currentMonthDays: null,
+  generalMonthDays: null,
+  detergent: "Хлорамин",
+  requirePhoto: false,
+  climateNorms: null,
+};
+
+test("Р8.0: versions — the current list is the last version, an earlier version is never dropped, fields are only added", () => {
+  for (const entity of EXCHANGE_ENTITIES) {
+    const versions = ENTITY_FIELD_VERSIONS[entity] as readonly { account: readonly string[]; foreign?: readonly string[] }[];
+    assert.equal(currentFieldVersion(entity), versions.length, entity);
+    assert.deepEqual([...ENTITY_FIELDS[entity]], [...versions[versions.length - 1].account], entity);
+    // A later version keeps every field of the earlier ones: the old fingerprint can be computed from what is read now.
+    for (let index = 1; index < versions.length; index += 1) {
+      for (const field of versions[index - 1].account) assert.ok(versions[index].account.includes(field), `${entity} v${index + 1} keeps ${field}`);
+    }
+  }
+  assert.equal(currentFieldVersion("room"), 2);
+  assert.equal(currentFieldVersion("position"), 2);
+  for (const entity of ["product", "staff", "building", "area", "equipment"] as const) assert.equal(currentFieldVersion(entity), 1, entity);
+  // Р4/Р8.3: the people of a room are never among the exchanged fields.
+  for (const forbidden of ["cleanerUserIds", "fillerUserIds", "verifierUserIds"]) assert.ok(!ENTITY_FIELDS.room.includes(forbidden), forbidden);
+});
+
+test("Р8.0: the version is a mark after the scope mark; version 1 and unchanged entities keep the old unmarked fingerprint", () => {
+  const room = rowHash("room", ROOM_V2, "g-cafe");
+  assert.match(room, /^v2:[0-9a-f]{28}$/);
+  assert.deepEqual(hashTag(room), { scope: "account", version: 2 });
+  assert.deepEqual(hashTag(`f:${room}`), { scope: "foreign", version: 2 });
+  assert.deepEqual(hashTag("0123456789abcdef0123456789ab"), { scope: "account", version: 1 });
+  assert.deepEqual(hashTag("f:0123456789abcdef0123456789ab"), { scope: "foreign", version: 1 });
+  assert.deepEqual(hashTag(""), { scope: "account", version: 1 });
+  // Products, staff and the rest: the same value as before versions existed.
+  assert.equal(rowHash("product", { name: "Сыр", unit: "kg" }), hashFields({ name: "Сыр", unit: "kg", "#parent": null }));
+  // A room of version 2 with the same name, kind and order is a different fingerprint from version 1.
+  const v1 = rowHashLike("room", ROOM_V2, "g-cafe", hashFields({ ...ROOM_V1, "#parent": "g-cafe" }));
+  assert.equal(v1, hashFields({ ...ROOM_V1, "#parent": "g-cafe" }));
+  assert.notEqual(v1, room);
+});
+
+test("Р8.0: isCurrentHash — only the current version in the current scope", () => {
+  const roomV1 = hashFields({ ...ROOM_V1, "#parent": "g" });
+  assert.equal(isCurrentHash("room", rowHash("room", ROOM_V2, "g")), true);
+  assert.equal(isCurrentHash("room", roomV1), false);
+  assert.equal(isCurrentHash("room", rowHash("room", ROOM_V2, "g"), "foreign"), true, "rooms have one field set");
+  const positionV1 = hashFields({ name: "Повар", "#parent": null });
+  assert.equal(isCurrentHash("position", positionV1), false);
+  assert.equal(isCurrentHash("position", rowHash("position", { name: "Повар" })), true);
+  assert.equal(isCurrentHash("position", rowHash("position", { name: "Повар" }), "foreign"), false);
+  assert.equal(isCurrentHash("position", rowHash("position", { name: "Повар" }, null, "foreign"), "foreign"), true);
+  // Staff are unchanged: both scopes of version 1 are current in their own scope.
+  assert.equal(isCurrentHash("staff", rowHash("staff", { name: "И" }, "g")), true);
+  assert.equal(isCurrentHash("staff", rowHash("staff", { name: "И" }, "g", "foreign"), "foreign"), true);
+  assert.equal(isCurrentHash("staff", rowHash("staff", { name: "И" }, "g"), "foreign"), false);
+});
+
+test("Р8.0: rowHashLike — the row's fingerprint in the link's version and scope, null when it cannot be computed", () => {
+  // An unedited room: its version-1 fingerprint equals the stored one, whatever its schedule now.
+  const stored = hashFields({ ...ROOM_V1, "#parent": "g" });
+  assert.equal(rowHashLike("room", ROOM_V2, "g", stored), stored);
+  assert.equal(rowHashLike("room", { ...ROOM_V2, detergent: "Другое", climateNorms: "{}" }, "g", stored), stored);
+  // A renamed room: the version-1 fingerprint differs — a real edit.
+  assert.notEqual(rowHashLike("room", { ...ROOM_V2, name: "Кухня 2" }, "g", stored), stored);
+  // A current link: the same as rowHash.
+  assert.equal(rowHashLike("room", ROOM_V2, "g", rowHash("room", ROOM_V2, "g")), rowHash("room", ROOM_V2, "g"));
+
+  // Positions: version 1 (name) from rows read inside the account or between accounts.
+  const cook = { name: "Повар", journals: '["cleaning","hygiene"]' };
+  const positionV1 = hashFields({ name: "Повар", "#parent": null });
+  assert.equal(rowHashLike("position", cook, null, positionV1), positionV1);
+  assert.equal(rowHashLike("position", { name: "Повар" }, null, positionV1, "foreign"), positionV1);
+  // Between accounts the journals are not read: a full version-2 fingerprint cannot be computed.
+  assert.equal(rowHashLike("position", { name: "Повар" }, null, rowHash("position", cook), "foreign"), null);
+  // Back inside the account the restricted one can.
+  const restricted = rowHash("position", cook, null, "foreign");
+  assert.equal(rowHashLike("position", cook, null, restricted), restricted);
+
+  // Staff keep the Р5 behaviour: full from restricted rows — no; restricted from full rows — yes.
+  const person = { name: "Иванов Иван", phone: "+79850000000", weeklyDaysOff: [5, 6] };
+  assert.equal(rowHashLike("staff", { name: person.name }, "g", rowHash("staff", person, "g"), "foreign"), null);
+  assert.equal(rowHashLike("staff", person, "g", rowHash("staff", person, "g", "foreign")), rowHash("staff", person, "g", "foreign"));
+
+  // A version this code does not know (a newer fingerprint after a rollback) — null, never «edited».
+  assert.equal(rowHashLike("room", ROOM_V2, "g", "v3:0123456789abcdef0123456789ab"), null);
+  // A scope mark the version never had — null.
+  assert.equal(rowHashLike("room", ROOM_V2, "g", "f:v2:0123456789abcdef0123456789ab"), null);
 });

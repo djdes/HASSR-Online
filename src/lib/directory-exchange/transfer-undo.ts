@@ -1,4 +1,11 @@
-import { EXCHANGE_ENTITIES, isExchangeEntity, type ExchangeEntity } from "@/lib/directory-exchange/kinds";
+import {
+  EXCHANGE_ENTITIES,
+  EXCHANGE_KINDS,
+  KIND_ENTITIES,
+  isExchangeEntity,
+  type ExchangeEntity,
+  type ExchangeKind,
+} from "@/lib/directory-exchange/kinds";
 import { normalizePlaceName } from "@/lib/orphan-areas";
 
 /**
@@ -9,8 +16,10 @@ import { normalizePlaceName } from "@/lib/orphan-areas";
  *
  * Отменяется только то, что перенос создал и что с тех пор не используется и
  * не правилось: продукты выключаются, сотрудники уходят в архив, оборудование,
- * помещения, цеха, объекты и должности удаляются. Остальное остаётся, и итог
- * называет причину. Работа с базой — `transfer-undo.server.ts`.
+ * помещения, цеха, объекты, должности и шаблоны чек-листов удаляются.
+ * Остальное остаётся, и итог называет причину. Замена настроек журналов
+ * (Р8.1) не отменяется никогда: прежних настроек перенос не хранит. Работа с
+ * базой — `transfer-undo.server.ts`.
  */
 
 /** Сколько дней после переноса его можно отменить. */
@@ -20,11 +29,15 @@ export const TRANSFER_UNDO_MS = TRANSFER_UNDO_DAYS * 86_400_000;
 export const TRANSFER_UNDONE_MESSAGE = "Этот перенос уже отменён";
 export const TRANSFER_EXPIRED_MESSAGE = `Перенос можно отменить только в течение ${TRANSFER_UNDO_DAYS} дней`;
 
-/** Созданные переносом записи по сущностям, включая помещения и цеха-зеркала, которые завело их создание. */
+/**
+ * Созданные переносом записи по сущностям, включая помещения и цеха-зеркала,
+ * которые завело их создание; у настроек журналов — организация, чьи
+ * настройки перенос заменил (`journal_settings`, не отменяется).
+ */
 export type TransferCreated = Record<ExchangeEntity, string[]>;
 
 export function emptyTransferCreated(): TransferCreated {
-  return { position: [], staff: [], building: [], room: [], area: [], equipment: [], product: [] };
+  return Object.fromEntries(EXCHANGE_ENTITIES.map((entity) => [entity, [] as string[]])) as TransferCreated;
 }
 
 /** `createdJson` из базы: только строки-id, без повторов; мусор — пусто. */
@@ -47,6 +60,16 @@ export function transferCreatedCount(created: TransferCreated): number {
   return EXCHANGE_ENTITIES.reduce((sum, entity) => sum + created[entity].length, 0);
 }
 
+/** Сколько из записанного переносом можно отменить (без замены настроек журналов). */
+export function undoableCreatedCount(created: TransferCreated): number {
+  return EXCHANGE_ENTITIES.reduce((sum, entity) => sum + (UNDO_ACTION[entity] ? created[entity].length : 0), 0);
+}
+
+/** Списки, где перенос что-то поменял без отмены (настройки журналов) — в порядке `EXCHANGE_KINDS`. */
+export function fixedTransferKinds(created: TransferCreated): ExchangeKind[] {
+  return EXCHANGE_KINDS.filter((kind) => KIND_ENTITIES[kind].some((entity) => !UNDO_ACTION[entity] && created[entity].length > 0));
+}
+
 /**
  * Отпечатки созданных записей на конец переноса — `createdJson.hashes`:
  * `{ сущность: { id: отпечаток } }`. Отпечаток — `hash` строки обмена
@@ -57,7 +80,7 @@ export function transferCreatedCount(created: TransferCreated): number {
 export type TransferHashes = Record<ExchangeEntity, Record<string, string>>;
 
 export function emptyTransferHashes(): TransferHashes {
-  return { position: {}, staff: {}, building: {}, room: {}, area: {}, equipment: {}, product: {} };
+  return Object.fromEntries(EXCHANGE_ENTITIES.map((entity) => [entity, {} as Record<string, string>])) as TransferHashes;
 }
 
 /** Отпечатки из `createdJson`: только строки по известным сущностям; нет или мусор — пусто. */
@@ -118,7 +141,8 @@ export function editedAfter(updatedAt: Date | null | undefined, transferAt: Date
 /** Что делает отмена с записью своего вида: продукт выключается, сотрудник — в архив, остальное удаляется. */
 export type UndoAction = "deactivated" | "archived" | "deleted";
 
-export const UNDO_ACTION: Record<ExchangeEntity, UndoAction> = {
+/** null — замена не отменяется (настройки журналов: прежних перенос не хранит). */
+export const UNDO_ACTION: Record<ExchangeEntity, UndoAction | null> = {
   product: "deactivated",
   staff: "archived",
   position: "deleted",
@@ -126,6 +150,8 @@ export const UNDO_ACTION: Record<ExchangeEntity, UndoAction> = {
   room: "deleted",
   area: "deleted",
   equipment: "deleted",
+  journal_settings: null,
+  checklist_template: "deleted",
 };
 
 /**
@@ -134,11 +160,12 @@ export const UNDO_ACTION: Record<ExchangeEntity, UndoAction> = {
  *   • `used` — используется: записи журналов, датчик, смены работы, назначения;
  *   • `not_empty` — внутри остались записи (помещения и цеха объекта, оборудование цеха);
  *   • `has_staff` — на должности есть действующие сотрудники;
- *   • `linked` — помещение и его цех-зеркало остаются вместе: второе из пары осталось.
+ *   • `linked` — помещение и его цех-зеркало остаются вместе: второе из пары осталось;
+ *   • `not_undoable` — замену настроек журналов отменить нельзя.
  */
-export type KeepReason = "edited" | "used" | "not_empty" | "has_staff" | "linked";
+export type KeepReason = "edited" | "used" | "not_empty" | "has_staff" | "linked" | "not_undoable";
 
-export const KEEP_REASONS: readonly KeepReason[] = ["edited", "used", "not_empty", "has_staff", "linked"];
+export const KEEP_REASONS: readonly KeepReason[] = ["edited", "used", "not_empty", "has_staff", "linked", "not_undoable"];
 
 /** Что известно о записи сейчас. */
 export type UndoFacts = {
@@ -166,10 +193,12 @@ export type UndoDecision =
  */
 export function decideUndo(entity: ExchangeEntity, facts: UndoFacts): UndoDecision {
   if (facts.missing || facts.inactive) return { kind: "skip" };
+  const action = UNDO_ACTION[entity];
+  if (!action) return { kind: "keep", reason: "not_undoable" };
   if (facts.edited) return { kind: "keep", reason: "edited" };
   if (facts.used) return { kind: "keep", reason: "used" };
   if (facts.hasChildren) return { kind: "keep", reason: entity === "position" ? "has_staff" : "not_empty" };
-  return { kind: "undo", action: UNDO_ACTION[entity] };
+  return { kind: "undo", action };
 }
 
 type Place = { id: string; name: string; buildingId: string | null };

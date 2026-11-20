@@ -12,6 +12,7 @@ import {
   editedByHash,
   emptyTransferCreated,
   emptyTransferHashes,
+  fixedTransferKinds,
   keepMirrorPartners,
   mirrorPairs,
   parseTransferCreated,
@@ -20,6 +21,7 @@ import {
   transferCreatedCount,
   transferCreatedJson,
   transferUndoDeadline,
+  undoableCreatedCount,
   type UndoDecision,
 } from "@/lib/directory-exchange/transfer-undo";
 
@@ -107,8 +109,11 @@ test("decision: products off, staff archived, the rest deleted", () => {
     room: "deleted",
     area: "deleted",
     equipment: "deleted",
+    journal_settings: null,
+    checklist_template: "deleted",
   });
   assert.deepEqual(decideUndo("product", {}), { kind: "undo", action: "deactivated" });
+  assert.deepEqual(decideUndo("checklist_template", {}), { kind: "undo", action: "deleted" });
   assert.deepEqual(decideUndo("staff", {}), { kind: "undo", action: "archived" });
   assert.deepEqual(decideUndo("equipment", { hasChildren: false, used: false, edited: false }), { kind: "undo", action: "deleted" });
 });
@@ -126,6 +131,26 @@ test("decision: edited, used and non-empty records stay, with the first reason",
   assert.deepEqual(decideUndo("building", { hasChildren: true }), { kind: "keep", reason: "not_empty" });
   assert.deepEqual(decideUndo("area", { hasChildren: true }), { kind: "keep", reason: "not_empty" });
   assert.deepEqual(decideUndo("position", { hasChildren: true }), { kind: "keep", reason: "has_staff" });
+});
+
+test("Р8.1: replaced journal settings are never undone; a checklist template follows the usual rules", () => {
+  assert.deepEqual(decideUndo("journal_settings", {}), { kind: "keep", reason: "not_undoable" });
+  assert.deepEqual(decideUndo("journal_settings", { edited: true, used: true }), { kind: "keep", reason: "not_undoable" });
+  assert.deepEqual(decideUndo("checklist_template", { used: true }), { kind: "keep", reason: "used" });
+  assert.deepEqual(decideUndo("checklist_template", { inactive: true }), { kind: "skip" });
+  const created = emptyTransferCreated();
+  created.journal_settings.push("org-1");
+  assert.equal(transferCreatedCount(created), 1);
+  assert.equal(undoableCreatedCount(created), 0);
+  assert.deepEqual(fixedTransferKinds(created), ["journals"]);
+  created.checklist_template.push("tpl-1");
+  assert.equal(undoableCreatedCount(created), 1);
+  assert.deepEqual(fixedTransferKinds(created), ["journals"]);
+  assert.deepEqual(fixedTransferKinds(emptyTransferCreated()), []);
+  // Старые записи переноса без новых сущностей читаются как прежде.
+  assert.deepEqual(parseTransferCreated({ product: ["p1"] }).journal_settings, []);
+  assert.deepEqual(parseTransferHashes({ hashes: { journal_settings: { "org-1": "abc" } } }).journal_settings, { "org-1": "abc" });
+  assert.equal(parseUndoResult({ undone: [], kept: [{ entity: "journal_settings", id: "org-1", name: "", reason: "not_undoable" }] })?.kept.length, 1);
 });
 
 test("mirror pairs: same name on the same object, case and ё insensitive", () => {

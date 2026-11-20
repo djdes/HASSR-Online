@@ -65,17 +65,40 @@ test("recent transfers: tolerant parsing, an undone transfer is never undoable",
         undoneAt: "2026-11-20T09:00:00.000Z",
         undo: RESULT,
       },
+      {
+        id: "t3",
+        createdAt: "2026-11-19T11:00:00.000Z",
+        from: { name: "Кафе на Ленина", foreign: false },
+        to: { id: "o2", name: "Кафе на Мира" },
+        counts: { checklists: 2 },
+        fixedKinds: ["journals", "nope"],
+        onlyFixed: false,
+        undoable: true,
+        undoneAt: null,
+        undo: null,
+      },
+      {
+        id: "t4",
+        from: { name: "Кафе на Ленина", foreign: false },
+        to: { id: "o2", name: "Кафе на Мира" },
+        counts: {},
+        fixedKinds: ["journals"],
+        onlyFixed: true,
+        undoable: false,
+      },
       { createdAt: "2026-11-19T10:00:00.000Z" },
       "garbage",
     ],
   });
-  assert.equal(transfers.length, 2);
+  assert.equal(transfers.length, 4);
   assert.deepEqual(transfers[0], {
     id: "t1",
     createdAt: "2026-11-20T10:00:00.000Z",
     from: { name: "Кафе на Ленина", foreign: false },
     to: { id: "o2", name: "Кафе на Мира" },
-    counts: { products: 3, staff: 2, objects: 0, equipment: 0 },
+    counts: { products: 3, staff: 2, objects: 0, equipment: 0, journals: 0, checklists: 0 },
+    fixedKinds: [],
+    onlyFixed: false,
     undoUntil: "2026-11-27T10:00:00.000Z",
     undoable: true,
     undoneAt: null,
@@ -85,6 +108,13 @@ test("recent transfers: tolerant parsing, an undone transfer is never undoable",
   assert.equal(transfers[1].undoable, false);
   assert.deepEqual(transfers[1].from, { name: "", foreign: true });
   assert.equal(transfers[1].undo?.undone.length, 2);
+  // Р8.1: замена настроек журналов — отдельной пометкой, без отмены.
+  assert.deepEqual(transfers[2].fixedKinds, ["journals"]);
+  assert.equal(transferCreatedTotal(transfers[2]), 2);
+  assert.equal(transfers[2].undoable, true);
+  assert.deepEqual([transfers[3].onlyFixed, transfers[3].undoable, transfers[3].fixedKinds], [true, false, ["journals"]]);
+  const kept = parseTransferUndo({ undone: [], kept: [{ entity: "journal_settings", id: "o2", name: "", reason: "not_undoable" }] });
+  assert.deepEqual(kept?.kept, [{ entity: "journal_settings", id: "o2", name: "", reason: "not_undoable" }]);
   assert.deepEqual(parseRecentTransfers(null), []);
   assert.deepEqual(parseRecentTransfers({ transfers: "x" }), []);
 });

@@ -102,11 +102,16 @@ function TransferRow({
   const undoneAt = moment(transfer.undoneAt);
   const undoUntil = moment(transfer.undoUntil);
   const fromName = transfer.from.name || (transfer.from.foreign ? t("transfers.foreignSource") : "—");
-  const counts = EXCHANGE_KINDS.filter((kind) => transfer.counts[kind] > 0).map((kind) =>
-    t("transfers.count", { kind: t(`kinds.${kind}`), count: String(transfer.counts[kind]) }),
-  );
+  const counts = [
+    ...EXCHANGE_KINDS.filter((kind) => transfer.counts[kind] > 0).map((kind) =>
+      t("transfers.count", { kind: t(`kinds.${kind}`), count: String(transfer.counts[kind]) }),
+    ),
+    // Настройки журналов перенос заменил — это не отменяется.
+    ...transfer.fixedKinds.map((kind) => t("transfers.fixed", { kind: t(`kinds.${kind}`) })),
+  ];
   let status: string | null = null;
   if (undoneAt) status = t("transfers.undoneAt", { date: undoneAt });
+  else if (transfer.onlyFixed) status = null;
   else if (transfer.undoable && undoUntil) status = t("transfers.undoUntil", { date: undoUntil });
   else if (!transfer.undoable) status = t("transfers.expired");
 

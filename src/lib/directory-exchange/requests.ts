@@ -263,6 +263,8 @@ export const EXCHANGE_KIND_LABELS: Record<ExchangeKind, string> = {
   staff: "Сотрудники",
   objects: "Объекты",
   equipment: "Оборудование",
+  journals: "Журналы",
+  checklists: "Чек-листы",
 };
 
 /** «Продукция, Сотрудники» — списки через запятую, в порядке `EXCHANGE_KINDS`. */

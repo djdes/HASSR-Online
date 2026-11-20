@@ -7,6 +7,7 @@ import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
 import {
   createEntityRow,
+  hasOwnJournalPoints,
   loadEntityRows,
   updateEntityRow,
   type CreateOutcome,
@@ -24,10 +25,11 @@ import {
   KIND_ENTITIES,
   emptyKindRecord,
   entityScope,
-  hashScope,
+  isCurrentHash,
+  isSingleRecordEntity,
   naturalKey,
   normalizeExchangeKinds,
-  rowHash,
+  rowHashLike,
   type ExchangeEntity,
   type ExchangeKind,
   type ExchangeScope,
@@ -339,19 +341,20 @@ async function exchangeEntity(params: {
   }
 
   // Состав полей сменился с прошлого обмена (в список вошла организация
-  // другого аккаунта или вышла из него) — это не правка записей: связи
-  // переводятся на нынешний отпечаток, чужие телефоны никуда не едут.
+  // другого аккаунта или вышла из него, Р5; вышла новая версия состава, Р8.0)
+  // — это не правка записей: связи переводятся на нынешний отпечаток, чужие
+  // телефоны никуда не едут, новые поля у соседей не перезаписываются.
   const aligned = rebaseLinks({
     rows,
     links,
-    isCurrent: (hash) => hashScope(entity, hash) === scope,
-    // Прежний отпечаток «между аккаунтами» считается из тех же строк; прежний
-    // полный — нет: телефон и выходные сейчас не читаются.
-    hashLike: (row, linkHash) =>
-      scope === "account" ? rowHash(entity, row.fields, row.parentGroupId, hashScope(entity, linkHash)) : null,
+    isCurrent: (hash) => isCurrentHash(entity, hash, scope),
+    // Прежний отпечаток считается из тех же строк в его версии и составе;
+    // прежний полный «внутри аккаунта» — нет, когда телефон и выходные (или
+    // журналы должности) сейчас не читаются: тогда null.
+    hashLike: (row, linkHash) => rowHashLike(entity, row.fields, row.parentGroupId, linkHash, scope),
   });
 
-  const ops = planEntityExchange({
+  const planned = planEntityExchange({
     participants: organizationIds,
     rows,
     links: aligned.links,
@@ -361,6 +364,9 @@ async function exchangeEntity(params: {
     companies,
     newGroupId: randomUUID,
   });
+  // Настройки журналов (Р8.1) у организации одни и уже связаны со своей
+  // группой: «создать» в другой группе нечего — ни записи, ни пропуска.
+  const ops = isSingleRecordEntity(entity) ? planned.filter((op) => op.type !== "create") : planned;
   // Пропуски создания — в строки разбора (Р9.1); то, что проход создал,
   // связал или сделал надгробием, из разбора уходит.
   const skipped = new Map<string, ExchangeSkipRecord>();
@@ -484,7 +490,7 @@ async function exchangeEntity(params: {
     } else {
       failedGroups.add(op.groupId);
       if (fresh.has(key)) writes.delete(key);
-      if (outcome.status === "conflict") tally.skipped(op.organizationId, kind, "conflict", skipKey);
+      if (outcome.status === "conflict" || outcome.status === "limit") tally.skipped(op.organizationId, kind, outcome.status, skipKey);
     }
   }
 
@@ -543,14 +549,15 @@ async function exchangeEntity(params: {
  * Список «Сотрудники» переходит в состав «между аккаунтами» (Р5): среди его
  * участников появилась организация другого аккаунта — её подтвердили,
  * открыли после оплаты или сняли с паузы, — а связи своих организаций ещё
- * хранят полный отпечаток (с телефоном и выходными).
+ * хранят полный отпечаток (сотрудника — с телефоном и выходными, должности —
+ * с журналами).
  *
  * Полный отпечаток в суженном составе пересчитать нельзя (телефон не
  * читается), поэтому при переходе записи считаются неизменёнными
  * (`rebaseLinks`). Чтобы правка, сделанная прямо перед переходом, не
  * потерялась, свои организации сначала обмениваются между собой как обычно:
- * должности и сотрудники, с телефонами — и только внутри аккаунта кабинета.
- * После перехода связи суженные, и этот шаг больше не срабатывает.
+ * должности и сотрудники, с телефонами и журналами — и только внутри аккаунта
+ * кабинета. После перехода связи суженные, и этот шаг больше не срабатывает.
  */
 async function settleStaffBeforeForeign(params: {
   masterOrganizationId: string;
@@ -567,7 +574,7 @@ async function settleStaffBeforeForeign(params: {
   const pending = await db.directoryExchangeLink.findFirst({
     where: {
       masterOrganizationId: params.masterOrganizationId,
-      entity: "staff",
+      entity: { in: [...KIND_ENTITIES.staff] },
       organizationId: { in: own.map((participant) => participant.organizationId) },
       entityId: { not: null },
       NOT: { hash: { startsWith: FOREIGN_HASH_PREFIX } },
@@ -680,6 +687,12 @@ async function exchangeUnderLock(
     if (await isOrganizationLocked(organization.id, now)) {
       notes.add(`Организация «${organization.name}» закрыта до оплаты точки и в обмене не участвовала.`);
       continue;
+    }
+    // «Журналы» не обмениваются у организации с точками со своим набором журналов (entities.server.ts).
+    if (kinds.includes("journals") && (await hasOwnJournalPoints(organization.id))) {
+      kinds.splice(kinds.indexOf("journals"), 1);
+      notes.add(`У «${organization.name}» есть точки со своим набором журналов — список «Журналы» для неё не обменивается.`);
+      if (kinds.length === 0) continue;
     }
     participants.push({ organizationId: organization.id, name: organization.name, kinds, foreign: member.foreign, accountKey });
   }
@@ -869,15 +882,7 @@ type TransferState = {
 };
 
 function transferMaps(): TransferMaps {
-  return {
-    position: new Map(),
-    staff: new Map(),
-    building: new Map(),
-    room: new Map(),
-    area: new Map(),
-    equipment: new Map(),
-    product: new Map(),
-  };
+  return Object.fromEntries(EXCHANGE_ENTITIES.map((entity) => [entity, new Map<string, string>()])) as TransferMaps;
 }
 
 /**
@@ -950,7 +955,9 @@ async function matchTransferEntity(
   for (const row of fromRows) {
     const match = row.key === null ? undefined : toByKey.get(row.key);
     if (!match) continue;
-    exists.add(row.id);
+    // Настройки журналов у получателя есть всегда: «уже есть» — только
+    // когда они такие же, как у источника; иначе перенос их заменит.
+    if (!isSingleRecordEntity(entity) || match.hash === row.hash) exists.add(row.id);
     state.toEntityOf[entity].set(row.id, match.id);
     if (!state.toGroupOf[entity].has(match.id)) state.toGroupOf[entity].set(match.id, row.id);
   }
@@ -1118,9 +1125,11 @@ export async function transferPreview(input: {
  * Разовый перенос выбранных записей из одной организации аккаунта в другую.
  * Связь не сохраняется; запись, которая у получателя уже есть (по
  * естественному ключу), пропускается и в итог не попадает; родители
- * подтягиваются сами. В итоге `updated` всегда 0. Что создано (с зеркалами
- * помещений и цехов), запоминается в `DirectoryTransfer`: владелец аккаунта
- * получателя может отменить перенос в течение 7 дней (transfer-undo.server.ts).
+ * подтягиваются сами. В итоге `updated` — только настройки журналов (Р8.1):
+ * они у получателя есть всегда, и перенос заменяет их образцом. Что создано
+ * (с зеркалами помещений и цехов) и что заменено, запоминается в
+ * `DirectoryTransfer`: владелец аккаунта получателя может отменить перенос в
+ * течение 7 дней (transfer-undo.server.ts) — кроме замены настроек журналов.
  *
  * `crossAccount` — разрешить пару из разных аккаунтов: его передаёт только
  * подтверждение запроса владельцем кабинета. Тогда `actor` — владелец
@@ -1194,6 +1203,27 @@ export async function transferOnce(input: {
           // То, что у получателя уже есть, пропускается молча: окно переноса
           // показало такие записи заранее, в итог идут только отказы.
           if (exists.has(row.id) || createdKeys.has(row.key)) continue;
+          if (isSingleRecordEntity(entity)) {
+            // Настройки журналов (Р8.1): перенос заменяет настройки получателя
+            // образцом — «обновлено»; отменить такую замену нельзя.
+            const target = state.toEntityOf[entity].get(row.id);
+            let replaced: UpdateOutcome = { status: "missing" };
+            try {
+              if (target) replaced = await updateEntityRow(entity, toOrganizationId, target, row, undefined, { scope });
+            } catch (error) {
+              console.error("[directory-exchange] transfer failed", { entity, toOrganizationId, error });
+              notes.add("Часть записей не удалось перенести из-за ошибки — повторите перенос.");
+              replaced = { status: "conflict" };
+            }
+            if (replaced.status === "updated" && target) {
+              createdKeys.add(row.key);
+              tally.updated(toOrganizationId, kind);
+              await record.created(entity, target);
+            } else if (replaced.status === "conflict" || replaced.status === "limit") {
+              tally.skipped(toOrganizationId, kind, replaced.status, `${entity}|${row.id}`);
+            }
+            continue;
+          }
           let parentId: string | null = null;
           if (parent?.required) {
             const known = row.parentId ? state.toEntityOf[parent.entity].get(row.parentId) : undefined;

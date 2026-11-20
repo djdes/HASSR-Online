@@ -26968,13 +26968,17 @@
         "products": "Goods and dishes",
         "staff": "Staff",
         "objects": "Locations",
-        "equipment": "Equipment"
+        "equipment": "Equipment",
+        "journals": "Journals",
+        "checklists": "Checklists"
       },
       "kindHints": {
         "products": "Product directory: name, supplier, storage conditions and shelf life",
-        "staff": "Staff without a login: full name, position and phone. Managers are not transferred",
-        "objects": "Locations with addresses and their rooms. The office is not transferred",
-        "equipment": "Equipment together with its workshops. Sensor links are not copied"
+        "staff": "Staff without a login: full name, position and phone; positions come with their journal access. Managers are not transferred",
+        "objects": "Locations with addresses and their rooms, with cleaning schedules and climate norms. The office is not transferred",
+        "equipment": "Equipment together with its workshops. Sensor links are not copied",
+        "journals": "Which journals are on and their automation: auto-creation and auto-fill. Location settings and responsible people are not transferred",
+        "checklists": "Checklist templates: title and questions. Assignments and sample files are not transferred"
       },
       "offer": {
         "available": "You already have “{name}” — link the directories or transfer data from it",
@@ -27028,7 +27032,9 @@
         "transferFailed": "Could not transfer the data",
         "left": "“{name}” no longer takes part in the directory exchange",
         "linkCommonNote": "The exchange is shared by all participants: an organisation that already has a list switched on receives it too, even without a tick here. To remove an organisation from the exchange, open this window in it and press “Turn off the exchange”.",
-        "menuSeparate": "The exchange does not connect the master cabinet’s menu and raw materials — that is done separately, in the “Master cabinet” section."
+        "menuSeparate": "The exchange does not connect the master cabinet’s menu and raw materials — that is done separately, in the “Master cabinet” section.",
+        "journalsSame": "Journal settings are already the same as in “{name}”",
+        "journalsReplace": "The journal settings of “{source}” will replace the settings of “{name}”. This transfer cannot be undone."
       },
       "result": {
         "linkTitle": "Directories linked",
@@ -27045,7 +27051,7 @@
       },
       "card": {
         "title": "Directory exchange",
-        "description": "Goods and dishes, staff, locations and equipment are shared between the organisations of the account: a change in one appears in the others.",
+        "description": "Goods and dishes, staff, locations, equipment, journals and checklists are shared between the organisations of the account: a change in one appears in the others.",
         "loading": "Loading the exchange status…",
         "noSiblings": "The exchange appears once the account has a second organisation: its directories can be linked with this one or transferred once.",
         "notConfigured": "The exchange is not set up. Link the directories with the other organisations of the account or transfer data once.",
@@ -27134,9 +27140,11 @@
         },
         "kindHints": {
           "products": "Product directory: name, supplier, storage conditions and shelf life",
-          "staff": "Staff without a login: full name and position only. Phone numbers and managers are not passed",
-          "objects": "Locations with addresses and their rooms. The office is not passed",
-          "equipment": "Equipment together with its workshops. Sensor links are not passed"
+          "staff": "Staff without a login: full name and position only. Phone numbers, position journals and managers are not passed",
+          "objects": "Locations with addresses and their rooms, with cleaning schedules and climate norms. The office is not passed",
+          "equipment": "Equipment together with its workshops. Sensor links are not passed",
+          "journals": "Which journals are on and their automation: auto-creation and auto-fill. Location settings and responsible people are not passed",
+          "checklists": "Checklist templates: title and questions. Assignments and sample files are not passed"
         },
         "page": {
           "metaTitle": "Directory exchange request",
@@ -27235,15 +27243,19 @@
           "room": "Room",
           "area": "Workshop",
           "equipment": "Equipment",
-          "product": "Product"
+          "product": "Product",
+          "journal_settings": "Journal settings",
+          "checklist_template": "Checklist"
         },
         "reasons": {
           "edited": "changed after the transfer",
           "used": "in use: journal records, sensors or assignments",
           "not_empty": "other records remain inside",
           "has_staff": "the position has staff",
-          "linked": "the linked room or workshop stays"
-        }
+          "linked": "the linked room or workshop stays",
+          "not_undoable": "replaced settings cannot be restored"
+        },
+        "fixed": "{kind}: cannot be undone"
       },
       "skips": {
         "count": "Skipped: {count}",
