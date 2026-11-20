@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Prisma } from "@prisma/client";
 
-import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
+import { advisoryLockKey, withAdvisoryTryLock, type AdvisoryLockResult } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
 import {
   createEntityRow,
@@ -16,6 +16,8 @@ import {
   type UpdateOutcome,
 } from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
+import { changeSnapshot } from "@/lib/directory-exchange/history";
+import { recordExchangeChanges, type ExchangeChangeRecord } from "@/lib/directory-exchange/history.server";
 import {
   ENTITY_KIND,
   ENTITY_PARENT,
@@ -46,6 +48,8 @@ import {
   type ExchangeCompanies,
   type ExchangeLinkRow,
 } from "@/lib/directory-exchange/plan";
+import type { ExchangeTrigger } from "@/lib/directory-exchange/runs";
+import { finishExchangeRun, pruneExchangeLogs, startExchangeRun } from "@/lib/directory-exchange/runs.server";
 import type { ExchangeSkipRecord } from "@/lib/directory-exchange/skips";
 import { recordExchangeSkips } from "@/lib/directory-exchange/skips-record.server";
 import {
@@ -87,6 +91,11 @@ import { isOrganizationLocked } from "@/lib/org-trial.server";
  *     новые записи идут в обе стороны, правки — только от владельца к ней;
  *   • люди двух компаний по ФИО не сопоставляются (`owner` в ключе
  *     сотрудника): однофамильцы остаются каждый у себя.
+ *
+ * Серия D: каждая попытка обмена — строка журнала `DirectoryExchangeRun`
+ * (повод, итог, длительность, счётчики, текст ошибки; runs.server.ts), а
+ * каждое созданное и изменённое у организации — строка истории
+ * `DirectoryExchangeChange` с полями до и после (history.server.ts).
  */
 
 export type ExchangeActor = { userId: string; userName: string | null };
@@ -272,10 +281,12 @@ async function writeAudit(params: {
 
 /**
  * Обмен одной сущностью между участниками. Возвращает число созданных и
- * обновлённых записей.
+ * обновлённых записей. Созданное и изменённое у каждой организации
+ * записывается в историю обмена (`runId` — строка журнала этого обмена).
  */
 async function exchangeEntity(params: {
   masterOrganizationId: string;
+  runId: string | null;
   entity: ExchangeEntity;
   participants: readonly Participant[];
   tally: Tally;
@@ -285,7 +296,7 @@ async function exchangeEntity(params: {
   /** Компании участников и основателей групп (Р6.3). */
   companies: ExchangeCompanies;
 }): Promise<number> {
-  const { masterOrganizationId, entity, participants, tally, blocked, notes, companies } = params;
+  const { masterOrganizationId, runId, entity, participants, tally, blocked, notes, companies } = params;
   const kind = ENTITY_KIND[entity];
   const parent = ENTITY_PARENT[entity];
   const organizationIds = participants.map((participant) => participant.organizationId);
@@ -404,6 +415,16 @@ async function exchangeEntity(params: {
     ids.add(entityId);
   };
   let changes = 0;
+  /** История (серия D, Р5): что применено у организаций; поля «после» — из перечитанных строк. */
+  const applied: Array<{
+    op: "create" | "update";
+    organizationId: string;
+    entityId: string;
+    groupId: string;
+    from: string;
+    source: EntityRow;
+    before: EntityRow | null;
+  }> = [];
 
   for (const op of ops) {
     const key = linkKey(op.groupId, op.organizationId);
@@ -461,6 +482,15 @@ async function exchangeEntity(params: {
         writes.set(key, { groupId: op.groupId, organizationId: op.organizationId, entityId: outcome.id, hash: op.hash });
         touch(op.organizationId, outcome.id);
         tally.created(op.organizationId, kind);
+        applied.push({
+          op: "create",
+          organizationId: op.organizationId,
+          entityId: outcome.id,
+          groupId: op.groupId,
+          from: op.fromOrganizationId,
+          source,
+          before: null,
+        });
         changes += 1;
       } else {
         blocked.set(`${skipKey}|${op.organizationId}`, outcome.status);
@@ -486,6 +516,15 @@ async function exchangeEntity(params: {
       writes.set(key, { groupId: op.groupId, organizationId: op.organizationId, entityId: op.entityId, hash: op.hash });
       touch(op.organizationId, op.entityId);
       tally.updated(op.organizationId, kind);
+      applied.push({
+        op: "update",
+        organizationId: op.organizationId,
+        entityId: op.entityId,
+        groupId: op.groupId,
+        from: op.fromOrganizationId,
+        source,
+        before: target ?? null,
+      });
       changes += 1;
     } else {
       failedGroups.add(op.groupId);
@@ -508,8 +547,10 @@ async function exchangeEntity(params: {
   // Связь хранит отпечаток записи такой, какой она сохранилась на самом деле
   // (телефон мог привестись к формату, цех — получить другой объект): иначе
   // получатель выглядел бы «изменённым» и гонял правку обратно.
+  const saved = new Map<string, Map<string, EntityRow>>();
   for (const [organizationId, ids] of touched) {
     const actual = new Map((await loadRows(organizationId)).map((row) => [row.id, row]));
+    saved.set(organizationId, actual);
     for (const write of writes.values()) {
       if (write.organizationId !== organizationId || !write.entityId || !ids.has(write.entityId)) continue;
       const row = actual.get(write.entityId);
@@ -542,8 +583,29 @@ async function exchangeEntity(params: {
     });
   }
   await syncSkips();
+  // История — одной пачкой; сбой записи обмен не останавливает.
+  await recordExchangeChanges(
+    applied.map((change): ExchangeChangeRecord => {
+      const row = saved.get(change.organizationId)?.get(change.entityId) ?? null;
+      return {
+        runId,
+        masterOrganizationId,
+        organizationId: change.organizationId,
+        entity,
+        entityId: change.entityId,
+        groupId: change.groupId,
+        op: change.op,
+        sourceOrganizationId: change.from,
+        name: row?.name ?? change.source.name,
+        before: change.before ? changeSnapshot(entity, change.before, scope) : null,
+        // Запись не перечиталась (выпала из обмена сразу после записи) — поля образца без отпечатка.
+        after: row ? changeSnapshot(entity, row, scope) : { scope, parentId: null, fields: change.source.fields, hash: null },
+      };
+    }),
+  );
   return changes;
 }
+
 
 /**
  * Список «Сотрудники» переходит в состав «между аккаунтами» (Р5): среди его
@@ -561,6 +623,7 @@ async function exchangeEntity(params: {
  */
 async function settleStaffBeforeForeign(params: {
   masterOrganizationId: string;
+  runId: string | null;
   participants: readonly Participant[];
   tally: Tally;
   blocked: Map<string, SkipReason>;
@@ -652,7 +715,9 @@ async function exchangeUnderLock(
   masterOrganizationId: string,
   actor: ExchangeActor | null,
   now: Date,
+  context: { runId: string | null; trigger: ExchangeTrigger },
 ): Promise<ExchangeSummary> {
+  const { runId } = context;
   const cabinet = await db.organization.findFirst({
     where: { id: masterOrganizationId, kind: MASTER_ORG_KIND },
     select: { id: true, accountId: true },
@@ -703,13 +768,13 @@ async function exchangeUnderLock(
     const ownerCompany = exchangeAccountKey(cabinet);
     await settleGroupOrigins(masterOrganizationId, ownerCompany);
     const companies = await cabinetCompanies(masterOrganizationId, ownerCompany, participants);
-    await settleStaffBeforeForeign({ masterOrganizationId, participants, tally, blocked, notes, companies });
+    await settleStaffBeforeForeign({ masterOrganizationId, runId, participants, tally, blocked, notes, companies });
     for (let pass = 0; pass < MAX_PASSES; pass += 1) {
       let changes = 0;
       for (const entity of EXCHANGE_ENTITIES) {
         const sharing = participants.filter((participant) => participant.kinds.includes(ENTITY_KIND[entity]));
         if (sharing.length < 2) continue;
-        changes += await exchangeEntity({ masterOrganizationId, entity, participants: sharing, tally, blocked, notes, companies });
+        changes += await exchangeEntity({ masterOrganizationId, runId, entity, participants: sharing, tally, blocked, notes, companies });
       }
       if (changes === 0) break;
     }
@@ -757,7 +822,7 @@ async function exchangeUnderLock(
       action: "directory_exchange.synced",
       details: {
         ...(isForeign ? { crossAccount: true } : { masterOrganizationId }),
-        trigger: actor ? "manual" : "schedule",
+        trigger: context.trigger,
         kinds: organization.kinds as unknown as Prisma.InputJsonObject,
       },
     });
@@ -787,25 +852,42 @@ export async function withExchangeLock<T>(
   return locked.value;
 }
 
+export type { ExchangeTrigger } from "@/lib/directory-exchange/runs";
+
 /**
  * Обмен справочниками кабинета: участники — организации аккаунта кабинета и
  * подтверждённые организации других аккаунтов (`foreign`) с отмеченными
  * списками, кроме закрытых после своих 14 дней. Одновременно
  * идёт один обмен на кабинет; занято — `DirectoryExchangeError` 409.
  * `actor` — кто запустил вручную; без него обмен считается плановым.
+ * `trigger` — повод для журнала обменов (серия D, Р2): по умолчанию
+ * `manual` с `actor` и `schedule` без него. Каждая попытка — строка журнала:
+ * готово, занято или ошибка (сбой записи журнала обмен не ломает).
  */
 export async function runDirectoryExchange(
   masterOrganizationId: string,
-  options: { actor?: ExchangeActor; now?: Date } = {},
+  options: { actor?: ExchangeActor; now?: Date; trigger?: ExchangeTrigger } = {},
 ): Promise<ExchangeSummary> {
   const now = options.now ?? new Date();
-  const locked = await withAdvisoryTryLock(
-    advisoryLockKey(LOCK_PREFIX, masterOrganizationId),
-    () => exchangeUnderLock(masterOrganizationId, options.actor ?? null, now),
-    // Человек ждёт несколько секунд, плановый обмен занятый кабинет пропускает.
-    { attempts: options.actor ? 16 : 1, delayMs: 250, timeoutMs: RUN_TIMEOUT_MS },
-  );
-  if (!locked.acquired) throw new DirectoryExchangeError(BUSY_MESSAGE, 409, EXCHANGE_BUSY_CODE);
+  const trigger = options.trigger ?? (options.actor ? "manual" : "schedule");
+  const run = await startExchangeRun(masterOrganizationId, trigger);
+  let locked: AdvisoryLockResult<ExchangeSummary>;
+  try {
+    locked = await withAdvisoryTryLock(
+      advisoryLockKey(LOCK_PREFIX, masterOrganizationId),
+      () => exchangeUnderLock(masterOrganizationId, options.actor ?? null, now, { runId: run?.id ?? null, trigger }),
+      // Человек ждёт несколько секунд, плановый обмен занятый кабинет пропускает.
+      { attempts: options.actor ? 16 : 1, delayMs: 250, timeoutMs: RUN_TIMEOUT_MS },
+    );
+  } catch (error) {
+    await finishExchangeRun(run, { status: "error", error });
+    throw error;
+  }
+  if (!locked.acquired) {
+    await finishExchangeRun(run, { status: "busy" });
+    throw new DirectoryExchangeError(BUSY_MESSAGE, 409, EXCHANGE_BUSY_CODE);
+  }
+  await finishExchangeRun(run, { status: "ok", summary: locked.value });
   return locked.value;
 }
 
@@ -826,9 +908,10 @@ export type ExchangeRunOutcome =
  */
 export async function runDirectoryExchangeWithin(
   masterOrganizationId: string,
-  options: { actor?: ExchangeActor; now?: Date; waitMs?: number } = {},
+  options: { actor?: ExchangeActor; now?: Date; waitMs?: number; trigger?: ExchangeTrigger } = {},
 ): Promise<ExchangeRunOutcome> {
-  const run = runDirectoryExchange(masterOrganizationId, { actor: options.actor, now: options.now });
+  // Строку журнала ведёт сам обмен: итог в фоне допишется, когда он закончится.
+  const run = runDirectoryExchange(masterOrganizationId, { actor: options.actor, now: options.now, trigger: options.trigger });
   let timer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<"waiting">((resolve) => {
     timer = setTimeout(() => resolve("waiting"), Math.max(0, options.waitMs ?? EXCHANGE_WAIT_MS));
@@ -846,15 +929,20 @@ export async function runDirectoryExchangeWithin(
   return { running: true, done };
 }
 
-/** Плановый обмен: каждый кабинет с двумя и более участниками; сбой одного не мешает остальным. */
+/**
+ * Плановый обмен: каждый кабинет с двумя и более участниками; сбой одного не
+ * мешает остальным. Заодно чистит журнал обменов (старше 90 дней) и историю
+ * изменений (старше 30 дней).
+ */
 export async function runAllDirectoryExchanges(options: { now?: Date } = {}): Promise<ExchangeBatchResult> {
   const result: ExchangeBatchResult = { cabinets: 0, busy: 0, created: 0, updated: 0, skipped: 0, errors: [] };
+  await pruneExchangeLogs(options.now ?? new Date());
   const groups = await db.directoryExchangeMember.groupBy({ by: ["masterOrganizationId"], _count: { _all: true } });
   for (const group of groups) {
     if (group._count._all < 2) continue;
     result.cabinets += 1;
     try {
-      const totals = summaryTotals(await runDirectoryExchange(group.masterOrganizationId, { now: options.now }));
+      const totals = summaryTotals(await runDirectoryExchange(group.masterOrganizationId, { now: options.now, trigger: "schedule" }));
       result.created += totals.created;
       result.updated += totals.updated;
       result.skipped += totals.skippedLimit + totals.skippedConflict;
@@ -1127,9 +1215,10 @@ export async function transferPreview(input: {
  * естественному ключу), пропускается и в итог не попадает; родители
  * подтягиваются сами. В итоге `updated` — только настройки журналов (Р8.1):
  * они у получателя есть всегда, и перенос заменяет их образцом. Что создано
- * (с зеркалами помещений и цехов) и что заменено, запоминается в
- * `DirectoryTransfer`: владелец аккаунта получателя может отменить перенос в
- * течение 7 дней (transfer-undo.server.ts) — кроме замены настроек журналов.
+ * (с зеркалами помещений и цехов) и что заменено (со снимком прежних
+ * настроек журналов, серия D, Р10), запоминается в `DirectoryTransfer`:
+ * владелец аккаунта получателя может отменить перенос в течение 7 дней
+ * (transfer-undo.server.ts).
  *
  * `crossAccount` — разрешить пару из разных аккаунтов: его передаёт только
  * подтверждение запроса владельцем кабинета. Тогда `actor` — владелец
@@ -1205,11 +1294,16 @@ export async function transferOnce(input: {
           if (exists.has(row.id) || createdKeys.has(row.key)) continue;
           if (isSingleRecordEntity(entity)) {
             // Настройки журналов (Р8.1): перенос заменяет настройки получателя
-            // образцом — «обновлено»; отменить такую замену нельзя.
+            // образцом — «обновлено». Прежние настройки запоминаются снимком:
+            // отмена переноса вернёт их, если их потом не меняли (серия D, Р10).
             const target = state.toEntityOf[entity].get(row.id);
             let replaced: UpdateOutcome = { status: "missing" };
+            let previous: EntityRow | undefined;
             try {
-              if (target) replaced = await updateEntityRow(entity, toOrganizationId, target, row, undefined, { scope });
+              if (target) {
+                previous = (await loadEntityRows(entity, toOrganizationId, undefined, scope)).find((item) => item.id === target);
+                replaced = await updateEntityRow(entity, toOrganizationId, target, row, undefined, { scope });
+              }
             } catch (error) {
               console.error("[directory-exchange] transfer failed", { entity, toOrganizationId, error });
               notes.add("Часть записей не удалось перенести из-за ошибки — повторите перенос.");
@@ -1219,6 +1313,7 @@ export async function transferOnce(input: {
               createdKeys.add(row.key);
               tally.updated(toOrganizationId, kind);
               await record.created(entity, target);
+              if (previous) record.replaced(entity, target, previous.fields);
             } else if (replaced.status === "conflict" || replaced.status === "limit") {
               tally.skipped(toOrganizationId, kind, replaced.status, `${entity}|${row.id}`);
             }

@@ -91,7 +91,7 @@ export async function PUT(request: Request) {
     });
     if (!saved.cabinet) return NextResponse.json({ ok: true, summary: emptySummary() });
     try {
-      const outcome = await runDirectoryExchangeWithin(saved.cabinet.id, { actor });
+      const outcome = await runDirectoryExchangeWithin(saved.cabinet.id, { actor, trigger: "save" });
       if (outcome.running) {
         after(outcome.done);
         return NextResponse.json({ ok: true, running: true, summary: emptySummary() });

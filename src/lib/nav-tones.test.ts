@@ -21,6 +21,8 @@ const FACTS: NavFacts[] = [
   { checklists: false, settingsPermissions: false },
   { checklists: true, settingsPermissions: true },
   { checklists: true, settingsPermissions: true, journalsPointMode: true },
+  // «Сеть» владельца аккаунта с двумя организациями и больше.
+  { checklists: true, settingsPermissions: true, accountNetwork: true },
 ];
 
 /** Соседи в списке: разные иконки — разные цвета (одинаковую иконку красим одинаково). */

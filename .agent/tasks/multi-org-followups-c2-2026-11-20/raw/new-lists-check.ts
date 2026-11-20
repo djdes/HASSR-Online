@@ -16,15 +16,15 @@
  * 3. Another company (AC6): with «Журналы» and «Чек-листы» allowed it gets the templates and the
  *    owner's journal edits; its own edits do not reach the owner; its new template reaches the
  *    owner. A one-off transfer to another company: templates and journal settings arrive; undo
- *    removes the templates, the journal settings stay as «cannot be undone».
- * 4. Own one-off transfer: preview, transfer, the recent-transfers list marks journals as not
- *    undoable, undo deletes unused templates and keeps a used one; a journals-only transfer has no
- *    undo at all (409).
+ *    removes the templates and restores the previous journal settings (series D, Р10).
+ * 4. Own one-off transfer: preview, transfer, the recent-transfers list marks journals as replaced
+ *    (undoable since series D, Р10), undo deletes unused templates, keeps a used one and restores the
+ *    settings; a journals-only transfer is undone too; the same settings again transfer nothing.
+ *    (Updated in series D: before Р10 a «Журналы» transfer could not be undone.)
  */
 import "dotenv/config";
 
 import { db } from "@/lib/db";
-import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { createExchangeRequest, decideExchangeRequest } from "@/lib/directory-exchange/requests.server";
 import { runDirectoryExchange, transferOnce, transferPreview } from "@/lib/directory-exchange/run.server";
 import { ensureExchangeCabinet, loadExchangeState, saveExchangeMembers } from "@/lib/directory-exchange/settings.server";
@@ -401,6 +401,7 @@ async function main() {
   console.log("--- AC6: a one-off transfer to another company");
   const g = await makeOrg("Компания-G");
   const go = await makeOwner(g.id, "g");
+  const gSettingsBefore = await settingsOf(g.id);
   const transferRequest = await createExchangeRequest({ organizationId: g.id, actor: go.actor, code, mode: "transfer", kinds: ["journals", "checklists"] });
   const transferred = await decideExchangeRequest({
     token: transferRequest.token,
@@ -418,17 +419,23 @@ async function main() {
   check("AC6 (transfer): a template of another company (F) is not passed to G", !(await template(g.id, "Чек-лист компании F")));
   const gTransfers = await listRecentTransfers({ accountId: go.account.id, userId: go.owner.id });
   check(
-    "AC6 (transfer): G's recent transfer marks journals as not undoable, the rest undoable",
-    gTransfers.length === 1 && same(gTransfers[0].fixedKinds, ["journals"]) && gTransfers[0].onlyFixed === false && gTransfers[0].undoable && gTransfers[0].counts.checklists === 2,
+    "AC6 (transfer): G's recent transfer marks journals as replaced (undoable since series D, Р10), the rest undoable",
+    gTransfers.length === 1 &&
+      same(gTransfers[0].fixedKinds, []) &&
+      same(gTransfers[0].replacedKinds, ["journals"]) &&
+      gTransfers[0].onlyFixed === false &&
+      gTransfers[0].undoable &&
+      gTransfers[0].counts.checklists === 2,
     gTransfers,
   );
   const gUndo = await undoTransfer({ id: gTransfers[0].id, ownerUserId: go.owner.id, ownerName: go.owner.name });
   check(
-    "AC6 (transfer undo): templates deleted, journal settings kept as «cannot be undone»",
+    "AC6 (transfer undo): templates deleted, G's previous journal settings restored (series D, Р10)",
     (await db.checklistTemplate.count({ where: { organizationId: g.id } })) === 0 &&
       gUndo.undone.filter((item) => item.entity === "checklist_template").length === 2 &&
-      same(gUndo.kept.map((item) => [item.entity, item.reason]), [["journal_settings", "not_undoable"]]) &&
-      same((await settingsOf(g.id)).disabled, ["health_check", "med_books"]),
+      same(gUndo.undone.filter((item) => item.entity === "journal_settings").map((item) => item.action), ["restored"]) &&
+      gUndo.kept.length === 0 &&
+      same((await settingsOf(g.id)).disabled, gSettingsBefore.disabled),
     gUndo,
   );
 
@@ -436,6 +443,7 @@ async function main() {
   console.log("--- own one-off transfer");
   const c = await makeOrg("Третья", x.account.id);
   await join(x.owner.id, c.id);
+  const cSettingsBefore = await settingsOf(c.id);
   const preview = await transferPreview({ fromOrganizationId: a.id, toOrganizationId: c.id });
   check(
     "Р8.5 (preview): journals — one settings item, not «exists» while settings differ; checklists — live templates",
@@ -454,34 +462,46 @@ async function main() {
   });
   const cTransfers = await listRecentTransfers({ accountId: x.account.id, userId: x.owner.id });
   const cTransfer = cTransfers.find((item) => item.to.id === c.id);
-  check("transfer: listed with «Журналы: cannot be undone» and an undo button", Boolean(cTransfer) && same(cTransfer!.fixedKinds, ["journals"]) && cTransfer!.undoable, cTransfer);
+  check(
+    "transfer: listed with «Журналы: replaced» (undoable since series D, Р10) and an undo button",
+    Boolean(cTransfer) && same(cTransfer!.fixedKinds, []) && same(cTransfer!.replacedKinds, ["journals"]) && cTransfer!.undoable,
+    cTransfer,
+  );
   const cUndo = await undoTransfer({ id: cTransfer!.id, ownerUserId: x.owner.id, ownerName: x.owner.name });
   check(
-    "transfer undo: unused templates deleted, the assigned one kept as «used», settings kept as «cannot be undone»",
+    "transfer undo: unused templates deleted, the assigned one kept as «used», previous settings restored (series D, Р10)",
     cUndo.undone.filter((item) => item.entity === "checklist_template").length === 2 &&
-      same(cUndo.kept.map((item) => [item.entity, item.reason]).sort(), [["checklist_template", "used"], ["journal_settings", "not_undoable"]].sort()) &&
-      (await db.checklistTemplate.count({ where: { organizationId: c.id } })) === 1,
+      same(cUndo.undone.filter((item) => item.entity === "journal_settings").map((item) => item.action), ["restored"]) &&
+      same(cUndo.kept.map((item) => [item.entity, item.reason]), [["checklist_template", "used"]]) &&
+      (await db.checklistTemplate.count({ where: { organizationId: c.id } })) === 1 &&
+      same((await settingsOf(c.id)).disabled, cSettingsBefore.disabled),
     cUndo,
   );
 
   const d = await makeOrg("Четвёртая", x.account.id);
   await join(x.owner.id, d.id);
+  const dSettingsBefore = await settingsOf(d.id);
   await transferOnce({ fromOrganizationId: a.id, toOrganizationId: d.id, selection: { journals: "all" }, actor: x.actor });
   const dTransfer = (await listRecentTransfers({ accountId: x.account.id, userId: x.owner.id })).find((item) => item.to.id === d.id);
-  check("journals-only transfer: no undo, no deadline (onlyFixed)", Boolean(dTransfer) && dTransfer!.onlyFixed && !dTransfer!.undoable && same(dTransfer!.fixedKinds, ["journals"]), dTransfer);
-  let refused: unknown = null;
-  try {
-    await undoTransfer({ id: dTransfer!.id, ownerUserId: x.owner.id, ownerName: x.owner.name });
-  } catch (error) {
-    refused = error;
-  }
   check(
-    "journals-only transfer: undo refused with 409, nothing marked undone",
-    refused instanceof DirectoryExchangeError && refused.status === 409 && (await db.directoryTransfer.findUniqueOrThrow({ where: { id: dTransfer!.id } })).undoneAt === null,
-    refused instanceof Error ? refused.message : refused,
+    "journals-only transfer: undoable since series D (Р10) — replaced, not «only fixed»",
+    Boolean(dTransfer) && !dTransfer!.onlyFixed && dTransfer!.undoable && same(dTransfer!.fixedKinds, []) && same(dTransfer!.replacedKinds, ["journals"]),
+    dTransfer,
   );
+  const dUndo = await undoTransfer({ id: dTransfer!.id, ownerUserId: x.owner.id, ownerName: x.owner.name });
+  check(
+    "journals-only transfer: undo restores D's previous settings and marks the transfer undone",
+    same(dUndo.undone.map((item) => [item.entity, item.action]), [["journal_settings", "restored"]]) &&
+      same((await settingsOf(d.id)).disabled, dSettingsBefore.disabled) &&
+      (await db.directoryTransfer.findUniqueOrThrow({ where: { id: dTransfer!.id } })).undoneAt !== null,
+    dUndo,
+  );
+  // After the undo D has its own settings again: transferring A's settings replaces them once more…
+  const dAgain = await transferOnce({ fromOrganizationId: a.id, toOrganizationId: d.id, selection: { journals: "all" }, actor: x.actor });
+  check("after the undo the settings transfer again (a new transfer record)", totals(dAgain).updated === 1 && (await db.directoryTransfer.count({ where: { toOrganizationId: d.id } })) === 2, totals(dAgain));
+  // …and the same settings a second time transfer nothing.
   const dSame = await transferOnce({ fromOrganizationId: a.id, toOrganizationId: d.id, selection: { journals: "all" }, actor: x.actor });
-  check("same settings again: nothing to transfer, no new transfer record", totals(dSame).updated === 0 && (await db.directoryTransfer.count({ where: { toOrganizationId: d.id } })) === 1, totals(dSame));
+  check("same settings again: nothing to transfer, no new transfer record", totals(dSame).updated === 0 && (await db.directoryTransfer.count({ where: { toOrganizationId: d.id } })) === 2, totals(dSame));
 }
 
 async function cleanup() {

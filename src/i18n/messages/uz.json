@@ -2917,7 +2917,8 @@
             "points": "Obyektlar",
             "master": "Master-kabinet",
             "more": "Boshqalar",
-            "organization": "Rekvizitlar"
+            "organization": "Rekvizitlar",
+            "network": "Tarmoq"
           },
           "tabs": {
             "organization": "Rekvizitlar",
@@ -4155,7 +4156,10 @@
       "ideaStatus": "{status, select, new {“{title}” g‘oyasi — yangi} planned {“{title}” g‘oyasi — rejalashtirilgan} in_progress {“{title}” g‘oyasi — bajarilmoqda} done {“{title}” g‘oyasi — bajarildi} declined {“{title}” g‘oyasi — rad etilgan} other {“{title}” g‘oyasi}}",
       "ideaStatusLabel": "{status, select, new {Yangi} planned {Rejalashtirilgan} in_progress {Bajarilmoqda} done {Bajarildi} declined {Rad etilgan} other {Noma’lum holat}}",
       "openIdeas": "G‘oyalarni ochish",
-      "open": "Ochish"
+      "open": "Ochish",
+      "orgTrialEnding": "{stage, select, tomorrow {«{name}» tashkilotining bepul kunlari ertaga tugaydi} other {«{name}» tashkilotining bepul kunlari tugamoqda}}",
+      "orgTrialLastDay": "Oxirgi bepul kun — {date}",
+      "addPoint": "Nuqta qo‘shish"
     }
   },
   "journalControls": {
@@ -10079,7 +10083,7 @@
       },
       "account": {
         "title": "Akkaunt bo‘yicha balans",
-        "subtitle": "Akkauntingizdagi barcha tashkilotlarning balanslari. Pulni ular o‘rtasida o‘tkazish mumkin — o‘tkazma ikkala tashkilot tarixida ko‘rinadi.",
+        "subtitle": "Akkauntingizdagi barcha tashkilotlarning balanslari. Pulni ular o‘rtasida o‘tkazish mumkin — o‘tkazma ikkala tashkilotning balans tafsilotida ko‘rinadi.",
         "current": "joriy",
         "total": "Akkaunt bo‘yicha jami",
         "transfer": "O‘tkazish",
@@ -10092,7 +10096,7 @@
         "submit": "{amount} o‘tkazish",
         "cancel": "Bekor qilish",
         "confirmTitle": "{amount} o‘tkazilsinmi?",
-        "confirmDescription": "«{from}» dan «{to}» ga. Pulni qaytarish uchun teskari o‘tkazma qiling.",
+        "confirmDescription": "«{from}»dan «{to}»ga. Pulni qaytarish uchun teskari o‘tkazma qiling.",
         "success": "{amount} o‘tkazildi: «{from}» → «{to}»",
         "duplicate": "Bu o‘tkazma allaqachon bajarilgan — pul ikki marta yechilmadi",
         "failed": "O‘tkazib bo‘lmadi. Qayta urinib ko‘ring.",
@@ -10106,8 +10110,8 @@
           "sameOrg": "Ikki xil tashkilotni tanlang",
           "notFound": "Tashkilot akkauntingizda topilmadi",
           "notOwner": "O‘tkazmalar faqat akkaunt egasiga ochiq",
-          "toDeleting": "«{name}» o‘chirilmoqda — unga pul o‘tkazib bo‘lmaydi",
-          "tooMany": "Juda ko‘p o‘tkazma ketma-ket. Bir daqiqa kuting.",
+          "toDeleting": "«{name}» tashkiloti o‘chirilmoqda — unga pul o‘tkazib bo‘lmaydi",
+          "tooMany": "Ketma-ket juda ko‘p o‘tkazma qilindi. Bir daqiqa kuting.",
           "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring — pul ikki marta yechilmaydi."
         }
       }
@@ -11169,6 +11173,58 @@
         "noAddress": "Manzil ko‘rsatilmagan",
         "staff": "{count, plural, =0 {xodim yo‘q} other {# xodim}}"
       }
+    },
+    "network": {
+      "description": "Akkauntingizdagi barcha tashkilotlar bitta ekranda: bugungi jurnallar, balans, o‘z 14 kuni va ma’lumotnomalar almashinuvi.",
+      "plan": {
+        "label": "Akkaunt tarifi: {plan}",
+        "paid": "{tier} · {count, plural, other {# ta nuqta}}",
+        "legacy": "Obuna (avvalgi tarif)",
+        "trial": "{date} gacha sinov davri",
+        "trialNoDate": "sinov davri",
+        "free": "bepul",
+        "none": "tanlanmagan"
+      },
+      "totals": {
+        "organizations": "Tashkilotlar",
+        "balance": "Umumiy balans",
+        "unfilled": "Bugun to‘ldirilmagan jurnallari bor tashkilotlar",
+        "unfilledValue": "{total} tadan {count} ta",
+        "allFilled": "hammasi to‘ldirilgan"
+      },
+      "columns": {
+        "organization": "Tashkilot",
+        "journals": "Bugungi jurnallar",
+        "balance": "Balans",
+        "trial": "O‘z 14 kuni",
+        "exchange": "Ma’lumotnomalar almashinuvi",
+        "actions": "Amallar"
+      },
+      "current": "joriy",
+      "deleting": "o‘chirilmoqda",
+      "journals": {
+        "value": "{total} tadan {done} ta",
+        "unknown": "—",
+        "status": {
+          "done": "hammasi to‘ldirilgan",
+          "partial": "hammasi ham to‘ldirilmagan",
+          "none": "boshlanmagan",
+          "empty": "jurnallar yo‘q",
+          "unknown": "hisoblab bo‘lmadi"
+        }
+      },
+      "trial": {
+        "active": "{date} gacha amalda",
+        "locked": "yopilgan",
+        "none": "—"
+      },
+      "addPoint": "Nuqta qo‘shish",
+      "exchange": {
+        "never": "bo‘lmagan"
+      },
+      "go": "O‘tish",
+      "goFailed": "Almashtirib bo‘lmadi",
+      "truncated": "Yaratilgan sanasi bo‘yicha dastlabki {count} ta tashkilot ko‘rsatilgan."
     }
   },
   "sanpinReference": {
@@ -16508,7 +16564,8 @@
     "accessOwner": "Platforma egasi — to‘liq ruxsat",
     "sberBusiness": "SberBiznes",
     "timesheet": "Tabel",
-    "correspondence": "Xatlar"
+    "correspondence": "Xatlar",
+    "directoryExchange": "Ma’lumotnomalar almashinuvi"
   },
   "rootEdo": {
     "metadata": {
@@ -17736,19 +17793,19 @@
       "suspicions": "Takroriy sinov davri shubhalari",
       "suspicionsEmpty": "Shubhalar yo‘q",
       "suspicionFlag": "shubha",
-      "suspicionEnded": "sinov davri tugatilgan",
+      "suspicionEnded": "sinov davri tugagan",
       "suspicionInn": "STIR {inn}",
       "suspicionPhone": "egasining telefoni",
       "suspicionWith": "«{name}» bilan mos keldi",
       "extendDays": "Kun",
       "extend": "Uzaytirish",
       "extendTitle": "O‘z 14 kuni {days, plural, other {# kunga}} uzaytirilsinmi?",
-      "extendDescription": "Yangi muddat — {date}. Bugun va joriy muddatdan kechrog‘idan hisoblanadi. Yopilgan tashkilot darhol ochiladi.",
+      "extendDescription": "Yangi muddat — {date}. «Bugun» va joriy muddatdan qaysi biri kechroq bo‘lsa, shundan hisoblanadi. Yopilgan tashkilot darhol ochiladi.",
       "clear": "Belgini olib tashlash",
       "clearTitle": "O‘z 14 kuni belgisi olib tashlansinmi?",
-      "clearDescription": "Tashkilot oddiy bo‘ladi: akkaunt tarifidan bitta nuqtani egallaydi va muddat bo‘yicha boshqa yopilmaydi.",
+      "clearDescription": "Tashkilot oddiy bo‘ladi: akkaunt tarifidan bitta nuqtani egallaydi va endi muddat bo‘yicha yopilmaydi.",
       "reset": "Hisoblagichni nollash",
-      "resetTitle": "Berilgan 14 kunlar hisoblagichi nollansinmi?",
+      "resetTitle": "Berilgan 14 kunlik davrlar hisoblagichi nollansinmi?",
       "resetDescription": "Akkaunt yana ikkita yangi tashkilot uchun o‘z 14 kunini olishi mumkin bo‘ladi.",
       "noMark": "Tashkilotda o‘z 14 kuni belgisi yo‘q",
       "daysInvalid": "1 dan 60 gacha kun kiriting",
@@ -26978,7 +27035,7 @@
         "objects": "Manzilli obyektlar va ularning xonalari tozalash jadvallari va iqlim me’yorlari bilan. Ofis ko‘chirilmaydi",
         "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi nusxalanmaydi",
         "journals": "Qaysi jurnallar yoqilgan va ularning avtomatlashtirilishi: avtomatik yaratish, avtomatik to‘ldirish. Nuqtalar sozlamalari va mas’ullar ko‘chirilmaydi",
-        "checklists": "Chek-list shablonlari: nomi va savollari. Tayinlovlar va namuna fayllar ko‘chirilmaydi"
+        "checklists": "Chek-list shablonlari: nomi va savollari. Biriktirishlar va namuna fayllar ko‘chirilmaydi"
       },
       "offer": {
         "available": "Sizda «{name}» allaqachon bor — ma’lumotnomalarni bog‘lang yoki ma’lumotlarni undan ko‘chiring",
@@ -27032,7 +27089,7 @@
         "transferFailed": "Ma’lumotlarni ko‘chirib bo‘lmadi",
         "left": "«{name}» endi ma’lumotnomalar almashinuvida qatnashmaydi",
         "linkCommonNote": "Almashinuv barcha ishtirokchilar uchun umumiy: tashkilotda ro‘yxat allaqachon yoqilgan bo‘lsa, bu yerda belgi qo‘yilmasa ham u ro‘yxatni oladi. Tashkilotni almashinuvdan chiqarish uchun uning oynasida «Almashinuvni o‘chirish» tugmasini bosing.",
-        "menuSeparate": "Almashinuv master-kabinetning menyusi va xomashyosini ulamaydi — bu alohida, «Master-kabinet» bo‘limida qilinadi.",
+        "menuSeparate": "Almashinuv master-kabinetning menyusi va xom ashyosini ulamaydi — bu alohida, «Master-kabinet» bo‘limida qilinadi.",
         "journalsSame": "Jurnal sozlamalari «{name}»dagi bilan allaqachon bir xil",
         "journalsReplace": "«{source}» jurnal sozlamalari «{name}» sozlamalarini almashtiradi. Bu ko‘chirishni bekor qilib bo‘lmaydi."
       },
@@ -27144,7 +27201,7 @@
           "objects": "Manzilli obyektlar va ularning xonalari tozalash jadvallari va iqlim me’yorlari bilan. Ofis uzatilmaydi",
           "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi uzatilmaydi",
           "journals": "Qaysi jurnallar yoqilgan va ularning avtomatlashtirilishi: avtomatik yaratish, avtomatik to‘ldirish. Nuqtalar sozlamalari va mas’ullar uzatilmaydi",
-          "checklists": "Chek-list shablonlari: nomi va savollari. Tayinlovlar va namuna fayllar uzatilmaydi"
+          "checklists": "Chek-list shablonlari: nomi va savollari. Biriktirishlar va namuna fayllar uzatilmaydi"
         },
         "page": {
           "metaTitle": "Ma’lumotnomalar almashinuvi so‘rovi",
@@ -27211,7 +27268,7 @@
           "needOwn": "Kamida bitta tashkilotingizni belgilang",
           "noOwn": "Akkauntingizda ma’lumot almashishi mumkin bo‘lgan tashkilot yo‘q. So‘rovni faqat rad etish mumkin.",
           "approvedRunning": "Almashinuv davom etmoqda — natija «Ma’lumotnomalar almashinuvi» kartochkasida paydo bo‘ladi, u tugagach kompaniya xat oladi.",
-          "poolLabel": "«{name}» ni kabinet menyusi va xom ashyosiga ulash",
+          "poolLabel": "«{name}»ni kabinet menyusi va xom ashyosiga ulash",
           "poolHint": "Kompaniya kabinet menyusi va xom ashyosini hamda tashkilotlaringiz taomlari bo‘yicha maslahatlarni oladi. Uning taomlari sizga taklif qilinmaydi. Belgilanmasa, bog‘lanish faqat ro‘yxatlar bilan bo‘ladi.",
           "confirmPool": "Kabinet menyusi va xom ashyosi ham ulanadi."
         },
@@ -27220,11 +27277,11 @@
       },
       "transfers": {
         "title": "So‘nggi ko‘chirishlar",
-        "hint": "Ko‘chirishni 7 kun ichida bekor qilish mumkin. Faqat u yaratgan va shundan beri ishlatilmagan hamda o‘zgartirilmagan narsalar bekor qilinadi.",
+        "hint": "Ko‘chirishni 7 kun ichida bekor qilish mumkin. Faqat u yaratgan va shundan beri ishlatilmagan hamda o‘zgartirilmagan narsalar bekor qilinadi; almashtirilgan jurnal sozlamalari o‘zgartirilmagan bo‘lsa, qaytariladi.",
         "foreignSource": "Boshqa kompaniya",
         "count": "{kind}: {count}",
         "undo": "Bekor qilish",
-        "undoConfirm": "Ko‘chirish bekor qilinsinmi? U yaratgan tovarlar o‘chirib qo‘yiladi, xodimlar arxivga o‘tadi, qolgan yozuvlar o‘chiriladi. Allaqachon ishlatilayotgan yoki ko‘chirishdan keyin o‘zgartirilgan narsalar qoladi.",
+        "undoConfirm": "Ko‘chirish bekor qilinsinmi? U yaratgan tovarlar o‘chirib qo‘yiladi, xodimlar arxivga o‘tadi, qolgan yozuvlar o‘chiriladi, almashtirilgan jurnal sozlamalari avvalgi holiga qaytadi. Allaqachon ishlatilayotgan yoki ko‘chirishdan keyin o‘zgartirilgan narsalar qoladi.",
         "undoDone": "Ko‘chirish bekor qilindi",
         "undoFailed": "Ko‘chirishni bekor qilib bo‘lmadi",
         "undoUntil": "{date} gacha bekor qilish mumkin",
@@ -27243,19 +27300,20 @@
           "room": "Xona",
           "area": "Sex",
           "equipment": "Uskuna",
-          "product": "Mahsulot",
+          "product": "Tovar",
           "journal_settings": "Jurnal sozlamalari",
           "checklist_template": "Chek-list"
         },
         "reasons": {
           "edited": "ko‘chirishdan keyin o‘zgartirilgan",
-          "used": "ishlatilmoqda: jurnal yozuvlari, datchiklar yoki tayinlovlar",
+          "used": "ishlatilmoqda: jurnal yozuvlari, datchiklar yoki biriktirishlar",
           "not_empty": "ichida boshqa yozuvlar qolgan",
           "has_staff": "lavozimda xodimlar bor",
           "linked": "bog‘langan xona yoki sex qoladi",
           "not_undoable": "almashtirilgan sozlamalarni qaytarib bo‘lmaydi"
         },
-        "fixed": "{kind}: bekor qilib bo‘lmaydi"
+        "fixed": "{kind}: bekor qilib bo‘lmaydi",
+        "replaced": "{kind}: almashtirildi"
       },
       "skips": {
         "count": "O‘tkazib yuborildi: {count}",
@@ -27274,6 +27332,39 @@
         "linked": "Yozuvlar bog‘landi",
         "failed": "Saqlab bo‘lmadi — qayta urinib ko‘ring",
         "empty": "Hammasi ko‘rib chiqildi — o‘tkazib yuborilgan yozuvlar yo‘q.",
+        "done": "Tayyor"
+      },
+      "history": {
+        "count": "30 kunlik almashinuv tarixi: {count}",
+        "open": "Ochish",
+        "title": "Almashinuv tarixi",
+        "description": "Ma’lumotnomalar almashinuvi 30 kun ichida ushbu tashkilotda nimalarni yaratgani yoki o‘zgartirgani. Bekor qilish faqat shu yerda amal qiladi — boshqa tashkilotlarda hammasi o‘zgarishsiz qoladi.",
+        "created": "Yaratildi",
+        "updated": "O‘zgartirildi",
+        "fromCabinet": "«{name}» master-kabineti",
+        "undo": "Bekor qilish",
+        "undoCreateConfirm": "Yaratish bekor qilinsinmi? Yozuv o‘zgartirilmagan va ishlatilmayotgan bo‘lsa, u o‘chiriladi (tovar o‘chirib qo‘yiladi, xodim arxivga o‘tadi). Almashinuv uni bu yerda qayta yaratmaydi.",
+        "undoUpdateConfirm": "Oldingi qiymatlar qaytarilsinmi? Faqat shu tashkilotda — boshqalarda o‘zgarishsiz qoladi. Manbadagi keyingi o‘zgarish yana keladi.",
+        "undoDone": "O‘zgarish bekor qilindi",
+        "undoFailed": "O‘zgarishni bekor qilib bo‘lmadi",
+        "undoneAt": "{date} bekor qilingan",
+        "kept": "O‘zgarishsiz qoldi: {reason}",
+        "actions": {
+          "deleted": "Yozuv o‘chirildi",
+          "archived": "Xodim arxivga o‘tkazildi",
+          "deactivated": "Tovar o‘chirib qo‘yildi",
+          "restored": "Oldingi qiymatlar qaytarildi",
+          "none": "Yozuv allaqachon yo‘q edi — almashinuv uni bu yerda qayta yaratmaydi"
+        },
+        "reasons": {
+          "edited": "almashinuvdan keyin o‘zgartirilgan",
+          "used": "ishlatilmoqda: jurnal yozuvlari, datchiklar yoki biriktirishlar",
+          "not_empty": "ichida boshqa yozuvlar qolgan",
+          "has_staff": "lavozimda xodimlar bor",
+          "linked": "bog‘langan xona yoki sex qoladi",
+          "not_undoable": "bu o‘zgarishni bekor qilib bo‘lmaydi"
+        },
+        "empty": "30 kun ichida almashinuv bu yerda hech narsani o‘zgartirmagan.",
         "done": "Tayyor"
       }
     }
@@ -30636,7 +30727,8 @@
       "orgTrialRunning": "“{name}” — {date} gacha bepul, keyin nuqta kerak",
       "orgTrialLocked": "“{name}” — yopilgan: bepul kunlar {date} da tugagan",
       "orgTrialLockedHint": "Yopilgan tashkilotlarni ochish uchun jami {points, plural, other {# ta nuqta}} kerak. Quyidagi variantlar ular bilan hisoblangan.",
-      "orgTrialsLeft": "Yangi tashkilotlar uchun qolgan bepul 14 kunlik davrlar: {count}."
+      "orgTrialsLeft": "Yangi tashkilotlar uchun qolgan bepul 14 kunlik davrlar: {count}.",
+      "addPointsNote": "Nuqta qo‘shilmoqda: quyidagi tanlovda allaqachon {count, plural, other {# ta nuqta}}. Tarifni tanlang va odatdagidek to‘lang."
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Komissiya — brakerajni imzolaydi",
@@ -32675,5 +32767,57 @@
     "failed": "Yuborib bo‘lmadi. Bizga qo‘ng‘iroq qiling yoki chatda yozing.",
     "phoneRequired": "Telefon raqamini kiriting",
     "hint": "Raqam faqat arizangiz bo‘yicha qo‘ng‘iroq qilish uchun kerak."
+  },
+  "rootDirectoryExchange": {
+    "title": "Ma’lumotnomalar almashinuvi",
+    "description": "Mijozlar tashkilotlari o‘rtasidagi har bir ma’lumotnomalar almashinuvi: qachon, qanday sabab bilan va qanday yakunlangani. Qatorlar 90 kun saqlanadi, vaqt — Moskva vaqti.",
+    "stats": {
+      "cabinets": "Almashinuvi bor kabinetlar: {count}",
+      "problems": "Ko‘rib chiqish kerak: {count}"
+    },
+    "problems": {
+      "title": "Ko‘rib chiqish kerak",
+      "hint": "Oxirgi almashinuvi xato bilan tugagan yoki bir kundan ortiq muvaffaqiyatli almashinuv bo‘lmagan kabinetlar.",
+      "empty": "Barcha kabinetlarda oxirgi bir kun ichida muvaffaqiyatli almashinuv bo‘lgan.",
+      "error": "Oxirgi almashinuv — xato",
+      "noSuccess": "Bir kun davomida muvaffaqiyatli almashinuv yo‘q",
+      "lastOk": "oxirgi muvaffaqiyatlisi — {date}",
+      "neverOk": "muvaffaqiyatli almashinuvlar bo‘lmagan",
+      "lastRun": "oxirgisi — {date}",
+      "members": "Ishtirokchilar: {count}"
+    },
+    "runs": {
+      "title": "So‘nggi almashinuvlar",
+      "filter": "Qaysi almashinuvlarni ko‘rsatish",
+      "all": "Hammasi",
+      "onlyErrors": "Faqat xatolar",
+      "empty": "Hozircha almashinuvlar bo‘lmagan.",
+      "emptyErrors": "Xatolar yo‘q."
+    },
+    "columns": {
+      "when": "Qachon",
+      "cabinet": "Kabinet va egasi",
+      "trigger": "Sabab",
+      "status": "Natija",
+      "duration": "Davomiyligi",
+      "result": "O‘zgarishlar",
+      "error": "Xato"
+    },
+    "triggers": {
+      "manual": "Qo‘lda",
+      "save": "Sozlamalar saqlandi",
+      "approval": "So‘rov tasdiqlandi",
+      "schedule": "Jadval bo‘yicha"
+    },
+    "statuses": {
+      "running": "Bajarilmoqda",
+      "ok": "Tayyor",
+      "busy": "Band",
+      "error": "Xato",
+      "stale": "Uzilib qoldi"
+    },
+    "result": "yaratildi {created}, yangilandi {updated}, o‘tkazib yuborildi {skipped}",
+    "seconds": "{value} s",
+    "unknownOwner": "egasi topilmadi"
   }
 }

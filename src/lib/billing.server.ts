@@ -33,6 +33,7 @@ import {
   formatMskDay,
   journalsLabel,
   lastDayBefore,
+  mskDayKey,
   normalizeTrialSettings,
   PAID_REMINDER_STAGES,
   paidPlansHint,
@@ -83,6 +84,7 @@ import {
 } from "@/lib/tariff-plans";
 import { isManagementRole } from "@/lib/user-roles";
 import { COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
+import { ADD_POINTS_HREF } from "@/lib/add-points";
 
 /**
  * Серверная часть тарифов 2026-10: настройки пробного периода из
@@ -1357,6 +1359,10 @@ export async function sendOwnerNotice(args: {
   emailOnlyWithoutTelegram?: boolean;
   /** Подпись кнопки в Telegram (по умолчанию «Открыть тариф»). */
   buttonLabel?: string;
+  /** Куда ведёт кнопка в Telegram (по умолчанию страница тарифа). */
+  buttonHref?: string;
+  /** false — без push в приложение: то же событие уже в колокольчике (он шлёт push сам). */
+  appPush?: boolean;
 }): Promise<{ telegram: boolean; email: boolean }> {
   const owner = await ownerContact(args.organizationId);
   if (!owner) return { telegram: false, email: false };
@@ -1369,8 +1375,11 @@ export async function sendOwnerNotice(args: {
         owner.userId,
         args.telegramText,
         // Кнопка web_app в Telegram принимает только полный https-адрес.
-        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: `${APP_URL}${BILLING_PAY_HREF}` },
-        { delivery: { organizationId: args.organizationId, kind: args.kind } }
+        { label: args.buttonLabel ?? "Открыть тариф", miniAppUrl: `${APP_URL}${args.buttonHref ?? BILLING_PAY_HREF}` },
+        {
+          delivery: { organizationId: args.organizationId, kind: args.kind },
+          ...(args.appPush === false ? { appPush: false } : {}),
+        }
       );
       telegram = true;
     } catch (error) {
@@ -1655,6 +1664,9 @@ export async function sendTrialReminderNow(organizationId: string, now: Date = n
 /**
  * Напоминание владельцу аккаунта: свои бесплатные дни дополнительной
  * организации кончаются (серия A, Р2). Письмо всегда, Telegram — если привязан.
+ * «Добавить точку» ведёт на страницу тарифа, которая сразу открывает выбор
+ * с точкой больше оплаченного (`?addPoints=1`, серия D, Р12). Push в
+ * приложение — от колокольчика (`notifyOrgTrialBell`), не отсюда.
  */
 async function sendOrgTrialReminder(
   unit: BillingUnit,
@@ -1665,7 +1677,7 @@ async function sendOrgTrialReminder(
   const name = escapeHtml(entry.name);
   const last = formatMskDay(lastDayBefore(entry.trialEndsAt));
   const when = stage === 1 ? "завтра" : "через 3 дня";
-  const payUrl = `${APP_URL}${BILLING_PAY_HREF}`;
+  const payUrl = `${APP_URL}${ADD_POINTS_HREF}`;
   const after =
     "После него организация закроется, пока для неё не добавлена точка в тарифе. Остальные организации аккаунта работают как обычно.";
   return sendOwnerNotice({
@@ -1684,7 +1696,65 @@ async function sendOrgTrialReminder(
     },
     emailOnlyWithoutTelegram: false,
     buttonLabel: "Добавить точку",
+    buttonHref: ADD_POINTS_HREF,
+    appPush: false,
   });
+}
+
+/** Ключ колокольчика напоминания: организация, срок и ступень — по одному на каждую. */
+export function orgTrialBellDedupeKey(organizationId: string, trialEndsAt: Date, stage: OrgTrialReminderStage): string {
+  return `billing.org_trial:${organizationId}:${trialEndsAt.toISOString()}:${stage}`;
+}
+
+/**
+ * То же напоминание в колокольчик владельца аккаунта — в его домашней
+ * организации (серия D, Р12): заголовок с названием организации, пункт с
+ * последним бесплатным днём, ссылка «Добавить точку». Тексты — ключами
+ * (`notifications.messages.orgTrial*`), русские — запасные. Сбой колокольчика
+ * письмо и Telegram не отменяет.
+ */
+async function notifyOrgTrialBell(
+  unit: BillingUnit,
+  entry: OrgTrialEntry,
+  stage: OrgTrialReminderStage,
+): Promise<boolean> {
+  if (!unit.ownerUserId) return false;
+  try {
+    const owner = await db.user.findUnique({
+      where: { id: unit.ownerUserId },
+      select: { id: true, organizationId: true, isActive: true, archivedAt: true },
+    });
+    if (!owner || !owner.isActive || owner.archivedAt) return false;
+    const lastDay = lastDayBefore(entry.trialEndsAt);
+    const { upsertNotification } = await import("@/lib/notifications");
+    await upsertNotification({
+      organizationId: owner.organizationId,
+      userId: owner.id,
+      kind: AUDIT_ACTIONS.orgTrialReminder,
+      dedupeKey: orgTrialBellDedupeKey(entry.organizationId, entry.trialEndsAt, stage),
+      title:
+        stage === 1
+          ? `Завтра закончатся бесплатные дни организации «${entry.name}»`
+          : `Бесплатные дни организации «${entry.name}» заканчиваются`,
+      messageKey: "orgTrialEnding",
+      messageParams: { name: entry.name, stage: stage === 1 ? "tomorrow" : "soon" },
+      linkHref: ADD_POINTS_HREF,
+      linkLabel: "Добавить точку",
+      linkLabelKey: "addPoint",
+      items: [
+        {
+          id: `org-trial:${entry.organizationId}`,
+          label: `Последний бесплатный день — ${formatMskDay(lastDay)}`,
+          labelKey: "orgTrialLastDay",
+          labelParams: { day: mskDayKey(lastDay) },
+        },
+      ],
+    });
+    return true;
+  } catch (error) {
+    console.error("[billing] org trial bell failed", { organizationId: entry.organizationId, error });
+    return false;
+  }
 }
 
 // ------------------------------------------------------------ daily job
@@ -1902,6 +1972,7 @@ async function remindOrgTrials(
           } else {
             if (!dryRun) {
               const delivered = await sendOrgTrialReminder(unit, entry, stage);
+              const bell = await notifyOrgTrialBell(unit, entry, stage);
               await db.auditLog.create({
                 data: {
                   organizationId: entry.organizationId,
@@ -1912,7 +1983,7 @@ async function remindOrgTrials(
                   details: { organizationId: entry.organizationId, trialEndsAt: entry.trialEndsAt.toISOString(), stage },
                 },
               });
-              outcome = `org trial reminder ${stage}d sent (telegram: ${delivered.telegram}, email: ${delivered.email})`;
+              outcome = `org trial reminder ${stage}d sent (telegram: ${delivered.telegram}, email: ${delivered.email}, bell: ${bell})`;
             }
             report.orgTrialReminded += 1;
           }

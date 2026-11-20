@@ -95,6 +95,11 @@ export type TariffCabinetState = {
    * минимум — закрытую организацию можно не оплачивать.
    */
   suggestedPoints?: number;
+  /**
+   * Открыть выбор сразу с этим числом точек (ссылка «Добавить точку» из
+   * напоминания: оплачено + 1, `lib/add-points.ts`). Не меньше точек в работе.
+   */
+  initialPoints?: number;
   /** Запланированное понижение. */
   scheduled: { tier: PaidTier; cycle: BillingCycle; points: number; atLabel: string } | null;
   /** Цена прежней «Подписки» за 30 дней — для зачёта остатка. */
@@ -189,7 +194,11 @@ export function TariffComparison({
   // её кнопка — «Перейти на год» с зачётом остатка, «Помесячно» — по клику.
   const [cycle, setCycle] = useState<BillingCycle>("year");
   const minPoints = Math.max(1, cabinet?.pointsInUse ?? 1);
-  const [points, setPoints] = useState(Math.max(minPoints, currentPaid?.points ?? 1, cabinet?.suggestedPoints ?? 1));
+  const [points, setPoints] = useState(
+    cabinet?.initialPoints
+      ? Math.min(MAX_POINTS, Math.max(minPoints, cabinet.initialPoints))
+      : Math.max(minPoints, currentPaid?.points ?? 1, cabinet?.suggestedPoints ?? 1),
+  );
   // Куда уехала ручка тумблера — для её растяжения в движении (`motion-knob`);
   // до первого нажатия анимации нет.
   const [knobMoved, setKnobMoved] = useState<"left" | "right" | null>(null);

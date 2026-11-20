@@ -1,0 +1,49 @@
+PASS setup: B received the room, the positions and the employee A has
+--- the state at deploy time: version-1 links
+PASS setup: room and position links rewritten to version-1 fingerprints
+PASS setup: rooms and positions really differ between A and B in the new fields
+PASS AC1: the first exchange after the deploy creates and updates nothing
+PASS AC1: A's rooms, schedules, positions, journal access, checklist items and staff are unchanged (update dates too)
+PASS AC1: B's rooms, schedules, positions, journal access, checklist items and staff are unchanged (update dates too)
+PASS AC1: every room and position link moved to version 2
+PASS AC1: the next run is empty and leaves the links as they are
+--- edits after the deploy reach the other organization
+PASS AC4: B's room edit is one update in A
+PASS AC4: A's kitchen has B's schedules, detergent, photo rule and climate norms
+PASS AC4: A's checklist items of the kitchen were rebuilt from the new schedule
+PASS AC4: people are not copied — A's kitchen keeps its own cleaner, B's has none
+PASS AC4: A's climate norm reaches B
+PASS AC4: a norm-only edit does not rebuild B's checklist items
+PASS AC3: A's position journals reach B's position
+PASS setup: a new employee on «Повар» in A
+PASS AC3: the employee created by the exchange in B gets the position's journals
+PASS AC3: an employee added by hand in B on that position gets the same journals
+PASS Р8.2: a rename from a position without journals renames B's position and keeps its journals
+PASS after the edits: an empty run
+--- a company of another account
+PASS F is linked
+PASS AC4 (foreign): F's kitchen came with the schedules and climate norms
+PASS AC4 (foreign): F's kitchen has checklist items from the schedule
+PASS AC4 (foreign): no people in F's room
+PASS AC3 (foreign): F's positions have no journal access
+PASS AC3 (foreign): F's employees got no journals from the owner's positions
+PASS Р8.0 (foreign): position links are restricted version 2 (f:v2:), room links version 2
+PASS AC4 (foreign): the owner's room edit reaches F and B
+PASS AC4 (foreign): F's general checklist items rebuilt
+PASS AC3 (foreign): a journal edit is not passed to F
+PASS Р5: while another company shares «Сотрудники», journals are not exchanged at all (like phones)
+PASS AC1 (foreign): version-1 links with a company of another account — 0 created, 0 updated
+PASS AC1 (foreign): data of A, B and F unchanged
+PASS AC1 (foreign): position links moved to f:v2:, room links to v2:
+--- a one-off transfer and its undo
+PASS transfer: C's kitchen came with A's schedule and norms
+PASS transfer: C's kitchen has checklist items
+PASS transfer: C's «Повар» came with A's journals
+PASS transfer: C's employee got the journals of the position
+PASS transfer undo: rooms with schedules and positions with journals are undone, not kept as «used»
+PASS transfer undo: C has no rooms and no positions left
+PASS transfer undo (recorded before the deploy, version-1 fingerprints): rooms and positions are not «edited»
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0, checklist items left 0
+TOTAL: 41 PASS, 0 FAIL
+RESULT: all checks passed
+exit 0

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  ArrowRightLeft,
   BadgePercent,
   Bot,
   ChevronDown,
@@ -143,6 +144,7 @@ const NAV: NavEntry[] = [
     items: [
       { href: "/root/status", label: "status", icon: Activity },
       { href: "/root/health", label: "health", icon: HeartPulse },
+      { href: "/root/directory-exchange", label: "directoryExchange", icon: ArrowRightLeft },
       { href: "/root/telegram-logs", label: "telegramLogs", icon: ScrollText },
       { href: "/root/audit", label: "audit", icon: FileClock },
       { href: "/root/audit-impersonations", label: "impersonation", icon: UserCog },

@@ -539,6 +539,19 @@ function makeRow(
   };
 }
 
+/**
+ * Строка обмена из сохранённых полей — снимка истории обмена или переноса
+ * (серия D, Р5 и Р10): образец для `updateEntityRow`, когда запись
+ * возвращают к прежним значениям. Поля берутся в составе `scope`.
+ */
+export function exchangeRowFromFields(
+  entity: ExchangeEntity,
+  input: { id: string; fields: ExchangeFields; parentId?: string | null },
+  scope: ExchangeScope = "account",
+): EntityRow {
+  return makeRow(entity, { id: input.id, fields: input.fields, parentId: input.parentId ?? null }, scope);
+}
+
 /* ───────────────────────── чтение ───────────────────────── */
 
 /**

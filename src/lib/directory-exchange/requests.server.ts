@@ -1184,7 +1184,7 @@ async function approveLink(
     ],
   });
   try {
-    const outcome = await runDirectoryExchangeWithin(masterOrganizationId, { actor, now, waitMs });
+    const outcome = await runDirectoryExchangeWithin(masterOrganizationId, { actor, now, waitMs, trigger: "approval" });
     if (!outcome.running) return { running: false, summary: withPoolNote(outcome.summary) };
     // Сбой в фоне уже записан в лог (`runDirectoryExchangeWithin`).
     return { running: true, done: outcome.done.then((summary) => withPoolNote(summary ?? failed(null))) };

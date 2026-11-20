@@ -2917,7 +2917,8 @@
             "points": "Sites",
             "master": "Master cabinet",
             "more": "More",
-            "organization": "Company details"
+            "organization": "Company details",
+            "network": "Network"
           },
           "tabs": {
             "organization": "Company details",
@@ -4155,7 +4156,10 @@
       "ideaStatus": "{status, select, new {Idea “{title}” — new} planned {Idea “{title}” — planned} in_progress {Idea “{title}” — in progress} done {Idea “{title}” — completed} declined {Idea “{title}” — declined} other {Idea “{title}”}}",
       "ideaStatusLabel": "{status, select, new {New} planned {Planned} in_progress {In progress} done {Completed} declined {Declined} other {Unknown status}}",
       "openIdeas": "Open ideas",
-      "open": "Open"
+      "open": "Open",
+      "orgTrialEnding": "{stage, select, tomorrow {The free days of the organization “{name}” end tomorrow} other {The free days of the organization “{name}” are ending}}",
+      "orgTrialLastDay": "Last free day — {date}",
+      "addPoint": "Add a location"
     }
   },
   "journalControls": {
@@ -11169,6 +11173,58 @@
         "noAddress": "No address",
         "staff": "{count, plural, =0 {no staff} one {# employee} other {# employees}}"
       }
+    },
+    "network": {
+      "description": "All organizations of your account on one screen: today's journals, balance, own 14 days and directory exchange.",
+      "plan": {
+        "label": "Account plan: {plan}",
+        "paid": "{tier} · {count, plural, one {# location} other {# locations}}",
+        "legacy": "Subscription (previous plan)",
+        "trial": "trial through {date}",
+        "trialNoDate": "trial",
+        "free": "free",
+        "none": "not chosen"
+      },
+      "totals": {
+        "organizations": "Organizations",
+        "balance": "Total balance",
+        "unfilled": "With unfilled journals today",
+        "unfilledValue": "{count} of {total}",
+        "allFilled": "all filled"
+      },
+      "columns": {
+        "organization": "Organization",
+        "journals": "Journals today",
+        "balance": "Balance",
+        "trial": "Own 14 days",
+        "exchange": "Directory exchange",
+        "actions": "Actions"
+      },
+      "current": "current",
+      "deleting": "being deleted",
+      "journals": {
+        "value": "{done} of {total}",
+        "unknown": "—",
+        "status": {
+          "done": "all filled",
+          "partial": "not all filled",
+          "none": "not started",
+          "empty": "no journals",
+          "unknown": "could not count"
+        }
+      },
+      "trial": {
+        "active": "active through {date}",
+        "locked": "closed",
+        "none": "—"
+      },
+      "addPoint": "Add a location",
+      "exchange": {
+        "never": "never"
+      },
+      "go": "Open",
+      "goFailed": "Could not switch",
+      "truncated": "Showing the first {count} organizations by creation date."
     }
   },
   "sanpinReference": {
@@ -16508,7 +16564,8 @@
     "accessOwner": "Platform owner — full access",
     "sberBusiness": "SberBusiness",
     "timesheet": "Timesheet",
-    "correspondence": "Letters"
+    "correspondence": "Letters",
+    "directoryExchange": "Directory exchange"
   },
   "rootEdo": {
     "metadata": {
@@ -27220,11 +27277,11 @@
       },
       "transfers": {
         "title": "Recent transfers",
-        "hint": "A transfer can be undone within 7 days. Only what it created and what has not been used or changed since is undone.",
+        "hint": "A transfer can be undone within 7 days. Only what it created and what has not been used or changed since is undone; replaced journal settings are restored if they have not been changed.",
         "foreignSource": "Another company",
         "count": "{kind}: {count}",
         "undo": "Undo",
-        "undoConfirm": "Undo the transfer? Goods it created will be turned off, staff moved to the archive, other records deleted. Anything already in use or changed after the transfer stays.",
+        "undoConfirm": "Undo the transfer? Goods it created will be turned off, staff moved to the archive, other records deleted, replaced journal settings restored. Anything already in use or changed after the transfer stays.",
         "undoDone": "Transfer undone",
         "undoFailed": "Could not undo the transfer",
         "undoUntil": "can be undone until {date}",
@@ -27255,7 +27312,8 @@
           "linked": "the linked room or workshop stays",
           "not_undoable": "replaced settings cannot be restored"
         },
-        "fixed": "{kind}: cannot be undone"
+        "fixed": "{kind}: cannot be undone",
+        "replaced": "{kind}: replaced"
       },
       "skips": {
         "count": "Skipped: {count}",
@@ -27274,6 +27332,39 @@
         "linked": "Records linked",
         "failed": "Could not save — please try again",
         "empty": "All done — no skipped records.",
+        "done": "Done"
+      },
+      "history": {
+        "count": "Exchange history for 30 days: {count}",
+        "open": "Open",
+        "title": "Exchange history",
+        "description": "What the directory exchange created or changed in this organization over 30 days. Undo works only here — the other organizations keep everything as it is.",
+        "created": "Created",
+        "updated": "Changed",
+        "fromCabinet": "master cabinet “{name}”",
+        "undo": "Undo",
+        "undoCreateConfirm": "Undo the creation? The record will be deleted (a product turned off, an employee moved to the archive) if it has not been changed and is not in use. The exchange will not create it here again.",
+        "undoUpdateConfirm": "Bring back the previous values? Only in this organization — the others keep theirs. The next edit at the source will come again.",
+        "undoDone": "Change undone",
+        "undoFailed": "Could not undo the change",
+        "undoneAt": "undone {date}",
+        "kept": "Kept as is: {reason}",
+        "actions": {
+          "deleted": "Record deleted",
+          "archived": "Employee moved to the archive",
+          "deactivated": "Product turned off",
+          "restored": "Previous values restored",
+          "none": "The record was already gone — the exchange will not create it here again"
+        },
+        "reasons": {
+          "edited": "changed after the exchange",
+          "used": "in use: journal records, sensors or assignments",
+          "not_empty": "other records remain inside",
+          "has_staff": "the position has staff",
+          "linked": "the linked room or workshop stays",
+          "not_undoable": "this change cannot be undone"
+        },
+        "empty": "The exchange has changed nothing here in 30 days.",
         "done": "Done"
       }
     }
@@ -30636,7 +30727,8 @@
       "orgTrialRunning": "“{name}” — free through {date}, then it needs a location",
       "orgTrialLocked": "“{name}” — closed: the free days ended on {date}",
       "orgTrialLockedHint": "To open the closed organisations you need {points, plural, one {# location} other {# locations}} in total. The options below already include them.",
-      "orgTrialsLeft": "Free 14-day periods left for new organisations: {count}."
+      "orgTrialsLeft": "Free 14-day periods left for new organisations: {count}.",
+      "addPointsNote": "Adding a location: the choice below already has {count, plural, one {# location} other {# locations}}. Pick a plan and pay as usual."
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Commission — signs off the quality check",
@@ -32675,5 +32767,57 @@
     "failed": "Could not send. Please call us or write in the chat.",
     "phoneRequired": "Enter a phone number",
     "hint": "We use the number only to call you about this request."
+  },
+  "rootDirectoryExchange": {
+    "title": "Directory exchange",
+    "description": "Every directory exchange between clients' organizations: when, why and how it ended. Rows are kept for 90 days; times are Moscow time.",
+    "stats": {
+      "cabinets": "Cabinets with an exchange: {count}",
+      "problems": "Need attention: {count}"
+    },
+    "problems": {
+      "title": "Need attention",
+      "hint": "Cabinets whose last exchange failed or that have had no successful exchange for more than a day.",
+      "empty": "Every cabinet has exchanged successfully within the last day.",
+      "error": "Last exchange failed",
+      "noSuccess": "No successful exchange for a day",
+      "lastOk": "last successful — {date}",
+      "neverOk": "no successful exchanges yet",
+      "lastRun": "last — {date}",
+      "members": "Members: {count}"
+    },
+    "runs": {
+      "title": "Recent exchanges",
+      "filter": "Which exchanges to show",
+      "all": "All",
+      "onlyErrors": "Errors only",
+      "empty": "No exchanges yet.",
+      "emptyErrors": "No errors."
+    },
+    "columns": {
+      "when": "When",
+      "cabinet": "Cabinet and owner",
+      "trigger": "Reason",
+      "status": "Result",
+      "duration": "Duration",
+      "result": "Changes",
+      "error": "Error"
+    },
+    "triggers": {
+      "manual": "Manual",
+      "save": "Settings saved",
+      "approval": "Request approved",
+      "schedule": "Scheduled"
+    },
+    "statuses": {
+      "running": "Running",
+      "ok": "Done",
+      "busy": "Busy",
+      "error": "Error",
+      "stale": "Interrupted"
+    },
+    "result": "created {created}, updated {updated}, skipped {skipped}",
+    "seconds": "{value} s",
+    "unknownOwner": "owner not found"
   }
 }

@@ -30,7 +30,7 @@ export async function POST() {
     return NextResponse.json({ error: "Обмен справочниками ещё не настроен" }, { status: 400 });
   }
   try {
-    const outcome = await runDirectoryExchangeWithin(cabinet.id, { actor });
+    const outcome = await runDirectoryExchangeWithin(cabinet.id, { actor, trigger: "manual" });
     if (outcome.running) {
       after(outcome.done);
       return NextResponse.json({ ok: true, running: true });

@@ -1,0 +1,39 @@
+rows: [{"name":"Первая netchkmwpeiayw","current":true,"journals":{"done":2,"total":2},"status":"done","balance":5000,"trial":"none","exchange":"2026-11-20T16:57:47.912Z"},{"name":"Третья netchkmwpeiayw","current":false,"journals":{"done":0,"total":1},"status":"none","balance":0,"trial":"locked","exchange":null},{"name":"Вторая netchkmwpeiayw","current":false,"journals":{"done":1,"total":3},"status":"partial","balance":1200,"trial":"trial","exchange":null}]
+totals: {"organizations":3,"balanceRub":6200,"withUnfilled":2} plan: {"kind":"paid","tier":"standard","points":1}
+PASS summary lists exactly the three working organizations (no demo, no master cabinet), oldest first
+PASS active organization is marked current
+PASS journals today: first 2/2 done
+PASS journals today: second 1/3 partial
+PASS journals today: third 0/1 not started
+PASS balances per organization 5 000 / 1 200 / 0
+PASS total balance = 6 200 (demo 777 and cabinet 999 not counted)
+PASS organizations with unfilled journals today = 2 of 3
+PASS own 14 days: second in force through the last free day
+PASS own 14 days: third closed, first — none
+PASS last exchange: first = member lastSyncedAt, second — never
+PASS account plan: Standard, 1 point
+PASS non-owner manager of the organization → refused (not_owner)
+PASS owner of another account looking from this organization → refused (not_owner)
+PASS single-organization account → refused (single_org)
+PASS menu fact: owner with 3 organizations → true (also from another own organization)
+PASS menu fact: non-owner manager → false
+PASS menu fact: single-organization owner → false
+PASS menu fact: impersonating / point-scoped / no full access → false
+PASS menu: «Сеть» visible with the owner's fact, absent with the single-org owner's fact
+bell after the first run: [{"org":"cmwpeib4o0000227dwvz2r195","dedupeKey":"billing.org_trial:cmwpeib5w0003227dsjta4qrb:2026-11-23T07:57:47.912Z:3","title":"Бесплатные дни организации «Вторая netchkmwpeiayw» заканчиваются","linkHref":"/settings/subscription?addPoints=1","linkLabel":"Добавить точку","messageKey":"orgTrialEnding","messageParams":{"name":"Вторая netchkmwpeiayw","stage":"soon"},"items":[{"id":"org-trial:cmwpeib5w0003227dsjta4qrb","label":"Последний бесплатный день — 23 ноября","labelKey":"orgTrialLastDay","labelParams":{"day":"2026-11-23"}}]}]
+PASS reminder letter 3 days before went out once
+PASS one bell notification for the account owner
+PASS bell lives in the owner's home organization
+PASS bell link is /settings/subscription?addPoints=1 with «Добавить точку»
+PASS bell title names the organization
+PASS bell dedupe key: organization + trialEndsAt + stage 3
+PASS bell item carries the last free day
+bell in English: The free days of the organization “Вторая netchkmwpeiayw” are ending | Last free day — 23 November | Add a location
+PASS bell is presented in the reader's language
+PASS second run the same day: no new bell, the old one untouched, no letter
+PASS 1 day before: a separate bell «Завтра закончатся …» (stage 1)
+PASS letter button and Telegram button use ADD_POINTS_HREF
+PASS addPoints=1 on this account → plan picker opens with 1 + 1 = 2 points
+PASS no addPoints param → page as usual
+cleanup: organizations left 0
+TOTAL: 33 PASS, 0 FAIL

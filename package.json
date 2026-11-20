@@ -40,6 +40,7 @@
     "test:gate": "bash scripts/test-with-baseline.sh",
     "test:gate:full": "TEST_FULL=1 bash scripts/test-with-baseline.sh",
     "verify": "bash scripts/verify-before-push.sh",
+    "e2e:exchange": "bash scripts/e2e/run-all.sh",
     "qa:smoke:prod": "bash .agent/smoke-prod.sh",
     "qa:complete-tasks": "bash .agent/complete-all.sh",
     "qa:fill-remaining": "bash .agent/fill-remaining.sh",

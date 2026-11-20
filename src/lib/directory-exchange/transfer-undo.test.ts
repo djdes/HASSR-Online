@@ -10,14 +10,17 @@ import {
   decideUndo,
   editedAfter,
   editedByHash,
+  emptyTransferBefore,
   emptyTransferCreated,
   emptyTransferHashes,
   fixedTransferKinds,
   keepMirrorPartners,
   mirrorPairs,
+  parseTransferBefore,
   parseTransferCreated,
   parseTransferHashes,
   parseUndoResult,
+  replacedTransferKinds,
   transferCreatedCount,
   transferCreatedJson,
   transferUndoDeadline,
@@ -151,6 +154,42 @@ test("Р8.1: replaced journal settings are never undone; a checklist template fo
   assert.deepEqual(parseTransferCreated({ product: ["p1"] }).journal_settings, []);
   assert.deepEqual(parseTransferHashes({ hashes: { journal_settings: { "org-1": "abc" } } }).journal_settings, { "org-1": "abc" });
   assert.equal(parseUndoResult({ undone: [], kept: [{ entity: "journal_settings", id: "org-1", name: "", reason: "not_undoable" }] })?.kept.length, 1);
+});
+
+test("Р10: journal settings with a snapshot are restored unless edited; old transfers without one stay not undoable", () => {
+  assert.deepEqual(decideUndo("journal_settings", { snapshot: true }), { kind: "undo", action: "restored" });
+  assert.deepEqual(decideUndo("journal_settings", { snapshot: true, edited: true }), { kind: "keep", reason: "edited" });
+  assert.deepEqual(decideUndo("journal_settings", { snapshot: true, missing: true }), { kind: "skip" });
+  assert.deepEqual(decideUndo("journal_settings", { snapshot: false, edited: true }), { kind: "keep", reason: "not_undoable" });
+  // Снимок — только у заменённых записей: созданное отменяется как раньше.
+  assert.deepEqual(decideUndo("product", { snapshot: true }), { kind: "undo", action: "deactivated" });
+
+  const created = emptyTransferCreated();
+  created.journal_settings.push("org-1");
+  const before = emptyTransferBefore();
+  before.journal_settings["org-1"] = { disabledJournalCodes: "[\"hygiene\"]", autoJournalCodes: null, automation: "{}" };
+  assert.equal(undoableCreatedCount(created, before), 1);
+  assert.deepEqual(fixedTransferKinds(created, before), []);
+  assert.deepEqual(replacedTransferKinds(created, before), ["journals"]);
+  // Без снимка — по-старому.
+  assert.equal(undoableCreatedCount(created), 0);
+  assert.deepEqual(fixedTransferKinds(created), ["journals"]);
+  assert.deepEqual(replacedTransferKinds(created, emptyTransferBefore()), []);
+
+  // createdJson: снимок рядом с id и отпечатками; прежний разбор его не видит.
+  const json = JSON.parse(JSON.stringify(transferCreatedJson(created, { ...emptyTransferHashes(), journal_settings: { "org-1": "h1" } }, before)));
+  assert.deepEqual(parseTransferCreated(json), created);
+  assert.deepEqual(parseTransferBefore(json), before);
+  assert.equal(parseTransferHashes(json).journal_settings["org-1"], "h1");
+  // Без снимков ключа `before` нет — запись как до серии D.
+  assert.equal(Object.hasOwn(transferCreatedJson(created, emptyTransferHashes()), "before"), false);
+  // Мусор в снимке отбрасывается, числа-массивы (дни недели) остаются.
+  assert.deepEqual(
+    parseTransferBefore({ before: { journal_settings: { "org-1": { a: "x", b: { nested: 1 }, c: [1, 2], d: Number.NaN }, "": { a: "y" } }, nope: { x: {} } } }),
+    { ...emptyTransferBefore(), journal_settings: { "org-1": { a: "x", c: [1, 2] } } },
+  );
+  assert.deepEqual(parseTransferBefore(null), emptyTransferBefore());
+  assert.deepEqual(parseUndoResult({ undone: [{ entity: "journal_settings", id: "org-1", name: "", action: "restored" }], kept: [] })?.undone[0]?.action, "restored");
 });
 
 test("mirror pairs: same name on the same object, case and ё insensitive", () => {

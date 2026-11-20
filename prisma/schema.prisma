@@ -730,6 +730,8 @@ model Organization {
   directoryExchangeRequestsIn  DirectoryExchangeRequest[]   @relation("DirectoryExchangeRequestMaster")
   directoryExchangeRequestsOut DirectoryExchangeRequest[]   @relation("DirectoryExchangeRequestRequester")
   directoryExchangeSkips       DirectoryExchangeSkip[]      @relation("DirectoryExchangeSkipMaster")
+  directoryExchangeRuns        DirectoryExchangeRun[]       @relation("DirectoryExchangeRunMaster")
+  directoryExchangeChanges     DirectoryExchangeChange[]    @relation("DirectoryExchangeChangeTarget")
   directoryExchangeSkipsIn     DirectoryExchangeSkip[]      @relation("DirectoryExchangeSkipTarget")
   directoryTransfersOut        DirectoryTransfer[]          @relation("DirectoryTransferFrom")
   directoryTransfersIn         DirectoryTransfer[]          @relation("DirectoryTransferTo")
@@ -6214,6 +6216,56 @@ model DirectoryExchangeSkip {
 
   @@unique([masterOrganizationId, entity, groupId, organizationId])
   @@index([organizationId])
+}
+
+/// Один обмен справочниками кабинета (серия D, 2026-11-20): для страницы ROOT
+/// «Обмен справочниками». Строки старше 90 дней удаляет плановый обмен.
+model DirectoryExchangeRun {
+  id                   String       @id @default(cuid())
+  masterOrganizationId String
+  masterOrganization   Organization @relation("DirectoryExchangeRunMaster", fields: [masterOrganizationId], references: [id], onDelete: Cascade)
+  /// manual | schedule | save | approval
+  trigger              String
+  /// running | ok | busy | error
+  status               String       @default("running")
+  startedAt            DateTime     @default(now())
+  finishedAt           DateTime?
+  durationMs           Int?
+  created              Int          @default(0)
+  updated              Int          @default(0)
+  skipped              Int          @default(0)
+  error                String?
+
+  @@index([masterOrganizationId, startedAt])
+  @@index([startedAt])
+}
+
+/// Что обмен создал или изменил у организации (серия D): «История» в карточке
+/// «Обмен справочниками» с отменой. Строки старше 30 дней удаляет плановый обмен.
+model DirectoryExchangeChange {
+  id                   String       @id @default(cuid())
+  runId                String?
+  masterOrganizationId String
+  organizationId       String
+  organization         Organization @relation("DirectoryExchangeChangeTarget", fields: [organizationId], references: [id], onDelete: Cascade)
+  /// product | position | staff | building | room | area | equipment | journal_settings | checklist_template
+  entity               String
+  entityId             String
+  groupId              String
+  /// create | update
+  op                   String
+  sourceOrganizationId String?
+  name                 String
+  /// Поля записи до правки (`update`); у создания — null.
+  beforeJson           Json?
+  /// Поля записи после обмена.
+  afterJson            Json?
+  undoneAt             DateTime?
+  undoneByUserId       String?
+  createdAt            DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([masterOrganizationId, createdAt])
 }
 
 /// Разовый перенос справочников (серия B, 2026-11-20): что создано — чтобы
