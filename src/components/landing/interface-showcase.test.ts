@@ -15,6 +15,7 @@ test("слайдер кабинета стоит на главной сразу 
   const capabilities = page.indexOf("{CAPABILITIES.map");
   assert.ok(qr > 0 && showcase > qr && capabilities > showcase, "порядок: QR-ролик → кабинет → что ещё умеет");
   assert.ok(page.includes("<InterfaceShowcase"), "компонент слайдера подключён");
+  assert.ok(page.includes('<LandingSectionHeader title={copy("landing.showcase.title")} />'), "у кабинета только заголовок");
   assert.ok(slideIds.length >= 5, `экранов не меньше пяти, сейчас ${slideIds.length}`);
 });
 
@@ -36,9 +37,12 @@ test("подписи экранов есть во всех трёх катало
       landing: { showcase: Record<string, unknown> & { slides: Record<string, { tab: string; title: string; text: string }> } };
     };
     const showcase = catalog.landing.showcase;
-    for (const key of ["title", "lead", "region", "tabs", "previous", "next", "position"]) {
+    for (const key of ["title", "region", "tabs", "previous", "next", "position"]) {
       assert.equal(typeof showcase[key], "string", `${locale}: landing.showcase.${key}`);
     }
+    // Правки 20.11.2026: заголовок без хвоста «: всё видно сразу», абзаца под ним нет.
+    assert.equal(showcase.lead, undefined, `${locale}: landing.showcase.lead убран`);
+    if (locale === "ru") assert.equal(showcase.title, "Кабинет руководителя");
     for (const id of slideIds) {
       const slide = showcase.slides[id];
       assert.ok(slide, `${locale}: нет экрана ${id}`);

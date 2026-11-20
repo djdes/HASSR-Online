@@ -5775,8 +5775,8 @@
     "signedInAs": "Signed in as ",
     "tryFree": "Try for free",
     "refundGuarantee": "14-day money-back guarantee.",
-    "qrEquipmentTitle": "QR code",
     "qrScanHeadline": "Scan — PIN — Entry",
+    "qrOffline": "Can work without internet",
     "qrScanDescription": "Employees scan the equipment sticker, enter their PIN and a reading, and the entry is added to the SanPiN log. No app or password needed.",
     "automationHeadline": "Reminders, automatic entries and inspection PDFs",
     "automationLead": "The QR code is just the start. WeSetup handles the rest.",
@@ -5927,8 +5927,7 @@
       "features": "{count, number} logs · QR entry · Automated reminders"
     },
     "showcase": {
-      "title": "The manager’s workspace at a glance",
-      "lead": "WeSetup screens with sample data. Staff and access use an industry-neutral example; logs and checks use food service examples. Your log set depends on your organisation’s industry.",
+      "title": "The manager’s workspace",
       "region": "WeSetup workspace screens",
       "tabs": "Workspace screens",
       "previous": "Previous screen",
@@ -5991,9 +5990,9 @@
     },
     "qrScanSteps": {
       "label": "Step {step, number}",
-      "scan": "An employee scans the QR code",
-      "pin": "Finds their name in the staff list and enters their PIN",
-      "entry": "Enters the data and it lands in the log, **even without internet!**"
+      "scan": "An employee **scans** the QR code",
+      "pin": "Picks their name and **enters the PIN**",
+      "entry": "Enters the data — **saved to the log**"
     },
     "presentationPdfShort": "PDF"
   },
@@ -6274,7 +6273,6 @@
       "storyboardCaption": "Storyboard {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "Chapter {chapterNumber, number}: {chapterName}. Log: {journalName}. {caption}",
       "watchVideo": "Watch the video with sound",
-      "watchVideoHint": "Food service example: QR codes and log entries. Turn on sound.",
       "videoLabel": "How QR works — video with sound",
       "videoSubtitles": "Subtitles",
       "seekValue": "{currentTime} of {totalTime}, chapter “{chapterName}”",
@@ -6322,6 +6320,27 @@
         "short": "The sensor records the temperature automatically and sends an alert if it is out of range.",
         "place": "Wi-Fi sensor in the refrigerated display case"
       }
+    },
+    "industries": {
+      "label": "Type of business",
+      "food": {
+        "label": "Food service",
+        "short": "Food",
+        "pending": "Video for food service"
+      },
+      "medical": {
+        "label": "Medical center",
+        "short": "Medical",
+        "pending": "Video for a medical center"
+      },
+      "hotel": {
+        "label": "Hotel",
+        "short": "Hotel",
+        "pending": "Video for a hotel"
+      },
+      "pendingBadge": "In progress",
+      "pendingText": "It works the same way: scan — PIN — entry. Meanwhile, see how it works in food service.",
+      "pendingBack": "Food service example"
     }
   },
   "glassInventory": {
@@ -6690,7 +6709,6 @@
       "launcher": "Contacts",
       "launcherAria": "Contacts: phone, Telegram, MAX, email or leave your contact details",
       "title": "Contacts",
-      "lead": "Call or message us. If you'd rather we reach out, leave your contact below.",
       "formTitle": "Leave your contact details",
       "name": "Your name",
       "namePlaceholder": "For example, Anna",
@@ -6710,8 +6728,7 @@
       "sent": "Request received — we'll get back to you during business hours.",
       "contactRequired": "Enter a phone, username or email so we can reply",
       "emailInvalid": "To be contacted by email, enter an address such as name@mail.com",
-      "failed": "Couldn't send it. Call us or write in the site chat.",
-      "privacy": "We use your contact only to answer your question."
+      "failed": "Couldn't send it. Call us or write in the site chat."
     }
   },
   "journalInfoTaglines": {
