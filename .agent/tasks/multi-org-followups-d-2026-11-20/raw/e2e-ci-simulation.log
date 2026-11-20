@@ -1,21 +1,14 @@
-# CI simulation: the workflow's commands against a fresh local database haccp_e2e_ci, with the workflow's env only (no .env for the scenarios; ROOT_* empty).
+# CI simulation 2026-11-20T20:33:52Z: the workflow's commands against a fresh local database haccp_e2e_ci (host localhost, as in the workflow), with the workflow's env only (no .env for the scenarios; ROOT_* empty).
 # npx prisma generate is skipped here: the client is already generated in this checkout (CI generates it on a fresh runner).
 $ npx prisma db push
-Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 Datasource "db": PostgreSQL database "haccp_e2e_ci", schema "public" at "localhost:5432"
 
-🚀  Your database is now in sync with your Prisma schema. Done in 1.83s
+🚀  Your database is now in sync with your Prisma schema. Done in 1.56s
 
 exit=0
 $ npx tsx prisma/seed.ts
-  Done: daily_samples: Журнал отбора и хранения суточных проб
-  Done: vitaminization: Журнал проведения витаминизации третьих и сладких блюд
-  Done: ration_control: Ведомость контроля за рационом питания
-  Done: transport_temperature: Журнал контроля температуры при транспортировке
-  Done: tableware_breakage: Журнал учёта боя посуды
-  Done: pool_water_control: Журнал контроля качества воды в бассейне
   Done: inventory_condition: Журнал оценки состояния металлического и пластикового инвентаря
   Done: instrument_sterilization: Журнал контроля стерилизации инструментов
   Done: medical_waste_b: Журнал учёта отходов класса Б
@@ -36,7 +29,7 @@ PASS members saved to the same cabinet
 PASS series A AC6: products in the exchange do not connect organizations to the cabinet menu and raw materials
 [billing] trial settings initialized {
   trialDays: 14,
-  launchedAt: '2026-11-20T19:54:21.900Z',
+  launchedAt: '2026-11-20T20:33:57.893Z',
   graceDays: 7,
   transitionEnabled: true
 }
@@ -92,7 +85,7 @@ PASS transfer into a foreign organization → 404
 PASS cabinet for a foreign account → 403
 PASS foreign organization got nothing
 [billing] seat limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -101,28 +94,28 @@ PASS foreign organization got nothing
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxbg0031lb7dmgxryt76',
+  organizationId: 'cmwpfsuje0031ed7d1wxjklwj',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -131,31 +124,31 @@ PASS foreign organization got nothing
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxbg0031lb7dmgxryt76',
+  organizationId: 'cmwpfsuje0031ed7d1wxjklwj',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
-DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/1/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Чужая-2",{"products":"0/0/0/0","staff":"1/0/1/0","objects":"0/0/2/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[] otherCabinet cmwpedxdg003clb7d6bv0wr4q
+DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/1/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Чужая-2",{"products":"0/0/0/0","staff":"1/0/1/0","objects":"0/0/2/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[] otherCabinet cmwpfsukv003ced7dcerlv9xf
 PASS tariff: employee over the seat limit skipped and reported
 PASS tariff: objects over the point limit skipped and reported
 [billing] seat limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -164,21 +157,21 @@ PASS tariff: objects over the point limit skipped and reported
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxbg0031lb7dmgxryt76',
+  organizationId: 'cmwpfsuje0031ed7d1wxjklwj',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -187,7 +180,7 @@ PASS tariff: objects over the point limit skipped and reported
 PASS tariff: skipped records are retried, nothing else changes
 PASS empty kinds: member and its links removed
 [billing] seat limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -196,21 +189,21 @@ PASS empty kinds: member and its links removed
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxce0035lb7du3tdr4gb',
+  organizationId: 'cmwpfsuk30035ed7dkzstgj1x',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwpedxbg0031lb7dmgxryt76',
+  organizationId: 'cmwpfsuje0031ed7d1wxjklwj',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -294,11 +287,11 @@ cleanup: organizations left 0
 TOTAL: 6 PASS, 0 FAIL
 
 ================ reminder-check ================
-letter 3 days before: [{"to":"remchkmwpee3y5-paid@example.test","subject":"Через 3 дня закончатся бесплатные дни организации «Вторая remchkmwpee3y5»"}]
+letter 3 days before: [{"to":"remchkmwpft01v-paid@example.test","subject":"Через 3 дня закончатся бесплатные дни организации «Вторая remchkmwpft01v»"}]
 PASS 3 days before: one letter «Через 3 дня закончатся бесплатные дни организации …» to the account owner
 PASS 3 days before: one AuditLog mark with stage 3
 PASS second run the same day: no letter, no new mark
-letter 1 day before: [{"to":"remchkmwpee3y5-paid@example.test","subject":"Завтра закончатся бесплатные дни организации «Вторая remchkmwpee3y5»"}]
+letter 1 day before: [{"to":"remchkmwpft01v-paid@example.test","subject":"Завтра закончатся бесплатные дни организации «Вторая remchkmwpft01v»"}]
 PASS 1 day before: the second letter «Завтра закончатся бесплатные дни организации …»
 PASS 1 day before: two marks in total, stages 3 and 1
 PASS account in its own trial: no letter, no mark
@@ -308,7 +301,7 @@ TOTAL: 7 PASS, 0 FAIL
 
 ================ skips-check ================
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -317,7 +310,7 @@ TOTAL: 7 PASS, 0 FAIL
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -326,7 +319,7 @@ TOTAL: 7 PASS, 0 FAIL
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -335,7 +328,7 @@ TOTAL: 7 PASS, 0 FAIL
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -351,7 +344,7 @@ PASS rows match the summary counters (B products, B staff, A products)
 PASS row carries source organization and record
 PASS the other direction: A has a conflict row for B's «МОЛОКО»
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -360,7 +353,7 @@ PASS the other direction: A has a conflict row for B's «МОЛОКО»
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -382,7 +375,7 @@ PASS ignore: tombstone link written (entityId null)
 PASS ignore: row removed
 PASS ignore: audit directory_exchange.skip_ignored in B
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -391,7 +384,7 @@ PASS ignore: audit directory_exchange.skip_ignored in B
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -405,7 +398,7 @@ PASS link: row removed
 PASS link: the record's own lonely group is released, A's row for it is gone
 PASS link: audit directory_exchange.skip_linked in B
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -414,7 +407,7 @@ PASS link: audit directory_exchange.skip_linked in B
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -425,7 +418,7 @@ PASS link: audit directory_exchange.skip_linked in B
 PASS link: next exchange leaves B's record data unchanged
 PASS link: next exchange creates and updates no products, no «Молоко» rows anywhere
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -434,7 +427,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -443,7 +436,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -452,7 +445,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -462,7 +455,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
 }
 PASS link: a later edit of the source reaches the linked record
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -473,7 +466,7 @@ PASS link: a later edit of the source reaches the linked record
 PASS re-activated product in B: its row is gone
 PASS employee added in B by hand: the limit row is gone
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -482,7 +475,7 @@ PASS employee added in B by hand: the limit row is gone
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwpee6910004rn7d60i8cl9m',
+  organizationId: 'cmwpft1tr0004jg7d0jjvmg6l',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -548,10 +541,10 @@ PASS route mapper: 409 { code: deleting, params: { name } }
 PASS transfer OUT of an organization being deleted is allowed (closing 300 → 0, A 3 500 → 3 800)
 PASS 4 × (A→B and B→A) at once: all 8 transfers succeed
 PASS opposite transfers: A and B balances back where they were
-PASS ledger invariant for Кафе А balchkmwpee88z
-PASS ledger invariant for Бар Б balchkmwpee88z
-PASS ledger invariant for Столовая В balchkmwpee88z
-PASS ledger invariant for Закрывается balchkmwpee88z
+PASS ledger invariant for Кафе А balchkmwpft3f3
+PASS ledger invariant for Бар Б balchkmwpft3f3
+PASS ledger invariant for Столовая В balchkmwpft3f3
+PASS ledger invariant for Закрывается balchkmwpft3f3
 cleanup: organizations left 0, ledger rows left 0, audit rows left 0
 TOTAL: 47 PASS, 0 FAIL
 
@@ -1129,37 +1122,38 @@ PASS AC6: F's own edits (journals, a template of the owner) do not reach the own
 PASS AC6 (transfer): approved
 PASS AC6 (transfer): G got the owner's templates and journal settings
 PASS AC6 (transfer): a template of another company (F) is not passed to G
-FAIL AC6 (transfer): G's recent transfer marks journals as not undoable, the rest undoable — [{"id":"cmwpef4kb002o637dz4zvlyul","createdAt":"2026-11-20T19:55:19.643Z","from":{"name":"Мастер-кабинет","foreign":true},"to":{"id":"cmwpef4gq002f637d7hh6is92","name":"Компания-G nlchkmwpef2yr"},"counts":{"products":0,"staff":0,"objects":0,"equipment":0,"journals":0,"checklists":2},"fixedKinds":[],"replacedKinds":["journals"],"onlyFixed":false,"undoUntil":"2026-11-27T19:55:19.643Z","undoable":true,"undoneAt":null,"undo":null}]
-FAIL AC6 (transfer undo): templates deleted, journal settings kept as «cannot be undone» — {"undone":[{"entity":"checklist_template","id":"cmwpef4js002m637daeyn8jkw","name":"Проверка кухни","action":"deleted"},{"entity":"checklist_template","id":"cmwpef4jw002n637dhocmcotj","name":"Санитарный день","action":"deleted"},{"entity":"journal_settings","id":"cmwpef4gq002f637d7hh6is92","name":"","action":"restored"}],"kept":[]}
+PASS AC6 (transfer): G's recent transfer marks journals as replaced (undoable since series D, Р10), the rest undoable
+PASS AC6 (transfer undo): templates deleted, G's previous journal settings restored (series D, Р10)
 --- own one-off transfer
 PASS Р8.5 (preview): journals — one settings item, not «exists» while settings differ; checklists — live templates
 PASS transfer: summary — journals updated 1, checklists created 3
 PASS transfer: C has A's journal settings and switches
 PASS transfer: afterwards the preview shows the settings and templates as existing
-FAIL transfer: listed with «Журналы: cannot be undone» and an undo button — {"id":"cmwpef4px002z637ds1beqti0","createdAt":"2026-11-20T19:55:19.845Z","from":{"name":"Первая nlchkmwpef2yr","foreign":false},"to":{"id":"cmwpef4n2002u637du8in1nns","name":"Третья nlchkmwpef2yr"},"counts":{"products":0,"staff":0,"objects":0,"equipment":0,"journals":0,"checklists":3},"fixedKinds":[],"replacedKinds":["journals"],"onlyFixed":false,"undoUntil":"2026-11-27T19:55:19.845Z","undoable":true,"undoneAt":null,"undo":null}
-FAIL transfer undo: unused templates deleted, the assigned one kept as «used», settings kept as «cannot be undone» — {"undone":[{"entity":"checklist_template","id":"cmwpef4pn002w637d66v1xzfc","name":"Проверка кухни","action":"deleted"},{"entity":"checklist_template","id":"cmwpef4ps002y637dh4f9tgfj","name":"Чек-лист компании F","action":"deleted"},{"entity":"journal_settings","id":"cmwpef4n2002u637du8in1nns","name":"","action":"restored"}],"kept":[{"entity":"checklist_template","id":"cmwpef4pp002x637dei8usxje","name":"Санитарный день","reason":"used"}]}
-FAIL journals-only transfer: no undo, no deadline (onlyFixed) — {"id":"cmwpef4vj0036637d30bir8c1","createdAt":"2026-11-20T19:55:20.047Z","from":{"name":"Первая nlchkmwpef2yr","foreign":false},"to":{"id":"cmwpef4tn0034637d3fjsefn1","name":"Четвёртая nlchkmwpef2yr"},"counts":{"products":0,"staff":0,"objects":0,"equipment":0,"journals":0,"checklists":0},"fixedKinds":[],"replacedKinds":["journals"],"onlyFixed":false,"undoUntil":"2026-11-27T19:55:20.047Z","undoable":true,"undoneAt":null,"undo":null}
-FAIL journals-only transfer: undo refused with 409, nothing marked undone — null
-FAIL same settings again: nothing to transfer, no new transfer record — {"created":0,"updated":1,"skippedLimit":0,"skippedConflict":0}
+PASS transfer: listed with «Журналы: replaced» (undoable since series D, Р10) and an undo button
+PASS transfer undo: unused templates deleted, the assigned one kept as «used», previous settings restored (series D, Р10)
+PASS journals-only transfer: undoable since series D (Р10) — replaced, not «only fixed»
+PASS journals-only transfer: undo restores D's previous settings and marks the transfer undone
+PASS after the undo the settings transfer again (a new transfer record)
+PASS same settings again: nothing to transfer, no new transfer record
 cleanup: organizations left 0, users left 0, accounts left 0, links left 0, templates left 0, settings left 0
-TOTAL: 47 PASS, 7 FAIL
-RESULT: 7 check(s) failed
+TOTAL: 55 PASS, 0 FAIL
+RESULT: all checks passed
 
 ================ summary ================
 PASS  part2-exchange-check (6s): 88 checks passed
 PASS  background-check (2s): 14 checks passed
-PASS  locked-check (3s): 6 checks passed
+PASS  locked-check (1s): 6 checks passed
 PASS  reminder-check (2s): 7 checks passed
 PASS  skips-check (3s): 39 checks passed
-PASS  balance-check (2s): 47 checks passed
-PASS  root-org-trial-check (2s): 25 checks passed
-PASS  transfer-undo-check (8s): 65 checks passed
+PASS  balance-check (1s): 47 checks passed
+PASS  root-org-trial-check (1s): 25 checks passed
+PASS  transfer-undo-check (7s): 65 checks passed
 PASS  cabinet-code-check (3s): 37 checks passed
-PASS  multi-company-check (7s): 49 checks passed
-PASS  part3-foreign-check (7s): 180 checks passed
+PASS  multi-company-check (6s): 49 checks passed
+PASS  part3-foreign-check (5s): 180 checks passed
 PASS  pool-check (4s): 49 checks passed
-PASS  versioning-check (7s): 41 checks passed
-FAIL  new-lists-check (4s, exit code 1): 47 passed, 7 failed
-scenarios: 14, passed: 13, failed: 1; checks: 694 passed, 7 failed; time: 60s
-RESULT: 1 scenario(s) failed
-exit=1
+PASS  versioning-check (4s): 41 checks passed
+PASS  new-lists-check (3s): 55 checks passed
+scenarios: 14, passed: 14, failed: 0; checks: 702 passed, 0 failed; time: 48s
+RESULT: all scenarios passed
+exit=0

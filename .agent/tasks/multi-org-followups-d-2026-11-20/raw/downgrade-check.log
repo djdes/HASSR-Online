@@ -8,6 +8,12 @@ PASS dry run: the cabinet is among the cabinets to roll back
 PASS AC1 dry run (library): planned = every room and position link with a record; the tombstone left
 PASS AC1 dry run (script): reports the count and exits 0
 PASS AC1 dry run: nothing written — every link of the cabinet identical, update dates too
+--- the exchange pause
+PASS --apply (script) without the exchange pause: refused, exit code 2, nothing written
+PASS pause on: a manual exchange is refused — 409, busy code, «Обмен справочниками временно приостановлен»
+PASS pause on: the refused attempt is in the exchange journal as «busy»
+PASS pause on: the scheduled run skips the cabinets (busy), no errors
+PASS pause on: nothing written — every link of the cabinet identical
 PASS --apply while the cabinet is busy: skipped, nothing written
 PASS --apply (script) while busy: «ЗАНЯТ», exit code 1, nothing written
 --- apply
@@ -19,9 +25,10 @@ PASS control: without the rollback the code before C2 would see every one of the
 PASS AC1 --apply: the tombstone and the links of other entities are untouched (update dates too)
 PASS AC1 --apply: no record of A, B or F changed
 PASS AC1 second --apply: 0 changes
-PASS AC1 second --apply (script): «записано 0», exit code 0
+PASS AC1 second --apply (script, paused): «записано 0», exit code 0
+PASS --apply --force without the pause: a warning, then it runs (0 here), exit code 0
 PASS AC1 second --apply: links as after the first
---- a normal exchange after the rollback (current code)
+--- pause off: a normal exchange after the rollback (current code)
 PASS normal exchange: 0 created, 0 updated
 PASS normal exchange: the links are version 2 again — the very fingerprints they had before the rollback
 PASS normal exchange: no record of A, B or F changed
@@ -34,5 +41,5 @@ PASS --apply: the link of the gone position is untouched
 PASS next exchange: A's edit reaches B and F, nothing else is updated
 PASS next exchange: the gone position became a tombstone (not created again), every other link is version 2
 cleanup: organizations left 0, users left 0, accounts left 0, links left 0
-TOTAL: 31 PASS, 0 FAIL
+TOTAL: 37 PASS, 0 FAIL
 RESULT: all checks passed

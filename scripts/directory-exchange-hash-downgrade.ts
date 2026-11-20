@@ -12,18 +12,21 @@
  * По умолчанию — пробный прогон: только отчёт по кабинетам, ничего не пишется.
  * `--apply` — запись: по кабинету в одной транзакции под замком обмена; занятый
  * кабинет пропускается (код выхода тогда 1 — запустите ещё раз). Повторный
- * `--apply` — 0 изменений.
+ * `--apply` — 0 изменений. `--apply` пишет только при паузе обмена
+ * (`DIRECTORY_EXCHANGE_PAUSED=1` в `.env` приложения + `pm2 restart`): иначе
+ * обмен нынешнего кода вернёт связи на новую версию; `--force` — без паузы.
  *
  *   npx tsx scripts/directory-exchange-hash-downgrade.ts                  # что будет сделано
- *   npx tsx scripts/directory-exchange-hash-downgrade.ts --apply          # сделать
+ *   npx tsx scripts/directory-exchange-hash-downgrade.ts --apply          # сделать (при паузе обмена)
  *   npx tsx scripts/directory-exchange-hash-downgrade.ts --cabinet=<id>   # один кабинет
  *   npx tsx scripts/directory-exchange-hash-downgrade.ts --to-version=2   # откат к версии 2 (по умолчанию 1)
  */
 import "dotenv/config";
 
 import { db } from "../src/lib/db";
-import { DEFAULT_DOWNGRADE_VERSION, type DowngradeCounts } from "../src/lib/directory-exchange/hash-downgrade";
+import { DEFAULT_DOWNGRADE_VERSION, downgradeApplyGate, type DowngradeCounts } from "../src/lib/directory-exchange/hash-downgrade";
 import { downgradeCabinetHashes, listDowngradeCabinets } from "../src/lib/directory-exchange/hash-downgrade.server";
+import { EXCHANGE_PAUSE_ENV, isExchangePaused } from "../src/lib/directory-exchange/pause";
 
 const LEFT_LABELS: Record<keyof DowngradeCounts["left"], string> = {
   edited: "правили после обмена — код до отката разнесёт правку",
@@ -52,10 +55,23 @@ function describe(counts: DowngradeCounts): string {
 
 async function main(): Promise<number> {
   const apply = process.argv.includes("--apply");
-  const unknown = process.argv.slice(2).filter((arg) => arg !== "--apply" && !arg.startsWith("--cabinet=") && !arg.startsWith("--to-version="));
+  const unknown = process.argv
+    .slice(2)
+    .filter((arg) => arg !== "--apply" && arg !== "--force" && !arg.startsWith("--cabinet=") && !arg.startsWith("--to-version="));
   if (unknown.length > 0) {
     console.error(`неизвестные аргументы: ${unknown.join(" ")}`);
     return 2;
+  }
+  const gate = downgradeApplyGate({ apply, force: process.argv.includes("--force"), paused: isExchangePaused() });
+  if (gate === "refused") {
+    console.error(
+      `--apply только при паузе обмена: ${EXCHANGE_PAUSE_ENV}=1 в .env приложения, затем pm2 restart (docs/directory-exchange-rollback.md). ` +
+        "Иначе обмен нынешнего кода вернёт связи на новую версию. Ничего не записано; без паузы — --force.",
+    );
+    return 2;
+  }
+  if (gate === "forced") {
+    console.warn(`ВНИМАНИЕ: --force без паузы обмена (${EXCHANGE_PAUSE_ENV}) — обмен до выката отката вернёт связи своего кабинета на новую версию.`);
   }
   const targetVersion = Number(argValue("to-version") ?? DEFAULT_DOWNGRADE_VERSION);
   if (!Number.isInteger(targetVersion) || targetVersion < 1) {

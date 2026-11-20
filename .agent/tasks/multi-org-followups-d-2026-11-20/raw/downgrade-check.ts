@@ -7,14 +7,18 @@
  *    leaves a tombstone.
  * 2. Dry run (the library function and the script itself): the planned count, nothing written
  *    (every link of the cabinet identical, update dates too).
- * 3. A cabinet busy with an exchange is skipped with nothing written.
+ * 3. The exchange pause (`DIRECTORY_EXCHANGE_PAUSED=1`): without it the script refuses `--apply`
+ *    (nothing written; `--force` overrides with a warning); with it a manual exchange is refused
+ *    with 409 «Обмен справочниками временно приостановлен», the scheduled run skips the cabinet
+ *    (counted as busy, no error) and links stay as they are. A cabinet busy with an exchange is
+ *    skipped with nothing written.
  * 4. `--apply` (the library function): room and position links become version 1 without marks,
  *    and each equals the fingerprint the code before C2 computes for its row (written out here
  *    independently: room {name, kind, sortOrder} + the building's group; position {name}) — so
  *    the code before C2 sees every record unchanged. Tombstones, other entities and the data stay.
  * 5. A second `--apply`: 0 changes.
- * 6. A normal exchange (current code) moves them back to version 2 with 0 created / 0 updated —
- *    to the very fingerprints they had before the rollback.
+ * 6. Pause off: a normal exchange (current code) moves them back to version 2 with 0 created /
+ *    0 updated — to the very fingerprints they had before the rollback.
  * 7. Safety: a row edited after the last exchange keeps its version-2 link (the old code sees the
  *    edit and carries it — not hidden), a link whose row is gone is left alone; the next exchange
  *    carries the edit and tombstones the gone row.
@@ -28,10 +32,12 @@ import { spawnSync } from "node:child_process";
 import { syncRoomChecklistItems } from "@/lib/cleaning-room-checklist-sync";
 import { parseScopeSteps } from "@/lib/cleaning-document";
 import { db } from "@/lib/db";
+import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { downgradeCabinetHashes, listDowngradeCabinets } from "@/lib/directory-exchange/hash-downgrade.server";
 import { hashFields, hashTag } from "@/lib/directory-exchange/kinds";
 import { createExchangeRequest, decideExchangeRequest } from "@/lib/directory-exchange/requests.server";
-import { runDirectoryExchange, withExchangeLock } from "@/lib/directory-exchange/run.server";
+import { EXCHANGE_PAUSE_ENV, EXCHANGE_PAUSED_MESSAGE } from "@/lib/directory-exchange/pause";
+import { EXCHANGE_BUSY_CODE, runAllDirectoryExchanges, runDirectoryExchange, withExchangeLock } from "@/lib/directory-exchange/run.server";
 import { ensureExchangeCabinet, saveExchangeMembers } from "@/lib/directory-exchange/settings.server";
 import { summaryTotals, type ExchangeSummary } from "@/lib/directory-exchange/summary";
 import { createStaffMember } from "@/lib/staff-create";
@@ -181,10 +187,31 @@ async function preC2Sees(cabinetId: string, link: Link): Promise<"unchanged" | "
   return preC2.rowHash(entity, row.fields, row.parent, scope) === link.hash ? "unchanged" : "edited";
 }
 
-/** The script itself, as on the server (dry run unless `--apply` is passed). */
-function runScript(args: string[]) {
-  const result = spawnSync("npx", ["tsx", "scripts/directory-exchange-hash-downgrade.ts", ...args], { cwd: process.cwd(), encoding: "utf8", timeout: 180_000 });
+/** The script itself, as on the server (dry run unless `--apply` is passed); it inherits this process's env. */
+function runScript(args: string[], env: Record<string, string> = {}) {
+  const result = spawnSync("npx", ["tsx", "scripts/directory-exchange-hash-downgrade.ts", ...args], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    timeout: 180_000,
+    env: { ...process.env, ...env },
+  });
   return { code: result.status, out: `${result.stdout ?? ""}${result.stderr ?? ""}` };
+}
+
+const pause = (on: boolean) => {
+  if (on) process.env[EXCHANGE_PAUSE_ENV] = "1";
+  else delete process.env[EXCHANGE_PAUSE_ENV];
+};
+
+/** A manual exchange: its refusal, or null when it ran. */
+async function refusalOf(cabinetId: string, actor: { userId: string; userName: string }): Promise<DirectoryExchangeError | null> {
+  try {
+    await runDirectoryExchange(cabinetId, { actor });
+    return null;
+  } catch (error) {
+    if (error instanceof DirectoryExchangeError) return error;
+    throw error;
+  }
 }
 
 async function main() {
@@ -281,6 +308,27 @@ async function main() {
   );
   check("AC1 dry run: nothing written — every link of the cabinet identical, update dates too", same(await allLinks(cabinet.id), before));
 
+  /* ── пауза обмена ── */
+  console.log("--- the exchange pause");
+  const unpaused = runScript([`--cabinet=${cabinet.id}`, "--apply"], { [EXCHANGE_PAUSE_ENV]: "" });
+  check(
+    "--apply (script) without the exchange pause: refused, exit code 2, nothing written",
+    unpaused.code === 2 && unpaused.out.includes("--apply только при паузе обмена") && same(await allLinks(cabinet.id), before),
+    unpaused.out,
+  );
+  pause(true);
+  const refused = await refusalOf(cabinet.id, x.actor);
+  check(
+    "pause on: a manual exchange is refused — 409, busy code, «Обмен справочниками временно приостановлен»",
+    refused?.status === 409 && refused.code === EXCHANGE_BUSY_CODE && refused.message === EXCHANGE_PAUSED_MESSAGE,
+    refused && { status: refused.status, code: refused.code, message: refused.message },
+  );
+  const lastRun = await db.directoryExchangeRun.findFirst({ where: { masterOrganizationId: cabinet.id }, orderBy: { startedAt: "desc" } });
+  check("pause on: the refused attempt is in the exchange journal as «busy»", lastRun?.status === "busy" && lastRun.trigger === "manual", lastRun);
+  const scheduled = await runAllDirectoryExchanges();
+  check("pause on: the scheduled run skips the cabinets (busy), no errors", scheduled.busy >= 1 && scheduled.errors.length === 0 && scheduled.updated === 0 && scheduled.created === 0, scheduled);
+  check("pause on: nothing written — every link of the cabinet identical", same(await allLinks(cabinet.id), before));
+
   /* ── кабинет занят ── */
   const busy = await withExchangeLock(cabinet.id, () => downgradeCabinetHashes(cabinet.id, { apply: true, waitMs: 300 }));
   check("--apply while the cabinet is busy: skipped, nothing written", busy.status === "busy" && same(await allLinks(cabinet.id), before), busy);
@@ -317,11 +365,18 @@ async function main() {
   const again = await downgradeCabinetHashes(cabinet.id, { apply: true });
   check("AC1 second --apply: 0 changes", again.status === "applied" && again.written === 0 && again.counts.rewrite === 0, again);
   const againScript = runScript([`--cabinet=${cabinet.id}`, "--apply"]);
-  check("AC1 second --apply (script): «записано 0», exit code 0", againScript.code === 0 && againScript.out.includes("записано 0 из 0"), againScript.out);
+  check("AC1 second --apply (script, paused): «записано 0», exit code 0", againScript.code === 0 && againScript.out.includes("записано 0 из 0"), againScript.out);
+  const forced = runScript([`--cabinet=${cabinet.id}`, "--apply", "--force"], { [EXCHANGE_PAUSE_ENV]: "" });
+  check(
+    "--apply --force without the pause: a warning, then it runs (0 here), exit code 0",
+    forced.code === 0 && forced.out.includes("ВНИМАНИЕ: --force без паузы обмена") && forced.out.includes("записано 0 из 0"),
+    forced.out,
+  );
   check("AC1 second --apply: links as after the first", same(await allLinks(cabinet.id), after));
 
   /* ── обычный обмен возвращает версию 2 без правок ── */
-  console.log("--- a normal exchange after the rollback (current code)");
+  console.log("--- pause off: a normal exchange after the rollback (current code)");
+  pause(false);
   const back = await runDirectoryExchange(cabinet.id, { actor: x.actor });
   check("normal exchange: 0 created, 0 updated", totals(back).created === 0 && totals(back).updated === 0, totals(back));
   const restored = versioned(await allLinks(cabinet.id));
@@ -347,6 +402,7 @@ async function main() {
     safeDry.status === "planned" && safeDry.counts.rewrite === targets.length - 2 && safeDry.counts.left.edited === 1 && safeDry.counts.left.missing_row === 1,
     safeDry,
   );
+  pause(true);
   const safeApply = await downgradeCabinetHashes(cabinet.id, { apply: true });
   const safeLinks = await allLinks(cabinet.id);
   const kitchenAfter = safeLinks.find((link) => link.id === kitchenLinkA.id)!;
@@ -360,6 +416,7 @@ async function main() {
       (await Promise.all(versioned(safeLinks).filter((link) => link.id !== kitchenAfter.id && link.id !== cashierAfter.id).map((link) => preC2Sees(cabinet.id, link)))).every((item) => item === "unchanged"),
   );
   check("--apply: the link of the gone position is untouched", cashierAfter.hash === cashierLinkB.hash && cashierAfter.entityId === cashierLinkB.entityId);
+  pause(false);
   const carried = await runDirectoryExchange(cabinet.id, { actor: x.actor });
   check(
     "next exchange: A's edit reaches B and F, nothing else is updated",

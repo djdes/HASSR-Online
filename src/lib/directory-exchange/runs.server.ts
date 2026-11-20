@@ -165,14 +165,10 @@ export async function loadExchangeRunsOverview(options: { now?: Date; onlyErrors
   const exchanging = active.filter((group) => realCabinets.has(group.masterOrganizationId));
   const ids = exchanging.map((group) => group.masterOrganizationId);
 
-  const [lastRuns, lastOk] = ids.length
+  // Последний обмен кабинета: время — агрегатом в базе, сами строки — только эти (без перебора всего журнала).
+  const [lastAt, lastOk] = ids.length
     ? await Promise.all([
-        db.directoryExchangeRun.findMany({
-          where: { masterOrganizationId: { in: ids } },
-          orderBy: [{ masterOrganizationId: "asc" }, { startedAt: "desc" }, { id: "desc" }],
-          distinct: ["masterOrganizationId"],
-          select: { masterOrganizationId: true, status: true, startedAt: true, error: true },
-        }),
+        db.directoryExchangeRun.groupBy({ by: ["masterOrganizationId"], where: { masterOrganizationId: { in: ids } }, _max: { startedAt: true } }),
         db.directoryExchangeRun.groupBy({
           by: ["masterOrganizationId"],
           where: { masterOrganizationId: { in: ids }, status: "ok" },
@@ -180,7 +176,17 @@ export async function loadExchangeRunsOverview(options: { now?: Date; onlyErrors
         }),
       ])
     : [[], []];
-  const lastRunOf = new Map(lastRuns.map((run) => [run.masterOrganizationId, run]));
+  const latest = lastAt.flatMap((row) => (row._max.startedAt ? [{ masterOrganizationId: row.masterOrganizationId, startedAt: row._max.startedAt }] : []));
+  const lastRuns = latest.length
+    ? await db.directoryExchangeRun.findMany({
+        where: { OR: latest },
+        orderBy: [{ startedAt: "desc" }, { id: "desc" }],
+        select: { masterOrganizationId: true, status: true, startedAt: true, error: true },
+      })
+    : [];
+  const lastRunOf = new Map<string, (typeof lastRuns)[number]>();
+  // Два обмена в одну миллисекунду — берётся первый по порядку выше.
+  for (const run of lastRuns) if (!lastRunOf.has(run.masterOrganizationId)) lastRunOf.set(run.masterOrganizationId, run);
   const lastOkOf = new Map(lastOk.map((row) => [row.masterOrganizationId, row._max.startedAt ?? null]));
 
   const labels = await cabinetLabels([...runs.map((run) => run.masterOrganizationId), ...ids]);

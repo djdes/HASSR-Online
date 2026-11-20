@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  downgradeApplyGate,
   downgradeEntities,
   needsDowngrade,
   planCabinetDowngrade,
@@ -153,4 +154,13 @@ test("Р1: needsDowngrade — a row read is needed only for a versioned link wit
   assert.equal(needsDowngrade({ entityId: null, hash: rowHash("room", ROOM, "g") }), false);
   assert.equal(needsDowngrade({ entityId: "r", hash: preC2Room(ROOM, "g") }), false);
   assert.equal(needsDowngrade({ entityId: "r", hash: rowHash("room", ROOM, "g") }, 2), false);
+});
+
+test("Р1: --apply writes only while the exchange is paused, --force overrides, a dry run always runs", () => {
+  assert.equal(downgradeApplyGate({ apply: false, force: false, paused: false }), "dry_run");
+  assert.equal(downgradeApplyGate({ apply: false, force: true, paused: true }), "dry_run");
+  assert.equal(downgradeApplyGate({ apply: true, force: false, paused: true }), "apply");
+  assert.equal(downgradeApplyGate({ apply: true, force: true, paused: true }), "apply");
+  assert.equal(downgradeApplyGate({ apply: true, force: false, paused: false }), "refused");
+  assert.equal(downgradeApplyGate({ apply: true, force: true, paused: false }), "forced");
 });

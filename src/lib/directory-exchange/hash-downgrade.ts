@@ -149,3 +149,16 @@ export function planCabinetDowngrade(
 export function needsDowngrade(link: { entityId: string | null; hash: string }, targetVersion: number = DEFAULT_DOWNGRADE_VERSION): boolean {
   return Boolean(link.entityId) && hashTag(link.hash).version > targetVersion;
 }
+
+/**
+ * Можно ли писать (`--apply`): только при паузе обмена (`DIRECTORY_EXCHANGE_PAUSED`,
+ * pause.ts) — иначе обмен нынешнего кода вернёт откатанные связи на новую
+ * версию ещё до выката отката. `--force` пишет и без паузы (с предупреждением).
+ */
+export type DowngradeApplyGate = "dry_run" | "apply" | "forced" | "refused";
+
+export function downgradeApplyGate(input: { apply: boolean; force: boolean; paused: boolean }): DowngradeApplyGate {
+  if (!input.apply) return "dry_run";
+  if (input.paused) return "apply";
+  return input.force ? "forced" : "refused";
+}

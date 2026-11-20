@@ -6266,6 +6266,8 @@ model DirectoryExchangeChange {
 
   @@index([organizationId, createdAt])
   @@index([masterOrganizationId, createdAt])
+  /// Очистка строк старше 30 дней (плановый обмен) фильтрует только по дате.
+  @@index([createdAt])
 }
 
 /// Разовый перенос справочников (серия B, 2026-11-20): что создано — чтобы

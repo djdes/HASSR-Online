@@ -47,6 +47,9 @@ test("snapshot: fields as the exchange saw them, own parent, hash like the trans
 test("snapshot round trip through JSON; garbage dropped", () => {
   const snapshot = changeSnapshot("room", { fields: { name: "Склад", kind: "storage", sortOrder: 2, requirePhoto: false }, parentId: "b-1" }, "account");
   assert.deepEqual(parseChangeSnapshot(JSON.parse(JSON.stringify(snapshot))), snapshot);
+  // Своё зеркало созданного помещения или цеха (`mirrorId`) читается обратно; пустое — нет.
+  assert.equal(parseChangeSnapshot({ ...JSON.parse(JSON.stringify(snapshot)), mirrorId: "area-1" })?.mirrorId, "area-1");
+  assert.equal(Object.hasOwn(parseChangeSnapshot({ ...snapshot, mirrorId: "" })!, "mirrorId"), false);
   assert.equal(parseChangeSnapshot(null), null);
   assert.equal(parseChangeSnapshot([]), null);
   assert.equal(parseChangeSnapshot({ scope: "account" }), null);

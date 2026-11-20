@@ -31,13 +31,16 @@ export function isChangeOp(value: unknown): value is ChangeOp {
  * (должность, объект, цех — id в этой организации) и переносимые поля.
  * `hash` — отпечаток с родителем-«самим собой», как у отмены переноса
  * (`currentHashes` в transfer-undo.server.ts): по нему отмена видит правку
- * после обмена. null — отпечаток не снят.
+ * после обмена. null — отпечаток не снят. `mirrorId` (только «после» у
+ * созданного помещения или цеха) — зеркало, которое создание завело само:
+ * отмена убирает только его; нет — зеркало не трогается.
  */
 export type ChangeSnapshot = {
   scope: ExchangeScope;
   parentId: string | null;
   fields: ExchangeFields;
   hash: string | null;
+  mirrorId?: string;
 };
 
 /** Снимок строки обмена: поля в составе `scope` и отпечаток с собственным родителем. */
@@ -61,7 +64,7 @@ function fieldValue(value: unknown): ExchangeFieldValue | undefined {
 /** Снимок из базы; не объект или без полей — null. Мусорные значения полей пропускаются. */
 export function parseChangeSnapshot(raw: unknown): ChangeSnapshot | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-  const source = raw as { scope?: unknown; parentId?: unknown; fields?: unknown; hash?: unknown };
+  const source = raw as { scope?: unknown; parentId?: unknown; fields?: unknown; hash?: unknown; mirrorId?: unknown };
   if (!source.fields || typeof source.fields !== "object" || Array.isArray(source.fields)) return null;
   const fields: ExchangeFields = {};
   for (const [key, value] of Object.entries(source.fields as Record<string, unknown>)) {
@@ -74,6 +77,7 @@ export function parseChangeSnapshot(raw: unknown): ChangeSnapshot | null {
     parentId: typeof source.parentId === "string" && source.parentId !== "" ? source.parentId : null,
     fields,
     hash: typeof source.hash === "string" && source.hash !== "" ? source.hash : null,
+    ...(typeof source.mirrorId === "string" && source.mirrorId !== "" ? { mirrorId: source.mirrorId } : {}),
   };
 }
 

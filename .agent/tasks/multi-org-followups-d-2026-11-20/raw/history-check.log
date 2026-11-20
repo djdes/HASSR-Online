@@ -8,7 +8,7 @@ PASS AC2 (busy): row with trigger schedule, status busy, no counters, finished
 PASS AC2 (error): the exchange's own error is thrown (404)
 PASS AC2 (error): row with status error and a one-line message, no stack
 [directory-exchange] run not recorded {
-  masterOrganizationId: 'missing-hchkmwpesu47',
+  masterOrganizationId: 'missing-hchkmwpfvu9z',
   trigger: 'manual',
   error: PrismaClientKnownRequestError: 
   Invalid `db.directoryExchangeRun.create()` invocation in
@@ -25,7 +25,7 @@ PASS AC2 (error): row with status error and a one-line message, no stack
       at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
       at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
       at async startExchangeRun (/home/user/HASSR-Online/src/lib/directory-exchange/runs.server.ts:30:17)
-      at async runDirectoryExchange (/home/user/HASSR-Online/src/lib/directory-exchange/run.server.ts:873:15)
+      at async runDirectoryExchange (/home/user/HASSR-Online/src/lib/directory-exchange/run.server.ts:880:15)
       at async refused (/home/user/HASSR-Online/.agent/tasks/multi-org-followups-d-2026-11-20/raw/history-check.ts:90:5)
       at async main (/home/user/HASSR-Online/.agent/tasks/multi-org-followups-d-2026-11-20/raw/history-check.ts:199:17) {
     code: 'P2003',
@@ -66,6 +66,7 @@ PASS AC5 (journals): undo — B's previous settings back, A unchanged
 PASS AC5 (journals): the next exchange keeps B's restored settings
 PASS AC5 (create): a position with an employee stays (409 change_kept «has_staff»), not marked undone
 PASS AC5 (create): the employee is archived
+PASS review #2: the room's create records the mirror workshop its creation made (afterJson.mirrorId)
 PASS AC5 (create): the room is deleted together with its mirror workshop
 PASS AC5 (create): the room's link in B is a tombstone
 PASS AC5 (create): a product edited after the exchange stays («edited»)
@@ -80,6 +81,21 @@ PASS AC5 (foreign): the cabinet owner cannot undo F's change — 404
 PASS AC5 (foreign): F's owner undoes the create in F — the product is turned off, A and B keep theirs
 PASS AC5 (foreign): F's audit has no cabinet id or owner's organizations
 PASS AC5 (foreign): the next exchange does not create «Молоко» in F again
+--- review #2: only the mirror the creation made is removed
+PASS review #2: a room matched to a hand-made same-name workshop records no mirror; a new mirror is recorded
+PASS review #2: undo of that room deletes the room but keeps B's hand-made workshop
+PASS review #2: an old change without a recorded mirror deletes the room only, the workshop stays
+--- review #1/#2: an organization in two cabinets; an area's mirror room
+PASS review #2: Y got the workshop on its only point with a mirror room, recorded in the change
+PASS review #2: undo of the created workshop removes its mirror room too (both unused)
+PASS review #2: the workshop is not created in Y again
+PASS review #1: X joined company Q's cabinet CB
+PASS review #1: Q's edit reached X through CB
+PASS review #1: CA spread it from X to Y
+PASS review #1: X's history has the update from CB (cabinet label)
+PASS review #1: undo at X restores «Пекарня» in X only
+PASS review #1: X's links in both cabinets carry the restored record's fingerprint
+PASS review #1: the next CA and CB exchanges push nothing — Y keeps «Пекарня-2», X «Пекарня», Q «Пекарня-2»
 --- AC2: pruning
 PASS AC2/AC5: runs older than 90 days and changes older than 30 days are deleted, newer ones stay
 PASS AC5: a change older than 30 days is not undone (409)
@@ -93,6 +109,5 @@ PASS AC6: edited after the transfer — kept with «edited», D's own edit stays
 PASS AC6: an old transfer without a snapshot — «cannot be undone», no undo
 PASS AC6: an old transfer without a snapshot — undo refused 409
 cleanup: organizations left 0, users left 0, runs left 0, changes left 0
-TOTAL: 60 PASS, 0 FAIL
+TOTAL: 74 PASS, 0 FAIL
 RESULT: all checks passed
-exit 0

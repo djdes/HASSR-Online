@@ -1,7 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
-import { deleteRoomMirrorArea } from "@/lib/area-building-sync";
 import { db } from "@/lib/db";
 import {
   exchangeRowFromFields,
@@ -10,6 +9,7 @@ import {
   type ParentGroupLookup,
 } from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
+import { EXCHANGE_PAUSED_MESSAGE, isExchangePaused } from "@/lib/directory-exchange/pause";
 import {
   CHANGE_CONFLICT_MESSAGE,
   CHANGE_EXPIRED_MESSAGE,
@@ -61,7 +61,14 @@ import { syncFryerOilDocumentsSafe } from "@/lib/fryer-oil-equipment-sync";
  *     отпечаток вернувшейся записи — посчитанный так же, как его считает
  *     обмен: правка не уходит обратно к остальным, а следующая правка
  *     источника придёт снова. Так же возвращаются настройки журналов.
- *     Запись правили после обмена — остаётся как есть (`edited`).
+ *     Запись правили после обмена — остаётся как есть (`edited`). Если
+ *     организация в том же списке участвует ещё в одном кабинете (свой
+ *     кабинет аккаунта и кабинет другой компании), там связь тоже получает
+ *     отпечаток вернувшейся записи — если она видела запись «после обмена»;
+ *     иначе тот кабинет разнёс бы прежние значения соседям.
+ *   • зеркало созданного помещения (цех) или цеха (помещение) убирается,
+ *     только если его завело само это создание (`afterJson.mirrorId`), и по
+ *     тем же правилам; у изменений без отметки зеркало не трогается.
  *
  * Отмена идёт под замками обмена кабинетов организации (и кабинета изменения)
  * и под замком переноса в организацию — как отмена переноса.
@@ -204,17 +211,18 @@ export type ExchangeChangeUndoResult = {
 };
 
 /**
- * `fn` под замками обмена кабинетов организации и кабинета изменения (по id,
- * по порядку) и под замком переноса в организацию — порядок тот же, что у
- * отмены переноса, круга ожидания нет.
+ * `fn` под замками обмена кабинетов организации и кабинетов `extraCabinetIds`
+ * (кабинет изменения, кабинеты со связями записи; по id, по порядку) и под
+ * замком переноса в организацию — порядок тот же, что у отмены переноса,
+ * круга ожидания нет.
  */
 async function underOrganizationLocks<T>(
   organizationId: string,
   accountId: string,
-  masterOrganizationId: string,
+  extraCabinetIds: readonly string[],
   fn: () => Promise<T>,
 ): Promise<T> {
-  const cabinets = [...new Set([...(await exchangeCabinetsOf(organizationId, accountId)), masterOrganizationId])].sort();
+  const cabinets = [...new Set([...(await exchangeCabinetsOf(organizationId, accountId)), ...extraCabinetIds])].sort();
   return underExchangeLocks(cabinets, async () => {
     const locked = await withAdvisoryTryLock(advisoryLockKey(TRANSFER_LOCK_PREFIX, organizationId), fn, LOCK_WAIT);
     if (!locked.acquired) throw new DirectoryExchangeError(TRANSFER_BUSY_MESSAGE, 409, "transfer_busy");
@@ -255,13 +263,17 @@ async function tombstoneLink(tx: Prisma.TransactionClient, change: ChangeRow): P
 /** Отменить созданное обменом: правила отмены переноса и надгробие связи. */
 async function undoCreatedChange(change: ChangeRow, actorUserId: string, now: Date): Promise<ExchangeChangeUndoResult> {
   const { organizationId, entity, entityId } = change;
-  const created = emptyTransferCreated();
-  created[entity] = [entityId];
   const after = parseChangeSnapshot(change.afterJson);
+  const hashed = emptyTransferCreated();
+  hashed[entity] = [entityId];
   const stored = emptyTransferHashes();
   if (after?.hash) stored[entity][entityId] = after.hash;
-  const current = await currentHashes(organizationId, after?.hash ? created : emptyTransferCreated(), stored);
-  const room = entity === "room" ? await db.room.findUnique({ where: { id: entityId }, select: { name: true, buildingId: true } }) : null;
+  const current = await currentHashes(organizationId, after?.hash ? hashed : emptyTransferCreated(), stored);
+  // Зеркало, которое завело само это создание (цех помещения, помещение цеха), идёт парой —
+  // те же правила, что у переноса: используется одно — остаются оба (`linked`).
+  const created = emptyTransferCreated();
+  created[entity] = [entityId];
+  if (after?.mirrorId && (entity === "room" || entity === "area")) created[entity === "room" ? "area" : "room"] = [after.mirrorId];
 
   const outcome = await db.$transaction(
     async (tx) => {
@@ -280,14 +292,8 @@ async function undoCreatedChange(change: ChangeRow, actorUserId: string, now: Da
     { maxWait: 10_000, timeout: 120_000 },
   );
 
-  // Следствия, как при удалении руками: цех-зеркало удалённого помещения (если к нему
-  // ничего не привязано), фритюрница уходит из журнала фритюра.
+  // Удалённая фритюрница уходит из журнала фритюра (как при удалении руками).
   const undone = outcome.result.undone.find((item) => item.entity === entity && item.id === entityId);
-  if (undone && room) {
-    await deleteRoomMirrorArea({ organizationId, buildingId: room.buildingId, name: room.name }).catch((error: unknown) =>
-      console.error("[directory-exchange] history undo: mirror area not removed", { organizationId, error }),
-    );
-  }
   if (outcome.fryersRemoved) await syncFryerOilDocumentsSafe(organizationId);
   return { op: "create", action: undone?.action ?? "none" };
 }
@@ -306,7 +312,7 @@ async function parentGroupLookup(masterOrganizationId: string, entity: ExchangeE
 
 /** Вернуть прежние значения изменённой записи только у этой организации. */
 async function undoUpdatedChange(change: ChangeRow, actorUserId: string, now: Date): Promise<ExchangeChangeUndoResult> {
-  const { masterOrganizationId, organizationId, entity, entityId } = change;
+  const { organizationId, entity, entityId } = change;
   const before = parseChangeSnapshot(change.beforeJson);
   const after = parseChangeSnapshot(change.afterJson);
   // Снимок другой версии состава полей (Р8.0) вернул бы новые поля пустыми — такую правку не трогаем.
@@ -322,6 +328,20 @@ async function undoUpdatedChange(change: ChangeRow, actorUserId: string, now: Da
     if (currentHash !== after.hash) throw new ExchangeChangeKeptError("edited");
   }
 
+  // Связи записи во всех кабинетах, которые видят её такой, какой её оставил обмен:
+  // отпечаток связи совпадает с записью сейчас (в составе и версии связи, родитель —
+  // группа этого кабинета). Только им после возврата нужен новый отпечаток.
+  const seenAsAfter: Array<{ masterOrganizationId: string; groupId: string; hash: string; lookup: ParentGroupLookup }> = [];
+  const links = await db.directoryExchangeLink.findMany({
+    where: { organizationId, entity, entityId },
+    select: { masterOrganizationId: true, groupId: true, hash: true },
+  });
+  for (const link of links) {
+    const lookup = await parentGroupLookup(link.masterOrganizationId, entity, organizationId);
+    const seen = (await loadEntityRows(entity, organizationId, lookup)).find((item) => item.id === entityId);
+    if (seen && rowHashLike(entity, seen.fields, seen.parentGroupId, link.hash) === link.hash) seenAsAfter.push({ ...link, lookup });
+  }
+
   const parent = ENTITY_PARENT[entity];
   const parentId = parent && before.parentId && before.parentId !== row.parentId ? before.parentId : undefined;
   const source = exchangeRowFromFields(entity, { id: entityId, fields: before.fields, parentId: before.parentId }, before.scope);
@@ -330,24 +350,18 @@ async function undoUpdatedChange(change: ChangeRow, actorUserId: string, now: Da
   if (outcome.status === "limit") throw new DirectoryExchangeError(CHANGE_LIMIT_MESSAGE, 409, "change_limit");
   if (outcome.status !== "updated") throw new DirectoryExchangeError(CHANGE_CONFLICT_MESSAGE, 409, "change_conflict");
 
-  // Связь — с отпечатком вернувшейся записи в том составе, в каком связь видел обмен:
-  // запись «не изменена», правка не уходит к остальным.
-  const key = { masterOrganizationId, entity, groupId: change.groupId, organizationId };
-  const link = await db.directoryExchangeLink.findUnique({
-    where: { masterOrganizationId_entity_groupId_organizationId: key },
-    select: { entityId: true, hash: true },
-  });
-  if (link?.entityId === entityId) {
-    const scope = hashScope(entity, link.hash);
-    const restored = (await loadEntityRows(entity, organizationId, await parentGroupLookup(masterOrganizationId, entity, organizationId), scope)).find(
-      (item) => item.id === entityId,
-    );
-    if (restored) {
-      await db.directoryExchangeLink.update({
-        where: { masterOrganizationId_entity_groupId_organizationId: key },
-        data: { hash: restored.hash },
-      });
-    }
+  // Связи — с отпечатком вернувшейся записи в том составе, в каком связь видел обмен
+  // (как его пишет обмен: нынешняя версия, группы родителей кабинета): запись «не
+  // изменена», правка не уходит к остальным ни в кабинете изменения, ни в других.
+  for (const link of seenAsAfter) {
+    const restored = (await loadEntityRows(entity, organizationId, link.lookup, hashScope(entity, link.hash))).find((item) => item.id === entityId);
+    if (!restored) continue;
+    await db.directoryExchangeLink.update({
+      where: {
+        masterOrganizationId_entity_groupId_organizationId: { masterOrganizationId: link.masterOrganizationId, entity, groupId: link.groupId, organizationId },
+      },
+      data: { hash: restored.hash },
+    });
   }
   await db.directoryExchangeChange.updateMany({
     where: { id: change.id, undoneAt: null },
@@ -367,6 +381,8 @@ export async function undoExchangeChange(input: {
   actor: { userId: string; userName: string | null };
   now?: Date;
 }): Promise<ExchangeChangeUndoResult> {
+  // Пауза обмена (откат версий отпечатка): отмена пишет связи — не во время паузы (`pause.ts`).
+  if (isExchangePaused()) throw new DirectoryExchangeError(EXCHANGE_PAUSED_MESSAGE, 409);
   const now = input.now ?? new Date();
   const found = await db.directoryExchangeChange.findUnique({
     where: { id: input.id },
@@ -397,13 +413,23 @@ export async function undoExchangeChange(input: {
   if (found.undoneAt) throw new DirectoryExchangeError(CHANGE_UNDONE_MESSAGE, 409, "change_undone");
   if (now.getTime() - found.createdAt.getTime() > HISTORY_MS) throw new DirectoryExchangeError(CHANGE_EXPIRED_MESSAGE, 409, "change_expired");
   const change: ChangeRow = { ...found, entity };
-
-  const result = await underOrganizationLocks(found.organizationId, accountId, found.masterOrganizationId, async () => {
-    // Под замками — ещё раз: вторая отмена, ждавшая замка, видит первую.
-    const fresh = await db.directoryExchangeChange.findUnique({ where: { id: change.id }, select: { undoneAt: true } });
-    if (!fresh || fresh.undoneAt) throw new DirectoryExchangeError(CHANGE_UNDONE_MESSAGE, 409, "change_undone");
-    return op === "create" ? undoCreatedChange(change, input.actor.userId, now) : undoUpdatedChange(change, input.actor.userId, now);
+  // Кабинеты, где у записи есть связь, — тоже под замки: их связи отмена может поправить.
+  const linkedCabinets = await db.directoryExchangeLink.findMany({
+    where: { organizationId: found.organizationId, entity, entityId: found.entityId },
+    select: { masterOrganizationId: true },
   });
+
+  const result = await underOrganizationLocks(
+    found.organizationId,
+    accountId,
+    [found.masterOrganizationId, ...linkedCabinets.map((link) => link.masterOrganizationId)],
+    async () => {
+      // Под замками — ещё раз: вторая отмена, ждавшая замка, видит первую.
+      const fresh = await db.directoryExchangeChange.findUnique({ where: { id: change.id }, select: { undoneAt: true } });
+      if (!fresh || fresh.undoneAt) throw new DirectoryExchangeError(CHANGE_UNDONE_MESSAGE, 409, "change_undone");
+      return op === "create" ? undoCreatedChange(change, input.actor.userId, now) : undoUpdatedChange(change, input.actor.userId, now);
+    },
+  );
 
   // В журнал организации; у участника другого аккаунта — без кабинета и источника владельца.
   const cabinet = await db.organization.findUnique({ where: { id: found.masterOrganizationId }, select: { accountId: true } });

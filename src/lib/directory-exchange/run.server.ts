@@ -16,6 +16,7 @@ import {
   type UpdateOutcome,
 } from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
+import { EXCHANGE_PAUSED_MESSAGE, isExchangePaused } from "@/lib/directory-exchange/pause";
 import { changeSnapshot } from "@/lib/directory-exchange/history";
 import { recordExchangeChanges, type ExchangeChangeRecord } from "@/lib/directory-exchange/history.server";
 import {
@@ -424,6 +425,8 @@ async function exchangeEntity(params: {
     from: string;
     source: EntityRow;
     before: EntityRow | null;
+    /** Зеркало, которое создание завело само (цех помещения, помещение цеха). */
+    mirrorId?: string;
   }> = [];
 
   for (const op of ops) {
@@ -490,6 +493,7 @@ async function exchangeEntity(params: {
           from: op.fromOrganizationId,
           source,
           before: null,
+          mirrorId: outcome.mirrorId,
         });
         changes += 1;
       } else {
@@ -599,7 +603,10 @@ async function exchangeEntity(params: {
         name: row?.name ?? change.source.name,
         before: change.before ? changeSnapshot(entity, change.before, scope) : null,
         // Запись не перечиталась (выпала из обмена сразу после записи) — поля образца без отпечатка.
-        after: row ? changeSnapshot(entity, row, scope) : { scope, parentId: null, fields: change.source.fields, hash: null },
+        after: {
+          ...(row ? changeSnapshot(entity, row, scope) : { scope, parentId: null, fields: change.source.fields, hash: null }),
+          ...(change.mirrorId ? { mirrorId: change.mirrorId } : {}),
+        },
       };
     }),
   );
@@ -871,6 +878,11 @@ export async function runDirectoryExchange(
   const now = options.now ?? new Date();
   const trigger = options.trigger ?? (options.actor ? "manual" : "schedule");
   const run = await startExchangeRun(masterOrganizationId, trigger);
+  // Пауза (`DIRECTORY_EXCHANGE_PAUSED`, откат версий отпечатка): отказ как «занято» — план кабинет пропускает.
+  if (isExchangePaused()) {
+    await finishExchangeRun(run, { status: "busy" });
+    throw new DirectoryExchangeError(EXCHANGE_PAUSED_MESSAGE, 409, EXCHANGE_BUSY_CODE);
+  }
   let locked: AdvisoryLockResult<ExchangeSummary>;
   try {
     locked = await withAdvisoryTryLock(

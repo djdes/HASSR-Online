@@ -343,6 +343,12 @@ async function main() {
   );
   const roomB = await db.room.findFirstOrThrow({ where: { building: { organizationId: b.id }, name: "Склад" } });
   const mirrorBefore = await db.area.count({ where: { organizationId: b.id, name: "Склад" } });
+  const roomMirror = await db.area.findFirst({ where: { organizationId: b.id, name: "Склад" }, select: { id: true } });
+  check(
+    "review #2: the room's create records the mirror workshop its creation made (afterJson.mirrorId)",
+    Boolean(roomMirror) &&
+      parseChangeSnapshot((await db.directoryExchangeChange.findUniqueOrThrow({ where: { id: created("room", "Склад").id } })).afterJson)?.mirrorId === roomMirror!.id,
+  );
   const undoRoom = await undoExchangeChange({ id: created("room", "Склад").id, actor: x.actor });
   check(
     "AC5 (create): the room is deleted together with its mirror workshop",
@@ -403,6 +409,121 @@ async function main() {
   check("AC5 (foreign): F's audit has no cabinet id or owner's organizations", Boolean(fAudit) && fDetails.includes("crossAccount") && !fDetails.includes(cabinet.id) && !fDetails.includes(a.id), fAudit?.details);
   const fNext = await runDirectoryExchange(cabinet.id, { actor: x.actor });
   check("AC5 (foreign): the next exchange does not create «Молоко» in F again", (of(fNext, f.id)?.products.created ?? -1) === 0 && (await db.product.count({ where: { organizationId: f.id, name: "Молоко", isActive: true } })) === 0);
+
+  /* ── правки по ревью ── */
+  console.log("--- review #2: only the mirror the creation made is removed");
+  const cafeB = await db.building.findFirstOrThrow({ where: { organizationId: b.id, name: "Кафе" } });
+  // B заводит цех «Мойка» руками; A добавляет помещения «Мойка» и «Кладовая».
+  const handArea = await db.area.create({ data: { organizationId: b.id, name: "Мойка", buildingId: cafeB.id } });
+  await db.room.createMany({ data: [{ buildingId: cafe.id, name: "Мойка", kind: "other" }, { buildingId: cafe.id, name: "Кладовая", kind: "storage" }] });
+  await runDirectoryExchange(cabinet.id, { actor: x.actor });
+  const roomChange = async (name: string) =>
+    db.directoryExchangeChange.findFirstOrThrow({ where: { organizationId: b.id, entity: "room", op: "create", name } });
+  const washChange = await roomChange("Мойка");
+  const pantryChange = await roomChange("Кладовая");
+  const pantryMirror = await db.area.findFirst({ where: { organizationId: b.id, name: "Кладовая" } });
+  check(
+    "review #2: a room matched to a hand-made same-name workshop records no mirror; a new mirror is recorded",
+    parseChangeSnapshot(washChange.afterJson)?.mirrorId === undefined &&
+      Boolean(pantryMirror) &&
+      parseChangeSnapshot(pantryChange.afterJson)?.mirrorId === pantryMirror!.id,
+    { wash: washChange.afterJson, pantry: pantryChange.afterJson },
+  );
+  const undoWash = await undoExchangeChange({ id: washChange.id, actor: x.actor });
+  check(
+    "review #2: undo of that room deletes the room but keeps B's hand-made workshop",
+    undoWash.action === "deleted" &&
+      (await db.room.count({ where: { building: { organizationId: b.id }, name: "Мойка" } })) === 0 &&
+      (await db.area.count({ where: { id: handArea.id } })) === 1,
+  );
+  // Изменение до отметки (без mirrorId): зеркало не трогается.
+  const { mirrorId: _mirror, ...oldAfter } = pantryChange.afterJson as Record<string, unknown>;
+  await db.directoryExchangeChange.update({ where: { id: pantryChange.id }, data: { afterJson: oldAfter as object } });
+  const undoPantry = await undoExchangeChange({ id: pantryChange.id, actor: x.actor });
+  check(
+    "review #2: an old change without a recorded mirror deletes the room only, the workshop stays",
+    undoPantry.action === "deleted" &&
+      (await db.room.count({ where: { building: { organizationId: b.id }, name: "Кладовая" } })) === 0 &&
+      (await db.area.count({ where: { id: pantryMirror!.id } })) === 1,
+  );
+
+  // Р: одна организация в двух кабинетах. Аккаунт P: X и Y в своём кабинете CA (товары и
+  // оборудование); X ещё и участник кабинета CB компании Q (товары).
+  console.log("--- review #1/#2: an organization in two cabinets; an area's mirror room");
+  const xOrg = await makeOrg("Икс");
+  const p = await makeOwner(xOrg.id, "p");
+  const yOrg = await makeOrg("Игрек", p.account.id);
+  await join(p.owner.id, yOrg.id);
+  await db.product.create({ data: { name: "Хлеб", kind: "raw", supplier: "Пекарня", unit: "pcs", organizationId: xOrg.id } });
+  await db.area.create({ data: { organizationId: xOrg.id, name: "Цех заготовки" } });
+  const pointY = await db.building.create({ data: { organizationId: yOrg.id, name: "Точка Игрек" } });
+  const ca = await ensureExchangeCabinet(p.owner.id, p.account.id);
+  orgIds.push(ca.id);
+  await saveExchangeMembers({
+    ownerUserId: p.owner.id,
+    ownerName: p.owner.name,
+    organizationId: xOrg.id,
+    members: [
+      { organizationId: xOrg.id, kinds: ["products", "equipment"] },
+      { organizationId: yOrg.id, kinds: ["products", "equipment"] },
+    ],
+  });
+  await runDirectoryExchange(ca.id, { actor: p.actor });
+  const areaY = await db.area.findFirst({ where: { organizationId: yOrg.id, name: "Цех заготовки" } });
+  const mirrorRoomY = await db.room.findFirst({ where: { buildingId: pointY.id, name: "Цех заготовки" } });
+  const areaChange = await db.directoryExchangeChange.findFirst({ where: { organizationId: yOrg.id, entity: "area", op: "create" } });
+  check(
+    "review #2: Y got the workshop on its only point with a mirror room, recorded in the change",
+    Boolean(areaY) && areaY!.buildingId === pointY.id && Boolean(mirrorRoomY) && parseChangeSnapshot(areaChange?.afterJson)?.mirrorId === mirrorRoomY!.id,
+    areaChange?.afterJson,
+  );
+  const undoArea = await undoExchangeChange({ id: areaChange!.id, actor: p.actor });
+  check(
+    "review #2: undo of the created workshop removes its mirror room too (both unused)",
+    undoArea.action === "deleted" && (await db.area.count({ where: { id: areaY!.id } })) === 0 && (await db.room.count({ where: { id: mirrorRoomY!.id } })) === 0,
+    undoArea,
+  );
+  const caAgain = await runDirectoryExchange(ca.id, { actor: p.actor });
+  check("review #2: the workshop is not created in Y again", (of(caAgain, yOrg.id)?.equipment.created ?? -1) === 0 && (await db.area.count({ where: { organizationId: yOrg.id, name: "Цех заготовки" } })) === 0);
+
+  const qOrg = await makeOrg("Компания-Q");
+  const q = await makeOwner(qOrg.id, "q");
+  await db.product.create({ data: { name: "Хлеб", kind: "raw", supplier: "Пекарня", unit: "pcs", organizationId: qOrg.id } });
+  const cb = await ensureExchangeCabinet(q.owner.id, q.account.id);
+  orgIds.push(cb.id);
+  const cbCode = (await db.organization.findUniqueOrThrow({ where: { id: cb.id }, select: { serviceCode: true } })).serviceCode!;
+  const join2 = await createExchangeRequest({ organizationId: xOrg.id, actor: p.actor, code: cbCode, mode: "link", kinds: ["products"] });
+  const joined = await decideExchangeRequest({ token: join2.token, actor: q.actor, decision: "approve", allowedKinds: ["products"], organizationIds: [qOrg.id], waitMs: 120_000 });
+  check("review #1: X joined company Q's cabinet CB", joined.status === "approved");
+  const qBread = (await product(qOrg.id, "Хлеб"))!;
+  await db.product.update({ where: { id: qBread.id }, data: { supplier: "Пекарня-2" } });
+  await runDirectoryExchange(cb.id, { actor: q.actor });
+  check("review #1: Q's edit reached X through CB", (await product(xOrg.id, "Хлеб"))?.supplier === "Пекарня-2");
+  await runDirectoryExchange(ca.id, { actor: p.actor });
+  check("review #1: CA spread it from X to Y", (await product(yOrg.id, "Хлеб"))?.supplier === "Пекарня-2");
+  const cbChange = (await listExchangeHistory({ organizationId: xOrg.id })).find((item) => item.op === "update" && item.name === "Хлеб");
+  check("review #1: X's history has the update from CB (cabinet label)", Boolean(cbChange) && cbChange!.from.cabinet && cbChange!.from.name === cb.name, cbChange);
+  const undoBread = await undoExchangeChange({ id: cbChange!.id, actor: p.actor });
+  check("review #1: undo at X restores «Пекарня» in X only", undoBread.action === "restored" && (await product(xOrg.id, "Хлеб"))?.supplier === "Пекарня" && (await product(yOrg.id, "Хлеб"))?.supplier === "Пекарня-2");
+  const xBread = (await product(xOrg.id, "Хлеб"))!;
+  const xRowHash = (await loadEntityRows("product", xOrg.id)).find((row) => row.id === xBread.id)?.hash;
+  const xLinks = await db.directoryExchangeLink.findMany({ where: { organizationId: xOrg.id, entity: "product", entityId: xBread.id } });
+  check(
+    "review #1: X's links in both cabinets carry the restored record's fingerprint",
+    xLinks.length === 2 && new Set(xLinks.map((link) => link.masterOrganizationId)).size === 2 && xLinks.every((link) => link.hash === xRowHash),
+    xLinks.map((link) => [link.masterOrganizationId === ca.id ? "CA" : "CB", link.hash === xRowHash]),
+  );
+  const caQuiet = await runDirectoryExchange(ca.id, { actor: p.actor });
+  const cbQuiet = await runDirectoryExchange(cb.id, { actor: q.actor });
+  check(
+    "review #1: the next CA and CB exchanges push nothing — Y keeps «Пекарня-2», X «Пекарня», Q «Пекарня-2»",
+    totals(caQuiet).updated === 0 &&
+      totals(cbQuiet).updated === 0 &&
+      (await product(yOrg.id, "Хлеб"))?.supplier === "Пекарня-2" &&
+      (await product(xOrg.id, "Хлеб"))?.supplier === "Пекарня" &&
+      (await product(qOrg.id, "Хлеб"))?.supplier === "Пекарня-2",
+    { ca: totals(caQuiet), cb: totals(cbQuiet) },
+  );
 
   /* ── очистка ── */
   console.log("--- AC2: pruning");
