@@ -11,7 +11,6 @@ import { publicMetadataFor } from "@/i18n/public-metadata";
 import {
   ArrowRight,
   Baby,
-  BadgeCheck,
   BellRing,
   Check,
   CircleUserRound,
@@ -58,6 +57,7 @@ import { QrSticker } from "@/components/landing/qr-player/qr-sticker";
 import { LandingMotion } from "@/components/public/landing-motion";
 import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
+import { HaccpGoldSeal } from "@/components/landing/haccp-gold-seal";
 import { DemoRequestButton } from "@/components/public/demo-request-button";
 import { NavStartButton } from "@/components/landing/nav-start-button";
 import { redirect } from "next/navigation";
@@ -334,8 +334,8 @@ export default async function LandingPage() {
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const premiumFrom = applyPromotion(planMonthlyRub(pricing.rates, "premium", "year"), promotion);
   const vipFrom = applyPromotion(planMonthlyRub(pricing.rates, "vip", "year"), promotion);
-  // Первый экран (правки 19.11.2026): строки с ценой больше нет, вместо
-  // гарантии — до какого числа всё бесплатно. Дата = сегодня по Москве плюс
+  // Первый экран (правки 19.11 и 20.11.2026): строки с ценой больше нет, под
+  // формой — «14 дней всё бесплатно (до даты)». Дата = сегодня по Москве плюс
   // пробный период; страница динамическая, поэтому дата всегда свежая.
   const trialUntil = formatDate(locale, Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000, "Europe/Moscow", {
     day: "2-digit",
@@ -679,13 +679,18 @@ export default async function LandingPage() {
                   showLoginLink={false}
                   showLiveGuide={false}
                 />
-                {/* До какого числа всё бесплатно и что потом — одной строкой
-                    по центру (правки 19.11.2026; раньше здесь стояла гарантия
-                    возврата — она осталась под тарифами). `text-balance`
-                    делит строку на телефоне на две равные. */}
-                <p className="mx-auto max-w-[480px] text-balance text-center text-[15px] leading-[1.5] text-[#3c4053] sm:text-[14px]">
+                {/* «14 дней всё бесплатно (до ДД.ММ.ГГГГ). Подробнее» — одной
+                    строкой по центру (правки 20.11.2026): это свои 14 дней
+                    после регистрации, а не общая акция до даты, поэтому дата —
+                    в скобках. Условия после пробного периода — по «Подробнее».
+                    Шрифт на телефоне идёт от ширины строки ((100vw − 32px) / 25.6:
+                    строка ≈ 25 кеглей в Inter / Helvetica Neue), чтобы она
+                    помещалась в одну от 360 px; уже — `text-balance` делит её
+                    поровну. */}
+                <p className="mx-auto max-w-full text-balance text-center text-[clamp(13px,3.906vw-1.25px,15px)] leading-[1.5] text-[#3c4053] sm:text-[14px]">
                   {copy.rich("landing.hero.trialUntil", {
                     date: trialUntil,
+                    trialDays: TRIAL_DAYS,
                     strong: (chunks) => <strong className="font-semibold text-[#0b1024]">{chunks}</strong>,
                     link: (chunks) => (
                       <AnchorScrollLink
@@ -702,14 +707,18 @@ export default async function LandingPage() {
             )}
           </div>
 
-{/* «Разработан при консультации…» — плашкой с фоном и значком
-              (правки 18.11.2026): строка серым текстом терялась под формой,
-              а это главный довод доверия на первом экране. */}
-          <div className="hero-trust mx-auto mt-6 flex w-full max-w-[480px] items-center gap-3 rounded-2xl border border-[#dfe3ff] bg-[#f5f6ff] p-3.5 text-left sm:mt-8 sm:w-fit sm:max-w-[720px] sm:gap-4 sm:px-5 sm:py-4">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white">
-              <BadgeCheck className="size-[22px]" aria-hidden="true" />
-            </span>
-            <p className="text-[15px] font-semibold leading-[1.4] tracking-[-0.005em] text-[#0b1024] sm:text-[16px]">
+          {/* «Разработан при консультации…» — плашкой с фоном (правки
+              18.11.2026): строка серым текстом терялась под формой, а это
+              главный довод доверия на первом экране. Слева — золотая печать
+              «ХАССП / сертифицировано» с лентами и бликом (правки 20.11.2026)
+              вместо синего значка. */}
+          <div className="hero-trust mx-auto mt-6 flex w-full max-w-[480px] items-center gap-3.5 rounded-2xl border border-[#dfe3ff] bg-[#f5f6ff] py-3 pl-3 pr-4 text-left sm:mt-8 sm:w-fit sm:max-w-[640px] sm:gap-5 sm:py-3.5 sm:pl-4 sm:pr-6">
+            <HaccpGoldSeal
+              title={copy("landing.hero.sealTitle")}
+              caption={copy("landing.hero.sealCaption")}
+              className="h-auto w-[84px] shrink-0 min-[400px]:w-[92px]"
+            />
+            <p className="text-balance text-[15px] font-semibold leading-[1.4] tracking-[-0.005em] text-[#0b1024] sm:max-w-[420px] sm:text-[16px]">
               {copy("landing.hero.consultationNote")}
             </p>
           </div>

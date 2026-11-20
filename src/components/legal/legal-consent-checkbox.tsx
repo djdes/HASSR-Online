@@ -44,8 +44,9 @@ export function LegalConsentCheckbox({
    * Нажатие на название документа сначала спрашивает «Открыть?» (правки
    * 19.11.2026). На телефоне строка согласия почти целиком из ссылок: человек
    * метит в галку, попадает в ссылку и уходит с формы в документ. Окно
-   * возвращает его к форме: «Нет» — крупная яркая кнопка справа, «Да» —
-   * спокойная слева. Работает для короткой строки (`variant="short"`).
+   * возвращает его к форме: как в Telegram (правки 20.11.2026), сверху яркая
+   * «Не переходить», под ней серая «Всё равно перейти». Работает для
+   * короткой строки (`variant="short"`).
    */
   confirmLinks?: boolean;
 }) {
@@ -120,7 +121,21 @@ export function LegalConsentCheckbox({
             </DialogTitle>
             <DialogDescription className="text-[14px] leading-[1.55] text-[#6f7282]">{t("openHint")}</DialogDescription>
           </DialogHeader>
-          <div className="mt-1 flex items-center gap-3">
+          {/* Как окно перехода по ссылке в Telegram (правки 20.11.2026): две
+              кнопки во всю ширину столбиком. Сверху яркая «Не переходить» —
+              на ней фокус, палец попадает в неё первой; снизу серая неброская
+              «Всё равно перейти». Серые классы — с ночным соответствием в
+              app-theme.css, иначе ночью кнопка осталась бы светлой. */}
+          <div className="mt-1 flex flex-col gap-2.5">
+            <button
+              type="button"
+              data-testid="legal-open-no"
+              autoFocus
+              onClick={() => setConfirm(null)}
+              className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-[#5566f6] px-6 text-[17px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:bg-[#4a5bf0]"
+            >
+              {t("openNo")}
+            </button>
             <button
               type="button"
               data-testid="legal-open-yes"
@@ -128,18 +143,9 @@ export function LegalConsentCheckbox({
                 if (confirm) window.open(CONFIRM_HREF[confirm], "_blank", "noopener");
                 setConfirm(null);
               }}
-              className="inline-flex h-11 shrink-0 items-center justify-center rounded-2xl border border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#6f7282] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] hover:text-[#0b1024]"
+              className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-[#f1f2f8] px-6 text-[16px] font-medium text-[#6f7282] hover:text-[#3c4053]"
             >
               {t("openYes")}
-            </button>
-            <button
-              type="button"
-              data-testid="legal-open-no"
-              autoFocus
-              onClick={() => setConfirm(null)}
-              className="inline-flex h-14 flex-1 items-center justify-center rounded-2xl bg-[#5566f6] px-6 text-[17px] font-semibold text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:bg-[#4a5bf0]"
-            >
-              {t("openNo")}
             </button>
           </div>
         </DialogContent>
