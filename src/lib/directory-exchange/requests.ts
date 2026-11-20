@@ -150,7 +150,8 @@ export function decideRequestCreation(input: {
   if (input.lastDeclinedAt) {
     const retryAt = requestRetryAt(input.lastDeclinedAt);
     if (retryAt.getTime() > (input.now ?? new Date()).getTime()) {
-      return refuse("declined_recently", `Владелец отклонил запрос. Повторить можно после ${refusalDate(retryAt)}.`);
+      // Дата уже кончается на «г.» — точку второй раз не ставим.
+      return refuse("declined_recently", `Владелец отклонил запрос. Повторить можно после ${refusalDate(retryAt)}`);
     }
   }
   return { ok: true, kinds };

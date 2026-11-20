@@ -425,14 +425,16 @@ export type DecisionRequest = {
 export type DecisionState = {
   request: DecisionRequest;
   cabinet: { id: string; name: string };
-  /** Свои организации владельца кабинета — откуда взять данные для разового переноса. */
+  /** Свои организации владельца кабинета: для переноса — откуда взять данные, для связи — кто будет обмениваться. */
   sources: Array<{ id: string; name: string }>;
+  /** Связь: свои организации, которые уже обмениваются запрошенными списками (отмечены по умолчанию). */
+  linkedIds: string[];
 };
 
 /** Тело `POST /api/exchange-requests/<токен>`. */
 export type DecisionBody =
   | { decision: "decline" }
-  | { decision: "approve"; allowedKinds: ExchangeKind[]; sourceOrganizationId?: string };
+  | { decision: "approve"; allowedKinds: ExchangeKind[]; sourceOrganizationId?: string; organizationIds?: string[] };
 
 export type DecisionResult = { status: "approved" | "declined"; summary: ExchangeSummary | null };
 
@@ -556,7 +558,18 @@ export function parseDecisionState(value: unknown): DecisionState | null {
     },
     cabinet: { id: asText(cabinet?.id), name: asText(cabinet?.name) },
     sources,
+    // Только из списка своих организаций: чужой id в подтверждение не попадёт.
+    linkedIds: asList(source.linkedIds).map(asText).filter((id) => sources.some((entry) => entry.id === id)),
   };
+}
+
+/**
+ * Какие свои организации отметить для связи сразу: уже обменивающиеся
+ * запрошенными списками; таких нет — единственная организация владельца.
+ */
+export function defaultOwnOrganizations(state: Pick<DecisionState, "sources" | "linkedIds">): string[] {
+  if (state.linkedIds.length > 0) return [...state.linkedIds];
+  return state.sources.length === 1 ? [state.sources[0].id] : [];
 }
 
 /** Ответ на решение; статус не пришёл — он следует из самого решения. Итог обмена — только у подтверждения. */
@@ -686,10 +699,15 @@ export function approvalBody(
   state: { request: Pick<DecisionRequest, "mode" | "kinds">; sources: DecisionState["sources"] },
   chosen: readonly ExchangeKind[],
   sourceId: string,
+  ownIds: readonly string[] = [],
 ): Extract<DecisionBody, { decision: "approve" }> | null {
   const allowedKinds = narrowKinds(state.request.kinds, chosen);
   if (allowedKinds.length === 0) return null;
-  if (state.request.mode === "link") return { decision: "approve", allowedKinds };
+  if (state.request.mode === "link") {
+    // Связь — со своими организациями владельца: хотя бы одна, только из его списка.
+    const organizationIds = state.sources.filter((source) => ownIds.includes(source.id)).map((source) => source.id);
+    return organizationIds.length > 0 ? { decision: "approve", allowedKinds, organizationIds } : null;
+  }
   if (!state.sources.some((source) => source.id === sourceId)) return null;
   return { decision: "approve", allowedKinds, sourceOrganizationId: sourceId };
 }

@@ -1,0 +1,17 @@
+{
+  "task": "org-exchange-foreign-2026-11-19",
+  "spec": ".agent/tasks/org-exchange-foreign-2026-11-19/spec.md",
+  "base": "master 850ab0678",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "requests/plan/kinds/request-letters/exchange-api tests — 84/84" },
+    { "id": "AC2", "status": "PASS", "evidence": "prisma db push: additive only (DirectoryExchangeRequest, DirectoryExchangeMember.foreign)" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/foreign-check.log sections who may ask, request created, token access, daily limit" },
+    { "id": "AC4", "status": "PASS", "evidence": "raw/foreign-check.log decision letter and notification; raw/foreign-live.log letter produced" },
+    { "id": "AC5", "status": "PASS", "evidence": "raw/foreign-check.log 175/175; raw/foreign-live.log two companies through the UI" },
+    { "id": "AC6", "status": "PASS", "evidence": "raw/01..07 screenshots" },
+    { "id": "AC7", "status": "PASS", "evidence": "typecheck clean, i18n:check 98/98, eslint clean, part 2 check 88/88" }
+  ],
+  "reviewFixes": { "status": "PASS", "evidence": "raw/foreign-check.log section review fixes (2026-11-20), 26 checks" },
+  "deploy": "prisma db push adds table DirectoryExchangeRequest and column DirectoryExchangeMember.foreign (Boolean, default false)"
+}

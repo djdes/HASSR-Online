@@ -46,7 +46,7 @@ PASS stranger cannot decide → 403
 PASS the requester cannot approve his own request → 403
 PASS the requester cannot decline by token either → 403
 PASS after all refusals the request is still pending, nobody is a member
-PASS cabinet owner reads the request: who, INN, mode, lists, cabinet
+PASS cabinet owner reads the request: who, INN, mode, lists, cabinet, his organizations (both already exchanging)
 PASS cabinet owner can open the request by its id too (the card has no token)
 --- approve link
 PASS approve with lists that were not requested → 400, still pending
@@ -71,7 +71,9 @@ PASS decision: notification in the requester's cabinet (owner and the other mana
 PASS two more runs change nothing
 PASS after two more runs the owner's phones are untouched and the requester still has none
 PASS phone and days-off edits are neither sent nor compared while a foreign organization shares staff
-PASS a rename by the requester reaches the owner's organizations; their phone and days off stay, the requester's phone does not travel
+PASS a rename by the other company does not change the owner's records
+PASS and the ignored edit produces nothing on the next run
+PASS a rename by the owner reaches his second organization; the other company keeps its own phone
 PASS requester's new employee appears at the owner WITHOUT phone and days off
 PASS products travel both ways across accounts
 PASS equipment and objects still did not leak to the requester
@@ -111,6 +113,7 @@ PASS decline: letter and notification to the requester
 PASS approve after a decline → 409
 PASS cancel after a decline → 409
 PASS the declined request left the lists
+PASS a new request right after the decline → 409
 --- cancel
 PASS a stranger cannot cancel → 404
 PASS another organization of the same account is not the requester → 404
@@ -158,6 +161,33 @@ PASS a locked organization can still cancel its request
 PASS code of any cabinet of the account addresses its exchange cabinet (where the owner's organizations are)
 PASS scheduled run: finished without errors
 PASS route modules load: handlers, nodejs runtime, force-dynamic
+--- review fixes (2026-11-20)
+PASS legacy cabinet code (pool code) finds the cabinet
+PASS owner opens the request by its id (without the letter)
+PASS requester cannot open the request by id → 404
+PASS another company cannot open the request by id → 404
+PASS approval while the requester is no longer paid → 409
+PASS …and the request stays pending
+PASS same-named people of two companies are not merged: one each, own phones, never in one group
+PASS …and repeated runs change nothing for them
+PASS B received the owner's freezer and product
+PASS B's edits do not change the owner's freezer norms or product
+PASS …and nothing is pending on the next run
+PASS the owner's later edit overwrites B's record
+PASS a one-off transfer to another company still works while the cabinet is linked
+PASS the requester's journal names no organization of the owner and no source id
+PASS approving a second company while one is linked → 409
+PASS …code request_cabinet_busy, names the linked company, request stays pending
+PASS …and C received nothing from the refused link
+PASS a new request right after a decline → 409
+PASS …code request_declined_recently with the date
+PASS B leaves: no member and no link rows remain
+PASS after the pause and B leaving, C can be linked
+PASS link request: the owner's organizations are offered, none preselected without an exchange
+PASS approving a link without an own organization → 400
+PASS …code request_no_own_organization, request stays pending
+PASS another company's organization passed as own → 404
+PASS approved with the chosen own organization: it joined the exchange and products moved both ways
 cleanup: organizations left 0, users left 0, accounts left 0, requests left 0, members left 0
-TOTAL: 146 PASS, 0 FAIL
+TOTAL: 175 PASS, 0 FAIL
 RESULT: all checks passed

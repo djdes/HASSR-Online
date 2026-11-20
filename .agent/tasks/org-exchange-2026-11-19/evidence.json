@@ -1,0 +1,19 @@
+{
+  "task": "org-exchange-2026-11-19",
+  "spec": ".agent/tasks/org-exchange-2026-11-19/spec.md",
+  "base": "master 1a16c18a8",
+  "verdict": "PASS",
+  "shipped": "djdes/HASSR-Online#265 (850ab0678), deploy run 2370 success",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "plan/kinds/exchange-api tests" },
+    { "id": "AC2", "status": "PASS", "evidence": "prisma db push additive: DirectoryExchangeMember, DirectoryExchangeLink" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/exchange-check.log 88/88" },
+    { "id": "AC4", "status": "PASS", "evidence": "raw/exchange-check.log authorization cases" },
+    { "id": "AC5", "status": "PASS", "evidence": "raw/exchange-live.log, raw/01-04 screenshots" },
+    { "id": "AC6", "status": "PASS", "evidence": "raw/06-settings-card.jpg" },
+    { "id": "AC7", "status": "PASS", "evidence": "raw/exchange-check.log scheduled run" },
+    { "id": "AC8", "status": "PASS", "evidence": "i18n:check 98/98" },
+    { "id": "AC9", "status": "PASS", "evidence": "typecheck clean; full suite 6679 pass, 0 fail" }
+  ],
+  "note": "evidence.json added after the merge; verdicts are those recorded in evidence.md"
+}

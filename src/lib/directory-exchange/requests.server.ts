@@ -4,7 +4,7 @@ import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { db } from "@/lib/db";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
-import { normalizeExchangeKinds, type ExchangeKind } from "@/lib/directory-exchange/kinds";
+import { EXCHANGE_KINDS, normalizeExchangeKinds, type ExchangeKind } from "@/lib/directory-exchange/kinds";
 import {
   countersLine,
   decisionNotificationLabel,
@@ -136,8 +136,13 @@ export type TokenRequestView = {
     allowedKinds: ExchangeKind[];
   };
   cabinet: { id: string; name: string };
-  /** Перенос: свои организации владельца, из которых можно взять данные. */
+  /**
+   * Свои рабочие организации владельца кабинета: для переноса — откуда взять
+   * данные, для связи — какие из них будут обмениваться с заявителем.
+   */
   sources: Array<{ id: string; name: string }>;
+  /** Связь: свои организации, которые уже обмениваются запрошенными списками (отмечены по умолчанию). */
+  linkedIds: string[];
 };
 
 /** Письма и уведомления по действию: вызывается после ответа, не бросает. */
@@ -837,6 +842,17 @@ async function findRequest(tokenOrId: string, userId: string): Promise<{ request
 }
 
 /** Рабочие организации аккаунта кабинета, из которых можно взять данные: не закрытые. */
+/** Свои организации владельца, которые уже обмениваются хотя бы одним из `kinds` в этом кабинете. */
+async function ownMembersSharing(masterOrganizationId: string, accountId: string | null, kinds: readonly string[]): Promise<string[]> {
+  if (!accountId) return [];
+  const members = await db.directoryExchangeMember.findMany({
+    where: { masterOrganizationId, foreign: false, organization: { accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE } },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { organizationId: true, kinds: true },
+  });
+  return members.filter((member) => member.kinds.some((kind) => kinds.includes(kind))).map((member) => member.organizationId);
+}
+
 async function transferSources(accountId: string, now: Date): Promise<Array<{ id: string; name: string }>> {
   const organizations = await db.organization.findMany({
     where: { accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
@@ -882,7 +898,8 @@ export async function loadExchangeRequestByToken(input: {
       allowedKinds: normalizeExchangeKinds(request.allowedKinds),
     },
     cabinet: { id: request.masterOrganization.id, name: request.masterOrganization.name },
-    sources: mode === "transfer" && status === "pending" && accountId ? await transferSources(accountId, now) : [],
+    sources: status === "pending" && accountId ? await transferSources(accountId, now) : [],
+    linkedIds: mode === "link" && status === "pending" ? await ownMembersSharing(request.masterOrganizationId, accountId, request.kinds) : [],
   };
 }
 
@@ -927,6 +944,35 @@ async function assertApprovable(request: RequestRow, mode: RequestMode, now: Dat
 }
 
 /**
+ * Свои организации владельца для связи: переданные (только рабочие организации
+ * его аккаунта, не закрытые) или — если не переданы — те, что уже обмениваются
+ * запрошенными списками. Пусто — 400: без своей организации обмениваться
+ * заявителю не с кем.
+ */
+async function chooseOwnOrganizations(
+  request: RequestRow,
+  allowed: readonly ExchangeKind[],
+  wanted: readonly string[] | null,
+  now: Date,
+): Promise<string[]> {
+  const accountId = request.masterOrganization.accountId;
+  if (!accountId) throw new DirectoryExchangeError("Организация не найдена", 404);
+  const ids = wanted && wanted.length > 0 ? [...new Set(wanted.map((id) => id.trim()).filter(Boolean))] : await ownMembersSharing(request.masterOrganizationId, accountId, allowed);
+  if (ids.length === 0) {
+    throw new DirectoryExchangeError("Выберите свою организацию, которая будет обмениваться с этой компанией", 400, "request_no_own_organization");
+  }
+  const own = await db.organization.findMany({
+    where: { id: { in: ids }, accountId, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
+    select: { id: true },
+  });
+  if (own.length !== ids.length) throw new DirectoryExchangeError("Организация не найдена", 404);
+  for (const organization of own) {
+    if (await isOrganizationLocked(organization.id, now)) throw new DirectoryExchangeError(ORG_LOCKED_MESSAGE, 409, ORG_LOCKED_CODE);
+  }
+  return ids;
+}
+
+/**
  * Подтверждённая связь (Р4): организация-заявитель — участник обмена кабинета
  * с разрешёнными списками и пометкой `foreign`; обмен запускается сразу.
  * К общим меню и сырью кабинета она НЕ подключается — это другой доступ.
@@ -934,6 +980,7 @@ async function assertApprovable(request: RequestRow, mode: RequestMode, now: Dat
 async function approveLink(
   request: RequestRow,
   allowed: ExchangeKind[],
+  ownOrganizationIds: readonly string[],
   actor: ExchangeActor,
   now: Date,
 ): Promise<ExchangeSummary> {
@@ -965,6 +1012,20 @@ async function approveLink(
       },
       update: { kinds: allowed, foreign: true },
     });
+    // Свои организации владельца, выбранные им на странице: им добавляются
+    // разрешённые списки (то, чем они уже обменивались, остаётся).
+    for (const organizationId of ownOrganizationIds) {
+      const current = await db.directoryExchangeMember.findUnique({
+        where: { masterOrganizationId_organizationId: { masterOrganizationId, organizationId } },
+        select: { kinds: true },
+      });
+      const kinds = EXCHANGE_KINDS.filter((kind) => allowed.includes(kind) || current?.kinds.includes(kind));
+      await db.directoryExchangeMember.upsert({
+        where: { masterOrganizationId_organizationId: { masterOrganizationId, organizationId } },
+        create: { masterOrganizationId, organizationId, kinds, foreign: false, createdByUserId: actor.userId },
+        update: { kinds },
+      });
+    }
   });
 
   try {
@@ -998,6 +1059,12 @@ export async function decideExchangeRequest(input: {
   decision: "approve" | "decline";
   allowedKinds?: unknown;
   sourceOrganizationId?: string | null;
+  /**
+   * Связь: свои организации владельца, которые будут обмениваться с
+   * заявителем. Не переданы — те, что уже обмениваются запрошенными списками;
+   * таких нет — отказ 400 (выбрать надо явно).
+   */
+  organizationIds?: readonly string[] | null;
   now?: Date;
 }): Promise<DecideRequestResult> {
   const now = input.now ?? new Date();
@@ -1043,6 +1110,11 @@ export async function decideExchangeRequest(input: {
   // ли уже с другой компанией. Отказ запрос не закрывает — он ждёт дальше.
   await assertApprovable(request, mode, now);
 
+  let ownOrganizationIds: string[] = [];
+  if (mode === "link") {
+    ownOrganizationIds = await chooseOwnOrganizations(request, allowed, input.organizationIds ?? null, now);
+  }
+
   let sourceOrganizationId: string | null = null;
   if (mode === "transfer") {
     const wanted = input.sourceOrganizationId?.trim();
@@ -1070,7 +1142,7 @@ export async function decideExchangeRequest(input: {
   let summary: ExchangeSummary;
   try {
     if (mode === "link") {
-      summary = await approveLink(request, allowed, actor, now);
+      summary = await approveLink(request, allowed, ownOrganizationIds, actor, now);
     } else {
       const selection: TransferSelection = {};
       for (const kind of allowed) selection[kind] = "all";

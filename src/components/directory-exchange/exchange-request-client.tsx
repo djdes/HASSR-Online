@@ -11,6 +11,7 @@ import { HOME_HREF } from "@/lib/home-page";
 import { cn } from "@/lib/utils";
 import {
   approvalBody,
+  defaultOwnOrganizations,
   decisionRequest,
   decisionView,
   exchangeError,
@@ -280,19 +281,25 @@ export function DecisionForm({
 
   const [chosen, setChosen] = useState<ExchangeKind[]>(request.kinds);
   const [sourceId, setSourceId] = useState(sources.length === 1 ? sources[0].id : "");
+  // Связь: какие свои организации будут обмениваться с компанией.
+  const [ownIds, setOwnIds] = useState<string[]>(() => defaultOwnOrganizations(data));
   const [confirming, setConfirming] = useState<DecisionBody["decision"] | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const until = dayLabel(request.expiresAt);
   const allowed = narrowKinds(request.kinds, chosen);
-  const approval = approvalBody(data, chosen, sourceId);
+  const approval = approvalBody(data, chosen, sourceId, ownIds);
   const sourceName = sources.find((source) => source.id === sourceId)?.name ?? "";
   const lists = allowed.map((kind) => t(`kinds.${kind}`)).join(", ");
-  const noSources = !link && sources.length === 0;
+  const noSources = sources.length === 0;
   /** Чего не хватает для подтверждения; `null` — можно подтверждать (или не из чего переносить). */
   const missing =
-    allowed.length === 0 ? t("foreign.page.needList") : !approval && !noSources ? t("foreign.page.needSource") : null;
+    allowed.length === 0
+      ? t("foreign.page.needList")
+      : !approval && !noSources
+        ? t(link ? "foreign.page.needOwn" : "foreign.page.needSource")
+        : null;
 
   function toggleKind(kind: ExchangeKind) {
     setChosen((current) => (current.includes(kind) ? current.filter((entry) => entry !== kind) : [...current, kind]));
@@ -409,11 +416,40 @@ export function DecisionForm({
         </ul>
       </fieldset>
 
-      {link ? null : noSources ? (
+      {noSources ? (
         <div className={cn(WARNING, "mt-5")} role="alert">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-[#b25e00]" aria-hidden />
-          <span className="min-w-0 flex-1">{t("foreign.page.noSources")}</span>
+          <span className="min-w-0 flex-1">{t(link ? "foreign.page.noOwn" : "foreign.page.noSources")}</span>
         </div>
+      ) : link ? (
+        <fieldset className="mt-5" disabled={busy || confirming !== null}>
+          <legend className={SECTION_TITLE}>{t("foreign.page.own")}</legend>
+          <p className="mt-1 text-[12.5px] leading-[1.45] text-[#6f7282]">{t("foreign.page.ownHint")}</p>
+          <ul className={LIST}>
+            {sources.map((source) => {
+              const checked = ownIds.includes(source.id);
+              return (
+                <li key={source.id}>
+                  <label className={cn(ROW, checked && "bg-[#fafbff]")}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setOwnIds((current) =>
+                          current.includes(source.id) ? current.filter((id) => id !== source.id) : [...current, source.id],
+                        )
+                      }
+                      className={CHECK}
+                      data-testid="exchange-request-own"
+                      data-organization-id={source.id}
+                    />
+                    <span className="min-w-0 flex-1 break-words text-[14px] font-medium text-[#0b1024]">{source.name}</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </fieldset>
       ) : (
         <fieldset className="mt-5" disabled={busy || confirming !== null}>
           <legend className={SECTION_TITLE}>{t("foreign.page.source")}</legend>

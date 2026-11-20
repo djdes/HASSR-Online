@@ -293,8 +293,8 @@ async function main() {
 
   const view = await loadExchangeRequestByToken({ token: first.token, userId: two.owner.id });
   check(
-    "cabinet owner reads the request: who, INN, mode, lists, cabinet",
-    view.request.id === first.request.id && view.request.requesterName === r1.name && view.request.requesterInn === "7707083893" && view.request.mode === "link" && view.request.status === "pending" && same(view.request.kinds, ["products", "staff", "objects"]) && view.cabinet.id === cabinet.id && view.cabinet.name === "Мастер-кабинет" && view.sources.length === 0,
+    "cabinet owner reads the request: who, INN, mode, lists, cabinet, his organizations (both already exchanging)",
+    view.request.id === first.request.id && view.request.requesterName === r1.name && view.request.requesterInn === "7707083893" && view.request.mode === "link" && view.request.status === "pending" && same(view.request.kinds, ["products", "staff", "objects"]) && view.cabinet.id === cabinet.id && view.cabinet.name === "Мастер-кабинет" && view.sources.length === 2 && view.linkedIds.length === 2,
     view,
   );
   check("cabinet owner can open the request by its id too (the card has no token)", (await loadExchangeRequestByToken({ token: first.request.id, userId: two.owner.id })).request.id === first.request.id);
@@ -364,15 +364,26 @@ async function main() {
     { run: totals(phoneRun), phones: await ownerPhones() },
   );
 
-  // Переименование у заявителя доходит до владельца — и только оно.
+  // Правка у заявителя (другая компания) записи владельца не меняет (уточнение 2026-11-20).
   await db.user.update({ where: { id: (await person(r1.id, "Петрова Анна"))!.id }, data: { name: "Петрова Анна Сергеевна", phone: "+79853330000" } });
   const renameRun = await runDirectoryExchange(cabinet.id, { actor: two.actor });
+  check(
+    "a rename by the other company does not change the owner's records",
+    totals(renameRun).updated === 0 && Boolean(await person(s.id, "Петрова Анна")) && Boolean(await person(s2.id, "Петрова Анна")) && !(await person(s.id, "Петрова Анна Сергеевна")),
+    { run: totals(renameRun) },
+  );
+  const renameIdle = await runDirectoryExchange(cabinet.id, { actor: two.actor });
+  check("and the ignored edit produces nothing on the next run", totals(renameIdle).created + totals(renameIdle).updated === 0, totals(renameIdle));
+  // Та же правка у владельца доходит до всех; телефон и выходные между компаниями не ходят.
+  await db.user.update({ where: { id: (await person(s.id, "Петрова Анна"))!.id }, data: { name: "Петрова Анна Сергеевна" } });
+  const ownerRenameRun = await runDirectoryExchange(cabinet.id, { actor: two.actor });
   const renamedS = await person(s.id, "Петрова Анна Сергеевна");
   const renamedS2 = await person(s2.id, "Петрова Анна Сергеевна");
+  const renamedR1 = await person(r1.id, "Петрова Анна Сергеевна");
   check(
-    "a rename by the requester reaches the owner's organizations; their phone and days off stay, the requester's phone does not travel",
-    of(renameRun, s.id)?.staff.updated === 1 && of(renameRun, s2.id)?.staff.updated === 1 && renamedS?.phone === "+79850001122" && renamedS2?.phone === "+79850001122" && same(renamedS?.weeklyDaysOff, [5, 6]) && same(renamedS2?.weeklyDaysOff, [5, 6]),
-    { run: [of(renameRun, s.id)?.staff, of(renameRun, s2.id)?.staff], s: renamedS?.phone, s2: renamedS2?.phone },
+    "a rename by the owner reaches his second organization; the other company keeps its own phone",
+    of(ownerRenameRun, s2.id)?.staff.updated === 1 && renamedS2?.phone === "+79850001122" && same(renamedS2?.weeklyDaysOff, [5, 6]) && renamedR1?.phone === "+79853330000",
+    { run: [of(ownerRenameRun, s2.id)?.staff, of(ownerRenameRun, r1.id)?.staff], s2: renamedS2?.phone, r1: renamedR1?.phone },
   );
 
   // Новый сотрудник заявителя с телефоном и новый продукт с каждой стороны.
@@ -474,6 +485,9 @@ async function main() {
   await refused("approve after a decline → 409", 409, () => decideExchangeRequest({ token: third.token, actor: two.actor, decision: "approve" }));
   await refused("cancel after a decline → 409", 409, () => endExchangeRequest({ id: third.request.id, organizationId: r1.id, accountId: one.account.id, actor: one.actor }));
   check("the declined request left the lists", (await loadExchangeRequests(one.owner.id, r1.id)).outgoing.length === 0 && (await loadExchangeRequests(two.owner.id, s.id)).incoming.length === 0);
+  // После отказа — неделя паузы для той же компании (уточнение 2026-11-20); дальше отказ «состариваем».
+  await refused("a new request right after the decline → 409", 409, () => ask(r1.id, one.actor, { kinds: ["products"] }));
+  await db.directoryExchangeRequest.updateMany({ where: { id: third.request.id }, data: { decidedAt: new Date(Date.now() - 20 * DAY) } });
 
   /* ── отмена заявителем ── */
   console.log("--- cancel");
@@ -593,6 +607,137 @@ async function main() {
   );
 }
 
+/* ── уточнения после независимой проверки (2026-11-20) ── */
+async function reviewFixes() {
+  console.log("--- review fixes (2026-11-20)");
+  const paid = { subscriptionPlan: "standard", subscriptionEnd: new Date(Date.now() + 30 * DAY), planPoints: 3, planCycle: "month" };
+  // Владелец кабинета.
+  const o = await makeOrg("Владелец-Р");
+  const owner = await makeOwner(o.id, "rown");
+  const cabinet = await ensureExchangeCabinet(owner.owner.id, owner.account.id);
+  orgIds.push(cabinet.id);
+  const code = (await db.organization.findUnique({ where: { id: cabinet.id }, select: { serviceCode: true } }))!.serviceCode!;
+  await saveExchangeMembers({ ownerUserId: owner.owner.id, ownerName: owner.owner.name, organizationId: o.id, members: [{ organizationId: o.id, kinds: [...EXCHANGE_KINDS] }] });
+  const ownerCook = await db.jobPosition.create({ data: { organizationId: o.id, categoryKey: "staff", name: "Повар", sortOrder: 1 } });
+  const ownerArea = await db.area.create({ data: { organizationId: o.id, name: "Холодный цех" } });
+  await db.equipment.create({ data: { name: "Ларь", type: "freezer", tempMin: -24, tempMax: -18, areaId: ownerArea.id } });
+  await db.product.create({ data: { name: "Творог", kind: "raw", unit: "kg", supplier: "Ферма владельца", organizationId: o.id } });
+  const ownerPerson = await db.user.create({ data: { email: `${TAG}-rp1@o.local.haccp`, name: "Кузнецов Ким", phone: "+79851110000", passwordHash: "", role: "cook", jobPositionId: ownerCook.id, positionTitle: "Повар", organizationId: o.id } });
+
+  // Компания B (оплачена) — однофамилец «Кузнецов Ким» со своим телефоном.
+  const b = await makeOrg("Компания-B");
+  const bo = await makeOwner(b.id, "rb", paid);
+  const bCook = await db.jobPosition.create({ data: { organizationId: b.id, categoryKey: "staff", name: "Повар", sortOrder: 1 } });
+  const bPerson = await db.user.create({ data: { email: `${TAG}-rp2@b.local.haccp`, name: "Кузнецов Ким", phone: "+79852220000", passwordHash: "", role: "cook", jobPositionId: bCook.id, positionTitle: "Повар", organizationId: b.id } });
+  // Компания C (оплачена).
+  const c = await makeOrg("Компания-C");
+  const co = await makeOwner(c.id, "rc", paid);
+
+  // Код старого кабинета (код пула в linkedServiceCode) тоже находит кабинет.
+  const legacyCode = generateServiceCode();
+  await db.organization.update({ where: { id: cabinet.id }, data: { linkedServiceCode: legacyCode } });
+  const byLegacy = await createExchangeRequest({ organizationId: b.id, actor: bo.actor, code: legacyCode, mode: "link", kinds: ["products", "staff", "equipment"] });
+  check("legacy cabinet code (pool code) finds the cabinet", byLegacy.request.cabinetName === (await db.organization.findUnique({ where: { id: cabinet.id } }))!.name);
+
+  // Владелец открывает запрос по номеру из карточки; заявитель и посторонний — нет.
+  const byId = await loadExchangeRequestByToken({ token: byLegacy.request.id, userId: owner.owner.id });
+  check("owner opens the request by its id (without the letter)", byId.request.id === byLegacy.request.id);
+  await refused("requester cannot open the request by id → 404", 404, () => loadExchangeRequestByToken({ token: byLegacy.request.id, userId: bo.owner.id }));
+  await refused("another company cannot open the request by id → 404", 404, () => loadExchangeRequestByToken({ token: byLegacy.request.id, userId: co.owner.id }));
+
+  // Подтверждение заново проверяет тариф заявителя.
+  await db.account.update({ where: { id: bo.account.id }, data: { subscriptionEnd: new Date(Date.now() - DAY) } });
+  await refused("approval while the requester is no longer paid → 409", 409, () => decideExchangeRequest({ token: byLegacy.request.id, actor: owner.actor, decision: "approve", allowedKinds: ["products", "staff", "equipment"] }));
+  check("…and the request stays pending", (await db.directoryExchangeRequest.findUnique({ where: { id: byLegacy.request.id } }))?.status === "pending");
+  await db.account.update({ where: { id: bo.account.id }, data: { subscriptionEnd: paid.subscriptionEnd } });
+  await decideExchangeRequest({ token: byLegacy.request.id, actor: owner.actor, decision: "approve", allowedKinds: ["products", "staff", "equipment"] });
+
+  // Однофамильцы разных компаний не сливаются.
+  const kim = await db.user.findMany({ where: { name: "Кузнецов Ким", organizationId: { in: [o.id, b.id] } }, orderBy: { organizationId: "asc" } });
+  const kimLinks = await db.directoryExchangeLink.findMany({ where: { masterOrganizationId: cabinet.id, entity: "staff", entityId: { in: [ownerPerson.id, bPerson.id] } } });
+  check(
+    "same-named people of two companies are not merged: one each, own phones, never in one group",
+    kim.length === 2 && (await person(o.id, "Кузнецов Ким"))?.phone === "+79851110000" && (await person(b.id, "Кузнецов Ким"))?.phone === "+79852220000" && new Set(kimLinks.map((l) => l.groupId)).size === kimLinks.length,
+    { kim: kim.map((u) => [u.organizationId === o.id ? "owner" : "B", u.phone]), groups: kimLinks.map((l) => l.groupId) },
+  );
+  const kimIdle = await runDirectoryExchange(cabinet.id, { actor: owner.actor });
+  check("…and repeated runs change nothing for them", totals(kimIdle).created + totals(kimIdle).updated === 0 && (await db.user.count({ where: { name: "Кузнецов Ким", organizationId: { in: [o.id, b.id] } } })) === 2, totals(kimIdle));
+
+  // Правка компании B (нормы ларя, поставщик творога) записи владельца не меняет; правка владельца — меняет у B.
+  const bFreezer = await db.equipment.findFirst({ where: { name: "Ларь", area: { organizationId: b.id } } });
+  const bCurd = await db.product.findFirst({ where: { name: "Творог", organizationId: b.id } });
+  check("B received the owner's freezer and product", Boolean(bFreezer) && Boolean(bCurd));
+  await db.equipment.update({ where: { id: bFreezer!.id }, data: { tempMin: -10, tempMax: -5 } });
+  await db.product.update({ where: { id: bCurd!.id }, data: { supplier: "Поставщик B" } });
+  const bEditRun = await runDirectoryExchange(cabinet.id, { actor: owner.actor });
+  const ownerFreezer = await db.equipment.findFirst({ where: { name: "Ларь", areaId: ownerArea.id } });
+  const ownerCurd = await db.product.findFirst({ where: { name: "Творог", organizationId: o.id } });
+  check(
+    "B's edits do not change the owner's freezer norms or product",
+    totals(bEditRun).updated === 0 && ownerFreezer?.tempMin === -24 && ownerFreezer?.tempMax === -18 && ownerCurd?.supplier === "Ферма владельца",
+    { run: totals(bEditRun), freezer: [ownerFreezer?.tempMin, ownerFreezer?.tempMax], curd: ownerCurd?.supplier },
+  );
+  const bEditIdle = await runDirectoryExchange(cabinet.id, { actor: owner.actor });
+  check("…and nothing is pending on the next run", totals(bEditIdle).created + totals(bEditIdle).updated === 0, totals(bEditIdle));
+  await db.product.update({ where: { id: ownerCurd!.id }, data: { supplier: "Новая ферма" } });
+  await runDirectoryExchange(cabinet.id, { actor: owner.actor });
+  check("the owner's later edit overwrites B's record", (await db.product.findUnique({ where: { id: bCurd!.id } }))?.supplier === "Новая ферма");
+
+  // Одноразовый перенос кабинет не занимает: C получает копию, хотя кабинет связан с B.
+  const cTransfer = await createExchangeRequest({ organizationId: c.id, actor: co.actor, code, mode: "transfer", kinds: ["products"] });
+  await decideExchangeRequest({ token: cTransfer.token, actor: owner.actor, decision: "approve", allowedKinds: ["products"], sourceOrganizationId: o.id });
+  check("a one-off transfer to another company still works while the cabinet is linked", (await names(c.id)).products.includes("Творог"));
+  // Журнал заявителя не называет организацию-источник владельца.
+  const cAudit = await db.auditLog.findMany({ where: { organizationId: c.id, action: { startsWith: "directory_exchange." } } });
+  check(
+    "the requester's journal names no organization of the owner and no source id",
+    cAudit.length > 0 && cAudit.every((row) => !JSON.stringify(row.details).includes(o.id) && !JSON.stringify(row.details).includes("Владелец-Р")),
+    cAudit.map((row) => [row.action, row.details]),
+  );
+
+  // Вторая компания: кабинет занят.
+  const cBefore = JSON.stringify(await names(c.id));
+  const cRequest = await createExchangeRequest({ organizationId: c.id, actor: co.actor, code, mode: "link", kinds: ["products"] });
+  const busy = await refused("approving a second company while one is linked → 409", 409, () => decideExchangeRequest({ token: cRequest.token, actor: owner.actor, decision: "approve", allowedKinds: ["products"] }));
+  check("…code request_cabinet_busy, names the linked company, request stays pending", busy?.code === "request_cabinet_busy" && (busy?.message ?? "").includes("Компания-B") && (await db.directoryExchangeRequest.findUnique({ where: { id: cRequest.request.id } }))?.status === "pending", busy?.message);
+  check("…and C received nothing from the refused link", JSON.stringify(await names(c.id)) === cBefore && (await db.directoryExchangeMember.count({ where: { organizationId: c.id } })) === 0);
+  // Отказ — и неделя паузы для той же компании.
+  await decideExchangeRequest({ token: cRequest.token, actor: owner.actor, decision: "decline" });
+  const cool = await refused("a new request right after a decline → 409", 409, () => createExchangeRequest({ organizationId: c.id, actor: co.actor, code, mode: "link", kinds: ["products"] }));
+  check("…code request_declined_recently with the date", cool?.code === "request_declined_recently" && /после \d+ \S+ \d{4}/.test(cool?.message ?? ""), cool?.message);
+
+  // Выход B: после него ни участника, ни связей; обмен с B прекращён.
+  const bLinks = (await loadExchangeRequests(bo.owner.id, b.id)).foreignLinks;
+  await endExchangeRequest({ id: bLinks[0].id, organizationId: b.id, accountId: bo.account.id, actor: bo.actor });
+  check("B leaves: no member and no link rows remain", (await db.directoryExchangeMember.count({ where: { organizationId: b.id } })) === 0 && (await db.directoryExchangeLink.count({ where: { organizationId: b.id } })) === 0);
+  // Теперь кабинет свободен — C можно связать, когда пройдёт пауза.
+  await db.directoryExchangeRequest.updateMany({ where: { requesterOrganizationId: c.id, status: "declined" }, data: { decidedAt: new Date(Date.now() - 20 * DAY) } });
+  const cAgain = await createExchangeRequest({ organizationId: c.id, actor: co.actor, code, mode: "link", kinds: ["products"] });
+  await decideExchangeRequest({ token: cAgain.token, actor: owner.actor, decision: "approve", allowedKinds: ["products"] });
+  check("after the pause and B leaving, C can be linked", (await db.directoryExchangeMember.count({ where: { organizationId: c.id, foreign: true } })) === 1);
+
+  // Владелец, который обмен сам не настраивал: свою организацию он выбирает на странице.
+  const o2 = await makeOrg("Владелец-2");
+  const owner2 = await makeOwner(o2.id, "rown2");
+  const cabinet2 = await ensureExchangeCabinet(owner2.owner.id, owner2.account.id);
+  orgIds.push(cabinet2.id);
+  const code2 = (await db.organization.findUnique({ where: { id: cabinet2.id }, select: { serviceCode: true } }))!.serviceCode!;
+  await db.product.create({ data: { name: "Ряженка", kind: "raw", unit: "l", organizationId: o2.id } });
+  const bReq = await createExchangeRequest({ organizationId: b.id, actor: bo.actor, code: code2, mode: "link", kinds: ["products"] });
+  const view2 = await loadExchangeRequestByToken({ token: bReq.token, userId: owner2.owner.id });
+  check("link request: the owner's organizations are offered, none preselected without an exchange", same(view2.sources.map((item) => item.id), [o2.id]) && view2.linkedIds.length === 0, view2);
+  const noOwn = await refused("approving a link without an own organization → 400", 400, () => decideExchangeRequest({ token: bReq.token, actor: owner2.actor, decision: "approve", allowedKinds: ["products"] }));
+  check("…code request_no_own_organization, request stays pending", noOwn?.code === "request_no_own_organization" && (await db.directoryExchangeRequest.findUnique({ where: { id: bReq.request.id } }))?.status === "pending");
+  await refused("another company's organization passed as own → 404", 404, () => decideExchangeRequest({ token: bReq.token, actor: owner2.actor, decision: "approve", allowedKinds: ["products"], organizationIds: [b.id] }));
+  await decideExchangeRequest({ token: bReq.token, actor: owner2.actor, decision: "approve", allowedKinds: ["products"], organizationIds: [o2.id] });
+  const o2Member = await db.directoryExchangeMember.findUnique({ where: { masterOrganizationId_organizationId: { masterOrganizationId: cabinet2.id, organizationId: o2.id } } });
+  check(
+    "approved with the chosen own organization: it joined the exchange and products moved both ways",
+    Boolean(o2Member) && o2Member!.foreign === false && o2Member!.kinds.includes("products") && (await names(b.id)).products.includes("Ряженка") && (await names(o2.id)).products.includes("Творог"),
+    { member: o2Member?.kinds, b: (await names(b.id)).products, o2: (await names(o2.id)).products },
+  );
+}
+
 async function cleanup() {
   const cabinets = await db.organization.findMany({ where: { accountId: { in: accountIds }, kind: "directory" }, select: { id: true } });
   const ids = [...new Set([...cabinets.map((item) => item.id), ...orgIds])].reverse();
@@ -610,6 +755,7 @@ async function cleanup() {
 }
 
 main()
+  .then(reviewFixes)
   .catch((error) => {
     failed += 1;
     console.error("FAIL script crashed", error);

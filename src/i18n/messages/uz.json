@@ -27098,7 +27098,11 @@
           "ruleNewRecords": "Yangi yozuvlar ikkala kompaniyada ham paydo bo‘ladi.",
           "ruleEdits": "Sizning tuzatishlaringiz «{name}» ga yetib boradi. «{name}» tuzatishlari sizning yozuvlaringizni o‘zgartirmaydi.",
           "ruleOneCompany": "Master-kabinet faqat bitta boshqa kompaniya bilan bog‘lanishi mumkin.",
-          "ruleDisconnect": "Kompaniyani istalgan vaqtda uzish mumkin: «Sozlamalar → Master-kabinet»."
+          "ruleDisconnect": "Kompaniyani istalgan vaqtda uzish mumkin: «Sozlamalar → Master-kabinet».",
+          "own": "Qaysi tashkilotlaringiz almashinuvda ishtirok etadi",
+          "ownHint": "Belgilangan tashkilotlar ruxsat etilgan ro‘yxatlarni bu kompaniya bilan va o‘zaro almashadi.",
+          "needOwn": "Kamida bitta tashkilotingizni belgilang",
+          "noOwn": "Akkauntingizda ma’lumot almashishi mumkin bo‘lgan tashkilot yo‘q. So‘rovni faqat rad etish mumkin."
         }
       }
     }

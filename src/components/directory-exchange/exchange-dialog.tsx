@@ -589,7 +589,9 @@ export function ExchangeDialog({
                               )}
                             </span>
                             <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#6f7282]">
-                              {t(`kindHints.${kind}`)}
+                              {/* Соседей нет — окно работает только для другой компании: там у сотрудников
+                                  передаются лишь ФИО и должность, и подпись не должна обещать телефон. */}
+                              {siblings.length === 0 ? t(`foreign.kindHints.${kind}`) : t(`kindHints.${kind}`)}
                             </span>
                           </span>
                         </label>

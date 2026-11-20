@@ -1,0 +1,47 @@
+owner before: {"products":["Курица охлаждённая","Молоко 3,2 %"],"staff":["Иванова Мария +79161234567","Сидоров Олег"],"buildings":["Кафе на Тверской"],"equipment":["Холодильник 1"]}
+cabinet code looks like a code: true
+request on a trial account: {"status":402,"json":{"error":"Запрос в другую компанию доступен на платном тарифе. Подключите «Стандарт», «Премиум» или «ВИП» и повторите.","code":"request_not_paid","payUrl":"/settings/subscription"}}
+requester pays the tariff: 200
+request with a wrong code: {"status":404,"json":{"error":"Мастер-кабинет с таким кодом не найден"}}
+requester sees: Ожидает подтверждения владельца мастер-кабинета «Мастер-кабинет» — до 27 ноября | Связь через мастер-кабинет: Товары и блюда, Сотрудники, Объекты, Оборудование | Какие списки войдут в обмен, решает владелец мастер-кабинета: он может разрешить не всё, что вы отметили. | Отменить запрос
+requester's view of requests (must name only the cabinet): [{"id":"cmwohwq2o000r3b7dkjycwppy","cabinetName":"Мастер-кабинет","mode":"link","kinds":["products","staff","objects","equipment"],"status":"pending","expiresAt":"2026-11-27T04:45:13.324Z","createdAt":"2026-11-20T04:45:13.324Z"}]
+duplicate request: 409
+requester before approval: {"products":[],"staff":["Сидоров Олег +79160000099"],"buildings":[],"equipment":[]}
+letter to the cabinet owner was produced: true
+owner sees the request in the card list: true
+requester opens the link: 404
+owner sees: Запрос на обмен справочниками | Запрос действует до 27 ноября | КТО ПРОСИТ | Кафе Партнёр | ИНН 5001000059 | ЧТО ПРОСИТ | Связать справочники через ваш мастер-кабинет «Мастер-кабинет» | Какими списками обмениваться | Отмечено всё, что просит компания. Лишнее можно снять. | Товары и блюда | Справочник продукции: название, поставщик, условия и сроки хранения | Сотрудники | Сотрудники без входа в систему: только ФИО и должность. Телефоны и руководители не передаются | Объекты | Объекты с адресами и их помещения. Офис не передаётся | Оборудование | Оборудование вместе с цехами. Привязка датчиков не передаётся | Какие ваши организации будут обмениваться | Отмеченные организации будут обмениваться
+own organizations offered and preselected: [true]
+owner after approval sees: Связь подтверждена | «Кафе Партнёр» теперь участвует в обмене мастер-кабинета «Мастер-кабинет». | Кафе Партнёр | Товары и блюда | создано: 2 | Сотрудники | создано: 1 · пропущено как дубли: 1 | Объекты | создано: 2 | Сеть Вкусно | Сотрудники | пропущено как дубли: 1 | Открыть мастер-кабинеты | Мы используем файлы cookie, чтобы сайт работал корректно и удобно. Подробнее | ОК
+requester after approval: {"products":["Курица охлаждённая","Молоко 3,2 %"],"staff":["Иванова Мария","Сидоров Олег +79160000099"],"buildings":["Кафе на Тверской"],"equipment":[]}
+owner after approval: {"products":["Курица охлаждённая","Молоко 3,2 %"],"staff":["Иванова Мария +79161234567","Сидоров Олег"],"buildings":["Кафе на Тверской"],"equipment":["Холодильник 1"]}
+member row: {products,staff,objects}|t
+second approval of the same request: 409
+requester adds a product: 201
+owner products after sync: ["Курица охлаждённая","Молоко 3,2 %","Сливки 20 %"]
+owner staff (phones untouched, no second Сидоров): ["Иванова Мария +79161234567","Сидоров Олег"]
+requester staff (own Сидоров kept with own phone): ["Иванова Мария","Сидоров Олег +79160000099"]
+requester edits a shared product: 200
+owner's record after the other company's edit: -
+owner edits the same product: 200
+requester's record after the owner's edit: Ферма владельца
+third company sends a request: {"status":200,"cabinetName":"Мастер-кабинет"}
+owner approves a second company: {"status":409,"json":{"error":"Кабинет уже связан с компанией «Кафе Партнёр». Отключите её или отклоните этот запрос.","code":"request_cabinet_busy"}}
+third company received nothing: []
+requester card: Связано с мастер-кабинетом «Мастер-кабинет»: Товары и блюда, Сотрудники, Объекты | в обмене с 20 ноября | Выйти из обмена | Новые записи появятся у обеих компаний. | Правки владельца кабинета изменят ваши записи с тем же названием. Ваши правки его записи не изменят. | Сотрудники передаются только как ФИО и должность. Человек с таким же ФИО не объединяется — он пропускается как дубль. | Выйти из обмена можно в любой момент.
+owner card: other company and incoming request: {"foreignMember":1,"incoming":1,"openLink":1}
+leave: 200
+member and link rows after leaving: 0 / 0
+owner did not get a product added after leaving: true
+cancel: 200
+approve a cancelled request: 409
+transfer request: sources offered: ["Сеть Вкусно"]
+approve transfer: 200
+requester equipment after transfer: ["Холодильник 1"]
+links kept after transfer: 0
+decline: {"ok":true,"status":"declined"}
+request again right after a decline: {"status":409,"json":{"error":"Владелец отклонил запрос. Повторить можно после 27 ноября 2026 г.","code":"request_declined_recently"}}
+stranger reads a request by its id: 404
+requester reads own request through the owner's route: 404
+requester's journal names no organisation of the owner: 0
+audit on both sides: directory_exchange.request_approved|2; directory_exchange.request_cancelled|1; directory_exchange.request_created|4; directory_exchange.request_declined|1; directory_exchange.request_left|1; directory_exchange.synced|8; directory_exchange.transferred|2

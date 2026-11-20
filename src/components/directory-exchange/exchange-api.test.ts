@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   approvalBody,
+  defaultOwnOrganizations,
   creationRefusal,
   decisionView,
   exchangeParticipants,
@@ -304,6 +305,7 @@ test("decision: the token payload is parsed, the owner can only narrow the lists
       { id: "o1", name: "Кафе" },
       { id: "o2", name: "" },
     ],
+    linkedIds: [],
   });
   // ИНН нет — строки с ним не будет; кабинет и источники могут не прийти.
   const bare = parseDecisionState({ request: { id: "r2", mode: "link", status: "expired", requesterInn: null } });
@@ -324,13 +326,25 @@ test("decision: the token payload is parsed, the owner can only narrow the lists
     allowedKinds: ["staff"],
     sourceOrganizationId: "o1",
   });
-  // Связь: источник не нужен и в запрос не уходит.
-  const link = { request: { mode: "link" as const, kinds: state.request.kinds }, sources: [] };
-  assert.deepEqual(approvalBody(link, ["products", "staff"], "o1"), {
+  // Связь: источник не нужен; нужны свои организации владельца — только из его списка.
+  const link = { request: { mode: "link" as const, kinds: state.request.kinds }, sources: state.sources };
+  assert.equal(approvalBody(link, ["products", "staff"], "o1"), null, "no own organization ticked");
+  assert.equal(approvalBody(link, ["products"], "", ["foreign-org"]), null, "a foreign id is not one of the owner's");
+  assert.deepEqual(approvalBody(link, ["products", "staff"], "", ["o2", "foreign-org", "o1"]), {
     decision: "approve",
     allowedKinds: ["products", "staff"],
+    organizationIds: ["o1", "o2"],
   });
-  assert.equal(approvalBody(link, [], ""), null);
+  assert.equal(approvalBody(link, [], "", ["o1"]), null);
+  // По умолчанию отмечены уже обменивающиеся; их нет — единственная организация.
+  assert.deepEqual(defaultOwnOrganizations({ sources: state.sources, linkedIds: ["o2"] }), ["o2"]);
+  assert.deepEqual(defaultOwnOrganizations({ sources: [{ id: "o1", name: "Кафе" }], linkedIds: [] }), ["o1"]);
+  assert.deepEqual(defaultOwnOrganizations({ sources: state.sources, linkedIds: [] }), []);
+  // Чужой id в linkedIds отбрасывается разбором.
+  assert.deepEqual(
+    parseDecisionState({ request: { id: "r", mode: "link", status: "pending" }, sources: [{ id: "o1", name: "Кафе" }], linkedIds: ["o1", "x"] })?.linkedIds,
+    ["o1"],
+  );
 });
 
 test("decision: the answer keeps the server status, a summary belongs to an approval only", () => {

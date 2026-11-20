@@ -29,6 +29,7 @@ const decideSchema = z.object({
   allowedKinds: z.array(z.enum(EXCHANGE_KINDS)).max(EXCHANGE_KINDS.length * 2).nullish(),
   // Перенос: своя организация, из которой взять данные.
   sourceOrganizationId: z.string().trim().min(1).max(64).nullish(),
+  organizationIds: z.array(z.string().trim().min(1).max(64)).max(100).nullish(),
 });
 
 type OwnerSession = { ok: true; session: Session } | { ok: false; response: NextResponse };
@@ -75,7 +76,7 @@ export async function GET(_request: Request, ctx: Ctx) {
 
 /**
  * POST /api/exchange-requests/[token] `{ decision: "approve" | "decline",
- * allowedKinds?, sourceOrganizationId? }` → `{ ok: true, status, summary? }`.
+ * allowedKinds?, sourceOrganizationId?, organizationIds? }` → `{ ok: true, status, summary? }`.
  * Подтверждение связи делает организацию-заявителя участником обмена кабинета
  * и сразу запускает обмен; подтверждение переноса разово переносит данные из
  * выбранной своей организации. Повторное решение, отменённый и истёкший
@@ -100,6 +101,7 @@ export async function POST(request: Request, ctx: Ctx) {
       decision: parsed.data.decision,
       allowedKinds: parsed.data.allowedKinds ?? undefined,
       sourceOrganizationId: parsed.data.sourceOrganizationId ?? null,
+      organizationIds: parsed.data.organizationIds ?? null,
     });
     after(decided.notify);
     return NextResponse.json({

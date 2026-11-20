@@ -27098,7 +27098,11 @@
           "ruleNewRecords": "New records will appear in both companies.",
           "ruleEdits": "Your edits will reach “{name}”. Edits made by “{name}” will not change your records.",
           "ruleOneCompany": "A master cabinet can be linked with only one other company.",
-          "ruleDisconnect": "You can disconnect the company at any time: “Settings → Master cabinet”."
+          "ruleDisconnect": "You can disconnect the company at any time: “Settings → Master cabinet”.",
+          "own": "Which of your organisations will take part",
+          "ownHint": "The ticked organisations will exchange the allowed lists with this company and with each other.",
+          "needOwn": "Tick at least one of your organisations",
+          "noOwn": "Your account has no organisation that can exchange data. The request can only be declined."
         }
       }
     }
