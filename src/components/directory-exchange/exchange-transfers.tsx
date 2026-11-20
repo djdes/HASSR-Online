@@ -106,7 +106,8 @@ function TransferRow({
     ...EXCHANGE_KINDS.filter((kind) => transfer.counts[kind] > 0).map((kind) =>
       t("transfers.count", { kind: t(`kinds.${kind}`), count: String(transfer.counts[kind]) }),
     ),
-    // Настройки журналов перенос заменил — это не отменяется.
+    // Настройки журналов перенос заменил: со снимком прежних отмена их вернёт (серия D), без него — нет.
+    ...transfer.replacedKinds.map((kind) => t("transfers.replaced", { kind: t(`kinds.${kind}`) })),
     ...transfer.fixedKinds.map((kind) => t("transfers.fixed", { kind: t(`kinds.${kind}`) })),
   ];
   let status: string | null = null;
@@ -196,7 +197,8 @@ function UndoResult({ result }: { result: TransferUndoResult }) {
   if (result.undone.length + result.kept.length === 0) {
     return <p className="mt-2 text-[12.5px] leading-[1.5] text-[#6f7282]">{t("resultNothing")}</p>;
   }
-  const names = result.undone.slice(0, PREVIEW).map((item) => item.name).filter(Boolean);
+  // У записи без названия (настройки журналов) — её вид.
+  const names = result.undone.slice(0, PREVIEW).map((item) => item.name || t(`entities.${item.entity}`));
   const moreUndone = result.undone.length - Math.min(result.undone.length, PREVIEW);
   const kept = result.kept.slice(0, PREVIEW);
   const moreKept = result.kept.length - kept.length;

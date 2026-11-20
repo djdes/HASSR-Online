@@ -1,0 +1,64 @@
+PASS Р8.5: exchange state counts the new lists (journals = 1 settings record, checklists = live templates)
+PASS setup: B has no saved journal controls
+--- AC2: «Журналы»
+PASS AC2: linking — both settings records in one group, ids are the organizations
+PASS AC2: linking overwrites nobody's journal settings (0 updated in «Журналы»)
+PASS AC2: B's settings unchanged by linking
+PASS AC2: reading the settings does not save B's journal controls (read-only path)
+PASS AC2: A's edit is one update in B's «Журналы»
+PASS AC2: B has A's disabled journals
+PASS AC2: B has A's legacy auto-create list
+PASS AC2: B has A's automation flags by journal
+PASS AC2: B's own responsible person for hygiene stays (people are not exchanged)
+PASS AC2: B's automation switches are A's
+PASS AC2: B's sensor-camera and brakerage choices are untouched
+PASS AC2: B's point (no own journal settings) is untouched
+PASS AC2: autofill follows to B's open documents (the point has no own automation, so its document follows too)
+PASS AC2: the next run is empty
+PASS AC2: B's edit (pest control back on) reaches A
+PASS own-set points: E's journal settings untouched
+PASS own-set points: E's point untouched
+PASS own-set points: no «Журналы» link for E
+PASS own-set points: the summary explains it
+PASS own-set points: nothing changed for A and B
+--- AC5: «Чек-листы»
+PASS AC5: the template reached B
+PASS AC5: B's copy has the questions but no file references
+PASS AC5: no assignments came with it
+PASS AC5: the archived template is not transferred
+PASS AC5: same title (case and spaces aside) — linked, not duplicated, B keeps its content
+PASS AC5: a sample file added in B is not an edit (references are not in the fingerprint)
+PASS AC5: A's edits are two updates in B
+PASS AC5: B's copy got the new question and its version grew
+PASS AC5: B's own sample file stays, A's does not arrive
+PASS AC5: the linked same-title template now follows A's edit
+PASS AC5: a template B archived is not created again
+--- AC6: a company of another account
+PASS AC6: F is linked with «Журналы» and «Чек-листы»
+PASS AC6: F got the owner's templates without file references
+PASS AC6: F's new template reached the owner's organizations
+PASS AC6: linking does not overwrite F's journal settings
+PASS AC6: the owner's journal edit reaches F and B
+PASS AC6: F's switches follow the owner's
+PASS AC6: F's own edits (journals, a template of the owner) do not reach the owner
+--- AC6: a one-off transfer to another company
+PASS AC6 (transfer): approved
+PASS AC6 (transfer): G got the owner's templates and journal settings
+PASS AC6 (transfer): a template of another company (F) is not passed to G
+PASS AC6 (transfer): G's recent transfer marks journals as replaced (undoable since series D, Р10), the rest undoable
+PASS AC6 (transfer undo): templates deleted, G's previous journal settings restored (series D, Р10)
+--- own one-off transfer
+PASS Р8.5 (preview): journals — one settings item, not «exists» while settings differ; checklists — live templates
+PASS transfer: summary — journals updated 1, checklists created 3
+PASS transfer: C has A's journal settings and switches
+PASS transfer: afterwards the preview shows the settings and templates as existing
+PASS transfer: listed with «Журналы: replaced» (undoable since series D, Р10) and an undo button
+PASS transfer undo: unused templates deleted, the assigned one kept as «used», previous settings restored (series D, Р10)
+PASS journals-only transfer: undoable since series D (Р10) — replaced, not «only fixed»
+PASS journals-only transfer: undo restores D's previous settings and marks the transfer undone
+PASS after the undo the settings transfer again (a new transfer record)
+PASS same settings again: nothing to transfer, no new transfer record
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0, templates left 0, settings left 0
+TOTAL: 55 PASS, 0 FAIL
+RESULT: all checks passed
+exit 0

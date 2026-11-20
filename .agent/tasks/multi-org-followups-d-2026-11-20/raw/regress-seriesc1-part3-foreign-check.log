@@ -1,0 +1,199 @@
+PASS setup: the owner's second organization got staff WITH the phone (exchange inside an account)
+--- who may ask
+PASS trial account: request by code → 402
+PASS trial account: a wrong code is the same 402 — nothing learnt about the code
+PASS free account (trial over): request by code → 402
+PASS refused accounts created no request rows
+PASS paid account: malformed code → 404 with the common text
+PASS paid account: unknown code → the same 404
+PASS paid account: demo cabinet code → the same 404
+PASS paid account: code of an ordinary organization (not a cabinet) → the same 404
+PASS paid account: own cabinet code → 409
+PASS paid account: no lists → 400
+PASS paid account: unknown mode → 400
+PASS not the account owner → 403
+PASS owner of another account asking for a foreign organization → 403
+PASS no refusal above created a request
+PASS before approval: transfer preview of a foreign organization → 404
+PASS before approval: one-off transfer from a foreign organization → 404
+PASS before approval: foreign organization as an exchange member → 404
+--- request created
+PASS paid account: request created, pending
+PASS response tells the requester the cabinet NAME and nothing else about the other account
+PASS only the SHA-256 of the token is stored
+PASS request expires in 7 days
+PASS request is addressed to the cabinet, asked by the owner of the paid account
+PASS series A AC4: bell in the cabinet owner's home organization, linking to /exchange-request/<request id>, naming the requester
+PASS series A AC4: Telegram message to the cabinet owner about the request (no bot locally — logged as failed)
+PASS letter to the cabinet owner: his address, who asks (name, INN), the lists, the link with the raw token, 7 days
+PASS letter body: link /exchange-request/<raw token>, foreign names escaped
+PASS synthetic address of the owner: letter skipped without throwing
+PASS series A AC4: the same request does not make a second bell
+PASS series A AC4: owner without Telegram — nothing sent, no error
+PASS audit on both sides: request_created
+PASS duplicate request to the same cabinet → 409
+PASS the duplicate created nothing
+PASS requester sees «pending»: cabinet name and the date, nothing incoming
+PASS cabinet owner sees the incoming request with the requester's name
+PASS a manager who is not the account owner sees nothing
+PASS «войти как» sees nothing
+PASS a stranger sees nothing, even naming a foreign organization
+PASS another organization of the requester's account shows no request of the first one
+--- token access
+PASS stranger with the raw token cannot read → 403
+PASS the requester himself with the raw token cannot read → 403
+PASS stranger with the request id → 404 (an id tells nothing)
+PASS the requester with his own request id → 404
+PASS unknown token → 404
+PASS garbage instead of a token → 404
+PASS stranger cannot decide → 403
+PASS the requester cannot approve his own request → 403
+PASS the requester cannot decline by token either → 403
+PASS after all refusals the request is still pending, nobody is a member
+PASS cabinet owner reads the request: who, INN, mode, lists, cabinet, his organizations (both already exchanging)
+PASS cabinet owner can open the request by its id too (the card has no token)
+--- approve link
+PASS approve with lists that were not requested → 400, still pending
+PASS approve with an empty list → 400
+PASS approved: member created with foreign = true and the narrowed lists (never wider than requested)
+PASS request row: approved, allowed lists, who decided, result stored
+PASS requester received products
+PASS requester received the position and both employees
+PASS lists that were not allowed did not come: no objects, no equipment
+PASS rule Р5: staff arrived WITHOUT phone and days off
+PASS summary: the requester got records in the allowed lists only
+PASS the exchange before the switch delivered the pending phone edit inside the owner's account
+PASS owner's employees keep their phones and days off
+PASS all staff fingerprints are now the restricted variant (marked f:)
+PASS second decision → 409
+PASS request while already a member → 409
+PASS audit on both sides: request_approved; the approver's name is not written into the requester's journal
+PASS exchange audit in the requester's organization carries no foreign user
+PASS decision: letter to the requester
+PASS decision: notification in the requester's cabinet (owner and the other manager)
+--- exchange across accounts
+PASS two more runs change nothing
+PASS after two more runs the owner's phones are untouched and the requester still has none
+PASS phone and days-off edits are neither sent nor compared while a foreign organization shares staff
+PASS a rename by the other company does not change the owner's records
+PASS and the ignored edit produces nothing on the next run
+PASS a rename by the owner reaches his second organization; the other company keeps its own phone
+PASS requester's new employee appears at the owner WITHOUT phone and days off
+PASS products travel both ways across accounts
+PASS equipment and objects still did not leak to the requester
+PASS and the next run is empty again
+PASS foreign member on pause sits out; the owner's organizations go back to full fingerprints with nothing pushed between them
+PASS foreign member is back: restricted fingerprints again, no record rewritten, no phone travelled
+PASS part 2 state of the owner lists only his own organizations as members
+PASS owner's card: the foreign member with its lists, no incoming left
+PASS requester's card: linked to the cabinet, nothing pending
+--- leave
+PASS a stranger cannot end somebody's link → 404
+PASS a stranger cannot end it by the request id or the organization id either → 404
+PASS …nor by the organization id
+PASS requester leaves the exchange
+PASS audit on both sides: request_left
+PASS after leaving the exchange stops in both directions; received data stays
+PASS back inside the account: different phones and days off stay where they are — nothing pushed, nothing erased
+PASS staff fingerprints are the full variant again
+PASS and a new phone edit travels inside the account as before
+PASS leaving twice → 409
+--- disconnect
+PASS a new request is possible after leaving
+PASS approve without a list means everything requested (opened by id)
+PASS staff is exchanged with phones again while the foreign organization shares products only
+PASS the requester cannot disconnect himself through the owner's path of another organization → 404
+PASS cabinet owner disconnects the foreign member (by organization id)
+PASS audit on both sides: request_disconnected
+PASS after the disconnect the exchange stops
+PASS own members of the cabinet are not touched by the disconnect
+PASS owner's path does not remove his OWN member → 404
+PASS …and the own member is still there
+--- decline
+PASS cabinet owner cannot «cancel» a pending request through DELETE → 409
+PASS declined: status, no member, nothing transferred
+PASS audit on both sides: request_declined
+PASS decline: letter and notification to the requester
+PASS approve after a decline → 409
+PASS cancel after a decline → 409
+PASS the declined request left the lists
+PASS a new request right after the decline → 409
+--- cancel
+PASS a stranger cannot cancel → 404
+PASS another organization of the same account is not the requester → 404
+PASS requester cancels the pending request
+PASS audit on both sides: request_cancelled
+PASS owner cannot approve a cancelled request → 409
+PASS cancelled request: nobody became a member
+--- expiry
+PASS a request made 8 days ago is past its term
+PASS approve after the term → 409
+PASS the expired request is marked on first touch and nobody became a member
+PASS an expired request does not block a new one; stale ones are expired lazily when lists are read
+PASS owner reading an expired request sees it expired
+PASS cancel of an expired request → 409
+--- transfer
+PASS transfer request: the owner is offered only his own working organizations as a source
+PASS approve a transfer without a source → 400
+PASS source from another account (the requester's own organization) → 404
+PASS the cabinet itself is not a source → 404
+PASS failed approvals leave the transfer request pending
+PASS transfer: staff with the position and equipment with its area came from the chosen source
+PASS transfer: the list that was not allowed did not come
+PASS transfer, rule Р5: staff without phone and days off
+PASS transfer keeps no links and no membership
+PASS transfer request row: approved, source and result stored
+PASS the source is untouched by the transfer
+PASS transfer audited on both sides; the owner's name is not written into the requester's journal
+PASS a transfer cannot be «left» afterwards → 409
+PASS without the explicit option a cross-account transfer is still 404
+PASS …and so is the preview
+PASS the cabinet's exchange knows nothing about the transfer target
+--- daily limit
+PASS sixth request of the day (cancelled ones count) → 429
+PASS the limit refusal carries its code and created nothing
+PASS over the limit a wrong code is 429 too — nothing learnt
+PASS a day later requests work again; refusals spent nothing
+--- locked organization
+PASS a locked organization cannot ask → 409
+PASS …with the «locked» code
+PASS a locked organization cannot be a transfer target → 409
+PASS …nor join an exchange
+PASS the request to the locked organization stays pending, nothing arrived
+PASS a locked organization can still cancel its request
+--- several cabinets
+PASS code of any cabinet of the account addresses its exchange cabinet (where the owner's organizations are)
+PASS scheduled run: finished without errors
+PASS route modules load: handlers, nodejs runtime, force-dynamic
+--- review fixes (2026-11-20)
+PASS legacy cabinet code (pool code) finds the cabinet
+PASS owner opens the request by its id (without the letter)
+PASS requester cannot open the request by id → 404
+PASS another company cannot open the request by id → 404
+PASS approval while the requester is no longer paid → 409
+PASS …and the request stays pending
+PASS same-named people of two companies are not merged: one each, own phones, never in one group
+PASS …and repeated runs change nothing for them
+PASS B received the owner's freezer and product
+PASS B's edits do not change the owner's freezer norms or product
+PASS …and nothing is pending on the next run
+PASS the owner's later edit overwrites B's record
+PASS a one-off transfer to another company still works while the cabinet is linked
+PASS the requester's journal names no organization of the owner and no source id
+PASS …C received nothing from the declined link
+PASS a new request right after a decline → 409
+PASS …code request_declined_recently with the date
+PASS C1: the owner received B's own new product
+PASS C1: after the pause C is linked while B stays linked (no «cabinet busy»)
+PASS C1: C received the owner's products but not B's
+PASS B leaves: no member and no link rows remain
+PASS C1: after B left, C still does not get B's product (its group remembers B)
+PASS link request: the owner's organizations are offered, none preselected without an exchange
+PASS approving a link without an own organization → 400
+PASS …code request_no_own_organization, request stays pending
+PASS another company's organization passed as own → 404
+PASS approved with the chosen own organization: it joined the exchange and products moved both ways
+cleanup: organizations left 0, users left 0, accounts left 0, requests left 0, members left 0
+TOTAL: 180 PASS, 0 FAIL
+RESULT: all checks passed
+exit 0

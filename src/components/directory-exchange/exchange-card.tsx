@@ -25,6 +25,7 @@ import {
 import { ExchangeCabinetCode } from "./exchange-cabinet-code";
 import { ExchangeDialog } from "./exchange-dialog";
 import { ForeignMemberRow, ForeignOutgoing, IncomingRequests } from "./exchange-foreign";
+import { ExchangeHistory } from "./exchange-history";
 import { ExchangeLimitNote, useResultParts } from "./exchange-result";
 import { ExchangeTransfers } from "./exchange-transfers";
 import { ExchangeSkips } from "./exchange-skips";
@@ -217,6 +218,15 @@ export function ExchangeCard({
           {summaryTotals(lastSync).skippedLimit > 0 ? <ExchangeLimitNote className="mt-3" /> : null}
           {/* Пропущенные записи своих организаций: «Пропущено: N — Разобрать». */}
           <ExchangeSkips refreshKey={version} className="mt-3" />
+          {/* Что обмен создал или изменил здесь за 30 дней — с «Отменить» (серия D). */}
+          <ExchangeHistory
+            refreshKey={version}
+            className="mt-3"
+            onUndone={() => {
+              setVersion((value) => value + 1);
+              onChanged?.();
+            }}
+          />
 
           {foreign && hasOutgoing ? (
             // Заявителю: запросы в кабинеты других компаний и подтверждённые связи с ними.

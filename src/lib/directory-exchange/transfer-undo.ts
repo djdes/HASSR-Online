@@ -18,8 +18,9 @@ import { normalizePlaceName } from "@/lib/orphan-areas";
  * не правилось: продукты выключаются, сотрудники уходят в архив, оборудование,
  * помещения, цеха, объекты, должности и шаблоны чек-листов удаляются.
  * Остальное остаётся, и итог называет причину. Замена настроек журналов
- * (Р8.1) не отменяется никогда: прежних настроек перенос не хранит. Работа с
- * базой — `transfer-undo.server.ts`.
+ * (Р8.1) отменяется, если перенос сохранил снимок прежних настроек (серия D,
+ * Р10) и после переноса их не меняли; у переносов до D снимка нет — замена
+ * остаётся «не отменяется». Работа с базой — `transfer-undo.server.ts`.
  */
 
 /** Сколько дней после переноса его можно отменить. */
@@ -32,7 +33,7 @@ export const TRANSFER_EXPIRED_MESSAGE = `Перенос можно отмени�
 /**
  * Созданные переносом записи по сущностям, включая помещения и цеха-зеркала,
  * которые завело их создание; у настроек журналов — организация, чьи
- * настройки перенос заменил (`journal_settings`, не отменяется).
+ * настройки перенос заменил (`journal_settings`: отменяется только со снимком, Р10).
  */
 export type TransferCreated = Record<ExchangeEntity, string[]>;
 
@@ -60,14 +61,28 @@ export function transferCreatedCount(created: TransferCreated): number {
   return EXCHANGE_ENTITIES.reduce((sum, entity) => sum + created[entity].length, 0);
 }
 
-/** Сколько из записанного переносом можно отменить (без замены настроек журналов). */
-export function undoableCreatedCount(created: TransferCreated): number {
-  return EXCHANGE_ENTITIES.reduce((sum, entity) => sum + (UNDO_ACTION[entity] ? created[entity].length : 0), 0);
+/** Замену записи можно отменить: созданное — всегда, заменённое — только со снимком прежних данных (Р10). */
+function isUndoableRecord(entity: ExchangeEntity, id: string, before: TransferBefore): boolean {
+  return UNDO_ACTION[entity] !== null || Object.hasOwn(before[entity], id);
 }
 
-/** Списки, где перенос что-то поменял без отмены (настройки журналов) — в порядке `EXCHANGE_KINDS`. */
-export function fixedTransferKinds(created: TransferCreated): ExchangeKind[] {
-  return EXCHANGE_KINDS.filter((kind) => KIND_ENTITIES[kind].some((entity) => !UNDO_ACTION[entity] && created[entity].length > 0));
+/** Сколько из записанного переносом можно отменить (замена настроек журналов — только со снимком). */
+export function undoableCreatedCount(created: TransferCreated, before: TransferBefore = emptyTransferBefore()): number {
+  return EXCHANGE_ENTITIES.reduce((sum, entity) => sum + created[entity].filter((id) => isUndoableRecord(entity, id, before)).length, 0);
+}
+
+/** Списки, где перенос что-то поменял без отмены (настройки журналов без снимка) — в порядке `EXCHANGE_KINDS`. */
+export function fixedTransferKinds(created: TransferCreated, before: TransferBefore = emptyTransferBefore()): ExchangeKind[] {
+  return EXCHANGE_KINDS.filter((kind) =>
+    KIND_ENTITIES[kind].some((entity) => created[entity].some((id) => !isUndoableRecord(entity, id, before))),
+  );
+}
+
+/** Списки, где перенос заменил данные и отмена может их вернуть (настройки журналов со снимком, Р10). */
+export function replacedTransferKinds(created: TransferCreated, before: TransferBefore): ExchangeKind[] {
+  return EXCHANGE_KINDS.filter((kind) =>
+    KIND_ENTITIES[kind].some((entity) => UNDO_ACTION[entity] === null && created[entity].some((id) => Object.hasOwn(before[entity], id))),
+  );
 }
 
 /**
@@ -97,9 +112,54 @@ export function parseTransferHashes(raw: unknown): TransferHashes {
   return hashes;
 }
 
-/** `createdJson` переноса: id по сущностям (как раньше) и их отпечатки. */
-export function transferCreatedJson(created: TransferCreated, hashes: TransferHashes): TransferCreated & { hashes: TransferHashes } {
-  return { ...created, hashes };
+/**
+ * Снимок прежних данных записи, которую перенос заменил (Р10, серия D):
+ * `createdJson.before` — `{ сущность: { id: поля } }`. Сейчас это настройки
+ * журналов получателя до переноса (поля обмена, `loadEntityRows`). Переносы
+ * до D снимка не хранят — читается пусто, и замена у них не отменяется.
+ */
+export type TransferFieldValue = string | number | boolean | null | readonly number[];
+export type TransferBefore = Record<ExchangeEntity, Record<string, Record<string, TransferFieldValue>>>;
+
+export function emptyTransferBefore(): TransferBefore {
+  return Object.fromEntries(EXCHANGE_ENTITIES.map((entity) => [entity, {}])) as TransferBefore;
+}
+
+function transferFieldValue(value: unknown): TransferFieldValue | undefined {
+  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (Array.isArray(value) && value.every((item) => typeof item === "number" && Number.isFinite(item))) return value as number[];
+  return undefined;
+}
+
+/** Снимки из `createdJson`; нет или мусор — пусто. */
+export function parseTransferBefore(raw: unknown): TransferBefore {
+  const before = emptyTransferBefore();
+  const source = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as { before?: unknown }).before : null;
+  if (!source || typeof source !== "object" || Array.isArray(source)) return before;
+  for (const [entity, byId] of Object.entries(source as Record<string, unknown>)) {
+    if (!isExchangeEntity(entity) || !byId || typeof byId !== "object" || Array.isArray(byId)) continue;
+    for (const [id, fields] of Object.entries(byId as Record<string, unknown>)) {
+      if (id.trim() === "" || !fields || typeof fields !== "object" || Array.isArray(fields)) continue;
+      const parsed: Record<string, TransferFieldValue> = {};
+      for (const [key, value] of Object.entries(fields as Record<string, unknown>)) {
+        const field = transferFieldValue(value);
+        if (field !== undefined) parsed[key] = field;
+      }
+      before[entity][id] = parsed;
+    }
+  }
+  return before;
+}
+
+/** `createdJson` переноса: id по сущностям (как раньше), их отпечатки и снимки заменённого (Р10). */
+export function transferCreatedJson(
+  created: TransferCreated,
+  hashes: TransferHashes,
+  before: TransferBefore = emptyTransferBefore(),
+): TransferCreated & { hashes: TransferHashes; before?: TransferBefore } {
+  const hasBefore = EXCHANGE_ENTITIES.some((entity) => Object.keys(before[entity]).length > 0);
+  return hasBefore ? { ...created, hashes, before } : { ...created, hashes };
 }
 
 /**
@@ -138,10 +198,14 @@ export function editedAfter(updatedAt: Date | null | undefined, transferAt: Date
 
 /* ───────────────────────── решение по записи ───────────────────────── */
 
-/** Что делает отмена с записью своего вида: продукт выключается, сотрудник — в архив, остальное удаляется. */
-export type UndoAction = "deactivated" | "archived" | "deleted";
+/**
+ * Что делает отмена с записью своего вида: продукт выключается, сотрудник —
+ * в архив, остальное удаляется; заменённые настройки журналов возвращаются
+ * по снимку (`restored`, Р10).
+ */
+export type UndoAction = "deactivated" | "archived" | "deleted" | "restored";
 
-/** null — замена не отменяется (настройки журналов: прежних перенос не хранит). */
+/** null — замена: отменяется только по снимку прежних данных (`UndoFacts.snapshot`, Р10). */
 export const UNDO_ACTION: Record<ExchangeEntity, UndoAction | null> = {
   product: "deactivated",
   staff: "archived",
@@ -161,7 +225,7 @@ export const UNDO_ACTION: Record<ExchangeEntity, UndoAction | null> = {
  *   • `not_empty` — внутри остались записи (помещения и цеха объекта, оборудование цеха);
  *   • `has_staff` — на должности есть действующие сотрудники;
  *   • `linked` — помещение и его цех-зеркало остаются вместе: второе из пары осталось;
- *   • `not_undoable` — замену настроек журналов отменить нельзя.
+ *   • `not_undoable` — замену настроек журналов отменить нельзя (перенос до серии D, без снимка).
  */
 export type KeepReason = "edited" | "used" | "not_empty" | "has_staff" | "linked" | "not_undoable";
 
@@ -179,6 +243,8 @@ export type UndoFacts = {
   used?: boolean;
   /** Остались вложенные записи или (у должности) действующие сотрудники. */
   hasChildren?: boolean;
+  /** Заменённая запись (настройки журналов): есть снимок прежних данных — её можно вернуть (Р10). */
+  snapshot?: boolean;
 };
 
 export type UndoDecision =
@@ -193,7 +259,7 @@ export type UndoDecision =
  */
 export function decideUndo(entity: ExchangeEntity, facts: UndoFacts): UndoDecision {
   if (facts.missing || facts.inactive) return { kind: "skip" };
-  const action = UNDO_ACTION[entity];
+  const action = UNDO_ACTION[entity] ?? (facts.snapshot ? "restored" : null);
   if (!action) return { kind: "keep", reason: "not_undoable" };
   if (facts.edited) return { kind: "keep", reason: "edited" };
   if (facts.used) return { kind: "keep", reason: "used" };
@@ -251,7 +317,7 @@ export type KeptItem = { entity: ExchangeEntity; id: string; name: string; reaso
 /** `DirectoryTransfer.undoJson`: что отменено и что осталось и почему. */
 export type TransferUndoResult = { undone: UndoneItem[]; kept: KeptItem[] };
 
-const UNDO_ACTIONS: readonly UndoAction[] = ["deactivated", "archived", "deleted"];
+const UNDO_ACTIONS: readonly UndoAction[] = ["deactivated", "archived", "deleted", "restored"];
 
 /** Итог из базы; мусорные строки пропускаются, не объект — null. */
 export function parseUndoResult(raw: unknown): TransferUndoResult | null {

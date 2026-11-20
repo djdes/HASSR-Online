@@ -1,0 +1,21 @@
+--- wait is 8000 ms
+PASS the wait is 8 seconds
+--- save / sync: a long exchange
+PASS answer comes at once with running: true
+PASS nothing is in the second organization yet at the answer
+PASS the background exchange finished with a result
+PASS its result is in the second organization
+PASS the card's source (lastSyncJson) holds the background result
+--- save / sync: a short exchange
+PASS a short exchange answers with its result (running: false)
+--- link approval: a long first exchange
+PASS approval answers running: true without a summary
+PASS request is approved right away; its result is not written yet
+PASS no letter to the requester before the exchange ends
+PASS after the exchange: resultJson holds what the requester got
+PASS after the exchange: the requester has the products
+PASS after the exchange: the requester's card (its lastSyncJson) holds its own result only
+PASS the requester's letter went out after the exchange, with what it got
+cleanup: organizations left 0, users left 0, accounts left 0
+TOTAL: 14 PASS, 0 FAIL
+exit 0

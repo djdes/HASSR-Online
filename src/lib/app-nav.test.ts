@@ -320,6 +320,13 @@ test("правило proxy: линейному сотруднику закрыт
   assert.equal(navAllows(cook, "/settings/balance", staffPath, noChecklists), true);
 });
 
+/** Чем страница проверяет факт меню. */
+const FACT_GUARD_TOKENS: Record<Extract<NavAccess, { kind: "fact" }>["fact"], string> = {
+  settingsPermissions: "sessionHasPermission(",
+  checklists: "hasJournalAccess(",
+  accountNetwork: "loadNetworkSummary(",
+};
+
 /**
  * Правило вкладки повторяет проверку самой страницы. Текст страницы
  * читаем как есть: если guard поменяют, тест покажет расхождение.
@@ -342,9 +349,7 @@ function guardTokens(access: NavAccess): string[][] {
     case "all":
       return access.rules.flatMap(guardTokens);
     case "fact":
-      return [
-        [access.fact === "settingsPermissions" ? "sessionHasPermission(" : "hasJournalAccess("],
-      ];
+      return [[FACT_GUARD_TOKENS[access.fact]]];
     case "notPointMode":
       return [["journalsPointMode("]];
   }
@@ -545,9 +550,9 @@ test("у каждого раздела, кроме «Остального» и �
     if (section.key === "more" || section.key === "news") assert.equal(section.menu, undefined);
     else assert.ok(section.menu && section.menu.length > 0, section.key);
   }
-  // Офис ›, Объекты ›, Мастер-кабинет (PRO), Реквизиты; «Ещё» — последним (2026-11-11).
+  // Офис ›, Объекты ›, Мастер-кабинет (PRO), Сеть, Реквизиты; «Ещё» — последним (2026-11-11).
   assert.deepEqual(menuShape("company"), [
-    [null, ["office", "points", "master", "organization"]],
+    [null, ["office", "points", "master", "network", "organization"]],
     [null, ["more"]],
   ]);
   // Лист 3: Сотрудники офиса; Права, доступ.
@@ -734,7 +739,7 @@ test("заведующая: пунктов только для admin.full нет
 });
 
 test("руководитель видит все пункты меню каждого раздела", () => {
-  const full: NavFacts = { checklists: true, settingsPermissions: true };
+  const full: NavFacts = { checklists: true, settingsPermissions: true, accountNetwork: true };
   for (const section of NAV_SECTIONS) {
     const all = (section.menu ?? []).flatMap((group) => [
       ...(group.sections ?? []),
@@ -791,6 +796,22 @@ test("«Моя компания»: реквизиты с вкладками, м�
   assert.deepEqual(visibleItemIds(headChef, "company"), []);
   assert.deepEqual(visibleItemIds(headChef, "settings"), ["names"]);
   assert.deepEqual(visibleItemIds(cook, "company"), []);
+});
+
+test("«Сеть» — только владельцу аккаунта с двумя организациями и больше (факт accountNetwork)", () => {
+  const items = (NAV_SECTIONS.find((section) => section.key === "company")?.menu ?? []).flatMap((group) => group.items);
+  const network = items.find((item) => item.id === "network");
+  assert.equal(network?.href, "/settings/network");
+  assert.deepEqual(network?.access, { kind: "fact", fact: "accountNetwork" });
+  assert.equal(sectionForPath("/settings/network")?.menuItemId, "network");
+  const owner: NavFacts = { ...withChecklists, accountNetwork: true };
+  assert.deepEqual(visibleItemIds(manager, "company", owner), ["office", "points", "master", "network", "organization", "more"]);
+  // Без факта (не владелец, одна организация, «войти как», точка) — пункта нет, адрес закрыт.
+  assert.ok(!visibleItemIds(manager, "company").includes("network"));
+  assert.ok(deniedNavHrefs(manager, withChecklists).includes("/settings/network"));
+  assert.ok(!deniedNavHrefs(manager, owner).includes("/settings/network"));
+  // Руководителю точки «Сеть» закрыта, даже если факт ошибочно true.
+  assert.ok(!visibleItemIds({ ...manager, pointScope: ["p1"] }, "company", owner).includes("network"));
 });
 
 test("пресет заведующей у линейной роли: в «Сотрудниках» — только команда", () => {
@@ -898,10 +919,11 @@ test("«Журналы» в режиме точки: «Журналы точек
 test("«Нет доступа» на месте страницы: закрытые пункты меню — по роли, не по режиму точки", () => {
   // Руководству с правом на права закрытых пунктов нет; без права из БД —
   // закрыта только иерархия (её страница пускает по тому же праву).
-  const allFacts: NavFacts = { checklists: true, settingsPermissions: true };
+  // «Сеть» — по факту владельца аккаунта с двумя организациями и больше.
+  const allFacts: NavFacts = { checklists: true, settingsPermissions: true, accountNetwork: true };
   assert.deepEqual(deniedNavHrefs(owner, allFacts), []);
   assert.deepEqual(deniedNavHrefs(root, allFacts), []);
-  assert.deepEqual(deniedNavHrefs(owner, withChecklists), ["/settings/staff-hierarchy"]);
+  assert.deepEqual(deniedNavHrefs(owner, withChecklists), ["/settings/network", "/settings/staff-hierarchy"]);
   // Повару закрыты разделы руководства, но не его баланс.
   const cookDenied = deniedNavHrefs(cook, noChecklists);
   for (const href of ["/production-control", "/settings/users", "/monitoring", "/inspection", "/verifications"]) {

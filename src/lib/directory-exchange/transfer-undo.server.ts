@@ -2,7 +2,12 @@ import type { Prisma } from "@prisma/client";
 
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
-import { loadEntityRows, type ParentGroupLookup } from "@/lib/directory-exchange/entities.server";
+import {
+  exchangeRowFromFields,
+  loadEntityRows,
+  updateEntityRow,
+  type ParentGroupLookup,
+} from "@/lib/directory-exchange/entities.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import {
   EXCHANGE_ENTITIES,
@@ -10,6 +15,7 @@ import {
   emptyKindRecord,
   rowHashLike,
   type ExchangeEntity,
+  type ExchangeFields,
   type ExchangeKind,
 } from "@/lib/directory-exchange/kinds";
 import { findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
@@ -19,14 +25,17 @@ import {
   decideUndo,
   editedAfter,
   editedByHash,
+  emptyTransferBefore,
   emptyTransferCreated,
   emptyTransferHashes,
   fixedTransferKinds,
   keepMirrorPartners,
   mirrorPairs,
+  parseTransferBefore,
   parseTransferCreated,
   parseTransferHashes,
   parseUndoResult,
+  replacedTransferKinds,
   transferCreatedCount,
   transferCreatedJson,
   transferUndoDeadline,
@@ -34,6 +43,7 @@ import {
   TRANSFER_UNDO_MS,
   TRANSFER_UNDONE_MESSAGE,
   type KeptItem,
+  type TransferBefore,
   type TransferCreated,
   type TransferHashes,
   type TransferUndoResult,
@@ -59,8 +69,9 @@ import { isManagementRole } from "@/lib/user-roles";
  * документов, чек-листы, киоски, отклонения температуры, датчики, смены
  * работы, назначения), остались ли вложенные записи. Порядок — потомки
  * раньше родителей: оборудование, сотрудники, продукты, шаблоны чек-листов,
- * помещения и цеха, должности, объекты. Замена настроек журналов (Р8.1) не
- * отменяется: в итоге она «осталась» с причиной `not_undoable`.
+ * помещения и цеха, должности, объекты. Замена настроек журналов (Р8.1)
+ * возвращается по снимку прежних настроек (серия D, Р10), если их после
+ * переноса не меняли; у переносов без снимка она «осталась» с `not_undoable`.
  *
  * Отмена идёт под замками обмена кабинетов, в которых участвует организация
  * (снаружи, по id), и под тем же замком, что и перенос в эту организацию
@@ -73,6 +84,7 @@ const EXCHANGE_LOCK_PREFIX = "directory-exchange";
 const EXCHANGE_BUSY_CODE = "exchange_busy";
 const NOT_FOUND_MESSAGE = "Перенос не найден";
 const NOT_UNDOABLE_MESSAGE = "Этот перенос заменил настройки журналов — его отменить нельзя";
+const SETTINGS_ENTITY: ExchangeEntity = "journal_settings";
 const BUSY_MESSAGE = "Перенос или отмена уже выполняются. Подождите минуту и повторите.";
 const EXCHANGE_BUSY_MESSAGE = "Идёт обмен справочниками. Подождите минуту и повторите отмену.";
 /** Сколько ждать замка и сколько может идти работа под ним. */
@@ -88,9 +100,10 @@ const OWN_PARENT: ParentGroupLookup = (parentId) => parentId;
  * Отпечатки записей `ids` организации — как их видит обмен. Запись вне строк
  * обмена — без отпечатка. `stored` — отпечатки с переноса: отпечаток записи
  * снимается в той же версии состава полей, что и сохранённый (Р8.0), — новая
- * версия сама по себе правкой не считается.
+ * версия сама по себе правкой не считается. Им же пользуется отмена
+ * изменения из истории обмена (history.server.ts).
  */
-async function currentHashes(organizationId: string, ids: TransferCreated, stored?: TransferHashes): Promise<TransferHashes> {
+export async function currentHashes(organizationId: string, ids: TransferCreated, stored?: TransferHashes): Promise<TransferHashes> {
   const hashes = emptyTransferHashes();
   for (const entity of EXCHANGE_ENTITIES) {
     if (ids[entity].length === 0) continue;
@@ -113,6 +126,11 @@ export type TransferRecorder = {
    * их создание. У настроек журналов — заменил их (id организации, без отмены).
    */
   created(entity: ExchangeEntity, id: string): Promise<void>;
+  /**
+   * Перенос заменил запись (настройки журналов, Р8.1): снимок её полей до
+   * замены — по нему отмена вернёт прежние настройки (серия D, Р10).
+   */
+  replaced(entity: ExchangeEntity, id: string, before: ExchangeFields): void;
   /**
    * Снять отпечатки созданного — в конце переноса, ещё под его замком. Сбой
    * чтения не ломает перенос: отпечатков тогда нет, отмена решает по прежним признакам.
@@ -137,6 +155,7 @@ export type TransferRecorder = {
  */
 export async function startTransferRecord(organizationId: string): Promise<TransferRecorder> {
   const created = emptyTransferCreated();
+  const snapshots = emptyTransferBefore();
   let hashes = emptyTransferHashes();
   let before: { rooms: Set<string>; areas: Set<string> } | null = null;
   try {
@@ -178,6 +197,11 @@ export async function startTransferRecord(organizationId: string): Promise<Trans
         console.error("[directory-exchange] transfer record: mirror not read", { organizationId, entity, error });
       }
     },
+    replaced(entity, id, fields) {
+      const copy: TransferBefore[ExchangeEntity][string] = {};
+      for (const [key, value] of Object.entries(fields)) if (value !== undefined) copy[key] = value;
+      snapshots[entity][id] = copy;
+    },
     async fingerprint() {
       try {
         hashes = await currentHashes(organizationId, created);
@@ -196,7 +220,7 @@ export async function startTransferRecord(organizationId: string): Promise<Trans
             toOrganizationId: input.toOrganizationId,
             actorUserId: input.actorUserId,
             requestId: input.requestId,
-            createdJson: transferCreatedJson(created, hashes) as unknown as Prisma.InputJsonObject,
+            createdJson: transferCreatedJson(created, hashes, snapshots) as unknown as Prisma.InputJsonObject,
             summaryJson: input.summary as unknown as Prisma.InputJsonObject,
           },
           select: { id: true },
@@ -220,8 +244,10 @@ export type RecentTransfer = {
   to: { id: string; name: string };
   /** Сколько записей создано по спискам (из итога переноса). */
   counts: Record<ExchangeKind, number>;
-  /** Списки, где перенос заменил данные без отмены (настройки журналов, Р8.1). */
+  /** Списки, где перенос заменил данные без отмены (настройки журналов переносов до серии D, Р8.1). */
   fixedKinds: ExchangeKind[];
+  /** Списки, где перенос заменил данные и отмена их вернёт (настройки журналов со снимком, Р10). */
+  replacedKinds: ExchangeKind[];
   /** Отменять нечего, кроме того, что не отменяется (`fixedKinds`): кнопки отмены нет. */
   onlyFixed: boolean;
   /** До какого момента можно отменить. */
@@ -295,7 +321,8 @@ export async function listRecentTransfers(
     const foreign = isForeignTransfer(source, row.toOrganization.accountId, row.requestId);
     const deadline = transferUndoDeadline(row.createdAt);
     const created = parseTransferCreated(row.createdJson);
-    const onlyFixed = undoableCreatedCount(created) === 0;
+    const snapshots = parseTransferBefore(row.createdJson);
+    const onlyFixed = undoableCreatedCount(created, snapshots) === 0;
     return {
       id: row.id,
       createdAt: row.createdAt.toISOString(),
@@ -307,7 +334,8 @@ export async function listRecentTransfers(
       },
       to: { id: row.toOrganization.id, name: row.toOrganization.name },
       counts: createdCounts(parseExchangeSummary(row.summaryJson), row.toOrganization.id),
-      fixedKinds: fixedTransferKinds(created),
+      fixedKinds: fixedTransferKinds(created, snapshots),
+      replacedKinds: replacedTransferKinds(created, snapshots),
       onlyFixed,
       undoUntil: deadline.toISOString(),
       undoable: !onlyFixed && canUndoTransfer({ createdAt: row.createdAt, undoneAt: row.undoneAt, now }).ok,
@@ -433,7 +461,16 @@ async function assignedStaff(tx: Tx, organizationId: string, ids: readonly strin
   return assigned;
 }
 
-type UndoOutcome = { result: TransferUndoResult; fryersRemoved: boolean };
+/**
+ * Итог отмены в транзакции. `restore` — заменённые записи, которые вернуть по
+ * снимку (настройки журналов, Р10): это делает вызывающий после транзакции —
+ * `updateEntityRow` пишет не в `tx`.
+ */
+export type UndoOutcome = {
+  result: TransferUndoResult;
+  fryersRemoved: boolean;
+  restore: Array<{ entity: ExchangeEntity; id: string; fields: ExchangeFields }>;
+};
 
 /** Итог отмены: решения по записям сущности ложатся в «отменено» и «осталось»; `settle` возвращает id к отмене. */
 class UndoLedger {
@@ -457,9 +494,10 @@ class UndoLedger {
 
 /**
  * Отменить созданное переносом в организации — в транзакции `tx`. Записи,
- * которых уже нет (удалили вручную), пропускаются молча.
+ * которых уже нет (удалили вручную), пропускаются молча. Отмену созданного
+ * обменом (история обмена, history.server.ts) решают те же правила.
  */
-async function undoCreated(
+export async function undoCreated(
   tx: Tx,
   params: {
     organizationId: string;
@@ -468,9 +506,12 @@ async function undoCreated(
     now: Date;
     /** Отпечатки с переноса и сейчас — правка у записей без `updatedAt`. */
     hashes: { stored: TransferHashes; current: TransferHashes };
+    /** Снимки заменённого (настройки журналов, Р10); нет — замена не отменяется. */
+    before?: TransferBefore;
   },
 ): Promise<UndoOutcome> {
   const { organizationId, created, transferAt, now, hashes } = params;
+  const snapshots = params.before ?? emptyTransferBefore();
   const ledger = new UndoLedger();
   const referenced = await referencedIds(tx, organizationId, created, transferAt);
   const changed = (entity: ExchangeEntity, id: string) => editedByHash(hashes.stored, hashes.current, entity, id);
@@ -606,12 +647,19 @@ async function undoCreated(
   );
   if (templateIds.length > 0) await tx.checklistTemplate.deleteMany({ where: { id: { in: templateIds }, organizationId } });
 
-  // 3b. Настройки журналов (Р8.1): замену не отменяем — прежних настроек перенос не хранит.
-  ledger.settle(
-    "journal_settings",
+  // 3b. Настройки журналов (Р8.1): замену возвращает снимок прежних настроек (Р10),
+  // если после переноса их не меняли (отпечаток тот же); без снимка — «не отменяется».
+  const settingsIds = ledger.settle(
+    SETTINGS_ENTITY,
     created.journal_settings.filter((id) => id === organizationId).map((id) => ({ id, name: "" })),
-    new Map(created.journal_settings.map((id) => [id, decideUndo("journal_settings", {})])),
+    new Map(
+      created.journal_settings.map((id) => [
+        id,
+        decideUndo(SETTINGS_ENTITY, { snapshot: Object.hasOwn(snapshots.journal_settings, id), edited: changed(SETTINGS_ENTITY, id) }),
+      ]),
+    ),
   );
+  const restore = settingsIds.map((id) => ({ entity: SETTINGS_ENTITY, id, fields: { ...snapshots.journal_settings[id] } as ExchangeFields }));
 
   // 4. Помещения и цеха — после оборудования: цех пуст, только если его оборудование ушло.
   const [rooms, areas] = await Promise.all([
@@ -745,7 +793,36 @@ async function undoCreated(
   );
   if (buildingIds.length > 0) await tx.building.deleteMany({ where: { id: { in: buildingIds }, organizationId } });
 
-  return { result: { undone: ledger.undone, kept: ledger.kept }, fryersRemoved };
+  return { result: { undone: ledger.undone, kept: ledger.kept }, fryersRemoved, restore };
+}
+
+/**
+ * Вернуть заменённые записи по снимкам (`UndoOutcome.restore`) — после
+ * транзакции отмены, ещё под замками. Не вышло (тариф, запись пропала) —
+ * запись переходит из «отменено» в «осталось» с `not_undoable`. Возвращает итог.
+ */
+async function restoreReplaced(organizationId: string, outcome: UndoOutcome): Promise<TransferUndoResult> {
+  if (outcome.restore.length === 0) return outcome.result;
+  const failed = new Set<string>();
+  for (const item of outcome.restore) {
+    let status = "conflict";
+    try {
+      status = (await updateEntityRow(item.entity, organizationId, item.id, exchangeRowFromFields(item.entity, { id: item.id, fields: item.fields })))
+        .status;
+    } catch (error) {
+      console.error("[directory-exchange] transfer undo: settings not restored", { organizationId, error });
+    }
+    if (status !== "updated") failed.add(`${item.entity}:${item.id}`);
+  }
+  if (failed.size === 0) return outcome.result;
+  const isFailed = (item: { entity: ExchangeEntity; id: string }) => failed.has(`${item.entity}:${item.id}`);
+  return {
+    undone: outcome.result.undone.filter((item) => !isFailed(item)),
+    kept: [
+      ...outcome.result.kept,
+      ...outcome.result.undone.filter(isFailed).map((item) => ({ entity: item.entity, id: item.id, name: item.name, reason: "not_undoable" as const })),
+    ],
+  };
 }
 
 /**
@@ -753,7 +830,7 @@ async function undoCreated(
  * кабинеты, где она участник (в том числе другой компании). По id — замки
  * берутся всегда в одном порядке.
  */
-async function exchangeCabinetsOf(organizationId: string, accountId: string): Promise<string[]> {
+export async function exchangeCabinetsOf(organizationId: string, accountId: string): Promise<string[]> {
   const [own, memberships] = await Promise.all([
     findExchangeCabinet(accountId),
     db.directoryExchangeMember.findMany({ where: { organizationId }, select: { masterOrganizationId: true } }),
@@ -769,7 +846,7 @@ async function exchangeCabinetsOf(organizationId: string, accountId: string): Pr
  * только свой замок, перенос — только замок переноса; отмена берёт замки
  * обмена снаружи, замок переноса — внутри, и круга ожидания нет.
  */
-async function underExchangeLocks<T>(cabinetIds: readonly string[], fn: () => Promise<T>): Promise<T> {
+export async function underExchangeLocks<T>(cabinetIds: readonly string[], fn: () => Promise<T>): Promise<T> {
   const [first, ...rest] = cabinetIds;
   if (!first) return fn();
   const locked = await withAdvisoryTryLock(advisoryLockKey(EXCHANGE_LOCK_PREFIX, first), () => underExchangeLocks(rest, fn), LOCK_WAIT);
@@ -814,8 +891,11 @@ export async function undoTransfer(input: {
 
   const organizationId = transfer.toOrganizationId;
   const created = parseTransferCreated(transfer.createdJson);
-  // Перенос только заменил настройки журналов (Р8.1): отменять нечего.
-  if (undoableCreatedCount(created) === 0) throw new DirectoryExchangeError(NOT_UNDOABLE_MESSAGE, 409, "transfer_not_undoable");
+  const snapshots = parseTransferBefore(transfer.createdJson);
+  // Перенос до серии D только заменил настройки журналов (Р8.1), снимка нет: отменять нечего.
+  if (undoableCreatedCount(created, snapshots) === 0) {
+    throw new DirectoryExchangeError(NOT_UNDOABLE_MESSAGE, 409, "transfer_not_undoable");
+  }
   const stored = parseTransferHashes(transfer.createdJson);
   // Отпечатки сейчас — только у записей, для которых они сняты при переносе.
   const hashed = emptyTransferCreated();
@@ -828,7 +908,7 @@ export async function undoTransfer(input: {
       async () => {
         // Под замками: обмен и перенос записи организации сейчас не меняют.
         const current = await currentHashes(organizationId, hashed, stored);
-        return db.$transaction(
+        const outcome = await db.$transaction(
           async (tx) => {
             // Отмена одна: вторая, пришедшая одновременно, здесь получает 0 строк.
             const claimed = await tx.directoryTransfer.updateMany({
@@ -842,6 +922,7 @@ export async function undoTransfer(input: {
               transferAt: transfer.createdAt,
               now,
               hashes: { stored, current },
+              before: snapshots,
             });
             await tx.directoryTransfer.update({
               where: { id: transfer.id },
@@ -851,6 +932,15 @@ export async function undoTransfer(input: {
           },
           { maxWait: 10_000, timeout: 120_000 },
         );
+        // Прежние настройки журналов (Р10) — после транзакции, ещё под замками.
+        if (outcome.restore.length === 0) return outcome;
+        const result = await restoreReplaced(organizationId, outcome);
+        if (result !== outcome.result) {
+          await db.directoryTransfer
+            .update({ where: { id: transfer.id }, data: { undoJson: result as unknown as Prisma.InputJsonObject } })
+            .catch((error: unknown) => console.error("[directory-exchange] transfer undo result not saved", { organizationId, error }));
+        }
+        return { ...outcome, result };
       },
       LOCK_WAIT,
     );

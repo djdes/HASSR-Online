@@ -9,6 +9,7 @@ import { getActiveOrgId } from "@/lib/auth-helpers";
 import { loadBuildingContext } from "@/lib/active-building";
 import { journalsPointMode } from "@/lib/building-scope";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
+import { loadAccountNetworkFact } from "@/lib/network-access.server";
 import {
   deniedNavHrefs,
   needsSidebar,
@@ -93,7 +94,9 @@ export async function loadNavFacts(session: Session): Promise<NavFacts> {
   const journalsPointModeOn = await loadBuildingContext(session)
     .then(journalsPointMode)
     .catch(() => false);
-  return { checklists, settingsPermissions, journalsPointMode: journalsPointModeOn };
+  // «Сеть»: владелец аккаунта с двумя организациями и больше (один запрос, только руководству).
+  const accountNetwork = await loadAccountNetworkFact(session).catch(() => false);
+  return { checklists, settingsPermissions, journalsPointMode: journalsPointModeOn, accountNetwork };
 }
 
 export async function buildNavModel(input: {

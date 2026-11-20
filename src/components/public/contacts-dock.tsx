@@ -3,18 +3,18 @@
 import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Loader2, Phone, Send } from "lucide-react";
+import { Loader2, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { ContactUsPanel } from "@/components/contact/contact-us-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SUPPORT_CHAT_UNREAD_EVENT, openSupportChat } from "@/lib/support-chat-bus";
 import { cn } from "@/lib/utils";
 
 /**
  * «Контакты» на каждой публичной странице (правки 05.11.2026; с 07.11 —
  * всегда на экране). С 18.11.2026 справа внизу одна кнопка — тёмный круг со
- * значком: она открывает это окно, а чат поддержки (`PublicSupportWidget`)
+ * значком (с 20.11.2026 — чат, не трубка): она открывает это окно, а чат поддержки (`PublicSupportWidget`)
  * открывается из него. Непрочитанный ответ поддержки — счётчик на кнопке, и
  * тогда нажатие ведёт сразу в переписку.
  *
@@ -128,7 +128,7 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
       style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <span className="flex size-[52px] shrink-0 items-center justify-center">
-        <Phone className="size-[21px] text-[#8e9bf8]" aria-hidden />
+        <MessageCircle className="size-[22px] text-[#8e9bf8]" aria-hidden />
       </span>
       <span className="motion-fab-label overflow-hidden whitespace-nowrap" aria-hidden>
         {t("launcher")}
@@ -146,13 +146,15 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
       {mounted ? createPortal(launcher, document.body) : null}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[480px]">
+        {/* Без подзаголовка-описания (правки 20.11.2026) — и без aria-describedby. */}
+        <DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-y-auto sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle className="text-[22px] tracking-[-0.02em]">{t("title")}</DialogTitle>
-            <DialogDescription className="text-[14px] leading-[1.55] text-[#6f7282]">{t("lead")}</DialogDescription>
+            {/* Заголовок в 3 раза крупнее прежних 22 px; на узком телефоне —
+                сколько помещается в строку рядом с крестиком. */}
+            <DialogTitle className="text-[clamp(44px,14vw,66px)] leading-none tracking-[-0.03em]">{t("title")}</DialogTitle>
           </DialogHeader>
 
-          <ContactUsPanel telegramUrl={telegramUrl} onBeforeChat={() => setOpen(false)} />
+          <ContactUsPanel telegramUrl={telegramUrl} groupLead={false} onBeforeChat={() => setOpen(false)} />
 
           <form onSubmit={submit} noValidate className="mt-2 space-y-4 rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4 sm:p-5">
             <div className="text-[16px] font-semibold text-[#0b1024]">{t("formTitle")}</div>
@@ -253,7 +255,6 @@ export function ContactsDock({ telegramUrl }: { telegramUrl: string | null }) {
               {sending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Send className="size-4" aria-hidden />}
               {sending ? t("sending") : t("submit")}
             </button>
-            <p className="text-center text-[12px] text-[#9b9fb3]">{t("privacy")}</p>
           </form>
         </DialogContent>
       </Dialog>

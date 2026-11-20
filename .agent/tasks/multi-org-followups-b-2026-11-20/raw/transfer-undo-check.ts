@@ -195,6 +195,9 @@ async function main() {
         return sorted((await db.area.findMany({ where: { id: { in: ids }, organizationId: b.id } })).map((row) => row.name));
       case "equipment":
         return sorted((await db.equipment.findMany({ where: { id: { in: ids }, area: { organizationId: b.id } } })).map((row) => row.name));
+      default:
+        // Настройки журналов и шаблоны чек-листов (серия C2) этот сценарий не переносит.
+        return [];
     }
   };
   check("T1: created products (Хлеб already there — not recorded)", same(await nameOf("product"), sorted(["Молоко 3,2%", "Сыр твёрдый", "Борщ"])), await nameOf("product"));

@@ -35,6 +35,8 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
   "/settings/organization",
   // Мастер-кабинет: подключает точки всей компании и приглашает операторов.
   "/settings/master-cabinet",
+  // «Сеть»: сводка по всем организациям аккаунта — владельцу.
+  "/settings/network",
   "/settings/names",
   "/settings/onboarding",
   "/settings/onboarding-template",

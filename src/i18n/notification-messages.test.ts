@@ -122,3 +122,38 @@ test("narrow historical adapters translate known wrappers and never rewrite stor
     }
   }
 });
+
+test("напоминание о своих 14 днях организации: название как есть, последний день и «Добавить точку» на языке читателя", async () => {
+  const name = "Кафе {stage} O‘tkir";
+  const row = {
+    kind: "billing.org_trial_reminder",
+    title: `Бесплатные дни организации «${name}» заканчиваются`,
+    messageKey: "orgTrialEnding",
+    messageParams: { name, stage: "soon" },
+    linkHref: "/settings/subscription?addPoints=1",
+    linkLabel: "Добавить точку",
+    linkLabelKey: "addPoint",
+    items: [{ label: "Последний бесплатный день — 23 ноября", labelKey: "orgTrialLastDay", labelParams: { day: "2026-11-23" } }],
+  };
+  const titles = new Set<string>();
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const presenter = await notificationPresenter(locale);
+    const result = presenter.row(row);
+    assert.ok(result.title.includes(name), result.title);
+    assert.ok(result.items[0].label.includes("23"), result.items[0].label);
+    assert.ok(!result.items[0].label.includes("{"), result.items[0].label);
+    assert.ok(result.linkLabel && !result.linkLabel.includes("{"));
+    assert.equal(result.linkHref, row.linkHref);
+    titles.add(result.title);
+    const tomorrow = presenter.row({ ...row, messageParams: { name, stage: "tomorrow" } });
+    assert.notEqual(tomorrow.title, result.title);
+    // Не день или без названия — сохранённый русский текст.
+    assert.equal(presenter.row({ ...row, messageParams: { stage: "soon" } }).title, row.title);
+    const badDay = presenter.row({ ...row, items: [{ ...row.items[0], labelParams: { day: "2026-02-31" } }] });
+    assert.equal(badDay.items[0].label, row.items[0].label);
+  }
+  assert.equal(titles.size, 3);
+  const ru = (await notificationPresenter("ru")).row(row);
+  assert.equal(ru.items[0].label, "Последний бесплатный день — 23 ноября");
+  assert.equal(ru.linkLabel, "Добавить точку");
+});

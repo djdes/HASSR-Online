@@ -1,0 +1,224 @@
+PASS cabinet created with the name «Мастер-кабинет»
+PASS second ensure returns the same cabinet
+PASS members saved to the same cabinet
+PASS series A AC6: products in the exchange do not connect organizations to the cabinet menu and raw materials
+PASS B received products
+PASS B received the staff position only
+PASS B received both line employees
+PASS B received the building without the office
+PASS B received the room
+PASS B received the area
+PASS B received the fridge
+PASS same rooms and areas on both sides; the source got no room it did not have
+PASS rule Р4: no login, mail, Telegram or management role copied
+PASS staff fields copied: phone, days off, position
+PASS rule Р4: sensor binding and fillers not copied; norms and place copied
+PASS rule Р4: room responsibles not copied, kind copied
+PASS summary: B created records in all four lists
+PASS lastSyncedAt and lastSyncJson written
+PASS audit row directory_exchange.synced for B
+DEBUG first [["Первая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"1/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"3/0/0/0","staff":"3/0/0/0","objects":"2/0/0/0","equipment":"2/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+DEBUG idle [["Первая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+DEBUG links ["area:A=2","area:B=2","building:A=1","building:B=1","equipment:A=1","equipment:B=1","journal_settings:A=1","journal_settings:B=1","position:A=1","position:B=1","product:A=3","product:B=3","room:A=1","room:B=1","staff:A=2","staff:B=2"]
+DEBUG A {"products":["Борщ","Молоко 3,2%","Сыр твёрдый"],"positions":["management:Директор","staff:Повар"],"staff":["Иванов Иван","Петрова Анна"],"buildings":["Кафе на Ленина","Офис"],"rooms":["Кухня"],"areas":["Кухня","Склад"],"equipment":["Холодильник №1"]}
+DEBUG B {"products":["Борщ","Молоко 3,2%","Сыр твёрдый"],"positions":["staff:Повар"],"staff":["Иванов Иван","Петрова Анна"],"buildings":["Кафе на Ленина"],"rooms":["Кухня"],"areas":["Кухня","Склад"],"equipment":["Холодильник №1"]}
+PASS run right after the first one changes nothing
+PASS new employee added in B
+DEBUG second [["Первая",{"products":"0/1/0/0","staff":"1/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+PASS A received the rename from B
+PASS A received the new employee from B
+PASS summary: A products updated 1, staff created 1
+PASS no duplicates appeared in B
+DEBUG third [["Первая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+PASS deleted product is still in B
+PASS deleted product was not recreated in A
+PASS deletion run created and updated nothing
+PASS later edit of the deleted record does not bring it back to A
+PASS one more run: zero created/updated
+PASS equipment norm edit reached B, sensor binding in A untouched
+PASS state: owner can manage, sibling and members listed, last sync present
+PASS state: not the owner — canManage false, nothing listed
+PASS state: «войти как» — canManage false
+PASS transfer preview: lists, parents first, duplicate marked
+PASS transfer: selected employee came with the position
+PASS transfer: equipment came with its area, no building pulled
+PASS transfer: duplicate product skipped, the other added
+PASS transfer summary: created counted, existing duplicate skipped silently
+PASS transfer keeps no links
+PASS transfer audited
+PASS repeated transfer adds only what was missing (2 employees, 1 area)
+PASS foreign organization in members → 404
+PASS not the owner saving members → 403
+PASS transfer from a foreign organization → 404
+PASS transfer into a foreign organization → 404
+PASS cabinet for a foreign account → 403
+PASS foreign organization got nothing
+[billing] seat limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshd10031qu7dz7q5t99o',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshd10031qu7dz7q5t99o',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/1/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Чужая-2",{"products":"0/0/0/0","staff":"1/0/1/0","objects":"0/0/2/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[] otherCabinet cmwpeshew003cqu7ddyh66x64
+PASS tariff: employee over the seat limit skipped and reported
+PASS tariff: objects over the point limit skipped and reported
+[billing] seat limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshd10031qu7dz7q5t99o',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+PASS tariff: skipped records are retried, nothing else changes
+PASS empty kinds: member and its links removed
+[billing] seat limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshdv0035qu7da15l1dnj',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwpeshd10031qu7dz7q5t99o',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+PASS scheduled run: finished without errors
+--- established organizations
+DEBUG established first [["Старая-1",{"products":"1/0/0/0","staff":"1/0/0/0","objects":"1/0/0/0","equipment":"1/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Старая-2",{"products":"1/0/0/0","staff":"1/0/0/0","objects":"0/0/0/0","equipment":"1/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]]
+DEBUG e1 {"products":["Мука","Сахар","Соль"],"positions":["staff:Официант","staff:Повар"],"staff":["Новикова Яна","Сидоров Олег"],"buildings":["Точка"],"rooms":["Бар","Зал"],"areas":["Бар","Кухня"],"equipment":["Весы","Печь"]}
+DEBUG e2 {"products":[" мука","Сахар","Соль"],"positions":["staff:Официант","staff:Повар"],"staff":["Новикова Яна","сидоров  олег"],"buildings":["Точка"],"rooms":["Бар","Зал"],"areas":["Бар","Кухня"],"equipment":["Весы","Печь"]}
+PASS established: products matched by name, no duplicates
+PASS established: matched product only linked — nobody's data overwritten
+PASS established: first run updated nothing
+PASS established: positions matched, the missing one created
+PASS established: same person matched, the other created — two each
+PASS established: matched employee keeps own data on both sides
+PASS established: address of the matched building kept
+PASS established: buildings matched (one each), rooms merged
+PASS established: area without object matched the same area of the only object
+PASS established: equipment matched and completed
+PASS established: sensor binding of the matched oven kept
+PASS established: next run is empty
+PASS established: an edit of the matched product reaches the other side
+PASS established: and the run after it is empty
+PASS position rename and staff move reached the other organization
+PASS archived employee stays active in the other organization
+PASS archived employee is neither updated nor created again
+PASS rule Р4: employee with a login is not touched and not duplicated
+PASS new building reached the other organization
+PASS name clash: update skipped and counted, nothing overwritten
+PASS name clash: retried on the next run
+PASS name clash resolved: the rename arrives, the deleted copy is not recreated
+PASS after the clash: empty run
+PASS unchecked list stops, checked list goes on
+PASS locked organization is left out with a note
+PASS transfer into a locked organization → 409
+--- review fixes
+PASS person with a login in the other organization is not duplicated
+PASS archived person in the other organization is not duplicated
+PASS switched-off product is not brought back
+PASS phone in an old format reaches the other organization in one form
+PASS an edit without a phone does not erase the phone of the other side
+PASS ticking «Объекты» later keeps the other organization's area on its own building with its own description
+PASS equipment stays in its area
+PASS both buildings now exist on both sides
+PASS after the review cases: empty run
+cleanup: organizations left 0, users left 0, accounts left 0
+RESULT: all checks passed
+exit 0

@@ -1,0 +1,119 @@
+name: Nightly e2e (directory exchange)
+
+# Ночной прогон сквозных сценариев (серия D, Р3): обмен справочниками, фон и
+# закрытые организации, напоминания, разбор пропусков, баланс и перевод,
+# инструменты ROOT, отмена переноса, код кабинета, компании, меню и сырьё,
+# версии отпечатка и новые списки — `scripts/e2e/` (`npm run e2e:exchange`),
+# без браузера. Каждый сценарий сам заводит свои организации и убирает их.
+#
+# База — одноразовый PostgreSQL этого запуска (service container): на прод
+# ничего не пишется, секретов прода здесь нет. Почта без SMTP только пишется
+# в лог. Сбой — сообщение в Telegram тем же ботом и в тот же чат, что сбой
+# выката (job notify-failure, как в deploy.yml).
+on:
+  schedule:
+    # 01:17 UTC = 04:17 МСК — ночью и не в начале часа.
+    - cron: "17 1 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: E2E scenarios (DB level)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: haccp_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d haccp_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/haccp_e2e?sslmode=disable
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@localhost:5432/haccp_e2e?sslmode=disable
+      NEXTAUTH_SECRET: nightly-e2e-dummy-secret
+      NEXTAUTH_URL: http://localhost:3000
+      CRON_SECRET: nightly-e2e-dummy-cron-secret
+      PLATFORM_ORG_ID: platform
+      # Пустой SMTP: письма не уходят, а пишутся в лог.
+      SMTP_HOST: ""
+      # Бота нет: сообщения Telegram сценариев только пишутся как неотправленные.
+      TELEGRAM_BOT_TOKEN: ""
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          # Как в deploy.yml: кеш npm отключён — он занимает ~280 МБ хранилища
+          # Actions на ключ, а оно тарифицируется; ночному прогону лишние
+          # 20–60 секунд установки не важны.
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Create the schema in the throwaway database
+        run: npx prisma db push
+
+      - name: Seed journal templates
+        run: npx tsx prisma/seed.ts
+
+      - name: Run e2e scenarios
+        run: npm run e2e:exchange
+
+  notify-failure:
+    name: Notify Telegram on failure
+    needs: [e2e]
+    # cancelled — в том числе превышение timeout-minutes.
+    if: always() && (needs.e2e.result == 'failure' || needs.e2e.result == 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Notify Telegram on failure
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.DEPLOY_ALERT_TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHORT_SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        run: |
+          if [ -z "$BOT_TOKEN" ] || [ -z "$CHAT_ID" ]; then
+            echo "[notify] секреты не заданы — пропуск"
+            exit 0
+          fi
+          if [ "$E2E_RESULT" = "cancelled" ]; then
+            WHAT="прерваны (время вышло или отмена)"
+          else
+            WHAT="упали"
+          fi
+          TEXT=$(printf '❌ Ночные сквозные проверки wesetup.ru %s\nВетка %s, коммит %s\nНа прод не влияет: прогон на одноразовой базе.\nЛог: %s' "$WHAT" "$REF_NAME" "${SHORT_SHA:0:8}" "$RUN_URL")
+          curl -sS --max-time 20 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "disable_web_page_preview=true" \
+            -o /dev/null -w "[notify] telegram HTTP %{http_code}\n" || echo "[notify] не отправилось — non-fatal"
