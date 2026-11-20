@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import type { SiteLocale } from "@/i18n/site-locale";
+import { CHALLENGE_MAX_AGE_MS, CHALLENGE_MIN_AGE_MS } from "@/lib/registration-challenge-timing";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -133,6 +134,10 @@ function BlankChallenge({ onToken, onRetry, tone }: {
 
   return (
     <div className="mt-3 w-full min-w-0" data-download-challenge>
+      {/* Виджет приходит только по просьбе сервера — подсказка, зачем он. */}
+      <p className={"mb-2 text-[13px] leading-[1.5] " + (tone === "dark" ? "text-white/80" : "text-[#3c4053]")}>
+        {t("required")}
+      </p>
       {/* Место под compact-виджет (164×144) держим с первой отрисовки: виджет
           приходит через секунды, и без этого форма вырастала на 124 px и
           сдвигала первый экран (CLS 0,17 на телефоне). Надпись «загружается»
@@ -160,17 +165,79 @@ function BlankChallenge({ onToken, onRetry, tone }: {
   );
 }
 
-/** Independent tokens per form; any completed submission retires its token. */
+/**
+ * Невидимая отметка времени — та же, что у регистрации
+ * (`GET /api/auth/registration-challenge`, спека invisible-antibot-2026-11).
+ * Одна на страницу: её берут все кнопки скачивания, сервер принимает её не
+ * раньше чем через 1,5 с после выдачи и не позже 12 часов.
+ */
+type Stamp = { token: string; receivedAt: number };
+const STAMP_ENDPOINT = "/api/auth/registration-challenge";
+let stampPromise: Promise<Stamp> | null = null;
+
+function loadStamp(): Promise<Stamp> {
+  if (stampPromise) return stampPromise;
+  const promise = fetch(STAMP_ENDPOINT, { cache: "no-store" }).then(async (response) => {
+    if (!response.ok) throw new Error("Stamp unavailable");
+    const data: unknown = await response.json();
+    if (!data || typeof data !== "object" || !("token" in data) || typeof data.token !== "string" || !data.token) {
+      throw new Error("Invalid stamp");
+    }
+    return { token: data.token, receivedAt: Date.now() };
+  });
+  stampPromise = promise;
+  promise.catch(() => {
+    if (stampPromise === promise) stampPromise = null;
+  });
+  return promise;
+}
+
+/** Отметка для отправки; сервер её не выдал — пустая строка, и он попросит «Я не робот». */
+async function stampToken(): Promise<string> {
+  try {
+    let stamp = await loadStamp();
+    if (Date.now() - stamp.receivedAt > CHALLENGE_MAX_AGE_MS / 2) {
+      stampPromise = null;
+      stamp = await loadStamp();
+    }
+    const wait = stamp.receivedAt + CHALLENGE_MIN_AGE_MS + 150 - Date.now();
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    return stamp.token;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Проверка перед скачиванием (спека blank-download-seal-cover-captcha-2026-11-20):
+ * обычно невидимая — `stamp()` перед отправкой; виджет reCAPTCHA появляется,
+ * только когда сервер ответил `captcha_required` (`requireCaptcha()`), и
+ * дальше в этой вкладке показывается сразу. Токен каждой формы свой, любая
+ * отправка его гасит.
+ */
 export function useBlankChallenge(tone: "light" | "dark" = "light") {
   const [token, setToken] = useState("");
   const [revision, setRevision] = useState(0);
+  const [required, setRequired] = useState(false);
   const reset = useCallback(() => {
     setToken("");
     setRevision((value) => value + 1);
   }, []);
+  const requireCaptcha = useCallback(() => {
+    setToken("");
+    setRequired(true);
+    setRevision((value) => value + 1);
+  }, []);
+  const prefetch = useCallback(() => {
+    loadStamp().catch(() => { /* повторим при отправке */ });
+  }, []);
   return {
     token,
+    required,
     reset,
-    element: <BlankChallenge key={revision} tone={tone} onToken={setToken} onRetry={reset} />,
+    requireCaptcha,
+    prefetch,
+    stamp: stampToken,
+    element: required ? <BlankChallenge key={revision} tone={tone} onToken={setToken} onRetry={reset} /> : null,
   };
 }

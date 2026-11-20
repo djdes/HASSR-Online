@@ -23,7 +23,7 @@ export type JournalCover = {
   appendix?: string;
 };
 
-const SANPIN = "к СанПиН 2.3/2.4.3590-20";
+export const COVER_SANPIN = "к СанПиН 2.3/2.4.3590-20";
 
 export const JOURNAL_COVERS: Readonly<Record<string, JournalCover>> = {
   hygiene: { lines: ["ГИГИЕНИЧЕСКИЙ ЖУРНАЛ", "(сотрудники)"], appendix: "Приложение N 1" },
@@ -41,6 +41,58 @@ export const JOURNAL_COVERS: Readonly<Record<string, JournalCover>> = {
 
 export function journalCover(templateCode: string): JournalCover | null {
   return JOURNAL_COVERS[templateCode] ?? null;
+}
+
+/** Длинное название — в строки по словам (до `max` знаков), как в образцах: крупно и не во всю ширину. */
+export function coverTitleLines(title: string, max = 34): string[] {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of title.replace(/\s+/g, " ").trim().split(" ")) {
+    if (line && line.length + 1 + word.length > max) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [title];
+}
+
+/**
+ * Титульник бланка с сайта (галка «Добавить титульный лист» в окне скачивания,
+ * спека blank-download-seal-cover-captcha-2026-11-20): у журналов из списка —
+ * их строки и приложение СанПиН, у остальных — название журнала.
+ */
+export function blankJournalCover(templateCode: string | null, title: string): JournalCover {
+  return (templateCode ? journalCover(templateCode) : null) ?? { lines: coverTitleLines(title) };
+}
+
+/** Что окно скачивания знает для титульника; остальное — пустые строки для заполнения от руки. */
+export type BlankCoverInput = {
+  /** Название компании из окна; нет — пустая строка под запись. */
+  organization?: string | null;
+  /** Ответственный из «Дополнительно». */
+  responsiblePost?: string | null;
+  responsibleName?: string | null;
+};
+
+/** Пустая строка вместо организации — вписать от руки. */
+export const COVER_BLANK_ORGANIZATION = "_____________________________________________";
+
+/** Параметры титульника бланка: без адреса, логотипа и дат. */
+export function blankCoverParams(cover: JournalCover, fontName: string, blank: BlankCoverInput): JournalCoverParams {
+  return {
+    cover,
+    fontName,
+    organization: blank.organization?.trim() || COVER_BLANK_ORGANIZATION,
+    address: null,
+    responsiblePost: blank.responsiblePost?.trim() || null,
+    responsibleName: blank.responsibleName?.trim() || null,
+    startedAt: null,
+    finishedAt: null,
+    logo: null,
+  };
 }
 
 const MONTHS_GENITIVE = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
@@ -131,7 +183,7 @@ export function drawJournalCover(doc: jsPDF, params: JournalCoverParams): void {
     const right = width - margin;
     doc.text("В соответствии с", right, top, { align: "right" });
     doc.text(params.cover.appendix, right, top + 4.6, { align: "right" });
-    doc.text(SANPIN, right, top + 9.2, { align: "right" });
+    doc.text(COVER_SANPIN, right, top + 9.2, { align: "right" });
   }
   doc.setFontSize(11);
 

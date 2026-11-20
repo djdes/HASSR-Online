@@ -47,7 +47,8 @@ export function deriveBlankKey(purpose: "download" | "qr"): Buffer {
  * (AuditLog `blank.download`). `o` — организация, созданная быстрой
  * регистрацией в этом же запросе: QR файла ведёт на QR журнала кабинета.
  */
-type Claims = { v: 1; e: string; t: string; f: BlankFormat; x: number; c?: string; k?: string; o?: string };
+/** `p: 1` — титульный лист первой страницей (галка в окне скачивания). */
+type Claims = { v: 1; e: string; t: string; f: BlankFormat; x: number; c?: string; k?: string; o?: string; p?: 1 };
 
 const REF_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -69,6 +70,8 @@ export function signBlankDownloadToken(
     extrasRef?: string | null;
     /** Организация из быстрой регистрации этого же запроса. */
     organizationId?: string | null;
+    /** Галка «Добавить титульный лист» — файл начнётся с титульника. */
+    cover?: boolean;
   },
   now: number = Date.now(),
 ): string {
@@ -84,13 +87,14 @@ export function signBlankDownloadToken(
     ...(company ? { c: company } : {}),
     ...(extrasRef ? { k: extrasRef } : {}),
     ...(organizationId ? { o: organizationId } : {}),
+    ...(params.cover ? { p: 1 as const } : {}),
   };
   const body = Buffer.from(JSON.stringify(claims), "utf8").toString("base64url");
   return `${body}.${sign(body)}`;
 }
 
 export type BlankDownloadCheck =
-  | { ok: true; email: string; company?: string; extrasRef?: string; organizationId?: string; expiresAt: Date }
+  | { ok: true; email: string; company?: string; extrasRef?: string; organizationId?: string; cover?: true; expiresAt: Date }
   | { ok: false; reason: "missing" | "bad-format" | "bad-sig" | "expired" | "mismatch" };
 
 function sameString(a: string, b: string): boolean {
@@ -134,6 +138,7 @@ export function verifyBlankDownloadToken(
     ...(company ? { company } : {}),
     ...(extrasRef ? { extrasRef } : {}),
     ...(organizationId ? { organizationId } : {}),
+    ...(claims.p === 1 ? { cover: true as const } : {}),
     expiresAt: new Date(claims.x * 1000),
   };
 }

@@ -1,0 +1,7 @@
+hygiene-pdf: 200/200 pages 2 -> 3; cover page: Электронный журнал · wesetup.ru ООО «Ромашка» В соответствии с Приложение N 1 к СанПиН 2.3/2.4.3590-20 ГИГИЕНИЧЕСКИЙ ЖУРНАЛ (сотрудники) Ответственный за ведение журнала 
+  second page equals plain first page: true
+cleaning-pdf: 200/200 pages 1 -> 2; cover page: Электронный журнал · wesetup.ru ООО «Ромашка» Журнал уборки Ответственный за ведение журнала _______________ / ________________ должность ФИО Журнал начат "___" _________
+  second page equals plain first page: true
+paper-ot_intro-pdf: 200/200 pages 2 -> 3; cover page: Электронный журнал · wesetup.ru ООО «Ромашка» Журнал вводного инструктажа по охране труда Ответственный за ведение журнала _______________ / ________________ должность ФИ
+  second page equals plain first page: true
+hygiene-docx: 200/200 sections 1 -> 2; cover has «Журнал начат»: true, «ООО «Ромашка»»: true

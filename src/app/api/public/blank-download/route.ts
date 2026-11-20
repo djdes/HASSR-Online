@@ -1,6 +1,6 @@
 import { NextResponse, after } from "next/server";
 
-import { verifyBlankChallenge } from "@/lib/blank-recaptcha.server";
+import { checkBlankChallenge } from "@/lib/blank-challenge-gate.server";
 import { recordAuditLog } from "@/lib/audit-log";
 import {
   BLANK_CONSENT_SOURCE,
@@ -101,7 +101,10 @@ async function domainOk(domain: string): Promise<boolean> {
  *
  * Невидимая проверка от ботов (`blankBotVerdict`): заполнено поле-ловушка —
  * ответ похож на успешный, но ничего не пишется и не отправляется; окно
- * отправлено слишком быстро — мягкая ошибка `too_fast`.
+ * отправлено слишком быстро — мягкая ошибка `too_fast`. Затем
+ * `checkBlankChallenge`: обычного человека пропускает невидимая отметка
+ * времени (`stamp`), подозрительному — `captcha_required`, и окно показывает
+ * reCAPTCHA (`captchaToken`). Галка `cover` — титульный лист в файле.
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -117,6 +120,8 @@ export async function POST(request: Request) {
     );
   }
   const { email, company, info, format, marketing, locale, phone, register, extras } = parsed.value;
+  // Титульник — русский (`journal-cover-pdf.ts`): на en/uz файл без него.
+  const cover = parsed.value.cover && locale === "ru";
   const timeZone = normalizeTimeZone(parsed.value.timeZone);
 
   const rawBody = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
@@ -144,9 +149,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const challenge = await verifyBlankChallenge(rawBody);
+  // reCAPTCHA — только подозрительным (`blank-challenge-gate.server.ts`):
+  // обычный человек скачивает по невидимой отметке времени.
+  const challenge = await checkBlankChallenge(rawBody, { ip, userAgent: request.headers.get("user-agent") });
   if (!challenge.ok) {
-    return NextResponse.json({ errorCode: challenge.status === 503 ? "captcha_unavailable" : "captcha", error: challenge.error }, { status: challenge.status });
+    return NextResponse.json({ errorCode: challenge.errorCode, error: challenge.error }, { status: challenge.status });
   }
 
   const limited = blankDownloadLimiter.consume(ip, email);
@@ -256,6 +263,8 @@ export async function POST(request: Request) {
       // «Дополнительно»: роут файла печатает их в бланке по id согласия.
       ...(extras ? { extras } : {}),
       ...(timeZone ? { timeZone } : {}),
+      ...(cover ? { cover: true } : {}),
+      ...(challenge.via === "captcha" ? { captcha: true } : {}),
     },
   });
 
@@ -284,6 +293,8 @@ export async function POST(request: Request) {
     extrasRef: extras ? consentId : null,
     // Кабинет создан этим скачиванием — QR файла ведёт на QR журнала кабинета.
     organizationId: account?.status === "created" ? account.organizationId : null,
+    // Галка «Добавить титульный лист» — файл (и ссылка из письма) с титульником.
+    cover,
   };
   const hrefFor = (fileFormat: BlankFormat) =>
     blankDownloadHref(target, fileFormat, signBlankDownloadToken({ ...fileClaims, format: fileFormat }, now), locale);

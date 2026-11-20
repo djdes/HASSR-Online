@@ -37,11 +37,14 @@ export async function GET(
   const inline = search.get("inline") === "1";
   let email: string | null = null;
   let company: string | undefined;
+  // Галка «Добавить титульный лист» в окне — зашита в подписанную ссылку.
+  let cover = false;
   if (!inline) {
     const check = verifyBlankDownloadToken(search.get("t"), { target, format: "pdf" });
     if (!check.ok) return blankDownloadDenied(request, target, "pdf", check.reason);
     email = check.email;
     company = check.company;
+    cover = check.cover === true;
   }
 
   const ip = clientIp(request) ?? "unknown";
@@ -63,6 +66,7 @@ export async function GET(
       rows: [],
       blankRows: 18,
       qr: blankPdfQr(journalPdfQrOrigin(), { target, email }),
+      cover: cover ? { organization: company ?? null } : null,
     });
 
     return new NextResponse(new Uint8Array(buffer), {

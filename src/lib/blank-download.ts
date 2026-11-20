@@ -288,7 +288,8 @@ export function blankSignupPlace(journal: string | null | undefined): string {
 }
 
 /** Что браузер помнит после первого скачивания. */
-export type RememberedBlankEmail = { email: string; consentVersion: string; company?: string; phone?: string };
+/** `cover` — последний выбор галки «Добавить титульный лист» (нет — отмечена). */
+export type RememberedBlankEmail = { email: string; consentVersion: string; company?: string; phone?: string; cover?: boolean };
 
 export function readRememberedBlankEmail(raw: string | null | undefined): RememberedBlankEmail | null {
   if (!raw) return null;
@@ -303,6 +304,7 @@ export function readRememberedBlankEmail(raw: string | null | undefined): Rememb
       consentVersion: value.consentVersion.slice(0, 32),
       ...(company ? { company } : {}),
       ...(phone ? { phone } : {}),
+      ...(typeof value.cover === "boolean" ? { cover: value.cover } : {}),
     };
   } catch {
     return null;

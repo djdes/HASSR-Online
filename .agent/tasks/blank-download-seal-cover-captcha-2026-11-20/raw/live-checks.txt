@@ -1,0 +1,33 @@
+Live checks 2026-11-20, `next dev` on 127.0.0.1:3100 (working tree of claude/hopeful-euler-lb6cie,
+base origin/master 330b983a1), Playwright Chromium, page /journals-info/hygiene, light theme.
+Local DB has no schema (prisma db push needs the owner's consent), so a request that passes the
+bot check ends in 500 server_failure at the consent write — that is the expected "passed the gate"
+signal here, not a defect.
+
+§1 Window «Куда прислать шаблон?» (iPhone UA)
+  width  dialog     seal   note text  captcha widget  recaptcha script  cover checkbox
+  440    440×747    56×62  290×55     none            not loaded        checked by default
+  375    375×787    56×62  257×55     none            not loaded        checked by default
+  1440   460×725    56×62  290×55     none            not loaded        checked by default
+  Seal + «Разработан при консультации специалистов Роспотребнадзора и ведущих аудиторов ХАССП»
+  sit under «Скачать PDF» (trust.top ≥ submit.bottom); no horizontal scroll. Screenshots
+  blank-modal-440/375/1440.png (gitignored).
+  Stamp: GET /api/auth/registration-challenge — 0 calls on page load, 1 when the window opens.
+  POST body: stamp (signed), cover: true, no captchaToken.
+  Response, iPhone UA: 500 server_failure (passed the gate, local DB has no tables).
+  Response, default headless UA ("HeadlessChrome"), no Google keys: 503 captcha_unavailable —
+  the gate treats it as a script.
+
+§2 Remembered email (short window), localStorage {email, consentVersion, cover: false}
+  cover checkbox restored unchecked; seal present; no widget; «Скачать PDF» enabled at once.
+  After ticking the checkbox the POST carries cover: true, remembered: true and a stamp.
+
+§3 Captcha on request (dev restarted with dummy non-test keys, headless UA = suspicious)
+  before submit: no widget, no recaptcha script
+  POST → 403 {"errorCode":"captcha_required","error":"Подтвердите, что вы не робот, и нажмите «Скачать» ещё раз."}
+  after: widget box shown with the hint «Подтвердите, что вы не робот, и нажмите «Скачать» ещё раз.»,
+  script api.js?render=explicit&…&hl=ru → recaptcha__ru.js (Russian), «Скачать» disabled until the
+  token, typed e-mail kept. With dummy keys Google answers «ОШИБКА: неверный ключ» (expected;
+  production has real keys). Screenshot blank-captcha-required.png (gitignored).
+
+§4 Files with the title page — raw/live-files.ts against the same dev server, raw/live-files.txt.

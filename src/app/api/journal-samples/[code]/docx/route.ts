@@ -14,6 +14,7 @@ import { journalPdfQrOrigin } from "@/lib/journal-pdf-qr-link";
 import type { BlankTarget } from "@/lib/blank-download";
 import { verifyBlankDownloadToken } from "@/lib/blank-download-token";
 import { blankFileQrUrl, loadBlankDownloadExtras } from "@/lib/blank-download-extras.server";
+import { blankJournalCover } from "@/lib/journal-cover-pdf";
 
 import { localizedJournalSampleInput, sampleDownloadDenied, sampleDownloadError, sampleLocaleFromUrl, sampleFooterLines } from "@/lib/public-sample-download-presentation";
 
@@ -59,10 +60,22 @@ export async function GET(
       console.error("[journal-samples] extras load failed", error);
       return null;
     });
+    const input = await localizedJournalSampleInput(code, locale, { blank: true, company: check.company, extras });
     const { buffer, fileName } = await renderJournalDocumentDocx(
-      await localizedJournalSampleInput(code, locale, { blank: true, company: check.company, extras }),
+      input,
       code,
       {
+        // Галка «Добавить титульный лист» в окне — зашита в подписанную ссылку.
+        cover: check.cover
+          ? {
+              cover: blankJournalCover(code, input.document.title),
+              blank: {
+                organization: check.company ?? null,
+                responsiblePost: extras?.responsible?.position ?? null,
+                responsibleName: extras?.responsible?.name ?? null,
+              },
+            }
+          : null,
         // Свой Word-макет есть у части журналов; остальным — таблица по колонкам образца.
         columns: isDocxSampleCode(code) ? null : (journalPageContent(code, locale) ?? journalPageContent(code, "ru"))?.sample?.columns ?? null,
         footer: {

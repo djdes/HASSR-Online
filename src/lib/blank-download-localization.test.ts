@@ -99,6 +99,7 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
   let requestBody: Dict | null = null;
   const goals: string[] = [];
   let now = 1_000_000;
+  let captchaRequests = 0;
   const historyChanges: string[] = [];
   const stored = new Map<string, string>();
   const getArray = (map: Map<HookComponent, unknown[]>) => { let value = map.get(current); if (!value) map.set(current, value = []); return value; };
@@ -131,7 +132,16 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
   };
   const passthrough = ({ children, ...props }: Dict) => jsxRuntime.jsx("div", { ...props, children });
   const modules: Record<string, unknown> = {
-    "@/components/public/blank-challenge": { useBlankChallenge: () => ({ token: "test-proof", reset() {}, element: null }) },
+    // Капча — только по просьбе сервера (спека blank-download-seal-cover-captcha-2026-11-20).
+    "@/components/public/blank-challenge": {
+      useBlankChallenge: () => ({
+        token: "", required: false, element: null, reset() {}, prefetch() {},
+        requireCaptcha() { captchaRequests += 1; }, stamp: async () => "test-stamp",
+      }),
+    },
+    "@/components/landing/haccp-gold-seal": {
+      HaccpGoldSeal: (props: Dict) => jsxRuntime.jsx("i", { "data-seal": `${String(props.title)}/${String(props.caption)}` }),
+    },
     react: { ...React, useState, useRef, useEffect },
     "react/jsx-runtime": jsxRuntime,
     "react-dom": { createPortal: (node: unknown) => node },
@@ -164,7 +174,7 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
     "@/i18n/site-locale": { localizedHref(href: string, locale: Locale) { return locale === "ru" ? href : `/${locale}${href}`; } },
     "@/lib/blank-download-presentation": {
       blankDownloadErrorKey(code: unknown, needConsent = false) {
-        const map: Record<string, string> = { email_domain: "emailDomain", rate_limit_email: "rateLimitEmail", consent_version: "consentVersion" };
+        const map: Record<string, string> = { email_domain: "emailDomain", rate_limit_email: "rateLimitEmail", consent_version: "consentVersion", captcha_required: "captchaRequired" };
         return typeof code === "string" && Object.hasOwn(map, code) ? map[code] : needConsent ? "consentRequired" : "generic";
       },
     },
@@ -201,11 +211,11 @@ function render(locale: Locale, response: { status: number; body: Dict }) {
     return { ...item, props: { ...item.props, children: draw(item.props.children) } };
   };
   const tree = (overrides: Dict = {}) => { cursors.clear(); current = exports.BlankDownloadClient as HookComponent; return draw(root(overrides)); };
-  return { tree, find, text, messages, setLocale(value: Locale) { currentLocale = value; }, get fetchCount() { return fetchCount; }, get requestBody() { return requestBody; }, goals, stored, historyChanges };
+  return { tree, find, text, messages, setLocale(value: Locale) { currentLocale = value; }, get fetchCount() { return fetchCount; }, get requestBody() { return requestBody; }, get captchaRequests() { return captchaRequests; }, goals, stored, historyChanges };
 }
 
 for (const locale of ["ru", "en", "uz"] as const) {
-  test(`${locale}: real blank-download client agrees consent snapshot, has two checkboxes and maps unknown errors`, async () => {
+  test(`${locale}: real blank-download client agrees consent snapshot, has its checkboxes and maps unknown errors`, async () => {
     const app = render(locale, { status: 400, body: { error: "private raw diagnostic", errorCode: "private_unknown_code" } });
     let tree = app.tree();
     const trigger = find(tree, (node) => node["data-testid"] === "blank-download-pdf");
@@ -226,7 +236,15 @@ for (const locale of ["ru", "en", "uz"] as const) {
       collect(props.children);
     };
     collect(tree);
-    assert.equal(checkboxes.length, 2, "exactly two checkboxes: consent and quick sign-up");
+    // ru: согласие, быстрая регистрация и титульный лист; en/uz — титульник русский, его галки нет.
+    assert.equal(checkboxes.length, locale === "ru" ? 3 : 2, "consent, quick sign-up (and the title page on ru)");
+    const coverBox = find(tree, (node) => node["data-testid"] === "blank-download-cover");
+    assert.equal(Boolean(coverBox), locale === "ru");
+    if (coverBox) assert.equal((coverBox.props as Dict).checked, true, "the title page is checked by default");
+    const trust = find(tree, (node) => node["data-testid"] === "blank-download-trust");
+    assert.ok(trust, "the HACCP seal sits under the download button");
+    assert.ok(app.text(trust).includes(app.messages("trust.note")));
+    assert.ok(find(trust, (node) => node["data-seal"] === `${app.messages("trust.sealTitle")}/${app.messages("trust.sealCaption")}`));
     const extras = find(tree, (node) => node["data-testid"] === "blank-download-extras");
     assert.equal(extras?.props["data-code"], "hygiene", "«More details» gets the journal code");
     const quickSignup = find(tree, (node) => node["data-testid"] === "blank-download-register");
@@ -264,7 +282,9 @@ for (const locale of ["ru", "en", "uz"] as const) {
     invoke(currentForm, "onSubmit", { preventDefault() {} });
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(app.fetchCount, 1);
-    assert.equal(app.requestBody?.captchaToken, "test-proof");
+    assert.equal(app.requestBody?.captchaToken, undefined, "no Google token unless the server asked for it");
+    assert.equal(app.requestBody?.stamp, "test-stamp", "the invisible stamp is sent");
+    assert.equal(app.requestBody?.cover, locale === "ru", "the title page is requested by default on ru");
     assert.equal(app.requestBody?.locale, locale);
     assert.equal(app.requestBody?.consent, true);
     assert.equal(app.requestBody?.email, "person@example.test");
@@ -357,6 +377,23 @@ test("phone and quick sign-up: phone is sent, unchecked sign-up is not, created 
   assert.ok(accountBlock, "created account replaces the sign-up CTA");
   assert.ok(app.text(accountBlock).includes("chef@example.test"));
   assert.equal(app.find(tree, (node) => typeof node.href === "string" && String(node.href).includes("register?email=")), null);
+});
+
+test("captcha only on request: the server asks — the window shows the widget without a red error", async () => {
+  const app = render("ru", { status: 403, body: { errorCode: "captcha_required", error: "raw" } });
+  let tree = app.tree();
+  invoke(app.find(tree, (node) => node["data-testid"] === "blank-download-pdf"), "onClick", { preventDefault() {} });
+  tree = app.tree();
+  invoke(app.find(tree, (node) => node.id === "blank-download-email"), "onChange", { target: { value: "cook@example.test" } });
+  invoke(app.find(app.tree(), (node) => node["data-testid"] === "blank-download-consent"), "onChange", { target: { checked: true } });
+  invoke(app.find(app.tree(), (node) => node["data-testid"] === "blank-download-cover"), "onChange", { target: { checked: false } });
+  invoke(app.find(app.tree(), (node) => typeof node.onSubmit === "function"), "onSubmit", { preventDefault() {} });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(app.fetchCount, 1);
+  assert.equal(app.requestBody?.cover, false, "unchecked title page is sent as false");
+  assert.equal(app.captchaRequests, 1, "the widget is requested");
+  assert.equal(app.find(app.tree(), (node) => node.role === "alert"), null, "no red error for the captcha request");
+  assert.ok(app.find(app.tree(), (node) => typeof node.onSubmit === "function"), "the form stays open with what was typed");
 });
 
 test("auto-open removes legacy query flags and displays the expired-link notice", () => {

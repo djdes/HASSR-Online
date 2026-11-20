@@ -17,6 +17,7 @@ import {
   WidthType,
 } from "docx";
 import { formatDate as formatLocaleDate, type Locale } from "@/i18n/locales";
+import { COVER_BLANK_ORGANIZATION, COVER_SANPIN, coverDate, type BlankCoverInput, type JournalCover } from "@/lib/journal-cover-pdf";
 import { journalDocxCopy } from "@/i18n/journal-docx-copy";
 import { brandQrPng } from "@/lib/brand-qr";
 import { HYGIENE_STATUS_OPTIONS } from "@/lib/hygiene-document";
@@ -391,6 +392,8 @@ export async function renderJournalDocumentDocx(
      * (берутся из образца страницы журнала; спека seo-speed-pack-2026-11, п. 16).
      */
     columns?: readonly string[] | null;
+    /** Титульный лист первой страницей — галка в окне скачивания (только `ru`). */
+    cover?: { cover: JournalCover; blank: BlankCoverInput } | null;
   } = {}
 ): Promise<{ buffer: Buffer; fileName: string }> {
   const locale = input.locale ?? "ru";
@@ -439,12 +442,49 @@ export async function renderJournalDocumentDocx(
   const footer = options.footer ? await blankFooter(options.footer, locale, t) : null;
   const doc = new Document({
     styles: { default: BLACK_DEFAULT_STYLES },
-    sections: [{ children: body, ...(footer ? { footers: { default: footer } } : {}) }],
+    sections: [
+      ...(options.cover && locale === "ru" ? [coverSection(options.cover.cover, options.cover.blank)] : []),
+      { children: body, ...(footer ? { footers: { default: footer } } : {}) },
+    ],
   });
   const buffer = await Packer.toBuffer(doc);
 
   return {
     buffer: Buffer.from(buffer),
     fileName: `obrazec-${code}.docx`,
+  };
+}
+
+type DocxAlignment = (typeof AlignmentType)[keyof typeof AlignmentType];
+
+/**
+ * Титульный лист Word — тот же, что в PDF (`journal-cover-pdf.ts`, по образцам
+ * владельца): организация сверху, «В соответствии с Приложением…» справа,
+ * крупное название по центру, ответственный и даты «Журнал начат / окончен»
+ * внизу справа. Отдельный раздел — бланк начинается со следующей страницы.
+ */
+function coverSection(cover: JournalCover, blank: BlankCoverInput) {
+  const line = (text: string, options: { bold?: boolean; size: number; alignment?: DocxAlignment; before?: number }) =>
+    new Paragraph({
+      alignment: options.alignment ?? AlignmentType.CENTER,
+      spacing: { before: options.before ?? 0 },
+      children: [new TextRun({ text, bold: options.bold, size: options.size })],
+    });
+  const post = blank.responsiblePost?.trim() || "_______________";
+  const name = blank.responsibleName?.trim() || "________________";
+  const empty = coverDate(null);
+  const titleSize = cover.lines.length > 2 ? 48 : 56;
+  return {
+    children: [
+      line(blank.organization?.trim() || COVER_BLANK_ORGANIZATION, { bold: true, size: 24 }),
+      ...(cover.appendix
+        ? ["В соответствии с", cover.appendix, COVER_SANPIN].map((text, index) =>
+            line(text, { size: 18, alignment: AlignmentType.RIGHT, before: index === 0 ? 240 : 0 }))
+        : []),
+      ...cover.lines.map((text, index) => line(text, { bold: true, size: titleSize, before: index === 0 ? 3200 : 0 })),
+      line(`Ответственный за ведение журнала   ${post} / ${name}`, { size: 22, alignment: AlignmentType.RIGHT, before: 3200 }),
+      line(`Журнал начат   ${empty.day} ${empty.year}`, { size: 22, alignment: AlignmentType.RIGHT, before: 240 }),
+      line(`Журнал окончен   ${empty.day} ${empty.year}`, { size: 22, alignment: AlignmentType.RIGHT, before: 240 }),
+    ],
   };
 }

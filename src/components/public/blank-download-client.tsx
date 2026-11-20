@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useBlankChallenge } from "@/components/public/blank-challenge";
+import { HaccpGoldSeal } from "@/components/landing/haccp-gold-seal";
 import { useEmailField } from "@/components/ui/email-field";
 import {
   BlankDownloadExtras,
@@ -58,11 +59,15 @@ import { localizedHref } from "@/i18n/site-locale";
  * С галкой регистрации сервер заводит кабинет и присылает доступ письмом
  * (спека blank-download-phone-autoreg-2026-11).
  *
- * Невидимая проверка от ботов: скрытое поле-ловушка `website` и время от
- * открытия окна до отправки (`elapsedMs`) — сервер решает по ним сам.
- * При повторном скачивании почта подставляется из браузера, а пользователь
- * проходит новую проверку Google reCAPTCHA. После скачивания а внизу экрана — плашка «копия —
- * на …» с кнопкой сменить почту.
+ * Невидимая проверка от ботов: скрытое поле-ловушка `website`, время от
+ * открытия окна до отправки (`elapsedMs`) и подписанная отметка времени
+ * (`stamp`). Виджет Google reCAPTCHA — только если сервер посчитал запрос
+ * подозрительным (`captcha_required`, спека
+ * blank-download-seal-cover-captcha-2026-11-20). При повторном скачивании
+ * почта подставляется из браузера. После скачивания внизу экрана — плашка
+ * «копия — на …» с кнопкой сменить почту. Под кнопкой «Скачать» — золотая
+ * печать ХАССП и «Разработан при консультации…», как на главной; галка
+ * «Добавить титульный лист первой страницей» (ru) отмечена по умолчанию.
  *
  * `href` у ссылки — адрес файла без токена: без JS (или по средней кнопке
  * мыши) браузер придёт туда, и роут вернёт его на страницу журнала с уже
@@ -144,6 +149,8 @@ type FormExtras = {
   website: string;
   /** Сколько окно было открыто до отправки, мс. */
   elapsedMs: number;
+  /** Галка «Добавить титульный лист первой страницей». */
+  cover: boolean;
 };
 
 /** Часовой пояс браузера — местное время клиента в уведомлении и в новом кабинете. */
@@ -156,7 +163,11 @@ function browserTimeZone(): string | null {
 }
 
 async function requestDownload(params: {
-  captchaToken: string;
+  /** Токен Google — только если окно показывало «Я не робот». */
+  captchaToken?: string;
+  /** Невидимая отметка времени (`useBlankChallenge().stamp()`). */
+  stamp: string;
+  cover: boolean;
   email: string;
   company?: string;
   target: BlankTarget;
@@ -179,7 +190,9 @@ async function requestDownload(params: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        captchaToken: params.captchaToken,
+        ...(params.captchaToken ? { captchaToken: params.captchaToken } : {}),
+        stamp: params.stamp,
+        cover: params.cover,
         email: params.email,
         ...(company ? { company } : {}),
         ...(params.target.kind === "code" ? { code: params.target.code } : { paperId: params.target.paperId }),
@@ -241,6 +254,8 @@ export function BlankDownloadClient({
   const locale = useLocale();
   const challenge = useBlankChallenge();
   const [savedDownload, setSavedDownload] = useState<RememberedBlankEmail | null>(null);
+  // Галка титульника в коротком окне: последний выбор, по умолчанию — отмечена.
+  const [quickCover, setQuickCover] = useState(true);
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("form");
   const [email, setEmail] = useState("");
@@ -256,6 +271,8 @@ export function BlankDownloadClient({
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const goal = { place, format };
   const formatLabel = t(`format.${format}`);
+  // Титульник печатается по-русски (`journal-cover-pdf.ts`) и не у бланка из конструктора.
+  const coverOption = locale === "ru" && !layout;
 
   function openForm(
     prefill: string,
@@ -273,14 +290,24 @@ export function BlankDownloadClient({
     setOpen(true);
   }
 
-  async function quickDownload(saved: RememberedBlankEmail) {
-    if (!challenge.token) return;
-    challenge.reset();
+  async function quickDownload(saved: RememberedBlankEmail, cover: boolean) {
+    if (challenge.required && !challenge.token) return;
+    const captchaToken = challenge.token;
     setSavedDownload(null);
     setOpen(false);
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     setNotice({ state: "sending", email: saved.email, emailed: true });
-    const result = await requestDownload({ captchaToken: challenge.token, email: saved.email, company: saved.company, target, format, locale, remembered: saved, layout });
+    const stamp = await challenge.stamp();
+    if (captchaToken) challenge.reset();
+    const result = await requestDownload({ captchaToken, stamp, cover, email: saved.email, company: saved.company, target, format, locale, remembered: saved, layout });
+    if (!result.ok && result.errorKey === "captchaRequired") {
+      // Сервер просит «Я не робот» — то же короткое окно, уже с виджетом.
+      challenge.requireCaptcha();
+      setNotice(null);
+      setSavedDownload(saved);
+      setOpen(true);
+      return;
+    }
     if (!result.ok) {
       // Редакция документов сменилась или сервер отказал — спрашиваем в окне.
       if (result.needConsent) remember(null);
@@ -292,6 +319,7 @@ export function BlankDownloadClient({
       consentVersion: result.consentVersion,
       ...(saved.company ? { company: saved.company } : {}),
       ...(saved.phone ? { phone: saved.phone } : {}),
+      cover,
     });
     triggerDownload(result.url);
     ymGoal("blank_download_done", { ...goal, remembered: "1" });
@@ -305,8 +333,11 @@ export function BlankDownloadClient({
     ymGoal("blank_download_click", goal);
     const saved = readRemembered();
     challenge.reset();
+    // Отметка времени — заранее: к нажатию «Скачать» ей уже больше 1,5 с.
+    challenge.prefetch();
     if (saved) {
       setSavedDownload(saved);
+      setQuickCover(saved.cover ?? true);
       setOpen(true);
       return;
     }
@@ -343,16 +374,20 @@ export function BlankDownloadClient({
   );
 
   async function submit(value: string, companyValue: string, extras: FormExtras) {
-    if (!challenge.token) {
+    if (challenge.required && !challenge.token) {
       setError("captcha");
       return;
     }
-    challenge.reset();
+    const captchaToken = challenge.token;
     const cleanCompany = companyValue.trim();
     setError(null);
     setPhase("sending");
+    const stamp = await challenge.stamp();
+    if (captchaToken) challenge.reset();
     const result = await requestDownload({
-      captchaToken: challenge.token,
+      captchaToken,
+      stamp,
+      cover: extras.cover,
       email: value,
       ...(cleanCompany ? { company: cleanCompany } : {}),
       target,
@@ -362,7 +397,9 @@ export function BlankDownloadClient({
       layout,
     });
     if (!result.ok) {
-      setError(result.errorKey);
+      // Сервер просит «Я не робот»: показываем виджет над кнопкой, без красной ошибки.
+      if (result.errorKey === "captchaRequired") challenge.requireCaptcha();
+      else setError(result.errorKey);
       setPhase("form");
       return;
     }
@@ -371,6 +408,7 @@ export function BlankDownloadClient({
       consentVersion: result.consentVersion,
       ...(cleanCompany ? { company: cleanCompany } : {}),
       ...(extras.phone ? { phone: extras.phone } : {}),
+      cover: extras.cover,
     });
     triggerDownload(result.url);
     ymGoal("blank_download_done", {
@@ -422,10 +460,12 @@ export function BlankDownloadClient({
                 <DialogTitle>{t("trigger.label", { format: formatLabel })}</DialogTitle>
                 <DialogDescription>{savedDownload.email}</DialogDescription>
               </DialogHeader>
+              {coverOption ? <CoverCheckbox checked={quickCover} onChange={setQuickCover} /> : null}
               {challenge.element}
-              <button type="button" className="rounded-xl bg-[#5566f6] p-3 text-white disabled:opacity-50" disabled={!challenge.token} onClick={() => void quickDownload(savedDownload)} data-testid="blank-remembered-submit">
+              <button type="button" className="rounded-xl bg-[#5566f6] p-3 text-white disabled:opacity-50" disabled={challenge.required && !challenge.token} onClick={() => void quickDownload(savedDownload, coverOption && quickCover)} data-testid="blank-remembered-submit">
                 {t("form.submit", { format: formatLabel })}
               </button>
+              <TrustSeal />
             </>
           ) : phase === "done" ? (
             <DoneView
@@ -452,6 +492,8 @@ export function BlankDownloadClient({
               expired={showExpired}
               sending={phase === "sending"}
               challenge={challenge.element}
+              captchaPending={challenge.required && !challenge.token}
+              coverOption={coverOption}
               onSubmit={submit}
             />
           )}
@@ -509,6 +551,8 @@ function FormView({
   expired,
   sending,
   challenge,
+  captchaPending,
+  coverOption,
   onSubmit,
 }: {
   /** Код журнала каталога — от него зависят поля «Дополнительно»; у бумажного бланка `null`. */
@@ -521,7 +565,12 @@ function FormView({
   error: ReturnType<typeof blankDownloadErrorKey> | null;
   expired: boolean;
   sending: boolean;
+  /** Виджет reCAPTCHA (только по просьбе сервера; иначе `null`). */
   challenge: React.ReactNode;
+  /** Сервер попросил «Я не робот», а галки ещё нет — «Скачать» ждёт её. */
+  captchaPending: boolean;
+  /** Показать галку «Добавить титульный лист» (ru, не бланк из конструктора). */
+  coverOption: boolean;
   onSubmit: (email: string, company: string, extras: FormExtras) => void;
 }) {
   const t = useTranslations("publicBlankDownload");
@@ -532,6 +581,8 @@ function FormView({
   const [consent, setConsent] = useState(false);
   // Быстрая регистрация — по умолчанию отмечена; снять можно одним нажатием.
   const [register, setRegister] = useState(true);
+  // Титульный лист первой страницей — тоже по умолчанию отмечен.
+  const [cover, setCover] = useState(true);
   // «Дополнительно» свёрнуто: человек, пришедший за файлом, его не видит.
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [extrasDraft, setExtrasDraft] = useState<BlankExtrasDraft>(emptyBlankExtrasDraft);
@@ -573,6 +624,7 @@ function FormView({
       extras: blankExtrasPayload(extrasDraft, code),
       website,
       elapsedMs: Math.max(0, Date.now() - openedAt),
+      cover: coverOption && cover,
     });
   }
 
@@ -721,6 +773,8 @@ function FormView({
           />
         </div>
 
+        {coverOption ? <CoverCheckbox checked={cover} onChange={setCover} /> : null}
+
         <div aria-hidden="true" className="hidden">
           <label htmlFor="blank-download-website">{t("form.websiteLabel")}</label>
           <input
@@ -795,7 +849,7 @@ function FormView({
         {challenge}
         <button
           type="submit"
-          disabled={sending || !field.valid}
+          disabled={sending || !field.valid || captchaPending}
           data-testid="blank-download-submit"
           className="mt-5 inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[16px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -811,8 +865,41 @@ function FormView({
             </>
           )}
         </button>
+        <TrustSeal />
       </form>
     </>
+  );
+}
+
+/** Галка «Добавить титульный лист первой страницей» — в окне и в коротком окне запомненной почты. */
+function CoverCheckbox({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+  const t = useTranslations("publicBlankDownload");
+  return (
+    <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-2xl px-1 py-1.5 text-left text-[14px] leading-[1.5] text-[#0b1024]">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-px size-5 shrink-0 accent-[#5566f6]"
+        data-testid="blank-download-cover"
+      />
+      <span>{t("cover.label")}</span>
+    </label>
+  );
+}
+
+/**
+ * Золотая печать ХАССП и «Разработан при консультации…» под кнопкой «Скачать»
+ * (правки владельца 20.11.2026): тот же знак, что на главной, соразмерный
+ * окну — печать 56 px рядом с текстом в две-три строки.
+ */
+function TrustSeal() {
+  const t = useTranslations("publicBlankDownload");
+  return (
+    <div className="mt-4 flex items-center justify-center gap-3" data-testid="blank-download-trust">
+      <HaccpGoldSeal title={t("trust.sealTitle")} caption={t("trust.sealCaption")} className="h-auto w-[56px] shrink-0" />
+      <p className="max-w-[290px] text-balance text-[13px] font-medium leading-[1.4] text-[#3c4053]">{t("trust.note")}</p>
+    </div>
   );
 }
 
