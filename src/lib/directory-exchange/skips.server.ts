@@ -331,6 +331,15 @@ function linkKey(skip: Pick<SkipRow, "masterOrganizationId" | "entity" | "organi
   };
 }
 
+/** Отметка группы (Р6.2, «чья запись её начала»): новая связь группы получает ту же. */
+async function groupOriginOf(skip: Pick<SkipRow, "masterOrganizationId" | "entity" | "groupId">): Promise<string | null> {
+  const link = await db.directoryExchangeLink.findFirst({
+    where: { masterOrganizationId: skip.masterOrganizationId, entity: skip.entity, groupId: skip.groupId, originOrganizationId: { not: null } },
+    select: { originOrganizationId: true },
+  });
+  return link?.originOrganizationId ?? null;
+}
+
 async function writeSkipAudit(organizationId: string, actor: ExchangeActor, action: string, details: Prisma.InputJsonObject) {
   try {
     await db.auditLog.create({
@@ -363,6 +372,7 @@ export async function ignoreExchangeSkip(owner: ExchangeSkipOwner, id: string): 
   const masterOrganizationId = await cabinetIdOf(owner.accountId);
   const skip = await withExchangeLock(masterOrganizationId, async () => {
     const { skip } = await ownSkip(masterOrganizationId, owner.accountId, id);
+    const originOrganizationId = await groupOriginOf(skip);
     await db.$transaction([
       db.directoryExchangeLink.upsert({
         where: linkKey(skip, skip.groupId),
@@ -373,6 +383,7 @@ export async function ignoreExchangeSkip(owner: ExchangeSkipOwner, id: string): 
           organizationId: skip.organizationId,
           entityId: null,
           hash: "",
+          originOrganizationId,
         },
         update: {},
       }),
@@ -415,6 +426,7 @@ export async function linkExchangeSkip(owner: ExchangeSkipOwner, id: string, ent
     });
     const target = candidates.get(skip.id)?.find((row) => row.id === entityId);
     if (!target) throw new DirectoryExchangeError(NOT_FOUND, 404);
+    const originOrganizationId = await groupOriginOf(skip);
 
     await db.$transaction(async (tx) => {
       // Прежняя группа, где запись была одна: запись из неё уходит, а пропуски
@@ -431,6 +443,7 @@ export async function linkExchangeSkip(owner: ExchangeSkipOwner, id: string, ent
           organizationId: skip.organizationId,
           entityId: target.id,
           hash: target.hash,
+          originOrganizationId,
         },
       });
       await tx.directoryExchangeSkip.deleteMany({ where: { id: skip.id } });

@@ -30,6 +30,8 @@ const decideSchema = z.object({
   // Перенос: своя организация, из которой взять данные.
   sourceOrganizationId: z.string().trim().min(1).max(64).nullish(),
   organizationIds: z.array(z.string().trim().min(1).max(64)).max(100).nullish(),
+  // Связь: меню и сырьё кабинета — отдельно от списков (серия C1); не просили — не учитывается.
+  allowPool: z.boolean().nullish(),
 });
 
 type OwnerSession = { ok: true; session: Session } | { ok: false; response: NextResponse };
@@ -53,7 +55,7 @@ async function requireOwnerSession(): Promise<OwnerSession> {
 /**
  * GET /api/exchange-requests/[token] — запрос для страницы подтверждения:
  * `{ request: { id, requesterName, requesterInn, mode, kinds, status,
- * expiresAt, createdAt, allowedKinds }, cabinet: { id, name }, sources:
+ * expiresAt, createdAt, allowedKinds, withPool }, cabinet: { id, name }, sources:
  * [{ id, name }] }`. Только владельцу аккаунта мастер-кабинета: остальным —
  * 403 с пояснением, неизвестная ссылка — 404. `sources` — для переноса:
  * свои организации, из которых можно взять данные.
@@ -76,7 +78,7 @@ export async function GET(_request: Request, ctx: Ctx) {
 
 /**
  * POST /api/exchange-requests/[token] `{ decision: "approve" | "decline",
- * allowedKinds?, sourceOrganizationId?, organizationIds? }` → `{ ok: true, status,
+ * allowedKinds?, sourceOrganizationId?, organizationIds?, allowPool? }` → `{ ok: true, status,
  * running?, summary? }`. Подтверждение связи делает организацию-заявителя
  * участником обмена кабинета и сразу запускает обмен (дольше 8 секунд —
  * `running: true`, обмен доходит в фоне); подтверждение переноса разово переносит данные из
@@ -103,6 +105,7 @@ export async function POST(request: Request, ctx: Ctx) {
       allowedKinds: parsed.data.allowedKinds ?? undefined,
       sourceOrganizationId: parsed.data.sourceOrganizationId ?? null,
       organizationIds: parsed.data.organizationIds ?? null,
+      allowPool: parsed.data.allowPool === true,
     });
     after(decided.notify);
     return NextResponse.json({

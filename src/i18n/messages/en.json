@@ -27196,14 +27196,19 @@
           "manage": "Open master cabinets",
           "ruleNewRecords": "New records will appear in both companies.",
           "ruleEdits": "Your edits will reach “{name}”. Edits made by “{name}” will not change your records.",
-          "ruleOneCompany": "A master cabinet can be linked with only one other company.",
+          "ruleOneCompany": "Several companies can be linked to the master cabinet: each gets the records of your organizations, but not the records of the other companies.",
           "ruleDisconnect": "You can disconnect the company at any time: “Settings → Master cabinet”.",
           "own": "Which of your organisations will take part",
           "ownHint": "The ticked organisations will exchange the allowed lists with this company and with each other.",
           "needOwn": "Tick at least one of your organisations",
           "noOwn": "Your account has no organisation that can exchange data. The request can only be declined.",
-          "approvedRunning": "The exchange is in progress — the result will appear in the “Directory exchange” card, and the company will get an e-mail when it finishes."
-        }
+          "approvedRunning": "The exchange is in progress — the result will appear in the “Directory exchange” card, and the company will get an e-mail when it finishes.",
+          "poolLabel": "Connect “{name}” to the cabinet’s menu and raw materials",
+          "poolHint": "The company will get the cabinet’s menu and raw materials and dish suggestions from your organizations. Its dishes are not suggested to you. Unticked, the link covers the lists only.",
+          "confirmPool": "The cabinet’s menu and raw materials will be connected too."
+        },
+        "pool": "Master cabinet menu and raw materials",
+        "poolHint": "The cabinet will fill your journals with its menu and raw materials — the owner decides this separately."
       },
       "transfers": {
         "title": "Recent transfers",

@@ -11,7 +11,9 @@ import {
   decisionTitle,
   ownerRequestLetter,
   ownerRequestNotice,
+  poolDecisionLine,
   requesterDecisionLetter,
+  type PoolDecision,
   type RequestLetter,
 } from "@/lib/directory-exchange/request-letters";
 import {
@@ -31,7 +33,6 @@ import {
 } from "@/lib/directory-exchange/requests";
 import {
   EXCHANGE_BUSY_CODE,
-  exchangeAccountKey,
   runDirectoryExchangeWithin,
   transferOnce,
   withExchangeLock,
@@ -41,9 +42,12 @@ import {
 } from "@/lib/directory-exchange/run.server";
 import { acceptsLegacyExchangeCode, findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
 import { emptySummary, summaryTotals, type ExchangeCounters, type ExchangeSummary } from "@/lib/directory-exchange/summary";
+import { ensureServiceCode } from "@/lib/dish-pool";
 import { normalizeServiceCode } from "@/lib/dish-pool-code";
 import { generateInviteToken, hashInviteToken } from "@/lib/invite-tokens";
+import { MasterCorrectionError } from "@/lib/master-brakerage-correction";
 import { MASTER_ORG_KIND, NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
+import { connectPoolObjectByCode, lockCabinetPool, releaseOrganizationPool } from "@/lib/master-pool-connect";
 import { ORG_LOCKED_CODE, ORG_LOCKED_MESSAGE, phaseOfKind } from "@/lib/org-trial";
 import { isOrganizationLocked } from "@/lib/org-trial.server";
 import { isTechnicalEmail } from "@/lib/technical-email";
@@ -73,8 +77,9 @@ import { isTechnicalEmail } from "@/lib/technical-email";
  *   • заявителю и после подтверждения известно только название кабинета:
  *     ни названий, ни id организаций владельца (и самого кабинета) нет ни в
  *     журнале его организации, ни в письме, ни в уведомлении;
- *   • у кабинета одна чужая компания: связь со второй подтвердить нельзя,
- *     пока есть первая (`decideRequestApproval`);
+ *   • компаний у кабинета может быть несколько (серия C1): каждая получает
+ *     записи владельца, но не записи другой компании и не знает о ней
+ *     (правило в plan.ts, разовый перенос — `transferOnce`);
  *   • письма и уведомления — после записи, в try/catch (`notify`).
  */
 
@@ -138,6 +143,8 @@ export type TokenRequestView = {
     createdAt: string;
     /** Что разрешено — после подтверждения. */
     allowedKinds: ExchangeKind[];
+    /** Связь: компания просит и меню и сырьё кабинета (серия C1, Р7.1) — владелец решает отдельно. */
+    withPool: boolean;
   };
   cabinet: { id: string; name: string };
   /**
@@ -275,6 +282,8 @@ function ownerRequestNotify(args: {
   requesterName: string;
   requesterInn: string | null;
   expiresAt: Date;
+  /** Связь: просит и меню и сырьё кабинета. */
+  withPool: boolean;
 }): Notify {
   return async () => {
     try {
@@ -353,10 +362,13 @@ function requesterDecisionNotify(args: {
   status: "approved" | "declined";
   allowedKinds: readonly ExchangeKind[];
   summary?: ExchangeSummary;
+  /** Связь, где просили меню и сырьё кабинета (серия C1): чем это кончилось. */
+  pool?: PoolDecision | null;
 }): Notify {
   return async () => {
     const approved = args.status === "approved";
     const counters = approved ? requesterCounters(args.summary, args.requesterOrganizationId) : null;
+    const poolLine = approved ? poolDecisionLine(args.pool) : null;
     const lists = exchangeKindsLabel(args.allowedKinds);
 
     try {
@@ -372,7 +384,9 @@ function requesterDecisionNotify(args: {
           {
             id: args.requestId,
             label: decisionNotificationLabel(args),
-            ...(approved ? { hint: counters ? `${lists}: ${countersLine(counters)}` : lists } : {}),
+            ...(approved
+              ? { hint: [counters ? `${lists}: ${countersLine(counters)}` : lists, poolLine].filter(Boolean).join(". ") }
+              : {}),
           },
         ],
       });
@@ -386,7 +400,7 @@ function requesterDecisionNotify(args: {
         console.info("[directory-exchange] decision letter skipped: the requester has no work e-mail");
         return;
       }
-      await deliver(to, requesterDecisionLetter({ ...args, url: `${APP_URL}${EXCHANGE_PAGE_HREF}`, counters }));
+      await deliver(to, requesterDecisionLetter({ ...args, url: `${APP_URL}${EXCHANGE_PAGE_HREF}`, counters, pool: approved ? args.pool : null }));
     } catch (error) {
       console.error("[directory-exchange] decision letter failed", error);
     }
@@ -411,6 +425,7 @@ const REQUEST_SELECT = {
   expiresAt: true,
   createdAt: true,
   allowedKinds: true,
+  withPool: true,
   requestedByUserId: true,
   masterOrganizationId: true,
   requesterOrganizationId: true,
@@ -601,11 +616,14 @@ export async function createExchangeRequest(input: {
   code: unknown;
   mode: unknown;
   kinds: unknown;
+  /** Связь: ещё и меню и сырьё кабинета (серия C1, Р7.1; по умолчанию нет). У переноса не бывает. */
+  withPool?: unknown;
   now?: Date;
 }): Promise<CreateRequestResult> {
   const now = input.now ?? new Date();
   if (!isRequestMode(input.mode)) throw new DirectoryExchangeError("Выберите: связь или разовый перенос", 400);
   const mode = input.mode;
+  const withPool = mode === "link" && input.withPool === true;
 
   const requester = await db.organization.findUnique({
     where: { id: input.organizationId },
@@ -684,6 +702,7 @@ export async function createExchangeRequest(input: {
           requestedByUserId: input.actor.userId,
           mode,
           kinds: decision.kinds,
+          withPool,
           tokenHash: hashInviteToken(token),
           expiresAt: requestExpiresAt(now),
           createdAt: now,
@@ -709,7 +728,7 @@ export async function createExchangeRequest(input: {
       requesterName: requester.name,
     },
     { side: "requester", actor: input.actor },
-    { expiresAt: created.expiresAt.toISOString() },
+    { expiresAt: created.expiresAt.toISOString(), ...(withPool ? { withPool: true } : {}) },
   );
 
   return {
@@ -725,28 +744,49 @@ export async function createExchangeRequest(input: {
       requesterName: requester.name,
       requesterInn: requester.inn,
       expiresAt: created.expiresAt,
+      withPool,
     }),
   };
 }
 
 /* ───────────────────────── отмена, выход, отключение ───────────────────────── */
 
-/** Убрать участника из другого аккаунта из обмена кабинета вместе с его соответствиями. Данные остаются у обеих сторон. */
-async function removeForeignMember(masterOrganizationId: string, organizationId: string): Promise<boolean> {
+/**
+ * Убрать участника из другого аккаунта из обмена кабинета вместе с его
+ * соответствиями. Данные остаются у обеих сторон. Подключение к меню и сырью
+ * кабинета, сделанное обменом (`poolConnected`), снимается вместе с ним —
+ * только там, где оно указывает на пул этого кабинета (серия C1, Р7.3).
+ * null — участника уже нет.
+ */
+async function removeForeignMember(
+  masterOrganizationId: string,
+  organizationId: string,
+): Promise<{ poolReleased: boolean } | null> {
   // Под замком обмена кабинета: идущий обмен дописывает свои связи, и только
-  // потом участник уходит — связи не остаются «сиротами».
+  // потом участник уходит — связи не остаются «сиротами». Замок пула — внутри,
+  // до чтения участника (порядок всегда: обмен → пул; подключение к пулу при
+  // подтверждении берёт только замок пула): подтверждение, которое как раз
+  // подключает компанию, либо уже записало `poolConnected`, либо увидит, что
+  // участника нет, и отменит подключение.
   return withExchangeLock(
     masterOrganizationId,
     () =>
       db.$transaction(async (tx) => {
-        const members = await tx.directoryExchangeMember.deleteMany({ where: { masterOrganizationId, organizationId, foreign: true } });
+        const poolCode = await lockCabinetPool(tx, masterOrganizationId);
+        const member = await tx.directoryExchangeMember.findFirst({
+          where: { masterOrganizationId, organizationId, foreign: true },
+          select: { id: true, poolConnected: true },
+        });
         // Соответствия уходят только вместе с участником: у участника своего
         // аккаунта (не `foreign`) этот путь не трогает ничего.
-        if (members.count === 0) return false;
+        if (!member) return null;
+        await tx.directoryExchangeMember.delete({ where: { id: member.id } });
         await tx.directoryExchangeLink.deleteMany({ where: { masterOrganizationId, organizationId } });
         await tx.directoryExchangeSkip.deleteMany({ where: { masterOrganizationId, organizationId } });
-        return true;
-      }),
+        // Подключение, сделанное вручную (не обменом), остаётся как есть.
+        const poolReleased = member.poolConnected && poolCode ? await releaseOrganizationPool(tx, poolCode, organizationId) : false;
+        return { poolReleased };
+      }, { timeout: 30_000 }),
     { waitMs: 30_000 },
   );
 }
@@ -776,9 +816,8 @@ export async function endExchangeRequest(input: {
     side: "requester" | "cabinet",
     requestId: string | null,
   ): Promise<EndRequestResult> => {
-    if (!(await removeForeignMember(link.masterOrganizationId, link.organizationId))) {
-      throw new DirectoryExchangeError(LINK_ENDED_MESSAGE, 409);
-    }
+    const removed = await removeForeignMember(link.masterOrganizationId, link.organizationId);
+    if (!removed) throw new DirectoryExchangeError(LINK_ENDED_MESSAGE, 409);
     // Запись журнала привязана к запросу, которым связь была установлена.
     const origin =
       requestId ??
@@ -807,6 +846,7 @@ export async function endExchangeRequest(input: {
         requesterName: link.requesterName,
       },
       { side, actor },
+      removed.poolReleased ? { poolDisconnected: true } : {},
     );
     return { action: side === "requester" ? "left" : "disconnected" };
   };
@@ -965,6 +1005,7 @@ export async function loadExchangeRequestByToken(input: {
       expiresAt: request.expiresAt.toISOString(),
       createdAt: request.createdAt.toISOString(),
       allowedKinds: normalizeExchangeKinds(request.allowedKinds),
+      withPool: mode === "link" && request.withPool,
     },
     cabinet: { id: request.masterOrganization.id, name: request.masterOrganization.name },
     sources: status === "pending" && accountId ? await transferSources(accountId, now) : [],
@@ -975,39 +1016,20 @@ export async function loadExchangeRequestByToken(input: {
 /* ───────────────────────── решение ───────────────────────── */
 
 /**
- * Организация другой компании, уже связанная с кабинетом (её название — для
- * текста владельцу); null — кабинет свободен. Вторая организация той же
- * компании, что и заявитель, кабинет не занимает.
+ * Можно ли подтвердить запрос сейчас (`decideRequestApproval`); нет —
+ * `DirectoryExchangeError`. Другие компании кабинета не мешают (серия C1).
  */
-async function linkedCompanyOf(request: RequestRow): Promise<string | null> {
-  const cabinetAccountId = request.masterOrganization.accountId;
-  const requesterKey = exchangeAccountKey(request.requesterOrganization);
-  const foreign = await db.directoryExchangeMember.findMany({
-    where: { masterOrganizationId: request.masterOrganizationId, foreign: true },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    select: { organization: { select: { id: true, name: true, accountId: true } } },
-  });
-  const other = foreign.find(
-    ({ organization }) => organization.accountId !== cabinetAccountId && exchangeAccountKey(organization) !== requesterKey,
-  );
-  return other?.organization.name ?? null;
-}
-
-/** Можно ли подтвердить запрос сейчас (`decideRequestApproval`); нет — `DirectoryExchangeError`. */
-async function assertApprovable(request: RequestRow, mode: RequestMode, now: Date): Promise<void> {
+async function assertApprovable(request: RequestRow, now: Date): Promise<void> {
   const requester = request.requesterOrganization;
-  const [billing, locked, linkedCompany] = await Promise.all([
+  const [billing, locked] = await Promise.all([
     loadAccountBilling(requester.id, now).catch(() => null),
     isOrganizationLocked(requester.id, now),
-    mode === "link" ? linkedCompanyOf(request) : Promise.resolve(null),
   ]);
   const verdict = decideRequestApproval({
-    mode,
     // Тариф не прочитался — считаем неоплаченным: данные получает только платный аккаунт.
     requesterPhase: billing ? phaseOfKind(billing.state.kind) : "free",
     requesterLocked: locked,
     requesterName: requester.name,
-    linkedCompany,
   });
   if (!verdict.ok) throw new DirectoryExchangeError(verdict.message, verdict.status, `request_${verdict.reason}`);
 }
@@ -1041,10 +1063,68 @@ async function chooseOwnOrganizations(
   return ids;
 }
 
+/** Участник подключён обменом к меню и сырью кабинета (`poolConnected`). */
+async function memberPoolConnected(request: Pick<RequestRow, "masterOrganizationId" | "requesterOrganizationId">): Promise<boolean> {
+  const member = await db.directoryExchangeMember.findUnique({
+    where: {
+      masterOrganizationId_organizationId: {
+        masterOrganizationId: request.masterOrganizationId,
+        organizationId: request.requesterOrganizationId,
+      },
+    },
+    select: { poolConnected: true },
+  });
+  return member?.poolConnected === true;
+}
+
+/** Пояснение в итоге: меню и сырьё кабинета не подключены (серия C1, Р7.2). */
+export const POOL_NOT_CONNECTED_NOTE = "Меню и сырьё не подключены";
+export const POOL_CONNECTED_NOTE = "Меню и сырьё мастер-кабинета подключены.";
+const POOL_MEMBER_GONE_MESSAGE = "связь с компанией уже разорвана.";
+const POOL_FAILED_MESSAGE = "не удалось — подключите организацию на вкладке «Подключённые объекты» кабинета.";
+
+/**
+ * Меню и сырьё кабинета для организации другой компании (серия C1, Р7.2) —
+ * тем же путём, что «Добавить объект»: код организации выдаёт сервер, дальше
+ * `connectPoolObjectByCode` под замком пула. В той же транзакции участник
+ * помечается `poolConnected`; если его уже нет (компания успела выйти),
+ * подключение отменяется. Уже подключённая организация (вручную или раньше)
+ * не трогается, и пометка не ставится: такое подключение обмен не снимает.
+ * Отказ — пояснение в итоге; связь списками остаётся.
+ */
+async function connectForeignPool(request: RequestRow, actor: ExchangeActor): Promise<string | null> {
+  const masterOrganizationId = request.masterOrganizationId;
+  const organizationId = request.requesterOrganizationId;
+  try {
+    const code = await ensureServiceCode(organizationId);
+    await connectPoolObjectByCode({
+      masterOrgId: masterOrganizationId,
+      code,
+      confirm: true,
+      // В журнал организации-заявителя обмен пишет сам — без имени владельца кабинета.
+      actor: { userId: actor.userId, userName: actor.userName ?? "" },
+      cabinetAuditOnly: true,
+      onConnected: async (tx) => {
+        const marked = await tx.directoryExchangeMember.updateMany({
+          where: { masterOrganizationId, organizationId, foreign: true },
+          data: { poolConnected: true },
+        });
+        if (marked.count === 0) throw new MasterCorrectionError(POOL_MEMBER_GONE_MESSAGE);
+      },
+    });
+    return POOL_CONNECTED_NOTE;
+  } catch (error) {
+    if (error instanceof MasterCorrectionError) return `${POOL_NOT_CONNECTED_NOTE}: ${error.message}`;
+    console.error("[directory-exchange] pool connection of a foreign member failed", { masterOrganizationId, organizationId, error });
+    return `${POOL_NOT_CONNECTED_NOTE}: ${POOL_FAILED_MESSAGE}`;
+  }
+}
+
 /**
  * Подтверждённая связь (Р4): организация-заявитель — участник обмена кабинета
  * с разрешёнными списками и пометкой `foreign`; обмен запускается сразу.
- * К общим меню и сырью кабинета она НЕ подключается — это другой доступ.
+ * К меню и сырью кабинета она подключается, только если владелец разрешил это
+ * отдельно (`allowPool`, серия C1): итог подключения — строкой в итоге обмена.
  */
 async function approveLink(
   request: RequestRow,
@@ -1053,22 +1133,12 @@ async function approveLink(
   actor: ExchangeActor,
   now: Date,
   waitMs?: number,
+  allowPool = false,
 ): Promise<ExchangeRunOutcome> {
   const masterOrganizationId = request.masterOrganizationId;
-  // Проверка «кабинет свободен» и запись участника — под замком обмена
-  // кабинета: два одновременных подтверждения разных компаний не пройдут оба.
+  // Запись участника — под замком обмена кабинета: идущий обмен сначала
+  // дописывает свои связи. Другие компании кабинета связи не мешают (серия C1).
   await withExchangeLock(masterOrganizationId, async () => {
-    const linkedCompany = await linkedCompanyOf(request);
-    if (linkedCompany) {
-      const verdict = decideRequestApproval({
-        mode: "link",
-        requesterPhase: "paid",
-        requesterLocked: false,
-        requesterName: request.requesterOrganization.name,
-        linkedCompany,
-      });
-      if (!verdict.ok) throw new DirectoryExchangeError(verdict.message, verdict.status, `request_${verdict.reason}`);
-    }
     await db.directoryExchangeMember.upsert({
       where: {
         masterOrganizationId_organizationId: { masterOrganizationId, organizationId: request.requesterOrganizationId },
@@ -1098,6 +1168,12 @@ async function approveLink(
     }
   });
 
+  // Меню и сырьё — после записи участника и вне замка обмена: подключение
+  // берёт свой замок пула (порядок «обмен → пул» держит только выход компании).
+  const poolNote = allowPool ? await connectForeignPool(request, actor) : null;
+  const withPoolNote = (summary: ExchangeSummary): ExchangeSummary =>
+    poolNote ? { ...summary, notes: [...summary.notes, poolNote] } : summary;
+
   // Связь уже установлена: не удавшийся первый обмен пройдёт при следующей синхронизации.
   const failed = (busyMessage: string | null): ExchangeSummary => ({
     ...emptySummary(),
@@ -1109,13 +1185,13 @@ async function approveLink(
   });
   try {
     const outcome = await runDirectoryExchangeWithin(masterOrganizationId, { actor, now, waitMs });
-    if (!outcome.running) return outcome;
+    if (!outcome.running) return { running: false, summary: withPoolNote(outcome.summary) };
     // Сбой в фоне уже записан в лог (`runDirectoryExchangeWithin`).
-    return { running: true, done: outcome.done.then((summary) => summary ?? failed(null)) };
+    return { running: true, done: outcome.done.then((summary) => withPoolNote(summary ?? failed(null))) };
   } catch (error) {
     const busy = error instanceof DirectoryExchangeError && error.code === EXCHANGE_BUSY_CODE;
     if (!busy) console.error("[directory-exchange] first exchange with a foreign member failed", { masterOrganizationId, error });
-    return { running: false, summary: failed(busy ? (error as Error).message : null) };
+    return { running: false, summary: withPoolNote(failed(busy ? (error as Error).message : null)) };
   }
 }
 
@@ -1139,6 +1215,11 @@ export async function decideExchangeRequest(input: {
    * таких нет — отказ 400 (выбрать надо явно).
    */
   organizationIds?: readonly string[] | null;
+  /**
+   * Связь: владелец разрешает и меню и сырьё кабинета (серия C1, Р7.1) —
+   * отдельно от списков. Учитывается, только если компания их просила.
+   */
+  allowPool?: boolean | null;
   now?: Date;
   /** Сколько ждать первого обмена связи до ухода в фон (по умолчанию 8 с; проверки ставят меньше). */
   waitMs?: number;
@@ -1177,14 +1258,16 @@ export async function decideExchangeRequest(input: {
 
   const allowed = narrowAllowedKinds(request.kinds, input.allowedKinds);
   if (!allowed) throw new DirectoryExchangeError("Отметьте хотя бы один список из запрошенных", 400);
+  // Меню и сырьё — только если компания их просила и владелец отметил их сам.
+  const poolAllowed = mode === "link" && request.withPool && input.allowPool === true;
 
   const requester = request.requesterOrganization;
   if (requester.isDemo || requester.kind === MASTER_ORG_KIND) {
     throw new DirectoryExchangeError("Организация заявителя больше не может участвовать в обмене", 409);
   }
-  // Заявитель сейчас: на платном ли тарифе и не закрыт ли; кабинет — не связан
-  // ли уже с другой компанией. Отказ запрос не закрывает — он ждёт дальше.
-  await assertApprovable(request, mode, now);
+  // Заявитель сейчас: на платном ли тарифе и не закрыт ли. Отказ запрос не
+  // закрывает — он ждёт дальше.
+  await assertApprovable(request, now);
 
   let ownOrganizationIds: string[] = [];
   if (mode === "link") {
@@ -1211,7 +1294,7 @@ export async function decideExchangeRequest(input: {
 
   const claimed = await db.directoryExchangeRequest.updateMany({
     where: stillPending,
-    data: { status: "approved", decidedAt: now, decidedByUserId: actor.userId, allowedKinds: allowed, sourceOrganizationId },
+    data: { status: "approved", decidedAt: now, decidedByUserId: actor.userId, allowedKinds: allowed, sourceOrganizationId, poolAllowed },
   });
   if (claimed.count === 0) throw alreadyDecided();
 
@@ -1219,7 +1302,7 @@ export async function decideExchangeRequest(input: {
   let background: Promise<ExchangeSummary | null> | null = null;
   try {
     if (mode === "link") {
-      const outcome = await approveLink(request, allowed, ownOrganizationIds, actor, now, input.waitMs);
+      const outcome = await approveLink(request, allowed, ownOrganizationIds, actor, now, input.waitMs, poolAllowed);
       if (outcome.running) background = outcome.done;
       else summary = outcome.summary;
     } else {
@@ -1233,6 +1316,8 @@ export async function decideExchangeRequest(input: {
         // Единственное место, где перенос между аккаунтами разрешён: его
         // только что подтвердил владелец источника.
         crossAccount: true,
+        // Записи групп, начатых в кабинете другой компанией, не передаются (Р6.5).
+        masterOrganizationId: request.masterOrganizationId,
         // Перенос запоминается с запросом: заявитель может его отменить (п. 12).
         requestId: request.id,
         now,
@@ -1243,7 +1328,7 @@ export async function decideExchangeRequest(input: {
     await db.directoryExchangeRequest
       .updateMany({
         where: { id: request.id, status: "approved" },
-        data: { status: "pending", decidedAt: null, decidedByUserId: null, allowedKinds: [], sourceOrganizationId: null },
+        data: { status: "pending", decidedAt: null, decidedByUserId: null, allowedKinds: [], sourceOrganizationId: null, poolAllowed: false },
       })
       .catch((revertError) => console.error("[directory-exchange] request revert failed", { id: request.id, revertError }));
     throw error;
@@ -1255,16 +1340,30 @@ export async function decideExchangeRequest(input: {
       .then(() => undefined)
       .catch((error) => console.error("[directory-exchange] request result not saved", { id: request.id, error }));
   if (summary) await saveResult(summary);
+  // Меню и сырьё: что просили, что разрешено и подключено ли обменом (Р7.2) — в журнал обеих сторон.
+  const pool: Prisma.InputJsonObject =
+    mode === "link" && request.withPool
+      ? { withPool: true, poolAllowed, poolConnected: poolAllowed && (await memberPoolConnected(request)) }
+      : {};
   await auditBoth(
     "request_approved",
     parties,
     { side: "cabinet", actor },
-    { allowedKinds: allowed },
+    { allowedKinds: allowed, ...pool },
     // Из какой своей организации владелец разрешил перенос — только в его журнал.
     sourceOrganizationId ? { sourceOrganizationId } : {},
   );
+  // Меню и сырьё заявителю — без причины отказа: она может говорить о кабинете.
+  const poolDecision = (result: ExchangeSummary): PoolDecision | null =>
+    mode === "link" && request.withPool
+      ? !poolAllowed
+        ? "not_allowed"
+        : result.notes.includes(POOL_CONNECTED_NOTE)
+          ? "connected"
+          : "refused"
+      : null;
   const notifyWith = (result: ExchangeSummary) =>
-    requesterDecisionNotify({ ...notifyBase, status: "approved", allowedKinds: allowed, summary: result });
+    requesterDecisionNotify({ ...notifyBase, status: "approved", allowedKinds: allowed, summary: result, pool: poolDecision(result) });
   if (background) {
     const pending = background;
     return {

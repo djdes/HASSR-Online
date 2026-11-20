@@ -8,7 +8,12 @@ import { checkSeatsForActivation, seatLimitResponse, type SeatGuard } from "@/li
 import { masterCabinetSeatsToAdd } from "@/lib/master-cabinet-seats";
 import { recordAuditLog } from "@/lib/audit-log";
 import { sendInviteTokenEmail } from "@/lib/email";
-import { createOrInviteMasterCabinet, MasterCabinetError, renameMasterCabinet } from "@/lib/master-cabinet";
+import {
+  createOrInviteMasterCabinet,
+  FOREIGN_POOL_CABINET_MESSAGE,
+  MasterCabinetError,
+  renameMasterCabinet,
+} from "@/lib/master-cabinet";
 import { inviteMasterCabinetEmployee } from "@/lib/master-cabinet-staff";
 import { loadOrgMasterCabinets } from "@/lib/org-master-cabinets";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -67,7 +72,8 @@ export async function PATCH(request: Request) {
   if ("error" in auth) return auth.error;
   const body = (await request.json().catch(() => null)) as { name?: unknown; cabinetId?: unknown } | null;
   const view = await loadOrgMasterCabinets(auth.organizationId, auth.session.user.id);
-  const cabinet = view.cabinets.find((item) => item.id === body?.cabinetId);
+  // Кабинет другой компании организация не переименовывает: ей известно только его название.
+  const cabinet = view.cabinets.find((item) => item.id === body?.cabinetId && !item.limited);
   if (!cabinet) return NextResponse.json({ error: "Мастер-кабинет не найден" }, { status: 404 });
   try {
     const result = await renameMasterCabinet(cabinet.id, body?.name);
@@ -203,7 +209,8 @@ export async function POST(request: Request) {
   // Оператор в кабинет, к которому подключена организация (или кабинет её аккаунта — владельцу).
   if (parsed.data.cabinetId) {
     const view = await loadOrgMasterCabinets(auth.organizationId, auth.session.user.id);
-    const cabinet = view.cabinets.find((item) => item.id === parsed.data.cabinetId);
+    // В кабинет другой компании операторов приглашает только она сама (серия C1, Р7.4).
+    const cabinet = view.cabinets.find((item) => item.id === parsed.data.cabinetId && !item.limited);
     if (!cabinet || (cabinet.objects.length === 0 && !(view.viewerIsOwner && cabinet.ownAccount))) {
       return NextResponse.json({ error: "Сначала подключите к этому кабинету точку организации" }, { status: 404 });
     }
@@ -233,6 +240,13 @@ export async function POST(request: Request) {
   }
 
   // Кабинетов нет — создать кабинет из организации и пригласить первого оператора.
+  // Организация (или её точка) в пуле кабинета другой компании — ни своего
+  // кабинета в этом пуле, ни людей в тот (серия C1; `createOrInviteMasterCabinet`
+  // проверяет то же по пулу самой организации).
+  const current = await loadOrgMasterCabinets(auth.organizationId, auth.session.user.id);
+  if (current.cabinets.some((cabinet) => cabinet.limited)) {
+    return NextResponse.json({ error: FOREIGN_POOL_CABINET_MESSAGE }, { status: 409 });
+  }
   let result;
   try {
     result = await createOrInviteMasterCabinet({

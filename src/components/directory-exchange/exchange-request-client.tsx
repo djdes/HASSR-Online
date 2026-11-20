@@ -288,13 +288,16 @@ export function DecisionForm({
   const [sourceId, setSourceId] = useState(sources.length === 1 ? sources[0].id : "");
   // Связь: какие свои организации будут обмениваться с компанией.
   const [ownIds, setOwnIds] = useState<string[]>(() => defaultOwnOrganizations(data));
+  // Меню и сырьё кабинета (серия C1): отдельная галочка, по умолчанию снята — владелец отмечает сам.
+  const [allowPool, setAllowPool] = useState(false);
   const [confirming, setConfirming] = useState<DecisionBody["decision"] | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const until = dayLabel(request.expiresAt);
   const allowed = narrowKinds(request.kinds, chosen);
-  const approval = approvalBody(data, chosen, sourceId, ownIds);
+  const approval = approvalBody(data, chosen, sourceId, ownIds, allowPool);
+  const askedPool = link && request.withPool;
   const sourceName = sources.find((source) => source.id === sourceId)?.name ?? "";
   const lists = allowed.map((kind) => t(`kinds.${kind}`)).join(", ");
   const noSources = sources.length === 0;
@@ -420,6 +423,31 @@ export function DecisionForm({
           })}
         </ul>
       </fieldset>
+
+      {askedPool ? (
+        <fieldset className="mt-5" disabled={busy || confirming !== null}>
+          <legend className={SECTION_TITLE}>{t("foreign.pool")}</legend>
+          <ul className={LIST}>
+            <li>
+              <label className={cn(ROW, allowPool && "bg-[#fafbff]")}>
+                <input
+                  type="checkbox"
+                  checked={allowPool}
+                  onChange={(event) => setAllowPool(event.target.checked)}
+                  className={CHECK}
+                  data-testid="exchange-request-pool"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block break-words text-[14px] font-medium text-[#0b1024]">
+                    {t("foreign.page.poolLabel", { name: request.requesterName })}
+                  </span>
+                  <span className="mt-0.5 block text-[12px] leading-[1.45] text-[#6f7282]">{t("foreign.page.poolHint")}</span>
+                </span>
+              </label>
+            </li>
+          </ul>
+        </fieldset>
+      ) : null}
 
       {noSources ? (
         <div className={cn(WARNING, "mt-5")} role="alert">
@@ -560,7 +588,9 @@ export function DecisionForm({
             {confirming === "decline"
               ? t("foreign.page.confirmDecline", { name: request.requesterName })
               : link
-                ? t("foreign.page.confirmLink", { name: request.requesterName, cabinet: cabinet.name, lists })
+                ? `${t("foreign.page.confirmLink", { name: request.requesterName, cabinet: cabinet.name, lists })}${
+                    approval?.allowPool ? ` ${t("foreign.page.confirmPool")}` : ""
+                  }`
                 : t("foreign.page.confirmTransfer", { name: request.requesterName, source: sourceName, lists })}
           </p>
           <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

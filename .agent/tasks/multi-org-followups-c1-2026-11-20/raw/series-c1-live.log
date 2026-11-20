@@ -1,0 +1,13 @@
+# Первый полный прогон series-c1-live.cjs (снимки 03, 04 — из него; 01, 02 — из повторного прогона, который
+# дошёл до подтверждения A и остановился на регистрации B: ограничение частоты регистраций с одного адреса).
+# Последняя строка этого прогона получила 400 из-за короткого имени оператора в теле запроса; правильная проверка
+# защиты — raw/series-c1-guard.log (409, членство в кабинете не создано).
+A: pool checkbox off by default: true
+confirmation page: pool line off by default: true
+A connected to the cabinet menu (poolConnected | linkedServiceCode set): true|true
+B approved (second company on the same cabinet): {"status":200,"result":"approved"}
+A products: Курица охлаждённая, Молоко 3,2 %, Продукт A
+B products (owner's yes, A's no): Курица охлаждённая, Молоко 3,2 %, Продукт B
+owner card: companies: 2
+A's page names the owner's organization: false
+A cannot join the owner's cabinet by API: 400

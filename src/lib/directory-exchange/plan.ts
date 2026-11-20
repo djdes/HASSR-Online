@@ -30,6 +30,15 @@
  *     перезаписывает, когда бы тот её ни менял;
  *   • образцом для `create` его запись быть может: новая запись пассивного
  *     участника создаётся у остальных, как у любого другого.
+ *
+ * Несколько компаний у одного кабинета (схема «звезда», серия C1, Р6.3):
+ * группа помнит, чья запись её начала (`originOrganizationId`, одинаковый у
+ * всех связей группы). Компания — аккаунт (`companies`); организация другой
+ * компании получает (`create`, `update`) и находит по ключу только группы,
+ * начатые организациями владельца кабинета или её же компании, и только по
+ * образцу из них же. Группа другой компании или «смешанная» (`MIXED_ORIGIN`)
+ * ей не достаётся: совпавшая по ключу запись заводит свою группу. Организации
+ * владельца получают всё, как раньше; их записи находят пару по ключу первыми.
  */
 
 export type ExchangeRow = {
@@ -48,11 +57,156 @@ export type ExchangeLinkRow = {
   /** null — надгробие: запись здесь удалили. */
   entityId: string | null;
   hash: string;
+  /** Чья запись начала группу (Р6.2); null — группа до C1, ещё без отметки. */
+  originOrganizationId?: string | null;
 };
 
+/** Отметка группы до C1 со связями нескольких компаний (Р6.4): новые компании её не получают. */
+export const MIXED_ORIGIN = "mixed";
+
+/** Компании участников (Р6.1): компания — аккаунт (`exchangeAccountKey`). */
+export type ExchangeCompanies = {
+  /** Компания владельца кабинета: её организации получают всё. */
+  owner: string;
+  /** Компания организации — участника или основателя группы. */
+  of: (organizationId: string) => string;
+};
+
+/**
+ * Получает ли организация компании `company` записи группы с отметкой
+ * `origin` (Р6.3): владелец — всё; другая компания — группы владельца и свои.
+ * Без отметки или «смешанная» — только владелец.
+ */
+export function companyReceivesGroup(origin: string | null | undefined, company: string, companies: ExchangeCompanies): boolean {
+  if (company === companies.owner) return true;
+  if (!origin || origin === MIXED_ORIGIN) return false;
+  const originCompany = companies.of(origin);
+  return originCompany === companies.owner || originCompany === company;
+}
+
+/** Когда создана запись (`createdAt`); null — прочитать нельзя (у сущности нет даты, записи уже нет). */
+export type RecordCreatedAt = (entityId: string) => Date | null | undefined;
+
+/**
+ * Связь с датой, когда её записали (`createdAt` строки связи). Обмен эту дату
+ * не меняет: правка, надгробие и «ожившая» запись обновляют связь на месте,
+ * поэтому по ней видно, кто был в группе раньше.
+ */
+export type DatedLinkRow = ExchangeLinkRow & { createdAt?: Date | null };
+
+/**
+ * Отметка группы, начатой до C1 (Р6.4) — по времени связей, а не записей:
+ * запись можно удалить и завести снова (она вернётся в группу под старой
+ * связью), а копию — сделать много позже оригинала. Компании — по всем
+ * связям группы, с надгробиями (компания, удалившая свою запись, могла её и
+ * начать):
+ *   • компаний нет — группа владельца (его самая ранняя живая связь);
+ *   • компаний несколько — «смешанная»;
+ *   • одна компания C — сравниваются самые ранние живые связи владельца и C
+ *     (у C только надгробия — её связи): владелец раньше — группа была у него
+ *     до прихода C, она его; C раньше — её. Связи из одного обмена (одна
+ *     дата) — группа владельца, только если записи читаются, самая старая
+ *     запись владельца строго старше каждой записи C и ни одна запись C не
+ *     заведена позже своей связи (не создана заново); иначе — C. Без дат (цеха,
+ *     оборудование, связи без даты) — C: осторожно.
+ * Связей нет — null.
+ */
+export function legacyGroupOrigin(
+  links: readonly Pick<DatedLinkRow, "organizationId" | "entityId" | "createdAt">[],
+  companies: ExchangeCompanies,
+  createdAtOf?: RecordCreatedAt,
+): string | null {
+  type Link = (typeof links)[number];
+  if (links.length === 0) return null;
+  const linkTime = (link: Link) => link.createdAt?.getTime() ?? Number.NaN;
+  const recordTime = (link: Link) => (link.entityId ? createdAtOf?.(link.entityId)?.getTime() : undefined) ?? Number.NaN;
+  /** Самая ранняя связь (при равенстве — меньший id организации); без дат — первая по порядку. */
+  const earliest = (list: readonly Link[]) =>
+    list.reduce((best, link) => {
+      const time = linkTime(link);
+      const bestTime = linkTime(best);
+      if (Number.isNaN(time)) return best;
+      if (Number.isNaN(bestTime) || time < bestTime || (time === bestTime && link.organizationId < best.organizationId)) return link;
+      return best;
+    }, list[0]);
+  const isLive = (link: Link) => link.entityId !== null;
+  const isOwner = (link: Link) => companies.of(link.organizationId) === companies.owner;
+
+  const foreign = new Map<string, Link[]>();
+  for (const link of links) {
+    if (isOwner(link)) continue;
+    const company = companies.of(link.organizationId);
+    const list = foreign.get(company);
+    if (list) list.push(link);
+    else foreign.set(company, [link]);
+  }
+  if (foreign.size > 1) return MIXED_ORIGIN;
+  const ownerLive = links.filter((link) => isLive(link) && isOwner(link));
+  if (foreign.size === 0) return earliest(ownerLive.length > 0 ? ownerLive : links).organizationId;
+
+  const companyLinks = [...foreign.values()][0];
+  const companyLive = companyLinks.filter(isLive);
+  const companyFirst = earliest(companyLive.length > 0 ? companyLive : companyLinks);
+  if (ownerLive.length === 0) return companyFirst.organizationId;
+  const ownerFirst = earliest(ownerLive);
+  const ownerTime = linkTime(ownerFirst);
+  const companyTime = linkTime(companyFirst);
+  if (Number.isNaN(ownerTime) || Number.isNaN(companyTime)) return companyFirst.organizationId;
+  if (ownerTime !== companyTime) return ownerTime < companyTime ? ownerFirst.organizationId : companyFirst.organizationId;
+
+  // Один обмен связал обе стороны: решают даты записей — осторожно.
+  const ownerRecords = ownerLive.map(recordTime).filter((time) => Number.isFinite(time));
+  if (ownerRecords.length === 0 || companyLive.length === 0) return companyFirst.organizationId;
+  const ownerOldest = Math.min(...ownerRecords);
+  const ownerFounded = companyLive.every((link) => {
+    const time = recordTime(link);
+    return Number.isFinite(time) && time > ownerOldest && time <= linkTime(link);
+  });
+  return ownerFounded ? ownerFirst.organizationId : companyFirst.organizationId;
+}
+
+/**
+ * Какие отметки дописать (Р6.2, Р6.4): группа → отметка для её связей без
+ * отметки. Есть в группе связь с отметкой — та же (у группы она одна); нет —
+ * `legacyGroupOrigin`. Группы, где отметка у всех связей, сюда не попадают.
+ */
+export function pendingGroupOrigins(
+  links: readonly DatedLinkRow[],
+  companies: ExchangeCompanies,
+  createdAtOf?: RecordCreatedAt,
+): Map<string, string> {
+  const pending = new Map<string, string>();
+  for (const [groupId, list] of linksByGroup(links)) {
+    if (list.every((link) => link.originOrganizationId)) continue;
+    const origin = list.find((link) => link.originOrganizationId)?.originOrganizationId ?? legacyGroupOrigin(list, companies, createdAtOf);
+    if (origin) pending.set(groupId, origin);
+  }
+  return pending;
+}
+
+/** Записи групп без отметки ни у одной связи: их даты нужны `legacyGroupOrigin`, когда связи из одного обмена. */
+export function unmarkedGroupRecords(links: readonly ExchangeLinkRow[]): string[] {
+  const ids: string[] = [];
+  for (const list of linksByGroup(links).values()) {
+    if (list.some((link) => link.originOrganizationId)) continue;
+    for (const link of list) if (link.entityId) ids.push(link.entityId);
+  }
+  return ids;
+}
+
+function linksByGroup<Link extends ExchangeLinkRow>(links: readonly Link[]): Map<string, Link[]> {
+  const groups = new Map<string, Link[]>();
+  for (const link of links) {
+    const list = groups.get(link.groupId);
+    if (list) list.push(link);
+    else groups.set(link.groupId, [link]);
+  }
+  return groups;
+}
+
 export type ExchangeOp =
-  /** Запомнить связь уже существующей записи с группой. */
-  | { type: "link"; groupId: string; organizationId: string; entityId: string; hash: string }
+  /** Запомнить связь уже существующей записи с группой; `originOrganizationId` — у новой группы (Р6.2). */
+  | { type: "link"; groupId: string; organizationId: string; entityId: string; hash: string; originOrganizationId?: string }
   /** Создать запись у участника по образцу; `hash` — отпечаток образца. */
   | { type: "create"; groupId: string; organizationId: string; fromOrganizationId: string; fromEntityId: string; hash: string }
   /** Привести запись участника к образцу. */
@@ -79,6 +233,8 @@ export type PlanEntityExchangeInput = {
   links: readonly ExchangeLinkRow[];
   /** Пассивные участники: их правки чужих записей не меняют (см. выше). */
   passive?: readonly string[];
+  /** Компании участников (Р6.3); не переданы — все участники как одна компания. */
+  companies?: ExchangeCompanies;
   newGroupId: () => string;
 };
 
@@ -103,6 +259,21 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
   if (participants.length < 2) return [];
   const order = new Map(participants.map((id, index) => [id, index]));
   const passive = new Set(input.passive ?? []);
+  const companies = input.companies ?? null;
+  /** Группа → чья запись её начала (Р6.2). */
+  const originOf = new Map<string, string>();
+  /**
+   * Р6.3: организация получает записи группы (и находит её по ключу), только
+   * если группа — владельца или её компании; образец — оттуда же.
+   */
+  const receives = (organizationId: string, groupId: string, fromOrganizationId?: string): boolean => {
+    if (!companies) return true;
+    const company = companies.of(organizationId);
+    if (!companyReceivesGroup(originOf.get(groupId), company, companies)) return false;
+    if (fromOrganizationId === undefined || company === companies.owner) return true;
+    const source = companies.of(fromOrganizationId);
+    return source === companies.owner || source === company;
+  };
 
   const rowsByOrg = new Map<string, Map<string, ExchangeRow>>();
   for (const organizationId of participants) {
@@ -129,6 +300,7 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
     if (!order.has(link.organizationId)) continue;
     let members = groups.get(link.groupId);
     if (!members) groups.set(link.groupId, (members = new Map()));
+    if (link.originOrganizationId && !originOf.has(link.groupId)) originOf.set(link.groupId, link.originOrganizationId);
     // Повтор связи в данных невозможен (unique), но и не должен ломать план.
     if (members.has(link.organizationId)) continue;
     const row = link.entityId ? rowsByOrg.get(link.organizationId)?.get(link.entityId) ?? null : null;
@@ -144,28 +316,50 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
     members.set(link.organizationId, { organizationId: link.organizationId, row: null, link, frozen: false });
   }
 
-  // 2. Записи без связи: своя группа по ключу или новая.
+  // Группы до C1 без отметки (Р6.4): обмен дописывает отметку в базу ещё до
+  // плана; здесь — на случай, если не дописал, осторожно (дат записей нет).
+  if (companies) {
+    const known = input.links.filter((link) => order.has(link.organizationId));
+    for (const [groupId, origin] of pendingGroupOrigins(known, companies)) if (!originOf.has(groupId)) originOf.set(groupId, origin);
+  }
+
+  // 2. Записи без связи: своя группа по ключу или новая. Организации
+  // владельца — первыми: совпавшее с его записью остаётся группой владельца.
   const revived = new Set<string>();
-  for (const organizationId of participants) {
+  const linking = companies
+    ? [...participants].sort((a, b) => Number(companies.of(a) !== companies.owner) - Number(companies.of(b) !== companies.owner))
+    : participants;
+  for (const organizationId of linking) {
     const linked = linkedIds.get(organizationId)!;
     for (const row of rowsByOrg.get(organizationId)!.values()) {
       if (linked.has(row.id) || row.key === null) continue;
       const candidates = groupsByKey.get(row.key) ?? [];
       // Группа свободна для организации, если живой записи в ней тут нет
-      // (связи не было или запись удалили и завели снова).
-      let groupId = candidates.find((id) => !groups.get(id)?.get(organizationId)?.row) ?? null;
+      // (связи не было или запись удалили и завели снова); группа другой
+      // компании ей не достаётся (Р6.3).
+      const free = candidates.filter((id) => !groups.get(id)?.get(organizationId)?.row);
+      let groupId = free.find((id) => receives(organizationId, id)) ?? null;
       // Ключ занят живой записью этой же организации — это дубль: без связи.
-      if (!groupId && candidates.length > 0) continue;
+      if (!groupId && free.length < candidates.length) continue;
+      const founded = !groupId;
       if (!groupId) {
         groupId = input.newGroupId();
         groups.set(groupId, new Map());
+        originOf.set(groupId, organizationId);
       }
       const members = groups.get(groupId)!;
       if (members.has(organizationId)) revived.add(`${groupId}\u0000${organizationId}`);
       members.set(organizationId, { organizationId, row, link: null, frozen: false });
       linked.add(row.id);
       indexKey(row.key, groupId);
-      linksOps.push({ type: "link", groupId, organizationId, entityId: row.id, hash: row.hash });
+      linksOps.push({
+        type: "link",
+        groupId,
+        organizationId,
+        entityId: row.id,
+        hash: row.hash,
+        ...(founded ? { originOrganizationId: organizationId } : {}),
+      });
     }
   }
 
@@ -207,7 +401,7 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
       // Переписываем чужую запись только по настоящей правке. Расхождение без
       // правки (записи совпали по ключу при связывании, или сохранились чуть
       // иначе образца) — не повод затирать данные.
-      if (canonicalChanged) {
+      if (canonicalChanged && receives(member.organizationId, groupId, canonical.organizationId)) {
         changes.push({ type: "update", groupId, organizationId: member.organizationId, entityId: member.row.id, ...source });
       }
     }
@@ -215,7 +409,8 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
       changes.push({ type: "rehash", groupId, organizationId: canonical.organizationId, entityId: canonical.row.id, hash: canonical.row.hash });
     }
     for (const organizationId of participants) {
-      if (!members.has(organizationId)) changes.push({ type: "create", groupId, organizationId, ...source });
+      if (members.has(organizationId) || !receives(organizationId, groupId, canonical.organizationId)) continue;
+      changes.push({ type: "create", groupId, organizationId, ...source });
     }
   }
 

@@ -25,6 +25,7 @@ import {
   emptyKindRecord,
   entityScope,
   hashScope,
+  naturalKey,
   normalizeExchangeKinds,
   rowHash,
   type ExchangeEntity,
@@ -32,7 +33,17 @@ import {
   type ExchangeScope,
   normalizeExchangeName,
 } from "@/lib/directory-exchange/kinds";
-import { planEntityExchange, rebaseLinks, type ExchangeLinkRow } from "@/lib/directory-exchange/plan";
+import {
+  MIXED_ORIGIN,
+  companyReceivesGroup,
+  pendingGroupOrigins,
+  planEntityExchange,
+  rebaseLinks,
+  unmarkedGroupRecords,
+  type DatedLinkRow,
+  type ExchangeCompanies,
+  type ExchangeLinkRow,
+} from "@/lib/directory-exchange/plan";
 import type { ExchangeSkipRecord } from "@/lib/directory-exchange/skips";
 import { recordExchangeSkips } from "@/lib/directory-exchange/skips-record.server";
 import {
@@ -66,10 +77,10 @@ import { isOrganizationLocked } from "@/lib/org-trial.server";
  * «Сотрудники» есть такой, сотрудники обмениваются только как ФИО и должность
  * (правило Р5, состав полей `foreign` в kinds.ts) — у всех участников списка.
  * Ещё три правила для него:
- *   • у кабинета одна чужая компания: списки расходятся по всем участникам,
- *     и две компании, не договаривавшиеся друг с другом, получили бы записи
- *     друг друга. Если чужих компаний почему-то две, обмен идёт только с
- *     первой подключённой;
+ *   • компаний у кабинета может быть несколько (серия C1, схема «звезда»):
+ *     каждая получает записи владельца, но не записи другой компании — группа
+ *     помнит, чья запись её начала (`originOrganizationId`, правило в plan.ts;
+ *     у групп до C1 отметку дописывает `settleGroupOrigins`);
  *   • её правки записей владельца не меняют (пассивный участник в plan.ts):
  *     новые записи идут в обе стороны, правки — только от владельца к ней;
  *   • люди двух компаний по ФИО не сопоставляются (`owner` в ключе
@@ -112,6 +123,57 @@ type Participant = {
   accountKey: string;
 };
 type LinkWrite = { groupId: string; organizationId: string; entityId: string | null; hash: string };
+/** Компания — аккаунт; организация, которой больше нет, — компания сама по себе. */
+const companyLookup = (known: ReadonlyMap<string, string>) => (organizationId: string) => known.get(organizationId) ?? `missing:${organizationId}`;
+
+/**
+ * Когда созданы записи сущности (для отметки групп до C1, Р6.4). У цехов и
+ * оборудования даты нет — пустой ответ, отметка тогда считается осторожно.
+ */
+async function recordsCreatedAt(entity: string, entityIds: readonly string[]): Promise<Map<string, Date>> {
+  const created = new Map<string, Date>();
+  const ids = [...new Set(entityIds)];
+  for (let index = 0; index < ids.length; index += 1000) {
+    const where = { id: { in: ids.slice(index, index + 1000) } };
+    const select = { id: true, createdAt: true } as const;
+    let rows: Array<{ id: string; createdAt: Date }> = [];
+    switch (entity) {
+      case "product":
+        rows = await db.product.findMany({ where, select });
+        break;
+      case "position":
+        rows = await db.jobPosition.findMany({ where, select });
+        break;
+      case "staff":
+        rows = await db.user.findMany({ where, select });
+        break;
+      case "building":
+        rows = await db.building.findMany({ where, select });
+        break;
+      case "room":
+        rows = await db.room.findMany({ where, select });
+        break;
+      default:
+        return created;
+    }
+    for (const row of rows) created.set(row.id, row.createdAt);
+  }
+  return created;
+}
+
+/** Отметки групп до C1 (`pendingGroupOrigins`: по времени связей, в одном обмене — по датам записей); `links` — связи одной сущности. */
+async function legacyOriginsOf(entity: string, links: readonly DatedLinkRow[], companies: ExchangeCompanies): Promise<Map<string, string>> {
+  const created = await recordsCreatedAt(entity, unmarkedGroupRecords(links));
+  return pendingGroupOrigins(links, companies, (entityId) => created.get(entityId) ?? null);
+}
+
+/** Компании организаций (`exchangeAccountKey`) по их id. */
+async function loadCompanies(organizationIds: Iterable<string>): Promise<Map<string, string>> {
+  const ids = [...new Set(organizationIds)];
+  if (ids.length === 0) return new Map();
+  const organizations = await db.organization.findMany({ where: { id: { in: ids } }, select: { id: true, accountId: true } });
+  return new Map(organizations.map((organization) => [organization.id, exchangeAccountKey(organization)]));
+}
 
 /** Компания организации: её аккаунт, а у организации без аккаунта — она сама. */
 export function exchangeAccountKey(organization: { id: string; accountId: string | null }): string {
@@ -218,8 +280,10 @@ async function exchangeEntity(params: {
   /** Не созданные записи: «сущность|группа|организация» → причина (для потомков). */
   blocked: Map<string, SkipReason>;
   notes: Set<string>;
+  /** Компании участников и основателей групп (Р6.3). */
+  companies: ExchangeCompanies;
 }): Promise<number> {
-  const { masterOrganizationId, entity, participants, tally, blocked, notes } = params;
+  const { masterOrganizationId, entity, participants, tally, blocked, notes, companies } = params;
   const kind = ENTITY_KIND[entity];
   const parent = ENTITY_PARENT[entity];
   const organizationIds = participants.map((participant) => participant.organizationId);
@@ -238,7 +302,7 @@ async function exchangeEntity(params: {
     db.directoryExchangeLink.findMany({
       where: { masterOrganizationId, entity, organizationId: { in: organizationIds } },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-      select: { groupId: true, organizationId: true, entityId: true, hash: true },
+      select: { groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true },
     }),
     parent
       ? db.directoryExchangeLink.findMany({
@@ -293,6 +357,8 @@ async function exchangeEntity(params: {
     links: aligned.links,
     // Правки чужой компании записей владельца не меняют.
     passive: foreign.map((participant) => participant.organizationId),
+    // Компании не получают записей друг друга (Р6.3).
+    companies,
     newGroupId: randomUUID,
   });
   // Пропуски создания — в строки разбора (Р9.1); то, что проход создал,
@@ -313,6 +379,11 @@ async function exchangeEntity(params: {
 
   const linkKey = (groupId: string, organizationId: string) => `${groupId}\u0000${organizationId}`;
   const stored = new Map<string, ExchangeLinkRow>(links.map((link) => [linkKey(link.groupId, link.organizationId), link]));
+  // Отметка группы (Р6.2): новая связь получает отметку своей группы, новая
+  // группа — своего основателя; правка связи отметку не трогает.
+  const groupOrigin = new Map<string, string>();
+  for (const link of links) if (link.originOrganizationId) groupOrigin.set(link.groupId, link.originOrganizationId);
+  for (const op of ops) if (op.type === "link" && op.originOrganizationId) groupOrigin.set(op.groupId, op.originOrganizationId);
   const writes = new Map<string, LinkWrite>();
   // Сначала переведённые связи; операции плана ниже пишут поверх них.
   for (const link of aligned.rebased) writes.set(linkKey(link.groupId, link.organizationId), { ...link });
@@ -460,7 +531,7 @@ async function exchangeEntity(params: {
   }
   if (inserts.length > 0) {
     await db.directoryExchangeLink.createMany({
-      data: inserts.map((write) => ({ masterOrganizationId, entity, ...write })),
+      data: inserts.map((write) => ({ masterOrganizationId, entity, ...write, originOrganizationId: groupOrigin.get(write.groupId) ?? null })),
       skipDuplicates: true,
     });
   }
@@ -487,6 +558,7 @@ async function settleStaffBeforeForeign(params: {
   tally: Tally;
   blocked: Map<string, SkipReason>;
   notes: Set<string>;
+  companies: ExchangeCompanies;
 }): Promise<void> {
   const sharing = params.participants.filter((participant) => participant.kinds.includes("staff"));
   if (!sharing.some((participant) => participant.foreign)) return;
@@ -506,6 +578,67 @@ async function settleStaffBeforeForeign(params: {
   for (const entity of KIND_ENTITIES.staff) {
     await exchangeEntity({ ...params, entity, participants: own });
   }
+}
+
+/**
+ * Отметка «чья запись начала группу» у связей без неё (Р6.2, Р6.4): группы,
+ * начатые до C1, и связи, записанные без отметки. В группе есть связь с
+ * отметкой — та же; нет — по времени связей: кто был в группе раньше
+ * (`legacyGroupOrigin`). Под замком обмена, до плана; дописываются только
+ * пустые отметки, поэтому повторный обмен ничего не меняет.
+ */
+async function settleGroupOrigins(masterOrganizationId: string, ownerCompany: string): Promise<void> {
+  const unmarked = await db.directoryExchangeLink.findFirst({
+    where: { masterOrganizationId, originOrganizationId: null },
+    select: { id: true },
+  });
+  if (!unmarked) return;
+  const links = await db.directoryExchangeLink.findMany({
+    where: { masterOrganizationId },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { entity: true, groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true, createdAt: true },
+  });
+  const companies = {
+    owner: ownerCompany,
+    of: companyLookup(await loadCompanies(links.map((link) => link.organizationId))),
+  };
+  const byEntity = new Map<string, DatedLinkRow[]>();
+  for (const link of links) {
+    const list = byEntity.get(link.entity);
+    if (list) list.push(link);
+    else byEntity.set(link.entity, [link]);
+  }
+  for (const [entity, entityLinks] of byEntity) {
+    const byOrigin = new Map<string, string[]>();
+    for (const [groupId, origin] of await legacyOriginsOf(entity, entityLinks, companies)) {
+      const groups = byOrigin.get(origin);
+      if (groups) groups.push(groupId);
+      else byOrigin.set(origin, [groupId]);
+    }
+    for (const [origin, groupIds] of byOrigin) {
+      for (let index = 0; index < groupIds.length; index += 1000) {
+        await db.directoryExchangeLink.updateMany({
+          where: { masterOrganizationId, entity, groupId: { in: groupIds.slice(index, index + 1000) }, originOrganizationId: null },
+          data: { originOrganizationId: origin },
+        });
+      }
+    }
+  }
+}
+
+/** Компании участников обмена и организаций, начавших группы кабинета (Р6.3). */
+async function cabinetCompanies(
+  masterOrganizationId: string,
+  ownerCompany: string,
+  participants: readonly Participant[],
+): Promise<ExchangeCompanies> {
+  const origins = await db.directoryExchangeLink.groupBy({
+    by: ["originOrganizationId"],
+    where: { masterOrganizationId, originOrganizationId: { not: null } },
+  });
+  const known = await loadCompanies(origins.map((row) => row.originOrganizationId).filter((id): id is string => Boolean(id)));
+  for (const participant of participants) known.set(participant.organizationId, participant.accountKey);
+  return { owner: ownerCompany, of: companyLookup(known) };
 }
 
 async function exchangeUnderLock(
@@ -531,11 +664,8 @@ async function exchangeUnderLock(
 
   const notes = new Set<string>();
   const participants: Participant[] = [];
-  // Чужая компания у кабинета одна — та, что подключена первой (участники
-  // идут от ранних к поздним). Подтверждение запроса вторую не пропускает
-  // (`requests.server.ts`); если она всё же есть — в обмене не участвует:
-  // иначе две компании получили бы записи друг друга.
-  let foreignCompany: { key: string; name: string } | null = null;
+  // Компаний других аккаунтов может быть несколько (серия C1): участвуют все
+  // подтверждённые, а записей друг друга они не получают (Р6.3, plan.ts).
   for (const member of members) {
     const organization = member.organization;
     const kinds = normalizeExchangeKinds(member.kinds);
@@ -545,15 +675,6 @@ async function exchangeUnderLock(
     if (organization.accountId !== cabinet.accountId && !member.foreign) continue;
     if (organization.isDemo || organization.kind === MASTER_ORG_KIND) continue;
     const accountKey = exchangeAccountKey(organization);
-    if (member.foreign && organization.accountId !== cabinet.accountId) {
-      if (!foreignCompany) foreignCompany = { key: accountKey, name: organization.name };
-      else if (foreignCompany.key !== accountKey) {
-        notes.add(
-          `Организация «${organization.name}» в обмене не участвовала: кабинет уже связан с компанией «${foreignCompany.name}», а с двумя компаниями сразу обмен не ведётся.`,
-        );
-        continue;
-      }
-    }
     // На паузе или отменена — как и остальная автоматика, обмен её не трогает.
     if (isInactivePlan(organization.subscriptionPlan)) continue;
     if (await isOrganizationLocked(organization.id, now)) {
@@ -566,13 +687,16 @@ async function exchangeUnderLock(
   const tally = new Tally();
   const blocked = new Map<string, SkipReason>();
   if (participants.length >= 2) {
-    await settleStaffBeforeForeign({ masterOrganizationId, participants, tally, blocked, notes });
+    const ownerCompany = exchangeAccountKey(cabinet);
+    await settleGroupOrigins(masterOrganizationId, ownerCompany);
+    const companies = await cabinetCompanies(masterOrganizationId, ownerCompany, participants);
+    await settleStaffBeforeForeign({ masterOrganizationId, participants, tally, blocked, notes, companies });
     for (let pass = 0; pass < MAX_PASSES; pass += 1) {
       let changes = 0;
       for (const entity of EXCHANGE_ENTITIES) {
         const sharing = participants.filter((participant) => participant.kinds.includes(ENTITY_KIND[entity]));
         if (sharing.length < 2) continue;
-        changes += await exchangeEntity({ masterOrganizationId, entity, participants: sharing, tally, blocked, notes });
+        changes += await exchangeEntity({ masterOrganizationId, entity, participants: sharing, tally, blocked, notes, companies });
       }
       if (changes === 0) break;
     }
@@ -833,20 +957,118 @@ async function matchTransferEntity(
   return { fromRows, exists };
 }
 
+type WithheldRows = Record<ExchangeEntity, Set<string>>;
+
+/**
+ * Записи источника, которые другой компании не передаются (Р6.5):
+ *   • связанные в обмене кабинета с группой, начатой не владельцем кабинета и
+ *     не самой этой компанией (`companyReceivesGroup`); у группы до C1 без
+ *     отметки — по тем же правилам, что и при обмене (`legacyOriginsOf`,
+ *     только для чтения);
+ *   • о которых связи кабинета молчат (организация вышла из обмена — её связи
+ *     удалены, а копии остались; запись не связана): по естественному ключу
+ *     совпадают с живой записью другой компании в группе этой компании или
+ *     «смешанной». Ключ — как в обмене, но родитель любой, а сотрудник — по
+ *     ФИО: групп у такой организации нет. Своя запись владельца с тем же
+ *     названием тоже не передаётся — лучше лишний отказ, чем чужая запись.
+ * Запись, чей обязательный родитель не передаётся, тоже не передаётся.
+ */
+async function withheldTransferRows(
+  masterOrganizationId: string,
+  fromOrganizationId: string,
+  toCompany: string,
+  scope: ExchangeScope,
+): Promise<WithheldRows> {
+  const result = Object.fromEntries(EXCHANGE_ENTITIES.map((entity) => [entity, new Set<string>()])) as WithheldRows;
+  const cabinet = await db.organization.findUnique({ where: { id: masterOrganizationId }, select: { id: true, accountId: true } });
+  if (!cabinet) return result;
+  const links = await db.directoryExchangeLink.findMany({
+    where: { masterOrganizationId },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { entity: true, groupId: true, organizationId: true, entityId: true, hash: true, originOrganizationId: true, createdAt: true },
+  });
+  if (links.length === 0) return result;
+  const known = await loadCompanies([
+    ...links.map((link) => link.organizationId),
+    ...links.map((link) => link.originOrganizationId).filter((id): id is string => Boolean(id)),
+  ]);
+  const companies: ExchangeCompanies = { owner: exchangeAccountKey(cabinet), of: companyLookup(known) };
+  const looseKey = (entity: ExchangeEntity, row: EntityRow) => naturalKey(entity, row.fields, ENTITY_PARENT[entity] ? "*" : null, null);
+
+  for (const entity of EXCHANGE_ENTITIES) {
+    const entityLinks = links.filter((link) => link.entity === entity);
+    if (entityLinks.length === 0) continue;
+    const originOf = new Map<string, string>();
+    for (const link of entityLinks) if (link.originOrganizationId && !originOf.has(link.groupId)) originOf.set(link.groupId, link.originOrganizationId);
+    for (const [groupId, origin] of await legacyOriginsOf(entity, entityLinks, companies)) if (!originOf.has(groupId)) originOf.set(groupId, origin);
+
+    const linkedSource = new Set<string>();
+    /** Записи другой компании в группах этой компании или «смешанных»: организация → id. */
+    const foreignRecords = new Map<string, Set<string>>();
+    for (const link of entityLinks) {
+      if (!link.entityId) continue;
+      const origin = originOf.get(link.groupId) ?? null;
+      if (link.organizationId === fromOrganizationId) {
+        linkedSource.add(link.entityId);
+        if (!companyReceivesGroup(origin, toCompany, companies)) result[entity].add(link.entityId);
+        continue;
+      }
+      const company = companies.of(link.organizationId);
+      if (company === companies.owner || company === toCompany) continue;
+      if (origin !== MIXED_ORIGIN && (origin === null || companies.of(origin) !== company)) continue;
+      const ids = foreignRecords.get(link.organizationId);
+      if (ids) ids.add(link.entityId);
+      else foreignRecords.set(link.organizationId, new Set([link.entityId]));
+    }
+    if (foreignRecords.size === 0) continue;
+
+    const keys = new Set<string>();
+    for (const [organizationId, ids] of foreignRecords) {
+      for (const row of await loadEntityRows(entity, organizationId, undefined, scope)) {
+        const key = ids.has(row.id) ? looseKey(entity, row) : null;
+        if (key) keys.add(key);
+      }
+    }
+    if (keys.size === 0) continue;
+    for (const row of await loadEntityRows(entity, fromOrganizationId, undefined, scope)) {
+      if (linkedSource.has(row.id)) continue;
+      const key = looseKey(entity, row);
+      if (key && keys.has(key)) result[entity].add(row.id);
+    }
+  }
+  return result;
+}
+
+/** Не передаётся ли запись (`withheldTransferRows`); потомок закрытого родителя запоминается тоже. */
+function isWithheld(withheld: WithheldRows | null, entity: ExchangeEntity, row: EntityRow): boolean {
+  if (!withheld) return false;
+  if (withheld[entity].has(row.id)) return true;
+  const parent = ENTITY_PARENT[entity];
+  if (!parent?.required || !row.parentId || !withheld[parent.entity].has(row.parentId)) return false;
+  withheld[entity].add(row.id);
+  return true;
+}
+
 /**
  * Что можно перенести из организации и что у получателя уже есть.
  * `crossAccount` — разрешить пару из разных аккаунтов (см. `loadTransferPair`);
- * без него чужая организация — 404, как раньше.
+ * без него чужая организация — 404, как раньше. С ним и `masterOrganizationId`
+ * (кабинет запроса) записи групп другой компании не показываются (Р6.5).
  */
 export async function transferPreview(input: {
   fromOrganizationId: string;
   toOrganizationId: string;
   crossAccount?: boolean;
+  masterOrganizationId?: string | null;
   now?: Date;
 }): Promise<TransferPreview> {
-  const { scope, owners } = await loadTransferPair(input.fromOrganizationId, input.toOrganizationId, input.now ?? new Date(), {
+  const { to, scope, owners } = await loadTransferPair(input.fromOrganizationId, input.toOrganizationId, input.now ?? new Date(), {
     crossAccount: input.crossAccount,
   });
+  const withheld =
+    input.crossAccount && input.masterOrganizationId
+      ? await withheldTransferRows(input.masterOrganizationId, input.fromOrganizationId, exchangeAccountKey(to), scope)
+      : null;
   const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
   const byEntity = new Map<ExchangeEntity, TransferItem[]>();
   // Люди и продукты, которых обмен «не видит» (с входом, в архиве, выключенные),
@@ -867,7 +1089,7 @@ export async function transferPreview(input: {
     byEntity.set(
       entity,
       fromRows
-        .filter((row) => row.key !== null)
+        .filter((row) => row.key !== null && !isWithheld(withheld, entity, row))
         .map((row) => ({
           id: row.id,
           name: row.name,
@@ -904,6 +1126,8 @@ export async function transferPreview(input: {
  * подтверждение запроса владельцем кабинета. Тогда `actor` — владелец
  * источника, сотрудники переносятся как ФИО и должность (Р5), а в журнал
  * получателя имя `actor` не пишется. Без параметра чужая организация — 404.
+ * `masterOrganizationId` — кабинет запроса: записи, чья группа в нём начата
+ * другой компанией, не передаются (Р6.5, `withheldTransferRows`).
  */
 export async function transferOnce(input: {
   fromOrganizationId: string;
@@ -911,6 +1135,7 @@ export async function transferOnce(input: {
   selection: TransferSelection;
   actor: ExchangeActor;
   crossAccount?: boolean;
+  masterOrganizationId?: string | null;
   /** Перенос по подтверждённому запросу другой компании — запоминается вместе с переносом. */
   requestId?: string | null;
   now?: Date;
@@ -948,6 +1173,10 @@ export async function transferOnce(input: {
     async () => {
       // Что перенос создаёт — для отмены в течение 7 дней (серия B, п. 12).
       const record = await startTransferRecord(toOrganizationId);
+      const withheld =
+        input.crossAccount && input.masterOrganizationId
+          ? await withheldTransferRows(input.masterOrganizationId, fromOrganizationId, exchangeAccountKey(to), scope)
+          : null;
       const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
       /** Не созданные записи источника → причина (для потомков). */
       const blocked = new Map<string, SkipReason>();
@@ -960,6 +1189,8 @@ export async function transferOnce(input: {
         const createdKeys = new Set<string>();
         for (const row of fromRows) {
           if (row.key === null || (chosen !== "all" && !chosen.has(row.id))) continue;
+          // Записи групп другой компании этой компании не передаются (Р6.5).
+          if (isWithheld(withheld, entity, row)) continue;
           // То, что у получателя уже есть, пропускается молча: окно переноса
           // показало такие записи заранее, в итог идут только отказы.
           if (exists.has(row.id) || createdKeys.has(row.key)) continue;

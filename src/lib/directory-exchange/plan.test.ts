@@ -2,7 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { hashScope, rowHash, type ExchangeFields, type ExchangeScope } from "@/lib/directory-exchange/kinds";
-import { planEntityExchange, rebaseLinks, type ExchangeLinkRow, type ExchangeOp, type ExchangeRow } from "@/lib/directory-exchange/plan";
+import {
+  MIXED_ORIGIN,
+  companyReceivesGroup,
+  legacyGroupOrigin,
+  pendingGroupOrigins,
+  planEntityExchange,
+  rebaseLinks,
+  unmarkedGroupRecords,
+  type DatedLinkRow,
+  type ExchangeCompanies,
+  type ExchangeLinkRow,
+  type ExchangeOp,
+  type ExchangeRow,
+} from "@/lib/directory-exchange/plan";
 
 const T0 = new Date("2026-11-19T10:00:00.000Z").getTime();
 const at = (minutes: number) => new Date(T0 + minutes * 60_000);
@@ -19,12 +32,13 @@ function world(participants: string[], rows: Record<string, ExchangeRow[]> = {})
 
 const row = (id: string, key: string | null, hash: string, updatedAt: Date | null = null): ExchangeRow => ({ id, key, hash, updatedAt });
 
-function plan(w: World, passive: string[] = []): ExchangeOp[] {
+function plan(w: World, passive: string[] = [], companies?: ExchangeCompanies): ExchangeOp[] {
   return planEntityExchange({
     participants: w.participants,
     rows: w.rows,
     links: w.links,
     passive,
+    companies,
     newGroupId: () => `g${(w.seq += 1)}`,
   });
 }
@@ -33,16 +47,21 @@ function linkOf(w: World, groupId: string, organizationId: string): ExchangeLink
   return w.links.find((link) => link.groupId === groupId && link.organizationId === organizationId);
 }
 
-function setLink(w: World, groupId: string, organizationId: string, entityId: string | null, hash: string) {
+/** Новая связь группы получает её отметку (Р6.2), как в run.server.ts; правка отметку не трогает. */
+function setLink(w: World, groupId: string, organizationId: string, entityId: string | null, hash: string, origin?: string) {
   const existing = linkOf(w, groupId, organizationId);
   if (existing) Object.assign(existing, { entityId, hash });
-  else w.links.push({ groupId, organizationId, entityId, hash });
+  else {
+    const originOrganizationId = origin ?? w.links.find((link) => link.groupId === groupId && link.originOrganizationId)?.originOrganizationId;
+    w.links.push({ groupId, organizationId, entityId, hash, ...(originOrganizationId ? { originOrganizationId } : {}) });
+  }
 }
 
 /** Применить план так, как это сделал бы обмен, когда всё удалось. */
 function apply(w: World, ops: ExchangeOp[]) {
   for (const op of ops) {
-    if (op.type === "link" || op.type === "rehash") setLink(w, op.groupId, op.organizationId, op.entityId, op.hash);
+    if (op.type === "link") setLink(w, op.groupId, op.organizationId, op.entityId, op.hash, op.originOrganizationId);
+    else if (op.type === "rehash") setLink(w, op.groupId, op.organizationId, op.entityId, op.hash);
     else if (op.type === "tombstone") setLink(w, op.groupId, op.organizationId, null, linkOf(w, op.groupId, op.organizationId)?.hash ?? "");
     else {
       const source = w.rows[op.fromOrganizationId].find((item) => item.id === op.fromEntityId);
@@ -246,7 +265,8 @@ test("two unlinked rows with one key in one organization: only the first is link
   const w = world(["A", "B"], { A: [row("a1", "k", "h1"), row("a2", "k", "h1x")] });
   const ops = sync(w);
   assert.deepEqual(types(ops), ["create:B", "link:A"]);
-  assert.deepEqual(ops[0], { type: "link", groupId: "g1", organizationId: "A", entityId: "a1", hash: "h1" });
+  // Запись, основавшая группу, — её отметка (Р6.2).
+  assert.deepEqual(ops[0], { type: "link", groupId: "g1", organizationId: "A", entityId: "a1", hash: "h1", originOrganizationId: "A" });
   assert.equal(w.rows.B.length, 1);
   assert.equal(w.links.length, 2);
   // Сколько ни запускай — дубль не привязывается и ничего не порождает.
@@ -541,4 +561,236 @@ test("passive: two owner organizations and the other company — the owner's edi
   apply(w, plan(w, ["F"]));
   assert.deepEqual([w.rows.A[0].hash, b1.hash, f1.hash], ["hB", "hB", "hB"]);
   assert.deepEqual(plan(w, ["F"]), []);
+});
+
+/* ── several companies at one cabinet, no access to each other («star», series C1, Р6.3–Р6.4) ── */
+
+/** O1, O2 — the cabinet owner's organizations; A, A2 — company A; B — company B; C — company C. */
+const COMPANY: Record<string, string> = { O1: "own", O2: "own", A: "ca", A2: "ca", B: "cb", C: "cc" };
+const companies: ExchangeCompanies = { owner: "own", of: (id) => COMPANY[id] ?? `missing:${id}` };
+const FOREIGN = ["A", "A2", "B", "C"];
+
+/** A full exchange of several companies; right after it the plan is empty. */
+function syncStar(w: World): ExchangeOp[] {
+  const passive = w.participants.filter((id) => FOREIGN.includes(id));
+  const ops = plan(w, passive, companies);
+  apply(w, ops);
+  assert.deepEqual(plan(w, passive, companies), [], "second run right after applying the plan is empty");
+  return ops;
+}
+
+const keysOf = (w: World, organizationId: string) => w.rows[organizationId].map((item) => item.key).sort();
+const originsOf = (w: World, organizationId: string) =>
+  w.links
+    .filter((link) => link.organizationId === organizationId && link.entityId)
+    .map((link) => link.originOrganizationId)
+    .sort();
+
+test("C1: two companies both get the owner's records and never each other's new records", () => {
+  const w = world(["O1", "O2", "A", "B"], {
+    O1: [row("o1", "milk", "hm", at(0))],
+    A: [row("a1", "cheese", "hc", at(1))],
+    B: [row("b1", "bread", "hb", at(2))],
+  });
+  const ops = syncStar(w);
+  assert.deepEqual(keysOf(w, "O1"), ["bread", "cheese", "milk"]);
+  assert.deepEqual(keysOf(w, "O2"), ["bread", "cheese", "milk"]);
+  assert.deepEqual(keysOf(w, "A"), ["cheese", "milk"]);
+  assert.deepEqual(keysOf(w, "B"), ["bread", "milk"]);
+  // Every new group remembers its founder, and every copy carries it.
+  assert.deepEqual(
+    ops.filter((op) => op.type === "link").map((op) => [op.organizationId, op.type === "link" ? op.originOrganizationId : null]),
+    [["O1", "O1"], ["A", "A"], ["B", "B"]],
+  );
+  assert.deepEqual(originsOf(w, "O2"), ["A", "B", "O1"]);
+});
+
+test("C1: an owner's edit of a company's record reaches that company only; company edits move nothing", () => {
+  const w = world(["O1", "O2", "A", "B"], {
+    O1: [row("o1", "milk", "hm", at(0))],
+    A: [row("a1", "cheese", "hc", at(1))],
+    B: [row("b1", "bread", "hb", at(2))],
+  });
+  syncStar(w);
+  // A edits its own record and the owner's: passive — nobody gets anything.
+  edit(w, "A", "a1", { hash: "hc-A", updatedAt: at(5) });
+  edit(w, "A", w.rows.A.find((item) => item.key === "milk")!.id, { hash: "hm-A", updatedAt: at(5) });
+  assert.deepEqual(syncStar(w), []);
+  assert.equal(w.rows.O1.find((item) => item.key === "milk")!.hash, "hm");
+  // The owner edits A's cheese: O2 and A get it, B — nothing (no create, no update).
+  const ownerCheese = w.rows.O1.find((item) => item.key === "cheese")!;
+  edit(w, "O1", ownerCheese.id, { hash: "hc-O", updatedAt: at(9) });
+  const ops = syncStar(w);
+  assert.deepEqual(types(ops), ["rehash:O1", "update:A", "update:O2"]);
+  assert.deepEqual(keysOf(w, "B"), ["bread", "milk"]);
+  // The owner's edit of its own milk reaches everybody.
+  edit(w, "O1", "o1", { hash: "hm-O", updatedAt: at(12) });
+  assert.deepEqual(types(syncStar(w)), ["rehash:O1", "update:A", "update:B", "update:O2"]);
+});
+
+test("C1: a name match with another company's group founds a group of its own; a match with the owner joins", () => {
+  const w = world(["O1", "O2", "A", "B"], {
+    O1: [row("o1", "milk", "hm-O", at(0))],
+    A: [row("a1", "cheese", "hc-A", at(1)), row("a2", "milk", "hm-A", at(1))],
+    B: [row("b1", "cheese", "hc-B", at(2)), row("b2", "milk", "hm-B", at(2))],
+  });
+  syncStar(w);
+  const groupOf = (organizationId: string, id: string) => w.links.find((link) => link.organizationId === organizationId && link.entityId === id)!.groupId;
+  // Milk: one owner's group, both companies joined it, nobody's data overwritten.
+  assert.equal(groupOf("A", "a2"), groupOf("O1", "o1"));
+  assert.equal(groupOf("B", "b2"), groupOf("O1", "o1"));
+  assert.deepEqual([w.rows.A[1].hash, w.rows.B[1].hash], ["hm-A", "hm-B"]);
+  // Cheese: two groups — A's and B's; A and B never share one.
+  assert.notEqual(groupOf("A", "a1"), groupOf("B", "b1"));
+  const groupsOfA = new Set(w.links.filter((link) => link.organizationId === "A").map((link) => link.groupId));
+  assert.ok(w.links.filter((link) => link.organizationId === "B").every((link) => !groupsOfA.has(link.groupId) || link.originOrganizationId === "O1"));
+  assert.equal(w.rows.A.length, 2);
+  assert.equal(w.rows.B.length, 2);
+});
+
+test("C1: the owner's records are matched first — a company listed earlier does not take a shared name", () => {
+  const w = world(["A", "O1", "B"], {
+    A: [row("a1", "milk", "hA")],
+    O1: [row("o1", "milk", "hO")],
+    B: [row("b1", "milk", "hB")],
+  });
+  const ops = syncStar(w);
+  assert.deepEqual(types(ops), ["link:A", "link:B", "link:O1"]);
+  assert.equal(new Set(w.links.map((link) => link.groupId)).size, 1);
+  assert.deepEqual(originsOf(w, "B"), ["O1"]);
+});
+
+test("C1: a second organization of the same company gets its company's records", () => {
+  const w = world(["O1", "A", "A2", "B"], { A: [row("a1", "cheese", "hc")] });
+  syncStar(w);
+  assert.deepEqual(keysOf(w, "A2"), ["cheese"]);
+  assert.deepEqual(keysOf(w, "O1"), ["cheese"]);
+  assert.deepEqual(keysOf(w, "B"), []);
+});
+
+test("C1: a create to a company comes only from the owner or its own company", () => {
+  // The owner's group lives on only in A's copy (with A's own edit): B does not get A's version, O2 does.
+  const w = world(["O1", "O2", "A", "B"], { A: [row("a1", "milk", "hm-A")] });
+  w.links.push(
+    { groupId: "g0", organizationId: "O1", entityId: null, hash: "hm", originOrganizationId: "O1" },
+    { groupId: "g0", organizationId: "A", entityId: "a1", hash: "hm", originOrganizationId: "O1" },
+  );
+  assert.deepEqual(types(plan(w, FOREIGN, companies)), ["create:O2", "rehash:A"]);
+});
+
+test("C1: a mixed group (before C1) — the owner still gets it, companies get neither creates nor updates", () => {
+  const w = world(["O1", "O2", "A", "B", "C"], {
+    O1: [row("o1", "milk", "h1", at(0))],
+    A: [row("a1", "milk", "h1", at(0))],
+    B: [row("b1", "milk", "h1", at(0))],
+  });
+  w.links.push(
+    { groupId: "g0", organizationId: "O1", entityId: "o1", hash: "h1", originOrganizationId: null },
+    { groupId: "g0", organizationId: "A", entityId: "a1", hash: "h1", originOrganizationId: null },
+    { groupId: "g0", organizationId: "B", entityId: "b1", hash: "h1", originOrganizationId: null },
+  );
+  edit(w, "O1", "o1", { hash: "h2", updatedAt: at(5) });
+  const ops = plan(w, FOREIGN, companies);
+  assert.deepEqual(types(ops), ["create:O2", "rehash:O1"]);
+  // C's own milk does not join the mixed group either: it founds its own.
+  w.rows.C.push(row("c1", "milk", "hC"));
+  const withC = plan(w, FOREIGN, companies);
+  assert.ok(withC.some((op) => op.type === "link" && op.organizationId === "C" && op.groupId !== "g0" && op.originOrganizationId === "C"));
+  assert.ok(!withC.some((op) => op.organizationId === "C" && op.groupId === "g0"));
+});
+
+test("C1: legacy origin by link time — whoever was in the group earlier; one run — record dates, cautiously", () => {
+  /** A link written at minute `linked`; its record created at minute `created` (undefined — unreadable). */
+  const records: Record<string, Date> = {};
+  let seq = 0;
+  const rec = (organizationId: string, linked: number, created?: number, live = true) => {
+    const entityId = `${organizationId.toLowerCase()}${(seq += 1)}`;
+    if (created !== undefined) records[entityId] = at(created);
+    return { organizationId, entityId: live ? entityId : null, createdAt: at(linked) };
+  };
+  const createdAt = (entityId: string) => records[entityId] ?? null;
+  const origin = (...links: ReturnType<typeof rec>[]) => legacyGroupOrigin(links, companies, createdAt);
+
+  // The owner was linked in an earlier run → the owner's group, even though A's record is older.
+  assert.equal(origin(rec("O1", 0, 5), rec("A", 60, -100)), "O1");
+  // A was linked earlier → A's group.
+  assert.equal(origin(rec("A", 0, -10), rec("O1", 60, 30)), "A");
+  // A deleted and re-created its record (newer than everything) under its old link: still decided by links.
+  assert.equal(origin(rec("A", 0, 500), rec("O1", 60, 30)), "A");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60, 500)), "O1");
+  // One run linked both: the owner only when its oldest record is strictly older than every record of A…
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 0, -5)), "O1");
+  // …A's record is older, or a record cannot be read → A.
+  assert.equal(origin(rec("O1", 0, -5), rec("A", 0, -10)), "A");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 0)), "A");
+  assert.equal(origin(rec("O1", 0), rec("A", 0, -5)), "A");
+  // …A's record was re-created after its link (A founded the group, the owner got a copy in that run) → A.
+  assert.equal(origin(rec("A", 0, 500), rec("O1", 0, -1)), "A");
+  // A record hard-deleted while its link is live: decided by links; in one run — A.
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60)), "O1");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 0)), "A");
+  // A company that only has a tombstone is still present, at its link time.
+  assert.equal(origin(rec("A", 0, undefined, false), rec("O1", 60, 30)), "A");
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60, undefined, false)), "O1");
+  // Two companies → mixed, whatever the dates; no company → the owner's earliest link (equal — smaller id).
+  assert.equal(origin(rec("O1", 0, -10), rec("A", 60, 5), rec("B", 90, 6)), MIXED_ORIGIN);
+  assert.equal(origin(rec("O2", 0, 1), rec("O1", 0, 2)), "O1");
+  assert.equal(origin(rec("O2", 10, 1), rec("O1", 20, 2)), "O2");
+
+  const links: DatedLinkRow[] = [
+    { groupId: "g1", organizationId: "O1", entityId: "o3", hash: "h", originOrganizationId: null, createdAt: at(0) },
+    { groupId: "g1", organizationId: "A", entityId: "a2", hash: "h", originOrganizationId: null, createdAt: at(0) },
+    { groupId: "g2", organizationId: "O1", entityId: "o1", hash: "h", originOrganizationId: "O1", createdAt: at(0) },
+    { groupId: "g2", organizationId: "B", entityId: "b9", hash: "h", originOrganizationId: null, createdAt: at(0) },
+  ];
+  // Only records of groups with no origin at all may need a date.
+  assert.deepEqual(unmarkedGroupRecords(links), ["o3", "a2"]);
+  const dates: Record<string, Date> = { o3: at(-10), a2: at(-5) };
+  assert.deepEqual([...pendingGroupOrigins(links, companies, (id) => dates[id] ?? null)], [["g1", "O1"], ["g2", "O1"]]);
+  assert.deepEqual([...pendingGroupOrigins(links, companies)], [["g1", "A"], ["g2", "O1"]]);
+});
+
+test("C1: legacy origin without any dates — one company → it (cautious), several → mixed, none → the owner's first", () => {
+  const live = (organizationId: string, entityId: string | null = "x") => ({ organizationId, entityId });
+  assert.equal(legacyGroupOrigin([live("O1"), live("A2"), live("A"), live("O2")], companies), "A2");
+  assert.equal(legacyGroupOrigin([live("O1"), live("A"), live("B")], companies), MIXED_ORIGIN);
+  assert.equal(legacyGroupOrigin([live("O2"), live("O1")], companies), "O2");
+  // A company that only has a tombstone still counts: with another company — mixed.
+  assert.equal(legacyGroupOrigin([live("B", null), live("O1"), live("A")], companies), MIXED_ORIGIN);
+  assert.equal(legacyGroupOrigin([live("B", null), live("O1", null)], companies), "B");
+  assert.equal(legacyGroupOrigin([], companies), null);
+  // An organization that no longer exists is a company of its own.
+  assert.equal(legacyGroupOrigin([live("O1"), live("gone")], companies), "gone");
+
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "O1", entityId: "o1", hash: "h", originOrganizationId: null },
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: "h", originOrganizationId: null },
+    { groupId: "g2", organizationId: "O1", entityId: "o2", hash: "h" },
+    { groupId: "g2", organizationId: "A", entityId: "a2", hash: "h" },
+    { groupId: "g2", organizationId: "B", entityId: "b2", hash: "h" },
+    { groupId: "g3", organizationId: "O2", entityId: "o3", hash: "h", originOrganizationId: null },
+    { groupId: "g3", organizationId: "O1", entityId: "o4", hash: "h", originOrganizationId: null },
+    { groupId: "g4", organizationId: "O1", entityId: "o5", hash: "h", originOrganizationId: "B" },
+    { groupId: "g4", organizationId: "O2", entityId: null, hash: "", originOrganizationId: null },
+    { groupId: "g5", organizationId: "O1", entityId: "o6", hash: "h", originOrganizationId: "O1" },
+  ];
+  assert.deepEqual(
+    [...pendingGroupOrigins(links, companies)],
+    [["g1", "A"], ["g2", MIXED_ORIGIN], ["g3", "O2"], ["g4", "B"]],
+  );
+  // Marked everywhere — nothing to write the second time.
+  const marked = links.map((link) => ({ ...link, originOrganizationId: pendingGroupOrigins(links, companies).get(link.groupId) ?? link.originOrganizationId }));
+  assert.deepEqual([...pendingGroupOrigins(marked, companies)], []);
+});
+
+test("C1: who receives a group — the owner everything, a company the owner's and its own", () => {
+  assert.equal(companyReceivesGroup("A", "own", companies), true);
+  assert.equal(companyReceivesGroup(MIXED_ORIGIN, "own", companies), true);
+  assert.equal(companyReceivesGroup(null, "own", companies), true);
+  assert.equal(companyReceivesGroup("O2", "cb", companies), true);
+  assert.equal(companyReceivesGroup("A2", "ca", companies), true);
+  assert.equal(companyReceivesGroup("A", "cb", companies), false);
+  assert.equal(companyReceivesGroup(MIXED_ORIGIN, "ca", companies), false);
+  assert.equal(companyReceivesGroup(null, "ca", companies), false);
+  assert.equal(companyReceivesGroup("gone", "ca", companies), false);
 });

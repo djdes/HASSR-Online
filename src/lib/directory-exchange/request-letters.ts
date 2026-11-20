@@ -54,6 +54,12 @@ export function countersLine(counters: ExchangeCounters): string {
 
 const quoted = (value: string) => `«${escapeHtml(value)}»`;
 const staffNote = (kinds: readonly ExchangeKind[]) => (kinds.includes("staff") ? ` ${STAFF_LETTER_NOTE}` : "");
+/** Меню и сырьё просят только к связи. */
+const withPool = (args: { mode: RequestMode; withPool?: boolean }) => args.mode === "link" && args.withPool === true;
+
+/** Строка о меню и сырье кабинета в письме и уведомлении владельцу (серия C1, Р7.1). */
+export const POOL_REQUEST_NOTE =
+  "Компания также просит подключить её к меню и сырью мастер-кабинета. Это вы решите отдельной галочкой: без неё связь будет только списками.";
 
 /** Письмо владельцу аккаунта кабинета о новом запросе (Р3). `url` — ссылка `/exchange-request/<токен>`. */
 export function ownerRequestLetter(args: {
@@ -64,6 +70,8 @@ export function ownerRequestLetter(args: {
   requesterName: string;
   requesterInn: string | null;
   expiresAt: Date;
+  /** Связь: просит и меню и сырьё кабинета. */
+  withPool?: boolean;
 }): RequestLetter {
   const inn = args.requesterInn?.trim() ? `ИНН ${escapeHtml(args.requesterInn.trim())}` : "ИНН не указан";
   const cabinet = quoted(args.cabinetName);
@@ -74,6 +82,7 @@ export function ownerRequestLetter(args: {
   const body =
     `<p ${P}>Организация <strong>${quoted(args.requesterName)}</strong> (${inn}) ${what}.</p>` +
     `<p ${P}>Списки: <strong>${escapeHtml(exchangeKindsLabel(args.kinds))}</strong>.${staffNote(args.kinds)}</p>` +
+    (withPool(args) ? `<p ${P}>${POOL_REQUEST_NOTE}</p>` : "") +
     `<p style="margin:0 0 24px"><a href="${escapeHtml(args.url)}" ${BUTTON}>Открыть запрос</a></p>` +
     `<p ${P}>Ссылка действует ${REQUEST_TTL_DAYS} дней — до ${escapeHtml(letterDate(args.expiresAt))}. Запрос откроется только под вашей учётной записью владельца аккаунта: вы сами отметите, какие списки разрешить, и сможете отклонить запрос.</p>` +
     `<p ${MUTED}>Если вы не знаете эту организацию — отклоните запрос или просто не отвечайте: без вашего подтверждения ничего не передаётся.</p>`;
@@ -95,19 +104,23 @@ export function ownerRequestNotice(args: {
   cabinetName: string;
   requesterName: string;
   expiresAt: Date;
+  withPool?: boolean;
 }): { title: string; label: string; hint: string; telegramText: string } {
   const what = args.mode === "link" ? "просит связать справочники" : "просит разово перенести данные";
   const lists = exchangeKindsLabel(args.kinds);
+  const pool = withPool(args);
   const until = letterDate(args.expiresAt);
   const title = "Запрос на обмен справочниками";
   return {
     title,
     label: `«${letterSubject(args.requesterName)}» ${what} — мастер-кабинет «${letterSubject(args.cabinetName)}»`,
-    hint: `${lists}; ответить до ${until}`,
+    hint: `${lists}${pool ? "; меню и сырьё кабинета" : ""}; ответить до ${until}`,
     telegramText:
       `<b>${title}</b>\n\n` +
       `Организация ${quoted(args.requesterName)} ${what} через ваш мастер-кабинет ${quoted(args.cabinetName)}.\n` +
-      `Списки: ${escapeHtml(lists)}.\n\n` +
+      `Списки: ${escapeHtml(lists)}.\n` +
+      (pool ? `${POOL_REQUEST_NOTE}\n` : "") +
+      `\n` +
       `Ответить можно до ${escapeHtml(until)}. Без вашего подтверждения ничего не передаётся.`,
   };
 }
@@ -126,6 +139,21 @@ export function decisionNotificationLabel(args: { status: "approved" | "declined
   return args.mode === "link" ? `${cabinet}: обмен справочниками установлен` : `${cabinet}: данные перенесены`;
 }
 
+/**
+ * Чем кончилась просьба о меню и сырье кабинета (серия C1): подключены, не
+ * разрешены владельцем или подключить не удалось. Причину отказа заявителю не
+ * называем — она может говорить о кабинете (например, о его лимите объектов).
+ */
+export type PoolDecision = "connected" | "not_allowed" | "refused";
+
+/** Строка о меню и сырье для заявителя — простой текст; не просили — null. */
+export function poolDecisionLine(pool: PoolDecision | null | undefined): string | null {
+  if (pool === "connected") return "Меню и сырьё мастер-кабинета подключены — они появятся в журналах организации.";
+  if (pool === "not_allowed") return "Меню и сырьё мастер-кабинета владелец не подключил: связь установлена только списками.";
+  if (pool === "refused") return "Меню и сырьё мастер-кабинета подключить не удалось: связь установлена только списками.";
+  return null;
+}
+
 /** Письмо заявителю о решении владельца кабинета (Р6). `counters` — что получила его организация. */
 export function requesterDecisionLetter(args: {
   url: string;
@@ -135,6 +163,8 @@ export function requesterDecisionLetter(args: {
   requesterName: string;
   allowedKinds: readonly ExchangeKind[];
   counters: ExchangeCounters | null;
+  /** Связь, где просили меню и сырьё кабинета: чем это кончилось. */
+  pool?: PoolDecision | null;
 }): RequestLetter {
   const cabinet = quoted(args.cabinetName);
   const organization = quoted(args.requesterName);
@@ -149,6 +179,7 @@ export function requesterDecisionLetter(args: {
     body =
       `<p ${P}>Владелец мастер-кабинета ${cabinet} подтвердил обмен справочниками с организацией ${organization}.</p>` +
       `<p ${P}>Разрешённые списки: <strong>${lists}</strong>.${staffNote(args.allowedKinds)}</p>` +
+      (poolDecisionLine(args.pool) ? `<p ${P}>${poolDecisionLine(args.pool)}</p>` : "") +
       `<p ${P}>${done ? `Первый обмен выполнен: ${done}. ` : ""}Дальше списки обмениваются автоматически раз в сутки. Выйти из обмена можно в «Настройки → Мастер-кабинет».</p>`;
   } else {
     body =

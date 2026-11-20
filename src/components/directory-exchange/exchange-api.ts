@@ -419,6 +419,8 @@ export type DecisionRequest = {
   kinds: ExchangeKind[];
   status: ForeignStatus;
   expiresAt: string | null;
+  /** Связь: компания просит и меню и сырьё кабинета — владелец решает отдельной галочкой (серия C1). */
+  withPool: boolean;
 };
 
 /** Ответ `GET /api/exchange-requests/<токен>`. */
@@ -434,7 +436,14 @@ export type DecisionState = {
 /** Тело `POST /api/exchange-requests/<токен>`. */
 export type DecisionBody =
   | { decision: "decline" }
-  | { decision: "approve"; allowedKinds: ExchangeKind[]; sourceOrganizationId?: string; organizationIds?: string[] };
+  | {
+      decision: "approve";
+      allowedKinds: ExchangeKind[];
+      sourceOrganizationId?: string;
+      organizationIds?: string[];
+      /** Связь: меню и сырьё кабинета разрешены (только если компания их просила). */
+      allowPool?: boolean;
+    };
 
 export type DecisionResult = {
   status: "approved" | "declined";
@@ -565,6 +574,8 @@ export function parseDecisionState(value: unknown): DecisionState | null {
       kinds: parseKinds(request.kinds),
       status,
       expiresAt: asMoment(request.expiresAt),
+      // Меню и сырьё бывают только у связи.
+      withPool: mode === "link" && request.withPool === true,
     },
     cabinet: { id: asText(cabinet?.id), name: asText(cabinet?.name) },
     sources,
@@ -627,9 +638,10 @@ export function decisionView(response: ExchangeResponse, now: number): DecisionV
 }
 
 /**
- * Отказы подтверждения, после которых запрос по-прежнему ждёт решения: к
- * кабинету уже подключена другая компания (её сначала отключают) или у
+ * Отказы подтверждения, после которых запрос по-прежнему ждёт решения: у
  * заявителя закончился платный тариф. Текст сервера показываем в форме.
+ * `request_cabinet_busy` (одна компания на кабинет) сервер больше не
+ * присылает (серия C1) — код остаётся для ответа прежней версии при выкладке.
  */
 const OPEN_REFUSAL_CODES: readonly string[] = ["request_cabinet_busy", "request_requester_not_paid"];
 
@@ -705,19 +717,25 @@ export function narrowKinds(requested: readonly ExchangeKind[], chosen: readonly
 /**
  * Тело подтверждения. `null` — подтверждать нечего: не отмечен ни один список
  * либо для разового переноса не выбрана своя организация-источник.
+ * `allowPool` — владелец отметил меню и сырьё кабинета; уходит, только если
+ * компания их просила.
  */
 export function approvalBody(
-  state: { request: Pick<DecisionRequest, "mode" | "kinds">; sources: DecisionState["sources"] },
+  state: { request: Pick<DecisionRequest, "mode" | "kinds"> & Partial<Pick<DecisionRequest, "withPool">>; sources: DecisionState["sources"] },
   chosen: readonly ExchangeKind[],
   sourceId: string,
   ownIds: readonly string[] = [],
+  allowPool = false,
 ): Extract<DecisionBody, { decision: "approve" }> | null {
   const allowedKinds = narrowKinds(state.request.kinds, chosen);
   if (allowedKinds.length === 0) return null;
   if (state.request.mode === "link") {
     // Связь — со своими организациями владельца: хотя бы одна, только из его списка.
     const organizationIds = state.sources.filter((source) => ownIds.includes(source.id)).map((source) => source.id);
-    return organizationIds.length > 0 ? { decision: "approve", allowedKinds, organizationIds } : null;
+    if (organizationIds.length === 0) return null;
+    return state.request.withPool === true && allowPool
+      ? { decision: "approve", allowedKinds, organizationIds, allowPool: true }
+      : { decision: "approve", allowedKinds, organizationIds };
   }
   if (!state.sources.some((source) => source.id === sourceId)) return null;
   return { decision: "approve", allowedKinds, sourceOrganizationId: sourceId };

@@ -209,8 +209,8 @@ test("creation: after a decline the same company waits seven days, the date is n
   assert.ok(!unpaid.ok && unpaid.reason === "not_paid");
 });
 
-test("approval: the requester must still be paid and open, the cabinet free of another company", () => {
-  const base = { mode: "link" as const, requesterPhase: "paid" as AccountPhase, requesterLocked: false, requesterName: "Кафе", linkedCompany: null };
+test("approval: the requester must still be paid and open; other linked companies do not block it (C1)", () => {
+  const base = { requesterPhase: "paid" as AccountPhase, requesterLocked: false, requesterName: "Кафе" };
   assert.deepEqual(decideRequestApproval(base), { ok: true });
   for (const phase of ["trial", "free", "open"] as AccountPhase[]) {
     const verdict = decideRequestApproval({ ...base, requesterPhase: phase });
@@ -218,9 +218,4 @@ test("approval: the requester must still be paid and open, the cabinet free of a
   }
   const locked = decideRequestApproval({ ...base, requesterLocked: true });
   assert.ok(!locked.ok && locked.reason === "requester_not_paid");
-  const busy = decideRequestApproval({ ...base, linkedCompany: "Другая компания" });
-  assert.ok(!busy.ok && busy.reason === "cabinet_busy");
-  assert.match(!busy.ok ? busy.message : "", /«Другая компания»/);
-  // A one-off transfer does not occupy the cabinet.
-  assert.deepEqual(decideRequestApproval({ ...base, mode: "transfer", linkedCompany: "Другая компания" }), { ok: true });
 });
