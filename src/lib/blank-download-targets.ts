@@ -67,6 +67,10 @@ const bodySchema = z.object({
   extras: z.unknown().optional(),
   /// Часовой пояс браузера (IANA) — местное время клиента.
   tz: z.unknown().optional(),
+  /// Галка «Добавить титульный лист первой страницей» (по умолчанию в окне отмечена).
+  cover: z.boolean().optional(),
+  /// Невидимая отметка времени (`blank-challenge-gate.server.ts`); разбирает роут.
+  stamp: z.unknown().optional(),
 });
 
 export type BlankDownloadRequest = {
@@ -91,6 +95,8 @@ export type BlankDownloadRequest = {
   extras?: BlankExtras;
   /** Часовой пояс браузера, как прислан (проверяет `normalizeTimeZone`). */
   timeZone?: string;
+  /** Галка «Добавить титульный лист» — файл начнётся с титульника (только `ru`). */
+  cover: boolean;
 };
 
 export type BlankDownloadParse =
@@ -168,6 +174,7 @@ export function parseBlankDownloadRequest(body: unknown, legalVersion: string): 
       ...(data.register === true && data.source !== undefined ? { source: data.source } : {}),
       ...(extras ? { extras } : {}),
       ...(typeof data.tz === "string" && data.tz.length <= 64 ? { timeZone: data.tz } : {}),
+      cover: data.cover === true,
     },
   };
 }

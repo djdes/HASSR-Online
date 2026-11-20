@@ -20073,7 +20073,8 @@
     "challenge": {
       "loading": "Loading verification…",
       "failed": "Verification failed. Please try again.",
-      "retry": "Try verification again"
+      "retry": "Try verification again",
+      "required": "Confirm that you are not a robot, then press “Download” again."
     },
     "trigger": {
       "pdf": "Download PDF",
@@ -20140,6 +20141,14 @@
     "marketing": {
       "statement": "<lead>Send me useful materials and WeSetup news</lead>. <note>I can withdraw my consent at any time.</note>"
     },
+    "cover": {
+      "label": "Add a title page as the first page"
+    },
+    "trust": {
+      "note": "Developed in consultation with Rospotrebnadzor specialists and leading HACCP auditors",
+      "sealTitle": "HACCP",
+      "sealCaption": "CERTIFIED"
+    },
     "form": {
       "sending": "Preparing your template…",
       "submit": "Download {format}",
@@ -20179,6 +20188,7 @@
       "invalidEmail": "Enter a valid email address.",
       "invalidPhone": "Check the phone number.",
       "captchaUnavailable": "Google verification is temporarily unavailable. Please try again later.",
+      "captchaRequired": "Confirm that you are not a robot, then press “Download” again.",
       "captcha": "Complete the “I’m not a robot” check and try again.",
       "tooFast": "We could not send the form. Refresh the page and try again.",
       "targetRequired": "No template was selected for download.",

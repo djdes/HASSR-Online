@@ -58,12 +58,15 @@ export async function GET(
   let company: string | undefined;
   let organizationId: string | null = null;
   let extras: BlankExtras | null = null;
+  // Галка «Добавить титульный лист» в окне — зашита в подписанную ссылку.
+  let cover = false;
   if (!inline) {
     const check = verifyBlankDownloadToken(search.get("t"), { target, format: "pdf" });
     if (!check.ok) return sampleDownloadDenied(request, target, "pdf", check.reason, locale);
     email = check.email;
     company = check.company;
     organizationId = check.organizationId ?? null;
+    cover = check.cover === true;
     // «Дополнительно» из окна — сотрудники, оборудование, помещения в бланке.
     extras = await loadBlankDownloadExtras(check.extrasRef, code).catch((error) => {
       console.error("[journal-samples] extras load failed", error);
@@ -102,6 +105,15 @@ export async function GET(
     // QR на /qb — в шапке каждой страницы, строка копирайта — внизу.
     const { buffer, fileName } = renderJournalDocumentPdf({
       ...await localizedJournalSampleInput(code, locale, { blank, company, extras }),
+      ...(cover
+        ? {
+            blankCover: {
+              organization: company ?? null,
+              responsiblePost: extras?.responsible?.position ?? null,
+              responsibleName: extras?.responsible?.name ?? null,
+            },
+          }
+        : {}),
       qr: {
         url: blankFileQrUrl({ origin: journalPdfQrOrigin(), target, email, organizationId }),
         locale,

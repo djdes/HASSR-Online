@@ -20073,7 +20073,8 @@
     "challenge": {
       "loading": "Tekshiruv yuklanmoqda…",
       "failed": "Tekshiruvdan o‘tib bo‘lmadi. Qayta urinib ko‘ring.",
-      "retry": "Tekshiruvni qayta urinish"
+      "retry": "Tekshiruvni qayta urinish",
+      "required": "Robot emasligingizni tasdiqlang va «Yuklab olish»ni yana bosing."
     },
     "trigger": {
       "pdf": "PDF formatida yuklab olish",
@@ -20140,6 +20141,14 @@
     "marketing": {
       "statement": "<lead>Menga foydali materiallar va WeSetup yangiliklarini yuboring</lead>. <note>Roziligimni istalgan vaqtda qaytarib olishim mumkin.</note>"
     },
+    "cover": {
+      "label": "Birinchi sahifa sifatida titul varag‘ini qo‘shish"
+    },
+    "trust": {
+      "note": "Rospotrebnadzor mutaxassislari va yetakchi HACCP auditorlari maslahatlari asosida ishlab chiqilgan",
+      "sealTitle": "HACCP",
+      "sealCaption": "SERTIFIKATLANGAN"
+    },
     "form": {
       "sending": "Shablon tayyorlanmoqda…",
       "submit": "{format} yuklab olish",
@@ -20179,6 +20188,7 @@
       "invalidEmail": "To'g'ri email manzilini kiriting.",
       "invalidPhone": "Telefon raqamini tekshiring.",
       "captchaUnavailable": "Google tekshiruvi vaqtincha ishlamayapti. Keyinroq qayta urinib ko‘ring.",
+      "captchaRequired": "Robot emasligingizni tasdiqlang va «Yuklab olish»ni yana bosing.",
       "captcha": "“Men robot emasman” tekshiruvidan o‘ting va qayta urinib ko‘ring.",
       "tooFast": "Formani yuborib bo'lmadi. Sahifani yangilab, qayta urinib ko'ring.",
       "targetRequired": "Yuklab olish uchun shablon tanlanmagan.",

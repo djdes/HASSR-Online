@@ -11,6 +11,7 @@ import {
   type JournalPdfQr,
   type JournalQrPlacement,
 } from "@/lib/pdf-journal-qr";
+import { blankCoverParams, blankJournalCover, drawJournalCover, type BlankCoverInput } from "@/lib/journal-cover-pdf";
 
 /**
  * Бланк бумажного журнала для печати.
@@ -63,6 +64,12 @@ export type PaperJournalPdfParams = {
    * у бланка из конструктора на сайте своей нормы нет.
    */
   note?: string | null;
+  /**
+   * Титульный лист первой страницей — бланк с сайта, галка «Добавить
+   * титульный лист» в окне скачивания: название журнала, организация из окна,
+   * пустые даты (спека blank-download-seal-cover-captcha-2026-11-20).
+   */
+  cover?: BlankCoverInput | null;
 };
 
 export function renderPaperJournalPdf(params: PaperJournalPdfParams): Buffer {
@@ -182,7 +189,16 @@ export function renderPaperJournalPdfDetailed(params: PaperJournalPdfParams): {
   stampPartnerPdfFooter(doc, branding, font);
   // QR — последним: в правый верхний угол страницы, если он свободен
   // (на первой — справа от заголовка, над таблицей).
-  const qrPlacements = qr ? stampJournalQr(doc, { ...qr, fontName: font, tracker: inkTracker }) : undefined;
+  const stampedQr = qr ? stampJournalQr(doc, { ...qr, fontName: font, tracker: inkTracker }) : undefined;
+
+  // Титульник — после QR и подвала: у него нет ни шапки, ни QR, страницы
+  // бланка сдвигаются на одну.
+  if (params.cover) {
+    doc.insertPage(1);
+    doc.setPage(1);
+    drawJournalCover(doc, blankCoverParams(blankJournalCover(null, journal.name), font, params.cover));
+  }
+  const qrPlacements = stampedQr && params.cover ? stampedQr.map((placement) => ({ ...placement, page: placement.page + 1 })) : stampedQr;
 
   return {
     buffer: Buffer.from(doc.output("arraybuffer")),

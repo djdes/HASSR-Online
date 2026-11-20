@@ -118,3 +118,16 @@ test("файл без токена: браузер — на страницу ж�
   assert.match(body.error, /после ввода email/);
   assert.equal(body.page, "/journals-info/hygiene?download=pdf");
 });
+
+test("титульный лист: галка из окна зашита в подпись и не подделывается", () => {
+  const plain = verifyBlankDownloadToken(signBlankDownloadToken({ email: "zav@example.com", target: HYGIENE, format: "pdf" }, NOW), { target: HYGIENE, format: "pdf" }, NOW);
+  assert.equal(plain.ok && plain.cover, undefined, "старые ссылки и снятая галка — без титульника");
+  const token = signBlankDownloadToken({ email: "zav@example.com", target: HYGIENE, format: "docx", cover: true }, NOW);
+  const check = verifyBlankDownloadToken(token, { target: HYGIENE, format: "docx" }, NOW);
+  assert.equal(check.ok && check.cover, true);
+  // Дописать «p» в тело без подписи нельзя.
+  const [body, sig] = signBlankDownloadToken({ email: "zav@example.com", target: HYGIENE, format: "pdf" }, NOW).split(".");
+  const claims = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as Record<string, unknown>;
+  const forged = `${Buffer.from(JSON.stringify({ ...claims, p: 1 }), "utf8").toString("base64url")}.${sig}`;
+  assert.deepEqual(verifyBlankDownloadToken(forged, { target: HYGIENE, format: "pdf" }, NOW), { ok: false, reason: "bad-sig" });
+});

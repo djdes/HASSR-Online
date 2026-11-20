@@ -1,4 +1,4 @@
-import { drawJournalCover, journalCover } from "@/lib/journal-cover-pdf";
+import { blankCoverParams, blankJournalCover, drawJournalCover, journalCover, type BlankCoverInput } from "@/lib/journal-cover-pdf";
 import { personnelPdfCopy, personnelPdfTitle, personnelMedColumn, personnelMedComparisons, personnelExamReferences, personnelVaccineReferences, personnelMonth, personnelApprovalDate, personnelRole, personnelInjectedRole, personnelPlanTopic, personnelPlanPosition, personnelPpeRecipient } from "@/lib/personnel-maintenance-pdf-presentation";
 import { hygieneHealthPdfCopy, hygieneHealthPdfTitle, hygieneHealthPdfMonth, hygieneHealthPdfWeekday, hygieneHealthPdfStatus, hygieneHealthPdfPosition } from "@/lib/hygiene-health-pdf-presentation";
 import { complaintDate, complaintTitle, complaintFieldLabel, complaintFieldOptions } from "@/components/journals/complaint-presentation";
@@ -7257,6 +7257,13 @@ export type JournalDocumentPdfInput = {
    * (`generateJournalDocumentPdf`); образцы и тесты рендерят без него.
    */
   cover?: boolean;
+  /**
+   * Титульный лист бланка с сайта — галка «Добавить титульный лист» в окне
+   * скачивания (спека blank-download-seal-cover-captcha-2026-11-20): у любого
+   * журнала (`blankJournalCover`), организация и ответственный — из окна,
+   * даты — пустые строки. Только `ru`, как и `cover`.
+   */
+  blankCover?: BlankCoverInput | null;
   locale?: Locale;
   document: JournalDocumentForPdf;
   users: JournalDocumentPdfUser[];
@@ -8374,21 +8381,34 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   // Титульный лист (2026-11-12) — первой страницей, после нумерации и QR:
   // у титульника нет ни «СТР. i ИЗ N», ни шапки, а страницы бланка
   // нумеруются как раньше. Страницы QR сдвигаются на одну.
-  const cover = input.cover && (input.locale ?? "ru") === "ru" ? journalCover(templateCode) : null;
+  // Бланк с сайта (`blankCover`) — титульник у любого журнала, без дат.
+  const russian = (input.locale ?? "ru") === "ru";
+  const cover = !russian
+    ? null
+    : input.blankCover
+      ? blankJournalCover(templateCode, document.title)
+      : input.cover
+        ? journalCover(templateCode)
+        : null;
   if (cover) {
     doc.insertPage(1);
     doc.setPage(1);
-    drawJournalCover(doc, {
-      cover,
-      fontName,
-      organization: orgName,
-      address: orgBlock.point?.address ?? orgBlock.org.address,
-      responsiblePost: document.responsibleTitle ?? null,
-      responsibleName: users.find((user) => user.id === document.responsibleUserId)?.name ?? null,
-      startedAt: document.dateFrom,
-      finishedAt: document.status === "closed" && !isPerpetualDateTo(document.dateTo) ? document.dateTo : null,
-      logo: input.logo ?? null,
-    });
+    drawJournalCover(
+      doc,
+      input.blankCover
+        ? blankCoverParams(cover, fontName, input.blankCover)
+        : {
+            cover,
+            fontName,
+            organization: orgName,
+            address: orgBlock.point?.address ?? orgBlock.org.address,
+            responsiblePost: document.responsibleTitle ?? null,
+            responsibleName: users.find((user) => user.id === document.responsibleUserId)?.name ?? null,
+            startedAt: document.dateFrom,
+            finishedAt: document.status === "closed" && !isPerpetualDateTo(document.dateTo) ? document.dateTo : null,
+            logo: input.logo ?? null,
+          },
+    );
   }
   const qrPlacements = stampedQr && cover ? stampedQr.map((placement) => ({ ...placement, page: placement.page + 1 })) : stampedQr;
 
