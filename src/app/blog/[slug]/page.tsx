@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Clock } from "lucide-react";
-import { db } from "@/lib/db";
-import { localizeArticles } from "@/lib/article-localization-server";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { formatDate as localizedDate, type Locale } from "@/i18n/locales";
 import { translatorFor } from "@/i18n/translator";
 import { localizedHref } from "@/i18n/site-locale";
 import { articleLanguageAlternates } from "@/lib/article-language-alternates";
-import { isArticlePublished, publishedArticleWhere } from "@/lib/article-visibility";
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "@/lib/server-session";
+import { alternateMarkdownPath, resolveBlogArticleView } from "@/lib/promo-cache";
 import { loadMessages } from "@/i18n/messages";
 import { journalTitle } from "@/i18n/journal-presentation";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
@@ -42,18 +38,6 @@ function formatDate(date: Date | null, locale: Locale) {
   });
 }
 
-/**
- * Статья открыта, если дата публикации наступила. Отложенную (дата в
- * будущем) читатели и поисковики не видят, а ROOT открывает её из админки
- * блога, чтобы проверить перед выходом. Сессию читаем только в этом случае.
- */
-async function canViewArticle(publishedAt: Date | null): Promise<boolean> {
-  if (!publishedAt) return false;
-  if (isArticlePublished(publishedAt, new Date())) return true;
-  const session = await getServerSession(authOptions).catch(() => null);
-  return session?.user?.isRoot === true;
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -62,23 +46,23 @@ export async function generateMetadata({
   const { slug } = await params;
   const locale = await getSiteLocale();
   const t = await translatorFor(locale);
-  const source = await db.article.findUnique({
-    where: { slug },
-    select: { id: true, slug: true, body: true, tags: true, title: true, excerpt: true, publishedAt: true, translations: true },
-  });
-  if (!source || !(await canViewArticle(source.publishedAt))) {
+  const resolved = await resolveBlogArticleView(slug, locale, new Date());
+  if (!resolved) {
     return { title: { absolute: t("blogChrome.article.notFoundTitle") } };
   }
-  const [article] = await localizeArticles([source], locale);
-  const url = `https://wesetup.ru${localizedHref(`/blog/${slug}`, locale)}`;
-  // Отложенную статью до её дня видит только ROOT — и не для индекса.
-  const scheduled = !isArticlePublished(source.publishedAt, new Date());
+  const { source, article, scheduled } = resolved;
+  const localizedPath = localizedHref(`/blog/${slug}`, locale);
+  const url = `https://wesetup.ru${localizedPath}`;
   return {
     // article.title уже самостоятельный, layout.template добавит — WeSetup.
     title: article.title,
     description: article.excerpt,
     keywords: article.displayTags,
-    alternates: { canonical: url, languages: articleLanguageAlternates(source, source.translations) },
+    alternates: {
+      canonical: url,
+      languages: articleLanguageAlternates(source, source.translations),
+      types: { "text/markdown": `https://wesetup.ru${alternateMarkdownPath(localizedPath)}` },
+    },
     ...(article.translationMissing || scheduled ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: "article",
@@ -105,13 +89,11 @@ export default async function BlogArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const source = await db.article.findUnique({
-    where: { slug },
-  });
-  if (!source || !(await canViewArticle(source.publishedAt))) notFound();
   const locale = await getSiteLocale();
+  const resolved = await resolveBlogArticleView(slug, locale, new Date());
+  if (!resolved) notFound();
+  const { article, related } = resolved;
   const t = await translatorFor(locale);
-  const [article] = await localizeArticles([source], locale);
   const messages = await loadMessages(locale);
 
   const body = isArticleBlockArray(article.body) ? article.body : [];
@@ -156,45 +138,7 @@ export default async function BlogArticlePage({
     })
     .filter((item): item is { code: string; name: string; tagline: string } => item !== null);
 
-  // Похожие статьи: ранжируем по пересечению тегов с текущей.
-  // Запрашиваем чуть больше чем 3 чтобы было из чего выбирать,
-  // считаем overlap, сортируем, берём top-3.
-  const relatedRaw = await db.article.findMany({
-    where: {
-      ...publishedArticleWhere(new Date()),
-      slug: { not: slug },
-    },
-    orderBy: { publishedAt: "desc" },
-    take: 30,
-    select: {
-      id: true,
-      body: true,
-      slug: true,
-      title: true,
-      excerpt: true,
-      tags: true,
-      readMinutes: true,
-      publishedAt: true,
-    },
-  });
-  const currentTags = new Set(article.tags.map((t) => t.toLowerCase()));
-  const relatedSources = relatedRaw
-    .map((r) => {
-      const overlap = r.tags.reduce(
-        (acc, t) => (currentTags.has(t.toLowerCase()) ? acc + 1 : acc),
-        0,
-      );
-      return { ...r, overlap };
-    })
-    .sort((a, b) => {
-      // Сначала по overlap, потом по дате (свежее → раньше).
-      if (b.overlap !== a.overlap) return b.overlap - a.overlap;
-      const ad = a.publishedAt?.getTime() ?? 0;
-      const bd = b.publishedAt?.getTime() ?? 0;
-      return bd - ad;
-    })
-    .slice(0, 3);
-  const related = await localizeArticles(relatedSources, locale);
+  // Похожие статьи уже отобраны по пересечению тегов из JSON-снапшота блога (0 SELECT).
 
   // E20: schema.org Article markup для расширенных snippet'ов в Google.
   // Per Google docs, Article requires `image` field — без него карточка
@@ -252,6 +196,7 @@ export default async function BlogArticlePage({
       ) : null}
       <PublicHeader activeSection="blog" />
 
+      <main id="main-content">
       <article className="mx-auto max-w-[760px] px-6 py-10 md:py-14">
         <PublicBreadcrumbs
           tone="light"
@@ -270,7 +215,7 @@ export default async function BlogArticlePage({
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" /> {t("blogChrome.article.readMinutes", { minutes: article.readMinutes })}
           </span>
-          <span>· {formatDate(article.publishedAt, locale)}</span>
+          <span>· <time dateTime={article.publishedAt.toISOString()}>{formatDate(article.publishedAt, locale)}</time></span>
         </div>
 
         <h1 lang={article.contentLocale} className="mt-4 text-[36px] font-semibold leading-[1.1] tracking-[-0.02em] md:text-[44px]">
@@ -351,6 +296,7 @@ export default async function BlogArticlePage({
           </div>
         </section>
       )}
+      </main>
 
       <PublicFooter />
     </div>

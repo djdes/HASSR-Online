@@ -22,16 +22,18 @@ import {
 } from "lucide-react";
 
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
-import { authOptions } from "@/lib/auth";
 import { DEFAULT_OG_IMAGES, DEFAULT_TWITTER_CARD, DEFAULT_TWITTER_IMAGES } from "@/lib/meta-defaults";
 import { PLATFORM_BADGE_TEXT } from "@/lib/partners/branding";
 import { formatRubFixed } from "@/lib/partners/rewards";
-import { getCurrentRewardRule } from "@/lib/partners/schema-extras";
 import { PartnerIncomeCalculator } from "@/components/partners/partner-income-calculator";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
-import { getServerSession } from "@/lib/server-session";
+import {
+  alternateMarkdownPath,
+  readPromoPartnerRewardRule,
+  readPromoPlanPricing,
+} from "@/lib/promo-cache";
+import { readPublicSessionBadge } from "@/lib/public-session-badge";
 import { planPeriodPriceRub } from "@/lib/tariff-plans";
-import { readPlanPricing } from "@/lib/tariffs";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +48,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: url, languages: siteLanguageAlternates("/partners") },
+    alternates: {
+      canonical: url,
+      languages: siteLanguageAlternates("/partners"),
+      types: { "text/markdown": `https://wesetup.ru${alternateMarkdownPath(localizedHref("/partners", locale))}` },
+    },
     openGraph: { type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", url, title, description, images: locale === "ru" ? [...DEFAULT_OG_IMAGES] : ogImages(image) },
     twitter: { card: DEFAULT_TWITTER_CARD, title, description, images: locale === "ru" ? [...DEFAULT_TWITTER_IMAGES] : twitterImages(image) },
   };
@@ -61,13 +67,17 @@ export async function generateMetadata(): Promise<Metadata> {
  * сразу связался с его аккаунтом.
  */
 export default async function PartnersPage() {
-  const [rule, session, pricing] = await Promise.all([getCurrentRewardRule(), getServerSession(authOptions), readPlanPricing()]);
+  const [rule, badge, pricing] = await Promise.all([
+    readPromoPartnerRewardRule(),
+    readPublicSessionBadge().catch(() => null),
+    readPromoPlanPricing(),
+  ]);
   // Пример вознаграждения — с цены «Стандарта» помесячно (правит ROOT).
   const subscriptionRub = planPeriodPriceRub(pricing.rates, "standard", "month", 1);
   const locale = await getSiteLocale();
   const messages = await loadMessages(locale);
   const t = createTranslator({ locale, messages, namespace: "publicPartners" });
-  const applyHref = session?.user ? "/settings/partner" : "/register?next=%2Fsettings%2Fpartner";
+  const applyHref = badge ? "/settings/partner" : "/register?next=%2Fsettings%2Fpartner";
 
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">

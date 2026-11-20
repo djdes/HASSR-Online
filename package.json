@@ -10,6 +10,8 @@
     "i18n:check": "node scripts/i18n-types.mjs --check && node --import tsx --test src/i18n/*.test.ts",
     "i18n:inventory": "tsx scripts/i18n-inventory.ts",
     "seo:indexnow": "node scripts/submit-indexnow.mjs --strict",
+    "promo-cache:refresh": "tsx scripts/refresh-promo-cache.ts",
+    "promo-cache:status": "tsx scripts/refresh-promo-cache.ts --status",
     "predev": "prisma generate",
     "dev": "next dev",
     "prebuild": "prisma generate",

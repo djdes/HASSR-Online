@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { invalidateTariffsCache, readTariffs } from "@/lib/tariffs";
 import { parsePlanTariffKey } from "@/lib/tariff-plans";
 
@@ -109,5 +110,8 @@ export async function PATCH(request: Request) {
 
   const tariff = await db.platformTariff.update({ where: { key }, data });
   invalidateTariffsCache();
+  await refreshPromoDataset("tariffs").catch((error) =>
+    console.error("[tariffs] promo snapshot refresh failed", error),
+  );
   return NextResponse.json({ tariff });
 }

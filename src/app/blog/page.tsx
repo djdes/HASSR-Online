@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Clock, NotebookText, Search } from "lucide-react";
-import { db } from "@/lib/db";
-import { publishedArticleWhere } from "@/lib/article-visibility";
-import { localizeArticles } from "@/lib/article-localization-server";
+import { alternateMarkdownPath, readPromoPublishedArticles } from "@/lib/promo-cache";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { formatDate as localizedDate, type Locale } from "@/i18n/locales";
 import { translatorFor } from "@/i18n/translator";
@@ -26,7 +24,10 @@ export async function generateMetadata() {
   return {
     title, description, keywords: ["HACCP", "SanPiN", title],
     alternates: { canonical: url, languages: siteLanguageAlternates("/blog"),
-      types: { "application/rss+xml": `https://wesetup.ru${localizedHref("/blog/feed.xml", locale)}` } },
+      types: {
+        "application/rss+xml": `https://wesetup.ru${localizedHref("/blog/feed.xml", locale)}`,
+        "text/markdown": `https://wesetup.ru${alternateMarkdownPath(localizedHref("/blog", locale))}`,
+      } },
     openGraph: { type: "website" as const, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", url, title, description, images: DEFAULT_OG_IMAGES },
     twitter: { card: DEFAULT_TWITTER_CARD, title, description, images: DEFAULT_TWITTER_IMAGES },
   };
@@ -60,25 +61,9 @@ export default async function BlogListPage({
   const query = params.q?.trim().toLowerCase() || null;
   const page = Math.max(1, Number(params.page) || 1);
 
-  // Загружаем все опубликованные статьи (на 25 их немного — кэшируем
-  // в памяти; для filter'а по tag/search'у нужны все). Если когда-то
-  // будет 200+, — перейдём на DB-фильтр.
-  const articleSources = await db.article.findMany({
-    // Отложенные статьи (дата в будущем) появятся в свой день.
-    where: publishedArticleWhere(new Date()),
-    orderBy: { publishedAt: "desc" },
-    select: {
-      id: true,
-      body: true,
-      slug: true,
-      title: true,
-      excerpt: true,
-      tags: true,
-      readMinutes: true,
-      publishedAt: true,
-    },
-  });
-  const allArticles = await localizeArticles(articleSources, locale);
+  // Статьи читаются из атомарного JSON-снапшота на диске (0 SELECT к БД;
+  // отложенные публикации появляются в свою минуту по текущему времени).
+  const allArticles = await readPromoPublishedArticles(locale, new Date());
   const displayTags = new Map<string, string>();
   for (const article of allArticles) {
     article.tags.forEach((tag, index) => {
@@ -154,6 +139,7 @@ export default async function BlogListPage({
       />
       <PublicHeader activeSection="blog" />
 
+      <main id="main-content">
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-10 text-white sm:px-6 sm:py-14 md:px-12 md:py-20">
@@ -290,7 +276,7 @@ export default async function BlogListPage({
                   {a.excerpt}
                 </p>
                 <div className="mt-6 flex items-center justify-between text-[13px] text-[#6f7282]">
-                  <span>{formatDate(a.publishedAt, locale)}</span>
+                  <time dateTime={a.publishedAt.toISOString()}>{formatDate(a.publishedAt, locale)}</time>
                   <span className="inline-flex items-center gap-1 font-medium text-[#3848c7]">
                     {t("blogChrome.list.readLink")}
                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
@@ -340,6 +326,7 @@ export default async function BlogListPage({
           </nav>
         )}
       </section>
+      </main>
 
       <PublicFooter />
     </div>

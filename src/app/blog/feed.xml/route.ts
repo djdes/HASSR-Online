@@ -1,26 +1,21 @@
 import { NextResponse } from "next/server";
 
-import { db } from "@/lib/db";
+import { readPromoPublishedArticles } from "@/lib/promo-cache";
 import { buildRss } from "@/lib/rss";
-import { localizeArticles } from "@/lib/article-localization-server";
 import { publicLocaleRoute, localizedHref } from "@/i18n/site-locale";
 import { translatorFor } from "@/i18n/translator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** RSS блога: опубликованные статьи, свежие первыми. */
+/** RSS блога из файлового JSON-снапшота (0 SELECT к БД): опубликованные статьи, свежие первыми. */
 export async function GET(request: Request) {
-  // Public cache content depends only on the URL, never a session or cookie.
   const locale = publicLocaleRoute(new URL(request.url).pathname)?.locale ?? "ru";
   const t = await translatorFor(locale);
-  const sources = await db.article.findMany({
-    where: { publishedAt: { not: null, lte: new Date() } },
-    orderBy: { publishedAt: "desc" },
-    take: 50,
-    select: { id: true, body: true, slug: true, title: true, excerpt: true, publishedAt: true, tags: true },
-  });
-  const articles = (await localizeArticles(sources, locale)).filter(article => !article.translationMissing);
+  const articles = (await readPromoPublishedArticles(locale, new Date()))
+    .filter((article) => !article.translationMissing)
+    .slice(0, 50);
+
   const xml = buildRss({
     title: t("blogChrome.rss.title"),
     link: `https://wesetup.ru${localizedHref("/blog", locale)}`,
@@ -36,6 +31,10 @@ export async function GET(request: Request) {
     })),
   });
   return new NextResponse(xml, {
-    headers: { "Content-Type": "application/rss+xml; charset=utf-8", "Content-Language": locale, "Cache-Control": "public, max-age=900" },
+    headers: {
+      "Content-Type": "application/rss+xml; charset=utf-8",
+      "Content-Language": locale === "uz" ? "uz-Latn" : locale,
+      "Cache-Control": "public, max-age=900",
+    },
   });
 }

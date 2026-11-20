@@ -19,6 +19,9 @@
 
 import "dotenv/config";
 import { getInboundBot, ensureBotInit } from "@/lib/bot/bot-app";
+import { refreshAllPromoDatasets } from "@/lib/promo-cache";
+
+const PROMO_AGGREGATE_REFRESH_MS = 60 * 60 * 1000;
 
 async function main() {
   const bot = getInboundBot();
@@ -30,8 +33,19 @@ async function main() {
   await ensureBotInit(bot);
   console.log("[poller] bot ready, starting long-polling");
 
+  // Раз в час фоново освежаем агрегированные промо-снапшоты на диске
+  // (количество организаций по журналам и цифры в отзывах), чтобы выдача
+  // страниц продвижения никогда не делала SELECT на запросах посетителей.
+  const promoTimer = setInterval(() => {
+    void refreshAllPromoDatasets({ datasets: ["journal-usage", "public-reviews"] }).catch((err) => {
+      console.error("[poller] hourly promo-cache refresh failed:", err);
+    });
+  }, PROMO_AGGREGATE_REFRESH_MS);
+  promoTimer.unref();
+
   const shutdown = () => {
     console.log("[poller] stopping…");
+    clearInterval(promoTimer);
     bot.stop();
     setTimeout(() => process.exit(0), 1500);
   };

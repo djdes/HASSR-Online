@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { readServices } from "@/lib/services/catalog";
 
 export const runtime = "nodejs";
@@ -68,5 +69,8 @@ export async function PATCH(request: Request) {
   }
 
   const service = await db.platformService.update({ where: { key }, data });
+  await refreshPromoDataset("services").catch((error) =>
+    console.error("[services] promo snapshot refresh failed", error),
+  );
   return NextResponse.json({ service });
 }

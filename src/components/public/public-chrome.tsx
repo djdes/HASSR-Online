@@ -14,8 +14,7 @@ import { popularJournalLinks } from "@/content/seo-redirects";
 import { FEATURES_ORDER } from "@/content/features";
 import { ArrowRight, CircleUserRound, LogIn } from "lucide-react";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
-import { getServerSession } from "@/lib/server-session";
-import { authOptions } from "@/lib/auth";
+import { readPublicSessionBadge } from "@/lib/public-session-badge";
 import { getWebHomeHref } from "@/lib/role-access";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-theme";
@@ -40,7 +39,7 @@ export async function PublicHeader({
 }) {
   const locale = await getSiteLocale();
   const t = await getTranslations({ locale, namespace: "publicChrome" });
-  const session = await getServerSession(authOptions).catch(() => null);
+  const badge = await readPublicSessionBadge().catch(() => null);
   // В приложении WeSetup нет оплаты и ссылок к ней (правила магазинов) —
   // «Тарифы» не показываем.
   const inApp = await isMobileAppRequest();
@@ -59,7 +58,7 @@ export async function PublicHeader({
   );
 
   return (
-    <div
+    <header
       className="public-header sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80"
       // В приложении страница под вырезом экрана (viewport-fit=cover): шапка
       // уходит под строку состояния, кнопки — ниже неё. На сайте отступ 0.
@@ -81,11 +80,11 @@ export async function PublicHeader({
           {link("journals-info", t("journals"), "/journals-info")}
           {link("blog", t("blog"), "/blog")}
           {link("knowledge-base", t("knowledgeBase"), "/baza-znaniy")}
-          {session ? (
+          {badge ? (
             <PublicHeaderAuthed
-              userName={session.user.name ?? t("userFallback")}
-              role={session.user.role ?? ""}
-              isRoot={session.user.isRoot === true}
+              userName={badge.name ?? t("userFallback")}
+              role={badge.role}
+              isRoot={badge.isRoot}
               dashboardLabel={t("dashboard")}
               dashboardShortLabel={t("dashboardShort")}
               profileLabel={t("profile")}
@@ -95,7 +94,7 @@ export async function PublicHeader({
           )}
         </div>
       </nav>
-    </div>
+    </header>
   );
 }
 

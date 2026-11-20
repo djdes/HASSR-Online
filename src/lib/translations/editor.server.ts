@@ -8,6 +8,7 @@ import { canUseTranslationEditor } from "@/lib/platform-access";
 import { isStaleOverride, looksUntranslated, placeholderNames, validateOverride, type FlatCatalog, type OverrideValidation } from "./catalog";
 import { buildCategories, type TranslationCategorySummary } from "./categories";
 import { invalidateTranslationOverrides } from "./overrides.server";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { normalizeSearchText, searchRank, TRANSLATION_PAGE_SIZE } from "./search";
 import { historyItemsFromAudit, isAutoCandidate, matchesFilter, type TranslationFilter, type TranslationHistoryItem } from "./view";
 
@@ -278,6 +279,9 @@ export async function saveOverride(actor: TranslationActor, input: { key: string
     await db.translationOverride.deleteMany({ where: { locale, key: input.key } });
   }
   invalidateTranslationOverrides();
+  await refreshPromoDataset("translation-overrides").catch((error) =>
+    console.error("[translations] promo snapshot refresh failed", error),
+  );
   if (before !== after) {
     await db.auditLog
       .create({

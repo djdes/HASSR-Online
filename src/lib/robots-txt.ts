@@ -96,6 +96,9 @@ export const ROBOTS_DISALLOW: readonly string[] = [
   "/equipment-fill",
   "/room-fill",
   "/journal-fill",
+
+  // Internal rewrite endpoint for AI Markdown delivery (.md / Accept: text/markdown)
+  "/promo-md",
 ];
 
 /**
@@ -109,6 +112,7 @@ export function renderRobotsTxt(): string {
   const lines = [
     "User-Agent: *",
     "Allow: /",
+    "Content-Signal: search=yes, ai-input=yes, ai-train=no",
     ...ROBOTS_DISALLOW.map((rule) => `Disallow: ${rule}`),
     `Clean-param: ${ROBOTS_CLEAN_PARAMS}`,
     "",

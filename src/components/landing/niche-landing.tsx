@@ -56,6 +56,7 @@ export function getNicheMetadata(slug: string) {
     description: data.metaDescription,
     alternates: {
       canonical: `https://wesetup.ru/${data.slug}`,
+      types: { "text/markdown": `https://wesetup.ru/${data.slug}.md` },
     },
     openGraph: {
       type: "website",
@@ -111,6 +112,7 @@ export function NicheLanding({ slug }: { slug: string }) {
       />
       <PublicHeader />
 
+      <main id="main-content">
       {/* HERO */}
       <section className="mx-auto max-w-[1200px] px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#0b1024] px-5 py-12 text-white sm:px-6 sm:py-16 md:px-12 md:py-20">
@@ -551,6 +553,7 @@ export function NicheLanding({ slug }: { slug: string }) {
           ))}
         </div>
       </section>
+      </main>
 
       <PublicFooter />
     </div>

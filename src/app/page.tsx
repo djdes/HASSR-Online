@@ -40,7 +40,6 @@ import {
 import { HardwareStrip } from "@/components/landing/hardware-strip";
 import { Testimonials } from "@/components/landing/testimonials";
 import { LANDING_SECTION_CLASS, LandingSectionHeader } from "@/components/landing/landing-section";
-import { listPublicReviews } from "@/lib/balance/reviews";
 import { buildAggregateRating } from "@/lib/seo/aggregate-rating";
 import { NICHES } from "@/content/niches";
 import { BrandWithTagline } from "@/components/brand/brand-with-tagline";
@@ -61,15 +60,18 @@ import { AnchorScrollLink } from "@/components/public/anchor-scroll-link";
 import { HeroEmailStart } from "@/components/landing/hero-email-start";
 import { DemoRequestButton } from "@/components/public/demo-request-button";
 import { NavStartButton } from "@/components/landing/nav-start-button";
-import { getServerSession } from "@/lib/server-session";
 import { redirect } from "next/navigation";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
-import { authOptions } from "@/lib/auth";
+import { readPublicSessionBadge } from "@/lib/public-session-badge";
 import { getWebHomeHref } from "@/lib/role-access";
 import { jsonLdSafeString } from "@/lib/json-ld";
-import { readPlanPricing } from "@/lib/tariffs";
+import {
+  alternateMarkdownPath,
+  readPromoActivePromotion,
+  readPromoPlanPricing,
+  readPromoPublicReviews,
+} from "@/lib/promo-cache";
 import { TariffComparison } from "@/components/pricing/tariff-comparison";
-import { readActivePromotion } from "@/lib/promo/offer";
 import { applyPromotion } from "@/lib/promo/promotions";
 import { contactTelegramUrl } from "@/lib/contact-us";
 import { SEATS_PER_POINT, STORAGE_BYTES, TRIAL_DAYS, planMonthlyRub } from "@/lib/tariff-plans";
@@ -91,7 +93,12 @@ export async function generateMetadata() {
   const image = `https://wesetup.ru/og/landing/${locale}`;
   return {
     ...base, title: { absolute: title }, description,
-    alternates: { ...base.alternates, canonical: url, languages: siteLanguageAlternates("/") },
+    alternates: {
+      ...base.alternates,
+      canonical: url,
+      languages: siteLanguageAlternates("/"),
+      types: { "text/markdown": `https://wesetup.ru${alternateMarkdownPath(localizedHref("/", locale))}` },
+    },
     openGraph: { title, description, url, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", images: [image] },
     twitter: { card: "summary_large_image" as const, title, description, images: [image] },
   };
@@ -294,17 +301,17 @@ export default async function LandingPage() {
   // В приложении лендинг с тарифами и кнопками оплаты не показываем
   // (правила магазинов) — сразу главный экран приложения.
   if (await isMobileAppRequest()) redirect(MOBILE_APP_HOME);
-  // Auth state — для адаптации nav/CTA. Лендинг остаётся публичным,
-  // но залогиненный видит «Открыть кабинет» вместо «Войти/Начать».
-  const session = await getServerSession(authOptions).catch(() => null);
-  const isAuthed = Boolean(session?.user);
-  const homeHref = isAuthed
+  // Auth state — из проверенного JWT-бейджа без SELECT к БД. Лендинг остаётся
+  // публичным, но залогиненный видит «Открыть кабинет» вместо «Войти/Начать».
+  const badge = await readPublicSessionBadge().catch(() => null);
+  const isAuthed = Boolean(badge);
+  const homeHref = badge
     ? getWebHomeHref({
-        role: session?.user?.role ?? "",
-        isRoot: session?.user?.isRoot === true,
+        role: badge.role,
+        isRoot: badge.isRoot,
       })
     : "/dashboard";
-  const userInitials = (session?.user?.name ?? "")
+  const userInitials = (badge?.name ?? "")
     .split(" ")
     .map((p) => p[0])
     .filter(Boolean)
@@ -312,22 +319,17 @@ export default async function LandingPage() {
     .toUpperCase()
     .slice(0, 2);
 
-  // Цены тарифов живут в БД и правятся ROOT'ом в /root/tariffs — карточки,
-  // калькулятор и JSON-LD читают одно и то же значение, поэтому смена
-  // цены не требует деплоя. Страница уже force-dynamic.
-  // Отзывы клиентов: только одобренные модератором и разрешённые к
-  // публикации. Пусто — секции на странице не будет.
-  const publicReviews = await listPublicReviews().catch((error) => {
+  // Цены тарифов, акции и одобренные отзывы читаются из атомарных JSON-снапшотов
+  // на диске (0 SELECT к PostgreSQL; обновляются мгновенно при правках в /root/*).
+  const publicReviews = await readPromoPublicReviews().catch((error) => {
     console.error("[landing] Failed to load reviews", error);
     return [];
   });
   const rating = buildAggregateRating(publicReviews);
 
-  // Тарифы 2026-10 (ROOT → «Тарифы»): цены месяц/год из `PlatformTariff`,
-  // действующая акция (ROOT → «Акции») — в первом экране, колонках и JSON-LD.
   const [pricing, promotion] = await Promise.all([
-    readPlanPricing(),
-    readActivePromotion().catch(() => null),
+    readPromoPlanPricing(),
+    readPromoActivePromotion().catch(() => null),
   ]);
   const standardFrom = applyPromotion(planMonthlyRub(pricing.rates, "standard", "year"), promotion);
   const premiumFrom = applyPromotion(planMonthlyRub(pricing.rates, "premium", "year"), promotion);
@@ -473,7 +475,7 @@ export default async function LandingPage() {
   };
 
   return (
-    <div className="landing-page min-h-screen bg-white text-[#0b1024]">
+    <div className="min-h-screen bg-white text-[#0b1024]">
       {/* Ночная тема: скрипт до гидрации + хук, который держит её актуальной. */}
       <PublicThemeBootstrap />
       <PublicThemeScope />
@@ -485,7 +487,7 @@ export default async function LandingPage() {
       {/* NAV — solid white, sticky so hero blobs don't bleed through on scroll.
           На телефоне кнопки и «Тарифы» — 48 px в высоту: в них попадают
           пальцем, а не курсором. */}
-      <div className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <header className="landing-nav sticky top-0 z-40 border-b border-[#ececf4] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         {/* Телефон (правки 18.11.2026): одна строка — знак с подписью слева,
             справа поиск, «Тарифы» и вход. Язык на телефоне — в подвале. */}
         <nav className="mx-auto flex max-w-[1200px] items-center justify-between gap-2 px-4 py-2.5 sm:px-6 sm:py-5">
@@ -533,8 +535,8 @@ export default async function LandingPage() {
                 </Link>
                 <Link
                   href={homeHref}
-                  title={session?.user?.name ?? copy("landing.profile")}
-                  aria-label={`${copy("landing.profile")} · ${session?.user?.name ?? ""}`}
+                  title={badge?.name ?? copy("landing.profile")}
+                  aria-label={`${copy("landing.profile")} · ${badge?.name ?? ""}`}
                   className="hidden size-10 items-center justify-center rounded-full border border-[#dcdfed] bg-[#f5f6ff] text-[12px] font-semibold text-[#3848c7] transition-colors hover:border-[#5566f6]/50 hover:bg-[#eef1ff] sm:inline-flex"
                 >
                   {userInitials}
@@ -559,8 +561,9 @@ export default async function LandingPage() {
             )}
           </div>
         </nav>
-      </div>
+      </header>
 
+      <main id="main-content" className="landing-page">
       {/* HERO. Отметка о реестре и заголовок — по центру на любой ширине
           (правки 18.11.2026; раньше на телефоне всё стояло от левого края).
           Список пунктов — блоком по центру, строки внутри от левого края:
@@ -662,7 +665,7 @@ export default async function LandingPage() {
                   {copy("landing.openWorkspace")}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <div className="text-[16px] text-[#6f7282] sm:text-[13px]">
-                  {copy("landing.account.signedInAs", { name: session?.user?.name ?? "" })}
+                  {copy("landing.account.signedInAs", { name: badge?.name ?? "" })}
                 </div>
               </>
             ) : (
@@ -1081,6 +1084,7 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* FOOTER — юридические ссылки, реквизиты и перелинковка: /blanki,
           /journals-info, все /dlya-*, возможности. */}

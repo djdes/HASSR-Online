@@ -11,6 +11,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 import pg from "pg";
 import type { ArticleBlock } from "../src/lib/article-blocks";
+import { refreshPromoDataset } from "../src/lib/promo-cache/datasets";
+import { db } from "../src/lib/db";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -1380,6 +1382,9 @@ async function main() {
     upserted += 1;
   }
   console.log(`[seed-articles] upserted=${upserted}`);
+  await refreshPromoDataset("blog-articles").catch((error) => {
+    console.error("[seed-articles] promo-cache refresh failed:", error);
+  });
 }
 
 main()
@@ -1388,6 +1393,7 @@ main()
     process.exit(1);
   })
   .finally(async () => {
+    await db.$disconnect().catch(() => undefined);
     await prisma.$disconnect();
     await pool.end();
   });

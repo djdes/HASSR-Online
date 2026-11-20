@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit-log";
 import { requireRoot } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { refreshPromoDataset } from "@/lib/promo-cache";
 import { invalidatePromotionCache } from "@/lib/promo/offer";
 import {
   describePromotion,
@@ -62,6 +63,9 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     },
   });
   invalidatePromotionCache();
+  await refreshPromoDataset("promotions").catch((error) =>
+    console.error("[promo] promo snapshot refresh failed", error),
+  );
   const summary = describePromotionChange(before, row);
   const action =
     before.active !== row.active && summary === (row.active ? "включена" : "выключена")
@@ -106,6 +110,9 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ id: stri
   if (!row) return NextResponse.json({ error: "Акция не найдена" }, { status: 404 });
   await db.pricePromotion.delete({ where: { id } });
   invalidatePromotionCache();
+  await refreshPromoDataset("promotions").catch((error) =>
+    console.error("[promo] promo snapshot refresh failed", error),
+  );
   const summary = describePromotion(row);
   console.info(`[promo] promotion deleted ${row.id} «${row.title}» ${summary} by ${session.user.email ?? session.user.id}`);
   await recordAuditLog({

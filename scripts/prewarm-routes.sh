@@ -35,11 +35,19 @@ else
 fi
 LIMITED=0
 
+echo "[prewarm] refreshing promo JSON cache snapshots"
+if ! npx tsx scripts/refresh-promo-cache.ts 2>&1; then
+  echo "[prewarm] promo-cache refresh failed — continuing with existing/cold snapshots"
+fi
+
 PUBLIC_ROUTES=(
   /
   /blog
+  /baza-znaniy
   /pricing
   /journals-info
+  /llms.txt
+  /pricing.md
   /dlya-kafe
   /dlya-pekarni
   /dlya-stolovoy
