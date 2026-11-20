@@ -71,70 +71,166 @@ export const ENTITY_PARENT: Record<ExchangeEntity, { entity: ExchangeEntity; req
 };
 
 /**
- * Переносимые поля. Состав и порядок входят в отпечаток: поменять список —
- * значит объявить изменёнными все связанные записи сразу.
+ * Состав переносимых полей (`FieldSet`): `account` — внутри аккаунта,
+ * `foreign` — «между аккаунтами» (правило Р5), если он у сущности свой.
  */
-export const ENTITY_FIELDS = {
+type FieldSet = { readonly account: readonly string[]; readonly foreign?: readonly string[] };
+
+/**
+ * Переносимые поля по версиям отпечатка (Р8.0, 2026-11-20). Состав и порядок
+ * полей входят в отпечаток, поэтому нынешний состав на месте не правится:
+ * поле, добавленное без новой версии, сделало бы «изменёнными» все связанные
+ * записи сразу, и запись одной организации перезаписала бы соседей.
+ *
+ * Новый состав — новая версия в конце списка сущности; прежние остаются как
+ * есть. Версия видна в отпечатке (`v2:…`, `rowHash`), и при первом обмене
+ * после выката связь прежней версии сверяется с записью по прежнему составу
+ * (`rowHashLike`, `rebaseLinks` в plan.ts): совпало — правки не было, связь
+ * переходит на новый отпечаток без правок у соседей; не совпало — запись
+ * правили на самом деле, и правка расходится как обычно.
+ * Версия 1 — составы до 2026-11-20; её отпечаток без метки версии.
+ *
+ * Поле можно только добавить: поля прежних версий остаются в нынешней, иначе
+ * прежний отпечаток не посчитать из прочитанных полей (`rowHashLike` → null).
+ */
+export const ENTITY_FIELD_VERSIONS = {
   product: [
-    "name",
-    "supplier",
-    "barcode",
-    "unit",
-    "category",
-    "kind",
-    "storageTemp",
-    "storageConditions",
-    "shelfLifeDays",
-    "shelfLifeHours",
-    "servingTemp",
+    {
+      account: [
+        "name",
+        "supplier",
+        "barcode",
+        "unit",
+        "category",
+        "kind",
+        "storageTemp",
+        "storageConditions",
+        "shelfLifeDays",
+        "shelfLifeHours",
+        "servingTemp",
+      ],
+    },
   ],
-  position: ["name"],
-  staff: ["name", "phone", "weeklyDaysOff"],
-  building: ["name", "address"],
-  room: ["name", "kind", "sortOrder"],
-  area: ["name", "description"],
-  equipment: ["name", "type", "serialNumber", "tempMin", "tempMax", "lampModel", "lampLifetimeHours"],
-} as const satisfies Record<ExchangeEntity, readonly string[]>;
+  position: [
+    { account: ["name"] },
+    // v2 (Р8.2): коды журналов, к которым у должности есть доступ. Другой
+    // компании — только название, как телефоны сотрудников.
+    { account: ["name", "journals"], foreign: ["name"] },
+  ],
+  staff: [{ account: ["name", "phone", "weeklyDaysOff"], foreign: ["name"] }],
+  building: [{ account: ["name", "address"] }],
+  room: [
+    { account: ["name", "kind", "sortOrder"] },
+    // v2 (Р8.3): графики уборки и нормы климата — данные помещения, без
+    // ссылок на записи организации, поэтому и другой компании. Ответственные
+    // (уборщики, проверяющие, «кто заполняет») — люди своей организации, их нет.
+    {
+      account: [
+        "name",
+        "kind",
+        "sortOrder",
+        "currentScope",
+        "generalScope",
+        "currentDays",
+        "generalDays",
+        "currentScheduleType",
+        "generalScheduleType",
+        "currentMonthDays",
+        "generalMonthDays",
+        "detergent",
+        "requirePhoto",
+        "climateNorms",
+      ],
+    },
+  ],
+  area: [{ account: ["name", "description"] }],
+  equipment: [{ account: ["name", "type", "serialNumber", "tempMin", "tempMax", "lampModel", "lampLifetimeHours"] }],
+} as const satisfies Record<ExchangeEntity, readonly [FieldSet, ...FieldSet[]]>;
+
+function fieldVersions(entity: ExchangeEntity): readonly FieldSet[] {
+  return ENTITY_FIELD_VERSIONS[entity];
+}
+
+/** Нынешняя версия состава полей сущности (1 — без метки в отпечатке). */
+export function currentFieldVersion(entity: ExchangeEntity): number {
+  return fieldVersions(entity).length;
+}
+
+/** Состав полей версии `version`; null — такой версии этот код не знает. */
+function fieldSetOf(entity: ExchangeEntity, version: number): FieldSet | null {
+  return fieldVersions(entity)[version - 1] ?? null;
+}
+
+function latestFieldSet(entity: ExchangeEntity): FieldSet {
+  return fieldSetOf(entity, currentFieldVersion(entity))!;
+}
+
+/** Нынешние переносимые поля сущности внутри аккаунта (последняя версия). */
+export const ENTITY_FIELDS = Object.fromEntries(
+  EXCHANGE_ENTITIES.map((entity) => [entity, latestFieldSet(entity).account]),
+) as Record<ExchangeEntity, readonly string[]>;
 
 /**
  * Состав полей (правило Р5 обмена между аккаунтами, 2026-11-19).
  *   • `account` — все участники списка из одного аккаунта: `ENTITY_FIELDS`;
  *   • `foreign` — среди участников списка есть организация другого аккаунта:
  *     у сотрудника остаются только ФИО и должность (должность — родитель
- *     записи). Телефон и выходные из аккаунта не уходят и не сравниваются.
+ *     записи), у должности — название без журналов. Телефон, выходные и
+ *     журналы должности из аккаунта не уходят и не сравниваются.
  * У остальных сущностей состав один.
  */
 export const EXCHANGE_SCOPES = ["account", "foreign"] as const;
 export type ExchangeScope = (typeof EXCHANGE_SCOPES)[number];
 
-/** Чем состав `foreign` отличается от `ENTITY_FIELDS`. */
-export const FOREIGN_ENTITY_FIELDS = {
-  staff: ["name"],
-} as const satisfies Partial<Record<ExchangeEntity, readonly string[]>>;
+/** Чем состав `foreign` отличается от `ENTITY_FIELDS` (нынешняя версия). */
+export const FOREIGN_ENTITY_FIELDS = Object.fromEntries(
+  EXCHANGE_ENTITIES.flatMap((entity) => {
+    const foreign = latestFieldSet(entity).foreign;
+    return foreign ? [[entity, foreign]] : [];
+  }),
+) as Partial<Record<ExchangeEntity, readonly string[]>>;
 
 /**
  * Отпечаток в составе `foreign` помечен: по строке видно, в каком составе он
  * снят. Смена состава (в обмен вошла организация другого аккаунта или вышла
  * из него) — не правка записи, и по метке обмен отличает одно от другого
- * (`rebaseLinks` в plan.ts).
+ * (`rebaseLinks` в plan.ts). Метка версии идёт после неё: `f:v2:…`.
  */
 export const FOREIGN_HASH_PREFIX = "f:";
+/** Метка версии состава: `v2:` (Р8.0). Версия 1 — без метки. */
+const VERSION_TAG = /^v([1-9][0-9]*):/;
 
 /** Состав, который действует у сущности: `foreign` — только там, где он свой. */
 export function entityScope(entity: ExchangeEntity, scope: ExchangeScope = "account"): ExchangeScope {
-  return scope === "foreign" && entity in FOREIGN_ENTITY_FIELDS ? "foreign" : "account";
+  return scope === "foreign" && latestFieldSet(entity).foreign ? "foreign" : "account";
 }
 
 /** Переносимые поля сущности в этом составе. */
 export function exchangedFields(entity: ExchangeEntity, scope: ExchangeScope = "account"): readonly string[] {
-  return entityScope(entity, scope) === "foreign"
-    ? FOREIGN_ENTITY_FIELDS[entity as keyof typeof FOREIGN_ENTITY_FIELDS]
-    : ENTITY_FIELDS[entity];
+  const fields = latestFieldSet(entity);
+  return entityScope(entity, scope) === "foreign" ? fields.foreign! : fields.account;
+}
+
+/**
+ * Метки отпечатка: состав и версия (`f:` — «между аккаунтами», `vN:` —
+ * версия состава). Отпечаток — шестнадцатеричная строка: ни `:`, ни `v` в
+ * ней нет, метки не спутать с ним. Пустая строка (надгробие) — версия 1.
+ */
+export function hashTag(hash: string): { scope: ExchangeScope; version: number } {
+  const foreign = hash.startsWith(FOREIGN_HASH_PREFIX);
+  const match = VERSION_TAG.exec(foreign ? hash.slice(FOREIGN_HASH_PREFIX.length) : hash);
+  return { scope: foreign ? "foreign" : "account", version: match ? Number(match[1]) : 1 };
 }
 
 /** В каком составе снят отпечаток связи. */
 export function hashScope(entity: ExchangeEntity, hash: string): ExchangeScope {
-  return entity in FOREIGN_ENTITY_FIELDS && hash.startsWith(FOREIGN_HASH_PREFIX) ? "foreign" : "account";
+  const tag = hashTag(hash);
+  return tag.scope === "foreign" && fieldSetOf(entity, tag.version)?.foreign ? "foreign" : "account";
+}
+
+/** Отпечаток связи снят в нынешних версии и составе `scope`: его сравнивают с записью как есть. */
+export function isCurrentHash(entity: ExchangeEntity, hash: string, scope: ExchangeScope = "account"): boolean {
+  return hashTag(hash).version === currentFieldVersion(entity) && hashScope(entity, hash) === entityScope(entity, scope);
 }
 
 export type ExchangeFieldValue = string | number | boolean | null | readonly number[];
@@ -227,7 +323,8 @@ export function hashFields(fields: ExchangeFields): string {
 
 /**
  * Только переносимые поля сущности — лишние ключи отбрасываются. В составе
- * `foreign` телефона и выходных сотрудника в результате нет вовсе.
+ * `foreign` телефона и выходных сотрудника и журналов должности в результате
+ * нет вовсе.
  */
 export function pickExchangeFields(
   entity: ExchangeEntity,
@@ -239,10 +336,27 @@ export function pickExchangeFields(
   return picked;
 }
 
+/** Отпечаток полей `keys` и группы родителя с метками состава и версии. */
+function taggedHash(
+  entity: ExchangeEntity,
+  fields: ExchangeFields,
+  parentGroupId: string | null,
+  keys: readonly string[],
+  scope: ExchangeScope,
+  version: number,
+): string {
+  const picked: ExchangeFields = {};
+  for (const key of keys) picked[key] = fields[key] ?? null;
+  const hash = hashFields({ ...picked, "#parent": entity === "area" ? null : parentGroupId });
+  // Внутри аккаунта и в версии 1 — без меток: у сущностей, чей состав не
+  // менялся, отпечаток прежний.
+  return `${scope === "foreign" ? FOREIGN_HASH_PREFIX : ""}${version > 1 ? `v${version}:` : ""}${hash}`;
+}
+
 /**
- * Отпечаток записи: переносимые поля (в составе `scope`) и группа родителя.
- * Перенос оборудования в другой цех или сотрудника на другую должность —
- * тоже правка, которую получают остальные.
+ * Отпечаток записи: переносимые поля (в составе `scope`, нынешней версии) и
+ * группа родителя. Перенос оборудования в другой цех или сотрудника на другую
+ * должность — тоже правка, которую получают остальные.
  *
  * У цеха родитель в отпечаток не входит: объект у него необязателен, и когда
  * список «Объекты» включают позже «Оборудования», группа объекта появляется
@@ -255,13 +369,31 @@ export function rowHash(
   parentGroupId: string | null = null,
   scope: ExchangeScope = "account",
 ): string {
-  const hash = hashFields({
-    ...pickExchangeFields(entity, fields, scope),
-    "#parent": entity === "area" ? null : parentGroupId,
-  });
-  // Отпечаток внутри аккаунта — прежний, без метки: у обменов, где чужих
-  // организаций нет, не меняется ничего.
-  return entityScope(entity, scope) === "foreign" ? `${FOREIGN_HASH_PREFIX}${hash}` : hash;
+  const effective = entityScope(entity, scope);
+  return taggedHash(entity, fields, parentGroupId, exchangedFields(entity, effective), effective, currentFieldVersion(entity));
+}
+
+/**
+ * Отпечаток записи в тех версии и составе, в каких снят `linkHash` (Р8.0, Р5),
+ * — из полей, прочитанных в составе `scope`. Так обмен отличает смену состава
+ * полей от правки записи. null — посчитать нельзя: версия неизвестна
+ * (отпечаток новее этого кода) или нужного поля среди прочитанных нет (полный
+ * отпечаток сотрудника, когда в обмене другая компания и телефон не читается).
+ */
+export function rowHashLike(
+  entity: ExchangeEntity,
+  fields: ExchangeFields,
+  parentGroupId: string | null,
+  linkHash: string,
+  scope: ExchangeScope = "account",
+): string | null {
+  const tag = hashTag(linkHash);
+  const set = fieldSetOf(entity, tag.version);
+  const keys = tag.scope === "foreign" ? set?.foreign : set?.account;
+  if (!keys) return null;
+  const readable = exchangedFields(entity, scope);
+  if (!keys.every((key) => readable.includes(key))) return null;
+  return taggedHash(entity, fields, parentGroupId, keys, tag.scope, tag.version);
 }
 
 /** Пустой счётчик по спискам — основа итогов и счётчиков окна. */

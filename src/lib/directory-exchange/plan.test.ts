@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { hashScope, rowHash, type ExchangeFields, type ExchangeScope } from "@/lib/directory-exchange/kinds";
+import {
+  hashFields,
+  hashScope,
+  isCurrentHash,
+  rowHash,
+  rowHashLike,
+  type ExchangeEntity,
+  type ExchangeFields,
+  type ExchangeScope,
+} from "@/lib/directory-exchange/kinds";
 import {
   MIXED_ORIGIN,
   companyReceivesGroup,
@@ -494,6 +503,178 @@ test("rebaseLinks: tombstones, missing rows and current links are left alone", (
   const aligned = rebaseLinks({ rows, links, isCurrent: (hash) => hashScope("staff", hash) === "foreign", hashLike: () => null });
   assert.deepEqual(aligned.rebased, []);
   assert.deepEqual(aligned.links, links);
+});
+
+/* ── Р8.0: a new version of the field set (rooms with schedules, positions with journals) ── */
+
+type Versioned = ExchangeRow & { fields: ExchangeFields; parentGroupId: string | null };
+
+/** A record as the exchange reads it now (current version, given scope). */
+function versioned(entity: ExchangeEntity, id: string, fields: ExchangeFields, parentGroupId: string | null, scope: ExchangeScope = "account"): Versioned {
+  const name = String(fields.name).toLowerCase();
+  return { id, key: name, hash: rowHash(entity, fields, parentGroupId, scope), updatedAt: null, fields, parentGroupId };
+}
+
+/** What `run.server.ts` does: version- and scope-aware alignment, then the plan. */
+function versionedPlan(entity: ExchangeEntity, scope: ExchangeScope, rows: Record<string, Versioned[]>, links: ExchangeLinkRow[], passive: string[] = []) {
+  const aligned = rebaseLinks({
+    rows,
+    links,
+    isCurrent: (hash) => isCurrentHash(entity, hash, scope),
+    hashLike: (item, linkHash) => rowHashLike(entity, item.fields, item.parentGroupId, linkHash, scope),
+  });
+  let seq = 0;
+  const ops = planEntityExchange({ participants: Object.keys(rows), rows, links: aligned.links, passive, newGroupId: () => `n${(seq += 1)}` });
+  return { ops, rebased: aligned.rebased, links: aligned.links };
+}
+
+/** A stored version-1 fingerprint, as the exchange wrote it before versions existed. */
+const roomV1Hash = (fields: ExchangeFields, parent: string) =>
+  hashFields({ name: fields.name ?? null, kind: fields.kind ?? null, sortOrder: fields.sortOrder ?? null, "#parent": parent });
+const positionV1Hash = (name: string) => hashFields({ name, "#parent": null });
+
+const KITCHEN = {
+  name: "Кухня",
+  kind: "kitchen",
+  sortOrder: 1,
+  currentScope: JSON.stringify([{ label: "Полы" }, { label: "Столы" }]),
+  generalScope: null,
+  currentDays: 127,
+  generalDays: 0,
+  currentScheduleType: "weekly",
+  generalScheduleType: "weekly",
+  currentMonthDays: null,
+  generalMonthDays: null,
+  detergent: "Хлорамин",
+  requirePhoto: false,
+  climateNorms: null,
+} satisfies ExchangeFields;
+// The same room elsewhere: another schedule, another detergent, climate norms set.
+const KITCHEN_B = {
+  ...KITCHEN,
+  currentScope: JSON.stringify([{ label: "Пол" }]),
+  generalScope: JSON.stringify([{ label: "Окна" }]),
+  generalScheduleType: "monthly",
+  generalMonthDays: JSON.stringify(["1", "last"]),
+  detergent: "Ника",
+  requirePhoto: true,
+  climateNorms: JSON.stringify({ temperature: { enabled: true, min: 18, max: 22 }, humidity: { enabled: false, min: null, max: null } }),
+} satisfies ExchangeFields;
+
+test("Р8.0: version-1 links of unchanged rooms — only re-based, zero updates, each room keeps its schedule", () => {
+  const rows = { A: [versioned("room", "a1", KITCHEN, "g-cafe")], B: [versioned("room", "b1", KITCHEN_B, "g-cafe")], C: [versioned("room", "c1", KITCHEN, "g-cafe")] };
+  const links: ExchangeLinkRow[] = ["A", "B", "C"].map((org) => ({ groupId: "g1", organizationId: org, entityId: `${org.toLowerCase()}1`, hash: roomV1Hash(KITCHEN, "g-cafe") }));
+
+  // The trap without versions: every link differs from the new fingerprint and A's schedule would overwrite B's.
+  const naive = planEntityExchange({ participants: ["A", "B", "C"], rows, links, newGroupId: () => "x" });
+  assert.ok(naive.some((op) => op.type === "update"), "a naive plan rewrites the neighbours");
+
+  const { ops, rebased, links: aligned } = versionedPlan("room", "account", rows, links);
+  assert.deepEqual(ops, []);
+  assert.deepEqual(rebased.map((link) => `${link.organizationId}:${link.hash}`).sort(), [`A:${rows.A[0].hash}`, `B:${rows.B[0].hash}`, `C:${rows.C[0].hash}`].sort());
+  assert.ok(rebased.every((link) => link.hash.startsWith("v2:")));
+  // The next run compares like with like: nothing to do.
+  assert.deepEqual(versionedPlan("room", "account", rows, aligned).ops, []);
+  assert.deepEqual(versionedPlan("room", "account", rows, aligned).rebased, []);
+});
+
+test("Р8.0: a room renamed before the first versioned run — the edit propagates with its schedule", () => {
+  const renamed = { ...KITCHEN, name: "Кухня горячая" };
+  const rows = { A: [versioned("room", "a1", renamed, "g-cafe")], B: [versioned("room", "b1", KITCHEN_B, "g-cafe")] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: roomV1Hash(KITCHEN, "g-cafe") },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: roomV1Hash(KITCHEN, "g-cafe") },
+  ];
+  const { ops, rebased } = versionedPlan("room", "account", rows, links);
+  // A really changed (its version-1 fingerprint differs): only B is re-based, B gets the update.
+  assert.deepEqual(rebased.map((link) => link.organizationId), ["B"]);
+  assert.deepEqual(types(ops), ["rehash:A", "update:B"]);
+  const update = ops.find((op) => op.type === "update");
+  assert.ok(update && update.type === "update" && update.fromEntityId === "a1" && update.hash === rows.A[0].hash);
+});
+
+test("Р8.0: after re-basing, a schedule or climate edit is an ordinary edit", () => {
+  const rows = { A: [versioned("room", "a1", KITCHEN, "g-cafe")], B: [versioned("room", "b1", KITCHEN_B, "g-cafe")] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: rows.A[0].hash },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: rows.B[0].hash },
+  ];
+  assert.deepEqual(versionedPlan("room", "account", rows, links).ops, []);
+  const climate = { ...rows, B: [versioned("room", "b1", { ...KITCHEN_B, climateNorms: JSON.stringify({ temperature: { enabled: true, min: 16, max: 20 }, humidity: { enabled: false, min: null, max: null } }) }, "g-cafe")] };
+  assert.deepEqual(types(versionedPlan("room", "account", climate, links).ops), ["rehash:B", "update:A"]);
+  const schedule = { ...rows, A: [versioned("room", "a1", { ...KITCHEN, currentDays: 31 }, "g-cafe")] };
+  assert.deepEqual(types(versionedPlan("room", "account", schedule, links).ops), ["rehash:A", "update:B"]);
+});
+
+test("Р8.0: version-1 position links — different journals stay, zero updates; a rename carries the journals", () => {
+  const cookA = { name: "Повар", journals: JSON.stringify(["cleaning", "hygiene"]) };
+  const cookB = { name: "Повар", journals: JSON.stringify(["hygiene"]) };
+  const rows = { A: [versioned("position", "a1", cookA, null)], B: [versioned("position", "b1", cookB, null)] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: positionV1Hash("Повар") },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: positionV1Hash("Повар") },
+  ];
+  const quiet = versionedPlan("position", "account", rows, links);
+  assert.deepEqual(quiet.ops, []);
+  assert.equal(quiet.rebased.length, 2);
+
+  const renamed = { ...rows, B: [versioned("position", "b1", { ...cookB, name: "Повар-универсал" }, null)] };
+  assert.deepEqual(types(versionedPlan("position", "account", renamed, links).ops), ["rehash:B", "update:A"]);
+});
+
+test("Р8.0, foreign scope: version-1 position links move to the restricted version 2, nothing else happens", () => {
+  // Before versions a position had one field set (its name) in any exchange.
+  const rows = {
+    A: [versioned("position", "a1", { name: "Повар" }, null, "foreign")],
+    B: [versioned("position", "b1", { name: "Повар" }, null, "foreign")],
+    F: [versioned("position", "f1", { name: "Повар" }, null, "foreign")],
+  };
+  const links: ExchangeLinkRow[] = ["A", "B", "F"].map((org) => ({ groupId: "g1", organizationId: org, entityId: `${org.toLowerCase()}1`, hash: positionV1Hash("Повар") }));
+  const { ops, rebased } = versionedPlan("position", "foreign", rows, links, ["F"]);
+  assert.deepEqual(ops, []);
+  assert.equal(rebased.length, 3);
+  assert.ok(rebased.every((link) => link.hash.startsWith("f:v2:")));
+
+  // A rename by the owner's organization still reaches everyone (name only).
+  const renamed = { ...rows, A: [versioned("position", "a1", { name: "Повар цеха" }, null, "foreign")] };
+  assert.deepEqual(types(versionedPlan("position", "foreign", renamed, links, ["F"]).ops), ["rehash:A", "update:B", "update:F"]);
+});
+
+test("Р8.0, foreign scope: rooms have one field set — version-1 links of unchanged rooms are re-based, an edit propagates", () => {
+  const rows = { A: [versioned("room", "a1", KITCHEN, "g-cafe")], F: [versioned("room", "f1", KITCHEN_B, "g-cafe")] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: roomV1Hash(KITCHEN, "g-cafe") },
+    { groupId: "g1", organizationId: "F", entityId: "f1", hash: roomV1Hash(KITCHEN, "g-cafe") },
+  ];
+  const quiet = versionedPlan("room", "foreign", rows, links, ["F"]);
+  assert.deepEqual(quiet.ops, []);
+  assert.equal(quiet.rebased.length, 2);
+  const sorted = { ...rows, A: [versioned("room", "a1", { ...KITCHEN, sortOrder: 5 }, "g-cafe")] };
+  assert.deepEqual(types(versionedPlan("room", "foreign", sorted, links, ["F"]).ops), ["rehash:A", "update:F"]);
+});
+
+test("Р8.0: the foreign organization leaves — restricted position links are compared by name, journals are not pushed", () => {
+  const cookA = { name: "Повар", journals: JSON.stringify(["cleaning"]) };
+  const cookB = { name: "Повар", journals: JSON.stringify(["hygiene"]) };
+  const rows = { A: [versioned("position", "a1", cookA, null)], B: [versioned("position", "b1", cookB, null)] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: rowHash("position", cookA, null, "foreign") },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: rowHash("position", cookB, null, "foreign") },
+  ];
+  const { ops, rebased } = versionedPlan("position", "account", rows, links);
+  assert.deepEqual(ops, []);
+  assert.ok(rebased.every((link) => link.hash.startsWith("v2:")));
+});
+
+test("Р8.0: a link of a version newer than the code is treated as unchanged, never as an edit", () => {
+  const rows = { A: [versioned("room", "a1", KITCHEN, "g-cafe")], B: [versioned("room", "b1", KITCHEN_B, "g-cafe")] };
+  const links: ExchangeLinkRow[] = [
+    { groupId: "g1", organizationId: "A", entityId: "a1", hash: "v3:0123456789abcdef0123456789ab" },
+    { groupId: "g1", organizationId: "B", entityId: "b1", hash: "v3:fedcba9876543210fedcba987654" },
+  ];
+  const { ops, rebased } = versionedPlan("room", "account", rows, links);
+  assert.deepEqual(ops, []);
+  assert.equal(rebased.length, 2);
 });
 
 /* ── passive participant: an organization of another company (part 3, 2026-11-20) ── */

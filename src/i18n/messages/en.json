@@ -26972,8 +26972,8 @@
       },
       "kindHints": {
         "products": "Product directory: name, supplier, storage conditions and shelf life",
-        "staff": "Staff without a login: full name, position and phone. Managers are not transferred",
-        "objects": "Locations with addresses and their rooms. The office is not transferred",
+        "staff": "Staff without a login: full name, position and phone; positions come with their journal access. Managers are not transferred",
+        "objects": "Locations with addresses and their rooms, with cleaning schedules and climate norms. The office is not transferred",
         "equipment": "Equipment together with its workshops. Sensor links are not copied"
       },
       "offer": {
@@ -27134,8 +27134,8 @@
         },
         "kindHints": {
           "products": "Product directory: name, supplier, storage conditions and shelf life",
-          "staff": "Staff without a login: full name and position only. Phone numbers and managers are not passed",
-          "objects": "Locations with addresses and their rooms. The office is not passed",
+          "staff": "Staff without a login: full name and position only. Phone numbers, position journals and managers are not passed",
+          "objects": "Locations with addresses and their rooms, with cleaning schedules and climate norms. The office is not passed",
           "equipment": "Equipment together with its workshops. Sensor links are not passed"
         },
         "page": {

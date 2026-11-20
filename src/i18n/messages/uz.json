@@ -26972,8 +26972,8 @@
       },
       "kindHints": {
         "products": "Mahsulotlar ma’lumotnomasi: nomi, yetkazib beruvchi, saqlash sharoiti va muddati",
-        "staff": "Tizimga kirmaydigan xodimlar: F.I.Sh., lavozim va telefon. Rahbarlar ko‘chirilmaydi",
-        "objects": "Manzilli obyektlar va ularning xonalari. Ofis ko‘chirilmaydi",
+        "staff": "Tizimga kirmaydigan xodimlar: F.I.Sh., lavozim va telefon; lavozimlar jurnallarga kirish huquqi bilan. Rahbarlar ko‘chirilmaydi",
+        "objects": "Manzilli obyektlar va ularning xonalari tozalash jadvallari va iqlim me’yorlari bilan. Ofis ko‘chirilmaydi",
         "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi nusxalanmaydi"
       },
       "offer": {
@@ -27134,8 +27134,8 @@
         },
         "kindHints": {
           "products": "Mahsulotlar ma’lumotnomasi: nomi, yetkazib beruvchi, saqlash sharoiti va muddati",
-          "staff": "Tizimga kirmaydigan xodimlar: faqat F.I.Sh. va lavozim. Telefonlar va rahbarlar uzatilmaydi",
-          "objects": "Manzilli obyektlar va ularning xonalari. Ofis uzatilmaydi",
+          "staff": "Tizimga kirmaydigan xodimlar: faqat F.I.Sh. va lavozim. Telefonlar, lavozim jurnallari va rahbarlar uzatilmaydi",
+          "objects": "Manzilli obyektlar va ularning xonalari tozalash jadvallari va iqlim me’yorlari bilan. Ofis uzatilmaydi",
           "equipment": "Uskunalar sexlari bilan birga. Datchiklar bog‘lanishi uzatilmaydi"
         },
         "page": {

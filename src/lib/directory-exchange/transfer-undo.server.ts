@@ -8,6 +8,7 @@ import {
   EXCHANGE_ENTITIES,
   EXCHANGE_KINDS,
   emptyKindRecord,
+  rowHashLike,
   type ExchangeEntity,
   type ExchangeKind,
 } from "@/lib/directory-exchange/kinds";
@@ -79,14 +80,21 @@ const LOCK_WAIT = { attempts: 16, delayMs: 250, timeoutMs: 180_000 } as const;
  */
 const OWN_PARENT: ParentGroupLookup = (parentId) => parentId;
 
-/** Отпечатки записей `ids` организации — как их видит обмен. Запись вне строк обмена — без отпечатка. */
-async function currentHashes(organizationId: string, ids: TransferCreated): Promise<TransferHashes> {
+/**
+ * Отпечатки записей `ids` организации — как их видит обмен. Запись вне строк
+ * обмена — без отпечатка. `stored` — отпечатки с переноса: отпечаток записи
+ * снимается в той же версии состава полей, что и сохранённый (Р8.0), — новая
+ * версия сама по себе правкой не считается.
+ */
+async function currentHashes(organizationId: string, ids: TransferCreated, stored?: TransferHashes): Promise<TransferHashes> {
   const hashes = emptyTransferHashes();
   for (const entity of EXCHANGE_ENTITIES) {
     if (ids[entity].length === 0) continue;
     const wanted = new Set(ids[entity]);
     for (const row of await loadEntityRows(entity, organizationId, OWN_PARENT)) {
-      if (wanted.has(row.id)) hashes[entity][row.id] = row.hash;
+      if (!wanted.has(row.id)) continue;
+      const before = stored?.[entity][row.id];
+      hashes[entity][row.id] = (before ? rowHashLike(entity, row.fields, row.parentGroupId, before) : null) ?? row.hash;
     }
   }
   return hashes;
@@ -342,12 +350,17 @@ async function idsInJournalTexts(tx: Tx, organizationId: string, ids: readonly s
  * Созданное переносом, на что ссылаются журналы и настройки организации:
  * тексты журналов (`idsInJournalTexts`), чек-листы помещений, киоски объектов,
  * отклонения температуры оборудования. id — cuid, общий набор не путает сущности.
+ * Пункты уборки, которые перенос сам собрал из графика помещения (Р8.3), —
+ * не использование: в счёт идут только заведённые после переноса.
  */
-async function referencedIds(tx: Tx, organizationId: string, created: TransferCreated): Promise<Set<string>> {
+async function referencedIds(tx: Tx, organizationId: string, created: TransferCreated, transferAt: Date): Promise<Set<string>> {
   const [texts, checklist, kiosks, incidents] = await Promise.all([
     idsInJournalTexts(tx, organizationId, [...created.equipment, ...created.area, ...created.room]),
     created.room.length
-      ? tx.journalChecklistItem.findMany({ where: { organizationId, roomId: { in: created.room } }, select: { roomId: true } })
+      ? tx.journalChecklistItem.findMany({
+          where: { organizationId, roomId: { in: created.room }, createdAt: { gt: transferAt } },
+          select: { roomId: true },
+        })
       : [],
     created.building.length
       ? tx.kioskDevice.findMany({ where: { organizationId, buildingId: { in: created.building } }, select: { buildingId: true } })
@@ -443,7 +456,7 @@ async function undoCreated(
 ): Promise<UndoOutcome> {
   const { organizationId, created, transferAt, now, hashes } = params;
   const ledger = new UndoLedger();
-  const referenced = await referencedIds(tx, organizationId, created);
+  const referenced = await referencedIds(tx, organizationId, created, transferAt);
   const changed = (entity: ExchangeEntity, id: string) => editedByHash(hashes.stored, hashes.current, entity, id);
 
   // 1. Оборудование: записи журналов и документов, датчики, смены работы УФ-ламп.
@@ -590,6 +603,8 @@ async function undoCreated(
   if (areaIds.length > 0) await tx.area.deleteMany({ where: { id: { in: areaIds }, organizationId } });
 
   // 5. Должности — после сотрудников: без действующих сотрудников, смен и настроек доступа.
+  // Журналы, с которыми должность пришла (Р8.2), — не настройка получателя:
+  // в счёт идут строки доступа, заведённые после переноса.
   const positions = await tx.jobPosition.findMany({
     where: { id: { in: created.position }, organizationId },
     select: {
@@ -597,7 +612,11 @@ async function undoCreated(
       name: true,
       updatedAt: true,
       _count: {
-        select: { users: { where: { isActive: true, archivedAt: null } }, workShifts: true, journalAccess: true },
+        select: {
+          users: { where: { isActive: true, archivedAt: null } },
+          workShifts: true,
+          journalAccess: { where: { createdAt: { gt: transferAt } } },
+        },
       },
     },
   });
@@ -754,7 +773,7 @@ export async function undoTransfer(input: {
       advisoryLockKey(TRANSFER_LOCK_PREFIX, organizationId),
       async () => {
         // Под замками: обмен и перенос записи организации сейчас не меняют.
-        const current = await currentHashes(organizationId, hashed);
+        const current = await currentHashes(organizationId, hashed, stored);
         return db.$transaction(
           async (tx) => {
             // Отмена одна: вторая, пришедшая одновременно, здесь получает 0 строк.

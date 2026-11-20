@@ -1,7 +1,12 @@
+import { Prisma } from "@prisma/client";
+
 import { normalizePhone } from "@/lib/phone";
 import { ensureRoomMirrorArea, renameRoomMirrorArea } from "@/lib/area-building-sync";
 import { checkPointsForCreation } from "@/lib/billing.server";
 import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
+import { parseScopeSteps, type ScopeStep } from "@/lib/cleaning-document";
+import { syncRoomChecklistItems } from "@/lib/cleaning-room-checklist-sync";
+import { normalizeClimateRoomNorms, type ClimateRoomNorms } from "@/lib/climate-document";
 import {
   COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE,
   applyEquipmentNormToColdConfig,
@@ -13,6 +18,7 @@ import {
   pickExchangeFields,
   rowHash,
   type ExchangeEntity,
+  type ExchangeFieldValue,
   type ExchangeFields,
   type ExchangeKind,
   type ExchangeScope,
@@ -47,8 +53,12 @@ import { isUvLampEquipment } from "@/lib/uv-lamp";
  * почта, пароль, роль, Telegram, датчики (`tuyaDeviceId`) и ответственные.
  *
  * Правило Р5 (обмен между аккаунтами) — параметр `scope`: в составе
- * `foreign` телефон и выходные сотрудника не читаются из базы, не пишутся
- * при создании и не трогаются при обновлении.
+ * `foreign` телефон и выходные сотрудника и журналы должности не читаются из
+ * базы, не пишутся при создании и не трогаются при обновлении.
+ *
+ * Помещение переносится с графиками уборки и нормами климата (Р8.3), должность
+ * — с журналами, к которым у неё есть доступ (Р8.2): поля в каноничном виде —
+ * ниже, «поля помещения и должности».
  */
 
 export type EntityRow = ExchangeRow & {
@@ -112,6 +122,172 @@ async function soleObjectId(organizationId: string): Promise<string | null> {
   return objects.length === 1 ? objects[0].id : null;
 }
 
+/* ───────────────────────── поля помещения и должности ───────────────────────── */
+
+/**
+ * Список в поле обмена — каноничной JSON-строкой: одинаковое содержимое даёт
+ * одну строку в любой организации. Пустой список — «нет» (null), как и
+ * отсутствие поля: в отпечаток он не входит.
+ */
+function jsonList(list: readonly unknown[]): string | null {
+  return list.length > 0 ? JSON.stringify(list) : null;
+}
+
+function parseJson(value: ExchangeFieldValue | undefined): unknown {
+  if (typeof value !== "string") return null;
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+/** Шаги уборки — как их хранит карточка помещения (`parseScopeSteps`, не больше 50). */
+function scopeSteps(raw: unknown): ScopeStep[] {
+  return parseScopeSteps(raw).slice(0, 50);
+}
+
+const scopeLabels = (steps: readonly ScopeStep[]) => steps.map((step) => step.label);
+const sameList = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((value, index) => value === b[index]);
+
+const MONTH_DAY = /^([1-9]|[12][0-9]|3[01]|last)$/;
+const monthDayOrder = (day: string) => (day === "last" ? 32 : Number(day));
+
+/** Дни месяца графика: без повторов и мусора, по порядку, «last» — последним. */
+function monthDays(raw: unknown): string[] {
+  const days = Array.isArray(raw) ? raw.filter((day): day is string => typeof day === "string" && MONTH_DAY.test(day)) : [];
+  return [...new Set(days)].sort((a, b) => monthDayOrder(a) - monthDayOrder(b));
+}
+
+/** Дни недели графика — маска 0…127 (бит 0 — понедельник). */
+function dayMask(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 127 ? value : fallback;
+}
+
+function scheduleType(value: unknown): "weekly" | "monthly" {
+  return value === "monthly" ? "monthly" : "weekly";
+}
+
+/** Нормы климата (`normalizeClimateRoomNorms`) с постоянным порядком ключей; null — нормы не заданы. */
+function climateNorms(raw: unknown): ClimateRoomNorms | null {
+  const norms = normalizeClimateRoomNorms(raw);
+  if (!norms) return null;
+  const metric = (value: ClimateRoomNorms["temperature"]) => ({ enabled: value.enabled, min: value.min, max: value.max });
+  return { temperature: metric(norms.temperature), humidity: metric(norms.humidity) };
+}
+
+type RoomSchedule = {
+  currentScope: unknown;
+  generalScope: unknown;
+  currentDays: number;
+  generalDays: number;
+  currentScheduleType: string;
+  generalScheduleType: string;
+  currentMonthDays: unknown;
+  generalMonthDays: unknown;
+  detergent: string | null;
+  requirePhoto: boolean;
+  climateNorms: unknown;
+};
+
+/**
+ * Графики уборки и нормы климата помещения — поля обмена (Р8.3). Ссылок на
+ * записи организации в них нет; ответственные (уборщики, проверяющие, «кто
+ * заполняет») — люди своей организации и не читаются.
+ */
+function roomScheduleFields(room: RoomSchedule): ExchangeFields {
+  const norms = climateNorms(room.climateNorms);
+  return {
+    currentScope: jsonList(scopeSteps(room.currentScope)),
+    generalScope: jsonList(scopeSteps(room.generalScope)),
+    currentDays: dayMask(room.currentDays, 127),
+    generalDays: dayMask(room.generalDays, 0),
+    currentScheduleType: scheduleType(room.currentScheduleType),
+    generalScheduleType: scheduleType(room.generalScheduleType),
+    currentMonthDays: jsonList(monthDays(room.currentMonthDays)),
+    generalMonthDays: jsonList(monthDays(room.generalMonthDays)),
+    detergent: text(room.detergent, 500),
+    requirePhoto: room.requirePhoto === true,
+    climateNorms: norms ? JSON.stringify(norms) : null,
+  };
+}
+
+/** Обратно: графики и нормы помещения из полей образца — в том же виде, в каком их читает `roomScheduleFields`. */
+function roomScheduleData(fields: ExchangeFields) {
+  return {
+    currentScope: scopeSteps(parseJson(fields.currentScope)),
+    generalScope: scopeSteps(parseJson(fields.generalScope)),
+    currentDays: dayMask(fields.currentDays, 127),
+    generalDays: dayMask(fields.generalDays, 0),
+    currentScheduleType: scheduleType(fields.currentScheduleType),
+    generalScheduleType: scheduleType(fields.generalScheduleType),
+    currentMonthDays: monthDays(parseJson(fields.currentMonthDays)),
+    generalMonthDays: monthDays(parseJson(fields.generalMonthDays)),
+    detergent: text(fields.detergent, 500) ?? "",
+    requirePhoto: fields.requirePhoto === true,
+    climateNorms: climateNorms(parseJson(fields.climateNorms)),
+  };
+}
+
+const ROOM_SCHEDULE_SELECT = {
+  currentScope: true,
+  generalScope: true,
+  currentDays: true,
+  generalDays: true,
+  currentScheduleType: true,
+  generalScheduleType: true,
+  currentMonthDays: true,
+  generalMonthDays: true,
+  detergent: true,
+  requirePhoto: true,
+  climateNorms: true,
+} as const;
+
+/** Коды журналов, к которым у должностей есть доступ (`JobPositionJournalAccess`): должность → коды по алфавиту. */
+async function positionJournalCodes(organizationId: string, positionIds: readonly string[]): Promise<Map<string, string[]>> {
+  const codes = new Map<string, string[]>();
+  if (positionIds.length === 0) return codes;
+  const rows = await db.jobPositionJournalAccess.findMany({
+    where: { organizationId, jobPositionId: { in: [...positionIds] } },
+    select: { jobPositionId: true, template: { select: { code: true } } },
+  });
+  for (const row of rows) {
+    const list = codes.get(row.jobPositionId);
+    if (list) list.push(row.template.code);
+    else codes.set(row.jobPositionId, [row.template.code]);
+  }
+  for (const [id, list] of codes) codes.set(id, [...new Set(list)].sort());
+  return codes;
+}
+
+/**
+ * Журналы должности — как у образца (Р8.2): по кодам шаблонов (шаблоны общие
+ * для всех организаций) недостающие строки доступа заводятся, лишние
+ * удаляются. Обмен повторяет явный перечень должности-образца; у шаблона, к
+ * которому у получателя не осталось ни одной строки, доступ снова «у всех
+ * должностей» — так же, как после такой же правки руками
+ * (`PUT /api/settings/positions/[id]/journals`).
+ *
+ * Пустой перечень образца — «сведений нет», а не «закройте всё» (как пустой
+ * телефон сотрудника): у организации, где доступ по должностям не настроен,
+ * переименование должности не стирает настроенный доступ соседей.
+ */
+async function syncPositionJournals(organizationId: string, positionId: string, value: ExchangeFieldValue | undefined) {
+  const raw = parseJson(value);
+  const codes = Array.isArray(raw) ? raw.filter((code): code is string => typeof code === "string" && code !== "") : [];
+  if (codes.length === 0) return;
+  const templates = await db.journalTemplate.findMany({ where: { code: { in: codes } }, select: { id: true } });
+  if (templates.length === 0) return;
+  const templateIds = templates.map((template) => template.id);
+  await db.$transaction([
+    db.jobPositionJournalAccess.deleteMany({ where: { organizationId, jobPositionId: positionId, templateId: { notIn: templateIds } } }),
+    db.jobPositionJournalAccess.createMany({
+      data: templateIds.map((templateId) => ({ organizationId, jobPositionId: positionId, templateId })),
+      skipDuplicates: true,
+    }),
+  ]);
+}
+
 function makeRow(
   entity: ExchangeEntity,
   input: {
@@ -163,7 +339,19 @@ export async function loadEntityRows(
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: { id: true, name: true, updatedAt: true },
       });
-      return rows.map((row) => makeRow(entity, { id: row.id, fields: { name: row.name }, updatedAt: row.updatedAt }));
+      // Между аккаунтами (Р8.2) журналы должности из базы не читаются вовсе.
+      const journals = scope === "foreign" ? null : await positionJournalCodes(organizationId, rows.map((row) => row.id));
+      return rows.map((row) =>
+        makeRow(
+          entity,
+          {
+            id: row.id,
+            fields: journals ? { name: row.name, journals: jsonList(journals.get(row.id) ?? []) } : { name: row.name },
+            updatedAt: row.updatedAt,
+          },
+          scope,
+        ),
+      );
     }
     case "staff": {
       // Между аккаунтами (Р5) телефон и выходные из базы не читаются вовсе.
@@ -232,6 +420,7 @@ export async function loadEntityRows(
           name: true,
           kind: true,
           sortOrder: true,
+          ...ROOM_SCHEDULE_SELECT,
           buildingId: true,
           updatedAt: true,
           building: { select: { name: true } },
@@ -240,7 +429,7 @@ export async function loadEntityRows(
       return rows.map((row) =>
         makeRow(entity, {
           id: row.id,
-          fields: { name: row.name, kind: row.kind, sortOrder: row.sortOrder },
+          fields: { name: row.name, kind: row.kind, sortOrder: row.sortOrder, ...roomScheduleFields(row) },
           parentId: row.buildingId,
           parentGroupId: parentGroupOf(row.buildingId),
           updatedAt: row.updatedAt,
@@ -446,6 +635,8 @@ export async function createEntityRow(
           data: { organizationId, categoryKey: STAFF_CATEGORY, name: name.slice(0, 120), sortOrder: (last?.sortOrder ?? 0) + 1 },
           select: { id: true },
         });
+        // Журналы — до сотрудников: `createStaffMember` выдаёт новым людям доступ по должности.
+        if (options.scope !== "foreign") await syncPositionJournals(organizationId, created.id, source.fields.journals);
         return { status: "created", id: created.id };
       }
       case "staff": {
@@ -498,12 +689,15 @@ export async function createEntityRow(
         const roomName = name.slice(0, 120);
         const exists = await db.room.findFirst({ where: { buildingId: building.id, name: roomName }, select: { id: true } });
         if (exists) return { status: "conflict" };
+        const { climateNorms: norms, ...schedule } = roomScheduleData(source.fields);
         const created = await db.room.create({
           data: {
             buildingId: building.id,
             name: roomName,
             kind: roomKind(source.fields.kind),
             sortOrder: intOrNull(source.fields.sortOrder) ?? 0,
+            ...schedule,
+            ...(norms ? { climateNorms: norms } : {}),
           },
           select: { id: true },
         });
@@ -512,6 +706,16 @@ export async function createEntityRow(
           organizationId,
           room: { id: created.id, name: roomName, buildingId: building.id },
         }).catch(() => undefined);
+        // Пункты уборки из графика — как при правке карточки помещения (best-effort:
+        // помещение уже есть, сбой пунктов не должен оставить его без связи).
+        if (schedule.currentScope.length > 0 || schedule.generalScope.length > 0) {
+          await syncRoomChecklistItems({
+            organizationId,
+            roomId: created.id,
+            currentScope: scopeLabels(schedule.currentScope),
+            generalScope: scopeLabels(schedule.generalScope),
+          }).catch((error) => console.error("[directory-exchange] room checklist sync failed", error));
+        }
         return { status: "created", id: created.id };
       }
       case "area": {
@@ -629,7 +833,9 @@ export async function updateEntityRow(
           where: { id: entityId, organizationId, categoryKey: STAFF_CATEGORY },
           data: { name: name.slice(0, 120) },
         });
-        return updated.count > 0 ? { status: "updated" } : { status: "missing" };
+        if (updated.count === 0) return { status: "missing" };
+        if (options.scope !== "foreign") await syncPositionJournals(organizationId, entityId, source.fields.journals);
+        return { status: "updated" };
       }
       case "staff": {
         const current = await db.user.findFirst({
@@ -683,7 +889,7 @@ export async function updateEntityRow(
       case "room": {
         const current = await db.room.findFirst({
           where: { id: entityId, building: { organizationId, kind: { not: OFFICE_BUILDING_KIND } } },
-          select: { id: true, name: true, buildingId: true },
+          select: { id: true, name: true, buildingId: true, currentScope: true, generalScope: true },
         });
         if (!current) return { status: "missing" };
         const roomName = name.slice(0, 120);
@@ -692,9 +898,31 @@ export async function updateEntityRow(
           select: { id: true },
         });
         if (clash) return { status: "conflict" };
+        const { climateNorms: norms, ...schedule } = roomScheduleData(source.fields);
+        // Пункты уборки пересобираются, когда изменился состав шагов, — до
+        // правки помещения, как в PATCH /api/settings/rooms/[id]: сбой не
+        // оставит помещение с новым графиком и старыми пунктами.
+        const currentLabels = scopeLabels(schedule.currentScope);
+        const generalLabels = scopeLabels(schedule.generalScope);
+        const currentChanged = !sameList(scopeLabels(scopeSteps(current.currentScope)), currentLabels);
+        const generalChanged = !sameList(scopeLabels(scopeSteps(current.generalScope)), generalLabels);
+        if (currentChanged || generalChanged) {
+          await syncRoomChecklistItems({
+            organizationId,
+            roomId: current.id,
+            currentScope: currentChanged ? currentLabels : undefined,
+            generalScope: generalChanged ? generalLabels : undefined,
+          });
+        }
         await db.room.update({
           where: { id: current.id },
-          data: { name: roomName, kind: roomKind(source.fields.kind), sortOrder: intOrNull(source.fields.sortOrder) ?? 0 },
+          data: {
+            name: roomName,
+            kind: roomKind(source.fields.kind),
+            sortOrder: intOrNull(source.fields.sortOrder) ?? 0,
+            ...schedule,
+            climateNorms: norms ?? Prisma.JsonNull,
+          },
         });
         // Цех-зеркало переименовывается вместе с помещением — как в PATCH помещения.
         if (roomName !== current.name) {

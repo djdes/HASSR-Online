@@ -24,10 +24,10 @@ import {
   KIND_ENTITIES,
   emptyKindRecord,
   entityScope,
-  hashScope,
+  isCurrentHash,
   naturalKey,
   normalizeExchangeKinds,
-  rowHash,
+  rowHashLike,
   type ExchangeEntity,
   type ExchangeKind,
   type ExchangeScope,
@@ -339,16 +339,17 @@ async function exchangeEntity(params: {
   }
 
   // Состав полей сменился с прошлого обмена (в список вошла организация
-  // другого аккаунта или вышла из него) — это не правка записей: связи
-  // переводятся на нынешний отпечаток, чужие телефоны никуда не едут.
+  // другого аккаунта или вышла из него, Р5; вышла новая версия состава, Р8.0)
+  // — это не правка записей: связи переводятся на нынешний отпечаток, чужие
+  // телефоны никуда не едут, новые поля у соседей не перезаписываются.
   const aligned = rebaseLinks({
     rows,
     links,
-    isCurrent: (hash) => hashScope(entity, hash) === scope,
-    // Прежний отпечаток «между аккаунтами» считается из тех же строк; прежний
-    // полный — нет: телефон и выходные сейчас не читаются.
-    hashLike: (row, linkHash) =>
-      scope === "account" ? rowHash(entity, row.fields, row.parentGroupId, hashScope(entity, linkHash)) : null,
+    isCurrent: (hash) => isCurrentHash(entity, hash, scope),
+    // Прежний отпечаток считается из тех же строк в его версии и составе;
+    // прежний полный «внутри аккаунта» — нет, когда телефон и выходные (или
+    // журналы должности) сейчас не читаются: тогда null.
+    hashLike: (row, linkHash) => rowHashLike(entity, row.fields, row.parentGroupId, linkHash, scope),
   });
 
   const ops = planEntityExchange({
@@ -543,14 +544,15 @@ async function exchangeEntity(params: {
  * Список «Сотрудники» переходит в состав «между аккаунтами» (Р5): среди его
  * участников появилась организация другого аккаунта — её подтвердили,
  * открыли после оплаты или сняли с паузы, — а связи своих организаций ещё
- * хранят полный отпечаток (с телефоном и выходными).
+ * хранят полный отпечаток (сотрудника — с телефоном и выходными, должности —
+ * с журналами).
  *
  * Полный отпечаток в суженном составе пересчитать нельзя (телефон не
  * читается), поэтому при переходе записи считаются неизменёнными
  * (`rebaseLinks`). Чтобы правка, сделанная прямо перед переходом, не
  * потерялась, свои организации сначала обмениваются между собой как обычно:
- * должности и сотрудники, с телефонами — и только внутри аккаунта кабинета.
- * После перехода связи суженные, и этот шаг больше не срабатывает.
+ * должности и сотрудники, с телефонами и журналами — и только внутри аккаунта
+ * кабинета. После перехода связи суженные, и этот шаг больше не срабатывает.
  */
 async function settleStaffBeforeForeign(params: {
   masterOrganizationId: string;
@@ -567,7 +569,7 @@ async function settleStaffBeforeForeign(params: {
   const pending = await db.directoryExchangeLink.findFirst({
     where: {
       masterOrganizationId: params.masterOrganizationId,
-      entity: "staff",
+      entity: { in: [...KIND_ENTITIES.staff] },
       organizationId: { in: own.map((participant) => participant.organizationId) },
       entityId: { not: null },
       NOT: { hash: { startsWith: FOREIGN_HASH_PREFIX } },
