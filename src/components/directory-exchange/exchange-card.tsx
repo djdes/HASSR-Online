@@ -9,15 +9,21 @@ import { useOrgTimeZone } from "@/components/shared/org-time-zone";
 import { formatDate } from "@/i18n/locales";
 import {
   exchangeError,
-  exchangeParticipants,
   exchangeRequest,
   loadExchangeState,
+  loadForeignState,
+  ownParticipants,
   parseSummary,
+  pendingRequests,
   summaryTotals,
+  withoutForeign,
   type ExchangeMode,
   type ExchangeState,
+  type ForeignState,
 } from "./exchange-api";
+import { ExchangeCabinetCode } from "./exchange-cabinet-code";
 import { ExchangeDialog } from "./exchange-dialog";
+import { ForeignMemberRow, ForeignOutgoing, IncomingRequests } from "./exchange-foreign";
 import { ExchangeLimitNote, useResultParts } from "./exchange-result";
 
 const CARD =
@@ -28,12 +34,18 @@ const SOFT =
   "inline-flex h-10 items-center justify-center gap-2 rounded-2xl bg-[#eef1ff] px-4 text-[14px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[#e2e7ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:cursor-not-allowed disabled:opacity-50";
 const NOTE =
   "mt-5 rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[13px] leading-[1.5] text-[#6f7282]";
+const SECTION_TITLE = "text-[13px] font-medium text-[#3c4053]";
 
 /**
  * Карточка «Обмен справочниками» в «Настройки → Мастер-кабинеты» (AC6): кто
  * из организаций аккаунта в обмене и какими списками, когда и чем закончился
  * последний обмен; настроить связь, перенести один раз, синхронизировать
  * сейчас. Только владельцу аккаунта (`canManage` считает сервер).
+ *
+ * Обмен с чужими аккаунтами (спека org-exchange-foreign-2026-11-19, AC6):
+ * заявителю — его запросы, которые ждут решения, и связи с кабинетами других
+ * компаний; владельцу кабинета — входящие запросы («Открыть запрос») и
+ * участники из других аккаунтов с пометкой и «Отключить».
  */
 export function ExchangeCard({
   onChanged,
@@ -48,15 +60,19 @@ export function ExchangeCard({
   const [version, setVersion] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [state, setState] = useState<ExchangeState | null>(null);
+  const [foreign, setForeign] = useState<ForeignState | null>(null);
   const [dialog, setDialog] = useState<ExchangeMode | null>(null);
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    void loadExchangeState().then((next) => {
+    void loadExchangeState().then(async (next) => {
+      // Запросы и участники из других аккаунтов — только владельцу аккаунта.
+      const requests = next?.canManage ? await loadForeignState() : null;
       if (!alive) return;
       // Не удалось перечитать — оставляем то, что уже показано.
       if (next) setState(next);
+      if (requests) setForeign(requests);
       setLoaded(true);
     });
     return () => {
@@ -94,8 +110,20 @@ export function ExchangeCard({
   if (loaded && (!state || !state.canManage)) return null;
 
   const ownId = state?.organization.id ?? "";
-  const participants = state ? exchangeParticipants(state) : [];
+  const participants = state ? ownParticipants(state, foreign) : [];
+  const foreignMembers = foreign?.foreignMembers ?? [];
+  const incoming = foreign?.incoming ?? [];
+  const hasOutgoing = foreign ? pendingRequests(foreign).length + foreign.foreignLinks.length > 0 : false;
+  // Обмениваться не с кем, пока в обмене меньше двух организаций — своих и из других аккаунтов.
+  const exchanging = participants.length + foreignMembers.length;
   const lastSync = state?.lastSync ?? null;
+
+  /** Запрос отменён, связь разорвана или участник отключён: убираем запись сразу и перечитываем. */
+  function foreignRemoved(id: string) {
+    setForeign((current) => (current ? withoutForeign(current, id) : current));
+    setVersion((value) => value + 1);
+    onChanged?.();
+  }
 
   function lastLine(member: { organizationId: string; lastSyncedAt: string | null }): string {
     const at = member.lastSyncedAt ? new Date(member.lastSyncedAt) : null;
@@ -122,13 +150,9 @@ export function ExchangeCard({
           <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" aria-hidden />
           {t("card.loading")}
         </div>
-      ) : state.siblings.length === 0 ? (
-        <p className={NOTE} data-testid="exchange-card-empty">
-          {t("card.noSiblings")}
-        </p>
       ) : (
         <>
-          {participants.length > 0 ? (
+          {exchanging > 0 ? (
             <ul
               className="mt-5 divide-y divide-[#ececf4] overflow-hidden rounded-2xl border border-[#ececf4]"
               data-testid="exchange-members"
@@ -161,7 +185,14 @@ export function ExchangeCard({
                   </span>
                 </li>
               ))}
+              {foreignMembers.map((member) => (
+                <ForeignMemberRow key={member.id} member={member} onRemoved={foreignRemoved} />
+              ))}
             </ul>
+          ) : state.siblings.length === 0 ? (
+            <p className={NOTE} data-testid="exchange-card-empty">
+              {t("card.noSiblings")}
+            </p>
           ) : (
             <p className={NOTE} data-testid="exchange-card-not-configured">
               {t("card.notConfigured")}
@@ -177,31 +208,62 @@ export function ExchangeCard({
           ) : null}
           {summaryTotals(lastSync).skippedLimit > 0 ? <ExchangeLimitNote className="mt-3" /> : null}
 
+          {foreign && hasOutgoing ? (
+            // Заявителю: запросы в кабинеты других компаний и подтверждённые связи с ними.
+            <div className="mt-4" data-testid="exchange-foreign-outgoing">
+              <div className={SECTION_TITLE}>{t("foreign.card.outgoingTitle")}</div>
+              <ForeignOutgoing foreign={foreign} onRemoved={foreignRemoved} className="mt-2" />
+            </div>
+          ) : null}
+          {/* Владельцу кабинета: кто просит обмен. Решение — на странице запроса («Открыть запрос» или ссылка из письма). */}
+          <IncomingRequests incoming={incoming} className="mt-4" />
+          {/* Код, по которому другая компания присылает запрос на обмен. */}
+          <ExchangeCabinetCode
+            code={state.cabinetCode}
+            className="mt-4"
+            onCode={() => setVersion((value) => value + 1)}
+          />
+
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <button type="button" onClick={() => setDialog("link")} className={SOFT} data-testid="exchange-configure">
-              <SlidersHorizontal className="size-4" aria-hidden />
-              {t("card.configure")}
-            </button>
-            <button type="button" onClick={() => setDialog("transfer")} className={OUTLINE} data-testid="exchange-transfer">
-              <ArrowRightLeft className="size-4 text-[#5566f6]" aria-hidden />
-              {t("card.transferOnce")}
-            </button>
-            <button
-              type="button"
-              onClick={() => void sync()}
-              // Обмениваться не с кем, пока в связи меньше двух организаций.
-              disabled={syncing || participants.length < 2}
-              title={participants.length < 2 ? t("card.notConfigured") : undefined}
-              className={OUTLINE}
-              data-testid="exchange-sync"
-            >
-              {syncing ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <RefreshCw className="size-4 text-[#5566f6]" aria-hidden />
-              )}
-              {t("card.syncNow")}
-            </button>
+            {state.siblings.length === 0 && exchanging === 0 ? (
+              // Соседних организаций нет: в окне работает только запрос в мастер-кабинет другой компании.
+              <button type="button" onClick={() => setDialog("link")} className={SOFT} data-testid="exchange-foreign-open">
+                <ArrowRightLeft className="size-4" aria-hidden />
+                {t("foreign.card.request")}
+              </button>
+            ) : (
+              <>
+                <button type="button" onClick={() => setDialog("link")} className={SOFT} data-testid="exchange-configure">
+                  <SlidersHorizontal className="size-4" aria-hidden />
+                  {t("card.configure")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDialog("transfer")}
+                  className={OUTLINE}
+                  data-testid="exchange-transfer"
+                >
+                  <ArrowRightLeft className="size-4 text-[#5566f6]" aria-hidden />
+                  {t("card.transferOnce")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void sync()}
+                  // Обмениваться не с кем, пока в связи меньше двух организаций.
+                  disabled={syncing || exchanging < 2}
+                  title={exchanging < 2 ? t("card.notConfigured") : undefined}
+                  className={OUTLINE}
+                  data-testid="exchange-sync"
+                >
+                  {syncing ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <RefreshCw className="size-4 text-[#5566f6]" aria-hidden />
+                  )}
+                  {t("card.syncNow")}
+                </button>
+              </>
+            )}
           </div>
         </>
       )}

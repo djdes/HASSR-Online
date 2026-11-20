@@ -96,6 +96,47 @@ export const ENTITY_FIELDS = {
   equipment: ["name", "type", "serialNumber", "tempMin", "tempMax", "lampModel", "lampLifetimeHours"],
 } as const satisfies Record<ExchangeEntity, readonly string[]>;
 
+/**
+ * Состав полей (правило Р5 обмена между аккаунтами, 2026-11-19).
+ *   • `account` — все участники списка из одного аккаунта: `ENTITY_FIELDS`;
+ *   • `foreign` — среди участников списка есть организация другого аккаунта:
+ *     у сотрудника остаются только ФИО и должность (должность — родитель
+ *     записи). Телефон и выходные из аккаунта не уходят и не сравниваются.
+ * У остальных сущностей состав один.
+ */
+export const EXCHANGE_SCOPES = ["account", "foreign"] as const;
+export type ExchangeScope = (typeof EXCHANGE_SCOPES)[number];
+
+/** Чем состав `foreign` отличается от `ENTITY_FIELDS`. */
+export const FOREIGN_ENTITY_FIELDS = {
+  staff: ["name"],
+} as const satisfies Partial<Record<ExchangeEntity, readonly string[]>>;
+
+/**
+ * Отпечаток в составе `foreign` помечен: по строке видно, в каком составе он
+ * снят. Смена состава (в обмен вошла организация другого аккаунта или вышла
+ * из него) — не правка записи, и по метке обмен отличает одно от другого
+ * (`rebaseLinks` в plan.ts).
+ */
+export const FOREIGN_HASH_PREFIX = "f:";
+
+/** Состав, который действует у сущности: `foreign` — только там, где он свой. */
+export function entityScope(entity: ExchangeEntity, scope: ExchangeScope = "account"): ExchangeScope {
+  return scope === "foreign" && entity in FOREIGN_ENTITY_FIELDS ? "foreign" : "account";
+}
+
+/** Переносимые поля сущности в этом составе. */
+export function exchangedFields(entity: ExchangeEntity, scope: ExchangeScope = "account"): readonly string[] {
+  return entityScope(entity, scope) === "foreign"
+    ? FOREIGN_ENTITY_FIELDS[entity as keyof typeof FOREIGN_ENTITY_FIELDS]
+    : ENTITY_FIELDS[entity];
+}
+
+/** В каком составе снят отпечаток связи. */
+export function hashScope(entity: ExchangeEntity, hash: string): ExchangeScope {
+  return entity in FOREIGN_ENTITY_FIELDS && hash.startsWith(FOREIGN_HASH_PREFIX) ? "foreign" : "account";
+}
+
 export type ExchangeFieldValue = string | number | boolean | null | readonly number[];
 export type ExchangeFields = Record<string, ExchangeFieldValue | undefined>;
 
@@ -109,11 +150,18 @@ export function normalizeExchangeName(value: unknown): string {
  * других участников. `parentGroupId` — группа родителя (объекта помещения,
  * цеха оборудования, должности сотрудника). null — запись не обменивается:
  * пустое имя или обязательный родитель сам не участвует в обмене.
+ *
+ * `owner` — чья это запись (аккаунт организации); его передаёт обмен, в
+ * котором участвует организация другого аккаунта. Тогда люди сопоставляются
+ * по ФИО только внутри своего аккаунта: «Иванов Иван» одной компании и
+ * «Иванов Иван» другой — разные люди, и связывать их нельзя. Должности,
+ * объекты, цеха, оборудование и продукты совпадают по названию у всех.
  */
 export function naturalKey(
   entity: ExchangeEntity,
   fields: ExchangeFields,
   parentGroupId: string | null = null,
+  owner: string | null = null,
 ): string | null {
   const name = normalizeExchangeName(fields.name);
   if (!name) return null;
@@ -122,8 +170,9 @@ export function naturalKey(
   switch (entity) {
     case "product":
       return `${normalizeExchangeName(fields.kind) || "raw"}|${name}`;
-    case "position":
     case "staff":
+      return owner ? `${owner}|${name}` : name;
+    case "position":
     case "building":
       return name;
     case "room":
@@ -176,25 +225,43 @@ export function hashFields(fields: ExchangeFields): string {
   return cyrb53(text, 0x9e3779b1) + cyrb53(text, 0x85ebca6b);
 }
 
-/** Только переносимые поля сущности — лишние ключи отбрасываются. */
-export function pickExchangeFields(entity: ExchangeEntity, source: ExchangeFields): ExchangeFields {
+/**
+ * Только переносимые поля сущности — лишние ключи отбрасываются. В составе
+ * `foreign` телефона и выходных сотрудника в результате нет вовсе.
+ */
+export function pickExchangeFields(
+  entity: ExchangeEntity,
+  source: ExchangeFields,
+  scope: ExchangeScope = "account",
+): ExchangeFields {
   const picked: ExchangeFields = {};
-  for (const key of ENTITY_FIELDS[entity]) picked[key] = source[key] ?? null;
+  for (const key of exchangedFields(entity, scope)) picked[key] = source[key] ?? null;
   return picked;
 }
 
 /**
- * Отпечаток записи: переносимые поля и группа родителя. Перенос
- * оборудования в другой цех или сотрудника на другую должность — тоже
- * правка, которую получают остальные.
+ * Отпечаток записи: переносимые поля (в составе `scope`) и группа родителя.
+ * Перенос оборудования в другой цех или сотрудника на другую должность —
+ * тоже правка, которую получают остальные.
  *
  * У цеха родитель в отпечаток не входит: объект у него необязателен, и когда
  * список «Объекты» включают позже «Оборудования», группа объекта появляется
  * у всех цехов сразу — все они выглядели бы изменёнными, и цеха одной
  * организации переезжали бы на объекты другой. Цех остаётся там, где он есть.
  */
-export function rowHash(entity: ExchangeEntity, fields: ExchangeFields, parentGroupId: string | null = null): string {
-  return hashFields({ ...pickExchangeFields(entity, fields), "#parent": entity === "area" ? null : parentGroupId });
+export function rowHash(
+  entity: ExchangeEntity,
+  fields: ExchangeFields,
+  parentGroupId: string | null = null,
+  scope: ExchangeScope = "account",
+): string {
+  const hash = hashFields({
+    ...pickExchangeFields(entity, fields, scope),
+    "#parent": entity === "area" ? null : parentGroupId,
+  });
+  // Отпечаток внутри аккаунта — прежний, без метки: у обменов, где чужих
+  // организаций нет, не меняется ничего.
+  return entityScope(entity, scope) === "foreign" ? `${FOREIGN_HASH_PREFIX}${hash}` : hash;
 }
 
 /** Пустой счётчик по спискам — основа итогов и счётчиков окна. */

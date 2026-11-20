@@ -20,14 +20,19 @@ import {
   ENTITY_PARENT,
   EXCHANGE_ENTITIES,
   EXCHANGE_KINDS,
+  FOREIGN_HASH_PREFIX,
   KIND_ENTITIES,
   emptyKindRecord,
+  entityScope,
+  hashScope,
   normalizeExchangeKinds,
+  rowHash,
   type ExchangeEntity,
   type ExchangeKind,
+  type ExchangeScope,
   normalizeExchangeName,
 } from "@/lib/directory-exchange/kinds";
-import { planEntityExchange, type ExchangeLinkRow } from "@/lib/directory-exchange/plan";
+import { planEntityExchange, rebaseLinks, type ExchangeLinkRow } from "@/lib/directory-exchange/plan";
 import {
   emptyKindCounters,
   summaryTotals,
@@ -51,6 +56,21 @@ import { isOrganizationLocked } from "@/lib/org-trial.server";
  *
  * Отказ тарифа и занятое название не останавливают обмен: запись
  * пропускается, попадает в итог и пробуется снова при следующем обмене.
+ *
+ * Обмен с чужим аккаунтом (часть 3): участник с `foreign = true` добавлен
+ * подтверждённым запросом (`requests.server.ts`) и участвует в обмене
+ * кабинета, хотя его аккаунт другой. Пока среди участников списка
+ * «Сотрудники» есть такой, сотрудники обмениваются только как ФИО и должность
+ * (правило Р5, состав полей `foreign` в kinds.ts) — у всех участников списка.
+ * Ещё три правила для него:
+ *   • у кабинета одна чужая компания: списки расходятся по всем участникам,
+ *     и две компании, не договаривавшиеся друг с другом, получили бы записи
+ *     друг друга. Если чужих компаний почему-то две, обмен идёт только с
+ *     первой подключённой;
+ *   • её правки записей владельца не меняют (пассивный участник в plan.ts):
+ *     новые записи идут в обе стороны, правки — только от владельца к ней;
+ *   • люди двух компаний по ФИО не сопоставляются (`owner` в ключе
+ *     сотрудника): однофамильцы остаются каждый у себя.
  */
 
 export type ExchangeActor = { userId: string; userName: string | null };
@@ -79,8 +99,21 @@ export type ExchangeBatchResult = {
 };
 
 type SkipReason = "limit" | "conflict";
-type Participant = { organizationId: string; name: string; kinds: readonly ExchangeKind[] };
+type Participant = {
+  organizationId: string;
+  name: string;
+  kinds: readonly ExchangeKind[];
+  /** Организация другого аккаунта, добавленная подтверждённым запросом. */
+  foreign: boolean;
+  /** Чья организация: `exchangeAccountKey`. */
+  accountKey: string;
+};
 type LinkWrite = { groupId: string; organizationId: string; entityId: string | null; hash: string };
+
+/** Компания организации: её аккаунт, а у организации без аккаунта — она сама. */
+export function exchangeAccountKey(organization: { id: string; accountId: string | null }): string {
+  return organization.accountId ?? `org:${organization.id}`;
+}
 
 const LOCK_PREFIX = "directory-exchange";
 const TRANSFER_LOCK_PREFIX = "directory-transfer";
@@ -171,6 +204,13 @@ async function exchangeEntity(params: {
   const kind = ENTITY_KIND[entity];
   const parent = ENTITY_PARENT[entity];
   const organizationIds = participants.map((participant) => participant.organizationId);
+  // Р5: среди участников списка есть организация другого аккаунта — состав
+  // полей «между аккаунтами» действует для всех участников этого списка.
+  const foreign = participants.filter((participant) => participant.foreign);
+  const scope: ExchangeScope = entityScope(entity, foreign.length > 0 ? "foreign" : "account");
+  // Есть чужая компания — ключ записи несёт её владельца (у сотрудников):
+  // люди разных компаний по ФИО не сопоставляются.
+  const ownerOf = new Map(participants.map((participant) => [participant.organizationId, participant.accountKey]));
   const sharesObjects = new Set(
     participants.filter((participant) => participant.kinds.includes("objects")).map((participant) => participant.organizationId),
   );
@@ -205,20 +245,44 @@ async function exchangeEntity(params: {
     const groups = parentGroupOf.get(organizationId);
     return (id) => groups?.get(id) ?? null;
   };
+  const loadRows = (organizationId: string) =>
+    loadEntityRows(entity, organizationId, lookupFor(organizationId), scope, foreign.length > 0 ? ownerOf.get(organizationId) ?? null : null);
 
   const rows: Record<string, EntityRow[]> = {};
   const rowIndex = new Map<string, Map<string, EntityRow>>();
   for (const organizationId of organizationIds) {
-    rows[organizationId] = await loadEntityRows(entity, organizationId, lookupFor(organizationId));
+    rows[organizationId] = await loadRows(organizationId);
     rowIndex.set(organizationId, new Map(rows[organizationId].map((row) => [row.id, row])));
   }
 
-  const ops = planEntityExchange({ participants: organizationIds, rows, links, newGroupId: randomUUID });
-  if (ops.length === 0) return 0;
+  // Состав полей сменился с прошлого обмена (в список вошла организация
+  // другого аккаунта или вышла из него) — это не правка записей: связи
+  // переводятся на нынешний отпечаток, чужие телефоны никуда не едут.
+  const aligned = rebaseLinks({
+    rows,
+    links,
+    isCurrent: (hash) => hashScope(entity, hash) === scope,
+    // Прежний отпечаток «между аккаунтами» считается из тех же строк; прежний
+    // полный — нет: телефон и выходные сейчас не читаются.
+    hashLike: (row, linkHash) =>
+      scope === "account" ? rowHash(entity, row.fields, row.parentGroupId, hashScope(entity, linkHash)) : null,
+  });
+
+  const ops = planEntityExchange({
+    participants: organizationIds,
+    rows,
+    links: aligned.links,
+    // Правки чужой компании записей владельца не меняют.
+    passive: foreign.map((participant) => participant.organizationId),
+    newGroupId: randomUUID,
+  });
+  if (ops.length === 0 && aligned.rebased.length === 0) return 0;
 
   const linkKey = (groupId: string, organizationId: string) => `${groupId}\u0000${organizationId}`;
   const stored = new Map<string, ExchangeLinkRow>(links.map((link) => [linkKey(link.groupId, link.organizationId), link]));
   const writes = new Map<string, LinkWrite>();
+  // Сначала переведённые связи; операции плана ниже пишут поверх них.
+  for (const link of aligned.rebased) writes.set(linkKey(link.groupId, link.organizationId), { ...link });
   /** Связи, появившиеся в этом же плане: при неудачной правке откатываются. */
   const fresh = new Set<string>();
   /** Группы, где правка дошла не до всех: образец остаётся «изменённым» до следующего обмена. */
@@ -275,6 +339,7 @@ async function exchangeEntity(params: {
         outcome = await createEntityRow(entity, op.organizationId, source, parentId, {
           // Помещения участника, который обменивается объектами, приходят обменом.
           mirrorRoom: !sharesObjects.has(op.organizationId),
+          scope,
         });
       } catch (error) {
         console.error("[directory-exchange] create failed", { entity, organizationId: op.organizationId, error });
@@ -299,7 +364,7 @@ async function exchangeEntity(params: {
       parent && typeof knownParent === "string" && target?.parentGroupId !== parentGroupId ? knownParent : undefined;
     let outcome: UpdateOutcome;
     try {
-      outcome = await updateEntityRow(entity, op.organizationId, op.entityId, source, parentId);
+      outcome = await updateEntityRow(entity, op.organizationId, op.entityId, source, parentId, { scope });
     } catch (error) {
       console.error("[directory-exchange] update failed", { entity, organizationId: op.organizationId, error });
       notes.add(FAILED_NOTE);
@@ -332,7 +397,7 @@ async function exchangeEntity(params: {
   // (телефон мог привестись к формату, цех — получить другой объект): иначе
   // получатель выглядел бы «изменённым» и гонял правку обратно.
   for (const [organizationId, ids] of touched) {
-    const actual = new Map((await loadEntityRows(entity, organizationId, lookupFor(organizationId))).map((row) => [row.id, row]));
+    const actual = new Map((await loadRows(organizationId)).map((row) => [row.id, row]));
     for (const write of writes.values()) {
       if (write.organizationId !== organizationId || !write.entityId || !ids.has(write.entityId)) continue;
       const row = actual.get(write.entityId);
@@ -367,6 +432,46 @@ async function exchangeEntity(params: {
   return changes;
 }
 
+/**
+ * Список «Сотрудники» переходит в состав «между аккаунтами» (Р5): среди его
+ * участников появилась организация другого аккаунта — её подтвердили,
+ * открыли после оплаты или сняли с паузы, — а связи своих организаций ещё
+ * хранят полный отпечаток (с телефоном и выходными).
+ *
+ * Полный отпечаток в суженном составе пересчитать нельзя (телефон не
+ * читается), поэтому при переходе записи считаются неизменёнными
+ * (`rebaseLinks`). Чтобы правка, сделанная прямо перед переходом, не
+ * потерялась, свои организации сначала обмениваются между собой как обычно:
+ * должности и сотрудники, с телефонами — и только внутри аккаунта кабинета.
+ * После перехода связи суженные, и этот шаг больше не срабатывает.
+ */
+async function settleStaffBeforeForeign(params: {
+  masterOrganizationId: string;
+  participants: readonly Participant[];
+  tally: Tally;
+  blocked: Map<string, SkipReason>;
+  notes: Set<string>;
+}): Promise<void> {
+  const sharing = params.participants.filter((participant) => participant.kinds.includes("staff"));
+  if (!sharing.some((participant) => participant.foreign)) return;
+  const own = sharing.filter((participant) => !participant.foreign);
+  if (own.length < 2) return;
+  const pending = await db.directoryExchangeLink.findFirst({
+    where: {
+      masterOrganizationId: params.masterOrganizationId,
+      entity: "staff",
+      organizationId: { in: own.map((participant) => participant.organizationId) },
+      entityId: { not: null },
+      NOT: { hash: { startsWith: FOREIGN_HASH_PREFIX } },
+    },
+    select: { id: true },
+  });
+  if (!pending) return;
+  for (const entity of KIND_ENTITIES.staff) {
+    await exchangeEntity({ ...params, entity, participants: own });
+  }
+}
+
 async function exchangeUnderLock(
   masterOrganizationId: string,
   actor: ExchangeActor | null,
@@ -383,30 +488,49 @@ async function exchangeUnderLock(
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: {
       kinds: true,
+      foreign: true,
       organization: { select: { id: true, name: true, accountId: true, isDemo: true, kind: true, subscriptionPlan: true } },
     },
   });
 
   const notes = new Set<string>();
   const participants: Participant[] = [];
+  // Чужая компания у кабинета одна — та, что подключена первой (участники
+  // идут от ранних к поздним). Подтверждение запроса вторую не пропускает
+  // (`requests.server.ts`); если она всё же есть — в обмене не участвует:
+  // иначе две компании получили бы записи друг друга.
+  let foreignCompany: { key: string; name: string } | null = null;
   for (const member of members) {
     const organization = member.organization;
     const kinds = normalizeExchangeKinds(member.kinds);
     if (kinds.length === 0) continue;
-    // Только организации аккаунта кабинета; демо и сами кабинеты — никогда.
-    if (organization.accountId !== cabinet.accountId || organization.isDemo || organization.kind === MASTER_ORG_KIND) continue;
+    // Организации аккаунта кабинета и те, кого владелец кабинета сам
+    // подтвердил по запросу (`foreign`); демо и сами кабинеты — никогда.
+    if (organization.accountId !== cabinet.accountId && !member.foreign) continue;
+    if (organization.isDemo || organization.kind === MASTER_ORG_KIND) continue;
+    const accountKey = exchangeAccountKey(organization);
+    if (member.foreign && organization.accountId !== cabinet.accountId) {
+      if (!foreignCompany) foreignCompany = { key: accountKey, name: organization.name };
+      else if (foreignCompany.key !== accountKey) {
+        notes.add(
+          `Организация «${organization.name}» в обмене не участвовала: кабинет уже связан с компанией «${foreignCompany.name}», а с двумя компаниями сразу обмен не ведётся.`,
+        );
+        continue;
+      }
+    }
     // На паузе или отменена — как и остальная автоматика, обмен её не трогает.
     if (isInactivePlan(organization.subscriptionPlan)) continue;
     if (await isOrganizationLocked(organization.id, now)) {
       notes.add(`Организация «${organization.name}» закрыта до оплаты точки и в обмене не участвовала.`);
       continue;
     }
-    participants.push({ organizationId: organization.id, name: organization.name, kinds });
+    participants.push({ organizationId: organization.id, name: organization.name, kinds, foreign: member.foreign, accountKey });
   }
 
   const tally = new Tally();
   const blocked = new Map<string, SkipReason>();
   if (participants.length >= 2) {
+    await settleStaffBeforeForeign({ masterOrganizationId, participants, tally, blocked, notes });
     for (let pass = 0; pass < MAX_PASSES; pass += 1) {
       let changes = 0;
       for (const entity of EXCHANGE_ENTITIES) {
@@ -427,18 +551,39 @@ async function exchangeUnderLock(
     notes: [...notes],
   };
 
+  // Итог целиком — у участников своего аккаунта. У участника из другого
+  // аккаунта в его строке остаётся только его собственная часть: названия
+  // организаций владельца кабинета и пояснения о них ему не предназначены.
   await db.directoryExchangeMember.updateMany({
-    where: { masterOrganizationId },
+    where: { masterOrganizationId, foreign: false },
     data: { lastSyncedAt: now, lastSyncJson: summary as unknown as Prisma.InputJsonObject },
   });
+  const foreignMembers = await db.directoryExchangeMember.findMany({
+    where: { masterOrganizationId, foreign: true },
+    select: { id: true, organizationId: true },
+  });
+  for (const member of foreignMembers) {
+    const own: ExchangeSummary = {
+      organizations: summary.organizations.filter((organization) => organization.organizationId === member.organizationId),
+      notes: [],
+    };
+    await db.directoryExchangeMember.update({
+      where: { id: member.id },
+      data: { lastSyncedAt: now, lastSyncJson: own as unknown as Prisma.InputJsonObject },
+    });
+  }
+  const foreignIds = new Set(participants.filter((participant) => participant.foreign).map((participant) => participant.organizationId));
   for (const organization of summary.organizations) {
     if (!hasCounters(organization.kinds)) continue;
+    const isForeign = foreignIds.has(organization.organizationId);
     await writeAudit({
       organizationId: organization.organizationId,
-      actor,
+      // Обмен запускает владелец кабинета: в журнал организации другого
+      // аккаунта не пишутся ни его имя, ни id его кабинета.
+      actor: isForeign ? null : actor,
       action: "directory_exchange.synced",
       details: {
-        masterOrganizationId,
+        ...(isForeign ? { crossAccount: true } : { masterOrganizationId }),
         trigger: actor ? "manual" : "schedule",
         kinds: organization.kinds as unknown as Prisma.InputJsonObject,
       },
@@ -448,8 +593,31 @@ async function exchangeUnderLock(
 }
 
 /**
- * Обмен справочниками кабинета: участники — организации аккаунта кабинета с
- * отмеченными списками, кроме закрытых после своих 14 дней. Одновременно
+ * Работа под замком обмена кабинета: тем же, под которым идёт сам обмен.
+ * Отключение участника берёт его, чтобы дождаться идущего обмена, а не
+ * удалять связи у него из-под рук. Замок занят дольше ожидания —
+ * `DirectoryExchangeError` 409 (`EXCHANGE_BUSY_CODE`), ничего не сделано.
+ * Внутри `fn` обмен этого кабинета запускать нельзя: он ждал бы сам себя.
+ */
+export async function withExchangeLock<T>(
+  masterOrganizationId: string,
+  fn: () => Promise<T>,
+  options: { waitMs?: number } = {},
+): Promise<T> {
+  const delayMs = 250;
+  const locked = await withAdvisoryTryLock(advisoryLockKey(LOCK_PREFIX, masterOrganizationId), fn, {
+    attempts: Math.max(1, Math.ceil((options.waitMs ?? 4_000) / delayMs)),
+    delayMs,
+    timeoutMs: 60_000,
+  });
+  if (!locked.acquired) throw new DirectoryExchangeError(BUSY_MESSAGE, 409, EXCHANGE_BUSY_CODE);
+  return locked.value;
+}
+
+/**
+ * Обмен справочниками кабинета: участники — организации аккаунта кабинета и
+ * подтверждённые организации других аккаунтов (`foreign`) с отмеченными
+ * списками, кроме закрытых после своих 14 дней. Одновременно
  * идёт один обмен на кабинет; занято — `DirectoryExchangeError` 409.
  * `actor` — кто запустил вручную; без него обмен считается плановым.
  */
@@ -515,8 +683,19 @@ function transferMaps(): TransferMaps {
   };
 }
 
-/** Обе организации — рабочие организации одного аккаунта, ни одна не закрыта. */
-async function loadTransferPair(fromOrganizationId: string, toOrganizationId: string, now: Date) {
+/**
+ * Обе организации — рабочие, ни одна не закрыта, и они из одного аккаунта.
+ * Пара из разных аккаунтов проходит только с `crossAccount` — его передаёт
+ * один вызывающий: подтверждение запроса владельцем кабинета
+ * (`requests.server.ts`). `scope` — состав полей переноса: между аккаунтами
+ * сотрудники идут только как ФИО и должность (Р5).
+ */
+async function loadTransferPair(
+  fromOrganizationId: string,
+  toOrganizationId: string,
+  now: Date,
+  options: { crossAccount?: boolean } = {},
+) {
   if (fromOrganizationId === toOrganizationId) throw new DirectoryExchangeError("Выберите другую организацию", 400);
   const organizations = await db.organization.findMany({
     where: { id: { in: [fromOrganizationId, toOrganizationId] }, isDemo: false, ...NOT_DIRECTORY_ORG_WHERE },
@@ -524,7 +703,9 @@ async function loadTransferPair(fromOrganizationId: string, toOrganizationId: st
   });
   const from = organizations.find((organization) => organization.id === fromOrganizationId);
   const to = organizations.find((organization) => organization.id === toOrganizationId);
-  if (!from || !to || !from.accountId || from.accountId !== to.accountId) {
+  if (!from || !to) throw new DirectoryExchangeError("Организация не найдена", 404);
+  const sameAccount = Boolean(from.accountId) && from.accountId === to.accountId;
+  if (!sameAccount && options.crossAccount !== true) {
     throw new DirectoryExchangeError("Организация не найдена", 404);
   }
   for (const organization of [to, from]) {
@@ -532,8 +713,13 @@ async function loadTransferPair(fromOrganizationId: string, toOrganizationId: st
       throw new DirectoryExchangeError(ORG_LOCKED_MESSAGE, 409, ORG_LOCKED_CODE);
     }
   }
-  return { from, to };
+  const scope: ExchangeScope = sameAccount ? "account" : "foreign";
+  // Между аккаунтами люди по ФИО не сопоставляются: ключ сотрудника несёт владельца.
+  const owners = sameAccount ? null : { from: exchangeAccountKey(from), to: exchangeAccountKey(to) };
+  return { from, to, scope, owners };
 }
+
+type TransferOwners = { from: string; to: string } | null;
 
 /**
  * Строки источника и какие из них у получателя уже есть. Связь при переносе
@@ -545,6 +731,8 @@ async function matchTransferEntity(
   fromOrganizationId: string,
   toOrganizationId: string,
   state: TransferState,
+  scope: ExchangeScope,
+  owners: TransferOwners,
 ): Promise<{ fromRows: EntityRow[]; exists: Set<string> }> {
   const parent = ENTITY_PARENT[entity];
   const fromLookup: ParentGroupLookup = !parent
@@ -556,8 +744,8 @@ async function matchTransferEntity(
         (id) => (state.toEntityOf[parent.entity].has(id) ? id : null);
   const toLookup: ParentGroupLookup = parent ? (id) => state.toGroupOf[parent.entity].get(id) ?? null : () => null;
   const [fromRows, toRows] = await Promise.all([
-    loadEntityRows(entity, fromOrganizationId, fromLookup),
-    loadEntityRows(entity, toOrganizationId, toLookup),
+    loadEntityRows(entity, fromOrganizationId, fromLookup, scope, owners?.from ?? null),
+    loadEntityRows(entity, toOrganizationId, toLookup, scope, owners?.to ?? null),
   ]);
   const toByKey = new Map<string, EntityRow>();
   for (const row of toRows) if (row.key !== null && !toByKey.has(row.key)) toByKey.set(row.key, row);
@@ -572,13 +760,20 @@ async function matchTransferEntity(
   return { fromRows, exists };
 }
 
-/** Что можно перенести из организации и что у получателя уже есть. */
+/**
+ * Что можно перенести из организации и что у получателя уже есть.
+ * `crossAccount` — разрешить пару из разных аккаунтов (см. `loadTransferPair`);
+ * без него чужая организация — 404, как раньше.
+ */
 export async function transferPreview(input: {
   fromOrganizationId: string;
   toOrganizationId: string;
+  crossAccount?: boolean;
   now?: Date;
 }): Promise<TransferPreview> {
-  await loadTransferPair(input.fromOrganizationId, input.toOrganizationId, input.now ?? new Date());
+  const { scope, owners } = await loadTransferPair(input.fromOrganizationId, input.toOrganizationId, input.now ?? new Date(), {
+    crossAccount: input.crossAccount,
+  });
   const state: TransferState = { toGroupOf: transferMaps(), toEntityOf: transferMaps() };
   const byEntity = new Map<ExchangeEntity, TransferItem[]>();
   // Люди и продукты, которых обмен «не видит» (с входом, в архиве, выключенные),
@@ -593,7 +788,7 @@ export async function transferPreview(input: {
     product: new Set(products.map((row) => normalizeExchangeName(row.name))),
   };
   for (const entity of EXCHANGE_ENTITIES) {
-    const { fromRows, exists } = await matchTransferEntity(entity, input.fromOrganizationId, input.toOrganizationId, state);
+    const { fromRows, exists } = await matchTransferEntity(entity, input.fromOrganizationId, input.toOrganizationId, state, scope, owners);
     const parent = ENTITY_PARENT[entity];
     const taken = takenNames[entity];
     byEntity.set(
@@ -629,16 +824,24 @@ export async function transferPreview(input: {
  * Связь не сохраняется; запись, которая у получателя уже есть (по
  * естественному ключу), пропускается и в итог не попадает; родители
  * подтягиваются сами. В итоге `updated` всегда 0.
+ *
+ * `crossAccount` — разрешить пару из разных аккаунтов: его передаёт только
+ * подтверждение запроса владельцем кабинета. Тогда `actor` — владелец
+ * источника, сотрудники переносятся как ФИО и должность (Р5), а в журнал
+ * получателя имя `actor` не пишется. Без параметра чужая организация — 404.
  */
 export async function transferOnce(input: {
   fromOrganizationId: string;
   toOrganizationId: string;
   selection: TransferSelection;
   actor: ExchangeActor;
+  crossAccount?: boolean;
   now?: Date;
 }): Promise<ExchangeSummary> {
   const { fromOrganizationId, toOrganizationId, actor } = input;
-  const { from, to } = await loadTransferPair(fromOrganizationId, toOrganizationId, input.now ?? new Date());
+  const { from, to, scope, owners } = await loadTransferPair(fromOrganizationId, toOrganizationId, input.now ?? new Date(), {
+    crossAccount: input.crossAccount,
+  });
 
   // Что выбрано по каждой сущности: всё или отмеченные записи.
   const wanted = new Map<ExchangeEntity, Set<string> | "all">();
@@ -656,7 +859,7 @@ export async function transferOnce(input: {
     const chosen = wanted.get(entity);
     const parents = parent?.required ? wanted.get(parent.entity) : undefined;
     if (!chosen || chosen === "all" || !parents || parents === "all") continue;
-    for (const row of await loadEntityRows(entity, fromOrganizationId)) {
+    for (const row of await loadEntityRows(entity, fromOrganizationId, undefined, scope)) {
       if (chosen.has(row.id) && row.parentId) parents.add(row.parentId);
     }
   }
@@ -670,7 +873,7 @@ export async function transferOnce(input: {
       /** Не созданные записи источника → причина (для потомков). */
       const blocked = new Map<string, SkipReason>();
       for (const entity of EXCHANGE_ENTITIES) {
-        const { fromRows, exists } = await matchTransferEntity(entity, fromOrganizationId, toOrganizationId, state);
+        const { fromRows, exists } = await matchTransferEntity(entity, fromOrganizationId, toOrganizationId, state, scope, owners);
         const chosen = wanted.get(entity);
         if (!chosen) continue;
         const kind = ENTITY_KIND[entity];
@@ -697,7 +900,7 @@ export async function transferOnce(input: {
 
           let outcome: CreateOutcome;
           try {
-            outcome = await createEntityRow(entity, toOrganizationId, row, parentId);
+            outcome = await createEntityRow(entity, toOrganizationId, row, parentId, { scope });
           } catch (error) {
             console.error("[directory-exchange] transfer failed", { entity, toOrganizationId, error });
             notes.add("Часть записей не удалось перенести из-за ошибки — повторите перенос.");
@@ -724,16 +927,24 @@ export async function transferOnce(input: {
     organizations: [{ organizationId: to.id, name: to.name, kinds }],
     notes: [...notes],
   };
-  const details = {
-    fromOrganizationId: from.id,
-    fromOrganizationName: from.name,
+  const received = {
     toOrganizationId: to.id,
     toOrganizationName: to.name,
     lists: EXCHANGE_KINDS.filter((kind) => input.selection[kind] !== undefined),
     kinds: kinds as unknown as Prisma.InputJsonObject,
+    ...(scope === "foreign" ? { crossAccount: true } : {}),
   };
-  // В журнале обеих сторон: куда пришли данные и откуда их взяли.
-  await writeAudit({ organizationId: to.id, actor, action: "directory_exchange.transferred", details });
+  const details = { fromOrganizationId: from.id, fromOrganizationName: from.name, ...received };
+  // В журнале обеих сторон: куда пришли данные и откуда их взяли. Между
+  // аккаунтами перенос запускает владелец источника — получателю чужие и он
+  // сам, и его организация: в журнал получателя не пишутся ни имя, ни
+  // название и id источника.
+  await writeAudit({
+    organizationId: to.id,
+    actor: scope === "foreign" ? null : actor,
+    action: "directory_exchange.transferred",
+    details: scope === "foreign" ? received : details,
+  });
   await writeAudit({ organizationId: from.id, actor, action: "directory_exchange.transferred", details });
   return summary;
 }

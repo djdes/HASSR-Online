@@ -18,6 +18,18 @@
  *   • запись со связью исчезла — «надгробие»: связь остаётся с пустым
  *     `entityId`, запись у удалившего не создаётся заново, у остальных живёт;
  *   • сразу после применения плана повторный план пуст.
+ *
+ * Пассивный участник (`passive`) — организация другого аккаунта, которую
+ * владелец кабинета подключил по запросу. Новые записи идут в обе стороны, а
+ * правки — только от организаций владельца к ней:
+ *   • правка пассивного участника не считается правкой: никому не
+ *     разносится, операций не даёт ни сейчас, ни при следующих обменах — его
+ *     запись просто остаётся своей;
+ *   • образцом для `update` пассивный участник не бывает никогда; правку
+ *     организации владельца получают все, и запись пассивного участника она
+ *     перезаписывает, когда бы тот её ни менял;
+ *   • образцом для `create` его запись быть может: новая запись пассивного
+ *     участника создаётся у остальных, как у любого другого.
  */
 
 export type ExchangeRow = {
@@ -65,6 +77,8 @@ export type PlanEntityExchangeInput = {
   rows: Readonly<Record<string, readonly ExchangeRow[]>>;
   /** Связи этой сущности; связи не участников игнорируются. */
   links: readonly ExchangeLinkRow[];
+  /** Пассивные участники: их правки чужих записей не меняют (см. выше). */
+  passive?: readonly string[];
   newGroupId: () => string;
 };
 
@@ -88,6 +102,7 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
   const participants = [...new Set(input.participants)];
   if (participants.length < 2) return [];
   const order = new Map(participants.map((id, index) => [id, index]));
+  const passive = new Set(input.passive ?? []);
 
   const rowsByOrg = new Map<string, Map<string, ExchangeRow>>();
   for (const organizationId of participants) {
@@ -164,12 +179,19 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
 
     const latest = (list: typeof live) =>
       list.reduce((best, member) => (timeOf(member.row) > timeOf(best.row) ? member : best), list[0]);
-    const changed = live.filter((member) => member.link !== null && member.link.hash !== member.row.hash);
+    const isActive = (member: Member) => !passive.has(member.organizationId);
+    const active = live.filter(isActive);
+    // Правка пассивного участника правкой не считается — см. описание выше.
+    const changed = active.filter((member) => member.link !== null && member.link.hash !== member.row.hash);
     const established = live.filter((member) => member.link !== null);
     // Образец: изменённая запись (поздняя из нескольких); правок нет — запись
     // давнего участника; группа новая — самая свежая запись. Без правки
-    // образец нужен только тем, у кого записи ещё нет.
-    const canonical = changed.length > 0 ? latest(changed) : established.length > 0 ? established[0] : latest(live);
+    // образец нужен только тем, у кого записи ещё нет. Запись пассивного
+    // участника — образец, только когда других записей в группе нет.
+    const canonical =
+      changed.length > 0
+        ? latest(changed)
+        : established.find(isActive) ?? (established.length > 0 ? established[0] : latest(active.length > 0 ? active : live));
     const canonicalChanged = changed.length > 0;
     const source = { fromOrganizationId: canonical.organizationId, fromEntityId: canonical.row.id, hash: canonical.row.hash };
 
@@ -203,4 +225,59 @@ export function planEntityExchange(input: PlanEntityExchangeInput): ExchangeOp[]
     ...linksOps,
     ...changes,
   ];
+}
+
+export type RebasedLink = { groupId: string; organizationId: string; entityId: string; hash: string };
+
+/**
+ * Связи, чей отпечаток снят в другом составе полей, чем сейчас (правило Р5:
+ * в список вошла организация другого аккаунта — у сотрудников остались ФИО и
+ * должность — или вышла из него). Смена состава — не правка: без этой
+ * подготовки планировщик счёл бы изменённой каждую запись и начал бы
+ * переписывать записи соседей по записи первого участника.
+ *
+ *   • отпечаток записи в прежнем составе совпал с отпечатком связи — запись
+ *     не меняли: связь переводится на нынешний отпечаток (`rebased`), план
+ *     её не трогает;
+ *   • не совпал — запись меняли на самом деле: связь остаётся как есть, и
+ *     планировщик разносит правку (уже в нынешнем составе полей);
+ *   • прежний отпечаток посчитать нельзя (`hashLike` вернул null: в составе
+ *     «между аккаунтами» телефон и выходные не читаются) — запись считается
+ *     неизменённой: молчаливо потерянная правка лучше затёртых данных, а
+ *     обмен перед такой сменой состава сначала проводит обычный обмен между
+ *     своими организациями (`settleStaffBeforeForeign` в run.server.ts).
+ *
+ * Чистая функция; `rebased` вызывающий записывает вместе с итогом плана.
+ */
+export function rebaseLinks<Row extends ExchangeRow>(input: {
+  rows: Readonly<Record<string, readonly Row[]>>;
+  links: readonly ExchangeLinkRow[];
+  /** Отпечаток связи снят в нынешнем составе полей. */
+  isCurrent: (hash: string) => boolean;
+  /** Отпечаток записи в том составе, в каком снят отпечаток связи; null — посчитать нельзя. */
+  hashLike: (row: Row, linkHash: string) => string | null;
+}): { links: ExchangeLinkRow[]; rebased: RebasedLink[] } {
+  const rowsByOrg = new Map<string, Map<string, Row>>();
+  const rowOf = (organizationId: string, entityId: string): Row | null => {
+    let byId = rowsByOrg.get(organizationId);
+    if (!byId) {
+      byId = new Map();
+      for (const row of input.rows[organizationId] ?? []) if (!byId.has(row.id)) byId.set(row.id, row);
+      rowsByOrg.set(organizationId, byId);
+    }
+    return byId.get(entityId) ?? null;
+  };
+
+  const rebased: RebasedLink[] = [];
+  const links = input.links.map((link) => {
+    if (!link.entityId || input.isCurrent(link.hash)) return link;
+    const row = rowOf(link.organizationId, link.entityId);
+    // Записи нет — это надгробие, отпечаток ему не нужен.
+    if (!row) return link;
+    const before = input.hashLike(row, link.hash);
+    if (before !== null && before !== link.hash) return link;
+    rebased.push({ groupId: link.groupId, organizationId: link.organizationId, entityId: link.entityId, hash: row.hash });
+    return { ...link, hash: row.hash };
+  });
+  return { links, rebased };
 }
