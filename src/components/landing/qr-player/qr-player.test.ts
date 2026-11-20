@@ -247,12 +247,65 @@ test("хром 19.11.2026: стрелки глав, PDF рядом с видео
   const scene = read("src/components/landing/qr-player/scene.tsx");
   assert.doesNotMatch(scene, /DEMO\.org/, "название организации — из словаря");
   assert.equal(scene.match(/tr\("demo\.org"\)/g)?.length, 3, "шапка формы, наклейка и штамп бланка");
-  // Блок на главной: «QR-код» без «на оборудовании», три шага вместо абзаца.
-  assert.equal(messages.landing.qrEquipmentTitle, "QR-код");
-  assert.doesNotMatch(messages.qrPlayer.chrome.watchVideoHint, /оборудовани/);
+  // Блок на главной: три шага вместо абзаца.
   const page = read("src/app/page.tsx");
   assert.ok(page.includes("QR_SCAN_STEPS.map"), "три шага");
   assert.doesNotMatch(page, /landing\.qrScanDescription/, "абзаца-описания больше нет");
+});
+
+test("блок QR 20.11.2026: без «QR-код», шаги с жирным, плашка «без интернета», кнопки под роликом", () => {
+  const page = read("src/app/page.tsx");
+  assert.doesNotMatch(page, /landing\.qrEquipmentTitle/, "надстрочника «QR-код» нет");
+  assert.equal((messages.landing as Record<string, unknown>).qrEquipmentTitle, undefined);
+  assert.deepEqual(
+    { ...messages.landing.qrScanSteps },
+    {
+      label: "Шаг {step, number}",
+      scan: "Сотрудник **отсканировал** QR-код",
+      pin: "Выбор сотрудника и **ввод PIN**",
+      entry: "Ввёл данные — **запись в журнал**",
+    },
+  );
+  assert.equal(messages.landing.qrOffline, "Может работать без интернета");
+  // Плашка — после списка шагов и вне колонки max-w: во всю ширину блока.
+  const steps = page.indexOf("QR_SCAN_STEPS.map");
+  const offline = page.indexOf("data-qr-offline");
+  const player = page.indexOf("<QrIndustryPlayer");
+  assert.ok(steps > 0 && offline > steps && player > offline, "шаги → плашка → ролик");
+  assert.ok(page.includes('{copy("landing.qrOffline")}'));
+  // Подписи «Пример для общепита… Включите звук.» нет ни под кнопкой, ни в подсказке.
+  assert.equal((messages.qrPlayer.chrome as Record<string, unknown>).watchVideoHint, undefined);
+  for (const file of ["qr-player.tsx", "video-lightbox.tsx", "qr-industry-player.tsx"]) {
+    assert.doesNotMatch(read(`src/components/landing/qr-player/${file}`), /watchVideoHint/, file);
+  }
+  // Видео и PDF — под сценой и «Попробуйте сами», а не над вкладками глав.
+  const source = read("src/components/landing/qr-player/qr-player.tsx");
+  const render = source.slice(source.indexOf("data-qr-player=\"\""));
+  const nav = render.indexOf("<nav");
+  const stage = render.indexOf("data-qr-stage");
+  const tryPanel = render.indexOf('id="qrp-try-panel"');
+  const media = render.indexOf("<QrMediaButtons");
+  assert.ok(nav >= 0 && stage > nav && tryPanel > stage && media > tryPanel, "главы → сцена → «Попробуйте сами» → видео и PDF");
+});
+
+test("вкладки вида деятельности: общепит по умолчанию, медцентр и отель — «в разработке»", () => {
+  const source = read("src/components/landing/qr-player/qr-industry-player.tsx");
+  assert.ok(source.includes('role="tablist"') && source.includes('role="tab"'), "вкладки");
+  assert.ok(source.includes("useState<QrIndustry>(DEFAULT_QR_INDUSTRY)"), "по умолчанию — общепит");
+  assert.ok(source.includes("data-qr-industry-pending"), "плашка «в разработке»");
+  assert.ok(source.includes("<QrMediaButtons video={media.video} presentation={media.presentation} />"), "у вида свои видео и PDF");
+  for (const catalog of ["ru", "en", "uz"]) {
+    const industries = JSON.parse(read(`src/i18n/messages/${catalog}.json`)).qrPlayer.industries;
+    for (const key of ["label", "pendingBadge", "pendingText", "pendingBack"]) assert.ok(industries[key]?.length > 0, `${catalog}: ${key}`);
+    for (const id of ["food", "medical", "hotel"]) {
+      for (const key of ["label", "short", "pending"]) assert.ok(industries[id]?.[key]?.length > 0, `${catalog}: ${id}.${key}`);
+      assert.ok(industries[id].short.length <= 11, `${catalog}: «${industries[id].short}» не влезет в треть строки телефона`);
+    }
+  }
+  assert.deepEqual(
+    [messages.qrPlayer.industries.food.label, messages.qrPlayer.industries.medical.label, messages.qrPlayer.industries.hotel.label],
+    ["Общепит", "Медицинский центр", "Отель"],
+  );
 });
 
 test("напоминания 12:00 / 17:00 / 21:00 — ступени крона compliance", () => {

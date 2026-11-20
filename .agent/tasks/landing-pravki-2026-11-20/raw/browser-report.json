@@ -1,0 +1,418 @@
+{
+  "phone-light": {
+    "eyebrowQrCode": false,
+    "h2": "Скан — PIN — Запись",
+    "steps": [
+      {
+        "text": "ШАГ 1 Сотрудник отсканировал QR-код",
+        "bold": [
+          "отсканировал"
+        ]
+      },
+      {
+        "text": "ШАГ 2 Выбор сотрудника и ввод PIN",
+        "bold": [
+          "ввод PIN"
+        ]
+      },
+      {
+        "text": "ШАГ 3 Ввёл данные — запись в журнал",
+        "bold": [
+          "запись в журнал"
+        ]
+      },
+      {
+        "text": "Скан наклейки",
+        "bold": []
+      },
+      {
+        "text": "Кто заполняет Иванова А.",
+        "bold": []
+      },
+      {
+        "text": "PIN • • • •",
+        "bold": []
+      },
+      {
+        "text": "Температура 4,0 °C",
+        "bold": []
+      },
+      {
+        "text": "5 Сохранить замер 08:41",
+        "bold": []
+      }
+    ],
+    "offlineText": "Может работать без интернета",
+    "offlineWidth": 324,
+    "cardInnerWidth": 358,
+    "hintPresent": false,
+    "mediaBelowStage": true,
+    "tabsAboveChapters": true,
+    "tabs": [
+      {
+        "text": "Общепит",
+        "selected": "true",
+        "scrollW": 103,
+        "clientW": 103
+      },
+      {
+        "text": "Медцентр",
+        "selected": "false",
+        "scrollW": 103,
+        "clientW": 103
+      },
+      {
+        "text": "Отель",
+        "selected": "false",
+        "scrollW": 103,
+        "clientW": 103
+      }
+    ],
+    "mediaButtons": [
+      "Видео со звуком",
+      "PDF"
+    ],
+    "medical": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для медицинского центра Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "hotel": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для отеля Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "backToFood": "food",
+    "interface": {
+      "h2": "Кабинет руководителя",
+      "lead": null
+    },
+    "dockIcon": "lucide lucide-message-circle size-[22px] text-[#8e9bf8]",
+    "dialog": {
+      "title": "Контакты",
+      "fontSize": "54.6px",
+      "titleW": 308,
+      "titleClientW": 308,
+      "titleLines": 1,
+      "text": "Закрыть Контакты Поддержка Отдел продаж Консалтинг @wesetup_support Поддержка в Telegram MAX Ответим в мессенджере MAX Чат на сайте Ответим здесь же, в окне чата admin@wesetup.ru Написать письмо Оставьте контакт для связи Как к вам обращаться Телефон, ник или почта Укажите удобный способ связи с вами Звонок Telegram MAX Почта Вопрос — если хотите Жду связи",
+      "hasLead": false,
+      "hasGroupLead": false,
+      "hasPrivacy": false,
+      "describedby": null
+    }
+  },
+  "desktop-light": {
+    "eyebrowQrCode": false,
+    "h2": "Скан — PIN — Запись",
+    "steps": [
+      {
+        "text": "ШАГ 1 Сотрудник отсканировал QR-код",
+        "bold": [
+          "отсканировал"
+        ]
+      },
+      {
+        "text": "ШАГ 2 Выбор сотрудника и ввод PIN",
+        "bold": [
+          "ввод PIN"
+        ]
+      },
+      {
+        "text": "ШАГ 3 Ввёл данные — запись в журнал",
+        "bold": [
+          "запись в журнал"
+        ]
+      },
+      {
+        "text": "Скан наклейки",
+        "bold": []
+      },
+      {
+        "text": "Кто заполняет Иванова А.",
+        "bold": []
+      },
+      {
+        "text": "PIN • • • •",
+        "bold": []
+      },
+      {
+        "text": "Температура 4,0 °C",
+        "bold": []
+      },
+      {
+        "text": "5 Сохранить замер 08:41",
+        "bold": []
+      }
+    ],
+    "offlineText": "Может работать без интернета",
+    "offlineWidth": 1070,
+    "cardInnerWidth": 1152,
+    "hintPresent": false,
+    "mediaBelowStage": true,
+    "tabsAboveChapters": true,
+    "tabs": [
+      {
+        "text": "Общепит",
+        "selected": "true",
+        "scrollW": 351,
+        "clientW": 351
+      },
+      {
+        "text": "Медицинский центр",
+        "selected": "false",
+        "scrollW": 351,
+        "clientW": 351
+      },
+      {
+        "text": "Отель",
+        "selected": "false",
+        "scrollW": 351,
+        "clientW": 351
+      }
+    ],
+    "mediaButtons": [
+      "Смотреть видео со звуком",
+      "Презентация сетап — PDF, 7 МБ"
+    ],
+    "medical": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для медицинского центра Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "hotel": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для отеля Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "backToFood": "food",
+    "interface": {
+      "h2": "Кабинет руководителя",
+      "lead": null
+    },
+    "dockIcon": "lucide lucide-message-circle size-[22px] text-[#8e9bf8]",
+    "dialog": {
+      "title": "Контакты",
+      "fontSize": "66px",
+      "titleW": 398,
+      "titleClientW": 398,
+      "titleLines": 1,
+      "text": "Закрыть Контакты Поддержка Отдел продаж Консалтинг @wesetup_support Поддержка в Telegram MAX Ответим в мессенджере MAX Чат на сайте Ответим здесь же, в окне чата admin@wesetup.ru Написать письмо Оставьте контакт для связи Как к вам обращаться Телефон, ник или почта Укажите удобный способ связи с вами Звонок Telegram MAX Почта Вопрос — если хотите Жду связи",
+      "hasLead": false,
+      "hasGroupLead": false,
+      "hasPrivacy": false,
+      "describedby": null
+    }
+  },
+  "phone-dark": {
+    "eyebrowQrCode": false,
+    "h2": "Скан — PIN — Запись",
+    "steps": [
+      {
+        "text": "ШАГ 1 Сотрудник отсканировал QR-код",
+        "bold": [
+          "отсканировал"
+        ]
+      },
+      {
+        "text": "ШАГ 2 Выбор сотрудника и ввод PIN",
+        "bold": [
+          "ввод PIN"
+        ]
+      },
+      {
+        "text": "ШАГ 3 Ввёл данные — запись в журнал",
+        "bold": [
+          "запись в журнал"
+        ]
+      },
+      {
+        "text": "Скан наклейки",
+        "bold": []
+      },
+      {
+        "text": "Кто заполняет Иванова А.",
+        "bold": []
+      },
+      {
+        "text": "PIN • • • •",
+        "bold": []
+      },
+      {
+        "text": "Температура 4,0 °C",
+        "bold": []
+      },
+      {
+        "text": "5 Сохранить замер 08:41",
+        "bold": []
+      }
+    ],
+    "offlineText": "Может работать без интернета",
+    "offlineWidth": 324,
+    "cardInnerWidth": 358,
+    "hintPresent": false,
+    "mediaBelowStage": true,
+    "tabsAboveChapters": true,
+    "tabs": [
+      {
+        "text": "Общепит",
+        "selected": "true",
+        "scrollW": 103,
+        "clientW": 103
+      },
+      {
+        "text": "Медцентр",
+        "selected": "false",
+        "scrollW": 103,
+        "clientW": 103
+      },
+      {
+        "text": "Отель",
+        "selected": "false",
+        "scrollW": 103,
+        "clientW": 103
+      }
+    ],
+    "mediaButtons": [
+      "Видео со звуком",
+      "PDF"
+    ],
+    "medical": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для медицинского центра Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "hotel": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для отеля Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "backToFood": "food",
+    "interface": {
+      "h2": "Кабинет руководителя",
+      "lead": null
+    },
+    "dockIcon": "lucide lucide-message-circle size-[22px] text-[#8e9bf8]",
+    "dialog": {
+      "title": "Контакты",
+      "fontSize": "54.6px",
+      "titleW": 308,
+      "titleClientW": 308,
+      "titleLines": 1,
+      "text": "Закрыть Контакты Поддержка Отдел продаж Консалтинг @wesetup_support Поддержка в Telegram MAX Ответим в мессенджере MAX Чат на сайте Ответим здесь же, в окне чата admin@wesetup.ru Написать письмо Оставьте контакт для связи Как к вам обращаться Телефон, ник или почта Укажите удобный способ связи с вами Звонок Telegram MAX Почта Вопрос — если хотите Жду связи",
+      "hasLead": false,
+      "hasGroupLead": false,
+      "hasPrivacy": false,
+      "describedby": null
+    }
+  },
+  "desktop-dark": {
+    "eyebrowQrCode": false,
+    "h2": "Скан — PIN — Запись",
+    "steps": [
+      {
+        "text": "ШАГ 1 Сотрудник отсканировал QR-код",
+        "bold": [
+          "отсканировал"
+        ]
+      },
+      {
+        "text": "ШАГ 2 Выбор сотрудника и ввод PIN",
+        "bold": [
+          "ввод PIN"
+        ]
+      },
+      {
+        "text": "ШАГ 3 Ввёл данные — запись в журнал",
+        "bold": [
+          "запись в журнал"
+        ]
+      },
+      {
+        "text": "Скан наклейки",
+        "bold": []
+      },
+      {
+        "text": "Кто заполняет Иванова А.",
+        "bold": []
+      },
+      {
+        "text": "PIN • • • •",
+        "bold": []
+      },
+      {
+        "text": "Температура 4,0 °C",
+        "bold": []
+      },
+      {
+        "text": "5 Сохранить замер 08:41",
+        "bold": []
+      }
+    ],
+    "offlineText": "Может работать без интернета",
+    "offlineWidth": 1070,
+    "cardInnerWidth": 1152,
+    "hintPresent": false,
+    "mediaBelowStage": true,
+    "tabsAboveChapters": true,
+    "tabs": [
+      {
+        "text": "Общепит",
+        "selected": "true",
+        "scrollW": 351,
+        "clientW": 351
+      },
+      {
+        "text": "Медицинский центр",
+        "selected": "false",
+        "scrollW": 351,
+        "clientW": 351
+      },
+      {
+        "text": "Отель",
+        "selected": "false",
+        "scrollW": 351,
+        "clientW": 351
+      }
+    ],
+    "mediaButtons": [
+      "Смотреть видео со звуком",
+      "Презентация сетап — PDF, 7 МБ"
+    ],
+    "medical": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для медицинского центра Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "hotel": {
+      "selectedTabBg": "rgb(255, 255, 255)",
+      "pending": "В РАЗРАБОТКЕ Видео для отеля Порядок тот же: скан — PIN — запись. Пока посмотрите, как это работает в общепите. Пример для общепита",
+      "playerHidden": true,
+      "media": false
+    },
+    "backToFood": "food",
+    "interface": {
+      "h2": "Кабинет руководителя",
+      "lead": null
+    },
+    "dockIcon": "lucide lucide-message-circle size-[22px] text-[#8e9bf8]",
+    "dialog": {
+      "title": "Контакты",
+      "fontSize": "66px",
+      "titleW": 398,
+      "titleClientW": 398,
+      "titleLines": 1,
+      "text": "Закрыть Контакты Поддержка Отдел продаж Консалтинг @wesetup_support Поддержка в Telegram MAX Ответим в мессенджере MAX Чат на сайте Ответим здесь же, в окне чата admin@wesetup.ru Написать письмо Оставьте контакт для связи Как к вам обращаться Телефон, ник или почта Укажите удобный способ связи с вами Звонок Telegram MAX Почта Вопрос — если хотите Жду связи",
+      "hasLead": false,
+      "hasGroupLead": false,
+      "hasPrivacy": false,
+      "describedby": null
+    }
+  }
+}

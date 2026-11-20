@@ -5779,8 +5779,8 @@
     "signedInAs": "Tizimga quyidagi hisob bilan kirdingiz: ",
     "tryFree": "Bepul sinab ko‘rish",
     "refundGuarantee": "To‘lovdan keyin 14 kun ichida pulni qaytarish kafolati.",
-    "qrEquipmentTitle": "QR-kod",
     "qrScanHeadline": "Skan — PIN — Yozuv",
+    "qrOffline": "Internetsiz ham ishlay oladi",
     "qrScanDescription": "Xodim uskuna stikeridagi QR-kodni skanerlaydi, PIN-kodi va ko‘rsatkichni kiritadi — yozuv SanPiN shaklidagi jurnalga qo‘shiladi. Ilova yoki parol kerak emas.",
     "automationHeadline": "Eslatadi, jurnalni to‘ldiradi va tekshiruv uchun PDF tayyorlaydi",
     "automationLead": "QR-kod — faqat boshlanishi. Qolganini WeSetup bajaradi.",
@@ -5931,8 +5931,7 @@
       "features": "{count, number} ta jurnal · QR orqali yozuv · Eslatmalar"
     },
     "showcase": {
-      "title": "Rahbar kabineti: hammasi bir qarashda",
-      "lead": "WeSetup ekranlari namuna ma’lumotlari bilan. Xodimlar va kirish huquqlari umumiy misolda, jurnallar va nazorat esa umumiy ovqatlanish misolida ko‘rsatilgan. Jurnallar to‘plami tashkilotingiz sohasiga bog‘liq.",
+      "title": "Rahbar kabineti",
       "region": "WeSetup kabineti ekranlari",
       "tabs": "Kabinet ekranlari",
       "previous": "Oldingi ekran",
@@ -5995,9 +5994,9 @@
     },
     "qrScanSteps": {
       "label": "{step, number}-qadam",
-      "scan": "Xodim QR-kodni skanerladi",
-      "pin": "Xodimlar ro‘yxatidan o‘zini topib, PIN-kodini kiritdi",
-      "entry": "Ma’lumotlarni kiritdi — ular jurnalga tushdi, **hatto internetsiz ham!**"
+      "scan": "Xodim QR-kodni **skanerladi**",
+      "pin": "Xodimni tanlash va **PIN kiritish**",
+      "entry": "Ma’lumotlarni kiritdi — **jurnalga yozildi**"
     },
     "presentationPdfShort": "PDF"
   },
@@ -6278,7 +6277,6 @@
       "storyboardCaption": "Kadrlar ketma-ketligi {chapterNumber, number}/{chapterCount, number}. {caption}",
       "chapterDescription": "{chapterNumber, number}-bob: {chapterName}. Jurnal: {journalName}. {caption}",
       "watchVideo": "Videoni ovoz bilan ko‘rish",
-      "watchVideoHint": "Umumiy ovqatlanish misoli: QR-kodlar va jurnallarni to‘ldirish. Ovozni yoqing.",
       "videoLabel": "QR qanday ishlashi — ovozli video",
       "videoSubtitles": "Subtitrlar",
       "seekValue": "{totalTime} dan {currentTime}, «{chapterName}» bobi",
@@ -6326,6 +6324,27 @@
         "short": "Datchik haroratni avtomatik yozadi, me’yordan chiqsa bildirishnoma yuboradi.",
         "place": "Sovutkich vitrinasidagi Wi-Fi datchigi"
       }
+    },
+    "industries": {
+      "label": "Faoliyat turi",
+      "food": {
+        "label": "Umumiy ovqatlanish",
+        "short": "Ovqatlanish",
+        "pending": "Umumiy ovqatlanish uchun video"
+      },
+      "medical": {
+        "label": "Tibbiyot markazi",
+        "short": "Tibbiyot",
+        "pending": "Tibbiyot markazi uchun video"
+      },
+      "hotel": {
+        "label": "Mehmonxona",
+        "short": "Mehmonxona",
+        "pending": "Mehmonxona uchun video"
+      },
+      "pendingBadge": "Ishlab chiqilmoqda",
+      "pendingText": "Tartib bir xil: skan — PIN — yozuv. Hozircha umumiy ovqatlanishda qanday ishlashini ko‘ring.",
+      "pendingBack": "Umumiy ovqatlanish misoli"
     }
   },
   "glassInventory": {
@@ -6694,7 +6713,6 @@
       "launcher": "Kontaktlar",
       "launcherAria": "Kontaktlar: telefon, Telegram, MAX, pochta yoki aloqa uchun kontakt qoldirish",
       "title": "Kontaktlar",
-      "lead": "Bizga qo‘ng‘iroq qiling yoki yozing. O‘zimiz bog‘lanishimizni istasangiz, quyida kontaktingizni qoldiring.",
       "formTitle": "Aloqa uchun kontakt qoldiring",
       "name": "Ismingiz",
       "namePlaceholder": "Masalan, Anna",
@@ -6714,8 +6732,7 @@
       "sent": "So‘rov qabul qilindi — ish vaqtida bog‘lanamiz.",
       "contactRequired": "Javob berishimiz uchun telefon, nik yoki pochtani kiriting",
       "emailInvalid": "Pochta orqali aloqa uchun manzil kiriting, masalan name@mail.uz",
-      "failed": "Yuborib bo‘lmadi. Qo‘ng‘iroq qiling yoki saytdagi chatga yozing.",
-      "privacy": "Kontaktingiz faqat savolingizga javob berish uchun kerak."
+      "failed": "Yuborib bo‘lmadi. Qo‘ng‘iroq qiling yoki saytdagi chatga yozing."
     }
   },
   "journalInfoTaglines": {
