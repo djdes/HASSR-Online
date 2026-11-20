@@ -1,0 +1,15 @@
+{
+  "task": "multi-org-followups-c1-2026-11-20",
+  "spec": ".agent/tasks/multi-org-followups-c1-2026-11-20/spec.md",
+  "base": "master 0cb78d7ac",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "plan.test.ts 40; raw/multi-company-check.log 49/49; raw/part3-foreign-check.log 180/180" },
+    { "id": "AC2", "status": "PASS", "evidence": "plan.test.ts legacy origin cases; raw/multi-company-check.log legacy section" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/pool-check.log 49/49; raw/series-c1-live.log; raw/01-03 screenshots" },
+    { "id": "AC4", "status": "PASS", "evidence": "dish-pool-share.test.ts; raw/pool-check.log; raw/04-company-cabinet-page.jpg; raw/series-c1-guard.log 409" },
+    { "id": "AC5", "status": "PASS", "evidence": "additive schema via apply-safe-schema; typecheck clean; eslint 0 errors; test:gate full 6822/0 before review fixes; raw/seriesB-*.log, raw/seriesA-*.log green" }
+  ],
+  "reviewFixes": { "status": "PASS", "evidence": "evidence.md section after the independent review (5 findings)" },
+  "deploy": "apply-safe-schema adds DirectoryExchangeLink.originOrganizationId, DirectoryExchangeRequest.withPool, poolAllowed, DirectoryExchangeMember.poolConnected"
+}
