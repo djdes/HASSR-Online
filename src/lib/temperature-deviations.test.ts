@@ -366,6 +366,35 @@ test("escalateOpenIncidents эскалирует просроченные инц
   assert.match(rec.managementMessages[0].text, /Морозильный ларь/);
 });
 
+test("escalateOpenIncidents пропускает закрытые после своих 14 дней организации", async () => {
+  const overdue = (id: string, organizationId: string): DeviationIncident => ({
+    id,
+    organizationId,
+    subjectKey: subjectKeyForEquipment(`eq_${id}`),
+    subjectName: "Морозильный ларь",
+    equipmentId: `eq_${id}`,
+    documentId: null,
+    responsibleUserId: "user_resp",
+    firstValue: -5,
+    lastValue: -5,
+    tempMin: null,
+    tempMax: -18,
+    notifiedAt: new Date(NOW.getTime() - 120 * 60000),
+    escalatedAt: null,
+    resolvedAt: null,
+  });
+  const seed = [overdue("inc_open", ORG), overdue("inc_locked", "org_locked")];
+  const { deps, rec } = fakeDeps({ responsible: RESPONSIBLE, minutes: 60, seed });
+
+  const result = await escalateOpenIncidents(
+    { now: NOW, skipOrganizationIds: new Set(["org_locked"]) },
+    { ...deps, listOpenIncidents: async () => seed }
+  );
+
+  assert.equal(result.checked, 1);
+  assert.deepEqual(rec.escalatedIds, ["inc_open"]);
+});
+
 test("закрытие эскалированного инцидента сообщает и руководству", async () => {
   const seed: DeviationIncident[] = [
     {

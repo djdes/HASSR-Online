@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 
 import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
-import { runDirectoryExchange } from "@/lib/directory-exchange/run.server";
+import { runDirectoryExchangeWithin } from "@/lib/directory-exchange/run.server";
 import { findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
@@ -13,7 +13,8 @@ const syncLimiter = createRateLimiter({ tokensPerInterval: 6, intervalMs: 60_000
 
 /**
  * POST /api/settings/directory-exchange/sync — «Синхронизировать сейчас»:
- * обмен по всем участникам мастер-кабинета аккаунта → `{ ok: true, summary }`.
+ * обмен по всем участникам мастер-кабинета аккаунта → `{ ok: true, summary }`;
+ * дольше 8 секунд — `{ ok: true, running: true }`, итог появится в карточке.
  * Только владелец аккаунта; обмен уже идёт или организация закрыта — 409.
  */
 export async function POST() {
@@ -29,8 +30,12 @@ export async function POST() {
     return NextResponse.json({ error: "Обмен справочниками ещё не настроен" }, { status: 400 });
   }
   try {
-    const summary = await runDirectoryExchange(cabinet.id, { actor });
-    return NextResponse.json({ ok: true, summary });
+    const outcome = await runDirectoryExchangeWithin(cabinet.id, { actor });
+    if (outcome.running) {
+      after(outcome.done);
+      return NextResponse.json({ ok: true, running: true });
+    }
+    return NextResponse.json({ ok: true, summary: outcome.summary });
   } catch (error) {
     return exchangeErrorResponse(error);
   }

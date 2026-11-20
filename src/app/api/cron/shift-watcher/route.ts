@@ -9,6 +9,7 @@ import {
 } from "@/lib/telegram";
 import { notifySilentOfflineDevices } from "@/lib/offline/devices.server";
 import { placeOfEvent } from "@/lib/place-recipients";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,9 +83,12 @@ async function handle(request: Request) {
   let notified = 0;
   let markedAbsent = 0;
   let staffCheckIns = 0;
+  const locked = await lockedOrganizationIds(now);
 
   for (const shift of shifts) {
     if (!shift.user.isActive || shift.user.archivedAt) continue;
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(shift.organizationId)) continue;
 
     // Активность с начала суток.
     const [fieldEntry, docEntry] = await Promise.all([

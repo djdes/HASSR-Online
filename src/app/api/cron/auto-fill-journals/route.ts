@@ -12,6 +12,7 @@ import {
 import { listAutomationOwnedCodes } from "@/lib/journal-automation";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +76,7 @@ async function handle(request: Request) {
       template: { select: { code: true } },
     },
   });
+  const locked = await lockedOrganizationIds();
 
   // Пропускаемые коды организации (кэш на прогон):
   //  • журналы, которые целиком ведёт cron автоматизации 06:00, — иначе
@@ -129,6 +131,8 @@ async function handle(request: Request) {
   const errors: string[] = [];
 
   for (const document of documents) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(document.organizationId)) continue;
     if (!automationOn(await getJournalControls(document.organizationId), "autoFill")) continue;
     const code = document.template.code;
     try {

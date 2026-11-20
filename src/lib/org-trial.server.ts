@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { BILLING_PAY_HREF } from "@/lib/billing-period";
-import { loadAccountBilling, loadBillingUnit, readTrialSettings } from "@/lib/billing.server";
+import { loadAccountBilling, loadBillingUnit, readTrialSettings, type BillingUnit } from "@/lib/billing.server";
 import { db } from "@/lib/db";
 import { innDigits, isValidInn } from "@/lib/inn";
 import {
   accountPhase,
   decideOrgCreation,
+  lockedOrgIdsOf,
+  oneOrgPerAccount,
   ORG_LOCKED_CODE,
   ORG_LOCKED_MESSAGE,
   ORG_TRIAL_MAX_GRANTS,
@@ -127,6 +129,40 @@ export async function isOrganizationLocked(organizationId: string, now: Date = n
   if (lockCache.size >= LOCK_CACHE_MAX) lockCache.clear();
   lockCache.set(organizationId, { at: now.getTime(), locked });
   return locked;
+}
+
+/**
+ * Все закрытые после своих 14 дней организации — для ежедневных задач,
+ * которые создают документы, задачи, напоминания и сводки: закрытой они ни к
+ * чему, записать в журнал она всё равно не может.
+ *
+ * Смотрим только организации с прошедшим сроком (`trialEndsAt <= now`, один
+ * запрос), тариф грузим один раз на аккаунт — он считает статусы всех его
+ * организаций. Сбой — организацию (аккаунт) не пропускаем: задачи идут как
+ * раньше, как и в остальных проверках тарифа.
+ */
+export async function lockedOrganizationIds(now: Date = new Date()): Promise<Set<string>> {
+  try {
+    const rows = await db.organization.findMany({
+      where: { trialEndsAt: { lte: now }, isDemo: false, kind: { not: "directory" } },
+      select: { id: true, accountId: true },
+    });
+    if (rows.length === 0) return new Set();
+    const settings = await readTrialSettings();
+    const units: (BillingUnit | null)[] = [];
+    for (const organizationId of oneOrgPerAccount(rows)) {
+      units.push(
+        await loadBillingUnit(organizationId, { now, settings }).catch((error) => {
+          console.error("[org-trial] locked check failed — not skipping", { organizationId, error });
+          return null;
+        })
+      );
+    }
+    return lockedOrgIdsOf(units);
+  } catch (error) {
+    console.error("[org-trial] locked organizations failed to load — not skipping", error);
+    return new Set();
+  }
 }
 
 /** Ответ 402 пишущему маршруту закрытой организации; null — работать можно. */

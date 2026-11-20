@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { countPendingVetDocumentsByPoint, enqueueEnterpriseSync } from "@/lib/mercury/sync";
 import { withBuildingSuffix } from "@/lib/building-scope";
 import { notifyManagement } from "@/lib/notifications";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,7 @@ export async function GET(request: Request) {
     let enqueued = 0;
     let reminded = 0;
     let skippedPlan = 0;
+    const locked = await lockedOrganizationIds();
 
     for (const integration of integrations) {
       // «Меркурий» — возможность «Премиума» (пробного, прежней «Подписки»,
@@ -80,6 +82,8 @@ export async function GET(request: Request) {
 
       // Напоминание о горящих сроках. Дедлайн гашения — один рабочий
       // день, и «забыли» здесь стоит дороже лишнего уведомления.
+      // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+      if (locked.has(integration.organizationId)) continue;
       const org = await db.organization.findUnique({
         where: { id: integration.organizationId },
         select: { timezone: true },

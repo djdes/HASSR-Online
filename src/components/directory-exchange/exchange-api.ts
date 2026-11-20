@@ -436,7 +436,17 @@ export type DecisionBody =
   | { decision: "decline" }
   | { decision: "approve"; allowedKinds: ExchangeKind[]; sourceOrganizationId?: string; organizationIds?: string[] };
 
-export type DecisionResult = { status: "approved" | "declined"; summary: ExchangeSummary | null };
+export type DecisionResult = {
+  status: "approved" | "declined";
+  summary: ExchangeSummary | null;
+  /** Первый обмен связи идёт в фоне: итог появится в карточке «Обмен справочниками». */
+  running: boolean;
+};
+
+/** Сервер не дождался обмена (дольше 8 секунд) — `running: true`: итог появится в карточке. */
+export function isExchangeRunning(value: unknown): boolean {
+  return asObject(value)?.running === true;
+}
 
 /**
  * Что показать странице решения по ответу сервера: форму, отказ по правам,
@@ -578,7 +588,8 @@ export function parseDecisionResult(value: unknown, decision: DecisionBody["deci
   const raw = source?.status;
   const status: DecisionResult["status"] =
     raw === "approved" || raw === "declined" ? raw : decision === "approve" ? "approved" : "declined";
-  return { status, summary: status === "approved" ? parseSummary(source?.summary) : null };
+  const approved = status === "approved";
+  return { status, summary: approved ? parseSummary(source?.summary) : null, running: approved && source?.running === true };
 }
 
 /**

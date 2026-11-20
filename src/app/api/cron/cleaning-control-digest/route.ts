@@ -13,6 +13,7 @@ import {
 import { applyRoomResponsiblesToConfig } from "@/lib/cleaning-room-responsibles";
 import { tasksflowClientFor } from "@/lib/tasksflow-client";
 import { buildControlRowKey } from "@/lib/tasksflow-adapters/cleaning";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +53,7 @@ async function handle(request: Request) {
       organization: { select: { shiftEndHour: true, timezone: true } },
     },
   });
+  const locked = await lockedOrganizationIds();
 
   let scanned = 0;
   let created = 0;
@@ -60,6 +62,8 @@ async function handle(request: Request) {
   const errors: Array<{ orgId: string; reason: string }> = [];
 
   for (const integration of integrations) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(integration.organizationId)) continue;
     scanned += 1;
 
     // Активное окно = [shiftEndHour-1, shiftEndHour+1] по timezone org.

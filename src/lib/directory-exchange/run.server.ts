@@ -636,6 +636,43 @@ export async function runDirectoryExchange(
   return locked.value;
 }
 
+/** Сколько человек ждёт обмена в запросе, прежде чем он уйдёт в фон. */
+export const EXCHANGE_WAIT_MS = 8_000;
+
+export type ExchangeRunOutcome =
+  | { running: false; summary: ExchangeSummary }
+  /** Не уложился: обмен доходит в фоне; `done` — его итог (null — сбой, он уже записан в лог). */
+  | { running: true; done: Promise<ExchangeSummary | null> };
+
+/**
+ * Обмен, которого человек ждёт не дольше `waitMs` (8 с): успел — итог сразу;
+ * не успел — `running: true`, а обмен продолжается и пишет итог участникам
+ * (`lastSyncJson`) — карточка «Обмен справочниками» покажет его. Отказ
+ * до срока (кабинет занят, ошибка) — как у `runDirectoryExchange`. Маршрут
+ * передаёт `done` в `after()`, чтобы процесс дождался конца обмена.
+ */
+export async function runDirectoryExchangeWithin(
+  masterOrganizationId: string,
+  options: { actor?: ExchangeActor; now?: Date; waitMs?: number } = {},
+): Promise<ExchangeRunOutcome> {
+  const run = runDirectoryExchange(masterOrganizationId, { actor: options.actor, now: options.now });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<"waiting">((resolve) => {
+    timer = setTimeout(() => resolve("waiting"), Math.max(0, options.waitMs ?? EXCHANGE_WAIT_MS));
+  });
+  try {
+    const first = await Promise.race([run, deadline]);
+    if (first !== "waiting") return { running: false, summary: first };
+  } finally {
+    clearTimeout(timer);
+  }
+  const done = run.catch((error: unknown) => {
+    console.error("[directory-exchange] background exchange failed", { masterOrganizationId, error });
+    return null;
+  });
+  return { running: true, done };
+}
+
 /** Плановый обмен: каждый кабинет с двумя и более участниками; сбой одного не мешает остальным. */
 export async function runAllDirectoryExchanges(options: { now?: Date } = {}): Promise<ExchangeBatchResult> {
   const result: ExchangeBatchResult = { cabinets: 0, busy: 0, created: 0, updated: 0, skipped: 0, errors: [] };

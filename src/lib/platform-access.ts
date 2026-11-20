@@ -222,6 +222,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   // «Войти» в кабинет клиента — владелец и администратор (2026-11-09).
   { pattern: "/api/root/impersonate", gate: "administrator" },
   { pattern: "/api/root/telegram", gate: "superadmin" },
+  // Образцы писем обмена справочниками себе на почту (карточка в «Рассылке»).
+  { pattern: "/api/root/directory-exchange", gate: "superadmin" },
 
   // Personal settings (own sending mailbox) — every panel user.
   { pattern: "/root/me", gate: "self" },

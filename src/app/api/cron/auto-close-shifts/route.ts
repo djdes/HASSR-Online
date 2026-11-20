@@ -8,6 +8,7 @@ import { NOT_AUTO_SEEDED } from "@/lib/journal-entry-filters";
 import { closeJournalForDay, utcDayStart } from "@/lib/journal-close-events";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { journalEntryPointWhere } from "@/lib/point-filters";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +64,7 @@ async function handle(request: Request) {
     select: { id: true, code: true },
   });
   const sharedTemplateIds = sharedTemplates.map((t) => t.id);
+  const locked = await lockedOrganizationIds(now);
 
   let totalClosed = 0;
   let totalSkipped = 0;
@@ -73,6 +75,8 @@ async function handle(request: Request) {
   }> = [];
 
   for (const org of orgs) {
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(org.id)) continue;
     let closed = 0;
     let skipped = 0;
     // Точки: день закрывается на каждой точке отдельно (или один раз для

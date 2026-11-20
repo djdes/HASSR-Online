@@ -136,6 +136,115 @@ export function orgTrialStatuses(input: {
   return statuses;
 }
 
+/**
+ * Напоминания владельцу аккаунта о конце своих 14 дней организации (серия A,
+ * Р2): за 3 дня и за 1 день, по разу на ступень. Дни считаются как `daysLeft`
+ * в `billing-period.ts` (округление вверх), поэтому ежедневная задача попадает
+ * в каждую ступень в свой день; 2 дня — без напоминания.
+ */
+export const ORG_TRIAL_REMINDER_STAGES = [3, 1] as const;
+export type OrgTrialReminderStage = (typeof ORG_TRIAL_REMINDER_STAGES)[number];
+
+/** Ступень по оставшимся дням: 2 < дней ≤ 3 → 3, 0 < дней ≤ 1 → 1; иначе null. */
+export function orgTrialReminderStage(daysLeftValue: number | null | undefined): OrgTrialReminderStage | null {
+  if (typeof daysLeftValue !== "number" || Number.isNaN(daysLeftValue)) return null;
+  if (daysLeftValue > 2 && daysLeftValue <= 3) return 3;
+  if (daysLeftValue > 0 && daysLeftValue <= 1) return 1;
+  return null;
+}
+
+/**
+ * Нужно ли напоминание: `sent` — детали записей `billing.org_trial_reminder`
+ * (`{ organizationId, trialEndsAt, stage }`). Закрывает его только запись той
+ * же организации, того же срока и той же ступени: продлённый срок — другой
+ * `trialEndsAt`, о нём напоминаем заново.
+ */
+export function orgTrialReminderDue(
+  sent: ReadonlyArray<unknown>,
+  organizationId: string,
+  trialEndsAt: Date,
+  stage: OrgTrialReminderStage
+): boolean {
+  const until = trialEndsAt.toISOString();
+  return !sent.some((raw) => {
+    if (!raw || typeof raw !== "object") return false;
+    const details = raw as { organizationId?: unknown; trialEndsAt?: unknown; stage?: unknown };
+    return details.organizationId === organizationId && details.trialEndsAt === until && details.stage === stage;
+  });
+}
+
+/**
+ * Закроется ли организация в конце своих 14 дней, если ничего не менять:
+ * только на оплаченном аккаунте с лимитом точек и только когда свободной
+ * оплаченной точки ей не достанется (владелец мог уже доплатить за точку —
+ * тогда пугать закрытием нельзя). Точки сначала у организаций в тарифе
+ * (`pointsInUse`), затем у пробующих, чей срок кончается раньше, — как в
+ * `orgTrialStatuses` (там порядок по созданию, сроки идут в том же порядке).
+ */
+export function orgTrialClosesAtEnd(input: {
+  phase: AccountPhase | null;
+  /** Оплачено точек; null — тариф без лимита точек: никого не закрываем. */
+  pointLimit: number | null;
+  /** Точек в тарифе сейчас (без пробующих и закрытых). */
+  pointsInUse: number;
+  trials: ReadonlyArray<{ organizationId: string; status: OrgTrialStatus; trialEndsAt: Date; points: number }>;
+  organizationId: string;
+}): boolean {
+  if (input.phase !== "paid" || input.pointLimit === null) return false;
+  const target = input.trials.find((entry) => entry.organizationId === input.organizationId);
+  if (!target || target.status !== "trial") return false;
+  const limit = Math.max(1, Math.floor(Number(input.pointLimit) || 1));
+  const points = (value: number) => Math.max(1, Math.floor(Number(value) || 0));
+  let used = Math.max(0, Math.floor(Number(input.pointsInUse) || 0));
+  const earlier = input.trials
+    .filter(
+      (entry) =>
+        entry.status === "trial" &&
+        entry.organizationId !== target.organizationId &&
+        entry.trialEndsAt.getTime() < target.trialEndsAt.getTime()
+    )
+    .sort((a, b) => a.trialEndsAt.getTime() - b.trialEndsAt.getTime());
+  for (const entry of earlier) {
+    if (used + points(entry.points) <= limit) used += points(entry.points);
+  }
+  return used + points(target.points) > limit;
+}
+
+/** Тема письма-напоминания: простой текст, без переводов строк из названия. */
+export function orgTrialReminderSubject(stage: OrgTrialReminderStage, organizationName: string): string {
+  const name = organizationName.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim();
+  return stage === 1
+    ? `Завтра закончатся бесплатные дни организации «${name}»`
+    : `Через 3 дня закончатся бесплатные дни организации «${name}»`;
+}
+
+/**
+ * По одной организации на аккаунт (организация без аккаунта — сама по себе):
+ * тариф аккаунта считает статусы всех его организаций, грузить его по каждой
+ * незачем. Порядок — как во входе.
+ */
+export function oneOrgPerAccount(rows: readonly { id: string; accountId: string | null }[]): string[] {
+  const picked = new Map<string, string>();
+  for (const row of rows) {
+    const key = row.accountId ?? `org:${row.id}`;
+    if (!picked.has(key)) picked.set(key, row.id);
+  }
+  return [...picked.values()];
+}
+
+/** Закрытые организации из загруженных тарифов (`BillingUnit.orgTrials`); null — тариф не загрузился. */
+export function lockedOrgIdsOf(
+  units: ReadonlyArray<{ orgTrials: ReadonlyArray<{ organizationId: string; status: OrgTrialStatus }> } | null>
+): Set<string> {
+  const ids = new Set<string>();
+  for (const unit of units) {
+    for (const entry of unit?.orgTrials ?? []) {
+      if (entry.status === "locked") ids.add(entry.organizationId);
+    }
+  }
+  return ids;
+}
+
 export type OrgCreationRefusal = "free_plan" | "trials_used" | "locked_org";
 
 export type OrgCreationDecision =

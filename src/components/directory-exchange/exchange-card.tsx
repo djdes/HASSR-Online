@@ -10,6 +10,7 @@ import { formatDate } from "@/i18n/locales";
 import {
   exchangeError,
   exchangeRequest,
+  isExchangeRunning,
   loadExchangeState,
   loadForeignState,
   ownParticipants,
@@ -90,7 +91,12 @@ export function ExchangeCard({
         return;
       }
       const totals = summaryTotals(parseSummary(json?.summary));
-      if (totals.created + totals.updated + totals.skippedLimit === 0) {
+      if (isExchangeRunning(json)) {
+        // Обмен дольше 8 секунд идёт в фоне: итог появится здесь же, в карточке —
+        // перечитаем её ещё раз через полминуты.
+        toast.info(t("card.syncRunning"));
+        window.setTimeout(() => setVersion((value) => value + 1), 30_000);
+      } else if (totals.created + totals.updated + totals.skippedLimit === 0) {
         toast.success(t("card.syncNoChanges"));
       } else {
         toast.success(

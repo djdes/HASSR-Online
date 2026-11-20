@@ -249,7 +249,12 @@ export function DecisionOutcome({ data, result }: { data: DecisionState; result:
         </Link>
       }
     >
-      {result.summary ? (
+      {result.running ? (
+        // Первый обмен идёт в фоне: итог — в карточке «Обмен справочниками», письмо заявителю — после него.
+        <p className="mt-4 text-[13px] leading-[1.5] text-[#6f7282]" data-testid="exchange-request-running">
+          {t("approvedRunning")}
+        </p>
+      ) : result.summary ? (
         <div className="mt-4" data-testid="exchange-request-summary">
           <ExchangeSummaryView summary={result.summary} />
         </div>

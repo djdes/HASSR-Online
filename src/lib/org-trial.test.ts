@@ -1,15 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { computeAccountBilling, DEFAULT_TRIAL_SETTINGS } from "@/lib/billing-period";
+import { computeAccountBilling, daysLeft, DEFAULT_TRIAL_SETTINGS } from "@/lib/billing-period";
 import {
   accountPhase,
   decideOrgCreation,
+  lockedOrgIdsOf,
+  oneOrgPerAccount,
   ORG_TRIAL_DAYS,
   ORG_TRIAL_MAX_GRANTS,
   orgCreationRefusalMessage,
+  orgTrialClosesAtEnd,
   orgTrialEnd,
   orgTrialInForce,
+  orgTrialReminderDue,
+  orgTrialReminderStage,
+  orgTrialReminderSubject,
   orgTrialStatuses,
   phaseOfKind,
   trialReuseVerdict,
@@ -187,6 +193,112 @@ test("trialReuseVerdict: INN and phone together end the trial, one sign only fla
   );
 });
 
+test("orgTrialReminderStage: 3 for (2, 3] days, 1 for (0, 1], nothing in between or outside", () => {
+  assert.equal(orgTrialReminderStage(3), 3);
+  assert.equal(orgTrialReminderStage(2.001), 3);
+  assert.equal(orgTrialReminderStage(2), null, "two days left — between the stages");
+  assert.equal(orgTrialReminderStage(1.5), null);
+  assert.equal(orgTrialReminderStage(1), 1);
+  assert.equal(orgTrialReminderStage(0.001), 1);
+  assert.equal(orgTrialReminderStage(0), null, "the end has come — the organization is already closed");
+  assert.equal(orgTrialReminderStage(-1), null);
+  assert.equal(orgTrialReminderStage(3.001), null);
+  assert.equal(orgTrialReminderStage(4), null);
+  assert.equal(orgTrialReminderStage(14), null);
+  assert.equal(orgTrialReminderStage(null), null);
+  assert.equal(orgTrialReminderStage(undefined), null);
+  assert.equal(orgTrialReminderStage(Number.NaN), null);
+});
+
+test("orgTrialReminderStage over daysLeft(): borders in time, one run per stage", () => {
+  const at = (ms: number) => orgTrialReminderStage(daysLeft(new Date(NOW.getTime() + ms), NOW));
+  assert.equal(at(2.5 * DAY), 3);
+  assert.equal(at(3 * DAY), 3);
+  assert.equal(at(3 * DAY + 1), null, "a millisecond over three days is the fourth day");
+  assert.equal(at(2 * DAY + 1), 3);
+  assert.equal(at(2 * DAY), null);
+  assert.equal(at(DAY + 1), null);
+  assert.equal(at(DAY), 1);
+  assert.equal(at(0.5 * DAY), 1);
+  assert.equal(at(1), 1);
+  assert.equal(at(0), null);
+  // The end is Moscow midnight after 24 Dec; the daily job runs at 06:15 MSK (03:15 UTC).
+  const end = new Date("2026-12-24T21:00:00.000Z");
+  const runs = [20, 21, 22, 23, 24, 25].map((day) => new Date(Date.UTC(2026, 11, day, 3, 15)));
+  assert.deepEqual(
+    runs.map((run) => orgTrialReminderStage(daysLeft(end, run))),
+    [null, null, 3, null, 1, null],
+  );
+});
+
+test("orgTrialReminderDue: same organization, same end date and same stage close it", () => {
+  const end = days(3);
+  const mark = { organizationId: "org-2", trialEndsAt: end.toISOString(), stage: 3 };
+  assert.equal(orgTrialReminderDue([], "org-2", end, 3), true);
+  assert.equal(orgTrialReminderDue([mark], "org-2", end, 3), false, "a repeated run sends nothing");
+  assert.equal(orgTrialReminderDue([mark], "org-2", end, 1), true, "the 1-day stage is its own reminder");
+  assert.equal(orgTrialReminderDue([mark], "org-3", end, 3), true, "another organization of the account");
+  assert.equal(orgTrialReminderDue([mark], "org-2", days(10), 3), true, "an extended end date reminds again");
+  assert.equal(
+    orgTrialReminderDue([null, "x", 5, { stage: 3 }, { ...mark, stage: "3" }, { ...mark, trialEndsAt: end }], "org-2", end, 3),
+    true,
+    "rows of another shape do not close the stage",
+  );
+});
+
+test("orgTrialClosesAtEnd: only a paid account with a point limit and no free point left", () => {
+  const trial = (organizationId: string, endInDays: number, points = 1) => ({
+    organizationId,
+    status: "trial" as const,
+    trialEndsAt: days(endInDays),
+    points,
+  });
+  const base = { phase: "paid" as const, pointLimit: 1, pointsInUse: 1, trials: [trial("b", 3)], organizationId: "b" };
+  assert.equal(orgTrialClosesAtEnd(base), true);
+  assert.equal(orgTrialClosesAtEnd({ ...base, pointLimit: 2 }), false, "the owner already paid for one more point");
+  assert.equal(orgTrialClosesAtEnd({ ...base, pointLimit: 2, trials: [trial("b", 3, 2)] }), true, "two buildings need two points");
+  assert.equal(orgTrialClosesAtEnd({ ...base, phase: "trial" }), false, "account trial: nothing closes");
+  assert.equal(orgTrialClosesAtEnd({ ...base, phase: null }), false);
+  assert.equal(orgTrialClosesAtEnd({ ...base, pointLimit: null }), false, "legacy subscription without a point limit");
+  assert.equal(orgTrialClosesAtEnd({ ...base, organizationId: "missing" }), false);
+  assert.equal(
+    orgTrialClosesAtEnd({ ...base, trials: [{ ...trial("b", -1), status: "locked" }] }),
+    false,
+    "already locked — not a reminder case",
+  );
+  // The earlier trial takes the free point first; one that does not fit does not block a smaller one.
+  const two = { ...base, pointLimit: 2, trials: [trial("a", 2), trial("b", 3)] };
+  assert.equal(orgTrialClosesAtEnd({ ...two, organizationId: "a" }), false);
+  assert.equal(orgTrialClosesAtEnd({ ...two, organizationId: "b" }), true);
+  assert.equal(
+    orgTrialClosesAtEnd({ ...base, pointLimit: 3, trials: [trial("a", 2, 3), trial("b", 3)], organizationId: "b" }),
+    false,
+  );
+});
+
+test("orgTrialClosesAtEnd agrees with orgTrialStatuses at the end moment", () => {
+  for (const pointLimit of [1, 2, 3]) {
+    for (const buildings of [1, 2]) {
+      const orgs = [org("first", 300, null), org("second", 11, 3, buildings)];
+      const now = days(3);
+      const lockedThen = orgTrialStatuses({ phase: "paid", pointLimit, orgs, now }).get("second") === "locked";
+      const predicted = orgTrialClosesAtEnd({
+        phase: "paid",
+        pointLimit,
+        pointsInUse: 1,
+        trials: [{ organizationId: "second", status: "trial", trialEndsAt: days(3), points: buildings }],
+        organizationId: "second",
+      });
+      assert.equal(predicted, lockedThen, `limit=${pointLimit} buildings=${buildings}`);
+    }
+  }
+});
+
+test("orgTrialReminderSubject: exact wording, name on one line", () => {
+  assert.equal(orgTrialReminderSubject(3, "Кафе «Север»"), "Через 3 дня закончатся бесплатные дни организации «Кафе «Север»»");
+  assert.equal(orgTrialReminderSubject(1, "Кафе\r\nBcc: x@y.ru"), "Завтра закончатся бесплатные дни организации «Кафе Bcc: x@y.ru»");
+});
+
 test("accountPhase agrees with the tariff state of the account", () => {
   const cases = [
     { plan: "free", subscriptionEnd: null, createdAt: days(-3), trialEndsAt: null },
@@ -209,4 +321,45 @@ test("accountPhase agrees with the tariff state of the account", () => {
     }
   }
   assert.equal(phaseOfKind("exempt"), "open");
+});
+
+test("oneOrgPerAccount: one organization per account, orgs without account stand alone", () => {
+  assert.deepEqual(oneOrgPerAccount([]), []);
+  assert.deepEqual(
+    oneOrgPerAccount([
+      { id: "a1", accountId: "acc_a" },
+      { id: "b1", accountId: "acc_b" },
+      { id: "a2", accountId: "acc_a" },
+      { id: "solo1", accountId: null },
+      { id: "solo2", accountId: null },
+      { id: "b2", accountId: "acc_b" },
+    ]),
+    ["a1", "b1", "solo1", "solo2"],
+  );
+});
+
+test("lockedOrgIdsOf: only locked entries, units that failed to load are skipped", () => {
+  assert.deepEqual([...lockedOrgIdsOf([])], []);
+  const ids = lockedOrgIdsOf([
+    {
+      orgTrials: [
+        { organizationId: "a2", status: "locked" },
+        { organizationId: "a3", status: "trial" },
+      ],
+    },
+    null,
+    { orgTrials: [] },
+    { orgTrials: [{ organizationId: "b2", status: "locked" }] },
+  ]);
+  assert.deepEqual([...ids].sort(), ["a2", "b2"]);
+});
+
+test("lockedOrgIdsOf over orgTrialStatuses: a paid account with one point locks only the expired extra org", () => {
+  const orgs = [org("first", 90, null), org("expired", 20, -2), org("trying", 3, 11)];
+  const statuses = orgTrialStatuses({ phase: "paid", pointLimit: 1, orgs, now: NOW });
+  const orgTrials = [...statuses].map(([organizationId, status]) => ({ organizationId, status }));
+  assert.deepEqual([...lockedOrgIdsOf([{ orgTrials }])], ["expired"]);
+  // Account trial: nobody is locked, the marks only give the org its 14 days.
+  const inTrial = orgTrialStatuses({ phase: "trial", pointLimit: 1, orgs, now: NOW });
+  assert.deepEqual([...lockedOrgIdsOf([{ orgTrials: [...inTrial].map(([organizationId, status]) => ({ organizationId, status })) }])], []);
 });

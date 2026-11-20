@@ -84,6 +84,34 @@ export function ownerRequestLetter(args: {
   };
 }
 
+/**
+ * Колокольчик и Telegram владельцу аккаунта кабинета о новом запросе (Р4
+ * серии A). `label` и `hint` — простой текст (колокольчик экранирует сам),
+ * `telegramText` — HTML Telegram: чужие названия экранированы.
+ */
+export function ownerRequestNotice(args: {
+  mode: RequestMode;
+  kinds: readonly ExchangeKind[];
+  cabinetName: string;
+  requesterName: string;
+  expiresAt: Date;
+}): { title: string; label: string; hint: string; telegramText: string } {
+  const what = args.mode === "link" ? "просит связать справочники" : "просит разово перенести данные";
+  const lists = exchangeKindsLabel(args.kinds);
+  const until = letterDate(args.expiresAt);
+  const title = "Запрос на обмен справочниками";
+  return {
+    title,
+    label: `«${letterSubject(args.requesterName)}» ${what} — мастер-кабинет «${letterSubject(args.cabinetName)}»`,
+    hint: `${lists}; ответить до ${until}`,
+    telegramText:
+      `<b>${title}</b>\n\n` +
+      `Организация ${quoted(args.requesterName)} ${what} через ваш мастер-кабинет ${quoted(args.cabinetName)}.\n` +
+      `Списки: ${escapeHtml(lists)}.\n\n` +
+      `Ответить можно до ${escapeHtml(until)}. Без вашего подтверждения ничего не передаётся.`,
+  };
+}
+
 /** Заголовок решения — он же тема письма и заголовок уведомления. */
 export function decisionTitle(status: "approved" | "declined"): string {
   return status === "approved" ? "Запрос на обмен справочниками подтверждён" : "Запрос на обмен справочниками отклонён";

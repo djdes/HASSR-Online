@@ -9,6 +9,7 @@ import { filterRecipientsByPlace } from "@/lib/place-recipients";
 import { syncAllPointDocumentRows } from "@/lib/point-document-rows-sync";
 import { syncAllUvDocumentPoints } from "@/lib/uv-document-points";
 import { UV_LAMP_RUNTIME_TEMPLATE_CODE } from "@/lib/uv-lamp-runtime-document";
+import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,8 +42,11 @@ async function handle(request: Request) {
     select: { id: true, name: true, runningSince: true, area: { select: { organizationId: true, buildingId: true } } },
   });
   let notified = 0;
+  const locked = await lockedOrganizationIds();
   for (const lamp of lamps) {
     const organizationId = lamp.area.organizationId;
+    // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
+    if (locked.has(organizationId)) continue;
     // Ответственный журнала УФ-ламп на точке цеха лампы (2026-10-31).
     const slots = await effectiveJournalSlots(organizationId, lamp.area.buildingId, UV_LAMP_RUNTIME_TEMPLATE_CODE);
     const responsibleId = slots[getPrimarySlotId(UV_LAMP_RUNTIME_TEMPLATE_CODE)] ?? null;

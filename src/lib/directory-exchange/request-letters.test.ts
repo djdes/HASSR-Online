@@ -8,6 +8,7 @@ import {
   decisionTitle,
   letterSubject,
   ownerRequestLetter,
+  ownerRequestNotice,
   requesterDecisionLetter,
 } from "@/lib/directory-exchange/request-letters";
 
@@ -146,4 +147,32 @@ test("counters line and the bell label", () => {
   assert.equal(decisionNotificationLabel({ status: "approved", mode: "link", cabinetName: "Сеть" }), "Мастер-кабинет «Сеть»: обмен справочниками установлен");
   assert.equal(decisionNotificationLabel({ status: "approved", mode: "transfer", cabinetName: "Сеть" }), "Мастер-кабинет «Сеть»: данные перенесены");
   assert.equal(decisionNotificationLabel({ status: "declined", mode: "transfer", cabinetName: "Сеть" }), "Мастер-кабинет «Сеть»: перенос данных отклонён");
+});
+
+test("owner notice, series A Р4: bell line and Telegram text name who asks, what for, lists and the term", () => {
+  const notice = ownerRequestNotice({
+    mode: "link",
+    kinds: ["products", "staff"],
+    cabinetName: "Мастер-кабинет",
+    requesterName: "ООО Ромашка",
+    expiresAt: EXPIRES,
+  });
+  assert.equal(notice.title, "Запрос на обмен справочниками");
+  assert.equal(notice.label, "«ООО Ромашка» просит связать справочники — мастер-кабинет «Мастер-кабинет»");
+  assert.equal(notice.hint, "Продукция, Сотрудники; ответить до 26 ноября 2026 г.");
+  assert.match(notice.telegramText, /^<b>Запрос на обмен справочниками<\/b>\n\n/);
+  assert.ok(notice.telegramText.includes("Без вашего подтверждения ничего не передаётся."));
+
+  const transfer = ownerRequestNotice({
+    mode: "transfer",
+    kinds: ["equipment"],
+    cabinetName: HOSTILE,
+    requesterName: `${HOSTILE}\nвторая строка`,
+    expiresAt: EXPIRES,
+  });
+  assert.ok(transfer.label.includes("просит разово перенести данные"));
+  // The bell line is plain text on one line; Telegram HTML has the names escaped.
+  assert.ok(!transfer.label.includes("\n"));
+  assert.ok(!transfer.telegramText.includes("<script>"));
+  assert.ok(transfer.telegramText.includes("&lt;script&gt;"));
 });

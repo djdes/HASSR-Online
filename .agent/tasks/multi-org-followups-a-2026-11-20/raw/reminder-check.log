@@ -1,0 +1,11 @@
+letter 3 days before: [{"to":"remchkmwonirz7-paid@example.test","subject":"Через 3 дня закончатся бесплатные дни организации «Вторая remchkmwonirz7»"}]
+PASS 3 days before: one letter «Через 3 дня закончатся бесплатные дни организации …» to the account owner
+PASS 3 days before: one AuditLog mark with stage 3
+PASS second run the same day: no letter, no new mark
+letter 1 day before: [{"to":"remchkmwonirz7-paid@example.test","subject":"Завтра закончатся бесплатные дни организации «Вторая remchkmwonirz7»"}]
+PASS 1 day before: the second letter «Завтра закончатся бесплатные дни организации …»
+PASS 1 day before: two marks in total, stages 3 and 1
+PASS account in its own trial: no letter, no mark
+PASS dry run reports and sends nothing
+cleanup: organizations left 0
+TOTAL: 7 PASS, 0 FAIL
