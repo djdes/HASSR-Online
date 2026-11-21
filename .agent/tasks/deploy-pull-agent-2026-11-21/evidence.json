@@ -1,0 +1,14 @@
+{
+  "task_id": "deploy-pull-agent-2026-11-21",
+  "base": "3bd9cb247",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/checks.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/checks.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/checks.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/checks.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/checks.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/checks.txt"] }
+  },
+  "notes": "Live agent deploy not exercised from this session (no server access); installed by the first deploy after merge.",
+  "raw": ["raw/checks.txt"]
+}

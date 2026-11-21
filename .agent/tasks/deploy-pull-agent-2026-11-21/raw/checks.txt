@@ -1,0 +1,29 @@
+Deploy agent checks, 2026-11-21:
+ok 1 - CRM: роль РОП и доступ к разделу
+ok 2 - decide
+ok 3 - classifyJobs
+ok 4 - шаги из deploy.yml
+ok 5 - runDeploy — на заглушках, без сети и pm2
+ok 6 - сообщения в Telegram
+ok 7 - deploy-lock.sh
+ok 8 - установка агента
+ok 9 - память сборки на сервере
+ok 10 - Dependabot не предлагает проверенные и отложенные обновления
+ok 11 - post-deploy-check.sh
+ok 12 - deploy-rollback.sh
+ok 13 - prewarm-routes.sh
+ok 14 - wait-for-port.sh
+ok 15 - deploy-tarball.sh и deploy-tree-digest.sh
+ok 16 - оповещаем только о новых разделах: выдача и добавление — да, снятие и то же самое — нет
+ok 17 - роль: пресет по набору разделов, иначе «свой набор»
+ok 18 - письмо о выдаче администратора: роль, разделы, кто выдал, ссылка входа
+ok 19 - добавленные разделы — другая тема; имя и выдавший экранируются
+ok 20 - выдача в «Команде и доступах» отправляет оповещение, разовый сид — с ожиданием
+ok 21 - Роли панели платформы
+# tests 65
+# pass 65
+# fail 0
+bash -n: scripts/deploy-lock.sh ok; scripts/deploy-agent.sh ok; scripts/install-deploy-agent-cron.sh ok; 
+node --check scripts/deploy-agent.mjs: ok
+npm run typecheck: ok
+Mutation check: step failure ignored + settle comparison flipped -> 4 failing tests (decide, runDeploy); restored -> 20/20.
