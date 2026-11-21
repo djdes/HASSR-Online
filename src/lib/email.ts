@@ -1,6 +1,8 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import nodemailer from "nodemailer";
 import { closingDocumentFilename } from "@/lib/closing-documents/types";
 import { escapeHtml } from "@/lib/html-escape";
+import { PREHEADER_FILLER, emailHtmlToText, emailPreheaderFromBody } from "@/lib/email-text";
 import { COMPANY_EMAIL, COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
 import { translatorFor } from "@/i18n/translator";
@@ -233,8 +235,12 @@ export function enlargeEmailHtml(html: string): string {
  * письма текстом (видна и без картинок), текст 17 px, кнопки крупные.
  */
 function layout(title: string, body: string, brand?: EmailBrand | null, extras?: EmailLayoutExtras) {
-  const preheader = extras?.preheader?.trim()
-    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${escapeHtml(extras.preheader.trim())}</div>`
+  // Строка во входящих — у каждого письма (21.11.2026): своя у рассылок, иначе
+  // первая содержательная фраза тела. Без неё рядом с темой стояли «wesetup.ru»
+  // и повтор темы. Заполнение после строки не даёт почте дописать шапку.
+  const preheaderText = extras?.preheader?.trim() || emailPreheaderFromBody(body);
+  const preheader = preheaderText
+    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;mso-hide:all">${escapeHtml(preheaderText)}${PREHEADER_FILLER}</div>`
     : "";
   // Заголовок полосы — без «— WeSetup» из темы письма: знак уже стоит сверху.
   const heading = title.replace(/\s+[—–-]\s+WeSetup\s*$/u, "");
@@ -334,6 +340,30 @@ export function isEmailDeliveryConfigured(): boolean {
  * отличить «ушло» от «упало», и в панели обращений было не видно, что
  * почтовый канал молчит. Fire-and-forget вызовы просто игнорируют результат.
  */
+/** Письмо, перехваченное `captureOutgoingEmails` вместо отправки. */
+export type CapturedEmail = {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  replyTo?: string;
+  attachments: number;
+};
+
+const emailCapture = new AsyncLocalStorage<CapturedEmail[]>();
+
+/**
+ * Собрать письма настоящими функциями отправки, ничего не отправляя: всё,
+ * что внутри `run` уходит через `sendEmail`, попадает в список. Для
+ * образцов в ROOT → «Письма» и для тестов. Перехват живёт только внутри
+ * вызова (AsyncLocalStorage), обычная отправка его не видит.
+ */
+export async function captureOutgoingEmails<T>(run: () => Promise<T>): Promise<{ result: T; emails: CapturedEmail[] }> {
+  const emails: CapturedEmail[] = [];
+  const result = await emailCapture.run(emails, run);
+  return { result, emails };
+}
+
 async function sendEmail(
   to: string,
   subject: string,
@@ -342,7 +372,14 @@ async function sendEmail(
   options?: { replyTo?: string | null; text?: string | null }
 ): Promise<boolean> {
   const replyTo = options?.replyTo?.trim() || undefined;
-  const text = options?.text?.trim() || undefined;
+  // Текстовая версия — у каждого письма (21.11.2026): своя, если дали, иначе
+  // из HTML. Письма одним HTML почтовики чаще считают спамом.
+  const text = options?.text?.trim() || emailHtmlToText(html) || undefined;
+  const captured = emailCapture.getStore();
+  if (captured) {
+    captured.push({ to, subject, html, text: text ?? "", ...(replyTo ? { replyTo } : {}), attachments: attachments?.length ?? 0 });
+    return true;
+  }
   if (!isSmtpConfigured()) {
     const stripped = html
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")

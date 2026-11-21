@@ -20176,7 +20176,7 @@ export type MessageContract = {
       "invalid": "Проверьте адрес почты."
     },
     "company": {
-      "placeholder": "Название компании или ИП (в шапку журнала)"
+      "placeholder": "Компания или ИП (для шапки)"
     },
     "extras": {
       "toggle": "Дополнительно",

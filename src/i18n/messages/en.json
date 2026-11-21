@@ -20175,7 +20175,7 @@
       "invalid": "Check the email address."
     },
     "company": {
-      "placeholder": "Company name for the log header (optional)"
+      "placeholder": "Company (for the log header)"
     },
     "extras": {
       "toggle": "More details",
