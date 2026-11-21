@@ -1,0 +1,10 @@
+### npm run typecheck
+
+typecheck exit=0
+### npm run test:gate
+→ [test:changed] Отобрано 1 связанных тестовых файлов для 6 изменённых файлов:
+=== Targeted test stats (1 files, 0.2s): pass=13, fail=0 ===
+✓ Все затронутые тесты прошли.
+test:gate exit=0
+### eslint
+eslint exit=0

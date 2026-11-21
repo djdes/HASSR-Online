@@ -1,0 +1,41 @@
+### стенд v2: случаи, которые v1 пропускал
+{"cafe":"cmwqs6dk90000f67ditpkkllv","gym":"cmwqs6e0c0005f67dx47im0e5","canteen":"cmwqs6e0w0007f67dtrmm0446","second":"cmwqs6e140009f67dojbga7xg","solo":"cmwqs6e1e000af67dudjz7ymy"}
+  cmwqs6dk90000f67ditpkkllv «Доброе кафе»: logoUrl=/api/org-assets/cmwqs6dk90000f67ditpkkllv/logo?v=2 file=v2 colour=#1f9d3a
+  cmwqs6e0c0005f67dx47im0e5 «Одинцовская гимназия»: logoUrl=/api/org-assets/cmwqs6e0c0005f67dx47im0e5/logo?v=1 file=v1 colour=—
+  cmwqs6e0w0007f67dtrmm0446 «Столовая №5»: logoUrl=/api/org-assets/cmwqs6e0w0007f67dtrmm0446/logo?v=1 file=v1 colour=—
+  cmwqs6e140009f67dojbga7xg «Сеть-2»: logoUrl=— file=— colour=#1F9D3A
+  cmwqs6e1e000af67dudjz7ymy «Одиночка»: logoUrl=/api/org-assets/cmwqs6dk90000f67ditpkkllv/logo?v=2 file=— colour=—
+  once:inherited-org-brand:v2 = —
+
+### v2 --dry-run
+[inherited-brand:dry-run] census: organizations 5, with logo 4 (own files 3, external links 0, other organization's file 1)
+[inherited-brand:dry-run] census: other organization's file: cmwqs6e1e000af67dudjz7ymy
+[inherited-brand:dry-run] census: own file never uploaded here: cmwqs6e0c0005f67dx47im0e5
+[inherited-brand:dry-run] census: same file in 2 (same account true, uploaded by a person 2): cmwqs6dk90000f67ditpkkllv cmwqs6e0w0007f67dtrmm0446
+[inherited-brand:dry-run] cmwqs6e0c0005f67dx47im0e5: logo copied-file
+[inherited-brand:dry-run] cmwqs6e140009f67dojbga7xg: colour
+[inherited-brand:dry-run] cmwqs6e1e000af67dudjz7ymy: logo shared-file
+[inherited-brand:dry-run] checked 5 organizations; would remove inherited brand: 3 (logo 2, colour 1)
+
+### как на выкладке: timeout 180 … | tail -40
+[inherited-brand] census: organizations 5, with logo 4 (own files 3, external links 0, other organization's file 1)
+[inherited-brand] census: other organization's file: cmwqs6e1e000af67dudjz7ymy
+[inherited-brand] census: own file never uploaded here: cmwqs6e0c0005f67dx47im0e5
+[inherited-brand] census: same file in 2 (same account true, uploaded by a person 2): cmwqs6dk90000f67ditpkkllv cmwqs6e0w0007f67dtrmm0446
+[inherited-brand] cmwqs6e0c0005f67dx47im0e5: logo copied-file
+[inherited-brand] cmwqs6e140009f67dojbga7xg: colour
+[inherited-brand] cmwqs6e1e000af67dudjz7ymy: logo shared-file
+[inherited-brand] checked 5 organizations; removed inherited brand: 3 (logo 2, colour 1)
+[inherited-brand] done
+  cmwqs6dk90000f67ditpkkllv «Доброе кафе»: logoUrl=/api/org-assets/cmwqs6dk90000f67ditpkkllv/logo?v=2 file=v2 colour=#1f9d3a
+  cmwqs6e0c0005f67dx47im0e5 «Одинцовская гимназия»: logoUrl=— file=— colour=—
+  cmwqs6e0w0007f67dtrmm0446 «Столовая №5»: logoUrl=/api/org-assets/cmwqs6e0w0007f67dtrmm0446/logo?v=1 file=v1 colour=—
+  cmwqs6e140009f67dojbga7xg «Сеть-2»: logoUrl=— file=— colour=—
+  cmwqs6e1e000af67dudjz7ymy «Одиночка»: logoUrl=— file=— colour=—
+  once:inherited-org-brand:v2 = {"at":"2026-11-21T19:08:45.390Z","checked":5,"removed":3,"logos":2,"colours":1,"census":{"withLogo":4,"ownFiles":3,"foreignPointers":1,"filesWithoutUpload":1,"sameFileGroups":1,"sameLinkGroups":0}}
+
+### повторная выкладка
+[inherited-brand] once:inherited-org-brand:v2: already done
+
+### ручной скрипт после v2 (показ)
+Проверено организаций: 5; с унаследованным фирменным стилем: 0 (только показ, --apply — исправить)

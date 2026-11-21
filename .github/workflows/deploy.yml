@@ -929,7 +929,7 @@ jobs:
                 echo "=== Роли панели: встроенные роли, раздел CRM, привязка наборов, коммерческий директор (one-shot, PlatformSetting-guard) ==="
                 timeout 180 npx tsx prisma/seed-platform-roles-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-platform-roles-2026-11 failed — deploy continues"
                 echo "=== Фирменный стиль: снять у организаций «как текущая» логотип и цвет донора (one-shot, PlatformSetting-guard; запрос владельца 2026-11-21) ==="
-                timeout 180 npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts 2>&1 | tail -15 || echo "[warn] seed-repair-inherited-org-brand-2026-11 failed — deploy continues"
+                timeout 180 npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts 2>&1 | tail -40 || echo "[warn] seed-repair-inherited-org-brand-2026-11 failed — deploy continues"
                 # Legacy business-data backfills require a separate reviewed run.
                 # A normal code release must not rewrite customer journal records.
                 if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then

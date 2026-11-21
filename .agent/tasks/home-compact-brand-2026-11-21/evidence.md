@@ -71,3 +71,17 @@ npx tsx scripts/repair-inherited-org-brand.ts --apply  # убрать унасл
   ключ записан, 2 записи `organization.brand.inherited_removed`; повторный запуск — `already done`; ручной скрипт
   после этого — 0.
 - Проверки (`raw/oneshot/checks.txt`): `npm run typecheck` — exit 0; `npm run test:gate` — pass 10, fail 0; eslint — exit 0.
+
+## Дополнение: AC3b v2 — шире правила и перепись логотипов
+
+- Выкладка #296 (run 44937888372, шаг 3/3): `[inherited-brand] checked 18 organizations in multi-organization accounts;
+  removed inherited brand: 0 (logo 0, colour 0)` — правила v1 были уже, чем нужно.
+- v2 (`once:inherited-org-brand:v2`): все организации; свой файл без записи `organization.logo.upload` — копия, пока
+  журнал хранит все загрузки (до 14.01.2027, `LOGO_UPLOAD_AUDIT_COMPLETE_UNTIL`); адрес файла другой организации — у
+  любой организации (и одиночной, и без аккаунта); перед починкой — обезличенная перепись (`brandCensus`): чужие
+  адреса, файлы без загрузки, одинаковые файлы и ссылки (только id).
+- Тесты `src/lib/inherited-org-brand.test.ts` — 13/13 (новые: копия после окна, общий файл у любой, перепись).
+- Стенд (`raw/oneshot/oneshot-v2-check.txt`): у «гимназии» (копия скрипта 01.11, донор потом перезалил логотип —
+  v1 не видел) и у «одиночки» (адрес файла «Доброго кафе») логотип убран, у «Сети-2» — цвет; донор и логотип,
+  загруженный человеком в «Столовой», на месте; повтор — `already done`; ручной скрипт после — 0.
+- Проверки (`raw/oneshot/checks-v2.txt`): typecheck — exit 0; test:gate — 13/13; eslint — exit 0.
