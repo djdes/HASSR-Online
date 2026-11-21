@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { findInheritedBrand, type BrandOrgRow } from "./inherited-org-brand";
@@ -102,4 +103,23 @@ test("цепочка: копия копии наследует от самой �
     findInheritedBrand([third, second, donor]).map((fix) => fix.organizationId),
     ["second", "third"],
   );
+});
+
+test("починка уже созданных организаций идёт сама на выкладке — один раз, без названий в логе", () => {
+  const read = (file: string) => readFileSync(file, "utf8");
+  const seed = read("prisma/seed-repair-inherited-org-brand-2026-11.ts");
+  assert.match(seed, /"once:inherited-org-brand:v1"/);
+  assert.match(seed, /findInheritedBrandInDb\(\)/);
+  assert.match(seed, /removeInheritedBrand\(/);
+  // Лог Actions публичный: в сиде нет названий организаций.
+  assert.doesNotMatch(seed, /\.name\b/);
+  // Тот же поиск и та же починка, что у ручного скрипта.
+  const script = read("scripts/repair-inherited-org-brand.ts");
+  assert.match(script, /findInheritedBrandInDb\(\)/);
+  assert.match(script, /removeInheritedBrand\(/);
+
+  const deploy = read(".github/workflows/deploy.yml");
+  const step = deploy.indexOf("npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts");
+  assert.ok(step > deploy.indexOf("prisma/seed-platform-roles-2026-11.ts"), "после сидов панели платформы");
+  assert.ok(step < deploy.indexOf('if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]'), "не за флагом legacy-сидов");
 });
