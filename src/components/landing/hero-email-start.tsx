@@ -286,8 +286,9 @@ export function HeroEmailStart({
         </button>
       </form>
 
-      {/* Юридический текст согласия — мелкой строкой, как на регистрации:
-          формулировку не меняем, это не «основной текст» страницы. */}
+      {/* Галка согласия — одной короткой строкой, крупнее и с большой
+          галкой (правки 21.11.2026); текст — `auth.legal.consentShort`,
+          в журнал согласий пишется он же (`LEGAL_CONSENT_TEXT_SHORT`). */}
       <div data-fine-print="legal">
         <LegalConsentCheckbox
           checked={consent}

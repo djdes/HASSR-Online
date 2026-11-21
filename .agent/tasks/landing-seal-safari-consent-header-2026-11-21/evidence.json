@@ -1,0 +1,14 @@
+{
+  "task": "landing-seal-safari-consent-header-2026-11-21",
+  "date": "2026-11-21",
+  "base": "dfd976cbf",
+  "verdict": "PASS",
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS" },
+  "commands": [
+    { "cmd": "npm run typecheck", "exit": 0, "raw": "raw/typecheck.txt" },
+    { "cmd": "npm run test:changed", "exit": 0, "result": "65 files, pass=276, fail=0", "raw": "raw/test-changed.txt" },
+    { "cmd": "npx eslint <changed files>", "exit": 0, "result": "0 errors, 1 pre-existing warning", "raw": "raw/lint.txt" }
+  ],
+  "live": "raw/live-checks.txt",
+  "notes": ["WebKit is not installed in this container; Safari behaviour reasoned from the user's screenshot", "screenshots gitignored"]
+}

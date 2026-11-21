@@ -2705,7 +2705,7 @@ export type MessageContract = {
     },
     "legal": {
       "consentSentence": "Я принимаю <offer>оферту</offer> и <terms>пользовательское соглашение</terms>, ознакомлен с <privacy>политикой конфиденциальности</privacy> и даю <consent>согласие на обработку персональных данных</consent>.",
-      "consentShort": "Принимаю <offer>оферту</offer> и даю <consent>согласие на обработку персональных данных</consent>",
+      "consentShort": "Принимаю <offer>оферту</offer> и <consent>обработку данных</consent>",
       "openOfferTitle": "Открыть оферту?",
       "openConsentTitle": "Открыть согласие на обработку персональных данных?",
       "openHint": "Документ откроется в новой вкладке, форма останется на месте.",

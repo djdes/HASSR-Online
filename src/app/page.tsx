@@ -510,8 +510,12 @@ export default async function LandingPage() {
           <Link href="/" className="shrink-0 text-[#0b1024]" aria-label={copy("landing.homeLink")}>
             <BrandWithTagline tagline={copy("landing.brandTagline")} />
           </Link>
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-3 lg:gap-4">
-            <SiteSearch />
+          <div className="ml-auto flex items-center gap-1 sm:gap-3 lg:gap-4">
+            {/* Уже 390 px поиск прячем: иначе «Тарифы» и «Войти» не влезают и
+                шапка упирается в край экрана (правки 21.11.2026). */}
+            <span className="hidden min-[390px]:contents">
+              <SiteSearch />
+            </span>
             <LanguageSwitch className="hidden lg:inline-flex" />
             <Link
               href="/journals-info"
@@ -533,7 +537,7 @@ export default async function LandingPage() {
                 отдельная страница: тарифы тут же, ниже по этой же. */}
             <AnchorScrollLink
               href="#pricing"
-              className="inline-flex h-10 items-center px-1.5 text-[15px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
+              className="inline-flex h-10 items-center px-1 text-[15px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
             >
               {copy("landing.pricingLink")}</AnchorScrollLink>
             {isAuthed ? (
@@ -568,7 +572,7 @@ export default async function LandingPage() {
                 <Link
                   href="/login"
                   aria-label={copy("landing.signIn")}
-                  className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-3 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:gap-2 sm:px-4 sm:text-[14px]"
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-2.5 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:gap-2 sm:px-4 sm:text-[14px]"
                 >
                   <span className="hidden min-[375px]:inline">{copy("landing.signIn")}</span>
                   <LogIn className="size-4 text-[#5566f6]" aria-hidden="true" />
