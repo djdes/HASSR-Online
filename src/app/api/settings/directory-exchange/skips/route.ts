@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { exchangeErrorResponse, requireExchangeManager } from "@/lib/directory-exchange/access.server";
 import { ignoreExchangeSkip, linkExchangeSkip, listExchangeSkips } from "@/lib/directory-exchange/skips.server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
@@ -24,10 +24,10 @@ const actionSchema = z.discriminatedUnion("action", [
  * создать у своих организаций аккаунта (нет мест в тарифе, такое название
  * уже есть): `{ total, organizations: [{ organizationId, name, items }] }`,
  * у строк «такое название уже есть» — `candidates` для «Связать с …».
- * Только владелец аккаунта.
+ * Владелец аккаунта или управляющий сетью.
  */
 export async function GET() {
-  const owner = await requireExchangeOwner({ allowLocked: true });
+  const owner = await requireExchangeManager({ allowLocked: true });
   if (!owner.ok) return owner.response;
   const { accountId, actor } = owner.context;
   if (!readLimiter.consume(`directory-exchange:skips:${actor.userId}`)) {
@@ -48,7 +48,7 @@ export async function GET() {
  * не меняются. → `{ ok: true }`. Чужое — 404, обмен идёт — 409.
  */
 export async function POST(request: Request) {
-  const owner = await requireExchangeOwner();
+  const owner = await requireExchangeManager();
   if (!owner.ok) return owner.response;
   const { accountId, actor } = owner.context;
   if (!actionLimiter.consume(`directory-exchange:skips-action:${actor.userId}`)) {

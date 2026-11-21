@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-c1-2026-11-20/raw/pool-check.ts (series C1); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-c1-2026-11-20/raw/pool-check.ts (series C1); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series C1, item 7 (Р7.1–Р7.4, AC3, AC4): the master cabinet's menu and raw materials for a
  * company of another account — a separate tick in the link request, a separate decision of the

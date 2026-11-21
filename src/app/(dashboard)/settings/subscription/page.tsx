@@ -14,6 +14,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { isPointScoped } from "@/lib/point-scope";
+import { accountPayHint } from "@/lib/balance/account-pay.server";
 import { db } from "@/lib/db";
 import { ClosingDocumentActions } from "@/components/settings/closing-document-actions";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
@@ -440,6 +442,12 @@ export default async function SubscriptionPage({
   }
 
   const exempt = !billing || billing.unit.exempt;
+  // «Собрать с организаций аккаунта и оплатить» (серия E, Р10): только
+  // владельцу аккаунта — не «войти как», не консультанту, не руководителю точки.
+  const accountPay =
+    !exempt && !isDemo && !isImpersonating(session) && !session.user.partnerAccess && !isPointScoped(session.user)
+      ? await accountPayHint(session.user.id, orgId)
+      : null;
   const cabinetStatus: "trial" | "free" | "paid" = kind === "paid" ? "paid" : kind === "free_period" ? "trial" : "free";
   const statusNote =
     kind === "free_period" && state
@@ -689,6 +697,7 @@ export default async function SubscriptionPage({
               nowIso: now.toISOString(),
               activeUsers: state?.activeUsers ?? 0,
             }}
+            accountPay={accountPay}
             freeAction={
               voluntaryFree ? <VoluntaryFreeButton paidUntilLabel={voluntaryFree.paidUntilLabel} className="h-auto min-h-12 w-full py-2 leading-tight sm:min-h-11" /> : null
             }

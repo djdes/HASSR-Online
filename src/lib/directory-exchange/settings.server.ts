@@ -1,3 +1,5 @@
+import { canManageNetworkRole } from "@/lib/account-roles";
+import { accountRoleForOrganization, canManageNetwork } from "@/lib/account-roles.server";
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
 import { countExchangeRecords } from "@/lib/directory-exchange/entities.server";
@@ -12,13 +14,16 @@ import { isOrganizationLocked } from "@/lib/org-trial.server";
 
 /**
  * Настройка обмена справочниками (правила Р2 и Р7): кто участвует и какими
- * списками. Настраивает владелец аккаунта и только между организациями
- * своего аккаунта; участники привязаны к мастер-кабинету аккаунта — самому
- * раннему, а если кабинета нет, он создаётся с названием «Мастер-кабинет».
+ * списками. Настраивает владелец аккаунта или управляющий сетью (серия E,
+ * Р5) и только между организациями своего аккаунта; участники привязаны к
+ * мастер-кабинету аккаунта — самому раннему, а если кабинета нет, он
+ * создаётся с названием «Мастер-кабинет».
  */
 
 export const EXCHANGE_CABINET_NAME = "Мастер-кабинет";
-export const EXCHANGE_OWNER_ONLY_MESSAGE = "Настраивать обмен справочниками может только владелец аккаунта";
+export const EXCHANGE_OWNER_ONLY_MESSAGE = "Настраивать обмен справочниками может владелец аккаунта или управляющий сетью";
+/** Запросы и связи с другой компанией — только владелец аккаунта (не управляющий сетью). */
+export const EXCHANGE_ACCOUNT_OWNER_ONLY_MESSAGE = "Это может только владелец аккаунта";
 const ORGANIZATION_NOT_FOUND = "Организация не найдена";
 
 export type ExchangeCabinet = { id: string; name: string };
@@ -40,8 +45,10 @@ export type ExchangeSibling = {
 };
 
 export type ExchangeState = {
-  /** Владелец аккаунта активной организации с полным доступом, не «войти как». */
+  /** Владелец аккаунта активной организации или управляющий сетью, с полным доступом, не «войти как». */
   canManage: boolean;
+  /** Владелец аккаунта: запросы и связи с другой компанией — только ему. */
+  isAccountOwner: boolean;
   organization: { id: string; name: string };
   /** Активная организация закрыта после своих 14 дней. */
   locked: boolean;
@@ -72,17 +79,19 @@ export async function findExchangeCabinet(accountId: string): Promise<ExchangeCa
 
 /**
  * Кабинет обмена аккаунта: существующий или новый «Мастер-кабинет».
- * Создаёт только владелец аккаунта; два одновременных запроса второго
+ * Заводит владелец аккаунта или управляющий сетью (`actorUserId`); кабинет
+ * всегда принадлежит владельцу аккаунта. Два одновременных запроса второго
  * кабинета не заводят.
  */
 export async function ensureExchangeCabinet(
-  ownerUserId: string,
+  actorUserId: string,
   accountId: string,
 ): Promise<ExchangeCabinet & { created: boolean }> {
   const account = await db.account.findUnique({ where: { id: accountId }, select: { ownerUserId: true } });
-  if (!account || account.ownerUserId !== ownerUserId) {
+  if (!account || !(await canManageNetwork(actorUserId, accountId))) {
     throw new DirectoryExchangeError(EXCHANGE_OWNER_ONLY_MESSAGE, 403);
   }
+  const ownerUserId = account.ownerUserId;
   const existing = await findExchangeCabinet(accountId);
   if (existing) return { ...existing, created: false };
 
@@ -164,8 +173,8 @@ async function isExchangeCodeFree(code: string): Promise<boolean> {
  * Прежний код перестаёт приниматься для новых запросов — и прежний путь через
  * код меню тоже (`acceptsLegacyExchangeCode`); подтверждённые связи, ждущие
  * запросы и подключения к меню и сырью (`serviceCode`, `linkedServiceCode`)
- * не меняются. Только владелец аккаунта; в журнале — что код сменился, без
- * самих кодов.
+ * не меняются. Владелец аккаунта или управляющий сетью (`ownerUserId` — кто
+ * действует); в журнале — что код сменился и кем, без самих кодов.
  */
 export async function regenerateExchangeCode(input: {
   ownerUserId: string;
@@ -174,8 +183,7 @@ export async function regenerateExchangeCode(input: {
   /** Активная организация владельца — в её журнал пишется действие. */
   organizationId: string;
 }): Promise<{ cabinet: ExchangeCabinet; code: string }> {
-  const account = await db.account.findUnique({ where: { id: input.accountId }, select: { ownerUserId: true } });
-  if (!account || account.ownerUserId !== input.ownerUserId) {
+  if (!(await canManageNetwork(input.ownerUserId, input.accountId))) {
     throw new DirectoryExchangeError(EXCHANGE_OWNER_ONLY_MESSAGE, 403);
   }
   const cabinet = await findExchangeCabinet(input.accountId);
@@ -240,21 +248,20 @@ export async function loadExchangeState(
       accountId: true,
       isDemo: true,
       kind: true,
-      account: { select: { ownerUserId: true } },
     },
   });
   if (!organization) throw new DirectoryExchangeError(ORGANIZATION_NOT_FOUND, 404);
 
   const accountId = organization.accountId;
-  const canManage =
-    options.sessionAllows !== false &&
-    Boolean(accountId) &&
-    organization.account?.ownerUserId === userId &&
-    !organization.isDemo &&
-    organization.kind !== MASTER_ORG_KIND;
-  const base = { canManage, organization: { id: organization.id, name: organization.name } };
+  // Владелец аккаунта или управляющий сетью (серия E, Р5) — роль по базе.
+  const role =
+    options.sessionAllows !== false && accountId && !organization.isDemo && organization.kind !== MASTER_ORG_KIND
+      ? ((await accountRoleForOrganization(userId, organization.id))?.role ?? null)
+      : null;
+  const canManage = canManageNetworkRole(role);
+  const base = { canManage, isAccountOwner: role === "owner", organization: { id: organization.id, name: organization.name } };
   if (!canManage || !accountId) {
-    return { ...base, canManage: false, locked: false, counts: zeroCounts(), siblings: [], cabinet: null, cabinetCode: null, members: [], lastSync: null };
+    return { ...base, canManage: false, isAccountOwner: false, locked: false, counts: zeroCounts(), siblings: [], cabinet: null, cabinetCode: null, members: [], lastSync: null };
   }
 
   const [counts, locked, organizations, cabinet] = await Promise.all([
@@ -300,7 +307,7 @@ export async function loadExchangeState(
     counts,
     siblings,
     cabinet,
-    // Сюда доходит только владелец аккаунта (выше — ранний выход для остальных).
+    // Сюда доходят только владелец аккаунта и управляющий сетью (выше — ранний выход для остальных).
     cabinetCode: cabinet ? await exchangeCabinetCode(cabinet.id) : null,
     members: rows.map((row) => ({
       organizationId: row.organizationId,
@@ -314,7 +321,8 @@ export async function loadExchangeState(
 
 /**
  * Сохранить участников обмена. `organizationId` — активная организация
- * владельца (по ней определяется аккаунт); `members` — только те
+ * владельца или управляющего сетью (по ней определяется аккаунт;
+ * `ownerUserId` — кто действует, его имя — в журнале); `members` — только те
  * организации, которые меняются: непустые `kinds` — участвует этими
  * списками, пустые — выходит из обмена (её соответствия удаляются).
  * Остальные участники не затрагиваются. Кабинет создаётся, когда нужен.
@@ -329,11 +337,11 @@ export async function saveExchangeMembers(input: {
 }): Promise<{ cabinet: ExchangeCabinet | null }> {
   const active = await db.organization.findUnique({
     where: { id: input.organizationId },
-    select: { id: true, accountId: true, isDemo: true, kind: true, account: { select: { ownerUserId: true } } },
+    select: { id: true, accountId: true, isDemo: true, kind: true },
   });
   if (!active) throw new DirectoryExchangeError(ORGANIZATION_NOT_FOUND, 404);
   const accountId = active.accountId;
-  if (!accountId || active.account?.ownerUserId !== input.ownerUserId || active.isDemo || active.kind === MASTER_ORG_KIND) {
+  if (!accountId || active.isDemo || active.kind === MASTER_ORG_KIND || !(await canManageNetwork(input.ownerUserId, accountId))) {
     throw new DirectoryExchangeError(EXCHANGE_OWNER_ONLY_MESSAGE, 403);
   }
 

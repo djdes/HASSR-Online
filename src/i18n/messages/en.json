@@ -4159,7 +4159,8 @@
       "open": "Open",
       "orgTrialEnding": "{stage, select, tomorrow {The free days of the organization “{name}” end tomorrow} other {The free days of the organization “{name}” are ending}}",
       "orgTrialLastDay": "Last free day — {date}",
-      "addPoint": "Add a location"
+      "addPoint": "Add a location",
+      "orgTrialAccountCovers": "The balances of the account's organizations have enough money — you can pay for the location from the balance in one step."
     }
   },
   "journalControls": {
@@ -11219,7 +11220,70 @@
       },
       "go": "Open",
       "goFailed": "Could not switch",
-      "truncated": "Showing the first {count} organizations by creation date."
+      "truncated": "Showing the first {count} organizations by creation date.",
+      "period": {
+        "label": "Period",
+        "options": {
+          "today": "Today",
+          "7": "7 days",
+          "30": "30 days"
+        },
+        "range": "{from} — {to}: full days, today not included.",
+        "hint": "A day counts when every daily journal the organization keeps has an entry or the day is closed. Days before the organization was created and after it was closed are not counted.",
+        "columns": {
+          "filled": "Days with journals filled",
+          "records": "Journal entries"
+        },
+        "value": "{filled} of {days}",
+        "percent": "{percent}%",
+        "status": {
+          "done": "every day",
+          "partial": "not every day",
+          "none": "not a single day",
+          "empty": "no journals",
+          "unknown": "could not count"
+        },
+        "totals": {
+          "filled": "Days with journals filled",
+          "records": "Journal entries in the period"
+        }
+      },
+      "export": {
+        "label": "Export",
+        "excel": "Excel",
+        "pdf": "PDF",
+        "title": "Network: summary by organization",
+        "sheet": "Network",
+        "today": "Today, {date}",
+        "range": "{from} — {to} ({count, plural, one {# day} other {# days}})",
+        "generated": "Generated {date}",
+        "total": "Total",
+        "status": "Status",
+        "percent": "Share of days, %"
+      },
+      "managers": {
+        "title": "Network managers",
+        "description": "A network manager sees the Network page, sets up and runs directory exchange, transfers data and undoes transfers, reviews skipped records and exchange history, issues the master cabinet code, sees the account balance and moves money between organizations. Requests from other companies, appointing managers, the plan and payments stay with the owner. Every action of a manager is logged under their name.",
+        "empty": "No managers yet — only the owner manages the network.",
+        "inactive": "rights inactive: no full access",
+        "since": "appointed {date}",
+        "candidate": "{name} — {organizations}",
+        "choose": "Choose a manager",
+        "add": "Appoint",
+        "noCandidates": "You can appoint a manager of one of the account's organizations with full access — there are none yet.",
+        "remove": "Remove",
+        "removeTitle": "Remove {name} from managing the network?",
+        "removeDescription": "The manager's rights end immediately. The person keeps their role in the organizations.",
+        "added": "{name} now manages the network",
+        "removed": "{name} no longer manages the network",
+        "failed": "Could not save — please try again"
+      },
+      "mini": {
+        "eyebrow": "Network",
+        "title": "Account organizations",
+        "unfilled": "With unfilled journals",
+        "full": "Full summary on the Network page"
+      }
     }
   },
   "sanpinReference": {
@@ -20794,7 +20858,11 @@
     "search": {
       "label": "Search sections"
     },
-    "emptySearch": "No sections found. Try another word, such as “journal,” “report,” or “employee.”"
+    "emptySearch": "No sections found. Try another word, such as “journal,” “report,” or “employee.”",
+    "network": {
+      "label": "Network",
+      "hint": "Account organizations: today's journals, balances, own 14 days"
+    }
   },
   "specializedHygieneGlassPdf": {
     "hygieneTitle": "Hygiene log (employees)",
@@ -27056,7 +27124,7 @@
         "description": "Directories of “{name}” and the other organisations of the account: link them or transfer selected items once.",
         "loading": "Loading organisations…",
         "loadFailed": "Could not load the organisations of the account",
-        "ownerOnly": "The directory exchange is set up by the account owner.",
+        "ownerOnly": "The directory exchange is set up by the account owner or a network manager.",
         "noSiblings": "The account has only one organisation so far. The exchange appears once you add a second one.",
         "modeLegend": "Method",
         "modeLink": "Link through the master cabinet",
@@ -30737,7 +30805,34 @@
       "orgTrialLocked": "“{name}” — closed: the free days ended on {date}",
       "orgTrialLockedHint": "To open the closed organisations you need {points, plural, one {# location} other {# locations}} in total. The options below already include them.",
       "orgTrialsLeft": "Free 14-day periods left for new organisations: {count}.",
-      "addPointsNote": "Adding a location: the choice below already has {count, plural, one {# location} other {# locations}}. Pick a plan and pay as usual."
+      "addPointsNote": "Adding a location: the choice below already has {count, plural, one {# location} other {# locations}}. Pick a plan and pay as usual.",
+      "accountPay": {
+        "button": "Collect from the account's organizations and pay",
+        "confirmTitle": "Pay {amount} from the account balances?",
+        "confirmDescription": "The balance of “{name}” is {balance} — {missing} short. We will transfer the missing amount from the account's other organizations and pay for the plan right away. The transfers will show in the balance history.",
+        "confirmEnough": "The balance of “{name}” is enough — we will pay from it, no transfers.",
+        "sourceLine": "Transfer from “{name}” — {amount}",
+        "chargeLine": "Plan payment from the balance of “{name}” — {amount}",
+        "confirmCollect": "Transfer and pay",
+        "confirm": "Pay",
+        "loading": "Working out the amount and where to take it from…",
+        "success": "Plan paid from the balance: {amount}",
+        "successCollected": "Collected {moved} from the account's organizations and paid for the plan: {amount}",
+        "already": "This payment has already gone through",
+        "errors": {
+          "notOwner": "Only the account owner can pay from the balances of the account's organizations",
+          "accountShort": "The balances of the account's organizations are {amount} short. Pay for the plan the usual way.",
+          "priceChanged": "The amount has been recalculated: it is now {amount}. Check it and confirm again.",
+          "deleting": "The organization “{name}” is being deleted — money cannot be collected to its balance.",
+          "transferFailed": "The transfer from “{source}” did not go through. {moved} is already on the balance of “{name}” — the transfers show in the balance history. Nothing was charged: try again, money already transferred will not be transferred twice.",
+          "transferFailedNothing": "The transfer from “{source}” did not go through. Nothing was transferred or charged — refresh the page and try again.",
+          "chargeFailed": "The payment did not go through. {moved} is already on the balance of “{name}” — the transfers show in the balance history. Try again or pay for the plan the usual way.",
+          "chargeFailedNothing": "The payment did not go through, nothing was charged. Try again.",
+          "network": "No connection to the server. Try again — the money will not be debited twice.",
+          "tooMany": "Too many attempts in a row. Wait a minute.",
+          "failed": "Payment failed. Refresh the page and try again."
+        }
+      }
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Commission — signs off the quality check",

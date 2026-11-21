@@ -14,6 +14,7 @@ import { runAbandonedOrderReminders } from "@/lib/abandoned-orders.server";
 import { sendRootHealthEmail } from "@/lib/root-health-email";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 import { lockedOrganizationIds } from "@/lib/org-trial.server";
+import { sendExchangeWeeklyDigests } from "@/lib/directory-exchange/weekly-digest.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +35,8 @@ export const dynamic = "force-dynamic";
  * Здесь же (каждый час): сводка воронки админу в понедельник 08:00 по
  * Москве (`sendFunnelDigest`) и письма по брошенным заказам
  * (`runAbandonedOrderReminders`) — у этого крона уже есть расписание.
+ * И сводка обмена справочниками владельцу аккаунта и управляющим сетью в
+ * тот же слот (`sendExchangeWeeklyDigests`, `?exchangeDigest=1` — вне слота).
  *
  * Для проверки: `?orgId=<id>&force=1` — одна организация сейчас,
  * `&to=<email>` — письмо только на этот адрес (отметка об отправке при
@@ -162,13 +165,23 @@ async function handle(request: Request) {
       ? await sendFunnelDigest({ now, force: funnelDigestForce, appUrl: baseUrl }).catch((error) => ({ sent: false, reason: `error: ${String(error).slice(0, 120)}` }))
       : { sent: false, reason: "not-slot" };
 
+  // Сводка обмена справочниками владельцу аккаунта и управляющим сетью
+  // (серия E, Р7) — в тот же понедельничный слот по Москве; ?exchangeDigest=1 —
+  // запуск вне слота. Раз в ISO-неделю на аккаунт: повтор отсекает отметка
+  // в журнале действий; закрытые организации не считаются.
+  const exchangeDigestNow = searchParams.get("exchangeDigest") === "1";
+  const exchangeDigest =
+    exchangeDigestNow || (!orgIdFilter && isDigestSlot(now, "Europe/Moscow"))
+      ? await sendExchangeWeeklyDigests({ now, locked }).catch((error) => ({ sent: 0, reason: `error: ${String(error).slice(0, 120)}` }))
+      : { sent: 0, reason: "not-slot" };
+
   // Брошенные заказы: письмо через час после незавершённой оплаты — крону
   // нужен ежечасный запуск, а этот уже идёт каждый час.
   const abandonedOrders = orgIdFilter
     ? { scanned: 0, sent: 0, skipped: 0, reason: "org-filter" }
     : await runAbandonedOrderReminders({ now }).catch((error) => ({ scanned: 0, sent: 0, skipped: 0, reason: `error: ${String(error).slice(0, 120)}` }));
 
-  return NextResponse.json({ ok: true, now: now.toISOString(), sent, skipped, errors, total: orgs.length, results, rootHealth, funnelDigest, abandonedOrders });
+  return NextResponse.json({ ok: true, now: now.toISOString(), sent, skipped, errors, total: orgs.length, results, rootHealth, funnelDigest, exchangeDigest, abandonedOrders });
 }
 
 export const GET = handle;

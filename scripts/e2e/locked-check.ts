@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-a-2026-11-20/raw/locked-check.ts (series A); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-a-2026-11-20/raw/locked-check.ts (series A); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series A, AC1: `lockedOrganizationIds` and the daily job that creates journal documents.
  * One paid account with one point: an organization in the tariff and an organization whose

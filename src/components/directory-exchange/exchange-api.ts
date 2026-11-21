@@ -64,6 +64,8 @@ export type ExchangeSibling = {
 /** Ответ `GET /api/settings/directory-exchange`. */
 export type ExchangeState = {
   canManage: boolean;
+  /** Владелец аккаунта; управляющему сетью запросы в другую компанию не показываем. */
+  isAccountOwner: boolean;
   organization: { id: string; name: string };
   counts: ExchangeCounts;
   siblings: ExchangeSibling[];
@@ -180,6 +182,8 @@ export function parseState(value: unknown): ExchangeState | null {
   }
   return {
     canManage: source.canManage === true,
+    // Прежний ответ без поля приходил только владельцу.
+    isAccountOwner: source.isAccountOwner !== false,
     organization: { id: asText(organization.id), name: asText(organization.name) },
     counts: parseCounts(source.counts),
     siblings,

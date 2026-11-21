@@ -1,3 +1,4 @@
+import { canManageNetwork } from "@/lib/account-roles.server";
 import { db } from "@/lib/db";
 import { listMasterUsers, type MasterCabinetUser } from "@/lib/master-cabinet";
 import { poolCodeOf } from "@/lib/master-cabinet-choice";
@@ -64,6 +65,8 @@ export type OrgMasterCabinetsView = {
   byPoints: boolean;
   /** Смотрящий — владелец аккаунта: создаёт кабинеты и управляет их людьми. */
   viewerIsOwner: boolean;
+  /** Смотрящий ведёт обмен справочниками аккаунта: владелец или управляющий сетью. */
+  viewerManagesExchange: boolean;
   isDemo: boolean;
 };
 
@@ -72,6 +75,7 @@ const EMPTY: Omit<OrgMasterCabinetsView, "organizationName" | "isDemo"> = {
   connectable: [],
   byPoints: false,
   viewerIsOwner: false,
+  viewerManagesExchange: false,
 };
 
 export async function loadOrgMasterCabinets(organizationId: string, viewerUserId: string): Promise<OrgMasterCabinetsView> {
@@ -97,6 +101,8 @@ export async function loadOrgMasterCabinets(organizationId: string, viewerUserId
     ? await db.account.findUnique({ where: { id: org.accountId }, select: { ownerUserId: true } })
     : null;
   const viewerIsOwner = ownerAccount?.ownerUserId === viewerUserId;
+  // Управляющий сетью настраивает и запускает обмен, как владелец (кабинеты и их люди — владельцу).
+  const viewerManagesExchange = viewerIsOwner || (org.accountId ? await canManageNetwork(viewerUserId, org.accountId) : false);
 
   // Кабинеты аккаунта и кабинеты кодов, к которым подключены организация и её точки.
   const codes = [
@@ -182,6 +188,7 @@ export async function loadOrgMasterCabinets(organizationId: string, viewerUserId
     connectable,
     byPoints,
     viewerIsOwner,
+    viewerManagesExchange,
     isDemo: org.isDemo,
   };
 }

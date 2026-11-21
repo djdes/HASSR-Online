@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 import { getActiveOrgId, isImpersonating, requireApiAuth } from "@/lib/auth-helpers";
-import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { exchangeErrorResponse, requireExchangeManager } from "@/lib/directory-exchange/access.server";
 import { DirectoryExchangeError } from "@/lib/directory-exchange/errors";
 import { EXCHANGE_KINDS } from "@/lib/directory-exchange/kinds";
 import { EXCHANGE_BUSY_CODE, runDirectoryExchangeWithin } from "@/lib/directory-exchange/run.server";
@@ -38,8 +38,9 @@ const saveSchema = z.object({
  * GET /api/settings/directory-exchange — состояние обмена справочниками для
  * окна «Связать или перенести данные» и карточки «Обмен справочниками»:
  * `{ canManage, organization, locked, counts, siblings, cabinet, members,
- * lastSync }`. Руководителю, который не владелец аккаунта, — `canManage:
- * false` без соседних организаций; сотруднику — 403.
+ * lastSync, isAccountOwner }`. Руководителю, который не владелец аккаунта и
+ * не управляющий сетью, — `canManage: false` без соседних организаций;
+ * сотруднику — 403.
  */
 export async function GET() {
   const auth = await requireApiAuth();
@@ -66,11 +67,11 @@ export async function GET() {
  * — сохранить участников (пустые `kinds` — выход из обмена), при
  * необходимости создать мастер-кабинет и сразу запустить обмен →
  * `{ ok: true, summary }`; обмен дольше 8 секунд — `{ ok: true, running:
- * true, summary }` (пустой), он доходит в фоне, итог — в карточке. Только
- * владелец аккаунта и только организации его аккаунта (чужая — 404).
+ * true, summary }` (пустой), он доходит в фоне, итог — в карточке. Владелец
+ * аккаунта или управляющий сетью и только организации аккаунта (чужая — 404).
  */
 export async function PUT(request: Request) {
-  const owner = await requireExchangeOwner();
+  const owner = await requireExchangeManager();
   if (!owner.ok) return owner.response;
   const { organizationId, actor } = owner.context;
   if (!saveLimiter.consume(`directory-exchange:save:${actor.userId}`)) {

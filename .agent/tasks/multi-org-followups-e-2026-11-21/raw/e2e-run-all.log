@@ -1,0 +1,1568 @@
+
+> haccp-online@0.1.0 e2e:exchange
+> bash scripts/e2e/run-all.sh
+
+
+================ part2-exchange-check ================
+PASS cabinet created with the name «Мастер-кабинет»
+PASS second ensure returns the same cabinet
+PASS members saved to the same cabinet
+PASS series A AC6: products in the exchange do not connect organizations to the cabinet menu and raw materials
+PASS B received products
+PASS B received the staff position only
+PASS B received both line employees
+PASS B received the building without the office
+PASS B received the room
+PASS B received the area
+PASS B received the fridge
+PASS same rooms and areas on both sides; the source got no room it did not have
+PASS rule Р4: no login, mail, Telegram or management role copied
+PASS staff fields copied: phone, days off, position
+PASS rule Р4: sensor binding and fillers not copied; norms and place copied
+PASS rule Р4: room responsibles not copied, kind copied
+PASS summary: B created records in all four lists
+PASS lastSyncedAt and lastSyncJson written
+PASS audit row directory_exchange.synced for B
+DEBUG first [["Первая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"1/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"3/0/0/0","staff":"3/0/0/0","objects":"2/0/0/0","equipment":"2/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+DEBUG idle [["Первая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+DEBUG links ["area:A=2","area:B=2","building:A=1","building:B=1","equipment:A=1","equipment:B=1","journal_settings:A=1","journal_settings:B=1","position:A=1","position:B=1","product:A=3","product:B=3","room:A=1","room:B=1","staff:A=2","staff:B=2"]
+DEBUG A {"products":["Борщ","Молоко 3,2%","Сыр твёрдый"],"positions":["management:Директор","staff:Повар"],"staff":["Иванов Иван","Петрова Анна"],"buildings":["Кафе на Ленина","Офис"],"rooms":["Кухня"],"areas":["Кухня","Склад"],"equipment":["Холодильник №1"]}
+DEBUG B {"products":["Борщ","Молоко 3,2%","Сыр твёрдый"],"positions":["staff:Повар"],"staff":["Иванов Иван","Петрова Анна"],"buildings":["Кафе на Ленина"],"rooms":["Кухня"],"areas":["Кухня","Склад"],"equipment":["Холодильник №1"]}
+PASS run right after the first one changes nothing
+PASS new employee added in B
+DEBUG second [["Первая",{"products":"0/1/0/0","staff":"1/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+PASS A received the rename from B
+PASS A received the new employee from B
+PASS summary: A products updated 1, staff created 1
+PASS no duplicates appeared in B
+DEBUG third [["Первая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Вторая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/0/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[]
+PASS deleted product is still in B
+PASS deleted product was not recreated in A
+PASS deletion run created and updated nothing
+PASS later edit of the deleted record does not bring it back to A
+PASS one more run: zero created/updated
+PASS equipment norm edit reached B, sensor binding in A untouched
+PASS state: owner can manage, sibling and members listed, last sync present
+PASS state: not the owner — canManage false, nothing listed
+PASS state: «войти как» — canManage false
+PASS transfer preview: lists, parents first, duplicate marked
+PASS transfer: selected employee came with the position
+PASS transfer: equipment came with its area, no building pulled
+PASS transfer: duplicate product skipped, the other added
+PASS transfer summary: created counted, existing duplicate skipped silently
+PASS transfer keeps no links
+PASS transfer audited
+PASS repeated transfer adds only what was missing (2 employees, 1 area)
+PASS foreign organization in members → 404
+PASS not the owner saving members → 403
+PASS transfer from a foreign organization → 404
+PASS transfer into a foreign organization → 404
+PASS cabinet for a foreign account → 403
+PASS foreign organization got nothing
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/1/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Чужая-2",{"products":"0/0/0/0","staff":"1/0/1/0","objects":"0/0/2/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[] otherCabinet cmwqhmkhb003cpn7dklz16df6
+PASS tariff: employee over the seat limit skipped and reported
+PASS tariff: objects over the point limit skipped and reported
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+PASS tariff: skipped records are retried, nothing else changes
+PASS empty kinds: member and its links removed
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 2,
+  adding: 1,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[billing] point limit: blocked {
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
+  source: 'directory-exchange',
+  tier: 'free',
+  pointsInUse: 3,
+  limit: 1
+}
+[directory-exchange] scheduled run done {
+  cabinets: 10,
+  busy: 0,
+  errors: 0,
+  cleanup: { skips: 0, requests: 0, transfers: 0 },
+  alert: { status: 'healthy', cabinets: 0 }
+}
+PASS scheduled run: finished without errors
+--- established organizations
+DEBUG established first [["Старая-1",{"products":"1/0/0/0","staff":"1/0/0/0","objects":"1/0/0/0","equipment":"1/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Старая-2",{"products":"1/0/0/0","staff":"1/0/0/0","objects":"0/0/0/0","equipment":"1/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]]
+DEBUG e1 {"products":["Мука","Сахар","Соль"],"positions":["staff:Официант","staff:Повар"],"staff":["Новикова Яна","Сидоров Олег"],"buildings":["Точка"],"rooms":["Бар","Зал"],"areas":["Бар","Кухня"],"equipment":["Весы","Печь"]}
+DEBUG e2 {"products":[" мука","Сахар","Соль"],"positions":["staff:Официант","staff:Повар"],"staff":["Новикова Яна","сидоров  олег"],"buildings":["Точка"],"rooms":["Бар","Зал"],"areas":["Бар","Кухня"],"equipment":["Весы","Печь"]}
+PASS established: products matched by name, no duplicates
+PASS established: matched product only linked — nobody's data overwritten
+PASS established: first run updated nothing
+PASS established: positions matched, the missing one created
+PASS established: same person matched, the other created — two each
+PASS established: matched employee keeps own data on both sides
+PASS established: address of the matched building kept
+PASS established: buildings matched (one each), rooms merged
+PASS established: area without object matched the same area of the only object
+PASS established: equipment matched and completed
+PASS established: sensor binding of the matched oven kept
+PASS established: next run is empty
+PASS established: an edit of the matched product reaches the other side
+PASS established: and the run after it is empty
+PASS position rename and staff move reached the other organization
+PASS archived employee stays active in the other organization
+PASS archived employee is neither updated nor created again
+PASS rule Р4: employee with a login is not touched and not duplicated
+PASS new building reached the other organization
+PASS name clash: update skipped and counted, nothing overwritten
+PASS name clash: retried on the next run
+PASS name clash resolved: the rename arrives, the deleted copy is not recreated
+PASS after the clash: empty run
+PASS unchecked list stops, checked list goes on
+PASS locked organization is left out with a note
+PASS transfer into a locked organization → 409
+--- review fixes
+PASS person with a login in the other organization is not duplicated
+PASS archived person in the other organization is not duplicated
+PASS switched-off product is not brought back
+PASS phone in an old format reaches the other organization in one form
+PASS an edit without a phone does not erase the phone of the other side
+PASS ticking «Объекты» later keeps the other organization's area on its own building with its own description
+PASS equipment stays in its area
+PASS both buildings now exist on both sides
+PASS after the review cases: empty run
+cleanup: organizations left 0, users left 0, accounts left 0
+RESULT: all checks passed
+
+================ background-check ================
+--- wait is 8000 ms
+PASS the wait is 8 seconds
+--- save / sync: a long exchange
+PASS answer comes at once with running: true
+PASS nothing is in the second organization yet at the answer
+PASS the background exchange finished with a result
+PASS its result is in the second organization
+PASS the card's source (lastSyncJson) holds the background result
+--- save / sync: a short exchange
+PASS a short exchange answers with its result (running: false)
+--- link approval: a long first exchange
+PASS approval answers running: true without a summary
+PASS request is approved right away; its result is not written yet
+PASS no letter to the requester before the exchange ends
+PASS after the exchange: resultJson holds what the requester got
+PASS after the exchange: the requester has the products
+PASS after the exchange: the requester's card (its lastSyncJson) holds its own result only
+PASS the requester's letter went out after the exchange, with what it got
+cleanup: organizations left 0, users left 0, accounts left 0
+TOTAL: 14 PASS, 0 FAIL
+
+================ locked-check ================
+PASS lockedOrganizationIds returns the organization whose own 14 days ended
+PASS lockedOrganizationIds does not return the organization in the tariff
+PASS agrees with isOrganizationLocked
+[directory-exchange] scheduled run done {
+  cabinets: 9,
+  busy: 0,
+  errors: 0,
+  cleanup: { skips: 0, requests: 0, transfers: 0 },
+  alert: { status: 'healthy', cabinets: 0 }
+}
+PASS auto-create-journals answers 200
+documents: open organization 1, locked organization 0
+PASS open organization got journal documents
+PASS locked organization got none
+cleanup: organizations left 0
+TOTAL: 6 PASS, 0 FAIL
+
+================ reminder-check ================
+letter 3 days before: [{"to":"remchkmwqhmtb1-paid@example.test","subject":"Через 3 дня закончатся бесплатные дни организации «Вторая remchkmwqhmtb1»"}]
+PASS 3 days before: one letter «Через 3 дня закончатся бесплатные дни организации …» to the account owner
+PASS 3 days before: one AuditLog mark with stage 3
+PASS second run the same day: no letter, no new mark
+letter 1 day before: [{"to":"remchkmwqhmtb1-paid@example.test","subject":"Завтра закончатся бесплатные дни организации «Вторая remchkmwqhmtb1»"}]
+PASS 1 day before: the second letter «Завтра закончатся бесплатные дни организации …»
+PASS 1 day before: two marks in total, stages 3 and 1
+PASS account in its own trial: no letter, no mark
+PASS dry run reports and sends nothing
+cleanup: organizations left 0
+TOTAL: 7 PASS, 0 FAIL
+
+================ skips-check ================
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+DEBUG rows after first [["B","staff","Иванов Иван","limit"],["B","staff","Петрова Анна","limit"],["B","staff","Сидоров Пётр","conflict"],["B","product","Молоко","conflict"],["B","product","Кефир","conflict"],["B","product","Сметана","conflict"],["A","product","МОЛОКО","conflict"]] B {"products":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":3},"staff":{"created":1,"updated":0,"skippedLimit":2,"skippedConflict":1},"objects":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":0},"equipment":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":0},"journals":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":0},"checklists":{"created":0,"updated":0,"skippedLimit":0,"skippedConflict":0}}
+PASS conflict rows written for B: «Молоко», «Кефир», «Сметана» (inactive or other kind with the same name)
+PASS conflict row written for a person with a login and the same full name
+PASS limit rows written for staff over the seat limit
+PASS rows match the summary counters (B products, B staff, A products)
+PASS row carries source organization and record
+PASS the other direction: A has a conflict row for B's «МОЛОКО»
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS second exchange: same rows, no duplicates
+PASS second exchange: lastSeenAt moved, firstSeenAt kept
+PASS list: grouped by organization with the total
+PASS list: «Молоко» offers B's «МОЛОКО» (visible, same name, other kind)
+PASS list: hidden records are not offered (inactive product, person with a login), limit rows have no candidates
+PASS list: A's «МОЛОКО» offers A's «Молоко»
+PASS link to a record that is not a candidate (inactive product) → 404
+PASS link to a record of another organization → 404
+PASS link on a limit row → 409
+PASS unknown row → 404
+PASS ignore: tombstone link written (entityId null)
+PASS ignore: row removed
+PASS ignore: audit directory_exchange.skip_ignored in B
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS ignore: next exchange does not retry (no row, no second «Кефир», one conflict fewer)
+PASS link: link written to B's «МОЛОКО» with its own fingerprint
+PASS link: row removed
+PASS link: the record's own lonely group is released, A's row for it is gone
+PASS link: audit directory_exchange.skip_linked in B
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS link: next exchange leaves B's record data unchanged
+PASS link: next exchange creates and updates no products, no «Молоко» rows anywhere
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 5,
+  adding: 1,
+  limit: 1
+}
+PASS link: a later edit of the source reaches the linked record
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 6,
+  adding: 1,
+  limit: 1
+}
+PASS re-activated product in B: its row is gone
+PASS employee added in B by hand: the limit row is gone
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 6,
+  adding: 1,
+  limit: 1
+}
+[billing] seat limit: blocked {
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
+  source: 'staff.create',
+  kind: 'needs_decision',
+  tier: 'free',
+  activeUsers: 6,
+  adding: 1,
+  limit: 1
+}
+PASS foreign participant: its own skip rows are written («Творог»)
+PASS foreign participant: not listed for the cabinet owner
+PASS foreign participant's row cannot be ignored by the cabinet owner → 404
+PASS another account sees nothing
+PASS another account: ignore → 404
+PASS another account: link → 404
+PASS rows untouched by refused calls
+PASS foreign member disconnected: its rows are gone
+PASS B leaves the exchange: its rows are gone
+PASS list after B left has no B
+cleanup: organizations left 0, users left 0, accounts left 0, skip rows left 0
+TOTAL: 39 passed, 0 failed
+RESULT: all checks passed
+
+================ balance-check ================
+PASS summary lists the three working organizations of the account
+PASS summary excludes the demo organization and the master cabinet
+PASS summary total = 5 000 + 1 000 + 0 = 6 000
+PASS summary total equals the sum of listed balances
+PASS active organization is marked
+PASS page block: shown to the owner with 2+ organizations
+PASS page block: hidden from a manager who is not the owner
+PASS transfer A → B 1 500 ₽ succeeds (not a duplicate)
+PASS A balance 5 000 → 3 500
+PASS B balance 1 000 → 2 500
+PASS account total unchanged after transfer (6 000)
+PASS history A: transfer_out −1 500 with its label
+PASS history B: transfer_in +1 500 with its label
+PASS history rows name the other organization and carry the comment
+PASS history rows record the actor
+PASS audit balance.transfer written in both organizations
+PASS audit details: actor, from/to, amount, comment
+PASS same key again → the earlier result, duplicate: true
+PASS same key with another destination, amount or direction → 409 idempotency_mismatch
+PASS route mapper: 409 { code: idempotency_mismatch }
+PASS balances unchanged by repeats (A 3 500, B 2 500, C 0)
+PASS still exactly two ledger rows and two audit rows for the key
+PASS three parallel requests with one key → one transfer, two duplicates
+PASS parallel: B debited once (2 500 → 2 000), C credited once (0 → 500)
+PASS to a foreign organization → 404
+PASS from a foreign organization → 404
+PASS demo organization and master cabinet → 404
+PASS foreign balance untouched (100)
+PASS manager who is not the owner: summary → 403
+PASS manager who is not the owner: transfer → 403
+PASS owner of another account, active in this one → 403
+PASS more than the balance (3 501 > 3 500) → 409 insufficient
+PASS balances unchanged after the refusal
+PASS same organization and fractional amount → 400
+PASS route mapper: 409 { code: insufficient, params }
+PASS route mapper: 404 and 403 statuses
+PASS summary flags the organization whose deletion is requested (others not)
+PASS transfer INTO an organization being deleted → 409 deleting with its name
+PASS refused: balances unchanged (A 3 500, closing 300)
+PASS route mapper: 409 { code: deleting, params: { name } }
+PASS transfer OUT of an organization being deleted is allowed (closing 300 → 0, A 3 500 → 3 800)
+PASS 4 × (A→B and B→A) at once: all 8 transfers succeed
+PASS opposite transfers: A and B balances back where they were
+PASS ledger invariant for Кафе А balchkmwqhmy7w
+PASS ledger invariant for Бар Б balchkmwqhmy7w
+PASS ledger invariant for Столовая В balchkmwqhmy7w
+PASS ledger invariant for Закрывается balchkmwqhmy7w
+cleanup: organizations left 0, ledger rows left 0, audit rows left 0
+TOTAL: 47 PASS, 0 FAIL
+
+================ root-org-trial-check ================
+PASS view: locked organization → state «закрыта» (locked)
+PASS view: term is the organization's trialEndsAt
+PASS view: grants 2 of 2
+PASS view: both reuse suspicions of the account with INN, phone and the matched organization
+PASS view: organization in the tariff → «нет отметки» (none)
+PASS view: organization without an account → no block
+PASS before extend: isOrganizationLocked = true (now cached for 30 s)
+PASS extend 7 days: counted from now (the end had passed), ≥ now + 7 days
+PASS extend: stored on the organization
+PASS after extend: isOrganizationLocked = false immediately
+PASS audit root.org_trial.extend with before/after and days
+PASS view after extend: «в своих 14 днях» (trial)
+PASS extend again: from the current (later) end, +3 days exactly
+PASS clear: after.trialEndsAt null and stored null
+PASS audit root.org_trial.clear with before/after
+PASS view after clear: «нет отметки» (none); not locked
+PASS extend/clear without a mark → 409 ORG_TRIAL_NO_MARK
+PASS reset_grants: 2 → 0
+PASS audit root.org_trial.reset_grants with before/after
+PASS organization without account → 409 ORG_NO_ACCOUNT; missing → 404
+PASS route body: days 0, 61, 1.5 and unknown action refused; 1 and 60 accepted
+PASS platform-access: POST org-trial is gated by «billing»
+PASS viewer with billing → allowed
+PASS viewer with clients only → refused (requireRoot answers 404)
+PASS card page itself stays on «clients»
+cleanup: organizations left 0, audit rows left 0
+TOTAL: 25 PASS, 0 FAIL
+
+================ transfer-undo-check ================
+--- transfer records what it created
+PASS T0: a single-product transfer is recorded
+PASS T1: the transfer row exists
+PASS T1: from A to B, actor = owner, no request
+PASS T1: created products (Хлеб already there — not recorded)
+PASS T1: created position and staff
+PASS T1: created buildings
+PASS T1: rooms include the mirror rooms of the created areas
+PASS T1: areas include the mirror area of the created room
+PASS T1: created equipment
+PASS T1: a fingerprint is stored for every created record
+PASS T1: the source name is stored (same account)
+PASS T1: every created id is a record of B (nothing pre-existing recorded)
+PASS T1: the summary is stored and matches the returned one
+PASS list: T1 shown from A to B, undoable, with counts
+--- access
+PASS another account: undo of T1 → 404
+PASS unknown id → 404
+PASS another account: its list does not show T1
+PASS a non-owner user id: the account list is empty
+PASS a transfer older than 7 days → 409
+PASS an old transfer is not listed
+PASS the refused old transfer changed nothing
+--- undo
+PASS T1 stored in the old format (no fingerprints)
+PASS undo (old row, fallback): undone — unused products off, unused staff archived, unused equipment/areas/rooms/building deleted
+PASS undo: kept with reasons — used, edited, non-empty, linked mirror, position with staff
+PASS B: active products — the edited one and the one from T0
+PASS B: products turned off, not deleted
+PASS B: Петрова archived, Иванов active
+PASS B: equipment left — the used fridge
+PASS B: areas left — Кухня (mirror) and Склад
+PASS B: rooms left — Кухня and Склад (mirror)
+PASS B: buildings left — Кафе на Ленина; Пекарня deleted
+PASS B: position Повар stays (Иванов is on it)
+PASS B: the journal entry survived
+PASS undoJson stored = returned result
+PASS undoneAt and undoneByUserId stored
+PASS audit: transfer_undone in the target organization with kept reasons
+PASS list: T1 now undone, not undoable, with the result
+PASS second undo → 409
+--- cross-account transfer by an approved request
+PASS request approved
+PASS T2: recorded with the request id, from the foreign source
+PASS T2: the foreign source's name is not stored
+PASS T2: created ids recorded (product, position, staff, building, rooms, areas, equipment)
+PASS requester list: T2 from the other company shown by the cabinet name, never the source organization
+PASS cabinet owner list: T2 not shown (it is not their organization)
+PASS cabinet owner (source side): undo of T2 → 404
+PASS concurrent undo: exactly one succeeds, the other is 409
+PASS T2 undo: nothing kept
+PASS T2 undo: everything undone
+PASS C after undo: product off, staff archived, no positions, buildings, rooms, areas or equipment
+PASS the source S is untouched
+PASS audit in C: transfer_undone, cross-account, without the source organization's name
+PASS T2 with the foreign source gone: still listed as another company by the cabinet name
+--- fingerprints and references
+PASS T3: 2 buildings, 3 rooms, 3 areas, 4 equipment — each with a fingerprint
+PASS T3: the new fryer is linked in the fryer journal settings by itself
+PASS undo while the account cabinet's exchange holds its lock → 409 exchange_busy
+PASS the refused undo changed nothing
+PASS T3 undo: edited tempMax and area name kept as «правили после переноса»; references keep records as used
+PASS T3 undo: the unused fryer (its automatic journal link does not count) and the unpaired room are undone
+PASS D: equipment left with the edited norm
+PASS D: the renamed area stays
+PASS D: the fryer link left the fryer journal settings
+--- deleted source
+PASS deleting the source keeps the recipient's transfer row (source id null, name kept)
+PASS list: the deleted source is shown by its stored name, same account, undoable
+PASS undo with the source deleted: the product is turned off
+PASS audit: the deleted source named by the stored name, id null
+cleanup: organizations left 0, users left 0, transfers left 0
+TOTAL: 65 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ cabinet-code-check ================
+PASS setup: the cabinet has a menu code and no exchange code yet
+--- before the first display
+PASS old code (serviceCode) works before the first display
+PASS old code typed in lower case with spaces works
+PASS another cabinet's menu code of the account still leads to it (legacy path, not regenerated)
+--- first display
+PASS first display returns the old code
+PASS first display stores it in exchangeCode; serviceCode unchanged
+PASS second display returns the same code
+PASS card state shows the same code
+PASS old code works after the first display
+PASS a link request approved
+PASS not the account owner: regenerate refused (403)
+--- regenerate
+PASS new code differs from the old one and looks like a code
+PASS exchangeCode = new code; serviceCode (menu code) unchanged
+PASS the new code collides with no organization or point code
+PASS display now returns the new code
+PASS card state shows the new code
+PASS audit: code_regenerated in the owner's organization, without the codes
+PASS old code after regenerate → the common 404
+PASS another cabinet's menu code after regenerate → the common 404
+PASS new code works
+PASS new code typed in lower case works
+--- nothing else changed
+PASS the pending request made with the old code is still pending for the same cabinet
+PASS the approved link is still there
+PASS connected organization keeps linkedServiceCode = the cabinet menu code
+PASS connected point keeps linkedServiceCode = the cabinet menu code
+PASS menu pool of the connected organization still includes the cabinet
+PASS menu pool info still points to the cabinet's menu code
+PASS regenerate again gives yet another code
+PASS the previous new code stops working
+PASS the latest code works
+PASS two regenerations — two audit rows
+--- legacy cabinet linked to a pool code
+PASS legacy: the pool code the cabinet is linked to works
+PASS legacy: the display stores the cabinet's own code
+PASS legacy: the pool code still works after the first display (not regenerated)
+PASS legacy: after regenerate the pool code → the common 404
+PASS legacy: after regenerate the cabinet's own menu code → the common 404
+PASS legacy: the cabinet's pool link is untouched
+cleanup: organizations left 0, users left 0, requests left 0
+TOTAL: 37 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ multi-company-check ================
+PASS setup: O2 received the owner's records
+--- linking A, then B (several companies at one cabinet)
+PASS A is linked
+PASS B is linked while A stays linked — no «cabinet busy»
+PASS both companies are foreign members of the cabinet
+PASS the cabinet's summary has no «second company did not take part» note
+--- creation
+PASS A received every owner's record
+PASS B received every owner's record
+PASS A has none of B's records
+PASS B has none of A's records
+PASS O1 received the records of both companies
+PASS O2 received the records of both companies
+--- name match
+PASS same-named «Общий хлеб» of A and B: two groups, each started by its own company
+PASS …the owner holds A's version (A linked first), B keeps its own
+PASS …B's «Общий хлеб» stays a conflict skip at both owner organizations with no candidate to link
+PASS «Молоко» equal to the owner's: both companies joined the owner's group, nobody's data overwritten
+PASS same-named area of A and B: separate groups; B's area keeps only its own equipment
+PASS the owner holds both same-named areas, each in its own company's group
+PASS every link of the cabinet has an origin
+--- edits
+PASS a repeated run changes nothing
+PASS A's edits change no record of the owner or of B
+PASS the owner's edit reaches O2, A and B
+PASS the owner's edit of A's records reaches A; B neither gets them nor has its «Общий хлеб» changed
+PASS a new record of B reaches the owner but not A
+PASS …and the next run changes nothing
+--- one-off transfer requested by B
+PASS transfer preview for B: the owner's and B's records, none that came from A
+PASS a transfer inside the owner's account still offers everything
+PASS B's second organization received the owner's records by the transfer
+PASS …and records that came from B itself
+PASS …but nothing that came from A (by creation or by name)
+PASS …of the owner's two same-named areas B got only B's own (with B's equipment norms)
+--- transfer from an own organization that left the exchange
+PASS O3 took part in the exchange and received A's records
+PASS O3 left the exchange: its links are gone, the copies stay
+PASS transfer preview O3 → B: O3's own product offered, none of A's names
+PASS transfer O3 → B by an approved request: O3's own product arrived
+PASS …and none of A's records (O3's copies are withheld by name)
+--- legacy groups without an origin
+PASS owner linked earlier than A (A's record older) → the owner's group
+PASS A linked earlier than the owner → A's group
+PASS one run, A's record re-created after its link → A's group (cautious)
+PASS one run, the owner's record strictly older than A's → the owner's group
+PASS two companies → «mixed»
+PASS owner's links only → the organization of the earliest link (O2)
+PASS no record dates (areas), one run → the company's group
+PASS B receives the owner's legacy groups (incl. one already copied to A)
+PASS B receives none of A's legacy groups
+PASS A received the owner's legacy group
+PASS the owner's O2 received every legacy group
+PASS the origin is saved: no link of the cabinet without one
+PASS a mixed group: the owner's edit reaches O2, not the companies
+PASS a second run changes nothing: no records, no links, no origins
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0
+TOTAL: 49 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ part3-foreign-check ================
+PASS setup: the owner's second organization got staff WITH the phone (exchange inside an account)
+--- who may ask
+PASS trial account: request by code → 402
+PASS trial account: a wrong code is the same 402 — nothing learnt about the code
+PASS free account (trial over): request by code → 402
+PASS refused accounts created no request rows
+PASS paid account: malformed code → 404 with the common text
+PASS paid account: unknown code → the same 404
+PASS paid account: demo cabinet code → the same 404
+PASS paid account: code of an ordinary organization (not a cabinet) → the same 404
+PASS paid account: own cabinet code → 409
+PASS paid account: no lists → 400
+PASS paid account: unknown mode → 400
+PASS not the account owner → 403
+PASS owner of another account asking for a foreign organization → 403
+PASS no refusal above created a request
+PASS before approval: transfer preview of a foreign organization → 404
+PASS before approval: one-off transfer from a foreign organization → 404
+PASS before approval: foreign organization as an exchange member → 404
+--- request created
+PASS paid account: request created, pending
+PASS response tells the requester the cabinet NAME and nothing else about the other account
+PASS only the SHA-256 of the token is stored
+PASS request expires in 7 days
+PASS request is addressed to the cabinet, asked by the owner of the paid account
+PASS series A AC4: bell in the cabinet owner's home organization, linking to /exchange-request/<request id>, naming the requester
+PASS series A AC4: Telegram message to the cabinet owner about the request (no bot locally — logged as failed)
+PASS letter to the cabinet owner: his address, who asks (name, INN), the lists, the link with the raw token, 7 days
+PASS letter body: link /exchange-request/<raw token>, foreign names escaped
+PASS synthetic address of the owner: letter skipped without throwing
+PASS series A AC4: the same request does not make a second bell
+PASS series A AC4: owner without Telegram — nothing sent, no error
+PASS audit on both sides: request_created
+PASS duplicate request to the same cabinet → 409
+PASS the duplicate created nothing
+PASS requester sees «pending»: cabinet name and the date, nothing incoming
+PASS cabinet owner sees the incoming request with the requester's name
+PASS a manager who is not the account owner sees nothing
+PASS «войти как» sees nothing
+PASS a stranger sees nothing, even naming a foreign organization
+PASS another organization of the requester's account shows no request of the first one
+--- token access
+PASS stranger with the raw token cannot read → 403
+PASS the requester himself with the raw token cannot read → 403
+PASS stranger with the request id → 404 (an id tells nothing)
+PASS the requester with his own request id → 404
+PASS unknown token → 404
+PASS garbage instead of a token → 404
+PASS stranger cannot decide → 403
+PASS the requester cannot approve his own request → 403
+PASS the requester cannot decline by token either → 403
+PASS after all refusals the request is still pending, nobody is a member
+PASS cabinet owner reads the request: who, INN, mode, lists, cabinet, his organizations (both already exchanging)
+PASS cabinet owner can open the request by its id too (the card has no token)
+--- approve link
+PASS approve with lists that were not requested → 400, still pending
+PASS approve with an empty list → 400
+PASS approved: member created with foreign = true and the narrowed lists (never wider than requested)
+PASS request row: approved, allowed lists, who decided, result stored
+PASS requester received products
+PASS requester received the position and both employees
+PASS lists that were not allowed did not come: no objects, no equipment
+PASS rule Р5: staff arrived WITHOUT phone and days off
+PASS summary: the requester got records in the allowed lists only
+PASS the exchange before the switch delivered the pending phone edit inside the owner's account
+PASS owner's employees keep their phones and days off
+PASS all staff fingerprints are now the restricted variant (marked f:)
+PASS second decision → 409
+PASS request while already a member → 409
+PASS audit on both sides: request_approved; the approver's name is not written into the requester's journal
+PASS exchange audit in the requester's organization carries no foreign user
+PASS decision: letter to the requester
+PASS decision: notification in the requester's cabinet (owner and the other manager)
+--- exchange across accounts
+PASS two more runs change nothing
+PASS after two more runs the owner's phones are untouched and the requester still has none
+PASS phone and days-off edits are neither sent nor compared while a foreign organization shares staff
+PASS a rename by the other company does not change the owner's records
+PASS and the ignored edit produces nothing on the next run
+PASS a rename by the owner reaches his second organization; the other company keeps its own phone
+PASS requester's new employee appears at the owner WITHOUT phone and days off
+PASS products travel both ways across accounts
+PASS equipment and objects still did not leak to the requester
+PASS and the next run is empty again
+PASS foreign member on pause sits out; the owner's organizations go back to full fingerprints with nothing pushed between them
+PASS foreign member is back: restricted fingerprints again, no record rewritten, no phone travelled
+PASS part 2 state of the owner lists only his own organizations as members
+PASS owner's card: the foreign member with its lists, no incoming left
+PASS requester's card: linked to the cabinet, nothing pending
+--- leave
+PASS a stranger cannot end somebody's link → 404
+PASS a stranger cannot end it by the request id or the organization id either → 404
+PASS …nor by the organization id
+PASS requester leaves the exchange
+PASS audit on both sides: request_left
+PASS after leaving the exchange stops in both directions; received data stays
+PASS back inside the account: different phones and days off stay where they are — nothing pushed, nothing erased
+PASS staff fingerprints are the full variant again
+PASS and a new phone edit travels inside the account as before
+PASS leaving twice → 409
+--- disconnect
+PASS a new request is possible after leaving
+PASS approve without a list means everything requested (opened by id)
+PASS staff is exchanged with phones again while the foreign organization shares products only
+PASS the requester cannot disconnect himself through the owner's path of another organization → 404
+PASS cabinet owner disconnects the foreign member (by organization id)
+PASS audit on both sides: request_disconnected
+PASS after the disconnect the exchange stops
+PASS own members of the cabinet are not touched by the disconnect
+PASS owner's path does not remove his OWN member → 404
+PASS …and the own member is still there
+--- decline
+PASS cabinet owner cannot «cancel» a pending request through DELETE → 409
+PASS declined: status, no member, nothing transferred
+PASS audit on both sides: request_declined
+PASS decline: letter and notification to the requester
+PASS approve after a decline → 409
+PASS cancel after a decline → 409
+PASS the declined request left the lists
+PASS a new request right after the decline → 409
+--- cancel
+PASS a stranger cannot cancel → 404
+PASS another organization of the same account is not the requester → 404
+PASS requester cancels the pending request
+PASS audit on both sides: request_cancelled
+PASS owner cannot approve a cancelled request → 409
+PASS cancelled request: nobody became a member
+--- expiry
+PASS a request made 8 days ago is past its term
+PASS approve after the term → 409
+PASS the expired request is marked on first touch and nobody became a member
+PASS an expired request does not block a new one; stale ones are expired lazily when lists are read
+PASS owner reading an expired request sees it expired
+PASS cancel of an expired request → 409
+--- transfer
+PASS transfer request: the owner is offered only his own working organizations as a source
+PASS approve a transfer without a source → 400
+PASS source from another account (the requester's own organization) → 404
+PASS the cabinet itself is not a source → 404
+PASS failed approvals leave the transfer request pending
+PASS transfer: staff with the position and equipment with its area came from the chosen source
+PASS transfer: the list that was not allowed did not come
+PASS transfer, rule Р5: staff without phone and days off
+PASS transfer keeps no links and no membership
+PASS transfer request row: approved, source and result stored
+PASS the source is untouched by the transfer
+PASS transfer audited on both sides; the owner's name is not written into the requester's journal
+PASS a transfer cannot be «left» afterwards → 409
+PASS without the explicit option a cross-account transfer is still 404
+PASS …and so is the preview
+PASS the cabinet's exchange knows nothing about the transfer target
+--- daily limit
+PASS sixth request of the day (cancelled ones count) → 429
+PASS the limit refusal carries its code and created nothing
+PASS over the limit a wrong code is 429 too — nothing learnt
+PASS a day later requests work again; refusals spent nothing
+--- locked organization
+PASS a locked organization cannot ask → 409
+PASS …with the «locked» code
+PASS a locked organization cannot be a transfer target → 409
+PASS …nor join an exchange
+PASS the request to the locked organization stays pending, nothing arrived
+PASS a locked organization can still cancel its request
+--- several cabinets
+PASS code of any cabinet of the account addresses its exchange cabinet (where the owner's organizations are)
+PASS scheduled run: finished without errors
+PASS route modules load: handlers, nodejs runtime, force-dynamic
+--- review fixes (2026-11-20)
+PASS legacy cabinet code (pool code) finds the cabinet
+PASS owner opens the request by its id (without the letter)
+PASS requester cannot open the request by id → 404
+PASS another company cannot open the request by id → 404
+PASS approval while the requester is no longer paid → 409
+PASS …and the request stays pending
+PASS same-named people of two companies are not merged: one each, own phones, never in one group
+PASS …and repeated runs change nothing for them
+PASS B received the owner's freezer and product
+PASS B's edits do not change the owner's freezer norms or product
+PASS …and nothing is pending on the next run
+PASS the owner's later edit overwrites B's record
+PASS a one-off transfer to another company still works while the cabinet is linked
+PASS the requester's journal names no organization of the owner and no source id
+PASS …C received nothing from the declined link
+PASS a new request right after a decline → 409
+PASS …code request_declined_recently with the date
+PASS C1: the owner received B's own new product
+PASS C1: after the pause C is linked while B stays linked (no «cabinet busy»)
+PASS C1: C received the owner's products but not B's
+PASS B leaves: no member and no link rows remain
+PASS C1: after B left, C still does not get B's product (its group remembers B)
+PASS link request: the owner's organizations are offered, none preselected without an exchange
+PASS approving a link without an own organization → 400
+PASS …code request_no_own_organization, request stays pending
+PASS another company's organization passed as own → 404
+PASS approved with the chosen own organization: it joined the exchange and products moved both ways
+cleanup: organizations left 0, users left 0, accounts left 0, requests left 0, members left 0
+TOTAL: 180 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ pool-check ================
+PASS setup: the owner's organization is in the cabinet's pool
+--- a request without the menu and raw materials
+PASS the tick is off by default: the request stores withPool = false
+PASS …the owner letter does not mention the menu and raw materials
+PASS …the confirmation page shows no pool line
+PASS approved (a stray allowPool is ignored): link without the pool, poolAllowed false, no pool note
+PASS …the requester's letter says nothing about the menu and raw materials
+PASS …A leaves: nothing about the pool changes
+--- asked for, not allowed
+PASS a transfer never asks for the pool even with withPool: true
+PASS the request stores withPool = true
+PASS …the owner letter mentions the menu and raw materials
+PASS …the owner's bell names it too
+PASS …the confirmation page shows the pool line
+PASS approved without ticking the pool: the link exists, the organization is not in the pool
+PASS …the requester's letter: the owner did not connect the menu and raw materials
+PASS …the requester's journal records the pool was asked for and not allowed
+--- asked for and allowed
+PASS allowed: A's organization is in the cabinet's pool, poolConnected, poolAllowed stored
+PASS …the result says the menu and raw materials are connected
+PASS …the requester's letter says they are connected
+PASS …the cabinet lists A among its objects
+PASS …the cabinet's shared menu resolves for A
+PASS …A's journal: approval with poolConnected, no pool entry with the owner's name, no cabinet id
+PASS …the cabinet's journal has the object connection
+PASS B is connected to the same pool
+--- isolation in the pool
+PASS A sees its own dishes, the owner's and the cabinet's menu — not B's
+PASS B does not see A's dishes
+PASS the owner gets no dish names of the companies
+PASS the organization directory (dishes) keeps the same isolation
+PASS A's «Мастер-кабинет» page: the cabinet's name only — no operators, no object count
+PASS …A's own organization is listed in that cabinet (it may disconnect itself)
+PASS the owner's page is unchanged: count of objects (O, A, B) and not limited
+PASS A's dish pool panel names the cabinet and counts only organizations whose dishes it sees
+PASS a point connected by its own code: the panel counts only its company's and the cabinet's objects (cabinet, O, the point)
+PASS A's manager cannot create a cabinet in / invite into the owner's pool: 409, no membership, no invited person
+PASS …the settings route refuses it too: A's page lists the cabinet as another company's
+--- leave and disconnect
+PASS A leaves: the organization leaves this pool; its point connected by hand and another pool's point are untouched
+PASS …the leave is journaled with poolDisconnected
+PASS …A's hand-connected point still gets the cabinet's menu
+PASS …once that point is unlinked by hand, the cabinet's menu no longer resolves for A
+PASS the owner disconnects B: B leaves the pool too
+--- a refused pool connection
+PASS C is already in another cabinet's pool: the link exists, the pool is not changed, a note explains
+PASS …the requester's letter: not connected, without the reason
+PASS …C leaves: its own cabinet's pool stays
+--- a pool link made by hand
+PASS D was connected by hand: approval is idempotent (connected, no error), poolConnected stays false
+PASS …D leaves the exchange: the hand-made pool link is kept
+--- the cabinet disconnected the object meanwhile
+PASS E is connected by the exchange
+PASS …the cabinet disconnected E on «Подключённые объекты»: the exchange mark is dropped
+PASS …then reconnected E by hand: no exchange mark
+PASS …then E leaves: nothing breaks, the hand-made connection stays
+--- the mark is written with the connection
+PASS a failing mark (the company already left) rolls the connection back
+cleanup: organizations left 0, users left 0, accounts left 0, requests left 0, members left 0
+TOTAL: 49 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ versioning-check ================
+PASS setup: B received the room, the positions and the employee A has
+--- the state at deploy time: version-1 links
+PASS setup: room and position links rewritten to version-1 fingerprints
+PASS setup: rooms and positions really differ between A and B in the new fields
+PASS AC1: the first exchange after the deploy creates and updates nothing
+PASS AC1: A's rooms, schedules, positions, journal access, checklist items and staff are unchanged (update dates too)
+PASS AC1: B's rooms, schedules, positions, journal access, checklist items and staff are unchanged (update dates too)
+PASS AC1: every room and position link moved to version 2
+PASS AC1: the next run is empty and leaves the links as they are
+--- edits after the deploy reach the other organization
+PASS AC4: B's room edit is one update in A
+PASS AC4: A's kitchen has B's schedules, detergent, photo rule and climate norms
+PASS AC4: A's checklist items of the kitchen were rebuilt from the new schedule
+PASS AC4: people are not copied — A's kitchen keeps its own cleaner, B's has none
+PASS AC4: A's climate norm reaches B
+PASS AC4: a norm-only edit does not rebuild B's checklist items
+PASS AC3: A's position journals reach B's position
+PASS setup: a new employee on «Повар» in A
+PASS AC3: the employee created by the exchange in B gets the position's journals
+PASS AC3: an employee added by hand in B on that position gets the same journals
+PASS Р8.2: a rename from a position without journals renames B's position and keeps its journals
+PASS after the edits: an empty run
+--- a company of another account
+PASS F is linked
+PASS AC4 (foreign): F's kitchen came with the schedules and climate norms
+PASS AC4 (foreign): F's kitchen has checklist items from the schedule
+PASS AC4 (foreign): no people in F's room
+PASS AC3 (foreign): F's positions have no journal access
+PASS AC3 (foreign): F's employees got no journals from the owner's positions
+PASS Р8.0 (foreign): position links are restricted version 2 (f:v2:), room links version 2
+PASS AC4 (foreign): the owner's room edit reaches F and B
+PASS AC4 (foreign): F's general checklist items rebuilt
+PASS AC3 (foreign): a journal edit is not passed to F
+PASS Р5: while another company shares «Сотрудники», journals are not exchanged at all (like phones)
+PASS AC1 (foreign): version-1 links with a company of another account — 0 created, 0 updated
+PASS AC1 (foreign): data of A, B and F unchanged
+PASS AC1 (foreign): position links moved to f:v2:, room links to v2:
+--- a one-off transfer and its undo
+PASS transfer: C's kitchen came with A's schedule and norms
+PASS transfer: C's kitchen has checklist items
+PASS transfer: C's «Повар» came with A's journals
+PASS transfer: C's employee got the journals of the position
+PASS transfer undo: rooms with schedules and positions with journals are undone, not kept as «used»
+PASS transfer undo: C has no rooms and no positions left
+PASS transfer undo (recorded before the deploy, version-1 fingerprints): rooms and positions are not «edited»
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0, checklist items left 0
+TOTAL: 41 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ new-lists-check ================
+PASS Р8.5: exchange state counts the new lists (journals = 1 settings record, checklists = live templates)
+PASS setup: B has no saved journal controls
+--- AC2: «Журналы»
+PASS AC2: linking — both settings records in one group, ids are the organizations
+PASS AC2: linking overwrites nobody's journal settings (0 updated in «Журналы»)
+PASS AC2: B's settings unchanged by linking
+PASS AC2: reading the settings does not save B's journal controls (read-only path)
+PASS AC2: A's edit is one update in B's «Журналы»
+PASS AC2: B has A's disabled journals
+PASS AC2: B has A's legacy auto-create list
+PASS AC2: B has A's automation flags by journal
+PASS AC2: B's own responsible person for hygiene stays (people are not exchanged)
+PASS AC2: B's automation switches are A's
+PASS AC2: B's sensor-camera and brakerage choices are untouched
+PASS AC2: B's point (no own journal settings) is untouched
+PASS AC2: autofill follows to B's open documents (the point has no own automation, so its document follows too)
+PASS AC2: the next run is empty
+PASS AC2: B's edit (pest control back on) reaches A
+PASS own-set points: E's journal settings untouched
+PASS own-set points: E's point untouched
+PASS own-set points: no «Журналы» link for E
+PASS own-set points: the summary explains it
+PASS own-set points: nothing changed for A and B
+--- AC5: «Чек-листы»
+PASS AC5: the template reached B
+PASS AC5: B's copy has the questions but no file references
+PASS AC5: no assignments came with it
+PASS AC5: the archived template is not transferred
+PASS AC5: same title (case and spaces aside) — linked, not duplicated, B keeps its content
+PASS AC5: a sample file added in B is not an edit (references are not in the fingerprint)
+PASS AC5: A's edits are two updates in B
+PASS AC5: B's copy got the new question and its version grew
+PASS AC5: B's own sample file stays, A's does not arrive
+PASS AC5: the linked same-title template now follows A's edit
+PASS AC5: a template B archived is not created again
+--- AC6: a company of another account
+PASS AC6: F is linked with «Журналы» and «Чек-листы»
+PASS AC6: F got the owner's templates without file references
+PASS AC6: F's new template reached the owner's organizations
+PASS AC6: linking does not overwrite F's journal settings
+PASS AC6: the owner's journal edit reaches F and B
+PASS AC6: F's switches follow the owner's
+PASS AC6: F's own edits (journals, a template of the owner) do not reach the owner
+--- AC6: a one-off transfer to another company
+PASS AC6 (transfer): approved
+PASS AC6 (transfer): G got the owner's templates and journal settings
+PASS AC6 (transfer): a template of another company (F) is not passed to G
+PASS AC6 (transfer): G's recent transfer marks journals as replaced (undoable since series D, Р10), the rest undoable
+PASS AC6 (transfer undo): templates deleted, G's previous journal settings restored (series D, Р10)
+--- own one-off transfer
+PASS Р8.5 (preview): journals — one settings item, not «exists» while settings differ; checklists — live templates
+PASS transfer: summary — journals updated 1, checklists created 3
+PASS transfer: C has A's journal settings and switches
+PASS transfer: afterwards the preview shows the settings and templates as existing
+PASS transfer: listed with «Журналы: replaced» (undoable since series D, Р10) and an undo button
+PASS transfer undo: unused templates deleted, the assigned one kept as «used», previous settings restored (series D, Р10)
+PASS journals-only transfer: undoable since series D (Р10) — replaced, not «only fixed»
+PASS journals-only transfer: undo restores D's previous settings and marks the transfer undone
+PASS after the undo the settings transfer again (a new transfer record)
+PASS same settings again: nothing to transfer, no new transfer record
+cleanup: organizations left 0, users left 0, accounts left 0, links left 0, templates left 0, settings left 0
+TOTAL: 55 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ manager-check ================
+--- before the appointment
+PASS M: no account role
+PASS M: no menu item «Сеть»
+PASS M: exchange routes → 403
+PASS M: network summary refused
+PASS M: mini page refused
+PASS M: account balances → 403
+PASS owner: menu item «Сеть» (2 organizations)
+--- appointment
+PASS owner: managers API access
+PASS candidates: M (manager of B) is offered
+PASS candidates: not the owner, not a cook, not another company
+PASS candidates: M is shown with her organization
+PASS no managers yet
+PASS appoint another company's owner → 404
+PASS appoint a cook → 404
+PASS appoint the owner himself → 409
+PASS owner appoints M
+PASS appoint M again → 409
+PASS row: account, user, granted by the owner
+PASS audit account.network_manager_added in the owner's organization, names M
+PASS list: M is an active manager, no longer a candidate
+PASS M: managers API → 403
+PASS M: appoint a manager (lib) → 403
+PASS M: remove a manager (lib) → 403
+--- the manager can
+PASS M: role network_manager
+PASS M: canManageNetwork
+PASS M: menu item «Сеть»
+PASS M: exchange routes allowed — actor M, cabinet owner O
+PASS M: another company's requests (owner only) → 403
+PASS owner: requests allowed
+PASS M: network summary — both organizations, B current
+PASS M: mini page rows (A, B)
+PASS M: mini «Перейти» only where M is a member (B yes, A no)
+PASS M: site «Перейти» (same rule) — B yes, A no
+PASS owner: mini page rows, «Перейти» everywhere
+PASS cook: mini page refused
+PASS M: exchange card — canManage, not the account owner, sees A
+PASS owner: exchange card — isAccountOwner
+PASS M impersonated session: card closed
+PASS M: save exchange members → cabinet created
+PASS cabinet: in account X, the owner is its member (owner), the manager is not
+PASS members: created by M
+PASS audit directory_exchange.configured by M (name)
+PASS ensureExchangeCabinet by M returns the same cabinet
+PASS M: sync ran
+PASS sync: «Сыр» created in B
+PASS audit directory_exchange.synced by M
+PASS skips: B has «Молоко» (link) and «Кефир» (ignore)
+PASS M: skip ignored — audit by M
+PASS M: skip linked — audit by M
+PASS history: «Сыр» created in B
+PASS M: history undo — «Сыр» turned off
+PASS audit directory_exchange.change_undone by M
+PASS M: transfer A → B listed for M
+PASS transfer row: actor M
+PASS staff «Иванов Иван» in B
+PASS owner sees the same transfer
+PASS another company's owner sees nothing
+PASS another company's owner: undo → 404
+PASS M: undo transfer — staff archived
+PASS transfer row: undone by M
+PASS audit directory_exchange.transfer_undone by M (name)
+PASS M: regenerate cabinet code — a new code
+PASS audit directory_exchange.code_regenerated by M
+PASS M: exchange card shows the cabinet code
+PASS M: account balances — A + B = 6 000
+PASS M: balance page block shown
+PASS M: transfer 300 ₽ A → B
+PASS balances: A 4 700, B 1 300
+PASS audit balance.transfer by M in both organizations
+PASS ledger rows: actor M
+--- the manager cannot
+PASS another company asks for a link (pending)
+PASS M: open another company's request by link → 403
+PASS M: open the request by id → 404
+PASS M: approve another company's request → 403
+PASS M: decline another company's request → 403
+PASS request still pending
+PASS M: incoming requests list is empty
+PASS owner: sees the incoming request
+PASS M: send a request to another company → 403
+PASS M: pay the plan from the account balances → 403
+--- others
+PASS another company's owner with an X organization active: exchange → 403
+PASS another company's owner: canManageNetwork(X) false
+PASS another company's owner: X balances → 403
+PASS another company's owner: X summary refused
+PASS another company's owner: mini page for X refused
+PASS another company's owner in his own Z: allowed, account Y
+PASS impersonation: exchange → 403
+PASS impersonation: managers API → 403
+PASS impersonation: mini page refused
+PASS impersonation: no menu item «Сеть»
+PASS M as a point manager: exchange → 403
+PASS M as a point manager: mini page refused
+PASS owner in «войти как»: managers API → 403
+--- undo stays inside the session's account
+PASS F: network manager of X and owner of Y
+PASS sync 2 ran
+PASS history: «Сметана» created in B
+PASS transfer «Творог» A → B listed
+PASS F working in Z: the route context is account Y
+PASS F working in A: the route context is account X
+PASS F working in Y: undo X's transfer by id → 404
+PASS F working in Y: undo X's exchange change by id → 404
+PASS refused undos changed nothing (transfer and change not undone, «Сметана» and «Творог» active in B)
+PASS M with a session in another account (Y): transfer undo → 404
+PASS F working in X: the same transfer undo works
+PASS F working in X: the same exchange change undo works («Сметана» turned off in B)
+PASS audit transfer_undone and change_undone by F in B
+--- removal and archiving
+PASS audit account.network_manager_removed
+PASS remove again → 404
+PASS removed: no account role
+PASS removed: exchange → 403
+PASS removed: no menu item
+PASS removed: summary refused
+PASS removed: mini page refused
+PASS removed: exchange card closed
+PASS removed: transfers list empty
+PASS removed: save members → 403
+PASS removed: cabinet → 403
+PASS removed: cabinet code → 403
+PASS removed: transfer undo → 404
+PASS removed: history undo → 404
+PASS removed: balances → 403
+PASS removed: money transfer → 403
+PASS removed: balance page block hidden
+PASS re-appointed: role back
+PASS archived: no account role
+PASS archived: exchange → 403
+PASS archived: no menu item
+PASS archived: summary refused
+PASS archived: mini page refused
+PASS archived: exchange card closed
+PASS archived: transfers list empty
+PASS archived: save members → 403
+PASS archived: cabinet → 403
+PASS archived: cabinet code → 403
+PASS archived: transfer undo → 404
+PASS archived: history undo → 404
+PASS archived: balances → 403
+PASS archived: money transfer → 403
+PASS archived: balance page block hidden
+PASS list: archived M shown as inactive, not a candidate
+PASS unarchived: role back
+PASS lost management role: no account role
+PASS lost management role: exchange → 403
+PASS candidates: a member of A from another company is offered (A)
+PASS member appointed: role network_manager
+PASS membership removed: role gone at once
+PASS no access in Y for X's manager
+PASS managers route module: GET/POST/DELETE, nodejs, force-dynamic
+PASS NetworkManagerError is exported for the route
+PASS AccountTransferError still maps refusals
+PASS DirectoryExchangeError still maps refusals
+cleanup: organizations left 0, users left 0, manager rows left 0
+TOTAL: 151 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ pay-from-account-check ================
+price: 14203 ₽ (renew, 5 points, promotion none, discount none)
+PASS setup: renewal of the paid plan, price > 0
+PASS page hint for the owner: active balance and account total without demo, cabinet and deleting
+PASS button shown: active short, account enough
+PASS preview: price equals the /order pay-from-balance price
+PASS preview: active balance, missing, account total, canPay
+PASS preview: sources largest first, exact sum, no overdraw (Большая all, Средняя the rest)
+PASS preview moved nothing
+PASS manager (not the owner): preview and pay → 403 not_owner
+PASS manager: no page hint
+PASS network manager of this account: preview and pay still → 403 (tariff and payment — owner only)
+PASS another account's owner, active here → 403; owner with a foreign active org → 403
+PASS refusals moved nothing (no ledger rows, balances as set)
+PASS expected price differs → 409 price_changed with the new price, nothing moved
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS pay: status paid with the price
+PASS pay: transfers Большая → Средняя (largest first), amounts as planned, not duplicates
+PASS balances: active a + missing − price = 0
+PASS balances: Большая → 0, Средняя − the rest, Малая untouched
+PASS demo, master cabinet and the deleting organization untouched
+PASS account total went down by exactly the price
+PASS history: one «Оплата тарифа» −price on the active organization, tied to the order
+PASS history: transfer_out −7102 on Большая, transfer_in +7102 on the active, comment «сбор на оплату тарифа»
+PASS history: transfer_out −4261 on Средняя, transfer_in +4261 on the active, comment «сбор на оплату тарифа»
+PASS history list of the active organization shows the two transfers in and the charge
+PASS order: paid from balance (amount 0, pointsSpent = price), renew of the chosen points, marked accountCollect
+PASS one new order for the active organization
+PASS audit: billing.account_pay with the order and transfers; balance.transfer in both organizations of each transfer
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS twin: the /order path paid fully by points with the same price
+PASS account plan, cycle, points and subscriptionEnd — identical to the /order pay-from-balance
+PASS subscriptionEnd moved from END by one month (renewal)
+PASS active organization plan and end — identical to the twin
+PASS same key again → already, the same order
+PASS same key again: no new ledger rows, no new order, balances unchanged
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS parallel ×3 with one key: exactly one paid, the others «already»
+PASS parallel: one charge row, one transfer pair per source
+PASS parallel: balances as after one payment
+PASS parallel: subscription extended once (one more month)
+[balance] account pay charge failed {
+  accountId: 'cmwqho3070002nm7d8d6pnsie',
+  organizationId: 'cmwqho2xr0000nm7d6zq38n15',
+  error: PrismaClientKnownRequestError: 
+  Invalid `tx.balanceTransaction.create()` invocation in
+  /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
+  
+    73 }
+    74 
+    75 try {
+  → 76   await tx.balanceTransaction.create(
+  Database error. Code: `P0001`. Message: `e2e: subscription_charge blocked`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async applyBalanceChange (/home/user/HASSR-Online/src/lib/balance/ledger.ts:76:5)
+      at async <anonymous> (/home/user/HASSR-Online/src/lib/balance/checkout.ts:343:7)
+      at async Proxy._transactionWithCallback (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:859:18)
+      at async createOrderPaidFromBalance (/home/user/HASSR-Online/src/lib/balance/checkout.ts:308:12)
+      at async payFromAccountBalances (/home/user/HASSR-Online/src/lib/balance/account-pay.server.ts:400:15) {
+    code: 'P2039',
+    meta: {
+      modelName: 'BalanceTransaction',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS charge fails after transfers → 409 charge_failed with what was moved and where
+  message: Оплата не прошла (ошибка сервера). 11 363 ₽ уже на балансе «M Активная paychkmwqho2qo» — переводы видны в истории баланса. Повторите оплату или оплатите тариф обычным способом
+PASS charge failed: the collected money stays on the active organization (= price), sources drained as planned
+PASS charge failed: no order, no charge row, subscription unchanged
+PASS charge failed: both transfers are in the history of the active organization
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS repeat with the same key: paid without new transfers
+PASS repeat: active 0, sources not touched again, exactly one transfer pair per source for the key
+[balance] account pay transfer failed {
+  accountId: 'cmwqho3070002nm7d8d6pnsie',
+  from: 'cmwqho3210004nm7dowb71cas',
+  error: PrismaClientKnownRequestError: 
+  Invalid `tx.balanceTransaction.create()` invocation in
+  /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
+  
+    73 }
+    74 
+    75 try {
+  → 76   await tx.balanceTransaction.create(
+  Database error. Code: `P0001`. Message: `e2e: transfer_out blocked`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async applyBalanceChange (/home/user/HASSR-Online/src/lib/balance/ledger.ts:76:5)
+      at async <anonymous> (/home/user/HASSR-Online/src/lib/balance/account-transfer.server.ts:236:7)
+      at async Proxy._transactionWithCallback (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:859:18)
+      at async transferBetweenOwnOrganizations (/home/user/HASSR-Online/src/lib/balance/account-transfer.server.ts:220:17)
+      at async payFromAccountBalances (/home/user/HASSR-Online/src/lib/balance/account-pay.server.ts:356:24) {
+    code: 'P2039',
+    meta: {
+      modelName: 'BalanceTransaction',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS second transfer fails → 409 transfer_failed naming the source, with the amount already moved
+  message: Перевод из «M Средняя paychkmwqho2qo» не прошёл (ошибка сервера). 7 102 ₽ уже на балансе «M Активная paychkmwqho2qo» — переводы видны в истории баланса. Оплата не списана: повторите её, уже переведённое второй раз не переведётся
+PASS transfer failed: Большая's money is on the active organization, Средняя untouched, nothing charged
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS repeat: paid, only Средняя transferred now
+PASS repeat: Большая transferred exactly once for the key, active 0
+PASS active covers: no button
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS active covers alone: paid, no transfers, active −price, others unchanged
+PASS account short: preview canPay false, no sources
+PASS account short: no button
+PASS account short → 409 account_short with how much is missing
+PASS account short: nothing moved, no order (deleting/demo/cabinet money is not counted)
+PASS ledger invariant for M Активная
+PASS ledger invariant for M Большая
+PASS ledger invariant for M Средняя
+PASS ledger invariant for M Малая
+PASS ledger invariant for M Демо
+PASS ledger invariant for M Кабинет
+PASS ledger invariant for M Закрывается
+PASS ledger invariant for T Активная
+PASS ledger invariant for T Большая
+PASS reminder: the +1 point price is computed for the paid account
+PASS reminder: the short account is 1 ₽ short
+  letter (covered): [email/dev] Body:    Бесплатные дни организации Рrich Вторая paychkmwqho2qo закончатся через 3 дня. Последний бесплатный день…&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbs
+PASS reminder: letter to the covered account carries the sentence
+PASS reminder: letter to the short account (1 ₽ short) without the sentence
+PASS reminder: one mark per account, the second run sends nothing
+PASS reminder bell: the covered account has the «хватает» line (orgTrialAccountCovers), the link stays ?addPoints=1
+PASS reminder bell: the short account has no such line
+cleanup: organizations left 0, ledger rows left 0, triggers left 0
+TOTAL: 68 PASS, 0 FAIL
+
+================ period-digest-check ================
+PASS setup: B is locked after its own 14 days, A and C are not
+7 days 2026-11-14 … 2026-11-20: [{"name":"Кафе «Ёлка» & <бар> perdigmwqho6w6","stats":{"days":7,"filledDays":4,"keptDays":7,"records":21},"status":"partial"},{"name":"Бар Б perdigmwqho6w6","stats":{"days":3,"filledDays":3,"keptDays":3,"records":3},"status":"done"},{"name":"Столовая В perdigmwqho6w6","stats":{"days":3,"filledDays":0,"keptDays":0,"records":2},"status":"empty"}]
+PASS 7 days: range is the 7 full days before today (Moscow)
+PASS 7 days: three working organizations, the active one marked
+PASS 7 days A: 4 of 7 days filled, 21 records, «partial»
+PASS 7 days B (locked from T-4): 3 of 3 days, 3 records, «done»
+PASS 7 days C (Yekaterinburg, created T-3): 3 days, no journals kept, 2 records, «empty»
+PASS 7 days totals: 13 days, 7 filled, 26 records
+PASS 30 days A: 5 of 30 days, 30 records
+PASS 30 days B: 6 of 16 days, 6 records
+PASS 30 days C: 3 days, 2 records
+PASS access: an employee is refused (403 on the page and the export)
+PASS access: the network manager is allowed
+PASS export name: set-7d-<day>.xlsx
+xlsx rows: [["Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям"],["14 ноября — 20 ноября (7 дней)"],["Организация","Дни с заполненными журналами","Доля дней, %","Статус","Записей журналов"],["Кафе «Ёлка» & <бар> perdigmwqho6w6 (текущая)","4 из 7",57,"не каждый день",21],["Бар Б perdigmwqho6w6","3 из 3",100,"каждый день",3],["Столовая В perdigmwqho6w6","0 из 3",0,"журналов нет",2],["Итого","7 из 13",54,null,26],["День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются."],["Сформировано 21 ноября в 17:14"]]
+PASS Excel: sheet «Сеть», title, period and header
+PASS Excel: row A — «4 из 7», 57 %, «не каждый день», 21
+PASS Excel: row B — «3 из 3», 100 %, «каждый день», 3
+PASS Excel: row C — «0 из 3», 0 %, «журналов нет», 2
+PASS Excel: totals — «7 из 13», 54 %, 26
+PASS Excel «Сегодня»: set-<day>.xlsx, balances and total 1 750
+PASS PDF: set-7d-<day>.pdf, starts with %PDF, not empty
+pdf text: Сеть: сводка по организациям 14 ноября — 20 ноября (7 дней) Организация Дни с заполненными журналами Доля дней, % Статус Записей журналов Кафе «Ёлка» & <бар> perdigmwqho6w6 (текущая) 4 из 7 57% не каждый день 21 Бар Б perdigmwqho6w6 3 из 3 100% каждый день 3 Столовая В perdigmwqho6w6 0 из 3 0% журналов нет 2 Итого 7 из 13 54% 26 Сформировано 21 ноября в 17:14 1 День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются. 
+PASS PDF text: Cyrillic title, organization names, values and totals
+PASS PDF in English (30 days): «5 of 30», set-30d-<day>.pdf
+[email/dev] SMTP не настроен — письмо не отправлено на владелец-perdigmwqho6w6@example.test.
+[email/dev] Subject: Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой
+[email/dev] Body:    Что принёс обмен справочниками за последние 7 дней.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp; wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqho6w6 3 1 2 Столовая В perdigmwqho6w6 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
+[email/dev] SMTP не настроен — письмо не отправлено на управляющий-perdigmwqho6w6@example.test.
+[email/dev] Subject: Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой
+[email/dev] Body:    Что принёс обмен справочниками за последние 7 дней.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp; wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqho6w6 3 1 2 Столовая В perdigmwqho6w6 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
+[exchange-digest] sent {
+  accountId: 'cmwqho75s0002q87dbecnl5me',
+  week: '2026-W47',
+  recipients: 2,
+  emails: 2,
+  telegram: 0
+}
+digest #1 (two at once): [{"weekKey":"2026-W47","accounts":1,"sent":1,"results":[{"accountId":"cmwqho75s0002q87dbecnl5me","reason":"sent","recipients":2,"emails":2,"telegram":0}]},{"weekKey":"2026-W47","accounts":1,"sent":0,"results":[{"accountId":"cmwqho75s0002q87dbecnl5me","reason":"already-sent"}]}]
+letters #1: [{"to":"владелец-perdigmwqho6w6@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"},{"to":"управляющий-perdigmwqho6w6@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"}]
+PASS digest #1: two runs at the same time → exactly one sends, the other finds the week taken
+PASS digest #1: sent to 2 recipients (owner + network manager)
+PASS digest #1: exactly one letter per recipient
+PASS digest #1: subject counts A 3+1, C 1 created/updated, 3 pending, 1 error run
+PASS digest #1: table with own organizations only (A, C), not locked B and not the other company
+PASS digest #1: the organization name is HTML-escaped
+PASS digest #1: link to the «Обмен справочниками» card
+PASS digest #1: Telegram to the manager (has Telegram), none to the owner (no Telegram)
+PASS digest #1: one mark in the action log
+PASS digest #2 (same week): nothing sent
+PASS digest #2: no new Telegram
+PASS empty week: nothing to report — nothing sent
+PASS account without events: nothing sent
+[exchange-digest] nothing delivered — will retry { accountId: 'cmwqho940002lq87dyw01g9nk', week: '2026-W47' }
+PASS nothing delivered (Telegram only, bot not configured): «not-delivered», no letter, the claim is released
+[exchange-digest] nothing delivered — will retry { accountId: 'cmwqho940002lq87dyw01g9nk', week: '2026-W47' }
+PASS nothing delivered: the next run in the same week tries again (not «already-sent»)
+2 000 legacy rows in B: expected +666 (7 days), +1110 (30 days); both periods loaded in 79 ms
+PASS 2 000 sensor rows in B: 7 days — records 3 + rows of T-7 … T-5 by Moscow day, other organizations unchanged
+PASS 2 000 sensor rows in B: 30 days — records 6 + rows of T-9 … T-5
+cleanup: organizations left 0, users left 0, accounts left 0
+TOTAL: 39 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ cleanup-check ================
+--- Р4: cleanup
+cleanupExchangeTables: {"skips":4,"requests":4,"transfers":1}
+PASS skips: unseen 30+ days, unticked list, member gone, list not exchanged — removed; fresh and 29-day-old kept
+PASS requests: declined/cancelled/expired 180+ days and long-expired pending — removed; approved, young, open kept
+PASS transfers: older than 180 days removed, 170 days and fresh kept
+PASS counts cover this scenario's rows (4 skips, 4 requests, 1 transfer)
+PASS second cleanup keeps the survivors
+[directory-exchange] scheduled run done {
+  cabinets: 10,
+  busy: 0,
+  errors: 0,
+  cleanup: { skips: 4, requests: 4, transfers: 1 },
+  alert: { status: 'healthy', cabinets: 0 }
+}
+runAllDirectoryExchanges: {"cabinets":10,"errors":0,"cleanup":{"skips":4,"requests":4,"transfers":1},"alert":{"status":"healthy","cabinets":0}}
+PASS scheduled run removes the same rows and keeps the same
+PASS scheduled run reports cleanup counts and the alert status
+--- Р1: alert
+PASS healthy night: nothing sent, no mark
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+PASS same day: nothing more
+PASS next day: sent again, the cabinet that failed in this run is listed
+PASS failed delivery: no mark, the next call retries
+cleanup: organizations left 0, users left 0, alert marks removed 3
+RESULT: all checks passed
+
+================ product-batch-check ================
+PASS taken at read time (any case, turned off too) — conflict at once
+PASS ten creations queued
+flush: {"a:Сметана":"conflict","a:Творог":"conflict","a:Сыр":"created","a:Масло":"created","a:Мас_о":"conflict","a:Сыр_1":"conflict","a:100% сок":"created","a:Йогурт":"created","b:Сметана":"created","b:Ряженка":"conflict"}
+PASS every queued creation has one result, in queue order
+PASS names taken after the read are «conflict», not errors
+PASS free names are created
+PASS no duplicates: one «сметана» and one «творог» in A, one «ряженка» in B; B's «Сметана» created (other organization)
+PASS wildcard names follow the one-by-one rule in queue order
+PASS the one-by-one path gives the same answer for «Сыр_1» next to «Сыр-1»
+PASS after the flush the created and hand-made names are taken
+PASS an empty flush is a no-op
+cleanup: organizations left 0
+RESULT: all checks passed
+
+================ summary ================
+PASS  part2-exchange-check (8s): 88 checks passed
+PASS  background-check (3s): 14 checks passed
+PASS  locked-check (4s): 6 checks passed
+PASS  reminder-check (3s): 7 checks passed
+PASS  skips-check (3s): 39 checks passed
+PASS  balance-check (2s): 47 checks passed
+PASS  root-org-trial-check (2s): 25 checks passed
+PASS  transfer-undo-check (9s): 65 checks passed
+PASS  cabinet-code-check (3s): 37 checks passed
+PASS  multi-company-check (8s): 49 checks passed
+PASS  part3-foreign-check (9s): 180 checks passed
+PASS  pool-check (4s): 49 checks passed
+PASS  versioning-check (6s): 41 checks passed
+PASS  new-lists-check (4s): 55 checks passed
+PASS  manager-check (5s): 151 checks passed
+PASS  pay-from-account-check (5s): 68 checks passed
+PASS  period-digest-check (6s): 39 checks passed
+PASS  cleanup-check (3s): 15 checks passed
+PASS  product-batch-check (2s): 10 checks passed
+scenarios: 19, passed: 19, failed: 0; checks: 985 passed, 0 failed; time: 89s
+RESULT: all scenarios passed
+e2e exit=0

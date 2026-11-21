@@ -1,3 +1,5 @@
+import { canManageNetworkRole } from "@/lib/account-roles";
+import { accountRoleForOrganization } from "@/lib/account-roles.server";
 import { db } from "@/lib/db";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
 
@@ -17,8 +19,9 @@ import { applyBalanceChange, DuplicateBalanceChangeError, InsufficientBalanceErr
 /**
  * Баланс по аккаунту и перевод между своими организациями (серия B, Р10).
  *
- * Только владелец аккаунта (`Account.ownerUserId`) и только организации
- * его аккаунта, кроме демо и мастер-кабинетов: у них нет своих денег.
+ * Владелец аккаунта (`Account.ownerUserId`) или назначенный им управляющий
+ * сетью (серия E, Р5; `account-roles.server.ts`) и только организации
+ * аккаунта, кроме демо и мастер-кабинетов: у них нет своих денег.
  * Закрытая после своих 14 дней организация и отдаёт, и получает — деньги
  * её, а точку тарифа можно оплатить и с другого баланса. Организация, удаление
  * которой запрошено, только отдаёт: деньги в неё пропали бы вместе с ней.
@@ -48,7 +51,7 @@ export class AccountTransferError extends Error {
 
 export type { AccountBalanceOrganization, AccountBalances } from "./account-transfer";
 
-export const ACCOUNT_OWNER_ONLY_MESSAGE = "Баланс по аккаунту и переводы доступны владельцу аккаунта";
+export const ACCOUNT_OWNER_ONLY_MESSAGE = "Баланс по аккаунту и переводы доступны владельцу аккаунта и управляющему сетью";
 const IDEMPOTENCY_MISMATCH_MESSAGE = "Этот перевод уже проведён с другими данными — обновите страницу и повторите";
 
 const platformOrgId = () => (process.env.PLATFORM_ORG_ID ?? "platform").trim();
@@ -59,23 +62,26 @@ function moneyOrgWhere(accountId: string) {
 }
 
 /**
- * Аккаунт, которым владеет человек, — и активная организация должна быть в
- * нём: руководитель чужой компании, который сам владеет другим аккаунтом,
- * из чужой организации переводов не делает.
+ * Аккаунт активной организации, если человек — его владелец или управляющий
+ * сетью (роль — по базе на каждый вызов: снятый управляющий теряет доступ
+ * сразу). Руководитель чужой компании, который сам владеет другим аккаунтом,
+ * из чужой организации переводов не делает. Без активной организации —
+ * аккаунт, которым человек владеет.
  */
-async function ownedAccountId(ownerUserId: string, activeOrgId: string | null): Promise<string> {
-  const account = await db.account.findUnique({ where: { ownerUserId }, select: { id: true } });
-  if (!account) throw new AccountTransferError(403, "not_owner", ACCOUNT_OWNER_ONLY_MESSAGE);
+async function ownedAccountId(userId: string, activeOrgId: string | null): Promise<string> {
   if (activeOrgId) {
-    const active = await db.organization.findUnique({ where: { id: activeOrgId }, select: { accountId: true } });
-    if (!active || active.accountId !== account.id) {
+    const access = await accountRoleForOrganization(userId, activeOrgId);
+    if (!access || !canManageNetworkRole(access.role)) {
       throw new AccountTransferError(403, "not_owner", ACCOUNT_OWNER_ONLY_MESSAGE);
     }
+    return access.accountId;
   }
+  const account = await db.account.findUnique({ where: { ownerUserId: userId }, select: { id: true } });
+  if (!account) throw new AccountTransferError(403, "not_owner", ACCOUNT_OWNER_ONLY_MESSAGE);
   return account.id;
 }
 
-/** Организации аккаунта владельца с балансами и итог. Не владелец — 403. */
+/** Организации аккаунта с балансами и итог. Не владелец и не управляющий сетью — 403. */
 export async function loadAccountBalances(ownerUserId: string, activeOrgId: string): Promise<AccountBalances> {
   const accountId = await ownedAccountId(ownerUserId, activeOrgId);
   const rows = await db.organization.findMany({
@@ -92,8 +98,8 @@ export async function loadAccountBalances(ownerUserId: string, activeOrgId: stri
 }
 
 /**
- * Для страницы «Настройки → Баланс»: сводка только владельцу аккаунта, у
- * которого две организации и больше; иначе null (блока нет).
+ * Для страницы «Настройки → Баланс»: сводка владельцу аккаунта или
+ * управляющему сетью, если в аккаунте две организации и больше; иначе null.
  */
 export async function accountBalancesForPage(ownerUserId: string, activeOrgId: string): Promise<AccountBalances | null> {
   try {
@@ -149,7 +155,7 @@ async function earlierTransfer(
  * зачисление `transfer_in` через леджер одной транзакцией, запись в журнал
  * действий обеих организаций — в той же транзакции.
  *
- * Отказы: не владелец — 403; организация не из аккаунта (или демо, кабинет)
+ * Отказы: не владелец и не управляющий сетью — 403; организация не из аккаунта (или демо, кабинет)
  * — 404, как будто её нет; больше остатка — 409 `insufficient`; в
  * организацию, удаление которой запрошено, — 409 `deleting`. Повтор с тем же
  * ключом — прежний результат с `duplicate: true`, деньги не двигаются; тот же

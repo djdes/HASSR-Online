@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-a-2026-11-20/raw/reminder-check.ts (series A); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-a-2026-11-20/raw/reminder-check.ts (series A); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series A, AC2: reminders 3 days and 1 day before an organization's own 14 days end,
  * sent by the daily billing job (the letter is written to the dev log), once per stage;
