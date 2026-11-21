@@ -1,0 +1,18 @@
+PASS skips: unseen 30+ days, unticked list, member gone, list not exchanged — removed; fresh and 29-day-old kept
+PASS requests: declined/cancelled/expired 180+ days and long-expired pending — removed; approved, young, open kept
+PASS transfers: older than 180 days removed, 170 days and fresh kept
+PASS counts cover this scenario's rows (4 skips, 4 requests, 1 transfer)
+PASS second cleanup keeps the survivors
+PASS scheduled run removes the same rows and keeps the same
+PASS scheduled run reports cleanup counts and the alert status
+PASS healthy night: nothing sent, no mark
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+PASS same day: nothing more
+PASS next day: sent again, the cabinet that failed in this run is listed
+PASS failed delivery: no mark, the next call retries
+RESULT: all checks passed
+PASS  cleanup-check (1s): 15 checks passed
+RESULT: all scenarios passed

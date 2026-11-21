@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, RefreshCw, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useReportError } from "@/lib/report-client-error";
+
 /**
  * Общая карточка ошибки для `error.tsx` журнальных маршрутов.
  *
@@ -31,6 +33,7 @@ export function JournalRouteError({
   variant?: "journal" | "journals" | "documents" | "document";
 }) {
   const t = useTranslations("errorSurface");
+  useReportError(error);
   useEffect(() => {
     console.error("[journals] route error", error);
   }, [error]);

@@ -1,0 +1,72 @@
+name: Prod monitor
+
+# Проверка прода из облака (спека cloud-testing-2026-11-21, AC3) — на сервер ничего не ставим.
+# Каждые 15 минут scripts/monitor/prod-check.mjs (без зависимостей, без npm ci) проверяет
+# /api/health (ok, база, версия), главную, вход, robots.txt и sitemap.xml по содержимому и что
+# прод не отстаёт от master больше часа.
+#
+# Из зарубежных дата-центров TLS к серверу рвётся примерно через раз: на каждую проверку до 6
+# попыток, сетевой сбой при живых остальных проверках — помеха, не сбой. Тревога в Telegram (тот
+# же бот и чат, что у выката) — со второго подряд упавшего запуска, один раз, и одно сообщение,
+# когда всё снова в порядке. Состояние между запусками — в кэше Actions. Запуск не краснеет из-за
+# сайта (иначе GitHub слал бы письмо каждые 15 минут сбоя): итог — в Summary запуска и в Telegram.
+on:
+  schedule:
+    # Не в начало часа: */15 со сдвигом.
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  # Удалить прошлые записи состояния из кэша.
+  actions: write
+
+concurrency:
+  group: prod-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check wesetup.ru
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 1
+
+      - name: Restore state
+        uses: actions/cache/restore@v5
+        with:
+          path: .prod-monitor
+          key: prod-monitor-state-${{ github.run_id }}
+          restore-keys: prod-monitor-state-
+
+      - name: Check production
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.DEPLOY_ALERT_TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          export MASTER_SHA="$(git rev-parse HEAD)"
+          export MASTER_COMMITTED_AT="$(git log -1 --format=%cI HEAD)"
+          node scripts/monitor/prod-check.mjs
+
+      - name: Save state
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: .prod-monitor
+          key: prod-monitor-state-${{ github.run_id }}
+
+      - name: Drop older state entries
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP: prod-monitor-state-${{ github.run_id }}
+        run: |
+          gh cache list --repo "$GITHUB_REPOSITORY" --key prod-monitor-state- --limit 100 --json id,key \
+            --jq ".[] | select(.key != \"$KEEP\") | .id" \
+            | xargs -r -n1 gh cache delete --repo "$GITHUB_REPOSITORY" || true

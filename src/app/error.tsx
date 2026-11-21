@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, RotateCcw, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedHref } from "@/i18n/site-locale";
+import { useReportError } from "@/lib/report-client-error";
 
 const DEPLOYMENT_DESYNC_PATTERNS = [
   "ChunkLoadError",
@@ -59,6 +60,7 @@ export default function AppError({
       console.error("[app-error]", error);
     }
   }, [error]);
+  useReportError(error);
 
   useEffect(() => {
     if (!canAutoReload || typeof window === "undefined") return;

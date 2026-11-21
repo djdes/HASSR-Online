@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { RotateCcw, ShieldAlert } from "lucide-react";
 
 import { haptic } from "@/app/mini/_components/use-haptic";
+import { useReportError } from "@/lib/report-client-error";
 import { useTranslations } from "next-intl";
 
 /**
@@ -24,6 +25,7 @@ export default function MiniError({
   reset: () => void;
 }) {
   const t = useTranslations("errorSurface");
+  useReportError(error);
   useEffect(() => {
     // Отдельная вибрация: человек мог отвести взгляд, пока грузилось.
     haptic("error");

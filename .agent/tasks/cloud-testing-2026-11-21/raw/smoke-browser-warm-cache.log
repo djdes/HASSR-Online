@@ -1,0 +1,129 @@
+
+> haccp-online@0.1.0 smoke:local
+> bash scripts/smoke/run-local.sh
+
+
+==> PostgreSQL
+database: haccp_smoke on 127.0.0.1:5432 (user smoke)
+
+==> Dependencies and schema
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+The database is already in sync with the Prisma schema.
+
+
+==> next dev on port 3005 (log: /tmp/smoke-dev.eHzsI4.log)
+
+==> Waiting for the app
+
+==> Browser smoke (screenshots: smoke-shots)
+PASS вход руководителя
+PASS 01-quick-setup: открывается (HTTP 200)
+PASS 01-quick-setup: есть «Кафе до 30 мест»
+PASS 01-quick-setup: нет горизонтальной прокрутки
+PASS 01-quick-setup: нет ошибок страницы
+PASS 02-quick-setup-questions: нет горизонтальной прокрутки
+PASS 02-quick-setup-questions: нет ошибок страницы
+PASS мастер: кабинет настроен
+PASS 03-quick-setup-done: нет горизонтальной прокрутки
+PASS 03-quick-setup-done: нет ошибок страницы
+PASS 04-acceptance: открывается (HTTP 200)
+PASS 04-acceptance: есть «ждут приёмки»
+PASS 04-acceptance: нет горизонтальной прокрутки
+PASS 04-acceptance: нет ошибок страницы
+PASS журнал: полоса Меркурия — 2 ждут, 1 просрочен
+PASS журнал: «Оформить» ведёт на «Входящие ВСД»
+PASS журнал: в меню «ВСД из Меркурия» и «Добавить из iiko»
+PASS журнал: iiko подключён — во «Входящие накладные»
+PASS 05-acceptance-iiko: нет горизонтальной прокрутки
+PASS 05-acceptance-iiko: нет ошибок страницы
+PASS УКЭП: плагин подписал PDF (CAdES-BES, откреплённая)
+PASS УКЭП: сервер принял, подписант из сертификата
+PASS 06-ukep-signed: нет горизонтальной прокрутки
+PASS 06-ukep-signed: нет ошибок страницы
+PASS УКЭП: PDF скачивается
+PASS УКЭП: подпись .sig скачивается
+PASS 07-mercury: открывается (HTTP 200)
+PASS 07-mercury: есть «Ждут гашения»
+PASS 07-mercury: нет горизонтальной прокрутки
+PASS 07-mercury: нет ошибок страницы
+PASS «Входящие ВСД»: у погашенного ВСД ссылка «История партии»
+PASS 07b-mercury-processed: нет горизонтальной прокрутки
+PASS 07b-mercury-processed: нет ошибок страницы
+PASS 08-traceability: открывается (HTTP 200)
+PASS 08-traceability: есть «Приёмка по ВСД»
+PASS 08-traceability: нет горизонтальной прокрутки
+PASS 08-traceability: нет ошибок страницы
+PASS история партии: партия, ВСД, ссылка на журнал приёмки
+PASS 09-batch: открывается (HTTP 200)
+PASS 09-batch: есть «История партии»
+PASS 09-batch: нет горизонтальной прокрутки
+PASS 09-batch: нет ошибок страницы
+PASS 10-poster: открывается (HTTP 200)
+PASS 10-poster: есть «Poster № 687409»
+PASS 10-poster: нет горизонтальной прокрутки
+PASS 10-poster: нет ошибок страницы
+PASS Poster: токен не показывается
+FAIL crash apiRequestContext.get: Timeout 180000ms exceeded.
+Call log:
+[2m  - → GET http://localhost:3005/api/name-suggestions?scope=dish[22m
+[2m    - user-agent: Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Mobile/15E148 Safari/604.1[22m
+[2m    - accept: */*[22m
+[2m    - accept-encoding: gzip,deflate,br[22m
+[2m    - cookie: wesetup.visitor=v1.G-FMR4-tgrJ9E15RznbtFA.N-1ggjyS6HXNqV6UDW2q8M; wesetup.site-locale=ru; wesetup_src=%7B%22landing%22%3A%22%2Flogin%22%2C%22referrer%22%3A%22%22%2C%22utmSource%22%3A%22%22%2C%22utmMedium%22%3A%22%22%2C%22utmCampaign%22%3A%22%22%7D; wesetup-theme=light; wesetup-whats-new=10j7m8l; haccp-online.csrf-token=fc66c8344b9092a39e01e1e918528befaddfc841ffb2f39af65668bc383ad485%7C2f9bb112a88a442dbe03bfe2ad7cbdd979302a79c4c403940efe0fd2071ace9a; haccp-online.callback-url=http%3A%2F%2Flocalhost%3A3005; haccp-online.session-token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..1DZ0vQf34owfMnVY.ZkcxqVGwBCij8GhJbq3O2vPnoEbxzXBX4_PJ6elH14_e1sxubJ54WfnmfGukrAgLgC0Ijk9IDGnrLHFWujEKvqjemJS59umtwgVITosylL8rcz9N0oIxAsxXvC2W_UDJ9wX2U796odzJojkbI6UjqZ-oSN5CA3yDoEYOXtG5YaJKfSdkNrYrSC3xnronIFDlNKS24hnzPib_i1bar9St0_UfxHHg8RIyKy1AO2n4gy3OKIMwSHOU1kSzsbdOegNha7IveyPQ1bOnD8w4jAMS90RAwPY_-az4MxzK3DsNoQBDDUQx85_WgrwYJqPrkMeFotFDT3PdmXa7mbwA3xdNNoMAGDp7hpmXzJfOKwDAJ1RHS659TwLDlYK3lt_QfjugigIDD-zUWWR4c_NhHWgT1B_5-zR0Fjfp69Xcn86YWG0pGyWlU_ds__q2Cxg-iBs78-ruxjEPI5yfz4JEf4fG81gE1BYUEHTAobUysBx5p8pnV4Y4tmXkcfCAhIG0qw6Qp4_A63HGatFB8HMGlmmdKFuOoD7k0X2EOWy-l6FYguGyvY9pmJYYCupZ1TXB-e07FDV2o3-AVjTrhfOYelFIlJDtYquLi54-NtCnwdjlr_6J-uHKWXWTn-YphPtJFPi7CknZQZ1jAsn_lV1naGyfWf9RDAgce8N9.iF8RM3gQGa7TLVxS-xBL2Q[22m
+
+    at main (/home/user/HASSR-Online/scripts/smoke/new-features.smoke.cjs:247:42) {
+  log: [
+    '  - → GET http://localhost:3005/api/name-suggestions?scope=dish',
+    '    - user-agent: Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Mobile/15E148 Safari/604.1',
+    '    - accept: */*',
+    '    - accept-encoding: gzip,deflate,br',
+    '    - cookie: wesetup.visitor=v1.G-FMR4-tgrJ9E15RznbtFA.N-1ggjyS6HXNqV6UDW2q8M; wesetup.site-locale=ru; wesetup_src=%7B%22landing%22%3A%22%2Flogin%22%2C%22referrer%22%3A%22%22%2C%22utmSource%22%3A%22%22%2C%22utmMedium%22%3A%22%22%2C%22utmCampaign%22%3A%22%22%7D; wesetup-theme=light; wesetup-whats-new=10j7m8l; haccp-online.csrf-token=fc66c8344b9092a39e01e1e918528befaddfc841ffb2f39af65668bc383ad485%7C2f9bb112a88a442dbe03bfe2ad7cbdd979302a79c4c403940efe0fd2071ace9a; haccp-online.callback-url=http%3A%2F%2Flocalhost%3A3005; haccp-online.session-token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..1DZ0vQf34owfMnVY.ZkcxqVGwBCij8GhJbq3O2vPnoEbxzXBX4_PJ6elH14_e1sxubJ54WfnmfGukrAgLgC0Ijk9IDGnrLHFWujEKvqjemJS59umtwgVITosylL8rcz9N0oIxAsxXvC2W_UDJ9wX2U796odzJojkbI6UjqZ-oSN5CA3yDoEYOXtG5YaJKfSdkNrYrSC3xnronIFDlNKS24hnzPib_i1bar9St0_UfxHHg8RIyKy1AO2n4gy3OKIMwSHOU1kSzsbdOegNha7IveyPQ1bOnD8w4jAMS90RAwPY_-az4MxzK3DsNoQBDDUQx85_WgrwYJqPrkMeFotFDT3PdmXa7mbwA3xdNNoMAGDp7hpmXzJfOKwDAJ1RHS659TwLDlYK3lt_QfjugigIDD-zUWWR4c_NhHWgT1B_5-zR0Fjfp69Xcn86YWG0pGyWlU_ds__q2Cxg-iBs78-ruxjEPI5yfz4JEf4fG81gE1BYUEHTAobUysBx5p8pnV4Y4tmXkcfCAhIG0qw6Qp4_A63HGatFB8HMGlmmdKFuOoD7k0X2EOWy-l6FYguGyvY9pmJYYCupZ1TXB-e07FDV2o3-AVjTrhfOYelFIlJDtYquLi54-NtCnwdjlr_6J-uHKWXWTn-YphPtJFPi7CknZQZ1jAsn_lV1naGyfWf9RDAgce8N9.iF8RM3gQGa7TLVxS-xBL2Q'
+  ],
+  name: 'TimeoutError'
+}
+ GET /api/support/chat/status 200 in 48ms (compile: 25ms, proxy.ts: 5ms, render: 19ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."SupportThread"."id", "public"."SupportThread"."userId", "public"."SupportThread"."organizationId", "public"."SupportThread"."organizationName", "public"."SupportThread"."userEmail", "public"."SupportThread"."userName", "public"."SupportThread"."phone", "public"."SupportThread"."unreadForClient", "public"."SupportThread"."unreadForStaff" FROM "public"."SupportThread" WHERE ("public"."SupportThread"."userId" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/support/chat/status 200 in 42ms (compile: 22ms, proxy.ts: 4ms, render: 16ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Notification"."id", "public"."Notification"."organizationId", "public"."Notification"."userId", "public"."Notification"."kind", "public"."Notification"."dedupeKey", "public"."Notification"."title", "public"."Notification"."messageKey", "public"."Notification"."messageParams", "public"."Notification"."linkHref", "public"."Notification"."linkLabel", "public"."Notification"."linkLabelKey", "public"."Notification"."items", "public"."Notification"."dismissedItemIds", "public"."Notification"."readAt", "public"."Notification"."dismissedAt", "public"."Notification"."createdAt", "public"."Notification"."updatedAt" FROM "public"."Notification" WHERE ("public"."Notification"."userId" = $1 AND "public"."Notification"."dismissedAt" IS NULL) ORDER BY "public"."Notification"."createdAt" DESC LIMIT $2 OFFSET $3
+ GET /api/notifications 200 in 36ms (compile: 19ms, proxy.ts: 4ms, render: 13ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."SupportThread"."id", "public"."SupportThread"."userId", "public"."SupportThread"."organizationId", "public"."SupportThread"."organizationName", "public"."SupportThread"."userEmail", "public"."SupportThread"."userName", "public"."SupportThread"."phone", "public"."SupportThread"."unreadForClient", "public"."SupportThread"."unreadForStaff" FROM "public"."SupportThread" WHERE ("public"."SupportThread"."userId" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/support/chat/status 200 in 43ms (compile: 22ms, proxy.ts: 4ms, render: 17ms)
+prisma:query SELECT "public"."User"."id", "public"."User"."sessionVersion" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."SupportThread"."id", "public"."SupportThread"."userId", "public"."SupportThread"."organizationId", "public"."SupportThread"."organizationName", "public"."SupportThread"."userEmail", "public"."SupportThread"."userName", "public"."SupportThread"."phone", "public"."SupportThread"."unreadForClient", "public"."SupportThread"."unreadForStaff" FROM "public"."SupportThread" WHERE ("public"."SupportThread"."userId" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/support/chat/status 200 in 39ms (compile: 17ms, proxy.ts: 4ms, render: 18ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Notification"."id", "public"."Notification"."organizationId", "public"."Notification"."userId", "public"."Notification"."kind", "public"."Notification"."dedupeKey", "public"."Notification"."title", "public"."Notification"."messageKey", "public"."Notification"."messageParams", "public"."Notification"."linkHref", "public"."Notification"."linkLabel", "public"."Notification"."linkLabelKey", "public"."Notification"."items", "public"."Notification"."dismissedItemIds", "public"."Notification"."readAt", "public"."Notification"."dismissedAt", "public"."Notification"."createdAt", "public"."Notification"."updatedAt" FROM "public"."Notification" WHERE ("public"."Notification"."userId" = $1 AND "public"."Notification"."dismissedAt" IS NULL) ORDER BY "public"."Notification"."createdAt" DESC LIMIT $2 OFFSET $3
+ GET /api/notifications 200 in 42ms (compile: 16ms, proxy.ts: 7ms, render: 18ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."SupportThread"."id", "public"."SupportThread"."userId", "public"."SupportThread"."organizationId", "public"."SupportThread"."organizationName", "public"."SupportThread"."userEmail", "public"."SupportThread"."userName", "public"."SupportThread"."phone", "public"."SupportThread"."unreadForClient", "public"."SupportThread"."unreadForStaff" FROM "public"."SupportThread" WHERE ("public"."SupportThread"."userId" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/support/chat/status 200 in 33ms (compile: 19ms, proxy.ts: 3ms, render: 11ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."SupportThread"."id", "public"."SupportThread"."userId", "public"."SupportThread"."organizationId", "public"."SupportThread"."organizationName", "public"."SupportThread"."userEmail", "public"."SupportThread"."userName", "public"."SupportThread"."phone", "public"."SupportThread"."unreadForClient", "public"."SupportThread"."unreadForStaff" FROM "public"."SupportThread" WHERE ("public"."SupportThread"."userId" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/support/chat/status 200 in 47ms (compile: 20ms, proxy.ts: 3ms, render: 24ms)
+prisma:query SELECT "public"."User"."id", "public"."User"."sessionVersion" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."SupportThread"."id", "public"."SupportThread"."userId", "public"."SupportThread"."organizationId", "public"."SupportThread"."organizationName", "public"."SupportThread"."userEmail", "public"."SupportThread"."userName", "public"."SupportThread"."phone", "public"."SupportThread"."unreadForClient", "public"."SupportThread"."unreadForStaff" FROM "public"."SupportThread" WHERE ("public"."SupportThread"."userId" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ GET /api/support/chat/status 200 in 41ms (compile: 21ms, proxy.ts: 3ms, render: 16ms)
+prisma:query SELECT "public"."Organization"."id", "public"."Organization"."name", "public"."Organization"."presetCapabilitiesJson", "public"."Organization"."kind", "public"."Organization"."locale" FROM "public"."Organization" WHERE ("public"."Organization"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."permissionPreset", "public"."User"."locale", "public"."User"."organizationId", "public"."User"."buildingIds" FROM "public"."User" WHERE ("public"."User"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."Notification"."id", "public"."Notification"."organizationId", "public"."Notification"."userId", "public"."Notification"."kind", "public"."Notification"."dedupeKey", "public"."Notification"."title", "public"."Notification"."messageKey", "public"."Notification"."messageParams", "public"."Notification"."linkHref", "public"."Notification"."linkLabel", "public"."Notification"."linkLabelKey", "public"."Notification"."items", "public"."Notification"."dismissedItemIds", "public"."Notification"."readAt", "public"."Notification"."dismissedAt", "public"."Notification"."createdAt", "public"."Notification"."updatedAt" FROM "public"."Notification" WHERE ("public"."Notification"."userId" = $1 AND "public"."Notification"."dismissedAt" IS NULL) ORDER BY "public"."Notification"."createdAt" DESC LIMIT $2 OFFSET $3
+ GET /api/notifications 200 in 34ms (compile: 18ms, proxy.ts: 5ms, render: 11ms)
+ GET /api/live 200 in 3.0min (compile: 16ms, proxy.ts: 5ms, render: 3.0min)
+
+================ smoke:local ================
+DB scenarios:  skipped
+Browser smoke: FAILED

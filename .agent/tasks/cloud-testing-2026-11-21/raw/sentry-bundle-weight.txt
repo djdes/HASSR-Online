@@ -1,0 +1,6 @@
+First-screen JS of every App Router page (build-manifest rootMainFiles, gzip), `next build --webpack`, 21.11.2026:
+
+  without Sentry (branch before Sentry)            116 472 B
+  Sentry.init from @sentry/nextjs                  204 873 B   (+88 401 B: tracing and web vitals always bundled)
+  minimal @sentry/browser client, eager            149 160 B   (+32 688 B)
+  minimal @sentry/browser client, lazy (shipped)   117 866 B   (+1 394 B; the client is a separate chunk loaded after page load)
