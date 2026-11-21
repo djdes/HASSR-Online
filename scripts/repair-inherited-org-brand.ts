@@ -6,7 +6,8 @@
  *
  * Что считается унаследованным — `src/lib/inherited-org-brand.ts`: только то,
  * чего в организации никто не задавал и что повторяет более старую организацию
- * того же аккаунта. Логотип убирается так же, как кнопкой «Удалить» (файл и
+ * того же аккаунта, и адрес файла другой организации у любой. Логотип
+ * убирается так же, как кнопкой «Удалить» (файл и
  * адрес), цвет сбрасывается; в журнал действий организации пишется
  * `organization.brand.inherited_removed` с прежними значениями.
  *
@@ -34,7 +35,7 @@ async function main() {
   const { checked, fixes } = await findInheritedBrandInDb();
 
   console.log(
-    `Организаций в аккаунтах с несколькими организациями: ${checked}; с унаследованным фирменным стилем: ${fixes.length}` +
+    `Проверено организаций: ${checked}; с унаследованным фирменным стилем: ${fixes.length}` +
       (apply ? "" : " (только показ, --apply — исправить)"),
   );
   for (const fix of fixes) {
@@ -42,7 +43,7 @@ async function main() {
       ...(fix.logo ? [`логотип — ${LOGO_REASON[fix.logo]}`] : []),
       ...(fix.brandColor ? [`цвет ${fix.brandColorValue}`] : []),
     ];
-    console.log(`  ${fix.organizationId} «${fix.name}» (аккаунт ${fix.accountId}): ${parts.join(", ")}`);
+    console.log(`  ${fix.organizationId} «${fix.name}» (аккаунт ${fix.accountId ?? "—"}): ${parts.join(", ")}`);
     if (!apply) continue;
     await removeInheritedBrand(fix, "repair-inherited-org-brand");
     console.log(`    убрано`);

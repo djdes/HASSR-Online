@@ -28,16 +28,22 @@ function changedKeys(details: unknown): string[] {
   return changed && typeof changed === "object" && !Array.isArray(changed) ? Object.keys(changed) : [];
 }
 
-export async function findInheritedBrandInDb(): Promise<{ checked: number; fixes: InheritedBrandFix[] }> {
-  const orgs = await db.organization.findMany({
-    where: { accountId: { not: null } },
+export async function findInheritedBrandInDb({ now = new Date() }: { now?: Date } = {}): Promise<{
+  checked: number;
+  rows: BrandOrgRow[];
+  fixes: InheritedBrandFix[];
+}> {
+  // Все организации: общий файл другой организации убирается у любой, а
+  // перепись (`brandCensus`) смотрит на всех.
+  const candidates = await db.organization.findMany({
     select: { id: true, name: true, accountId: true, createdAt: true, logoUrl: true, brandColor: true },
   });
-  // Сравниваются организации одного аккаунта — одиночек дальше не читаем.
-  const perAccount = new Map<string, number>();
-  for (const org of orgs) perAccount.set(org.accountId!, (perAccount.get(org.accountId!) ?? 0) + 1);
-  const candidates = orgs.filter((org) => (perAccount.get(org.accountId!) ?? 0) > 1);
-  const ids = candidates.map((org) => org.id);
+  const withFile = await db.organizationLogo.findMany({ select: { organizationId: true } });
+  const ids = withFile.map((row) => row.organizationId);
+  // Журнал действий — только тех, у кого есть что проверять.
+  const auditIds = [
+    ...new Set([...ids, ...candidates.filter((org) => org.logoUrl || org.brandColor).map((org) => org.id)]),
+  ];
 
   const files = new Map<string, NonNullable<BrandOrgRow["logoFile"]>>();
   for (let start = 0; start < ids.length; start += FILE_CHUNK) {
@@ -56,11 +62,11 @@ export async function findInheritedBrandInDb(): Promise<{ checked: number; fixes
 
   const [uploads, settings] = await Promise.all([
     db.auditLog.findMany({
-      where: { organizationId: { in: ids }, action: "organization.logo.upload" },
+      where: { organizationId: { in: auditIds }, action: "organization.logo.upload" },
       select: { organizationId: true },
     }),
     db.auditLog.findMany({
-      where: { organizationId: { in: ids }, action: "organization.settings.update" },
+      where: { organizationId: { in: auditIds }, action: "organization.settings.update" },
       select: { organizationId: true, details: true },
     }),
   ]);
@@ -79,12 +85,12 @@ export async function findInheritedBrandInDb(): Promise<{ checked: number; fixes
     setByPerson: { logoUpload: uploaded.has(org.id), logoUrl: setLogoUrl.has(org.id), brandColor: setBrandColor.has(org.id) },
   }));
   const byId = new Map(rows.map((row) => [row.id, row]));
-  const fixes = findInheritedBrand(rows).map((fix) => ({
+  const fixes = findInheritedBrand(rows, { now }).map((fix) => ({
     ...fix,
     logoUrl: byId.get(fix.organizationId)?.logoUrl ?? null,
     brandColorValue: byId.get(fix.organizationId)?.brandColor ?? null,
   }));
-  return { checked: rows.length, fixes };
+  return { checked: rows.length, rows, fixes };
 }
 
 /**
