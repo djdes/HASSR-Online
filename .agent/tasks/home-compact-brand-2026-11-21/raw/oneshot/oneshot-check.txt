@@ -1,0 +1,36 @@
+### стенд: старое поведение воспроизведено
+{"accountId":"cmwqric9j0002p97dn5wqla7f","homeId":"cmwqric900000p97d5eyds6l5","gymId":"cmwqridgv0005p97dgyxd2pwc","canteenId":"cmwqridhl0007p97d5yv0477l"}
+  cmwqric900000p97d5eyds6l5 «Доброе кафе»: logo=file v1 colour=#1f9d3a
+  cmwqridgv0005p97dgyxd2pwc «Одинцовская гимназия»: logo=file v1 colour=#1f9d3a
+  cmwqridhl0007p97d5yv0477l «Столовая №5»: logo=file v2 colour=#1f9d3a
+  cmwqridi3000ap97d8z8t331w «Пекарня Колос»: logo=— colour=—
+  once:inherited-org-brand:v1 = —
+  audit organization.brand.inherited_removed: 0
+
+### npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts --dry-run
+[inherited-brand:dry-run] cmwqridgv0005p97dgyxd2pwc: logo copied-file, colour
+[inherited-brand:dry-run] cmwqridhl0007p97d5yv0477l: colour
+[inherited-brand:dry-run] checked 4 organizations in multi-organization accounts; would remove inherited brand: 2 (logo 1, colour 2)
+  cmwqric900000p97d5eyds6l5 «Доброе кафе»: logo=file v1 colour=#1f9d3a
+  cmwqridgv0005p97dgyxd2pwc «Одинцовская гимназия»: logo=file v1 colour=#1f9d3a
+  cmwqridhl0007p97d5yv0477l «Столовая №5»: logo=file v2 colour=#1f9d3a
+  cmwqridi3000ap97d8z8t331w «Пекарня Колос»: logo=— colour=—
+  once:inherited-org-brand:v1 = —
+  audit organization.brand.inherited_removed: 0
+
+### как на выкладке: timeout 180 npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts | tail -15
+[inherited-brand] cmwqridgv0005p97dgyxd2pwc: logo copied-file, colour
+[inherited-brand] cmwqridhl0007p97d5yv0477l: colour
+[inherited-brand] checked 4 organizations in multi-organization accounts; removed inherited brand: 2 (logo 1, colour 2)
+[inherited-brand] done
+  cmwqric900000p97d5eyds6l5 «Доброе кафе»: logo=file v1 colour=#1f9d3a
+  cmwqridgv0005p97dgyxd2pwc «Одинцовская гимназия»: logo=— colour=—
+  cmwqridhl0007p97d5yv0477l «Столовая №5»: logo=file v2 colour=—
+  cmwqridi3000ap97d8z8t331w «Пекарня Колос»: logo=— colour=—
+  once:inherited-org-brand:v1 = {"at":"2026-11-21T18:50:15.893Z","checked":4,"removed":2,"logos":1,"colours":2}
+  audit organization.brand.inherited_removed: 2
+
+### повторная выкладка
+[inherited-brand] once:inherited-org-brand:v1: already done
+### ручной скрипт после рефакторинга (показ)
+Организаций в аккаунтах с несколькими организациями: 4; с унаследованным фирменным стилем: 0 (только показ, --apply — исправить)

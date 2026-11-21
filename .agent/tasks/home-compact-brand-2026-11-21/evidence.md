@@ -56,3 +56,18 @@ npx tsx scripts/repair-inherited-org-brand.ts --apply  # убрать унасл
 
 - iOS Safari не проверялся (на стенде только Chromium); переносы по слогам в Safari поддерживаются (`hyphens`).
 - Стенд — `next dev`, не production-сборка.
+
+## Дополнение: AC3b — починка на проде сама на выкладке (PASS)
+
+- Код: `src/lib/inherited-org-brand.server.ts` (поиск и починка в базе — общие), `scripts/repair-inherited-org-brand.ts`
+  (ручной запуск), `prisma/seed-repair-inherited-org-brand-2026-11.ts` (разовый шаг, ключ `once:inherited-org-brand:v1`),
+  строка в шаге 3/3 `.github/workflows/deploy.yml` после сидов панели платформы, до флага legacy-сидов. Новый файл в
+  `prisma/` меняет отпечаток, поэтому блок сидов на этой выкладке выполнится.
+- Тест: `src/lib/inherited-org-brand.test.ts` — ключ `once`, общий модуль у сида и скрипта, без названий в логе, место
+  шага в `deploy.yml`.
+- Стенд (`raw/oneshot/oneshot-check.txt`, старое поведение воспроизведено `raw/oneshot/stand-oneshot.ts`): `--dry-run`
+  — 2 организации, ничего не изменено, ключа нет; запуск как на выкладке (`timeout 180 … | tail -15`) — у гимназии
+  убраны логотип и цвет, у столовой — цвет, донор, пекарня и логотип, загруженный в столовой человеком, не тронуты,
+  ключ записан, 2 записи `organization.brand.inherited_removed`; повторный запуск — `already done`; ручной скрипт
+  после этого — 0.
+- Проверки (`raw/oneshot/checks.txt`): `npm run typecheck` — exit 0; `npm run test:gate` — pass 10, fail 0; eslint — exit 0.
