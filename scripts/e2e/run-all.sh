@@ -31,6 +31,7 @@ SCENARIOS=(
   new-lists-check
   manager-check
   pay-from-account-check
+  period-digest-check
 )
 if [ "$#" -gt 0 ]; then
   SCENARIOS=("$@")

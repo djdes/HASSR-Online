@@ -25,7 +25,8 @@ import { rollupConfigDocumentForDay } from "@/lib/today-compliance";
  * аккаунта — дни с заполненными обязательными журналами и записи журналов
  * (правило — в `network-period.ts`). Дёшево: на организацию пять запросов за
  * весь период (документы, отметки ежедневных журналов в документе, записи по
- * дням, записи старых журналов, закрытые дни), не больше `NETWORK_ORG_LIMIT`
+ * дням, записи старых журналов, закрытые дни); записи считает база (по
+ * документу или журналу и дню), строки записей не грузятся. Не больше `NETWORK_ORG_LIMIT`
  * организаций и `NETWORK_CONCURRENCY` одновременно. Доступ проверяет
  * вызывающий (страница «Сеть», выгрузка).
  */
@@ -69,6 +70,44 @@ async function lockedFromDays(anyOrganizationId: string, now: Date): Promise<Map
   return locked;
 }
 
+/** Зона для SQL: как `orgTodayKey` — неизвестная зона считается по UTC. */
+function sqlTimeZone(timeZone: string): string {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone });
+    return timeZone;
+  } catch {
+    return "UTC";
+  }
+}
+
+/** Момент как «стенные часы» UTC без зоны — так хранится `timestamp(3)` Prisma, сравнение не зависит от зоны сессии. */
+const naiveUtc = (date: Date) => date.toISOString().slice(0, 23);
+
+/**
+ * Записи старых журналов (`JournalEntry`, туда же пишут датчики) по журналу
+ * и дню по часовому поясу организации — счётом в базе, а не строками: у
+ * организации с датчиками их десятки тысяч за месяц. Окно — с запасом на
+ * часовой пояс в обе стороны, лишние дни отсекает период.
+ */
+async function legacyEntryCounts(
+  organizationId: string,
+  timeZone: string,
+  from: Date,
+  to: Date,
+): Promise<Array<{ templateId: string; dayKey: string; count: number }>> {
+  const zone = sqlTimeZone(timeZone);
+  const rows = await db.$queryRaw<Array<{ templateId: string; dayKey: string; count: number }>>`
+    SELECT "templateId",
+           to_char(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${zone}, 'YYYY-MM-DD') AS "dayKey",
+           COUNT(*)::int AS "count"
+      FROM "JournalEntry"
+     WHERE "organizationId" = ${organizationId}
+       AND "createdAt" >= ${naiveUtc(new Date(from.getTime() - 15 * HOUR_MS))}::timestamp
+       AND "createdAt" < ${naiveUtc(new Date(to.getTime() + 15 * HOUR_MS))}::timestamp
+     GROUP BY 1, 2`;
+  return rows.map((row) => ({ templateId: row.templateId, dayKey: row.dayKey, count: Number(row.count) }));
+}
+
 async function orgPeriodStats(input: {
   org: PeriodOrg;
   days: number;
@@ -107,12 +146,7 @@ async function orgPeriodStats(input: {
       where: { document: { organizationId: org.id }, date: { gte: from, lt: to }, ...NOT_AUTO_SEEDED },
       _count: { _all: true },
     }),
-    // Старые журналы: день записи — по часовому поясу организации, поэтому
-    // окно с запасом в обе стороны, лишнее отсекает период.
-    db.journalEntry.findMany({
-      where: { organizationId: org.id, createdAt: { gte: new Date(from.getTime() - 15 * HOUR_MS), lt: new Date(to.getTime() + 15 * HOUR_MS) } },
-      select: { templateId: true, createdAt: true },
-    }),
+    legacyEntryCounts(org.id, timeZone, from, to),
     db.journalCloseEvent.findMany({
       where: { organizationId: org.id, date: { gte: from, lt: to }, reopenedAt: null },
       select: { templateId: true, date: true },
@@ -131,9 +165,7 @@ async function orgPeriodStats(input: {
     const templateId = documentTemplate.get(row.documentId);
     if (templateId) marks.push({ templateId, dayKey: dayKeyOf(row.date), count: row._count._all });
   }
-  for (const entry of legacyEntries) {
-    marks.push({ templateId: entry.templateId, dayKey: orgTodayKey(timeZone, entry.createdAt), count: 1 });
-  }
+  marks.push(...legacyEntries);
   for (const doc of configDocuments) {
     const code = codeById.get(doc.templateId);
     if (!code) continue;

@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { listActiveNetworkManagerIds } from "@/lib/account-roles.server";
 import { db } from "@/lib/db";
 import {
@@ -13,6 +15,7 @@ import {
   exchangeDigestWeekStart,
 } from "@/lib/directory-exchange/weekly-digest";
 import { MASTER_ORG_KIND } from "@/lib/master-directory";
+import { DEFERRED_STATUS, PUSH_ONLY_STATUS } from "@/lib/telegram-delivery-policy";
 import { isTechnicalEmail } from "@/lib/technical-email";
 
 /**
@@ -21,7 +24,9 @@ import { isTechnicalEmail } from "@/lib/technical-email";
  * организациях обмена что-то пришло, ждёт разбора или обмен падал. Зовёт
  * ежечасная задача `weekly-digest` в понедельник 08:00 по Москве. Одна сводка
  * на аккаунт за ISO-неделю: отметка в журнале действий кабинета ставится до
- * отправки, повтор за неделю ничего не шлёт. Закрытые после своих 14 дней
+ * отправки под замком (аккаунт, неделя) — из двух одновременных запусков
+ * шлёт один, повтор за неделю ничего не шлёт; не дошло ничего — отметка
+ * снимается, и следующий запуск пробует снова. Закрытые после своих 14 дней
  * организации не считаются. Сбой одного аккаунта остальных не останавливает.
  */
 
@@ -29,7 +34,8 @@ const APP_URL = () => (process.env.NEXTAUTH_URL || process.env.APP_URL || "https
 
 export type ExchangeDigestAccountResult = {
   accountId: string;
-  reason: "sent" | "already-sent" | "empty" | "no-members" | "no-recipients" | "error";
+  /** `not-delivered` — ничего не дошло: отметка снята, следующий запуск попробует снова. */
+  reason: "sent" | "already-sent" | "empty" | "no-members" | "no-recipients" | "not-delivered" | "error";
   recipients?: number;
   emails?: number;
   telegram?: number;
@@ -61,6 +67,44 @@ async function recipientsOf(accountId: string, ownerUserId: string): Promise<Rec
       null,
     telegram: Boolean(user.telegramChatId),
   }));
+}
+
+/** Статусы журнала Telegram, при которых сообщение дошло или дойдёт (тихие часы — утром, без Telegram — push). */
+const TELEGRAM_DELIVERED = ["sent", DEFERRED_STATUS, PUSH_ONLY_STATUS];
+
+/**
+ * Занять сводку аккаунта за неделю: под замком (аккаунт, ISO-неделя) в одной
+ * транзакции — проверить отметку и записать её. Возвращает id отметки или
+ * null, если неделю уже занял другой запуск. Шлёт только тот, кто записал.
+ */
+async function claimDigest(input: {
+  accountId: string;
+  weekKey: string;
+  weekStart: Date;
+  organizationId: string;
+  details: Prisma.InputJsonValue;
+}): Promise<string | null> {
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`exchange-digest:${input.accountId}:${input.weekKey}`})::bigint)`;
+    const already = await tx.auditLog.findFirst({
+      where: { action: EXCHANGE_DIGEST_ACTION, entity: "account", entityId: input.accountId, createdAt: { gte: input.weekStart } },
+      select: { id: true },
+    });
+    if (already) return null;
+    const claim = await tx.auditLog.create({
+      data: {
+        organizationId: input.organizationId,
+        userId: null,
+        userName: null,
+        action: EXCHANGE_DIGEST_ACTION,
+        entity: "account",
+        entityId: input.accountId,
+        details: input.details,
+      },
+      select: { id: true },
+    });
+    return claim.id;
+  });
 }
 
 async function digestForAccount(input: {
@@ -116,58 +160,81 @@ async function digestForAccount(input: {
   });
   if (!exchangeDigestHasNews(digest)) return { accountId, reason: "empty" };
 
-  const recipients = await recipientsOf(accountId, input.ownerUserId);
+  // Дойти можно только до тех, у кого есть почта или Telegram.
+  const recipients = (await recipientsOf(accountId, input.ownerUserId)).filter((recipient) => recipient.email || recipient.telegram);
   if (recipients.length === 0) return { accountId, reason: "no-recipients" };
 
-  // Отметка до отправки: два запуска в один час не пришлют сводку дважды.
-  await db.auditLog.create({
-    data: {
-      organizationId: cabinetIds[0],
-      userId: null,
-      userName: null,
-      action: EXCHANGE_DIGEST_ACTION,
-      entity: "account",
-      entityId: accountId,
-      details: {
-        week: digest.weekKey,
-        recipients: recipients.map((recipient) => recipient.userId),
-        rows: digest.rows.length,
-        errorRuns: digest.errorRuns,
-      },
-    },
-  });
-
+  // Письмо и сообщение готовим до отметки: сбой здесь не оставит отметку без отправки.
   const appUrl = APP_URL();
   const email = exchangeDigestEmail(digest, appUrl);
   const telegramText = exchangeDigestTelegram(digest);
-  const { emailBrandForOrganization, renderEmailLayout, sendRawEmail } = await import("@/lib/email");
+  const { emailBrandForOrganization, isEmailDeliveryConfigured, renderEmailLayout, sendRawEmail } = await import("@/lib/email");
   const { notifyEmployee } = await import("@/lib/telegram");
   const html = renderEmailLayout(email.title, email.html, await emailBrandForOrganization(own[0].organizationId).catch(() => null));
+  const dedupeKey = `${EXCHANGE_DIGEST_KIND}:${accountId}:${digest.weekKey}`;
+
+  // Отметка до отправки и атомарно: шлёт только запуск, который её записал.
+  const claimId = await claimDigest({
+    accountId,
+    weekKey: digest.weekKey,
+    weekStart: exchangeDigestWeekStart(now),
+    organizationId: cabinetIds[0],
+    details: {
+      week: digest.weekKey,
+      recipients: recipients.map((recipient) => recipient.userId),
+      rows: digest.rows.length,
+      errorRuns: digest.errorRuns,
+    },
+  });
+  if (!claimId) return { accountId, reason: "already-sent" };
+
   let emails = 0;
-  let telegram = 0;
-  for (const recipient of recipients) {
-    if (recipient.telegram) {
-      try {
-        await notifyEmployee(
-          recipient.userId,
-          telegramText,
-          { label: "Открыть обмен", miniAppUrl: `${appUrl}${EXCHANGE_DIGEST_HREF}` },
-          { delivery: { organizationId: own[0].organizationId, kind: EXCHANGE_DIGEST_KIND, dedupeKey: `${EXCHANGE_DIGEST_KIND}:${accountId}:${digest.weekKey}` } },
-        );
-        telegram += 1;
-      } catch (error) {
-        console.error("[exchange-digest] telegram failed", { accountId, userId: recipient.userId, error });
+  try {
+    // Без настроенной почты письмо пишется в журнал сервера — это не сбой (dev).
+    const emailDelivers = isEmailDeliveryConfigured();
+    for (const recipient of recipients) {
+      if (recipient.telegram) {
+        try {
+          await notifyEmployee(
+            recipient.userId,
+            telegramText,
+            { label: "Открыть обмен", miniAppUrl: `${appUrl}${EXCHANGE_DIGEST_HREF}` },
+            { delivery: { organizationId: own[0].organizationId, kind: EXCHANGE_DIGEST_KIND, dedupeKey } },
+          );
+        } catch (error) {
+          console.error("[exchange-digest] telegram failed", { accountId, userId: recipient.userId, error });
+        }
+      }
+      if (recipient.email) {
+        try {
+          if ((await sendRawEmail(recipient.email, email.subject, html)) || !emailDelivers) emails += 1;
+        } catch (error) {
+          console.error("[exchange-digest] email failed", { accountId, userId: recipient.userId, error });
+        }
       }
     }
-    if (recipient.email) {
-      try {
-        // Без настроенной почты письмо пишется в журнал сервера — это не сбой.
-        await sendRawEmail(recipient.email, email.subject, html);
-        emails += 1;
-      } catch (error) {
-        console.error("[exchange-digest] email failed", { accountId, userId: recipient.userId, error });
-      }
-    }
+  } catch (error) {
+    console.error("[exchange-digest] send failed", { accountId, error });
+  }
+  // Telegram не сообщает об исходе — смотрим журнал отправок: ушло, отложено на утро или ушло push'ем.
+  // Ключ — аккаунт и неделя; доставленных строк прошлых попыток этой недели нет: иначе отметка осталась бы.
+  const telegram = await db.telegramLog
+    .count({
+      where: {
+        kind: EXCHANGE_DIGEST_KIND,
+        dedupeKey,
+        userId: { in: recipients.map((recipient) => recipient.userId) },
+        status: { in: TELEGRAM_DELIVERED },
+      },
+    })
+    .catch(() => 0);
+  if (emails + telegram === 0) {
+    // Ничего не дошло — снимаем отметку, следующий запуск попробует снова.
+    await db.auditLog.delete({ where: { id: claimId } }).catch((error) => {
+      console.error("[exchange-digest] claim release failed", { accountId, error });
+    });
+    console.warn("[exchange-digest] nothing delivered — will retry", { accountId, week: digest.weekKey });
+    return { accountId, reason: "not-delivered", recipients: recipients.length, emails, telegram };
   }
   console.info("[exchange-digest] sent", { accountId, week: digest.weekKey, recipients: recipients.length, emails, telegram });
   return { accountId, reason: "sent", recipients: recipients.length, emails, telegram };
