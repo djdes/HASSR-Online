@@ -1,0 +1,11 @@
+2026-11-21 ~10:40–10:50 UTC, from this cloud session (egress via agent proxy, foreign data center):
+/api/health: {"ok":true,"db":"ok","buildSha":"bb1f3a2","uptimeSec":15702}  (prod still on #282)
+https://wesetup.ru/robots.txt ok=5 fail=10   (curl, 1 s pause, 15 s timeout)
+https://ya.ru/                ok=10 fail=0
+https://www.mail.ru/          ok=8 fail=0
+https://www.wildberries.ru/   ok=5 fail=1
+https://github.com/           6/6 answered in 0.1–0.2 s
+homepage x12: 3 x 200, 9 x "curl: (35) Recv failure: Connection reset by peer" after ~10 s
+[agent-proxy] wesetup.ru:443 — ws_closed_mid_exchange (the tunnel to the egress proxy closed before the exchange completed)
+wesetup.ru A 79.137.237.2 — RIPE: 79.137.231.0-79.137.237.255 DINETHOSTING-NEXT, RU, "Hosting and Colocation Services"
+Playwright (Chromium) page loads: 5 of 6 OK, 1 x 502 for the document; several CSS/JS chunks failed (proxy error bodies, text/plain).
