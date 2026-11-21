@@ -1,5 +1,5 @@
 PASS setup: B is locked after its own 14 days, A and C are not
-7 days 2026-11-14 … 2026-11-20: [{"name":"Кафе «Ёлка» & <бар> perdigmwqe74tw","stats":{"days":7,"filledDays":4,"keptDays":7,"records":21},"status":"partial"},{"name":"Бар Б perdigmwqe74tw","stats":{"days":3,"filledDays":3,"keptDays":3,"records":3},"status":"done"},{"name":"Столовая В perdigmwqe74tw","stats":{"days":3,"filledDays":0,"keptDays":0,"records":2},"status":"empty"}]
+7 days 2026-11-14 … 2026-11-20: [{"name":"Кафе «Ёлка» & <бар> perdigmwqgk93j","stats":{"days":7,"filledDays":4,"keptDays":7,"records":21},"status":"partial"},{"name":"Бар Б perdigmwqgk93j","stats":{"days":3,"filledDays":3,"keptDays":3,"records":3},"status":"done"},{"name":"Столовая В perdigmwqgk93j","stats":{"days":3,"filledDays":0,"keptDays":0,"records":2},"status":"empty"}]
 PASS 7 days: range is the 7 full days before today (Moscow)
 PASS 7 days: three working organizations, the active one marked
 PASS 7 days A: 4 of 7 days filled, 21 records, «partial»
@@ -12,7 +12,7 @@ PASS 30 days C: 3 days, 2 records
 PASS access: an employee is refused (403 on the page and the export)
 PASS access: the network manager is allowed
 PASS export name: set-7d-<day>.xlsx
-xlsx rows: [["Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям"],["14 ноября — 20 ноября (7 дней)"],["Организация","Дни с заполненными журналами","Доля дней, %","Статус","Записей журналов"],["Кафе «Ёлка» & <бар> perdigmwqe74tw (текущая)","4 из 7",57,"не каждый день",21],["Бар Б perdigmwqe74tw","3 из 3",100,"каждый день",3],["Столовая В perdigmwqe74tw","0 из 3",0,"журналов нет",2],["Итого","7 из 13",54,null,26],["День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются."],["Сформировано 21 ноября в 15:36"]]
+xlsx rows: [["Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям"],["14 ноября — 20 ноября (7 дней)"],["Организация","Дни с заполненными журналами","Доля дней, %","Статус","Записей журналов"],["Кафе «Ёлка» & <бар> perdigmwqgk93j (текущая)","4 из 7",57,"не каждый день",21],["Бар Б perdigmwqgk93j","3 из 3",100,"каждый день",3],["Столовая В perdigmwqgk93j","0 из 3",0,"журналов нет",2],["Итого","7 из 13",54,null,26],["День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются."],["Сформировано 21 ноября в 16:43"]]
 PASS Excel: sheet «Сеть», title, period and header
 PASS Excel: row A — «4 из 7», 57 %, «не каждый день», 21
 PASS Excel: row B — «3 из 3», 100 %, «каждый день», 3
@@ -20,24 +20,24 @@ PASS Excel: row C — «0 из 3», 0 %, «журналов нет», 2
 PASS Excel: totals — «7 из 13», 54 %, 26
 PASS Excel «Сегодня»: set-<day>.xlsx, balances and total 1 750
 PASS PDF: set-7d-<day>.pdf, starts with %PDF, not empty
-pdf text: Сеть: сводка по организациям 14 ноября — 20 ноября (7 дней) Организация Дни с заполненными журналами Доля дней, % Статус Записей журналов Кафе «Ёлка» & <бар> perdigmwqe74tw (текущая) 4 из 7 57% не каждый день 21 Бар Б perdigmwqe74tw 3 из 3 100% каждый день 3 Столовая В perdigmwqe74tw 0 из 3 0% журналов нет 2 Итого 7 из 13 54% 26 Сформировано 21 ноября в 15:36 1 День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются. 
+pdf text: Сеть: сводка по организациям 14 ноября — 20 ноября (7 дней) Организация Дни с заполненными журналами Доля дней, % Статус Записей журналов Кафе «Ёлка» & <бар> perdigmwqgk93j (текущая) 4 из 7 57% не каждый день 21 Бар Б perdigmwqgk93j 3 из 3 100% каждый день 3 Столовая В perdigmwqgk93j 0 из 3 0% журналов нет 2 Итого 7 из 13 54% 26 Сформировано 21 ноября в 16:43 1 День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются. 
 PASS PDF text: Cyrillic title, organization names, values and totals
 PASS PDF in English (30 days): «5 of 30», set-30d-<day>.pdf
-[email/dev] SMTP не настроен — письмо не отправлено на владелец-perdigmwqe74tw@example.test.
+[email/dev] SMTP не настроен — письмо не отправлено на владелец-perdigmwqgk93j@example.test.
 [email/dev] Subject: Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой
-[email/dev] Body:    wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqe74tw 3 1 2 Столовая В perdigmwqe74tw 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
-[email/dev] SMTP не настроен — письмо не отправлено на управляющий-perdigmwqe74tw@example.test.
+[email/dev] Body:    wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqgk93j 3 1 2 Столовая В perdigmwqgk93j 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
+[email/dev] SMTP не настроен — письмо не отправлено на управляющий-perdigmwqgk93j@example.test.
 [email/dev] Subject: Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой
-[email/dev] Body:    wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqe74tw 3 1 2 Столовая В perdigmwqe74tw 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
+[email/dev] Body:    wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqgk93j 3 1 2 Столовая В perdigmwqgk93j 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
 [exchange-digest] sent {
-  accountId: 'cmwqe751b0002fp7d6kd6g38r',
+  accountId: 'cmwqgk9di0002b97d6kcqxbzi',
   week: '2026-W47',
   recipients: 2,
   emails: 2,
   telegram: 1
 }
-digest #1: {"weekKey":"2026-W47","accounts":1,"sent":1,"results":[{"accountId":"cmwqe751b0002fp7d6kd6g38r","reason":"sent","recipients":2,"emails":2,"telegram":1}]}
-letters #1: [{"to":"владелец-perdigmwqe74tw@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"},{"to":"управляющий-perdigmwqe74tw@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"}]
+digest #1: {"weekKey":"2026-W47","accounts":1,"sent":1,"results":[{"accountId":"cmwqgk9di0002b97d6kcqxbzi","reason":"sent","recipients":2,"emails":2,"telegram":1}]}
+letters #1: [{"to":"владелец-perdigmwqgk93j@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"},{"to":"управляющий-perdigmwqgk93j@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"}]
 PASS digest #1: sent to 2 recipients (owner + network manager)
 PASS digest #1: exactly one letter per recipient
 PASS digest #1: subject counts A 3+1, C 1 created/updated, 3 pending, 1 error run

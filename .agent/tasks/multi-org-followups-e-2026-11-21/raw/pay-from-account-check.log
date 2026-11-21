@@ -39,8 +39,8 @@ PASS parallel: one charge row, one transfer pair per source
 PASS parallel: balances as after one payment
 PASS parallel: subscription extended once (one more month)
 [balance] account pay charge failed {
-  accountId: 'cmwqdw3bq0002qb7d57743nzd',
-  organizationId: 'cmwqdw39g0000qb7dr4gk8hqh',
+  accountId: 'cmwqgk5mi00028u7d2vjizxmv',
+  organizationId: 'cmwqgk5kh00008u7di06jgsxy',
   error: PrismaClientKnownRequestError: 
   Invalid `tx.balanceTransaction.create()` invocation in
   /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
@@ -69,7 +69,7 @@ PASS parallel: subscription extended once (one more month)
   }
 }
 PASS charge fails after transfers → 409 charge_failed with what was moved and where
-  message: Оплата не прошла (ошибка сервера). 11 363 ₽ уже на балансе «M Активная paychkmwqdw315» — переводы видны в истории баланса. Повторите оплату или оплатите тариф обычным способом
+  message: Оплата не прошла (ошибка сервера). 11 363 ₽ уже на балансе «M Активная paychkmwqgk5f3» — переводы видны в истории баланса. Повторите оплату или оплатите тариф обычным способом
 PASS charge failed: the collected money stays on the active organization (= price), sources drained as planned
 PASS charge failed: no order, no charge row, subscription unchanged
 PASS charge failed: both transfers are in the history of the active organization
@@ -77,8 +77,8 @@ PASS charge failed: both transfers are in the history of the active organization
 PASS repeat with the same key: paid without new transfers
 PASS repeat: active 0, sources not touched again, exactly one transfer pair per source for the key
 [balance] account pay transfer failed {
-  accountId: 'cmwqdw3bq0002qb7d57743nzd',
-  from: 'cmwqdw3dd0004qb7d3605opkf',
+  accountId: 'cmwqgk5mi00028u7d2vjizxmv',
+  from: 'cmwqgk5nz00048u7dd1pbxy9t',
   error: PrismaClientKnownRequestError: 
   Invalid `tx.balanceTransaction.create()` invocation in
   /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
@@ -107,7 +107,7 @@ PASS repeat: active 0, sources not touched again, exactly one transfer pair per 
   }
 }
 PASS second transfer fails → 409 transfer_failed naming the source, with the amount already moved
-  message: Перевод из «M Средняя paychkmwqdw315» не прошёл (ошибка сервера). 7 102 ₽ уже на балансе «M Активная paychkmwqdw315» — переводы видны в истории баланса. Оплата не списана: повторите её, уже переведённое второй раз не переведётся
+  message: Перевод из «M Средняя paychkmwqgk5f3» не прошёл (ошибка сервера). 7 102 ₽ уже на балансе «M Активная paychkmwqgk5f3» — переводы видны в истории баланса. Оплата не списана: повторите её, уже переведённое второй раз не переведётся
 PASS transfer failed: Большая's money is on the active organization, Средняя untouched, nothing charged
 [platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
 PASS repeat: paid, only Средняя transferred now
@@ -130,7 +130,7 @@ PASS ledger invariant for T Активная
 PASS ledger invariant for T Большая
 PASS reminder: the +1 point price is computed for the paid account
 PASS reminder: the short account is 1 ₽ short
-  letter (covered): [email/dev] Body:    wesetup.ru Бесплатные дни организации заканчиваются Здравствуйте! Бесплатные дни организации Рrich Вторая paychkmwqdw315 закончатся через 3 дня. Последний бесплатный день — 24 ноября включительно. После него организация закроется, пока для неё не добавлена точка в тарифе. Остальные организации аккаунта работают как обычно. На балансах организаций аккаунта хватает денег — точку
+  letter (covered): [email/dev] Body:    wesetup.ru Бесплатные дни организации заканчиваются Здравствуйте! Бесплатные дни организации Рrich Вторая paychkmwqgk5f3 закончатся через 3 дня. Последний бесплатный день — 24 ноября включительно. После него организация закроется, пока для неё не добавлена точка в тарифе. Остальные организации аккаунта работают как обычно. На балансах организаций аккаунта хватает денег — точку
 PASS reminder: letter to the covered account carries the sentence
 PASS reminder: letter to the short account (1 ₽ short) without the sentence
 PASS reminder: one mark per account, the second run sends nothing

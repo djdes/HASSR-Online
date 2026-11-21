@@ -1,4 +1,3 @@
-# npx tsx .agent/tasks/multi-org-followups-e-2026-11-21/raw/cleanup-check.ts — 2026-11-21T13:12:29Z, local PostgreSQL 16, HEAD c792c2742 + working tree
 --- Р4: cleanup
 cleanupExchangeTables: {"skips":4,"requests":4,"transfers":1}
 PASS skips: unseen 30+ days, unticked list, member gone, list not exchanged — removed; fresh and 29-day-old kept
@@ -6,18 +5,14 @@ PASS requests: declined/cancelled/expired 180+ days and long-expired pending —
 PASS transfers: older than 180 days removed, 170 days and fresh kept
 PASS counts cover this scenario's rows (4 skips, 4 requests, 1 transfer)
 PASS second cleanup keeps the survivors
-[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
-[email/dev] SMTP не настроен — письмо не отправлено на root@local.test.
-[email/dev] Subject: WeSetup · Обмен справочниками: 1 кабинет с проблемой
-[email/dev] Body:    Обмен справочниками: 1 кабинет с проблемой wesetup.ru Обмен справочниками: 1 кабинет с проблемой Последний обмен с ошибкой или нет успешного обмена больше суток. • Мастер-кабинет — Владелец сети · loadmwqfglml-owner@example.test: нет успешного обмена больше суток; успешного обмена не было Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП Письмо администратору платформы WeSetup. Такое же уведомление приходит в Telegram, если он привязан.
 [directory-exchange] scheduled run done {
-  cabinets: 11,
-  busy: 1,
+  cabinets: 10,
+  busy: 0,
   errors: 0,
   cleanup: { skips: 4, requests: 4, transfers: 1 },
-  alert: { status: 'not_delivered', cabinets: 1 }
+  alert: { status: 'healthy', cabinets: 0 }
 }
-runAllDirectoryExchanges: {"cabinets":11,"errors":0,"cleanup":{"skips":4,"requests":4,"transfers":1},"alert":{"status":"not_delivered","cabinets":1}}
+runAllDirectoryExchanges: {"cabinets":10,"errors":0,"cleanup":{"skips":4,"requests":4,"transfers":1},"alert":{"status":"healthy","cabinets":0}}
 PASS scheduled run removes the same rows and keeps the same
 PASS scheduled run reports cleanup counts and the alert status
 --- Р1: alert
@@ -31,4 +26,3 @@ PASS next day: sent again, the cabinet that failed in this run is listed
 PASS failed delivery: no mark, the next call retries
 cleanup: organizations left 0, users left 0, alert marks removed 3
 RESULT: all checks passed
-exit=0
