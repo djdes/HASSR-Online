@@ -2704,7 +2704,7 @@
     },
     "legal": {
       "consentSentence": "Men <offer>ommaviy oferta</offer> va <terms>Foydalanuvchi kelishuvi</terms>ni qabul qilaman, <privacy>Maxfiylik siyosati</privacy> bilan tanishdim va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman.",
-      "consentShort": "<offer>Ommaviy oferta</offer>ni qabul qilaman va <consent>shaxsiy ma’lumotlarimni qayta ishlashga rozilik</consent> beraman",
+      "consentShort": "<offer>Oferta</offer> va <consent>ma’lumotlarni qayta ishlash</consent>ga roziman",
       "openOfferTitle": "Ofertani ochaymi?",
       "openConsentTitle": "Shaxsiy ma’lumotlarni qayta ishlashga rozilikni ochaymi?",
       "openHint": "Hujjat yangi varaqda ochiladi, shakl joyida qoladi.",

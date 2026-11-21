@@ -1,4 +1,6 @@
-import { useId } from "react";
+"use client";
+
+import { useId, useRef } from "react";
 
 /**
  * Золотая печать «ХАССП / СЕРТИФИЦИРОВАНО» у плашки «Разработан при
@@ -6,13 +8,18 @@ import { useId } from "react";
  * зубчатая печать «HACCP CERTIFIED» с лаврами и красными лентами).
  *
  * Чистый SVG: без картинок и внешних шрифтов. Надписи — из словарей
- * (`landing.hero.sealTitle` / `sealCaption`); ширина каждой зажата
- * `textLength`, поэтому при любом системном шрифте они не вылезают за
- * кольцо. Цвета — атрибутами, а не классами Tailwind: ночная тема и
- * «Новая» перекрашивают классы, а печать должна остаться золотой.
- * Анимация (печать ставится, по ней проходит блик, вспыхивают искры) —
- * в globals.css (`.gold-seal*`), там же её выключение при «Уменьшить
- * движение» и «Без анимации».
+ * (`landing.hero.sealTitle` / `sealCaption`). Цвета — атрибутами, а не
+ * классами Tailwind: ночная тема и «Новая» перекрашивают классы, а печать
+ * должна остаться золотой.
+ *
+ * Надписи (правки 21.11.2026, iPhone): сплошной цвет и сжатие `scale(x, 1)`
+ * по ширине с запасом. Safari не применяет `textLength` к буквам, а градиент
+ * на тексте обрезает по сжатой рамке — крайние «Х» и «П» выходили белыми.
+ * Без `<use>`: гравировка нарисована двумя явными слоями.
+ *
+ * Анимация (печать ставится, раз в 8 с — покачивание, блик и искры) — в
+ * globals.css (`.gold-seal*`), там же её выключение при «Уменьшить движение»
+ * и «Без анимации». Нажатие на печать проигрывает «постановку» ещё раз.
  */
 
 const CX = 60;
@@ -79,6 +86,53 @@ const SPARKLE_PATH = "M0-6C.6-1.2 1.2-.6 6 0 1.2.6.6 1.2 0 6-.6 1.2-1.2.6-6 0-1.
 const RIBBON_PATH = "M41.1 84.43L58.9 93.57 39.9 130.57 34.65 118.88 22.1 121.43Z";
 const MIRROR = `translate(${CX * 2} 0) scale(-1 1)`;
 
+/**
+ * Ширина надписи с запасом: заглавная полужирная буква любого системного
+ * шрифта (Helvetica Neue, Arial, Segoe UI, Roboto) — не шире 0,74 кегля.
+ * Не влезает — сжимаем по горизонтали: одинаково во всех браузерах.
+ */
+const CAP_EM = 0.74;
+export function sealTextScale(text: string, fontSize: number, maxWidth: number): number {
+  const estimate = Math.max(1, [...text].length) * CAP_EM * fontSize;
+  return round(Math.min(1, maxWidth / estimate));
+}
+
+const TITLE = { y: 56.5, size: 21, max: 64 };
+const CAPTION = { y: 68.6, size: 9, max: 62 };
+const INK = "#6a4300";
+const INK_STROKE = "#7a4f04";
+const HIGHLIGHT = "#fff4c6";
+
+/** Нажатие — «печать ставится» ещё раз, с бликом и искрами (без анимации — ничего). */
+function replaySeal(svg: SVGSVGElement | null) {
+  if (!svg || typeof window === "undefined") return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  if (document.documentElement.hasAttribute("data-view-still")) return;
+  svg.animate?.(
+    [
+      { transform: "scale(1) rotate(0deg)" },
+      { transform: "scale(1.22) rotate(-12deg)", offset: 0.3 },
+      { transform: "scale(0.94) rotate(4deg)", offset: 0.65 },
+      { transform: "scale(1) rotate(0deg)" },
+    ],
+    { duration: 750, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+  );
+  svg.querySelector(".gold-seal-shine")?.animate?.(
+    [{ transform: "translateX(-24px)" }, { transform: "translateX(150px)" }],
+    { duration: 1100, delay: 250, easing: "cubic-bezier(0.45, 0, 0.25, 1)" },
+  );
+  svg.querySelectorAll(".gold-seal-sparkle").forEach((sparkle, index) => {
+    sparkle.animate?.(
+      [
+        { opacity: 0, transform: "scale(0) rotate(0deg)" },
+        { opacity: 1, transform: "scale(1.2) rotate(45deg)", offset: 0.45 },
+        { opacity: 0, transform: "scale(0) rotate(90deg)" },
+      ],
+      { duration: 800, delay: 500 + index * 180, easing: "ease-in-out" },
+    );
+  });
+}
+
 export function HaccpGoldSeal({
   title,
   caption,
@@ -94,16 +148,68 @@ export function HaccpGoldSeal({
   const uid = `gs${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const id = (name: string) => `${uid}-${name}`;
   const ref = (name: string) => `url(#${id(name)})`;
-  // Короткие надписи не растягиваем, длинные — сжимаем в кольцо.
-  const titleLength = Math.min(66, title.length * 13.5);
-  const captionLength = Math.min(66, caption.length * 5.8);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const titleScale = sealTextScale(title, TITLE.size, TITLE.max);
+  const captionScale = sealTextScale(caption, CAPTION.size, CAPTION.max);
+
+  // Всё «выгравированное» — двумя слоями: светлый отблеск со сдвигом вниз и тёмное золото сверху.
+  const engraving = (layer: "light" | "ink") => {
+    const fill = layer === "light" ? HIGHLIGHT : INK;
+    return (
+      <g
+        key={layer}
+        fill={fill}
+        stroke={layer === "light" ? HIGHLIGHT : INK_STROKE}
+        {...(layer === "light" ? { transform: "translate(0 0.8)", opacity: 0.9 } : {})}
+      >
+        <circle cx={CX} cy={CY} r="44" fill="none" strokeWidth="1.8" />
+        <circle cx={CX} cy={CY} r="40.5" fill="none" strokeWidth="0.8" />
+        {STARS.map((d) => (
+          <path key={d} d={d} stroke="none" />
+        ))}
+        <text
+          transform={`translate(${CX} ${TITLE.y}) scale(${titleScale} 1)`}
+          textAnchor="middle"
+          fontSize={TITLE.size}
+          fontWeight="800"
+          stroke="none"
+        >
+          {title}
+        </text>
+        <text
+          transform={`translate(${CX} ${CAPTION.y}) scale(${captionScale} 1)`}
+          textAnchor="middle"
+          fontSize={CAPTION.size}
+          fontWeight="700"
+          stroke="none"
+        >
+          {caption}
+        </text>
+        {[false, true].map((mirrored) => (
+          <g key={String(mirrored)} transform={mirrored ? MIRROR : undefined}>
+            <path d={STEM_PATH} fill="none" strokeWidth="1.2" strokeLinecap="round" />
+            {LEAVES.map((leaf) => (
+              <path
+                key={`${leaf.x}-${leaf.y}-${leaf.angle}`}
+                d={LEAF_PATH}
+                stroke="none"
+                transform={`translate(${leaf.x} ${leaf.y}) rotate(${leaf.angle}) scale(${leaf.scale})`}
+              />
+            ))}
+          </g>
+        ))}
+      </g>
+    );
+  };
 
   return (
     <svg
+      ref={svgRef}
       viewBox="0 0 120 132"
       className={className ? `gold-seal ${className}` : "gold-seal"}
       aria-hidden="true"
       focusable="false"
+      onClick={() => replaySeal(svgRef.current)}
     >
       <defs>
         <linearGradient id={id("rim")} x1="0" y1="0" x2="1" y2="1">
@@ -127,10 +233,6 @@ export function HaccpGoldSeal({
           <stop offset="0.86" stopColor="#d29a22" />
           <stop offset="1" stopColor="#b47d0d" />
         </radialGradient>
-        <linearGradient id={id("inkfill")} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#94640a" />
-          <stop offset="1" stopColor="#5e3a00" />
-        </linearGradient>
         {/* Лента объёмная: поперёк — светлая середина и тёмные края,
             вдоль — темнеет к хвосту. */}
         <linearGradient id={id("ribbon")} gradientUnits="userSpaceOnUse" x1="41.1" y1="84.43" x2="58.9" y2="93.57">
@@ -150,52 +252,6 @@ export function HaccpGoldSeal({
         <clipPath id={id("clip")}>
           <path d={ROSETTE_PATH} />
         </clipPath>
-        {/* Всё «выгравированное» одной группой: рисуется дважды — светлым
-            отблеском со сдвигом вниз и тёмным золотом сверху. */}
-        <g id={id("engraving")}>
-          <circle cx={CX} cy={CY} r="44" fill="none" strokeWidth="1.8" />
-          <circle cx={CX} cy={CY} r="40.5" fill="none" strokeWidth="0.8" />
-          {STARS.map((d) => (
-            <path key={d} d={d} stroke="none" />
-          ))}
-          <text
-            x={CX}
-            y="56.5"
-            textAnchor="middle"
-            fontSize="22"
-            fontWeight="800"
-            stroke="none"
-            textLength={titleLength}
-            lengthAdjust="spacingAndGlyphs"
-          >
-            {title}
-          </text>
-          <text
-            x={CX}
-            y="68.5"
-            textAnchor="middle"
-            fontSize="9.2"
-            fontWeight="700"
-            stroke="none"
-            textLength={captionLength}
-            lengthAdjust="spacingAndGlyphs"
-          >
-            {caption}
-          </text>
-          {[false, true].map((mirrored) => (
-            <g key={String(mirrored)} transform={mirrored ? MIRROR : undefined}>
-              <path d={STEM_PATH} fill="none" strokeWidth="1.2" strokeLinecap="round" />
-              {LEAVES.map((leaf) => (
-                <path
-                  key={`${leaf.x}-${leaf.y}-${leaf.angle}`}
-                  d={LEAF_PATH}
-                  stroke="none"
-                  transform={`translate(${leaf.x} ${leaf.y}) rotate(${leaf.angle}) scale(${leaf.scale})`}
-                />
-              ))}
-            </g>
-          ))}
-        </g>
       </defs>
 
       {[false, true].map((mirrored) => (
@@ -209,8 +265,8 @@ export function HaccpGoldSeal({
       <circle cx={CX} cy={CY} r="50.3" fill={ref("face")} stroke={ref("bevel")} strokeWidth="2.6" />
       <circle cx={CX} cy={CY} r="46.9" fill="none" stroke="#a77712" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="0 3.07" />
 
-      <use href={`#${id("engraving")}`} fill="#fff4c6" stroke="#fff4c6" transform="translate(0 0.8)" opacity="0.9" />
-      <use href={`#${id("engraving")}`} fill={ref("inkfill")} stroke="#7a4f04" />
+      {engraving("light")}
+      {engraving("ink")}
 
       <g clipPath={ref("clip")}>
         <path className="gold-seal-shine" d="M0-10H18L-12 140H-30Z" fill={ref("shine")} />

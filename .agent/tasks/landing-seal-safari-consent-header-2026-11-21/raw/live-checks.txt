@@ -1,0 +1,31 @@
+Live checks 2026-11-21, `next dev` (127.0.0.1:3100, branch claude/hopeful-euler-lb6cie on master dfd976cbf),
+Playwright Chromium, iPhone UA, light theme.
+
+§1 Seal (430 px, DPR 3, animations frozen at rest)
+  Text fonts forced per run; widths of the dark title/caption in viewBox units (ring ≈ 76–79 wide there):
+    'Liberation Sans' (Arial metrics, like Helvetica on iPhone): title 61, caption 60
+    'DejaVu Sans' (very wide):                                   title 66, caption 67
+  All letters one dark colour, nothing outside the ring (seal-font-*.png, gitignored).
+  SVG has no textLength / lengthAdjust / <use>; text fill is a solid colour (test-enforced).
+  Cause on iPhone (user screenshot, zoom): the light engraving copy was wider than the dark one —
+  Safari ignored textLength for glyphs and clipped the gradient fill to the squeezed box.
+
+§2 Tap to replay: tapping .hero-trust svg.gold-seal starts 4 Web Animations (seal, shine, 2 sparkles)
+  at 360/375/390/430 px. CSS cycle: wiggle at 3 s then every 8 s, shine +0.25 s, sparkles +0.7/+1.1 s;
+  reduced motion / data-view-still → animation none (existing rules cover .gold-seal*), replay skipped.
+
+§3 Consent line «Принимаю оферту и обработку данных»
+  width  font      lines  checkbox  label
+  360    14.69px   1      22×22     328×38
+  375    15.455px  1      22×22     343×38
+  390    16px      1      22×22     358×38
+  430    16px      1      22×22     398×38
+  (was 12.5px, 2 lines, 18px checkbox)
+
+§4 Header (logo / right group distance to the screen edge; was 28 / 28 at 430, 28 / 0 at 390)
+  360: 16 / 16, «Тарифы» + «Войти» (icon), no overflow
+  375: 16 / 16, «Тарифы» + «Войти», no overflow
+  390: 16 / 16, search + «Тарифы» + «Войти», no overflow
+  430: 16 / 16, search + «Тарифы» + «Войти», no overflow
+  Cause: `.app-shell header.sticky { padding-inline: .75rem !important }` (≤767px, cabinet rule) matched
+  public pages (body.app-shell.public-theme) — now `.app-shell:not(.public-theme)`.
