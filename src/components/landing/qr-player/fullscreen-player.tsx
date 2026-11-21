@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -18,7 +19,7 @@ import { Pause, Play, Smartphone, X } from "lucide-react";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 import { formatClock } from "./clock";
-import { CHAPTERS, DURATION_IN_FRAMES, FPS, chapterAt, type ChapterId } from "./chapters";
+import { FPS, chapterTimeline, type ChapterId } from "./chapters";
 import { QrComposition } from "./composition";
 import { DESKTOP_COMPOSITION, DESKTOP_QUERY, MOBILE_COMPOSITION, usePlayerFrame, usePlayerPlaying } from "./player-state";
 import { STAGE_BACKGROUND, type SceneDay } from "./scene";
@@ -56,6 +57,7 @@ export function FullscreenPlayer({
   startFrame,
   autoPlay,
   chapterLabels,
+  chapterIds,
   onClose,
   extraAction,
 }: {
@@ -67,11 +69,16 @@ export function FullscreenPlayer({
   startFrame: number;
   autoPlay: boolean;
   chapterLabels: Record<ChapterId, string>;
+  /** Набор глав ролика — тот же, что у ролика на странице. */
+  chapterIds?: readonly ChapterId[];
   onClose: (result: FullscreenResult) => void;
   /** Дополнительная кнопка в шапке (видео со звуком, этап 2). */
   extraAction?: ReactNode;
 }) {
   const t = useTranslations("qrPlayer");
+  const timeline = useMemo(() => chapterTimeline(chapterIds), [chapterIds]);
+  const CHAPTERS = timeline.chapters;
+  const DURATION_IN_FRAMES = timeline.durationInFrames;
   const overlayRef = useRef<HTMLDivElement>(null);
   const [player, setPlayer] = useState<PlayerRef | null>(null);
   const playerRef = useCallback((instance: PlayerRef | null) => setPlayer(instance), []);
@@ -175,7 +182,7 @@ export function FullscreenPlayer({
     (target: number) => {
       player?.seekTo(Math.min(DURATION_IN_FRAMES - 1, Math.max(0, Math.round(target))));
     },
-    [player],
+    [player, DURATION_IN_FRAMES],
   );
   const togglePlay = useCallback(() => {
     player?.toggle();
@@ -188,7 +195,7 @@ export function FullscreenPlayer({
     togglePlay();
   };
 
-  const { chapter, index, local } = chapterAt(frame);
+  const { chapter, index, local } = timeline.at(frame);
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     wake();
@@ -262,7 +269,7 @@ export function FullscreenPlayer({
             <Player
               ref={playerRef}
               component={QrComposition}
-              inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr }}
+              inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr, chapterIds: timeline.ids }}
               durationInFrames={DURATION_IN_FRAMES}
               fps={FPS}
               compositionWidth={composition.width}

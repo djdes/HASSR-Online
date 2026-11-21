@@ -178,6 +178,47 @@ export function finalFrameOf(index: number): number {
   return chapter.from + chapter.duration - 1;
 }
 
+/**
+ * Ролик из своего набора глав (правки 21.11.2026: у медцентра и отеля —
+ * свои ролики из подходящих сцен, без кухни). Кадр сцены — функция главы
+ * и времени внутри неё, так что набор — просто другая раскладка тех же
+ * глав по времени: `from` пересчитан, первая глава в наборе открывается
+ * чистой обложкой (без входа «на скорости»).
+ */
+export type ChapterTimeline = {
+  ids: readonly ChapterId[];
+  chapters: readonly Chapter[];
+  durationInFrames: number;
+  at: (frame: number) => { chapter: Chapter; index: number; local: number };
+  resultFrameOf: (index: number) => number;
+};
+
+export const ALL_CHAPTER_IDS: readonly ChapterId[] = CHAPTERS.map((chapter) => chapter.id);
+
+export function chapterTimeline(ids: readonly ChapterId[] = ALL_CHAPTER_IDS): ChapterTimeline {
+  const chapters = ids.map((id, index) => {
+    const draft = CHAPTERS.find((chapter) => chapter.id === id);
+    if (!draft) throw new Error(`Нет главы ${id}`);
+    return { ...draft, from: index * CHAPTER_FRAMES, duration: CHAPTER_FRAMES };
+  });
+  if (chapters.length === 0) throw new Error("Пустой набор глав");
+  const durationInFrames = chapters.length * CHAPTER_FRAMES;
+  return {
+    ids,
+    chapters,
+    durationInFrames,
+    at(frame) {
+      const clamped = Math.min(Math.max(0, Math.floor(frame)), durationInFrames - 1);
+      const index = Math.floor(clamped / CHAPTER_FRAMES);
+      const chapter = chapters[index];
+      return { chapter, index, local: clamped - chapter.from };
+    },
+    resultFrameOf(index) {
+      return chapters[index].from + sceneFrame(RESULT_SECONDS);
+    },
+  };
+}
+
 /* ---------------------------------------------------------------------
  * «Попробуйте сами»
  * ------------------------------------------------------------------- */

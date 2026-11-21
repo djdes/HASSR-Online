@@ -2035,3 +2035,20 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
   background-image: none;
 }
 
+
+/* Блок QR на главной — тёмная карточка в обеих темах, и светлое на нём
+   (выбранная вкладка вида деятельности, выбранная оценка масла) должно
+   остаться светлым с тёмным текстом. Без этих классов тёмная тема
+   перекрашивала их встроенный `color: #0b1024` в светлый текст — надпись
+   пропадала на белой плашке (правки 21.11.2026). */
+.landing-on-light,
+body.app-shell[data-app-theme="dark"] .landing-on-light,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .landing-on-light {
+  color: #0b1024 !important;
+}
+.landing-light-chip,
+body.app-shell[data-app-theme="dark"] .landing-light-chip,
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .landing-light-chip {
+  background-color: #ffffff !important;
+  color: #0b1024 !important;
+}

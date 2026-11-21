@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import {
+  BatteryFull,
   BookOpenCheck,
   ChevronLeft,
   ChevronRight,
@@ -12,8 +13,10 @@ import {
   Lock,
   QrCode,
   ShieldCheck,
+  Signal,
   Table2,
   Users,
+  Wifi,
   type LucideIcon,
 } from "lucide-react";
 
@@ -286,19 +289,33 @@ export function InterfaceShowcase({ slides, labels }: { slides: ShowcaseSlide[];
                   <div className="mx-auto w-[min(100%,272px)] md:hidden">
                     <div className="rounded-[2.4rem] bg-[linear-gradient(150deg,#727892_0%,#262934_16%,#0d0f15_46%,#2c303c_74%,#808699_100%)] p-[3px] shadow-[0_30px_60px_-30px_rgba(11,16,36,0.6)]">
                       <div className="rounded-[2.25rem] bg-[#040507] p-[7px]">
-                        <div className="relative aspect-[390/800] overflow-hidden rounded-[1.8rem]" style={{ background: "#f4f5fa" }}>
-                          <span aria-hidden="true" className="absolute left-1/2 top-2 z-10 h-[18px] w-[78px] -translate-x-1/2 rounded-full bg-black" />
-                          {near ? (
-                            <Image
-                              src={slide.mobile.src}
-                              alt={slide.title}
-                              width={slide.mobile.width}
-                              height={slide.mobile.height}
-                              sizes="272px"
-                              draggable={false}
-                              className="h-full w-full object-cover object-top"
-                            />
-                          ) : null}
+                        <div className="relative flex aspect-[390/800] flex-col overflow-hidden rounded-[1.8rem]" style={{ background: "#f4f5fa" }}>
+                          {/* Строка состояния, как у настоящего телефона: «чёлка»
+                              стоит в ней, а не поверх шапки кабинета (правки
+                              21.11.2026). Снимок начинается под ней и снизу
+                              чуть обрезан — рамка та же. */}
+                          <div aria-hidden="true" className="landing-light-chip relative flex h-[30px] shrink-0 items-center justify-between px-5 text-[11px] font-semibold tabular-nums" data-phone-status-bar="">
+                            <span>9:41</span>
+                            <span className="flex items-center gap-1">
+                              <Signal className="size-3" strokeWidth={2.5} />
+                              <Wifi className="size-3" strokeWidth={2.5} />
+                              <BatteryFull className="size-3.5" strokeWidth={2} />
+                            </span>
+                            <span className="absolute left-1/2 top-1.5 h-[18px] w-[78px] -translate-x-1/2 rounded-full bg-black" />
+                          </div>
+                          <div className="relative min-h-0 flex-1">
+                            {near ? (
+                              <Image
+                                src={slide.mobile.src}
+                                alt={slide.title}
+                                width={slide.mobile.width}
+                                height={slide.mobile.height}
+                                sizes="272px"
+                                draggable={false}
+                                className="h-full w-full object-cover object-top"
+                              />
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     </div>

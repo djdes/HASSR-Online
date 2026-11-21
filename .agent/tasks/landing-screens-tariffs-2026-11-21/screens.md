@@ -1,5 +1,11 @@
 # Как сняты экраны кабинета для слайдера на главной (21.11.2026)
 
+> **Одной командой:** `npm run screens:landing -- --seed` (`scripts/landing-screens.ts`)
+> делает шаги 2–8 ниже на локальной базе: нужна пустая база после `prisma db push` и
+> `npm run dev` с той же базой (`SCREENS_BASE`, если не `http://localhost:3000`).
+> Снимки — в `public/landing/screens/<дата>/`; затем поменять `SHOWCASE_SCREENS_DIR`.
+> С нелокальной базой команда не запускается.
+
 Файлы: `public/landing/screens/2026-11-21/<id>-desktop.webp` (2400×1500, снято
 1440×900 при 2× и уменьшено) и `<id>-mobile.webp` (780×1600, снято 390×800 при
 2×). Папка — в `SHOWCASE_SCREENS_DIR` (`src/components/landing/showcase-screens.ts`).
