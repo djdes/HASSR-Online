@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { exchangeErrorResponse, requireExchangeManager } from "@/lib/directory-exchange/access.server";
 import { regenerateExchangeCode } from "@/lib/directory-exchange/settings.server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
@@ -14,10 +14,10 @@ const limiter = createRateLimiter({ tokensPerInterval: 5, intervalMs: 60_000 });
  * мастер-кабинета для запросов от других компаний (серия B, Р13.2) →
  * `{ ok: true, code }`. Прежний код перестаёт приниматься для новых
  * запросов; подключённые компании, ждущие запросы и подключения к меню и
- * сырью не меняются. Только владелец аккаунта; кабинета нет — 404.
+ * сырью не меняются. Владелец аккаунта или управляющий сетью; кабинета нет — 404.
  */
 export async function POST() {
-  const owner = await requireExchangeOwner({ allowLocked: true });
+  const owner = await requireExchangeManager({ allowLocked: true });
   if (!owner.ok) return owner.response;
   const { accountId, organizationId, actor } = owner.context;
   if (!limiter.consume(`directory-exchange:cabinet-code:${actor.userId}`)) {

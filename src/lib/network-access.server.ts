@@ -1,9 +1,10 @@
 import type { Session } from "next-auth";
 
+import { canManageNetwork } from "@/lib/account-roles.server";
 import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
-import { isNetworkOwner, isNetworkViewer } from "@/lib/network-summary";
+import { NETWORK_MIN_ORGS, isNetworkOwner, isNetworkViewer } from "@/lib/network-summary";
 import { isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 
@@ -23,9 +24,10 @@ export function networkOrgWhere(accountId?: string) {
 }
 
 /**
- * Факт меню «Сеть» (`NavFacts.accountNetwork`): один запрос и только людям
- * с полным доступом не в «войти как» и не руководителям точки. Модуль
- * лёгкий — его грузит меню на каждой странице.
+ * Факт меню «Сеть» (`NavFacts.accountNetwork`): владелец аккаунта или
+ * управляющий сетью, только людям с полным доступом не в «войти как» и не
+ * руководителям точки. Владельцу — один запрос. Модуль лёгкий — его грузит
+ * меню на каждой странице.
  */
 export async function loadAccountNetworkFact(session: Session): Promise<boolean> {
   const user = session.user;
@@ -41,6 +43,7 @@ export async function loadAccountNetworkFact(session: Session): Promise<boolean>
   const org = await db.organization.findUnique({
     where: { id: getActiveOrgId(session) },
     select: {
+      accountId: true,
       account: {
         select: {
           ownerUserId: true,
@@ -49,9 +52,9 @@ export async function loadAccountNetworkFact(session: Session): Promise<boolean>
       },
     },
   });
-  return isNetworkOwner({
-    userId: user.id,
-    ownerUserId: org?.account?.ownerUserId ?? null,
-    organizations: org?.account?._count.organizations ?? 0,
-  });
+  const organizations = org?.account?._count.organizations ?? 0;
+  if (!org?.accountId || organizations < NETWORK_MIN_ORGS) return false;
+  if (isNetworkOwner({ userId: user.id, ownerUserId: org.account?.ownerUserId ?? null, organizations })) return true;
+  // Управляющий сетью (серия E, Р5): ещё запрос — только руководителям сети из двух организаций и больше.
+  return canManageNetwork(user.id, org.accountId);
 }

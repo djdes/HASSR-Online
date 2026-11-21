@@ -116,7 +116,8 @@ export type ProblemCabinet = {
 
 export type ExchangeRunsOverview = { runs: ExchangeRunRow[]; problems: ProblemCabinet[]; cabinets: number };
 
-async function cabinetLabels(ids: readonly string[]): Promise<Map<string, CabinetLabel>> {
+/** Подписи кабинетов: название и владелец аккаунта (как на странице ROOT). */
+export async function cabinetLabels(ids: readonly string[]): Promise<Map<string, CabinetLabel>> {
   const unique = [...new Set(ids)];
   if (unique.length === 0) return new Map();
   const cabinets = await db.organization.findMany({

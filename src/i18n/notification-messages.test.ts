@@ -157,3 +157,20 @@ test("напоминание о своих 14 днях организации: �
   assert.equal(ru.items[0].label, "Последний бесплатный день — 23 ноября");
   assert.equal(ru.linkLabel, "Добавить точку");
 });
+
+test("напоминание о своих 14 днях: строка «по аккаунту хватает» на языке читателя (серия E, Р9)", async () => {
+  const label = "На балансах организаций аккаунта хватает денег — точку можно оплатить с баланса в один шаг.";
+  const row = {
+    kind: "billing.org_trial_reminder",
+    title: "Бесплатные дни организации «Кафе» заканчиваются",
+    items: [{ label, labelKey: "orgTrialAccountCovers" }],
+  };
+  const labels = new Set<string>();
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const result = (await notificationPresenter(locale)).row(row);
+    assert.ok(result.items[0].label.length > 20 && !result.items[0].label.includes("{"), result.items[0].label);
+    labels.add(result.items[0].label);
+  }
+  assert.equal(labels.size, 3);
+  assert.equal((await notificationPresenter("ru")).row(row).items[0].label, label);
+});

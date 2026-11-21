@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { exchangeErrorResponse, requireExchangeManager } from "@/lib/directory-exchange/access.server";
 import { listExchangeHistory } from "@/lib/directory-exchange/history.server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
@@ -15,10 +15,10 @@ const limiter = createRateLimiter({ tokensPerInterval: 30, intervalMs: 60_000 })
  * `{ changes: [{ id, createdAt, entity, kind, op, name, from: { name,
  * cabinet, foreign }, undoneAt, undoable }] }`, новые первыми. Организации
  * другого аккаунта источник называется только мастер-кабинетом. Только
- * владелец аккаунта.
+ * владелец аккаунта или управляющий сетью.
  */
 export async function GET() {
-  const owner = await requireExchangeOwner({ allowLocked: true });
+  const owner = await requireExchangeManager({ allowLocked: true });
   if (!owner.ok) return owner.response;
   const { organizationId, actor } = owner.context;
   if (!limiter.consume(`directory-exchange:history:${actor.userId}`)) {

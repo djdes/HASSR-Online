@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "@/lib/server-session";
 import { getActiveOrgId } from "@/lib/auth-helpers";
@@ -28,11 +30,23 @@ export default async function MiniSectionsPage() {
   const groups: MiniSectionGroupView[] = [];
   if (session && user) {
     const customNames = await getOrgCustomNames(getActiveOrgId(session));
+    const facts = await loadNavFacts(session);
     const model = await buildNavModel({
       user,
-      facts: await loadNavFacts(session),
+      facts,
       customNames,
       });
+    // «Сеть» приложения (серия E, Р8) — владельцу аккаунта и управляющему
+    // сетью из двух организаций и больше (тот же факт, что у пункта меню сайта).
+    if (facts.accountNetwork) {
+      const t = await getTranslations("miniSections");
+      groups.push({
+        id: "network",
+        title: "",
+        subtitle: "",
+        items: [{ href: "/mini/network", label: t("network.label"), hint: t("network.hint"), icon: "Map" }],
+      });
+    }
     groups.push({
       id: "sections",
       title: "",

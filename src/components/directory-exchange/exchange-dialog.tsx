@@ -516,17 +516,19 @@ export function ExchangeDialog({
                 ) : null}
               </div>
 
-              {/* Запрос в мастер-кабинет чужого аккаунта: способ и списки — те, что выбраны в окне. */}
-              <ForeignBlock
-                className="mt-4"
-                mode={mode}
-                kinds={kinds}
-                disabled={busy}
-                onChanged={() => setForeignChanged(true)}
-                onLoaded={(next) => setForeignPartners(next.foreignMembers.length)}
-                onDraftChange={setForeignDraft}
-                onNavigate={close}
-              />
+              {/* Запрос в мастер-кабинет чужого аккаунта: способ и списки — те, что выбраны в окне. Только владельцу аккаунта. */}
+              {state?.isAccountOwner ? (
+                <ForeignBlock
+                  className="mt-4"
+                  mode={mode}
+                  kinds={kinds}
+                  disabled={busy}
+                  onChanged={() => setForeignChanged(true)}
+                  onLoaded={(next) => setForeignPartners(next.foreignMembers.length)}
+                  onDraftChange={setForeignDraft}
+                  onNavigate={close}
+                />
+              ) : null}
 
               <div className="mt-4">
                 <div className={SECTION_TITLE}>{mode === "link" ? t("dialog.linkLists") : t("dialog.transferLists")}</div>

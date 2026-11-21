@@ -1,0 +1,33 @@
+# CI-like run: fresh database haccp_e2e_ci (prisma db push + seed), then the platform organization removed
+# as in the CI database where the seed has no ROOT_EMAIL. Before the fix (stash):
+FAIL mark in the platform's AuditLog with the cabinets — []
+FAIL same day: nothing more — {"status":"sent","cabinets":2}
+FAIL next day: sent again, the cabinet that failed in this run is listed — {"nextDay":{"status":"sent","cabinets":3},"sent":3}
+FAIL failed delivery: no mark, the next call retries — {"lost":{"status":"not_delivered","cabinets":3},"retry":{"status":"sent","cabinets":3}}
+RESULT: 4 check(s) failed
+# After the fix:
+platform organization platform created for this run
+RESULT: all checks passed
+# Whole set on the fresh database (platform present):
+================ summary ================
+PASS  part2-exchange-check (12s): 88 checks passed
+PASS  background-check (2s): 14 checks passed
+PASS  locked-check (2s): 6 checks passed
+PASS  reminder-check (2s): 7 checks passed
+PASS  skips-check (3s): 39 checks passed
+PASS  balance-check (1s): 47 checks passed
+PASS  root-org-trial-check (2s): 25 checks passed
+PASS  transfer-undo-check (7s): 65 checks passed
+PASS  cabinet-code-check (6s): 37 checks passed
+PASS  multi-company-check (15s): 49 checks passed
+PASS  part3-foreign-check (7s): 180 checks passed
+PASS  pool-check (4s): 49 checks passed
+PASS  versioning-check (6s): 41 checks passed
+PASS  new-lists-check (4s): 55 checks passed
+PASS  manager-check (3s): 151 checks passed
+PASS  pay-from-account-check (5s): 68 checks passed
+PASS  period-digest-check (8s): 39 checks passed
+PASS  cleanup-check (6s): 15 checks passed
+PASS  product-batch-check (1s): 10 checks passed
+scenarios: 19, passed: 19, failed: 0; checks: 985 passed, 0 failed; time: 96s
+RESULT: all scenarios passed

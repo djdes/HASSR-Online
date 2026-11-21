@@ -44,7 +44,7 @@ const SECTION_TITLE = "text-[13px] font-medium text-[#3c4053]";
  * Карточка «Обмен справочниками» в «Настройки → Мастер-кабинеты» (AC6): кто
  * из организаций аккаунта в обмене и какими списками, когда и чем закончился
  * последний обмен; настроить связь, перенести один раз, синхронизировать
- * сейчас. Только владельцу аккаунта (`canManage` считает сервер).
+ * сейчас. Владельцу аккаунта и управляющему сетью (`canManage` считает сервер).
  *
  * Обмен с чужими аккаунтами (спека org-exchange-foreign-2026-11-19, AC6):
  * заявителю — его запросы, которые ждут решения, и связи с кабинетами других
@@ -71,8 +71,8 @@ export function ExchangeCard({
   useEffect(() => {
     let alive = true;
     void loadExchangeState().then(async (next) => {
-      // Запросы и участники из других аккаунтов — только владельцу аккаунта.
-      const requests = next?.canManage ? await loadForeignState() : null;
+      // Запросы и участники из других аккаунтов — только владельцу аккаунта (не управляющему сетью).
+      const requests = next?.canManage && next.isAccountOwner ? await loadForeignState() : null;
       if (!alive) return;
       // Не удалось перечитать — оставляем то, что уже показано.
       if (next) setState(next);

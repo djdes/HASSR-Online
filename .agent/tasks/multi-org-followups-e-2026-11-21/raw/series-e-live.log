@@ -1,0 +1,116 @@
+owner profile complete: 200
+org B created: 200
+ids: {"owner":"cmwqj30q30002tw7d8zas5t0l","account":"cmwqj30qa0003tw7dedive3qt","A":"cmwqj30pw0001tw7dohtyztag","B":"cmwqj34vz0006tw7dq0k4fxsj"}
+owner /settings/network status: 200
+PASS: period bar «Сегодня / 7 дней / 30 дней» on «Сеть» — Сегодня | 7 дней | 30 дней | Выгрузить | Excel | PDF
+today totals: Организаций | 2 | Общий баланс | 0 ₽ | С незаполненными журналами сегодня | 2 из 2
+PASS: «Сегодня» is the selected period by default
+7 days: records before (A, B): {"A":0,"B":0}
+7 days: records after 3 entries in A: {"A":3,"B":0}
+PASS: 7 days: A's records grew by exactly the 3 entries, B unchanged — {"before":{"A":0,"B":0},"after":{"A":3,"B":0}}
+7 days: range note: 14 ноября — 20 ноября: полные дни, без сегодняшнего. День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются.
+7 days: totals: Организаций | 2 | Дни с заполненными журналами | 0 из 14 | 0% | Записей журналов за период | 3
+7 days: row Сеть Обед 792516: Сеть Обед 792516 | текущая | 0 из 7 | журналов нет | 3 Перейти
+7 days: row Обед на Арбате 792516: Обед на Арбате 792516 | 0 из 7 | журналов нет | 0 Перейти
+PASS: 7 days: both organizations listed with «N из 7»
+7 days xlsx: {"file":"set-7d-2026-11-21.xlsx","bytes":7426}
+7 days xlsx sheet: Сеть
+7 days xlsx row 1: Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям
+7 days xlsx row 2: 14 ноября — 20 ноября (7 дней)
+7 days xlsx row 3: Организация | Дни с заполненными журналами | Доля дней, % | Статус | Записей журналов
+7 days xlsx row 4: Сеть Обед 792516 (текущая) | 0 из 7 | 0 | журналов нет | 3
+7 days xlsx row 5: Обед на Арбате 792516 | 0 из 7 | 0 | журналов нет | 0
+7 days xlsx row 6: Итого | 0 из 14 | 0 |  | 3
+7 days xlsx row 7: День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются.
+7 days xlsx row 8: Сформировано 21 ноября в 17:54
+PASS: Excel (7 days) opens and lists both organizations
+PASS: Excel (7 days) row of A carries the same records as the page — Сеть Обед 792516 (текущая) | 0 из 7 | 0 | журналов нет | 3
+7 days pdf: {"file":"set-7d-2026-11-21.pdf","bytes":154389,"head":"%PDF-","pages":1}
+PASS: PDF (7 days) starts with %PDF and has at least one page — {"head":"%PDF-","pages":1,"bytes":154389}
+30 days: totals: Организаций | 2 | Дни с заполненными журналами | 0 из 18 | 0% | Записей журналов за период | 3
+PASS: 30 days: both organizations listed with «N из 9» (days since they opened) — Сеть Обед 792516 | текущая | 0 из 9 | журналов нет | 3 Перейти
+PASS: back to «Сегодня»: the today table is shown again
+today xlsx: {"file":"set-2026-11-21.xlsx","bytes":7319,"rows":7}
+today xlsx row 1: Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям | Сеть: сводка по организациям
+today xlsx row 2: Сегодня, 21 ноября
+today xlsx row 3: Организация | Журналы сегодня | Статус | Баланс | Свои 14 дней | Обмен справочниками
+today xlsx row 4: Сеть Обед 792516 (текущая) | 0 из 3 | не начаты | 0 | — | не было
+today xlsx row 5: Обед на Арбате 792516 | 0 из 12 | не начаты | 0 | в силе по 5 декабря | не было
+today xlsx row 6: Итого |  |  | 0
+today xlsx row 7: Сформировано 21 ноября в 17:54
+PASS: Excel (today) lists both organizations
+management position in B: {"status":200,"id":"cmwqj3ol1000gtw7dudcirdvy"}
+staff card in B: {"status":200,"id":"cmwqj3p8r000htw7duotc47oh"}
+manager credentials: {"status":200,"login":"u3097_mgr792516","role":"manager"}
+managers section before: Управляющие сетью | Управляющий видит «Сеть», настраивает и запускает обмен справочниками, переносит данные и отменяет перенос, разбирает пропуски и историю обмена, выдаёт код мастер-кабинета, видит баланс по аккаунту и переводит деньги между организациями. Запросы другой компании, назначение управляющих, тариф и оплата остаются у владельца. Все действия управляющего записываются в журнал с его именем. | Управляющих пока нет — сетью управляет только владелец. | Выберите руководителя | Назначить
+candidate option: Петров Пётр Управляющий — Обед на Арбате 792516
+managers section after appointment: Управляющие сетью | Управляющий видит «Сеть», настраивает и запускает обмен справочниками, переносит данные и отменяет перенос, разбирает пропуски и историю обмена, выдаёт код мастер-кабинета, видит баланс по аккаунту и переводит деньги между организациями. Запросы другой компании, назначение управляющих, тариф и оплата остаются у владельца. Все действия управляющего записываются в журнал с его именем. | Петров Пётр Управляющий | u3097_mgr792516 · Обед на Арбате 792516 · назначен 21 ноября | Снять | Назначить можно руководителя организации аккаунта с полным доступом — таких пока нет.
+PASS: owner appoints the manager in the UI (row shown, DB row exists)
+audit network_manager_added: 1
+manager landed on: http://localhost:3000/home
+manager accepted the updated terms modal: true
+manager: links to «Сеть» on /dashboard: 1
+PASS: manager sees «Сеть» in the menu
+manager /settings/network status: 200
+manager network page: Сеть | Все организации аккаунта на одном экране: журналы за сегодня, баланс, свои 14 дней и обмен справочниками. | Тариф аккаунта: пробный период по 5 декабря | Сегодня | 7 дней | 30 дней | Выгрузить | Excel | PDF | Организаций | 2 | Общий баланс | 0 ₽ | С незаполненными журналами сегодня | 2 из 2 | ОРГАНИЗАЦИЯ ЖУРНАЛЫ СЕГОДНЯ БАЛАНС СВОИ 14 ДНЕЙ ОБМЕН СПРАВОЧНИКАМИ | Действия | Сеть Обед 792516 | 0 из 3 | не начаты | 0 ₽ — не было | Обед на Арбате 792516 | текущая | 0 из 12 | не начаты | 0 ₽ в силе по 5 декабря не было Перейти
+manager «Перейти» buttons (A not a member, B home): {"A":0,"B":2}
+PASS: manager opens «Сеть»: both organizations listed
+PASS: «Перейти» only where the manager is a member (B yes, A no) — {"A":0,"B":2}
+PASS: manager does not see «Управляющие сетью»
+manager GET exchange state: {"status":200,"canManage":true,"isAccountOwner":false,"siblings":1}
+PASS: manager can open the exchange settings (API: canManage)
+manager saves exchange A↔B: {"status":200}
+PASS: manager configures the exchange (PUT 200)
+manager runs the exchange: {"status":200}
+PASS: manager runs the exchange (sync 200)
+audit rows of the exchange with the manager's name: 1
+owner sees the exchange card on /settings/master-cabinet: true
+manager /settings/master-cabinet text: Моя компания | Мастер-кабинет | Мастер-кабинеты | Оператор кабинета ведёт меню и сырьё, а подключённые объекты получают их в журналы бракеража и скоропорта. Здесь видно, какие кабинеты есть, какие объекты к ним подключены и кто в них работает. | Как работают мастер-кабинеты | Обмен справочниками | Товары и блюда, сотрудники, объекты, оборудование, журналы и чек-листы — общие для организаций аккаун
+PASS: manager sees the exchange card «Обмен справочниками» in the UI (/settings/master-cabinet)
+manager → managers API: {"appoint":403,"remove":403,"list":403,"error":"Назначать управляющих сетью может только владелец аккаунта"}
+PASS: manager cannot appoint/remove managers (403/404)
+manager → account-pay: {"preview":403,"pay":403,"code":"not_owner","error":"Оплатить тариф с балансов организаций аккаунта может только владелец аккаунта"}
+PASS: manager cannot pay from the account balances (account-pay 403)
+manager /mini/network: {"status":200,"url":"http://localhost:3000/mini/network"}
+manager mini «Перейти»: {"A":0,"B":1}
+PASS: mini «Сеть» renders for the manager, «Перейти» only for B — {"A":0,"B":1}
+PASS: mini «Все разделы» has «Сеть» for the manager — 1
+remove dialog: Снять Петров Пётр Управляющий с управления сетью? | Права управляющего пропадут сразу. В организациях человек останется со своей ролью. | Отмена | Снять
+PASS: owner removes the manager (row and DB row gone)
+audit network_manager_removed: 1
+removed manager → exchange/export: {"sync":403,"stateCanManage":false,"export":403}
+removed manager /settings/network: {"status":200,"summaryShown":0,"text":"Моя компания | Нет доступа к этому разделу | Раздел закрыт для вашей роли. Если он нужен для работы, попросите руководителя открыть доступ. | Выберите нужный раздел в меню слева — в нём только то, что вам доступно. | Назад | На главную"}
+PASS: removal takes the rights at once: «Сеть» shows «Нет доступа», sync 403, export 403, canManage false — {"page":200,"summaryShown":0,"sync":403,"export":403,"canManage":false}
+PASS: removed manager no longer has «Сеть» in the menu
+set balances A=10, B=10: [200,200]
+standard CTA: {"text":"Подключить — 23 880 ₽","href":"/order?plan=standard&cycle=year&points=1"}
+premium CTA: {"text":"Подключить — 47 880 ₽","href":"/order?plan=premium&cycle=year&points=1"}
+balances (short case): {"Обед на Арбате 792516":10,"Сеть Обед 792516":10}
+PASS: account total short → no «Собрать с организаций аккаунта и оплатить» — 0
+standard price and selection: {"price":23880,"plan":"standard","cycle":"year","points":"1"}
+set balances A=7960, B=23880: [200,200]
+collect buttons visible: ["tariff-account-collect-standard"]
+PASS: active short, account enough → «Собрать с организаций аккаунта и оплатить» under «Стандарт»
+balances before payment: {"Обед на Арбате 792516":23880,"Сеть Обед 792516":7960}
+plan before (plan|cycle|points|paidUntil|trialEnds): free|-|1|-|-
+preview request body: {"plan":"standard","cycle":"year","points":1,"promoCode":null}
+preview response: {"price":23880,"activeBalance":7960,"missing":15920,"accountTotal":31840,"activeName":"Сеть Обед 792516","sources":[{"orgId":"cmwqj34vz0006tw7dq0k4fxsj","name":"Обед на Арбате 792516","amount":15920}],"canPay":true}
+confirmation: Оплатить 23 880 ₽ с балансов аккаунта? | На балансе «Сеть Обед 792516» 7 960 ₽ — не хватает 15 920 ₽. Переведём недостающее с других организаций аккаунта и сразу оплатим тариф. Переводы будут видны в истории баланса. | Перевод из «Обед на Арбате 792516» — 15 920 ₽ | Оплата тарифа с баланса «Сеть Обед 792516» — 23 880 ₽ | Отмена | Перевести и оплатить
+PASS: confirmation shows how much from which organization and the charge — {"moved":15920,"price":23880}
+payment response: {"status":200,"body":{"ok":true,"status":"paid","orderId":64,"priceRub":23880,"transfers":[{"orgId":"cmwqj34vz0006tw7dq0k4fxsj","name":"Обед на Арбате 792516","amountRub":15920,"duplicate":false}],"periodEnd":"2027-11-21T14:55:44.811Z"}}
+toast: ["Собрали 15 920 ₽ с организаций аккаунта и оплатили тариф: 23 880 ₽"]
+balances after payment: {"Обед на Арбате 792516":7960,"Сеть Обед 792516":0}
+plan after (plan|cycle|points|paidUntil): standard|year|1|2027-11-21
+ledger rows: ["Сеть Обед 792516 manual_adjust 10","Обед на Арбате 792516 manual_adjust 10","Сеть Обед 792516 manual_adjust 7950","Обед на Арбате 792516 manual_adjust 23870","Обед на Арбате 792516 transfer_out -15920","Сеть Обед 792516 transfer_in 15920","Сеть Обед 792516 subscription_charge -23880"]
+PASS: payment ok: A = 0 after the charge, B lost exactly the moved amount — {"before":{"Обед на Арбате 792516":23880,"Сеть Обед 792516":7960},"after":{"Обед на Арбате 792516":7960,"Сеть Обед 792516":0},"moved":15920}
+PASS: plan after payment = selected tariff (standard, cycle and points as selected, paid-until set) — standard|year|1|2027-11-21
+collect buttons after payment (total now short): 0
+owner /mini/network: {"status":200,"url":"http://localhost:3000/mini/network"}
+owner mini network: СЕТЬ | Организации аккаунта | ОБЩИЙ БАЛАНС | 7 960 ₽ | С НЕЗАПОЛНЕННЫМИ ЖУРНАЛАМИ | 2 из 2 | Сеть Обед 792516 | текущая | Журналы сегодня | 0 из 3 | не начаты | Баланс | 0 ₽ | Перейти | Обед на Арбате 792516 | Журналы сегодня | 0 из 12 | не начаты | Баланс | 7 960 ₽ | Свои 14 дней | в силе по 5 декабря | Перейти | Вся сводка на странице «Сеть»
+PASS: mini «Сеть» renders for the owner with both organizations and «Перейти» for both
+PASS: mini «Все разделы» has «Сеть» for the owner — 1
+removed manager /mini/network → url: http://localhost:3000/dashboard
+PASS: mini «Сеть» is closed for a non-owner/non-manager (redirect away) — http://localhost:3000/dashboard
+PASS: mini «Все разделы» has no «Сеть» for a non-owner/non-manager
+cleanup: none — like series D, the live run leaves its organizations and users in the local DB
+TOTAL: 35 PASS, 0 FAIL

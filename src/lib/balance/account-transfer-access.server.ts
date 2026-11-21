@@ -10,8 +10,8 @@ import { ACCOUNT_OWNER_ONLY_MESSAGE, AccountTransferError } from "./account-tran
 /**
  * Доступ к `/api/balance/account` и `/api/balance/transfer` (Р10.1): человек
  * с полным доступом, не в режиме «войти как» (чужие деньги) и не
- * руководитель точки. Что он владелец аккаунта активной организации,
- * проверяют сами функции перевода (403).
+ * руководитель точки. Что он владелец аккаунта активной организации или
+ * управляющий сетью (серия E, Р5), проверяют сами функции перевода (403).
  */
 export async function requireAccountTransferSession(): Promise<
   { ok: true; session: Session; organizationId: string } | { ok: false; response: NextResponse }

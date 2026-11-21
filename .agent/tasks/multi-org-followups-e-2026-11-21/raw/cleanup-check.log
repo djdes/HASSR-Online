@@ -1,0 +1,51 @@
+# npx tsx scripts/e2e/cleanup-check.ts — 2026-11-21T14:04:56Z, local PostgreSQL 16, branch claude/eloquent-cray-4wdz2i @ 819ed0948 + working tree (review fixes)
+--- Р4: cleanup
+cleanupExchangeTables: {"skips":4,"requests":4,"transfers":1}
+PASS skips: unseen 30+ days, unticked list, member gone, list not exchanged — removed; fresh and 29-day-old kept
+PASS requests: declined/cancelled/expired 180+ days and long-expired pending — removed; approved, young, open kept
+PASS transfers: older than 180 days removed, 170 days and fresh kept
+PASS counts cover this scenario's rows (4 skips, 4 requests, 1 transfer)
+PASS second cleanup keeps the survivors
+[directory-exchange] scheduled run done {
+  cabinets: 10,
+  busy: 0,
+  errors: 0,
+  cleanup: { skips: 4, requests: 4, transfers: 1 },
+  alert: { status: 'healthy', cabinets: 0 }
+}
+runAllDirectoryExchanges: {"cabinets":10,"errors":0,"cleanup":{"skips":4,"requests":4,"transfers":1},"alert":{"status":"healthy","cabinets":0}}
+PASS scheduled run removes the same rows and keeps the same
+PASS scheduled run reports cleanup counts and the alert status
+--- Р1: alert
+PASS healthy night: nothing sent, no mark
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+PASS same day: nothing more
+PASS next day: sent again, the cabinet that failed in this run is listed
+PASS failed delivery: no mark, the next call retries
+cleanup: organizations left 0, users left 0, alert marks removed 3
+RESULT: all checks passed
+exit=0
+
+# the wrapper: npx tsx .agent/tasks/multi-org-followups-e-2026-11-21/raw/cleanup-check.ts
+cleanupExchangeTables: {"skips":4,"requests":4,"transfers":1}
+PASS skips: unseen 30+ days, unticked list, member gone, list not exchanged — removed; fresh and 29-day-old kept
+PASS requests: declined/cancelled/expired 180+ days and long-expired pending — removed; approved, young, open kept
+PASS transfers: older than 180 days removed, 170 days and fresh kept
+PASS counts cover this scenario's rows (4 skips, 4 requests, 1 transfer)
+PASS second cleanup keeps the survivors
+PASS scheduled run removes the same rows and keeps the same
+PASS scheduled run reports cleanup counts and the alert status
+PASS healthy night: nothing sent, no mark
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+PASS same day: nothing more
+PASS next day: sent again, the cabinet that failed in this run is listed
+PASS failed delivery: no mark, the next call retries
+cleanup: organizations left 0, users left 0, alert marks removed 3
+RESULT: all checks passed
+exit=0

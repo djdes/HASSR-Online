@@ -1,6 +1,6 @@
 import { NextResponse, after } from "next/server";
 
-import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { exchangeErrorResponse, requireExchangeManager } from "@/lib/directory-exchange/access.server";
 import { runDirectoryExchangeWithin } from "@/lib/directory-exchange/run.server";
 import { findExchangeCabinet } from "@/lib/directory-exchange/settings.server";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -15,10 +15,10 @@ const syncLimiter = createRateLimiter({ tokensPerInterval: 6, intervalMs: 60_000
  * POST /api/settings/directory-exchange/sync — «Синхронизировать сейчас»:
  * обмен по всем участникам мастер-кабинета аккаунта → `{ ok: true, summary }`;
  * дольше 8 секунд — `{ ok: true, running: true }`, итог появится в карточке.
- * Только владелец аккаунта; обмен уже идёт или организация закрыта — 409.
+ * Владелец аккаунта или управляющий сетью; обмен уже идёт или организация закрыта — 409.
  */
 export async function POST() {
-  const owner = await requireExchangeOwner();
+  const owner = await requireExchangeManager();
   if (!owner.ok) return owner.response;
   const { accountId, actor } = owner.context;
   if (!syncLimiter.consume(`directory-exchange:sync:${actor.userId}`)) {

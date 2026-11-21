@@ -830,6 +830,16 @@ function productData(fields: ExchangeFields) {
 }
 
 /**
+ * Данные нового продукта по образцу — как у `createEntityRow("product", …)`;
+ * пустое название — null (там это «занято»). Нужны пачке продуктов обмена
+ * (`product-batch.server.ts`, серия E, Р3).
+ */
+export function productCreateData(organizationId: string, source: EntityRow) {
+  const name = text(source.fields.name, 200);
+  return name ? { ...productData(source.fields), name, organizationId } : null;
+}
+
+/**
  * Продукт с таким названием (без регистра) уже есть. При переименовании —
  * среди активных, как в `POST /api/products`; при создании (`anyState`) — и
  * среди выключенных: продукт, который организация убрала из справочника,

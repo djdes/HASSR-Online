@@ -5,6 +5,9 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageHeaderStat } from "@/components/ui/page-header";
 import { NetworkGoButton } from "@/components/settings/network-go-button";
+import { NetworkPeriodBar } from "@/components/settings/network-period-bar";
+import { NetworkPeriodView } from "@/components/settings/network-period-view";
+import { NetworkManagersSection } from "@/components/settings/network-managers-section";
 import type { Locale } from "@/i18n/locales";
 import { ADD_POINTS_HREF } from "@/lib/add-points";
 import { getActiveOrgId, isImpersonating, requireAuth } from "@/lib/auth-helpers";
@@ -16,7 +19,10 @@ import {
   type NetworkOrgRow,
   type NetworkPlan,
 } from "@/lib/network-summary";
+import { canOpenNetworkOrg, openableNetworkOrgIds } from "@/lib/network-mini.server";
 import { NetworkSummaryAccessError, loadNetworkSummary } from "@/lib/network-summary.server";
+import { networkPeriodDays, parseNetworkPeriod } from "@/lib/network-period";
+import { loadNetworkPeriod } from "@/lib/network-period.server";
 import { isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { cn } from "@/lib/utils";
@@ -47,21 +53,31 @@ const JOURNAL_TONE: Record<JournalDayStatus, keyof typeof PILL_TONE> = {
  * владелец аккаунта активной организации с двумя организациями и больше
  * (`loadNetworkSummary`); остальным — 403, пункта меню у них нет.
  */
-export default async function NetworkSettingsPage() {
+export default async function NetworkSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [name: string]: string | string[] | undefined }>;
+}) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) || isImpersonating(session) || isPointScoped(session.user)) forbidden();
-  const summary = await loadNetworkSummary({ ownerUserId: session.user.id, activeOrgId: getActiveOrgId(session) }).catch(
+  // «Сегодня / 7 дней / 30 дней» (серия E, Р6): за период журналы за сегодня не считаем.
+  const period = parseNetworkPeriod((await searchParams).period);
+  const days = networkPeriodDays(period);
+  const summary = await loadNetworkSummary({ ownerUserId: session.user.id, activeOrgId: getActiveOrgId(session), journals: days === null }).catch(
     (error: unknown) => {
       if (error instanceof NetworkSummaryAccessError) return null;
       throw error;
     },
   );
   if (!summary) forbidden();
+  const periodSummary =
+    days === null ? null : await loadNetworkPeriod(summary.accountId, days, { activeOrgId: summary.activeOrganizationId });
 
-  const [t, tTariffs, locale] = await Promise.all([
+  const [t, tTariffs, locale, openable] = await Promise.all([
     getTranslations("settingsManagement.network"),
     getTranslations("landingComponents.tariffs"),
     getLocale() as Promise<Locale>,
+    openableNetworkOrgIds(session.user.id),
   ]);
 
   const planText = (plan: NetworkPlan): string => {
@@ -110,9 +126,11 @@ export default async function NetworkSettingsPage() {
       {row.deletionRequested ? <span className={cn(PILL, PILL_TONE.danger)}>{t("deleting")}</span> : null}
     </span>
   );
-  const goButton = (row: NetworkOrgRow) => (
-    <NetworkGoButton organizationId={row.id} current={row.current} label={t("go")} failedLabel={t("goFailed")} />
-  );
+  // «Перейти» — только туда, куда человек может переключиться (управляющий сетью — не везде участник).
+  const goButton = (row: NetworkOrgRow) =>
+    canOpenNetworkOrg(row, openable) ? (
+      <NetworkGoButton organizationId={row.id} current={row.current} label={t("go")} failedLabel={t("goFailed")} />
+    ) : null;
 
   return (
     <div className="space-y-5" data-network-summary>
@@ -120,6 +138,10 @@ export default async function NetworkSettingsPage() {
         description={t("description")}
         actions={<PageHeaderStat>{t("plan.label", { plan: planText(summary.plan) })}</PageHeaderStat>}
       />
+
+      {/* Период и выгрузка (серия E, Р6): за 7/30 дней — своя таблица, иначе — «Сегодня» как было. */}
+      <NetworkPeriodBar period={period} />
+      {periodSummary ? <NetworkPeriodView summary={periodSummary} openableIds={[...openable]} /> : (<>
 
       <section className="grid gap-3 sm:grid-cols-3" data-network-totals>
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5">
@@ -204,7 +226,7 @@ export default async function NetworkSettingsPage() {
               <dt className="text-[#6f7282]">{t("columns.exchange")}</dt>
               <dd className="text-[#3c4053]">{exchangeText(row)}</dd>
             </dl>
-            <div className="mt-3 flex justify-end">{goButton(row)}</div>
+            {canOpenNetworkOrg(row, openable) ? <div className="mt-3 flex justify-end">{goButton(row)}</div> : null}
           </li>
         ))}
       </ul>
@@ -212,6 +234,10 @@ export default async function NetworkSettingsPage() {
       {summary.truncated ? (
         <p className="text-[13px] text-[#6f7282]">{t("truncated", { count: String(rows.length) })}</p>
       ) : null}
+      </>)}
+
+      {/* Управляющие сетью (серия E, Р5) — только владельцу аккаунта. */}
+      <NetworkManagersSection accountId={summary.accountId} viewerId={session.user.id} />
     </div>
   );
 }

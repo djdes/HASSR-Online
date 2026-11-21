@@ -136,6 +136,11 @@ type Props = {
   onSchedule?: (target: { tier: PaidTier; cycle: BillingCycle; points: number }) => void;
   onCancelSchedule?: () => void;
   scheduleBusy?: boolean;
+  /**
+   * Под кнопкой оплаты тарифа (кабинет): «Собрать с организаций аккаунта и
+   * оплатить» (серия E, Р10). Цена — как на кнопке, с акцией.
+   */
+  payExtra?: (args: { tier: PaidTier; cycle: BillingCycle; points: number; payRub: number; dark: boolean }) => ReactNode;
   /** Таблица сравнения под колонками. */
   showTable?: boolean;
   /** Таблица свёрнута до заголовка-кнопки (главная, правки 21.11.2026: на
@@ -188,6 +193,7 @@ export function TariffComparison({
   onSchedule,
   onCancelSchedule,
   scheduleBusy = false,
+  payExtra,
   showTable = true,
   tableCollapsed = false,
   className,
@@ -235,6 +241,17 @@ export function TariffComparison({
     if (promoCode) params.set("promo", promoCode);
     return `/order?${params.toString()}`;
   };
+
+  // Кнопка оплаты и под ней — дополнительная (сбор с организаций аккаунта); без неё разметка прежняя.
+  const withPayExtra = (cta: ReactNode, extra: ReactNode) =>
+    extra ? (
+      <div className="space-y-2">
+        {cta}
+        {extra}
+      </div>
+    ) : (
+      cta
+    );
 
   const intro = (tier: TierId) =>
     t(`includes.${tier}`);
@@ -470,6 +487,11 @@ export function TariffComparison({
           const quote = quotes?.[tier] ?? null;
           // К оплате — с действующей акцией, как посчитает страница заказа.
           const payRub = quote ? applyPromotion(quote.amountRub, promotion).priceRub : 0;
+          // Сбор с организаций аккаунта — под кнопкой оплаты сейчас (не у понижения).
+          const payExtraNode =
+            mode === "cabinet" && payExtra && quote && quote.kind !== "scheduled" && isAvailable && !needsIndividualOffer(points)
+              ? payExtra({ tier, cycle, points, payRub, dark: tier === "standard" })
+              : null;
           const isCurrent =
             cabinet?.status === "paid" &&
             currentPaid?.tier === tier &&
@@ -578,19 +600,22 @@ export function TariffComparison({
                     </button>
                   )
                 ) : (
-                  <CtaLink
-                    href={orderHref(tier)}
-                    variant={tier === "standard" ? "light" : "primary"}
-                    testId={`tariff-cta-${tier}`}
-                  >
-                    {quote.kind === "renew"
-                      ? t("cta.renew", { amount: rub(payRub) })
-                      : quote.kind === "upgrade"
-                        ? t("cta.upgrade", { amount: rub(payRub) })
-                        : quote.kind === "switch"
-                          ? t(cycle === "year" ? "cta.switchYear" : "cta.switch", { amount: rub(payRub) })
-                          : t("cta.newPlan", { amount: rub(payRub) })}
-                  </CtaLink>
+                  withPayExtra(
+                    <CtaLink
+                      href={orderHref(tier)}
+                      variant={tier === "standard" ? "light" : "primary"}
+                      testId={`tariff-cta-${tier}`}
+                    >
+                      {quote.kind === "renew"
+                        ? t("cta.renew", { amount: rub(payRub) })
+                        : quote.kind === "upgrade"
+                          ? t("cta.upgrade", { amount: rub(payRub) })
+                          : quote.kind === "switch"
+                            ? t(cycle === "year" ? "cta.switchYear" : "cta.switch", { amount: rub(payRub) })
+                            : t("cta.newPlan", { amount: rub(payRub) })}
+                    </CtaLink>,
+                    payExtraNode,
+                  )
                 )
               }
               data-tariff-key={planTariffKey(tier, cycle)}
