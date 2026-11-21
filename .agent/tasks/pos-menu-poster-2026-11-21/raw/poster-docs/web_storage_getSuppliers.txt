@@ -1,0 +1,67 @@
+URL: https://dev.joinposter.com/en/docs/v3/web/storage/getSuppliers
+storage.getSuppliers: Get all Suppliers
+Request example:
+<?php
+$url = 'https://joinposter.com/api/storage.getSuppliers'
+ . '?token=687409:4164553abf6a031302898da7800b59fb';
+$data = sendRequest($url);
+Copy to clipboard
+Error
+Copied
+Response example:
+{
+  "response":[
+    {
+      "supplier_id":"1",
+      "supplier_name":"Supplier 1",
+      "supplier_phone":"+380981111111",
+      "supplier_adress":"",
+      "supplier_comment":"",
+      "supplier_code":"",
+      "supplier_tin":"",
+      "delete":"0"
+    },
+    {
+      "supplier_id":"2",
+      "supplier_name":"Supplier 2",
+      "supplier_phone":"+380981111112",
+      "supplier_adress":"",
+      "supplier_comment":"",
+      "supplier_code":"",
+      "supplier_tin":"",
+      "delete":"0"
+    },
+    {
+      "supplier_id":"3",
+      "supplier_name":"Wine Market",
+      "supplier_phone":"+380987658943",
+      "supplier_adress":"",
+      "supplier_comment":"",
+      "supplier_code":"",
+      "supplier_tin":"",
+      "delete":"0"
+    }
+  ]
+}
+Copy to clipboard
+Error
+Copied
+The method returns all suppliers
+HTTP request
+GET https://joinposter.com/api/storage.getSuppliers
+GET parameters of the storage.getSuppliers request
+Parameter	Description
+id_1c	An optional parameter; true if id_1 is returned
+The storage.getSuppliers response parameters
+Parameter	Description
+response	Response object
+Inside the response parameter, there is an array, each element of which contains the following parameters:
+Parameter	Description
+supplier_id	Supplier ID
+supplier_name	Supplier name
+supplier_phone	Supplier phone number
+supplier_adress	Supplier address
+supplier_comment	Comment
+supplier_code	Unique Identification Number of a legal entity
+supplier_tin	Supplier TIN
+delete	The status of a supplier removed: 1—removed, 0—not removed

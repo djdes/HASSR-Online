@@ -1,0 +1,18 @@
+{
+  "taskId": "pos-menu-poster-2026-11-21",
+  "branch": "claude/hopeful-euler-lb6cie",
+  "base": "b1123dee",
+  "verdict": "PASS",
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/supply/iiko.test.ts"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/supply/poster.test.ts#AC2"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/supply/poster.test.ts#AC3", "raw/poster-docs/"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/supply/poster.test.ts#AC4"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/supply/poster.test.ts#AC5", "docs/pos-integrations.md", "raw/01-poster-connect-mobile.png", "raw/02-poster-connected-mobile.png", "raw/03-poster-connected-desktop.png"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/eslint.txt", "raw/tests.txt", "full suite: 7015 pass, route-count test updated 154 -> 155"] }
+  },
+  "notes": [
+    "No live Poster account: client verified against documented responses via fake transport.",
+    "Supply lines from storage.getSupplyIngredients (documented minor units)."
+  ]
+}

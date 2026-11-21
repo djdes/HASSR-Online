@@ -10,7 +10,7 @@ import { DIADOC_BASE_URL } from "./diadoc";
  * ящик; пароль и защищённый ключ не отдаются никогда.
  */
 
-export const SUPPLY_PROVIDERS = ["diadoc", "saby", "iiko"] as const;
+export const SUPPLY_PROVIDERS = ["diadoc", "saby", "iiko", "poster"] as const;
 export type SupplyProvider = (typeof SUPPLY_PROVIDERS)[number];
 
 export function isSupplyProvider(value: unknown): value is SupplyProvider {
@@ -49,6 +49,22 @@ export const iikoOptionsSchema = z.object({
 });
 
 export type IikoStoredCredentials = z.infer<typeof iikoCredentialsSchema> & { options?: z.infer<typeof iikoOptionsSchema> };
+
+/**
+ * Poster: токен личной интеграции («Доступ → Интеграции → Личная интеграция»)
+ * вида `номер_аккаунта:ключ` (спека pos-menu-poster-2026-11-21).
+ */
+export const posterCredentialsSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .regex(/^\d{1,12}:[0-9A-Za-z]{16,128}$/, "Токен Poster — вида 123456:abcdef… (Доступ → Интеграции → Личная интеграция)"),
+});
+
+/** Что забирать из Poster — те же три переключателя, что у iiko (поставки — `invoices`). */
+export const posterOptionsSchema = iikoOptionsSchema;
+
+export type PosterStoredCredentials = z.infer<typeof posterCredentialsSchema> & { options?: z.infer<typeof posterOptionsSchema> };
 export type IikoOptions = z.infer<typeof iikoOptionsSchema>;
 
 export function readIikoOptions(value: unknown): IikoOptions {
@@ -89,9 +105,12 @@ export function connectionView(
       ? maskLogin(login)
       : provider === "iiko"
         ? `${login} · ${typeof record.serverUrl === "string" ? record.serverUrl : ""}`
-        : typeof record.clientId === "string"
-          ? record.clientId
-          : "";
+        : provider === "poster"
+          ? // Токен не показываем — только номер аккаунта из него.
+            `Poster № ${typeof record.token === "string" ? /^(\d{1,12}):/.exec(record.token)?.[1] ?? "—" : "—"}`
+          : typeof record.clientId === "string"
+            ? record.clientId
+            : "";
   return {
     provider,
     connected: true,

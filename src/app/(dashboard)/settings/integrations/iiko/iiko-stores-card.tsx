@@ -12,20 +12,24 @@ import { IIKO_STORE_SKIP, type IikoStoreView } from "@/lib/supply/supply-points"
 const NO_POINT = "__none__";
 
 /**
- * Склады iiko → объекты (2026-11-01). Накладные и акты списания склада
- * ложатся на его точку; «Не загружать» пропускает склад; без точки — точку
- * выберут при приёмке. Список складов берётся с сервера iiko по кнопке.
+ * Склады iiko и Poster → объекты (2026-11-01, Poster — 2026-11-21).
+ * Накладные (поставки) и списания склада ложатся на его точку; «Не
+ * загружать» пропускает склад; без точки — точку выберут при приёмке.
+ * Список складов берётся из учётной системы по кнопке.
  */
 export function IikoStoresCard({
+  provider = "iiko",
   initialStores,
   initialMap,
   points,
 }: {
+  provider?: "iiko" | "poster";
   initialStores: IikoStoreView[];
   initialMap: Record<string, string>;
   points: Array<{ id: string; name: string }>;
 }) {
-  const t = useTranslations("supplyEdo.iiko.stores");
+  // Тексты карточки — свои у iiko и Poster, ключи одинаковые.
+  const t = useTranslations(provider === "poster" ? "supplyEdo.poster.stores" : "supplyEdo.iiko.stores") as ReturnType<typeof useTranslations<"supplyEdo.iiko.stores">>;
   const [stores, setStores] = useState(initialStores);
   const [saved, setSaved] = useState(initialMap);
   const [map, setMap] = useState(initialMap);
@@ -35,7 +39,7 @@ export function IikoStoresCard({
   async function load() {
     setBusy("load");
     try {
-      const res = await fetch("/api/settings/supply/iiko/stores").catch(() => null);
+      const res = await fetch(`/api/settings/supply/${provider}/stores`).catch(() => null);
       if (!res) {
         toast.error(t("failed"));
         return;
@@ -57,7 +61,7 @@ export function IikoStoresCard({
   async function save() {
     setBusy("save");
     try {
-      const res = await fetch("/api/settings/supply/iiko/stores", {
+      const res = await fetch(`/api/settings/supply/${provider}/stores`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ map }),

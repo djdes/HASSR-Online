@@ -1,8 +1,10 @@
 /**
  * iiko → WeSetup: приходные накладные — во «Входящие накладные» (дальше та
  * же приёмка, что у УПД), акты списания — в «Потери», номенклатура
- * (товары и заготовки) — в справочник продуктов. Чистые функции.
+ * (товары, заготовки и блюда меню) — в справочник продуктов. Чистые функции.
  */
+import type { ProductKind } from "@/lib/product-kinds";
+
 import type { IikoInvoice, IikoProduct, IikoSupplier, IikoWriteoff } from "./iiko";
 import type { ParsedUpd, SupplyItem } from "./upd";
 
@@ -98,18 +100,24 @@ export function iikoWriteoffToLosses(writeoff: IikoWriteoff, dir: IikoDirectory)
   });
 }
 
-/** Товары и заготовки — в справочник продуктов; блюда, услуги и модификаторы — нет. */
-const DIRECTORY_TYPES = new Set(["GOODS", "PREPARED"]);
+/**
+ * Тип номенклатуры iiko → вид продукции справочника (спека
+ * pos-menu-poster-2026-11-21, Р1): товары — сырьё, заготовки — полуфабрикаты,
+ * блюда меню — готовая продукция (подсказки бракеража и раздачи). Услуги и
+ * модификаторы — не продукты.
+ */
+const DIRECTORY_KINDS: Readonly<Record<string, ProductKind>> = { GOODS: "raw", PREPARED: "semi", DISH: "finished" };
 
-export function iikoProductsForDirectory(dir: IikoDirectory): Array<{ name: string; unit: string | null }> {
+export function iikoProductsForDirectory(dir: IikoDirectory): Array<{ name: string; unit: string | null; kind: ProductKind }> {
   const seen = new Set<string>();
-  const out: Array<{ name: string; unit: string | null }> = [];
+  const out: Array<{ name: string; unit: string | null; kind: ProductKind }> = [];
   for (const product of dir.products.values()) {
-    if (product.deleted || !product.type || !DIRECTORY_TYPES.has(product.type.toUpperCase())) continue;
+    const kind = product.type ? DIRECTORY_KINDS[product.type.toUpperCase()] : undefined;
+    if (product.deleted || !kind) continue;
     const key = product.name.toLocaleLowerCase("ru");
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ name: product.name, unit: product.unitId ? dir.units.get(product.unitId) ?? null : null });
+    out.push({ name: product.name, unit: product.unitId ? dir.units.get(product.unitId) ?? null : null, kind });
   }
   return out;
 }

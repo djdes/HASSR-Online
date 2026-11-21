@@ -3445,6 +3445,7 @@
       "settings_integrations_mercury": "Merkuriy federal axborot tizimi",
       "settings_integrations_edo": "EHA: Diadoc va SBIS",
       "settings_integrations_iiko": "iiko",
+      "settings_integrations_poster": "Poster",
       "settings_integrations_1c": "1C: kadrlar",
       "mercury": "Kiruvchi veterinariya hujjatlari",
       "edo": "Kiruvchi yuk xatlari",
@@ -9309,6 +9310,7 @@
     "source": "Manba",
     "fromWriteoff": "{date} sanasidagi hisobdan chiqarish dalolatnomasidan",
     "fromIiko": "iiko’dan",
+    "fromPoster": "Poster’dan",
     "manual": "qo‘lda kiritilgan",
     "empty": "Hozircha yozuvlar yo‘q",
     "categories": {
@@ -10259,7 +10261,11 @@
         },
         "settings_integrations_iiko": {
           "title": "iiko",
-          "description": "Yuk xatlari — «Kiruvchi»ga, hisobdan chiqarishlar — «Yo‘qotishlar»ga, tovarlar — mahsulotlar ma’lumotnomasiga"
+          "description": "Yuk xatlari — «Kiruvchi»ga, hisobdan chiqarishlar — «Yo‘qotishlar»ga, tovarlar va taomlar — mahsulotlar ma’lumotnomasiga"
+        },
+        "settings_integrations_poster": {
+          "title": "Poster",
+          "description": "Yetkazib berishlar — «Kiruvchi»ga, hisobdan chiqarishlar — «Yo‘qotishlar»ga, menyu — mahsulotlar ma’lumotnomasi va brakerajga"
         },
         "settings_integrations_1c": {
           "title": "1C: kadrlar",
@@ -11236,9 +11242,9 @@
       "period": {
         "label": "Davr",
         "options": {
-          "today": "Bugun",
           "7": "7 kun",
-          "30": "30 kun"
+          "30": "30 kun",
+          "today": "Bugun"
         },
         "range": "{from} — {to}: to‘liq kunlar, bugun kirmaydi.",
         "hint": "Tashkilot yuritadigan har bir kundalik jurnalda yozuv bo‘lsa yoki kun yopilgan bo‘lsa, kun hisobga olinadi. Tashkilot yaratilishidan oldingi va yopilganidan keyingi kunlar hisoblanmaydi.",
@@ -32378,11 +32384,13 @@
         "upload": "Fayl",
         "diadoc": "Diadoc",
         "saby": "SBIS",
-        "iiko": "iiko"
+        "iiko": "iiko",
+        "poster": "Poster"
       },
       "items": "{count, plural, other {# ta pozitsiya}}",
       "number": "UPD № {number}",
       "invoiceNumber": "Yuk xati № {number}",
+      "supplyNumber": "Yetkazib berish № {number}",
       "date": "{date} sanali",
       "total": "{sum} summaga",
       "errors": {
@@ -32394,6 +32402,7 @@
     "document": {
       "title": "UPD № {number}, {date}",
       "invoiceTitle": "Kirim yuk xati № {number}, {date}",
+      "supplyTitle": "Yetkazib berish № {number}, {date}",
       "seller": "Yetkazib beruvchi",
       "inn": "STIR {inn}",
       "basis": "Asos",
@@ -32471,7 +32480,7 @@
     "iiko": {
       "eyebrow": "Ulanishlar",
       "title": "iiko",
-      "description": "iiko kirim yuk xatlari — «Kiruvchi yuk xatlari»ga (keyin UPD bilan bir xil qabul), hisobdan chiqarish dalolatnomalari — «Yo‘qotishlar»ga, yangi tovarlar va yarim tayyor mahsulotlar — mahsulotlar ma’lumotnomasiga.",
+      "description": "iiko kirim yuk xatlari — «Kiruvchi yuk xatlari»ga (keyin UPD bilan bir xil qabul), hisobdan chiqarish dalolatnomalari — «Yo‘qotishlar»ga, yangi tovarlar, yarim tayyor mahsulotlar va menyu taomlari — mahsulotlar ma’lumotnomasiga (taomlar brakeraj takliflariga ham tushadi).",
       "hint": "iiko serveri (iikoOffice) kerak: manzil, API orqali kirish huquqiga ega foydalanuvchining logini va paroli.",
       "serverUrl": "Server manzili",
       "serverHint": "Masalan, https://name.iiko.it yoki http://manzil:8080",
@@ -32481,7 +32490,7 @@
         "title": "Nimani olish",
         "invoices": "Kirim yuk xatlari",
         "writeoffs": "Hisobdan chiqarish dalolatnomalari",
-        "products": "Tovarlar va yarim tayyor mahsulotlar"
+        "products": "Tovarlar, yarim tayyor mahsulotlar va taomlar"
       },
       "connect": "Ulash",
       "connecting": "Tekshirilmoqda…",
@@ -32514,6 +32523,59 @@
         "reload": "Omborlar ro‘yxatini yangilash",
         "loading": "Omborlar yuklanmoqda…",
         "empty": "«Omborlarni iiko’dan yuklash» tugmasini bosing — server omborlari ro‘yxati chiqadi.",
+        "none": "Nuqtasiz — qabulda tanlash",
+        "skip": "Yuklamaslik",
+        "save": "Saqlash",
+        "saving": "Saqlanmoqda…",
+        "saved": "Omborlar va nuqtalar saqlandi",
+        "unsaved": "Saqlanmagan o‘zgarishlar bor",
+        "failed": "Bo‘lmadi. Qaytadan urinib ko‘ring."
+      }
+    },
+    "poster": {
+      "eyebrow": "Ulanishlar",
+      "title": "Poster",
+      "description": "Poster yetkazib berishlari — «Kiruvchi yuk xatlari»ga (keyin UPD bilan bir xil qabul), hisobdan chiqarishlar — «Yo‘qotishlar»ga, menyu taomlari, yarim tayyor mahsulotlar va ingrediyentlar — mahsulotlar ma’lumotnomasiga (taomlar brakeraj takliflariga ham tushadi).",
+      "hint": "Shaxsiy integratsiya tokeni kerak: Poster’da «Kirish → Integratsiyalar → Shaxsiy integratsiya»ni oching va kalitni nusxalang.",
+      "token": "Token",
+      "tokenHint": "Masalan, 123456:4164553abf6a031302898da7800b59fb",
+      "options": {
+        "title": "Nimani olish",
+        "invoices": "Yetkazib berishlar",
+        "writeoffs": "Hisobdan chiqarishlar",
+        "products": "Menyu va ingrediyentlar"
+      },
+      "connect": "Ulash",
+      "connecting": "Tekshirilmoqda…",
+      "connected": "Ulangan",
+      "reconnect": "Qayta ulash",
+      "disconnect": "Uzish",
+      "disconnected": "Uzildi",
+      "account": "Akkaunt: {account}",
+      "lastSync": "Tekshirilgan {when}",
+      "never": "Hali tekshirilmagan",
+      "sync": "Hozir olish",
+      "syncing": "Olinmoqda…",
+      "synced": "Yetkazib berishlar: {invoices}, yo‘qotish satrlari: {losses}, yangi mahsulotlar: {products}",
+      "status": {
+        "active": "Ishlamoqda",
+        "error": "Xato"
+      },
+      "openInbox": "Kiruvchi yuk xatlari",
+      "openLosses": "Yo‘qotishlar",
+      "openProducts": "Mahsulotlar ma’lumotnomasi",
+      "secretsNote": "Token shifrlangan holda saqlanadi va ulangandan keyin ko‘rsatilmaydi.",
+      "limitNote": "Bir yuklashda 100 tagacha yetkazib berish va 100 tagacha hisobdan chiqarish olinadi — qolgani keyingi tekshiruvda keladi.",
+      "errors": {
+        "failed": "Ulab bo‘lmadi. Tokenni tekshiring."
+      },
+      "stores": {
+        "title": "Poster omborlari va obyektlar",
+        "hint": "Ombor yetkazib berishlari va hisobdan chiqarishlari uning nuqtasiga tushadi. «Yuklamaslik» — ombor hujjatlari o‘tkazib yuboriladi. Nuqtasiz — nuqta yetkazib berishni qabul qilishda tanlanadi.",
+        "load": "Omborlarni Poster’dan yuklash",
+        "reload": "Omborlar ro‘yxatini yangilash",
+        "loading": "Omborlar yuklanmoqda…",
+        "empty": "«Omborlarni Poster’dan yuklash» tugmasini bosing — omborlar ro‘yxati chiqadi.",
         "none": "Nuqtasiz — qabulda tanlash",
         "skip": "Yuklamaslik",
         "save": "Saqlash",

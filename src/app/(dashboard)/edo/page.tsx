@@ -77,7 +77,7 @@ export default async function EdoInboxPage({
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ru";
   const timeZone = organization?.timezone || "Europe/Moscow";
   const sourceLabel = (source: string) =>
-    t(`source.${source === "diadoc" || source === "saby" || source === "iiko" ? source : "upload"}`);
+    t(`source.${source === "diadoc" || source === "saby" || source === "iiko" || source === "poster" ? source : "upload"}`);
   const money = (value: number) => formatNumber(locale, value, { style: "currency", currency: "RUB", maximumFractionDigits: 2 });
   const tabClass = (active: boolean) =>
     `inline-flex h-10 items-center rounded-2xl px-4 text-[13.5px] font-medium transition-colors ${
@@ -107,7 +107,7 @@ export default async function EdoInboxPage({
 
       <EdoInboxActions
         connections={connections.map((connection) => ({
-          provider: connection.provider === "saby" || connection.provider === "iiko" ? connection.provider : "diadoc",
+          provider: connection.provider === "saby" || connection.provider === "iiko" || connection.provider === "poster" ? connection.provider : "diadoc",
           ok: connection.status !== "error",
           lastError: connection.lastError,
           lastSyncAt: connection.lastSyncAt?.toISOString() ?? null,
@@ -158,7 +158,11 @@ export default async function EdoInboxPage({
                     </div>
                     <div className="mt-1 text-[13.5px] text-[#3c4053]">
                       {[
-                        doc.source === "iiko" ? t("invoiceNumber", { number: doc.number }) : t("number", { number: doc.number }),
+                        doc.source === "iiko"
+                          ? t("invoiceNumber", { number: doc.number })
+                          : doc.source === "poster"
+                            ? t("supplyNumber", { number: doc.number })
+                            : t("number", { number: doc.number }),
                         t("date", { date: formatDate(locale, doc.date, "UTC", DATE) }),
                         t("items", { count: items.length }),
                         doc.total !== null ? t("total", { sum: money(doc.total) }) : null,

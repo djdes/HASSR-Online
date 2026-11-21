@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { resolveDishSuggestionOrgIds } from "@/lib/dish-pool";
 import { listPoolSharedItems } from "@/lib/master-directory";
 import {
+  appendSuggestionValues,
   mergeMasterMenuMeta,
   NAME_SUGGESTION_LIMIT,
   normalizeSuggestionMeta,
@@ -38,6 +39,18 @@ export async function listNameSuggestions(
     if (normalized) meta[suggestionKey(row.value)] = normalized;
   }
   const values = rows.map((row) => row.value);
+  // Блюда — сразу после своей памяти — «Готовая продукция» своего справочника:
+  // блюда меню из кассы (iiko, Poster) и заведённые руками (спека
+  // pos-menu-poster-2026-11-21, Р2). Дальше пул и мастер, как было.
+  if (scope === "dish") {
+    const directory = await db.product.findMany({
+      where: { organizationId, isActive: true, kind: "finished" },
+      orderBy: { name: "asc" },
+      take: NAME_SUGGESTION_LIMIT,
+      select: { name: true },
+    });
+    appendSuggestionValues(values, directory.map((product) => product.name), NAME_SUGGESTION_LIMIT * 2);
+  }
   // Блюда — ещё и из общего справочника по служебному коду (dish-pool.ts):
   // свои сверху, дальше блюда других организаций пула. Память температур
   // берём только свою — чужая кухня не должна подставлять свои градусы.

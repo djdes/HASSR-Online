@@ -1,0 +1,87 @@
+URL: https://dev.joinposter.com/en/docs/v3/start/faq
+FAQ:
+General
+1. What is a developer account?
+A developer account is a specialized Poster account that includes:
+A test environment: the account provides all the features of a regular Poster client account.
+A tool to create your app and list it in the Poster integrations marketplace.
+You can register a developer account by clicking Login in the upper-right corner and selecting Create an account.
+A developer account is only required if you plan to publish your integration in our marketplace. If you are developing an integration for personal use or for a single client (e.g., integrating with a personal website), you can use the personal integration token from the client’s account.
+2. Do I need to pay for a developer account?
+The developer account is free. Upon registration, the account is automatically renewed for 15 days. After this period, you can contact our support chat to extend the account, and our team will be glad to assist you.
+3. How do I link the developer account to a client account in Poster?
+There is no need to link a developer account with a client account. The developer account is separate, used to configure your integration. Once the integration is ready, the client can connect it via a direct link or from the marketplace if it has been published there.
+It is essential to understand that interactions occur between the developer’s app and the client’s account through API requests, not between accounts. An access token identifies which client account the request belongs to.
+4. Can I add custom functionality to Poster QR via the API?
+Poster QR does not have its own API, so it cannot be integrated. However, you can manage most menu-related settings through Poster’s Web API.
+Marketplace and Publishing
+5. Where can I find the integration I need?
+Integrations are listed in the Poster Application Marketplace. If you cannot find the integration you need, you can hire a developer to add the required functionality using our open API.
+6. Can I provide access to my app only to specific clients without publishing it in the marketplace?
+Yes, you don't need to publish your app in the marketplace. Your clients can connect your app via a direct link: https://joinposter.com/applications/Your-Integration-Name
+7. Can I sell my integration through Poster?
+Publish your app in our marketplace to sell it to our clients. Provide a description, upload photos, name it, and submit it for review. During the review, you will also need to present the app to one of our managers.
+Publishing your integration in our marketplace opens doors to new markets and generates leads, as our system operates in 23,000 locations across 122 countries. Using our platform’s billing simplifies the sales process and ensures a stable income, allowing you to expand your audience and increase revenue with Poster.
+8. How long does the review process take in the Poster marketplace?
+The review process takes up to 14 days. If your integration is resubmitted for review, it will also take up to 14 days.
+To speed up the moderation process:
+Test your app before submitting it for review to ensure it works for all user scenarios.
+Provide test access to your service or specify if no test access is available.
+Record a video guide demonstrating how to connect and use the integration to help future users and increase engagement.
+List Poster clients already testing your app.
+Provide a marketing description, user guide, and pricing information for each region.
+9. If I update the code in the POS platform or on the app server, do I need to submit my integration for review again?
+No. To apply changes in the POS platform, simply run the command: npm run deploy.
+☝️ Important: for the deploy to succeed, the Access categories field in your app settings in the developer account must include settings и application.
+10. How soon will changes appear for clients after deployment?
+Changes will appear after the Poster application restarts twice.
+11. If I change the marketing description, webhook URL, OAuth URL, manage URL, or API access, do I need to submit the integration for review again?
+Yes, submit the integration for review to verify the new data and publish the update.
+Authorization and Access
+12. How can I get a token if I don’t need a separate app?
+Register an account in Poster, open the admin panel, and copy the key from Access → Integrations → Personal Integration.
+This option is suitable for personal integrations for a single client, such as integrating with your website. For other cases, set up OAuth authorization to obtain tokens for multiple clients.
+13. How do I set up OAuth authorization?
+Watch our webinar on this topic. We also provide detailed written instructions.
+14. How long is a token valid?
+The access token is valid for two years.
+15. What should I do if the token expires?
+The client must reconnect the integration to reauthorize through OAuth, generating a new token for another two years.
+Our support team can also renew a personal integration token upon request via chat.
+Web API
+16. I couldn’t find an API for the feature I need. What should I do?
+Contact us at contact@joinposter.com, and we’ll help you find a solution.
+17. Why am I receiving an error in response to my Web API request?
+Check the "code" and "message" in the error. The "message" parameter provides a brief description of the error. You can find a list of error codes on this page.
+18. My website is built on Tilda, OpenCart, Wix, WordPress, uKit, or custom code. What code should I use, and where should I place it to send online orders to my Poster account?
+To integrate your site with Poster, consider hiring a developer. We provide documentation for integrating online stores with Poster.
+We also offer a ready-made app for integrating with WordPress + WooCommerce.
+19. Can I upload product, dish, or category images via the API?
+No. Images can only be uploaded through the Poster admin panel under Menu.
+20. How can I validate a phone number in advance to avoid sending invalid data and receiving an error?
+Use the libphonenumber library.
+Webhooks
+21. Can I use webhooks without creating an app?
+No, webhooks require an app created in the developer account.
+22. Why am I not receiving webhooks?
+Check the following:
+Ensure the URL responds with a 200 status and accepts POST requests.
+Verify the webhook URL is added in the app settings and shows a green checkmark when tested.
+Confirm subscription to the required webhooks in the app settings.
+Simulate a webhook trigger by editing the relevant entity in the Poster admin panel.
+Ensure your app is connected to the client account expecting webhooks.
+If the app is already published, wait for reapproval to apply the changes.
+POS Platform
+23. Why is the Dev/Prod switch not available on the cash register?
+Enable the POS Platform switch in your app settings.
+Add the Poster account to the developer list in your developer account.
+Connect your integration through the Poster Application Catalog.
+24. Can I make CORS requests with JS from a browser?
+No, such requests are blocked. Use other tools like Postman instead.
+25. Can I add multiple app buttons to the POS platform?
+No, only one button per app is allowed.
+26. Can I add additional data to the receipt?
+Use the orders.setPrintText method to add text. The orders.printReceipt method can print a pre-receipt with a QR code and text.
+Device Platform
+27. Is there an emulator for thermal printers and fiscal registers?
+There is no complete emulator. However, you can locally run a print server on port 9100 to receive byte data.

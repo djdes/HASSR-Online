@@ -11,9 +11,21 @@ import type { DiadocClient } from "./diadoc";
 import { isUpdDocument } from "./diadoc";
 import type { IikoClient } from "./iiko";
 import { buildIikoDirectory, iikoInvoiceToDocument, iikoProductsForDirectory, iikoWriteoffToLosses, type IikoLoss } from "./iiko-map";
+import type { PosterClient } from "./poster";
+import {
+  buildPosterDirectory,
+  posterLossId,
+  posterProductsForDirectory,
+  posterSupplyToDocument,
+  posterWasteToLosses,
+  type PosterLoss,
+} from "./poster-map";
 import type { SabyIncomingApi } from "./saby-incoming";
 import { pickUpdAttachment } from "./saby-incoming";
 import { parseUpd, UpdParseError, type ParsedUpd } from "./upd";
+
+/** Позиция для справочника продуктов (тип — в `products.server.ts`, здесь без БД). */
+export type DirectoryItem = { name: string; unit: string | null; kind?: "raw" | "semi" | "finished" };
 
 /** Больше страниц за один заход не листаем: остальное — в следующий раз. */
 export const MAX_SYNC_PAGES = 10;
@@ -110,8 +122,8 @@ export type IikoSyncCounters = SyncCounters & { losses: number; products: number
 
 /**
  * iiko: одна сессия на всё (лицензия сервера!) — справочники, приходные
- * накладные во «Входящие», акты списания в «Потери», новые товары и
- * заготовки в справочник продуктов. Внешний id накладной — её id в iiko,
+ * накладные во «Входящие», акты списания в «Потери», новые товары,
+ * заготовки и блюда в справочник продуктов (с видом продукции). Внешний id накладной — её id в iiko,
  * строки потерь — `iiko:<акт>:<строка>`.
  *
  * `storeDecision` — склад документа → точка или «не загружать» (настройки
@@ -124,7 +136,7 @@ export async function syncIikoData(input: {
   options: { invoices: boolean; writeoffs: boolean; products: boolean };
   sink: SyncSink;
   losses: { exists(sourceEntryId: string): Promise<boolean>; save(loss: IikoLoss, buildingId: string | null): Promise<void> };
-  products: { addMissing(items: Array<{ name: string; unit: string | null }>): Promise<number> };
+  products: { addMissing(items: DirectoryItem[]): Promise<number> };
   storeDecision?: (storeId: string | null) => { skip: boolean; buildingId: string | null };
 }): Promise<IikoSyncCounters> {
   const decide = input.storeDecision ?? (() => ({ skip: false, buildingId: null }));
@@ -162,5 +174,78 @@ export async function syncIikoData(input: {
     }
     if (input.options.products) counters.products = await input.products.addMissing(iikoProductsForDirectory(dir));
   });
+  return counters;
+}
+
+/**
+ * Poster: больше стольких поставок и списаний со строками за один заход не
+ * запрашиваем (у Poster ограничение частоты, ошибка 700) — остальное заберём
+ * в следующий раз.
+ */
+export const MAX_POSTER_DOCUMENTS_PER_SYNC = 100;
+
+export type PosterSyncCounters = SyncCounters & { losses: number; products: number };
+
+/**
+ * Poster (спека pos-menu-poster-2026-11-21, Р3): поставки — во «Входящие»
+ * (внешний id — номер поставки), ручные списания — в «Потери»
+ * (`poster:<списание>:<позиция>`), меню и ингредиенты — в справочник с видом
+ * продукции. `storeDecision` — склад Poster → точка или «не загружать», как
+ * у складов iiko.
+ */
+export async function syncPosterData(input: {
+  client: Pick<PosterClient, "supplies" | "supplyItems" | "wastes" | "waste" | "products" | "ingredients" | "suppliers">;
+  fromDate: string;
+  toDate: string;
+  options: { invoices: boolean; writeoffs: boolean; products: boolean };
+  sink: SyncSink;
+  losses: { exists(sourceEntryId: string): Promise<boolean>; save(loss: PosterLoss, buildingId: string | null): Promise<void> };
+  products: { addMissing(items: DirectoryItem[]): Promise<number> };
+  storeDecision?: (storeId: string | null) => { skip: boolean; buildingId: string | null };
+}): Promise<PosterSyncCounters> {
+  const decide = input.storeDecision ?? (() => ({ skip: false, buildingId: null }));
+  const counters: PosterSyncCounters = { created: 0, skipped: 0, failed: 0, losses: 0, products: 0 };
+  const needMenu = input.options.writeoffs || input.options.products;
+  const products = needMenu ? await input.client.products() : [];
+  const ingredients = needMenu ? await input.client.ingredients() : [];
+  const suppliers = input.options.invoices ? await input.client.suppliers() : [];
+  const dir = buildPosterDirectory(products, ingredients, suppliers);
+
+  if (input.options.invoices) {
+    let fetched = 0;
+    for (const supply of await input.client.supplies(input.fromDate, input.toDate)) {
+      const store = decide(supply.storageId);
+      if (supply.deleted || store.skip || (await input.sink.exists(supply.id))) {
+        counters.skipped += 1;
+        continue;
+      }
+      if (fetched >= MAX_POSTER_DOCUMENTS_PER_SYNC) break;
+      fetched += 1;
+      const parsed = posterSupplyToDocument(supply, await input.client.supplyItems(supply.id), supply.supplierId ? dir.suppliers.get(supply.supplierId) : null);
+      if (!parsed) {
+        counters.skipped += 1;
+        continue;
+      }
+      const saved = await input.sink.save({ externalId: supply.id, parsed, fileName: null, buildingId: store.buildingId });
+      if (saved.created) counters.created += 1;
+      else counters.skipped += 1;
+    }
+  }
+  if (input.options.writeoffs) {
+    let fetched = 0;
+    for (const waste of await input.client.wastes(input.fromDate, input.toDate)) {
+      const store = decide(waste.storageId);
+      // Первая позиция уже в «Потерях» — списание загружено, состав не запрашиваем.
+      if (waste.deleted || store.skip || (await input.losses.exists(posterLossId(waste.id, 1)))) continue;
+      if (fetched >= MAX_POSTER_DOCUMENTS_PER_SYNC) break;
+      fetched += 1;
+      for (const loss of posterWasteToLosses(await input.client.waste(waste.id), dir)) {
+        if (await input.losses.exists(loss.sourceEntryId)) continue;
+        await input.losses.save(loss, store.buildingId);
+        counters.losses += 1;
+      }
+    }
+  }
+  if (input.options.products) counters.products = await input.products.addMissing(posterProductsForDirectory(products, ingredients));
   return counters;
 }

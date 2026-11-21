@@ -1,0 +1,76 @@
+URL: https://dev.joinposter.com/en/docs/v3/web/storage/getSupply
+storage.getSupply: Supply Properties
+Example request:
+<?php
+$url = 'https://joinposter.com/api/storage.getSupply'
+ . '?token=687409:4164553abf6a031302898da7800b59fb'
+ . '&supply_id=46';
+$data = sendRequest($url);
+Copy to clipboard
+Error
+Copied
+Example response:
+{  
+   "response":{  
+      "supply_id":"46",
+      "in_inventory":"1",
+      "storage_id":"1",
+      "supplier_id":"1",
+      "account_id":"",
+      "date":"2017-05-18 09:07:00",
+      "supply_sum":"6698828.90",
+      "supply_comment":"",
+      "supplier_name":"Purchasing Agent",
+      "ingredients":[  
+         {  
+            "ingredient_id":"66",
+            "product_id":"86",
+            "supply_ingredient_num":"3.0000000",
+            "supply_ingredient_sum":"150.00",
+            "ingredient_name":"Shen Da Bai Cha-Dzen Gu",
+            "ingredient_unit":"kg",
+            "pack_id":"3",
+            "type":1,
+            "ing_delete":"0",
+            "tax_id":"0"
+         }
+      ]
+   }
+}
+Copy to clipboard
+Error
+Copied
+This method returns the properties of a supply.
+HTTP Request
+GET https://joinposter.com/api/storage.getSupply
+GET parameters for storage.getSupply
+Parameter	Description
+supply_id	Required parameter specifying the supply ID
+Response parameters for storage.getSupply
+Parameter	Description
+response	Response object
+Inside the response parameter is an object containing the following fields:
+Parameter	Description
+supply_id	Supply ID
+in_inventory	Inventory check for the supply: 0 — no inventory check, 1 — inventory check performed
+storage_id	ID of the storage where the supply was received
+supplier_id	Supplier ID
+date	Date of the supply
+account_id	ID of the financial account used for the supply
+supply_sum	Total supply amount
+supply_comment	Comment
+storage_name	Name of the storage
+supplier_name	Supplier name
+ingredients	List of ingredients included in the supply
+Inside the ingredients parameter is an array, where each item includes the following fields:
+Parameter	Description
+ingredient_id	Ingredient ID
+product_id	Product ID
+supply_ingredient_num	Quantity of the ingredient
+supply_ingredient_sum	Total amount for the ingredient supply
+ingredient_name	Name of the ingredient
+ingredient_unit	Unit of measurement: kg — kilograms, p — pieces, l — liters
+pack_id	Packaging ID
+type	Product type: Product type: 1 — product, 2 — manufactured dish, 3 — manufactured preparation, 8 — product modification, 10 — ingredient
+ing_delete	Indicates if the ingredient was deleted: 0 — not deleted, 1 — deleted
+tax_id	Tax ID
