@@ -2704,7 +2704,7 @@
     },
     "legal": {
       "consentSentence": "I accept the <offer>Offer</offer> and <terms>User Agreement</terms>, have read the <privacy>Privacy Policy</privacy>, and give my <consent>consent to the processing of personal data</consent>.",
-      "consentShort": "I accept the <offer>Offer</offer> and give my <consent>consent to the processing of personal data</consent>",
+      "consentShort": "I accept the <offer>Offer</offer> and <consent>data processing</consent>",
       "openOfferTitle": "Open the Offer?",
       "openConsentTitle": "Open the consent to personal data processing?",
       "openHint": "The document opens in a new tab; the form stays where it is.",

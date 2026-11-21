@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { loadMessages } from "../../i18n/messages";
 import { translatorFor } from "../../i18n/translator";
-import { HaccpGoldSeal } from "./haccp-gold-seal";
+import { HaccpGoldSeal, sealTextScale } from "./haccp-gold-seal";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -21,15 +21,27 @@ test("gold seal renders the localized words inside the ring in every locale", as
     assert.match(html, /^<svg[^>]*aria-hidden="true"/, `${locale}: decorative`);
     assert.ok(html.includes(`>${sealTitle}</text>`), `${locale}: title`);
     assert.ok(html.includes(`>${sealCaption}</text>`), `${locale}: caption`);
-    // Words are squeezed into the ring, never stretched past it.
-    const lengths = [...html.matchAll(/textLength="([\d.]+)"/g)].map((match) => Number(match[1]));
-    assert.equal(lengths.length, 2);
-    for (const length of lengths) assert.ok(length > 0 && length <= 66, `${locale}: textLength ${length}`);
+    // Words are squeezed with scale(x 1) from a generous width estimate: Safari ignores textLength
+    // for glyphs and clipped a gradient fill to the squeezed box (21.11.2026: white «Х» and «П»).
+    const scales = [...html.matchAll(/scale\(([\d.]+) 1\)/g)].map((match) => Number(match[1]));
+    assert.equal(scales.length, 4, `${locale}: two words in two engraving layers`);
+    for (const scale of scales) assert.ok(scale > 0 && scale <= 1, `${locale}: scale ${scale}`);
+    assert.doesNotMatch(html, /textLength|lengthAdjust|<use/, `${locale}: no Safari-fragile text features`);
+    for (const group of html.match(/<g fill="[^"]*"/g) ?? []) assert.doesNotMatch(group, /url\(/, `${locale}: solid ink, no gradient on text`);
     if (locale !== "ru") assert.doesNotMatch(html, /[А-Яа-яЁё]/, `${locale}: Cyrillic in the seal`);
   }
   const ru = (await loadMessages("ru")).landing.hero;
   assert.equal(ru.sealTitle, "ХАССП");
   assert.equal(ru.sealCaption, "СЕРТИФИЦИРОВАНО");
+});
+
+test("seal words fit the ring with any system font: width estimate × scale stays inside", () => {
+  for (const [text, size, max] of [["ХАССП", 21, 64], ["HACCP", 21, 64], ["СЕРТИФИЦИРОВАНО", 9, 62], ["SERTIFIKATLANGAN", 9, 62], ["CERTIFIED", 9, 62]] as const) {
+    const scale = sealTextScale(text, size, max);
+    assert.ok(scale > 0.5 && scale <= 1, `${text}: ${scale}`);
+    assert.ok([...text].length * 0.74 * size * scale <= max + 0.05, `${text} fits ${max}`);
+  }
+  assert.equal(sealTextScale("CERTIFIED", 9, 62), 1, "short words are not squeezed");
 });
 
 test("gold seal references only its own gradients, so two seals never share ids", () => {

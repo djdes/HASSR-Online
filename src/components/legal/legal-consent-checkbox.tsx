@@ -83,8 +83,13 @@ export function LegalConsentCheckbox({
     <label
       data-guide={guideTarget}
       className={cn(
-        "flex cursor-pointer gap-2.5 rounded-2xl px-1 py-1 text-left text-[12.5px] leading-[1.5] transition-colors",
-        variant === "short" ? "items-center" : "items-start",
+        "flex cursor-pointer gap-2.5 rounded-2xl px-1 text-left transition-colors",
+        // Короткая строка стартовой формы (правки 21.11.2026): одной строкой,
+        // крупнее и с большой галкой — в неё попадают пальцем. Кегль идёт от
+        // ширины экрана: строка ≈ 19,6 кегля, рядом галка 22 px.
+        variant === "short"
+          ? "items-center py-2 text-[clamp(14px,5.1vw-3.67px,16px)] leading-[1.35]"
+          : "items-start py-1 text-[12.5px] leading-[1.5]",
         dark ? "text-white/70" : "text-[#6f7282]",
         highlight && !checked && (dark ? "bg-white/10 ring-2 ring-[#ffb4ab]/60" : "bg-[#fff4f2] ring-2 ring-[#f2b8b0]"),
         className
@@ -94,7 +99,7 @@ export function LegalConsentCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className={cn("size-[18px] shrink-0 accent-[#5566f6]", variant === "short" ? "" : "mt-0.5")}
+        className={cn("shrink-0 accent-[#5566f6]", variant === "short" ? "size-[22px]" : "mt-0.5 size-[18px]")}
         data-testid="legal-consent"
         aria-describedby={descriptionId}
       />

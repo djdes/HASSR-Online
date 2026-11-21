@@ -1220,9 +1220,12 @@ html, body {
   }
 
   /* ── Header: компактный padding и hide длинных breadcrumbs ──── */
-  .app-shell > header,
-  .app-shell header.sticky,
-  .app-shell header[class*="sticky"] {
+  /* Только кабинет: у публичных шапок (`public-theme` на <body>) свой отступ
+     у <nav>; с этим правилом знак и «Войти» стояли в 28 px от краёв, а не в
+     16 px, как всё остальное (правки 21.11.2026). */
+  .app-shell:not(.public-theme) > header,
+  .app-shell:not(.public-theme) header.sticky,
+  .app-shell:not(.public-theme) header[class*="sticky"] {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
   }
@@ -1423,31 +1426,36 @@ html, body {
   animation-delay: 520ms;
 }
 
-/* Золотая печать «ХАССП» у плашки «Разработан при консультации…»
-   (правки 20.11.2026, landing/haccp-gold-seal.tsx): ставится, когда плашка
-   уже поднялась; потом по ней раз в 5 с проходит блик и вспыхивают искры.
-   Без анимации блик и искры стоят за краем / в нуле — их не видно. */
+/* Золотая печать «ХАССП» (landing/haccp-gold-seal.tsx; на главной и в окне
+   скачивания шаблона): ставится, когда плашка поднялась; дальше раз в 8 с —
+   покачивание, блик и искры одним «бликом» (правки 21.11.2026: «повторялась
+   через какое-то время»). Нажатие проигрывает «постановку» ещё раз — в
+   компоненте. Без анимации блик и искры стоят за краем / в нуле. */
 .gold-seal {
   overflow: visible;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transform-origin: 50% 44%;
   filter: drop-shadow(0 6px 10px rgba(166, 112, 6, 0.3));
-  animation: gold-seal-stamp 0.9s cubic-bezier(0.22, 1.3, 0.36, 1) 0.78s both;
+  animation:
+    gold-seal-stamp 0.9s cubic-bezier(0.22, 1.3, 0.36, 1) 0.78s both,
+    gold-seal-wiggle 8s ease-in-out 3s infinite;
 }
 
 .gold-seal-shine {
   transform: translateX(-24px);
-  animation: gold-seal-shine 5s cubic-bezier(0.45, 0, 0.25, 1) 1.7s infinite;
+  animation: gold-seal-shine 8s cubic-bezier(0.45, 0, 0.25, 1) 3.25s infinite;
 }
 
 .gold-seal-sparkle {
   transform-box: fill-box;
   transform-origin: center;
   transform: scale(0);
-  animation: gold-seal-sparkle 5s ease-in-out 2.3s infinite;
+  animation: gold-seal-sparkle 8s ease-in-out 3.7s infinite;
 }
 
 .gold-seal-sparkle-late {
-  animation-delay: 3.4s;
+  animation-delay: 4.1s;
 }
 
 @keyframes gold-seal-stamp {
@@ -1465,11 +1473,28 @@ html, body {
   }
 }
 
+@keyframes gold-seal-wiggle {
+  0%,
+  12%,
+  100% {
+    transform: none;
+  }
+  3% {
+    transform: scale(1.08) rotate(-7deg);
+  }
+  6% {
+    transform: scale(1.03) rotate(5deg);
+  }
+  9% {
+    transform: scale(1.01) rotate(-2deg);
+  }
+}
+
 @keyframes gold-seal-shine {
   0% {
     transform: translateX(-24px);
   }
-  42%,
+  18%,
   100% {
     transform: translateX(150px);
   }
@@ -1481,11 +1506,11 @@ html, body {
     opacity: 0;
     transform: scale(0) rotate(0deg);
   }
-  8% {
+  5% {
     opacity: 1;
     transform: scale(1) rotate(45deg);
   }
-  18% {
+  11% {
     opacity: 0;
     transform: scale(0) rotate(90deg);
   }

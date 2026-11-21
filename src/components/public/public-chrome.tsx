@@ -74,8 +74,11 @@ export async function PublicHeader({
         <Link href="/" className="shrink-0 text-[#0b1024]" aria-label={t("homeAria")}>
           <BrandWithTagline tagline={t("tagline")} />
         </Link>
-        <div className="flex items-center gap-1.5 sm:gap-5">
-          <SiteSearch />
+        <div className="flex items-center gap-1 sm:gap-5">
+          {/* Уже 390 px поиск прячем: иначе «Тарифы» и вход не влезают (правки 21.11.2026). */}
+          <span className="hidden min-[390px]:contents">
+            <SiteSearch />
+          </span>
           <LanguageSwitch className="hidden lg:inline-flex" />
           {link("journals-info", t("journals"), "/journals-info")}
           {link("blog", t("blog"), "/blog")}
@@ -104,14 +107,14 @@ function PublicHeaderAnon({ showPricing, pricingLabel, loginLabel }: { showPrici
       {showPricing ? (
         <Link
           href="/pricing"
-          className="inline-flex h-10 items-center px-1.5 text-[15px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
+          className="inline-flex h-10 items-center px-1 text-[15px] font-medium text-[#6f7282] transition-colors hover:text-[#0b1024] sm:h-auto sm:px-0 sm:text-[14px]"
         >
           {pricingLabel}</Link>
       ) : null}
       <Link
         href="/login"
         aria-label={loginLabel}
-        className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-3 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:gap-2 sm:px-4 sm:text-[14px]"
+        className="inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl border border-[#dcdfed] bg-white px-2.5 text-[15px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] sm:gap-2 sm:px-4 sm:text-[14px]"
       >
         {/* Уже 375 px — только значок: подпись не влезает рядом с «Тарифами». */}
         <span className="hidden min-[375px]:inline">{loginLabel}</span><LogIn className="size-4 text-[#5566f6]" />
