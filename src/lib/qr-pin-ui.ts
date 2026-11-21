@@ -9,6 +9,11 @@
  * Размер задаётся переменной `--qc` на `.qc` (по умолчанию 112px). Ореол —
  * `box-shadow` 10px: контейнеру нужен отступ ≥ 10px, иначе ореол режется.
  * При `prefers-reduced-motion` — без анимации, сразу готовая галка.
+ *
+ * Цвет компании (2026-11-21): на страницах сотрудников по QR в её стиле
+ * (`QrPageShell`) задан `--brand-accent` — галка, рамка поля PIN, ссылки и
+ * «Запомнить выбор» берут его; без него — индиго WeSetup. Ореол сначала
+ * объявлен `rgba` — браузер без `color-mix` оставит его.
  */
 export const QR_CHECK_COLOR = "#5566f6";
 
@@ -16,7 +21,7 @@ export const QR_CHECK_COLOR = "#5566f6";
 export const QR_CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="qc-m" d="m6.5 12.5 3.6 3.6 7.4-7.6"/></svg>`;
 
 export const QR_CHECK_CSS = `
-.qc{--qc:112px;width:var(--qc);height:var(--qc);flex:none;border-radius:28%;background:${QR_CHECK_COLOR};box-shadow:0 0 0 10px rgba(85,102,246,.14);display:flex;align-items:center;justify-content:center;animation:qc-pop .42s cubic-bezier(.2,.9,.3,1.25) both}
+.qc{--qc:112px;width:var(--qc);height:var(--qc);flex:none;border-radius:28%;background:var(--brand-accent,${QR_CHECK_COLOR});box-shadow:0 0 0 10px rgba(85,102,246,.14);box-shadow:0 0 0 10px color-mix(in srgb,var(--brand-accent,${QR_CHECK_COLOR}) 14%,transparent);display:flex;align-items:center;justify-content:center;animation:qc-pop .42s cubic-bezier(.2,.9,.3,1.25) both}
 .qc svg{width:58%;height:58%;display:block}
 .qc-m{stroke-dasharray:18;stroke-dashoffset:18;animation:qc-draw .28s ease-out .2s forwards}
 @keyframes qc-pop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.06);opacity:1}100%{transform:scale(1);opacity:1}}
@@ -47,10 +52,10 @@ export const QR_PIN_UI_CSS = `
 .qp-card{background:#fff;border:1px solid #ececf4;border-radius:20px;padding:14px 16px;margin:0 0 16px;box-shadow:0 0 0 1px rgba(240,240,250,.45)}
 .qp-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:6px 2px 12px}
 .qp-k{font-size:24px;font-weight:700;color:#0b1024;letter-spacing:-.01em}
-.qp-link{flex:none;font-size:17px;font-weight:600;color:#3848c7;text-decoration:underline;text-underline-offset:3px}
+.qp-link{flex:none;font-size:17px;font-weight:600;color:var(--brand-accent,#3848c7);text-decoration:underline;text-underline-offset:3px}
 .qp-pin{display:block;width:100%;min-height:120px;border:2px solid #dcdfed;border-radius:22px;background:#fff;color:#0b1024;text-align:center;font:inherit;font-size:clamp(44px,13vw,64px);font-weight:700;letter-spacing:.25em;padding:0 0 0 .25em;-webkit-appearance:none;appearance:none;margin:0}
 .qp-pin::placeholder{color:#c8cbe0;letter-spacing:.2em}
-.qp-pin:focus{outline:none;border-color:#5566f6;box-shadow:0 0 0 5px rgba(85,102,246,.15)}
+.qp-pin:focus{outline:none;border-color:var(--brand-accent,#5566f6);box-shadow:0 0 0 5px rgba(85,102,246,.15);box-shadow:0 0 0 5px color-mix(in srgb,var(--brand-accent,#5566f6) 15%,transparent)}
 .qp-hint{font-size:20px;line-height:1.4;color:#6f7282;margin:12px 2px 0}
 .qp-err{border:1px solid #ffd2cd;background:#fff4f2;color:#a13a32;border-radius:16px;padding:14px 16px;font-size:19px;line-height:1.4;margin:0 0 12px}
 .qp-note{border:1px solid #ffe9b0;background:#fff8eb;color:#7a4a00;border-radius:18px;padding:16px 18px;font-size:21px;line-height:1.4;font-weight:500;margin:0 0 14px}
@@ -58,7 +63,7 @@ export const QR_PIN_UI_CSS = `
 .qp-remember{display:flex;align-items:center;gap:12px;margin:14px 2px 0;font-size:18px;color:#3c4053;cursor:pointer;line-height:1.35}
 /* Между карточкой «Кто заполняет» и карточкой PIN — одинаковый отступ сверху и снизу. */
 .qp-remember-mid{margin:14px 2px}
-.qp-remember input{width:26px;height:26px;margin:0;flex:none;accent-color:#5566f6}
+.qp-remember input{width:26px;height:26px;margin:0;flex:none;accent-color:var(--brand-accent,#5566f6)}
 .qp-ok{display:flex;justify-content:center;overflow:hidden;max-height:190px;padding:16px 0 18px;margin:0 0 8px;animation:qp-out .3s ease-in .9s forwards}
 .qc-wrap{display:flex;justify-content:center;padding:12px 0;margin:0 0 12px}
 .qp-rise{animation:qp-rise .35s ease-out .12s both}

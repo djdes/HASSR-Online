@@ -57,6 +57,11 @@ async function makeOwner(orgId: string, label: string) {
 }
 
 const ago = (days: number, from = new Date()) => new Date(from.getTime() - days * DAY);
+/** Полдень того же дня по Москве (UTC+3, без перехода на летнее время). */
+const moscowNoon = (at: Date) => {
+  const msk = new Date(at.getTime() + 3 * HOUR);
+  return new Date(Date.UTC(msk.getUTCFullYear(), msk.getUTCMonth(), msk.getUTCDate(), 12 - 3));
+};
 
 /* ───────────── Р4: уборка ───────────── */
 
@@ -219,10 +224,9 @@ async function alertPart() {
   const mine = new Set([healthy.id, broken.id, stale.id]);
 
   // Время тревоги — через месяц: сегодняшние отметки и обмены ей не мешают. В полдень по Москве:
-  // «+2 часа» и «+1 час» ниже не должны перескакивать через полночь МСК (при запуске в 22–24 МСК
-  // «тот же день» иначе оказывался следующим и сценарий падал).
-  const T = new Date(STARTED.getTime() + 30 * DAY);
-  T.setUTCHours(9, 0, 0, 0);
+  // «тот же день + 2 часа» не должен переходить московскую полночь — сценарий, начатый в 22–24 МСК,
+  // иначе падал на «same day» и «next day» (PR #298, запуск в 23:14 МСК).
+  const T = moscowNoon(new Date(STARTED.getTime() + 30 * DAY));
   const run = (masterOrganizationId: string, status: string, at: Date, error: string | null = null) =>
     db.directoryExchangeRun.create({ data: { masterOrganizationId, trigger: "schedule", status, startedAt: at, finishedAt: at, durationMs: 10, error } });
   await run(healthy.id, "ok", new Date(T.getTime() - 1 * HOUR));

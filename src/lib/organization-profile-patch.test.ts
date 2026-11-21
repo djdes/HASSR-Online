@@ -108,3 +108,11 @@ test("фирменный стиль: цвета, сайт и переключа�
   });
   assert.equal(parseOrganizationProfilePatch({ brandColor2: "красный" }, ORG_PROFILE_FIELDS).ok, false);
 });
+
+test("кабинет в цветах компании — только да/нет", () => {
+  assert.deepEqual(parseOrganizationProfilePatch({ brandCabinet: true }, ORG_PROFILE_FIELDS), { ok: true, data: { brandCabinet: true } });
+  assert.deepEqual(parseOrganizationProfilePatch({ brandCabinet: false }, ORG_PROFILE_FIELDS), { ok: true, data: { brandCabinet: false } });
+  // Не булево — поле не трогаем.
+  const odd = parseOrganizationProfilePatch({ brandCabinet: "yes", name: "Кафе" }, ORG_PROFILE_FIELDS);
+  assert.deepEqual(odd, { ok: true, data: { name: "Кафе" } });
+});

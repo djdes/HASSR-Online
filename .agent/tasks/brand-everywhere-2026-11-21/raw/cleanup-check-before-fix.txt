@@ -1,0 +1,12 @@
+PASS second cleanup keeps the survivors
+PASS scheduled run removes the same rows and keeps the same
+PASS scheduled run reports cleanup counts and the alert status
+PASS healthy night: nothing sent, no mark
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+FAIL same day: nothing more — {"status":"sent","cabinets":2}
+FAIL next day: sent again, the cabinet that failed in this run is listed — {"nextDay":{"status":"already_sent","cabinets":3},"sent":2}
+PASS failed delivery: no mark, the next call retries
+RESULT: 2 check(s) failed

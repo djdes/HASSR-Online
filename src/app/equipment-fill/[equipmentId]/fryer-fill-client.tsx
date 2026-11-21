@@ -8,6 +8,7 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import type { QrPageBrand } from "@/lib/qr-page-brand";
 import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { WhoRow } from "@/components/qr-fill/who-row";
@@ -42,6 +43,8 @@ function parseKg(value: string): number | null | "invalid" {
 export function FryerFillClient(props: {
   token: string;
   organizationName: string;
+  /** Логотип и цвет компании для шапки и кнопок (`qrPageBrand`); нет — стиль WeSetup. */
+  brand?: QrPageBrand | null;
   journalTitle: string;
   fryer: { id: string; name: string };
   employees: Employee[];
@@ -192,7 +195,7 @@ export function FryerFillClient(props: {
   const stepTitle = "mb-2 text-[15px] font-semibold text-[#0b1024]";
 
   return (
-    <QrPageShell orgName={props.organizationName} title={props.journalTitle}>
+    <QrPageShell orgName={props.organizationName} title={props.journalTitle} brand={props.brand}>
       <QrPinUiStyles />
       <WhoRow label={t("fryer.fryer")} value={props.fryer.name} />
       {!props.target ? (

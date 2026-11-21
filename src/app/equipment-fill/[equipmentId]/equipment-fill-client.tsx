@@ -8,6 +8,7 @@ import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import type { QrPageBrand } from "@/lib/qr-page-brand";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
@@ -59,6 +60,8 @@ type Props = {
   stamp?: { date: string; time: string } | null;
   /** Шапка в две строки: организация и название журнала. */
   organizationName: string;
+  /** Логотип и цвет компании для шапки и кнопок (`qrPageBrand`); нет — стиль WeSetup. */
+  brand?: QrPageBrand | null;
   journalTitle: string;
   /** «Запомнить выбор на этом оборудовании» — сотрудник из cookie организации. */
   rememberedEmployeeId?: string | null;
@@ -90,6 +93,7 @@ export function EquipmentFillClient({
   todayValues = null,
   stamp = null,
   organizationName,
+  brand = null,
   journalTitle,
   rememberedEmployeeId = null,
   passEmployeeId = null,
@@ -360,7 +364,7 @@ export function EquipmentFillClient({
               : null;
 
   return (
-    <QrPageShell orgName={organizationName} title={journalTitle}>
+    <QrPageShell orgName={organizationName} title={journalTitle} brand={brand}>
         <QrPinUiStyles />
         {/* Смены оборудования на наклейке нет (владелец, 2026-09-22): каждый
             холодильник — своей наклейкой, чтобы замер делали у него. */}

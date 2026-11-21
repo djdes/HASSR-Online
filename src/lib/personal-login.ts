@@ -65,7 +65,8 @@ export async function resolvePersonalLoginToken(raw: string) {
       permissionPreset: true,
       organizationId: true,
       qrPinHash: true,
-      organization: { select: { name: true } },
+      // Логотип и цвет — шапка страницы входа в стиле компании (`qrPageBrand`).
+      organization: { select: { name: true, logoUrl: true, brandColor: true } },
     },
   });
   return user ? { tokenId: row.id, user } : null;

@@ -39,6 +39,7 @@ import { QrFillPresentationProvider } from "@/components/qr-fill/qr-fill-present
 import { getOrgCustomNames } from "@/lib/org-custom-names";
 import { customJournalName } from "@/lib/custom-names";
 import { normalizeUserRole } from "@/lib/user-roles";
+import { qrPageBrand } from "@/lib/qr-page-brand";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,7 +107,8 @@ export default async function EquipmentFillPage({
           name: true,
           organizationId: true,
           buildingId: true,
-          organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true } },
+          // Логотип и цвет — шапка и кнопки страницы в стиле компании (`qrPageBrand`).
+          organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true, logoUrl: true, brandColor: true } },
         },
       },
       sensorMappings: {
@@ -178,6 +180,7 @@ export default async function EquipmentFillPage({
       <UvLampClient
         token={token}
         organizationName={equipment.area.organization.name}
+        brand={qrPageBrand(equipment.area.organization)}
         lamp={{ id: equipment.id, name: equipment.name, areaName: equipment.area.name }}
         employees={list.map((e) => ({ id: e.id, name: e.name, positionTitle: qrRosterPosition(pointScope?.substituteUserIds, e.id, position(e), messages.equipmentFill.page.substitute) || null, hasPin: Boolean(e.qrPinHash) }))}
         journalTitle={customJournalName(customNames, UV_LAMP_RUNTIME_TEMPLATE_CODE) ?? messages.equipmentFill.uv.title}
@@ -215,6 +218,7 @@ export default async function EquipmentFillPage({
       <FryerFillClient
         token={token}
         organizationName={equipment.area.organization.name}
+        brand={qrPageBrand(equipment.area.organization)}
         journalTitle={customJournalName(customNames, FRYER_OIL_TEMPLATE_CODE) ?? messages.equipmentFill.fryer.title}
         fryer={{ id: equipment.id, name: equipment.name }}
         employees={(sessionEmployee && !sessionEmployee.canPickOthers
@@ -286,6 +290,7 @@ export default async function EquipmentFillPage({
     <EquipmentFillClient
       token={token}
       organizationName={equipment.area.organization.name}
+      brand={qrPageBrand(equipment.area.organization)}
       journalTitle={customJournalName(customNames, "cold_equipment_control") ?? messages.equipmentFill.page.journalTitle}
       todayValues={siblings.find((item) => item.current)?.values ?? null}
       stamp={stampFor(timezone)}

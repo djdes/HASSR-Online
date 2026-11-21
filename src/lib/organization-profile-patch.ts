@@ -37,6 +37,8 @@ export const ORG_PROFILE_FIELDS = [
   "website",
   "qrBrandFrame",
   "qrCenterLogo",
+  // Кабинет в цветах компании (2026-11-21, `qr-page-brand.ts`).
+  "brandCabinet",
   "logoUrl",
   "shiftEndHour",
   "lockPastDayEdits",
@@ -176,7 +178,7 @@ export function parseOrganizationProfilePatch(
       else data.website = site;
     }
   }
-  for (const key of ["qrBrandFrame", "qrCenterLogo"] as const) {
+  for (const key of ["qrBrandFrame", "qrCenterLogo", "brandCabinet"] as const) {
     if (has(key) && typeof body[key] === "boolean") data[key] = body[key];
   }
   if (has("logoUrl")) {

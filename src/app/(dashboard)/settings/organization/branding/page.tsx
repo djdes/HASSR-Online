@@ -33,6 +33,7 @@ export default async function OrganizationBrandingPage() {
         qrIconUrl: true,
         qrBrandFrame: true,
         qrCenterLogo: true,
+        brandCabinet: true,
       },
     }),
     getTranslations("settingsManagement.organizationProfile.brandingPage"),
@@ -63,6 +64,7 @@ export default async function OrganizationBrandingPage() {
             website: org.website,
             qrBrandFrame: org.qrBrandFrame,
             qrCenterLogo: org.qrCenterLogo,
+            brandCabinet: org.brandCabinet,
             logoUrl: org.logoUrl,
             qrIconUrl: org.qrIconUrl,
           }}

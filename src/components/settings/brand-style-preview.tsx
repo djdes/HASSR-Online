@@ -4,12 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import QRCode from "qrcode";
 import { PrintBrandFrame } from "@/components/print/print-brand-frame";
+import { QrHeaderMark, qrHeaderBackground } from "@/components/qr-fill/qr-header-brand";
+import { WESETUP_ACCENT } from "@/lib/document-brand";
 import { isSquareishLogo, orgMonogram, qrFrameColor, type PrintBrand } from "@/lib/print-brand";
+import type { BrandAccent, QrPageBrand } from "@/lib/qr-page-brand";
 
 /*
  * Живой предпросмотр фирменного стиля печати: плакат A4, QR-наклейка и
  * этикетка 58×40 мм. Рисуется на клиенте из тех же функций, что и печать
  * (`print-brand.ts`), поэтому меняется ещё до сохранения.
+ *
+ * С 2026-11-21 — ещё телефон сотрудника после скана QR (та же шапка, что у
+ * `QrPageShell`) и, если включён «Кабинет в цветах компании», образец кабинета.
+ * Цвета — инлайн-стилями: внутри кабинета с акцентом классы перекрасились бы.
  */
 
 const DEMO_QR_TEXT = "https://wesetup.ru/q/demo";
@@ -162,6 +169,70 @@ export function LabelPreview({ brand }: { brand: PrintBrand }) {
         <div>{t("labelMade")}</div>
         <div>{t("labelUntil")}</div>
         <div>{t("labelResp")}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Телефон сотрудника после скана QR-наклейки: шапка, поле замера и кнопка. */
+export function QrPagePreview({ brand, orgName }: { brand: QrPageBrand | null; orgName: string }) {
+  const t = useTranslations("settingsManagement.organizationProfile.brandingPage");
+  const accent = brand?.accent ?? WESETUP_ACCENT;
+  return (
+    <div
+      className="mx-auto w-[200px] overflow-hidden rounded-[26px] border-[5px] border-[#0b1024] bg-[#fafbff] shadow-[0_10px_24px_-14px_rgba(11,16,36,0.55)]"
+      data-preview="qr-page"
+    >
+      <div className="text-white" style={{ background: qrHeaderBackground(brand) }} data-preview-qr-header>
+        <div className="flex items-center gap-1.5 px-2.5 py-2">
+          <QrHeaderMark logoUrl={brand?.logoUrl ?? null} small />
+          <div className="min-w-0">
+            <div className="truncate text-[6.5px] font-semibold uppercase tracking-[0.12em] text-white/65">{orgName}</div>
+            <div className="truncate text-[10px] font-semibold leading-tight">{t("previewQrPageTitle")}</div>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-1.5 p-2.5">
+        <div className="rounded-xl border border-[#ececf4] bg-white p-2">
+          <div className="text-[7px] font-medium text-[#6f7282]">{t("previewQrPageField")}</div>
+          <div
+            className="mt-1 flex h-6 items-center rounded-lg border-2 bg-white px-1.5 text-[10px] font-semibold text-[#0b1024]"
+            style={{ borderColor: accent }}
+          >
+            +3,5
+          </div>
+        </div>
+        <div
+          className="flex h-7 items-center justify-center rounded-xl text-[9px] font-semibold text-white"
+          style={{ background: accent }}
+          data-preview-qr-button
+        >
+          {t("previewQrPageSave")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Кабинет в цветах компании: выбранный пункт меню и основная кнопка. */
+export function CabinetPreview({ accent }: { accent: BrandAccent }) {
+  const t = useTranslations("settingsManagement.organizationProfile.brandingPage");
+  return (
+    <div className="mx-auto w-[220px] rounded-2xl border border-[#ececf4] bg-white p-2.5" data-preview="cabinet">
+      <div
+        className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold"
+        style={{ background: `color-mix(in srgb, ${accent.accent} 10%, white)`, color: accent.accent }}
+      >
+        <span className="size-1.5 shrink-0 rounded-full" style={{ background: accent.accent }} aria-hidden />
+        {t("previewCabinetMenuActive")}
+      </div>
+      <div className="px-2 py-1.5 text-[10px] text-[#3c4053]">{t("previewCabinetMenu")}</div>
+      <div
+        className="mt-1.5 flex h-7 items-center justify-center rounded-lg text-[10px] font-semibold text-white"
+        style={{ background: accent.accent }}
+        data-preview-cabinet-button
+      >
+        {t("previewCabinetButton")}
       </div>
     </div>
   );
