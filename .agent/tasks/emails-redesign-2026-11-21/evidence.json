@@ -1,0 +1,14 @@
+{
+  "task": "emails-redesign-2026-11-21",
+  "date": "2026-11-21",
+  "base": "b2a311f79",
+  "verdict": "PASS",
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS" },
+  "commands": [
+    { "cmd": "npm run typecheck", "exit": 0, "raw": "raw/typecheck.txt" },
+    { "cmd": "npm run test:gate", "exit": 0, "result": "escalated to full suite: pass=6895, fail=0", "raw": "raw/test-changed.txt" },
+    { "cmd": "npx eslint <changed files>", "exit": 0, "raw": "raw/lint.txt" },
+    { "cmd": "SMTP_PORT=2526 npx tsx raw/preview-emails.ts + Playwright 390px", "exit": 0, "result": "16 emails, scrollW=390, min font 14px", "raw": "raw/preview-390.txt" }
+  ],
+  "notes": ["email screenshots stay in the local scratchpad (gitignored)", "promo designs, proposals and team-only notices unchanged"]
+}

@@ -6,6 +6,10 @@
  * обращение по имени и подпись ответственного менеджера — ответ на письмо
  * уходит ему (Reply-To ставит `job.server.ts`). Чистый модуль — тексты
  * проверяет `emails.test.ts`.
+ *
+ * Правки владельца 21.11.2026 «крупнее текст и слов поменьше»: в каждом
+ * письме — только суть (срок, что изменится, тариф, счёт, кнопка), по одной
+ * мысли на абзац; кегль поднимает общий шаблон (`enlargeEmailHtml`).
  */
 
 import { journalsLabel } from "@/lib/billing-period";
@@ -109,19 +113,19 @@ function join(blocks: Block[]): { html: string; text: string } {
 function replyLine(input: Common): Block {
   return para(
     input.manager
-      ? `Остались вопросы или нужно время на согласование — просто ответьте на это письмо, оно придёт мне. Или напишите нам в Telegram ${input.supportTelegram}.`
-      : `Остались вопросы или нужно время на согласование — просто ответьте на это письмо или напишите нам в Telegram ${input.supportTelegram}.`,
+      ? `Вопросы — ответьте на письмо, оно придёт мне, или напишите в Telegram ${input.supportTelegram}.`
+      : `Вопросы — ответьте на письмо или напишите в Telegram ${input.supportTelegram}.`,
   );
 }
 
 function offerText(input: Pick<TrialEmailInput, "tierTitle" | "points" | "monthRub" | "yearRub">): string {
   const yearMonthly = Math.round(input.yearRub / 12);
-  return `Вам подойдёт тариф «${input.tierTitle}» ${forPoints(input.points)}: ${rub(input.monthRub)} в месяц или ${rub(input.yearRub)} за год (${rub(yearMonthly)} в месяц).`;
+  return `Подойдёт тариф «${input.tierTitle}» ${forPoints(input.points)}: ${rub(input.monthRub)} в месяц или ${rub(input.yearRub)} за год (${rub(yearMonthly)} в месяц).`;
 }
 
 function savingsText(monthRub: number, yearRub: number): string | null {
   const save = yearSavings(monthRub, yearRub);
-  return save > 0 ? `За год выгоднее на ${rub(save)}, чем платить помесячно.` : null;
+  return save > 0 ? `За год выгоднее на ${rub(save)}.` : null;
 }
 
 export function composeTrialEmail(input: TrialEmailInput): ComposedNotice {
@@ -138,30 +142,28 @@ export function composeTrialEmail(input: TrialEmailInput): ComposedNotice {
       : `${org}: осталось ${left} пробного периода`;
 
   const losses = overLimit
-    ? `Если не продлить, ${org} перейдёт на бесплатный тариф — ${free}. Вы сами выберете, кого из сотрудников и какой журнал оставить; остальные сотрудники уйдут в архив, журналы выключатся. Записи и документы сохранятся — после оплаты всё вернётся как было.`
-    : `Если не продлить, ${org} останется на бесплатном тарифе — ${free}, как у вас сейчас. Подключить команду и все журналы можно в любой момент.`;
+    ? `${org} перейдёт на бесплатный тариф — ${free}. Остальные сотрудники уйдут в архив, журналы выключатся. Записи сохранятся, после оплаты всё вернётся.`
+    : `${org} останется на бесплатном тарифе — ${free}, как сейчас.`;
 
   const invoice: Block = input.invoice
     ? {
-        html: `<p ${P}>Мы уже выставили счёт <strong>№${escapeHtml(input.invoice.number)}</strong> на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — он во вложении. Оплатить по нему можно до ${escapeHtml(input.invoice.dueLabel)}, доступ продлится сам, как только деньги придут.</p>`,
-        text: `Мы уже выставили счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — он во вложении. Оплатить по нему можно до ${input.invoice.dueLabel}, доступ продлится сам, как только деньги придут.`,
+        html: `<p ${P}>Счёт <strong>№${escapeHtml(input.invoice.number)}</strong> на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — во вложении, оплатить до ${escapeHtml(input.invoice.dueLabel)}. Платёж идёт 1–3 рабочих дня, доступ продлится сам.</p>`,
+        text: `Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — во вложении, оплатить до ${input.invoice.dueLabel}. Платёж идёт 1–3 рабочих дня, доступ продлится сам.`,
       }
     : {
-        html: `<p ${P}>Нужен счёт для бухгалтерии? Укажите ИНН организации на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a> — счёт сформируется в один клик.</p>`,
-        text: `Нужен счёт для бухгалтерии? Укажите ИНН организации на странице тарифа — счёт сформируется в один клик: ${input.requisitesUrl}`,
+        html: `<p ${P}>Нужен счёт? Укажите ИНН на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a> — он сформируется сразу.</p>`,
+        text: `Нужен счёт? Укажите ИНН на странице тарифа — он сформируется сразу: ${input.requisitesUrl}`,
       };
 
   const body = join([
     para(greeting(input.recipientName)),
-    para(`Пробный период ${org} действует по ${input.lastDayLabel} включительно — ${input.stage === "trial_first" ? "осталось" : "остаётся всего"} ${left}.`),
+    para(`Пробный период ${org} — по ${input.lastDayLabel} включительно, ${input.stage === "trial_first" ? "осталось" : "осталось всего"} ${left}.`),
     box(`Сейчас у вас: ${now}.`),
-    heading("Что изменится без оплаты"),
+    heading("Без оплаты"),
     para(losses),
-    heading("Чтобы всё осталось как есть"),
-    para(offer),
-    ...(savings ? [para(savings)] : []),
+    heading("Чтобы всё осталось"),
+    para([offer, savings].filter(Boolean).join(" ")),
     invoice,
-    para("Оплатить лучше заранее: бухгалтерии и директору нужно время на согласование, а в выходные платежи не проходят."),
     button("Продлить доступ", input.payUrl),
     replyLine(input),
     signature(input.manager),
@@ -195,9 +197,8 @@ export function composeIdleTrialEmail(input: IdleTrialEmailInput): ComposedNotic
   const left = workdays(input.workdaysLeft);
   const body = join([
     para(greeting(input.recipientName)),
-    para(`Пробный период ${org} действует по ${input.lastDayLabel} включительно — осталось ${left}. Мы видим, что журналы в WeSetup ещё не начали вести.`),
-    box("Не успели разобраться? Ответьте на это письмо — продлим пробный период и поможем настроить журналы под вашу кухню: обычно это занимает 15 минут."),
-    para("Что можно сделать уже сейчас: добавить сотрудников, включить нужные журналы и сделать первую запись — гигиену или температуру холодильников."),
+    para(`Пробный период ${org} — по ${input.lastDayLabel}, осталось ${left}. Журналы пока не начаты.`),
+    box("Ответьте на это письмо — продлим пробный период и за 15 минут настроим журналы под вашу кухню."),
     button("Открыть журналы", input.helpUrl),
     replyLine(input),
     signature(input.manager),
@@ -237,14 +238,14 @@ export function composeGraceLastEmail(input: GraceLastEmailInput): ComposedNotic
   const head = input.reason === "subscription_expired" ? "Оплаченный срок закончился" : "Пробный период закончился";
   const body = join([
     para(greeting(input.recipientName)),
-    para(`${head}, и ${org} работает в отсрочке — она действует по ${input.lastDayLabel} включительно (осталось ${workdays(input.workdaysLeft)}).`),
-    box(`Если не оплатить, аккаунт перейдёт на бесплатный тариф — ${employeesLabel(input.freeUsers)} и ${journalsLabel(input.freeJournals)}${losses ? `: ${losses}` : ""}. Записи сохранятся, но вести журналы командой будет нельзя.`, WARN),
+    para(`${head}. Отсрочка ${org} — по ${input.lastDayLabel} включительно, осталось ${workdays(input.workdaysLeft)}.`),
+    box(`Без оплаты — бесплатный тариф: ${employeesLabel(input.freeUsers)} и ${journalsLabel(input.freeJournals)}${losses ? `; ${losses}` : ""}. Записи сохранятся.`, WARN),
     para(offerText(input)),
     input.invoice
-      ? para(`Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — во вложении. Платёж по счёту идёт 1–3 рабочих дня, поэтому лучше оплатить сегодня. Не успеете — записи сохранятся, а команду и журналы можно будет вернуть после оплаты.`)
+      ? para(`Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)}${input.invoice.cycle === "year" ? " (за год)" : ""} — во вложении. Платёж идёт 1–3 рабочих дня — лучше оплатить сегодня.`)
       : {
-          html: `<p ${P}>Нужен счёт? Укажите ИНН на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a> — он сформируется сразу. Картой — мгновенно.</p>`,
-          text: `Нужен счёт? Укажите ИНН на странице тарифа — он сформируется сразу. Картой — мгновенно: ${input.requisitesUrl}`,
+          html: `<p ${P}>Нужен счёт? Укажите ИНН на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a>. Картой — сразу.</p>`,
+          text: `Нужен счёт? Укажите ИНН на странице тарифа. Картой — сразу: ${input.requisitesUrl}`,
         },
     button("Оплатить и сохранить команду", input.payUrl),
     replyLine(input),
@@ -275,14 +276,14 @@ export function composeRenewalEarlyEmail(input: RenewalEarlyEmailInput): Compose
   const days = `${input.daysLeft} ${pluralRu(input.daysLeft, "день", "дня", "дней")}`;
   const body = join([
     para(greeting(input.recipientName)),
-    para(`Год работы ${org} в WeSetup оплачен по ${input.lastDayLabel} — осталось ${days}. Спасибо, что вы с нами!`),
+    para(`Год ${org} в WeSetup оплачен по ${input.lastDayLabel} — осталось ${days}. Спасибо, что вы с нами!`),
     box(`Продление: ${input.planLabel}${input.amountRub ? ` — ${rub(input.amountRub)} за год` : ""}.`),
-    para("Оплатить лучше заранее: годовой платёж проходит согласование у директора и бухгалтерии, а без оплаты в срок команда перейдёт на бесплатный тариф."),
+    para("Оплатите заранее: годовой платёж проходит согласование."),
     input.invoice
-      ? para(`Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)} — во вложении, оплатить можно до ${input.invoice.dueLabel}. Новый год начнётся с даты окончания текущего — ни одного дня не пропадёт.`)
+      ? para(`Счёт №${input.invoice.number} на ${rub(input.invoice.amountRub)} — во вложении, оплатить до ${input.invoice.dueLabel}. Новый год начнётся с конца текущего.`)
       : {
-          html: `<p ${P}>Нужен счёт? Он сформируется на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a>, если указан ИНН. Новый год начнётся с даты окончания текущего.</p>`,
-          text: `Нужен счёт? Он сформируется на странице тарифа, если указан ИНН: ${input.requisitesUrl}. Новый год начнётся с даты окончания текущего.`,
+          html: `<p ${P}>Нужен счёт? Укажите ИНН на <a href="${input.requisitesUrl}" style="color:#3848c7">странице тарифа</a>. Новый год начнётся с конца текущего.</p>`,
+          text: `Нужен счёт? Укажите ИНН на странице тарифа: ${input.requisitesUrl}. Новый год начнётся с конца текущего.`,
         },
     button("Продлить на год", input.payUrl),
     replyLine(input),

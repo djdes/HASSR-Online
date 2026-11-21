@@ -1,0 +1,16 @@
+account-password-blank.html  h= 1268 scrollW=390 minFont=14.5 words=120 | Аккаунт создан
+alert-compliance.html        h=  800 scrollW=390 minFont=16 words=12 | Напоминание о журналах
+alert-temperature.html       h=  823 scrollW=390 minFont=16 words=31 | Температура вне нормы!
+blank-download.html          h= 1006 scrollW=390 minFont=14 words=79 | Шаблон «Журнал уборки»
+blank-followup.html          h= 1032 scrollW=390 minFont=14 words=71 | Как вести журнал «Журнал уборки»: подсказки
+feedback-received.html       h=  822 scrollW=390 minFont=14 words=38 | Обращение принято
+feedback-reply.html          h=  800 scrollW=390 minFont=14 words=30 | Ответ поддержки
+invite-password.html         h=  800 scrollW=390 minFont=15 words=28 | Приглашение в систему
+invite-token.html            h=  800 scrollW=390 minFont=15 words=23 | Вас пригласили в Кафе «Ромашка»
+lifecycle-idle.html          h=  800 scrollW=390 minFont=17 words=48 | Поможем начать
+lifecycle-trial.html         h= 1172 scrollW=390 minFont=17 words=117 | Пробный период заканчивается
+new-device.html              h=  805 scrollW=390 minFont=15 words=48 | Новый вход в аккаунт
+password-changed.html        h=  800 scrollW=390 minFont=15 words=26 | Пароль обновлён
+password-reset.html          h=  800 scrollW=390 minFont=15 words=27 | Задайте новый пароль
+verification.html            h=  800 scrollW=390 minFont=15 words=20 | Код подтверждения
+welcome.html                 h= 1248 scrollW=390 minFont=16 words=66 | Добро пожаловать в WeSetup

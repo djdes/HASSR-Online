@@ -189,9 +189,9 @@ function brandBlock(brand: EmailBrand | null | undefined, tagline?: string): str
     ? `<img src="${brand.logoUrl}" height="32" alt="${escapeHtml(brand.brandName)}" style="display:block;border:0;height:32px;max-width:160px;width:auto;margin:0 0 6px">`
     : "";
   return `
-  <tr><td style="padding:14px 32px;background:#f5f6ff;border-bottom:1px solid #e4e4e7">
+  <tr><td class="ws-pad" style="padding:16px 28px;background:#f5f6ff">
     ${logo}
-    <p style="margin:0;font-size:12px;color:#3c4053">${escapeHtml(tagline ?? "при сопровождении")} <strong style="color:#0b1024">${escapeHtml(brand.brandName)}</strong></p>
+    <p style="margin:0;font-size:14px;color:#3c4053">${escapeHtml(tagline ?? "при сопровождении")} <strong style="color:#0b1024">${escapeHtml(brand.brandName)}</strong></p>
   </td></tr>`;
 }
 
@@ -207,27 +207,65 @@ export type EmailLayoutExtras = {
   locale?: Locale;
 };
 
+/**
+ * Крупнее текст во всех письмах (правки владельца 21.11.2026): кегли тела
+ * письма 11–16 px становятся на 2 px больше, кнопки — выше и круглее.
+ * Заголовки (17 px и больше) не трогаем. Тело приходит из десятков шаблонов —
+ * поэтому одним местом, в общем шаблоне.
+ */
+export function enlargeEmailHtml(html: string): string {
+  return html
+    .replace(/font-size:\s*(\d+(?:\.\d+)?)px/g, (whole, size: string) => {
+      const value = Number(size);
+      return value >= 11 && value <= 16 ? `font-size:${Math.min(18, value + 2)}px` : whole;
+    })
+    .replace(/style="(display:inline-block;background:[^"]*)"/g, (_whole, style: string) =>
+      `style="${style.replace(/padding:\s*\d+px\s+\d+px/, "padding:15px 28px").replace(/border-radius:\s*\d+px/, "border-radius:14px")}"`,
+    );
+}
+
+/**
+ * Общий шаблон писем (правки владельца 21.11.2026: «чёрная полоска, сделай во
+ * всю ширину и поинтереснее, крупнее текст»). Раньше сверху была тёмная полоса
+ * с тёмным же логотипом — его не было видно, а без картинок оставалась пустая
+ * чёрная полоса. Теперь: письмо во всю ширину (колонка до 600 px на ПК), сверху
+ * на белом — знак «сетап» и wesetup.ru, под ним яркая полоса с заголовком
+ * письма текстом (видна и без картинок), текст 17 px, кнопки крупные.
+ */
 function layout(title: string, body: string, brand?: EmailBrand | null, extras?: EmailLayoutExtras) {
   const preheader = extras?.preheader?.trim()
     ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${escapeHtml(extras.preheader.trim())}</div>`
     : "";
-  const footer = extras?.footerHtml ? `\n    ${extras.footerHtml}` : "";
+  // Заголовок полосы — без «— WeSetup» из темы письма: знак уже стоит сверху.
+  const heading = title.replace(/\s+[—–-]\s+WeSetup\s*$/u, "");
+  // Подвал — слева, как копирайт: старые подвалы (рассылки, служебные) были по центру.
+  const footer = extras?.footerHtml
+    ? `\n      ${enlargeEmailHtml(extras.footerHtml.replace(/;?\s*text-align:\s*center/g, ""))}`
+    : "";
   return `<!DOCTYPE html>
 <html lang="${extras?.locale === "uz" ? "uz-Latn" : extras?.locale ?? "ru"}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">${preheader}
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px">
-<tr><td align="center">
-<table width="100%" style="max-width:560px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
-  <tr><td style="background:#0b1024;padding:22px 32px">
-    <img src="${EMAIL_ASSET_ORIGIN}/brand/logo-email.png" width="116" height="31" alt="WeSetup" style="display:block;border:0;height:31px;width:116px">
-  </td></tr>${brandBlock(brand, extras?.brandTagline)}
-  <tr><td style="padding:32px">
-    <h2 style="margin:0 0 16px;font-size:18px;color:#18181b">${title}</h2>
-    ${body}
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<style>@media (max-width:620px){.ws-pad{padding-left:20px!important;padding-right:20px!important}.ws-title{font-size:25px!important}}</style></head>
+<body style="margin:0;padding:0;background:#ffffff;-webkit-text-size-adjust:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">${preheader}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff">
+<tr><td align="center" style="padding:0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px">
+  <tr><td class="ws-pad" style="padding:22px 28px 18px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="vertical-align:middle"><img src="${EMAIL_ASSET_ORIGIN}/brand/logo-email.png" width="104" height="28" alt="сетап" style="display:block;border:0;height:28px;width:104px;font-size:22px;font-weight:800;color:#0b1024"></td>
+      <td align="right" style="vertical-align:middle;font-size:14px;color:#6a6c7a"><a href="${EMAIL_ASSET_ORIGIN}" style="color:#6a6c7a;text-decoration:none">wesetup.ru</a></td>
+    </tr></table>
   </td></tr>
-  <tr><td style="padding:16px 32px;background:#fafafa;border-top:1px solid #e4e4e7">
-    ${extras?.locale ? "" : `<p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center">&copy; 2026 WeSetup. Ваш электронный ХАССП.${brand ? " Работает на платформе WeSetup." : ""}</p>`}${footer}
+  <tr><td class="ws-pad" style="background:#5566f6;background-image:linear-gradient(135deg,#5566f6 0%,#7a5cff 100%);padding:30px 28px 32px">
+    <h1 class="ws-title" style="margin:0;font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-0.01em;color:#ffffff">${heading}</h1>
+  </td></tr>${brandBlock(brand, extras?.brandTagline)}
+  <tr><td class="ws-pad" style="padding:28px 28px 8px;font-size:17px;line-height:1.55;color:#1f2130">
+    ${enlargeEmailHtml(body)}
+  </td></tr>
+  <tr><td class="ws-pad" style="padding:20px 28px 32px">
+    <div style="border-top:1px solid #ececf4;padding-top:18px">
+      ${extras?.locale ? "" : `<p style="margin:0;font-size:14px;line-height:1.5;color:#8a8c99">&copy; 2026 WeSetup · Ваш электронный ХАССП${brand ? " · Работает на платформе WeSetup" : ""}</p>`}${footer}
+    </div>
   </td></tr>
 </table>
 </td></tr>
@@ -247,7 +285,7 @@ function localizedLayout(
   const footer = `${t("email.common.footer")}${brand ? ` ${t("email.common.footerBrand")}` : ""}`;
   return layout(escapeHtml(title), body, brand, {
     locale,
-    footerHtml: `<p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center">&copy; 2026 WeSetup. ${footer}</p>`,
+    footerHtml: `<p style="margin:0;font-size:12px;line-height:1.5;color:#8a8c99">&copy; 2026 WeSetup · ${footer}</p>`,
     brandTagline: brand ? t("email.common.partnerBrandTagline") : undefined,
   });
 }

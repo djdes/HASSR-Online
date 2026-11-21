@@ -37,9 +37,11 @@ test("письмо за 4 рабочих дня: что у клиента сей
   assert.ok(!/«Кафе «Ромашка»»/.test(text));
   assert.match(text, /осталось 4 рабочих дня/);
   assert.match(text, /Сейчас у вас: 12 сотрудников, 18 журналов, 2 точки\./);
-  assert.match(text, /бесплатный тариф — 1 сотрудник и 1 журнал\. Вы сами выберете/);
+  assert.match(text, /бесплатный тариф — 1 сотрудник и 1 журнал\. Остальные сотрудники уйдут в архив/);
   assert.match(text, /тариф «Стандарт» на 2 точки: 5 980 ₽ в месяц или 47 760 ₽ за год \(3 980 ₽ в месяц\)/);
-  assert.match(text, /счёт №512 на 5 980 ₽ — он во вложении\. Оплатить по нему можно до 24 ноября/);
+  assert.match(text, /Счёт №512 на 5 980 ₽ — во вложении, оплатить до 24 ноября/);
+  // «Слов поменьше» (21.11.2026): письмо — короткие абзацы, без пересказа одного и того же.
+  assert.ok(text.length < 900, `письмо короткое: ${text.length} знаков`);
   assert.match(mail.telegramText, /остальные сотрудники уйдут в архив/);
 });
 
@@ -47,8 +49,8 @@ test("без ИНН — как получить счёт; в пределах б
   const mail = composeTrialEmail({ ...base, stage: "trial_second", workdaysLeft: 2, seats: 1, journals: 1, invoice: null });
   const text = plain(mail.html);
   assert.equal(mail.subject, "Кафе «Ромашка»: осталось 2 рабочих дня пробного периода");
-  assert.match(text, /Укажите ИНН организации/);
-  assert.match(text, /как у вас сейчас/);
+  assert.match(text, /Укажите ИНН/);
+  assert.match(text, /как сейчас/);
   assert.ok(!/уйдут в архив/.test(text));
 });
 
@@ -66,18 +68,20 @@ test("не начали вести журналы — без счёта, пре�
   const text = plain(mail.html);
   assert.equal(mail.subject, "Кафе «Ромашка»: продлим пробный период и поможем начать");
   assert.match(text, /продлим пробный период/);
+  assert.match(text, /по 17 ноября, осталось 4 рабочих дня/);
   assert.ok(!/счёт/i.test(text));
+  assert.ok(text.length < 520, `письмо короткое: ${text.length} знаков`);
   assert.match(mail.text, /Алексей Петров/);
 });
 
 test("последние дни отсрочки и годовой «оплатите заранее»", () => {
   const grace = composeGraceLastEmail({ ...base, reason: "trial_ended", lastDayLabel: "24 ноября", workdaysLeft: 2 });
   const text = plain(grace.html);
-  assert.match(text, /отсрочке — она действует по 24 ноября включительно/);
+  assert.match(text, /Отсрочка Кафе «Ромашка» — по 24 ноября включительно/);
   assert.match(text, /11 сотрудников уйдут в архив, 17 журналов выключатся/);
   assert.match(text, /Счёт №512 на 5 980 ₽ — во вложении/);
   const early = composeRenewalEarlyEmail({ ...base, lastDayLabel: "10 декабря", daysLeft: 30, planLabel: "«Стандарт», 2 точ.", amountRub: 47760, invoice: { number: "700", amountRub: 47760, dueLabel: "1 декабря" } });
   assert.equal(early.subject, "Кафе «Ромашка»: годовой тариф заканчивается 10 декабря — продлите заранее");
-  assert.match(plain(early.html), /Оплатить лучше заранее/);
+  assert.match(plain(early.html), /Оплатите заранее/);
   assert.match(plain(early.html), /Счёт №700 на 47 760 ₽ — во вложении/);
 });
