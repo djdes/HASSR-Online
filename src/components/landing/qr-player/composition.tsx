@@ -2,6 +2,7 @@
 
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 
+import type { ChapterId } from "./chapters";
 import { SceneFrame, type SceneDay } from "./scene";
 import type { QrMatrix } from "./qr-sticker";
 
@@ -12,6 +13,8 @@ export type QrCompositionProps = {
   fryerQuality?: number;
   today: SceneDay;
   qr: QrMatrix;
+  /** Набор глав ролика; без него — все шесть (общепит). */
+  chapterIds?: readonly ChapterId[];
 };
 
 /**
@@ -22,11 +25,11 @@ export type QrCompositionProps = {
  * размеров композиции (px из `compositionWidth/Height`), а Плеер
  * масштабирует готовый кадр под контейнер — пропорции инвариантны.
  */
-export const QrComposition: React.FC<QrCompositionProps> = ({ fridgeTemp, bodyTemp, fryerQuality, today, qr }) => {
+export const QrComposition: React.FC<QrCompositionProps> = ({ fridgeTemp, bodyTemp, fryerQuality, today, qr, chapterIds }) => {
   const frame = useCurrentFrame();
   return (
     <AbsoluteFill className="@container">
-      <SceneFrame frame={frame} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} fryerQuality={fryerQuality} today={today} qr={qr} />
+      <SceneFrame frame={frame} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} fryerQuality={fryerQuality} today={today} qr={qr} chapterIds={chapterIds} />
     </AbsoluteFill>
   );
 };

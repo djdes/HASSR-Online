@@ -9,6 +9,7 @@ import {
   Cable,
   Camera,
   Check,
+  ChevronDown,
   ClipboardCheck,
   Crown,
   Database,
@@ -137,6 +138,9 @@ type Props = {
   scheduleBusy?: boolean;
   /** Таблица сравнения под колонками. */
   showTable?: boolean;
+  /** Таблица свёрнута до заголовка-кнопки (главная, правки 21.11.2026: на
+      телефоне она занимала два экрана). Содержимое всё равно в HTML. */
+  tableCollapsed?: boolean;
   className?: string;
 };
 
@@ -185,6 +189,7 @@ export function TariffComparison({
   onCancelSchedule,
   scheduleBusy = false,
   showTable = true,
+  tableCollapsed = false,
   className,
 }: Props) {
   const t = useTranslations("landingComponents.tariffs");
@@ -629,7 +634,7 @@ export function TariffComparison({
         </div>
       </div>
 
-      {showTable ? <ComparisonTable onContact={() => setContactOpen(true)} /> : null}
+      {showTable ? <ComparisonTable onContact={() => setContactOpen(true)} collapsible={tableCollapsed} /> : null}
 
       <ContactUsDialog
         open={contactOpen}
@@ -852,10 +857,11 @@ function CtaStatic({ children }: { children: ReactNode }) {
  * скрыты классом, а не убраны из разметки — поисковик и скринридер на ПК
  * получают таблицу целиком.
  */
-function ComparisonTable({ onContact }: { onContact: () => void }) {
+function ComparisonTable({ onContact, collapsible = false }: { onContact: () => void; collapsible?: boolean }) {
   const t = useTranslations("landingComponents.tariffs");
   const tiers: TierId[] = ["free", "standard", "premium", "vip"];
   const [selected, setSelected] = useState<TierId>("standard");
+  const [open, setOpen] = useState(!collapsible);
   const cell = (value: ComparisonCell) => {
     if (value.kind === "yes") {
       return (
@@ -883,7 +889,24 @@ function ComparisonTable({ onContact }: { onContact: () => void }) {
   };
   return (
     <section data-testid="tariff-table" className="rounded-3xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-7">
-      <h3 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("table.title")}</h3>
+      {collapsible ? (
+        <h3>
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-expanded={open}
+            aria-controls="tariff-table-body"
+            data-testid="tariff-table-toggle"
+            className="-m-2 flex min-h-11 w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-2xl p-2 text-left text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024] transition-colors duration-150 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          >
+            {t("table.title")}
+            <ChevronDown className={`size-5 shrink-0 text-[#5566f6] transition-transform duration-150 ${open ? "rotate-180" : ""}`} aria-hidden />
+          </button>
+        </h3>
+      ) : (
+        <h3 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("table.title")}</h3>
+      )}
+      <div id="tariff-table-body" hidden={!open}>
 
       <LiquidTabs
         className="mt-4 lg:hidden"
@@ -967,6 +990,7 @@ function ComparisonTable({ onContact }: { onContact: () => void }) {
         ))}
       </table>
       <p className="mt-4 text-[13px] leading-relaxed text-[#6f7282]">{t("table.trialNote", { trialDays: TRIAL_DAYS })}</p>
+      </div>
     </section>
   );
 }

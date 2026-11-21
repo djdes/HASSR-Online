@@ -31,11 +31,12 @@ import {
   FRYER_QUALITY,
   JOURNALS,
   bodyFever,
-  chapterAt,
+  chapterTimeline,
   fridgeOutOfRange,
   fryerQualityKey,
   sceneSeconds,
   type Chapter,
+  type ChapterId,
 } from "./chapters";
 import type { QrMatrix } from "./qr-sticker";
 
@@ -85,6 +86,8 @@ export type SceneProps = {
   fryerQuality?: number;
   today: SceneDay;
   qr: QrMatrix;
+  /** Набор глав ролика (медцентр, отель); без него — все шесть. */
+  chapterIds?: readonly ChapterId[];
 };
 
 const P = {
@@ -2268,8 +2271,8 @@ function journalAtFor(chapter: Chapter, fridgeTemp: number): number {
  *    её первый кадр — чистая обложка.
  * Плюс «ручная» камера: едва заметный дрейф. Всё — функция кадра.
  */
-export function SceneFrame({ frame, fridgeTemp, bodyTemp, fryerQuality = FRYER_QUALITY.initial, today, qr }: SceneProps) {
-  const { chapter, index, local } = chapterAt(frame);
+export function SceneFrame({ frame, fridgeTemp, bodyTemp, fryerQuality = FRYER_QUALITY.initial, today, qr, chapterIds }: SceneProps) {
+  const { chapter, index, local } = chapterTimeline(chapterIds).at(frame);
   // Доля кадра — только у видео с голосом, где глава держит итог
   // (`narrated-timeline.ts`); Плеер на главной отдаёт целые кадры.
   const t = sceneSeconds(local + (frame - Math.floor(frame)));

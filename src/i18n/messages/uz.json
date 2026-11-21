@@ -5804,6 +5804,7 @@
     "faqHeading": "Ko‘p beriladigan savollar",
     "finalCtaHeading": "Bepul boshlang",
     "finalCtaDetails": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar, kartasiz. Xodimlarga hech narsa o‘rnatish kerak emas.",
+    "demoOffer": "O‘zingiz tushunishni xohlamaysizmi? 15 daqiqada ko‘rsatamiz",
     "qrCameraInstruction": "Xodim jurnalni qanday ochishini ko‘rish uchun telefon kamerangizni shu yerga qarating.",
     "faq": {
       "refund": {
@@ -5822,18 +5823,6 @@
         "question": "QR orqali kiritilgan yozuvni soxtalashtirish mumkinmi?",
         "answer": "Yozuvni shaxsiy PIN-kod tasdiqlaydi, vaqtni server qo‘yadi, amallar jurnali kim nima yozganini saqlaydi. PIN besh marta noto‘g‘ri kiritilsa, kiritish 15 daqiqaga bloklanadi."
       },
-      "electronicLogs": {
-        "question": "Elektron SanPiN jurnali nima?",
-        "answer": "O‘sha jurnal, faqat telefon va kompyuterda: xodimlar yozuv kiritadi, rahbar tekshiradi va hujjatlarni yuklab oladi."
-      },
-      "inspection": {
-        "question": "Rospotrebnadzor tekshiruvi qanday o‘tadi?",
-        "answer": "Inspektorga kerakli davr uchun PDF beriladi: F.I.Sh., lavozim, imzo, sana va qiymatlar."
-      },
-      "integrations": {
-        "question": "iiko va 1C bilan sinxronlash bormi?",
-        "answer": "Ha. Yetkazib beruvchilar, mahsulotlar, qabul va sifat tekshiruvlari o‘zi sinxronlanadi. Muhandisimiz bilan sozlash — taxminan 30 daqiqa."
-      },
       "offline": {
         "question": "Internet uzilib qolsa nima bo‘ladi?",
         "answer": "Yozuvlar qurilmada saqlanadi va tarmoq tiklangach serverga yuboriladi."
@@ -5841,10 +5830,6 @@
       "dataSecurity": {
         "question": "Ma’lumotlarim xavfsizmi?",
         "answer": "Ma’lumotlar Rossiyadagi serverlarda saqlanadi, har 6 soatda zaxiralanadi va HTTPS orqali uzatiladi. Kirish — login va parol bilan, ruxsat — rol bo‘yicha."
-      },
-      "import": {
-        "question": "Excel’dan ma’lumotlarni ko‘chirsa bo‘ladimi?",
-        "answer": "Ha. Xodimlar, uskunalar va yetkazib beruvchilarni Excel’dan yuklash mumkin. Qog‘oz arxivni haq evaziga raqamlashtiramiz."
       }
     },
     "capabilities": {
@@ -5987,9 +5972,6 @@
       "employeeAccess": "Xodimlar jurnallarni QR-kod orqali qanday to‘ldiradi",
       "missedEntry": "Smena eslatmalari qanday ishlaydi",
       "qrSecurity": "Rollar bo‘yicha kirish va harakatlar jurnali",
-      "electronicLogs": "SanPiN 2.3/2.4.4282-26 nimalarni talab qiladi",
-      "inspection": "Rospotrebnadzor jarimalari kalkulyatori",
-      "integrations": "iiko va 1C bilan sinxronlash haqida batafsil",
       "dataSecurity": "Ma’lumotlar qanday himoyalanadi va qayerda saqlanadi"
     },
     "qrScanSteps": {
@@ -6329,22 +6311,16 @@
       "label": "Faoliyat turi",
       "food": {
         "label": "Umumiy ovqatlanish",
-        "short": "Ovqatlanish",
-        "pending": "Umumiy ovqatlanish uchun video"
+        "short": "Ovqatlanish"
       },
       "medical": {
         "label": "Tibbiyot markazi",
-        "short": "Tibbiyot",
-        "pending": "Tibbiyot markazi uchun video"
+        "short": "Tibbiyot"
       },
       "hotel": {
         "label": "Mehmonxona",
-        "short": "Mehmonxona",
-        "pending": "Mehmonxona uchun video"
-      },
-      "pendingBadge": "Ishlab chiqilmoqda",
-      "pendingText": "Tartib bir xil: skan — PIN — yozuv. Hozircha umumiy ovqatlanishda qanday ishlashini ko‘ring.",
-      "pendingBack": "Umumiy ovqatlanish misoli"
+        "short": "Mehmonxona"
+      }
     }
   },
   "glassInventory": {
