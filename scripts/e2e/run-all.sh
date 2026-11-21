@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# End-to-end scenarios of the directory exchange and the multi-organization series (DB level, no
-# browser): each one builds its own organizations in the database of DATABASE_URL, checks, and
+# End-to-end scenarios of the directory exchange, the multi-organization series and the new features of
+# 21.11.2026 (new-features-check: acceptance hints, Poster, brakerage suggestions, QES), DB level, no
+# browser: each one builds its own organizations in the database of DATABASE_URL, checks, and
 # cleans up after itself. Runs them one after another, prints a summary and exits non-zero if any
 # scenario failed (non-zero exit, timeout or crash).
 #
@@ -34,6 +35,7 @@ SCENARIOS=(
   period-digest-check
   cleanup-check
   product-batch-check
+  new-features-check
 )
 if [ "$#" -gt 0 ]; then
   SCENARIOS=("$@")
