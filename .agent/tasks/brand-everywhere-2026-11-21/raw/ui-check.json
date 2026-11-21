@@ -1,0 +1,86 @@
+[
+  {
+    "name": "AC1 до загрузки логотипа кнопки подбора нет",
+    "ok": true
+  },
+  {
+    "name": "AC1 после загрузки логотипа цвета подобраны сами (зелёный и оранжевый)",
+    "ok": true,
+    "details": {
+      "c1": "#1f9d3a",
+      "c2": "#f39c12",
+      "c3": "",
+      "toast": "Подобрали цвета под логотип — сохраните или поменяйте | Логотип загружен"
+    }
+  },
+  {
+    "name": "AC1 сообщение о подборе",
+    "ok": true,
+    "details": "Подобрали цвета под логотип — сохраните или поменяйте | Логотип загружен"
+  },
+  {
+    "name": "AC4 превью телефона — шапка и кнопка в цвете компании, логотип",
+    "ok": true,
+    "details": {
+      "headerBg": "radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0) 55%), linear-gradient(135deg, rgb(26, 133, 49), rgb(23, 117, 43))",
+      "button": "rgb(26, 133, 49)",
+      "logo": true
+    }
+  },
+  {
+    "name": "AC1 кнопка «Подобрать по логотипу»",
+    "ok": true,
+    "details": {
+      "c1": "#1f9d3a",
+      "c2": "#f39c12"
+    }
+  },
+  {
+    "name": "AC4 превью кабинета появилось",
+    "ok": true
+  },
+  {
+    "name": "AC3 кабинет включён — акцент компании на кабинете (затемнён до AA)",
+    "ok": true,
+    "details": {
+      "accentAttr": true,
+      "accentVar": "#1a8531",
+      "setupBg": "rgb(26, 133, 49)"
+    }
+  },
+  {
+    "name": "AC3 «Начальная настройка» в цвете компании",
+    "ok": true,
+    "details": "rgb(26, 133, 49)"
+  },
+  {
+    "name": "AC2 страница по QR в стиле компании: логотип в шапке",
+    "ok": true,
+    "details": {
+      "branded": true,
+      "accentAttr": true,
+      "headerBg": "radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0) 55%), linear-gradient(135deg, rgb(26, 133, 49), rgb(23, 117, 43))",
+      "logo": true,
+      "logoLoaded": true,
+      "primaryBg": "rgb(26, 133, 49)"
+    }
+  },
+  {
+    "name": "AC2 шапка — градиент цвета компании (затемнён до AA)",
+    "ok": true,
+    "details": "radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0) 55%), linear-gradient(135deg, rgb(26, 133, 49), rgb(23, 117, 43))"
+  },
+  {
+    "name": "AC2 основная кнопка — в цвете компании (или её нет на экране)",
+    "ok": true,
+    "details": "rgb(26, 133, 49)"
+  },
+  {
+    "name": "AC3 кабинет выключен — прежний вид",
+    "ok": true,
+    "details": {
+      "accentAttr": false,
+      "setupBg": "linear-gradient(135deg, rgb(85, 102, 246), rgb(122, 92, 255))"
+    }
+  }
+]

@@ -43,6 +43,7 @@ import { normalizeUserRole } from "@/lib/user-roles";
 import { employeeWorksAtQrPoint, filterByQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { qrRosterPosition } from "@/lib/point-assignments";
 import { OtherPointScreen } from "@/components/qr-fill/other-point-screen";
+import { qrPageBrand } from "@/lib/qr-page-brand";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ const findRoom = cache(async (roomId: string) => db.room.findUnique({
   where: { id: roomId },
   select: {
     id: true, name: true, climateNorms: true, buildingId: true, fillerUserIds: true,
-    building: { select: { name: true, organizationId: true, organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true } } } },
+    building: { select: { name: true, organizationId: true, organization: { select: { name: true, timezone: true, qrFillMode: true, locale: true, logoUrl: true, brandColor: true } } } },
   },
 }));
 
@@ -215,6 +216,8 @@ export default async function RoomFillPage({
         name: row?.name ?? room.name,
         buildingName: room.building.name,
         organizationName: room.building.organization.name,
+        // Логотип и цвет компании — шапка и кнопки страницы (`qrPageBrand`).
+        brand: qrPageBrand(room.building.organization),
       }}
       norms={norms}
       hasActiveDocument={Boolean(document)}

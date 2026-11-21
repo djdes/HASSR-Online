@@ -32,7 +32,7 @@ function ScopedLanguageChoice() {
     finally { setSaving(false); }
   }
   return <div className="shrink-0 text-[12px]">
-    <select aria-label={t("label")} value={locale} disabled={saving || refreshing} onChange={event => void change(event.target.value as Locale)} className="min-h-11 max-w-28 rounded-xl border border-white/30 bg-[#252b59] px-2 text-white">
+    <select aria-label={t("label")} value={locale} disabled={saving || refreshing} onChange={event => void change(event.target.value as Locale)} className="min-h-11 max-w-28 rounded-xl border border-white/30 bg-[var(--qr-control-bg,#252b59)] px-2 text-white">
       {offeredLocales(locale).map(value => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
     </select>
     {failed ? <p role="alert" className="max-w-40 text-white">{t("saveFailed")}</p> : null}

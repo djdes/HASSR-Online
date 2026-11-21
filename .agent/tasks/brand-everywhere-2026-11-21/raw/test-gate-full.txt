@@ -1,0 +1,3 @@
+→ [test:changed] Эскалация до полного прогона: Затронут ядровый файл (prisma/schema.prisma)
+=== Test stats: pass=7063, fail=0 ===
+exit=0

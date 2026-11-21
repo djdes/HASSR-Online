@@ -1,0 +1,17 @@
+{
+  "task": "brand-everywhere-2026-11-21",
+  "branch": "claude/friendly-hawking-8iy5h0",
+  "base": "230e9e709",
+  "checkedAt": "2026-11-21",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/logo-palette.ts", "src/lib/logo-palette.test.ts", "src/lib/logo-palette.client.ts", "raw/ui-check.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/qr-page-brand.ts", "src/lib/qr-page-brand.test.ts", "src/components/qr-fill/qr-header-brand.tsx", "src/components/qr-fill/qr-page-shell.tsx", "src/components/qr-fill/qr-header-brand.test.ts", "src/lib/qr-pin-ui.ts", "raw/ui-check.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["prisma/schema.prisma", "src/lib/organization-profile-patch.ts", "src/app/(dashboard)/layout.tsx", "src/app/app-theme.css", "raw/ui-check.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["src/components/settings/brand-style-preview.tsx", "src/components/settings/organization-branding-form.tsx", "raw/ui-check.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/print-colors.test.ts", "raw/targeted-after-fix.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["src/i18n/messages/ru.json", "src/i18n/messages/en.json", "src/i18n/messages/uz.json", "raw/i18n-check.txt"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate-full.txt", "raw/eslint.txt"], "results": { "typecheck": "exit 0", "testGate": "full (schema): pass=7063, fail=0", "eslint": "24 files, exit 0" } },
+    "AC8": { "status": "PASS", "evidence": ["raw/ui-check.txt", "raw/ui-check.json"], "results": "12/12" }
+  }
+}

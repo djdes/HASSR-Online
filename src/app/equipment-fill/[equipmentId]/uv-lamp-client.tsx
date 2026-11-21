@@ -8,6 +8,7 @@ import { Lightbulb, LightbulbOff, Loader2 } from "lucide-react";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { QrPassNote, QrPinOk, QrPinStep, QrPinUiStyles, QrRememberToggle, forgetQrPass, rememberQrEmployee } from "@/components/qr-fill/qr-pin-step";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import type { QrPageBrand } from "@/lib/qr-page-brand";
 import { SaveBlockedReason } from "@/components/qr-fill/save-blocked-reason";
 import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { WhoRow } from "@/components/qr-fill/who-row";
@@ -30,6 +31,8 @@ const LS_SHARED_EMPLOYEE_KEY = "wesetup.qr-fill.employeeId";
 export function UvLampClient(props: {
   token: string;
   organizationName: string;
+  /** Логотип и цвет компании для шапки и кнопок (`qrPageBrand`); нет — стиль WeSetup. */
+  brand?: QrPageBrand | null;
   journalTitle?: string;
   lamp: { id: string; name: string; areaName: string };
   employees: Employee[];
@@ -147,7 +150,7 @@ export function UvLampClient(props: {
   }
 
   return (
-    <QrPageShell orgName={props.organizationName} title={props.journalTitle ?? t("uv.title")}>
+    <QrPageShell orgName={props.organizationName} title={props.journalTitle ?? t("uv.title")} brand={props.brand}>
       <QrPinUiStyles />
       <WhoRow label={t("uv.lamp")} value={props.lamp.name} />
       {done ? (

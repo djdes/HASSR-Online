@@ -1,0 +1,21 @@
+== src/components/qr-fill/qr-header-brand.test.ts
+# pass 7
+# fail 0
+== src/components/theme/theme-tiles-model.test.ts
+# pass 15
+# fail 0
+== src/lib/print-colors.test.ts
+# pass 11
+# fail 0
+== src/app/neutral-palette.test.ts
+# pass 1
+# fail 0
+== src/lib/logo-palette.test.ts
+# pass 7
+# fail 0
+== src/lib/qr-page-brand.test.ts
+# pass 3
+# fail 0
+== src/lib/organization-profile-patch.test.ts
+# pass 8
+# fail 0
