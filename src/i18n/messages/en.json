@@ -5799,52 +5799,52 @@
     "popularBadge": "Popular",
     "contactSupport": "Contact support",
     "refundHeading": "Not right for you? Get a refund.",
-    "refundDetails": "A full refund within 14 days of payment, with no questions or deductions.",
-    "refundTerms": "See the service agreement",
+    "refundDetails": "Full refund within 14 days of payment.",
+    "refundTerms": "Terms in the agreement",
     "faqHeading": "Frequently asked questions",
-    "finalCtaHeading": "Put up a QR sticker. Keep records where the work happens.",
-    "finalCtaDetails": "{trialDays, number} {trialDays, plural, one {day} other {days}} with every log unlocked and no payment card. Print stickers from your workspace; employees do not need to install anything.",
+    "finalCtaHeading": "Start for free",
+    "finalCtaDetails": "{trialDays, number} {trialDays, plural, one {day} other {days}} with every log, no card. Employees install nothing.",
     "qrCameraInstruction": "Point your phone camera here to see how an employee opens a log.",
     "faq": {
       "refund": {
-        "question": "Can I get a refund if the service is not right for me?",
-        "answer": "Yes. Email admin@wesetup.ru within 14 days of paying for your subscription for a full refund, with no questions or deductions. The refund terms are part of our service agreement, not just a promotional promise."
+        "question": "Can I get a refund?",
+        "answer": "Yes. Email admin@wesetup.ru within 14 days of payment and we refund the full amount. This is part of the service agreement."
       },
       "employeeAccess": {
         "question": "Do employees need an app or a password?",
-        "answer": "No. Scanning a QR sticker with a phone camera opens the relevant log. Employees select their name and confirm the entry with their personal 4–6 digit PIN. No app installation or workspace login is needed."
+        "answer": "No. An employee scans the QR with a phone camera, picks their name and enters their PIN."
       },
       "missedEntry": {
-        "question": "What happens if an employee misses a log entry?",
-        "answer": "The entry stays empty and the service detects it. The manager receives a Telegram reminder at 12:00, another reminder and an email at 17:00, and an urgent alert at 21:00. At the end of the shift, those responsible for the hygiene log receive a list of employees who have not checked in."
+        "question": "What if an employee forgets a log entry?",
+        "answer": "The service notices and reminds the manager in Telegram at 12:00, 17:00 (plus an email) and 21:00."
       },
       "qrSecurity": {
         "question": "How are QR entries verified?",
-        "answer": "Entries are confirmed with the employee’s personal PIN. Five incorrect attempts lock entry for 15 minutes. The server records the time, and the audit log records who entered what and when. Each refrigerator has its own sticker; the equipment cannot be changed in the form."
+        "answer": "Each entry is confirmed with a personal PIN, the server sets the time and the activity log keeps who wrote what. Five wrong PINs lock entry for 15 minutes."
       },
       "electronicLogs": {
         "question": "What is an electronic SanPiN log?",
-        "answer": "A web service for keeping logs: employees enter records from a phone or computer, while managers review them and export documents. Choose the logs, responsible employees and recording procedures for your industry and organisation’s requirements."
+        "answer": "The same log, on a phone or computer: employees make entries, the manager reviews them and exports documents."
       },
       "inspection": {
         "question": "How does a Rospotrebnadzor inspection work?",
-        "answer": "The inspector receives a PDF export with all records for the requested period. The print format includes the required details: full name, job title, electronic signature, date and key values."
+        "answer": "The inspector gets a PDF for the requested period: full name, job title, signature, date and values."
       },
       "integrations": {
         "question": "Does it sync with iiko and 1C?",
-        "answer": "Yes. Suppliers, products, deliveries and product checks sync automatically, so you do not have to enter them by hand. Setup takes about 30 minutes with our engineer."
+        "answer": "Yes. Suppliers, products, deliveries and product checks sync on their own. Setup takes about 30 minutes with our engineer."
       },
       "offline": {
         "question": "What happens if the internet goes down?",
-        "answer": "Nothing serious: the interface keeps working on the tablet, records are saved locally and sent to the server automatically when the connection returns. Wi-Fi problems will not cause you to miss a shift."
+        "answer": "Entries are saved on the device and sent to the server when the connection returns."
       },
       "dataSecurity": {
         "question": "Is my data secure?",
-        "answer": "All logs are stored in a protected PostgreSQL database on servers in Russia. Backups are made every 6 hours. Data is transmitted over HTTPS with TLS 1.3. Access requires a username and password and follows role-based permissions; PDF exports for inspections are available only to administrator accounts."
+        "answer": "Data is stored on servers in Russia, backed up every 6 hours and sent over HTTPS. Sign-in with a username and password, access by role."
       },
       "import": {
-        "question": "Can I import data from Excel or paper?",
-        "answer": "Yes. Import employees, equipment and suppliers from an Excel spreadsheet. Keep your old paper records and create new ones in WeSetup; you can also choose paid digitization of your archive."
+        "question": "Can I import data from Excel?",
+        "answer": "Yes. Upload employees, equipment and suppliers from Excel. We can digitise a paper archive for a fee."
       }
     },
     "capabilities": {
@@ -5873,15 +5873,15 @@
     "qrSteps": {
       "equipment": {
         "title": "Add your equipment",
-        "text": "Add refrigerators, lamps and fryers in settings in just a couple of minutes."
+        "text": "Refrigerators, lamps and more — in a couple of minutes."
       },
       "stickers": {
         "title": "Print the stickers",
-        "text": "Print a sheet of QR stickers on a standard printer and put them in place."
+        "text": "On a regular printer, then put them up."
       },
       "scan": {
         "title": "Employees scan",
-        "text": "Phone camera, PIN, reading — the log takes care of itself."
+        "text": "Camera, PIN, value — done."
       }
     },
     "popularJournals": {
@@ -5975,13 +5975,13 @@
         }
       }
     },
-    "pricingTitle": "Four plans. Start with the free one",
+    "pricingTitle": "Four plans",
     "brandTagline": "Your electronic HACCP",
     "presentationPdf": "WeSetup presentation — PDF, 7 MB (in Russian)",
     "knowledgeBaseLink": "Knowledge base",
     "workspaceShort": "Account",
     "allFeaturesLink": "All features",
-    "faqKnowledgeBase": "Still have a question? See the <link>WeSetup knowledge base</link>.",
+    "faqKnowledgeBase": "No answer here? See the <link>knowledge base</link>.",
     "faqMore": {
       "refund": "Refund terms in the offer agreement",
       "employeeAccess": "How employees fill in logs by QR code",
@@ -6020,18 +6020,18 @@
       "title": "Equipment for Premium",
       "bundlePrice": "Equipment bundles start at {price} ₽ (one-time).",
       "oneTime": "One-time payment",
-      "sensorBenefit": "Refrigerator sensors record temperatures automatically",
-      "tabletBenefit": "A workplace tablet and NFC key fobs for the shift",
-      "setupBenefit": "On-site setup, installation and shift training",
+      "sensorBenefit": "Refrigerator sensors",
+      "tabletBenefit": "Tablet and NFC key fobs",
+      "setupBenefit": "Installation and training",
       "collapse": "Hide equipment options",
       "choose": "Choose equipment",
       "calculatorTitle": "Choose your equipment",
-      "calculatorDescription": "Choose what you need — the price is recalculated. Already have a tablet or sensors? Untick them and only the Premium plan remains.",
-      "premiumNote": "Temperature sensors and a tablet arrive already linked to your account: readings go into the logs on their own. Delivery and connection come with the Premium plan.",
+      "calculatorDescription": "Tick what you need — the price updates. Already have equipment? Untick it.",
+      "premiumNote": "Sensors and a tablet arrive set up — readings go into the logs on their own.",
       "printerBenefit": "“Setup Helper” printer"
     },
     "testimonials": {
-      "title": "What our customers say",
+      "title": "Customer reviews",
       "originalLanguageNote": "Customer reviews are shown in their original language.",
       "ratingLabel": "Rated {rating, number} out of 5.",
       "statsLabel": "The venue's numbers in WeSetup",
@@ -6051,24 +6051,24 @@
         "label": "Locations",
         "decrease": "Remove a location",
         "increase": "Add a location",
-        "hint": "A site has its own logs and staff within one organisation: a café, a workshop, a branch. Each is priced as another plan. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%, from 50 — a custom offer."
+        "hint": "A site is a café, workshop or branch. Discount on all sites: from 5 — 5%, from 10 — 10%, from 15 — 20%, from 35 — 25%, from 50 — on request."
       },
       "tiers": {
         "free": {
           "name": "Free",
-          "tagline": "Try everything without limits"
+          "tagline": "Try everything"
         },
         "standard": {
           "name": "Standard",
-          "tagline": "Digital logs and checklists, a team of up to 25 people per site"
+          "tagline": "Logs and checklists"
         },
         "premium": {
           "name": "Premium",
-          "tagline": "Digital HACCP-based production control programme, automation and equipment"
+          "tagline": "HACCP programme, automation and equipment"
         },
         "vip": {
           "name": "VIP",
-          "tagline": "Hotline, extended data bank and a personal consultant"
+          "tagline": "Personal consultant and hotline"
         }
       },
       "badges": {
@@ -6094,23 +6094,23 @@
         "vip": "Everything in Premium, plus:"
       },
       "features": {
-        "trialAll": "All logs, employees and locations — no limits",
-        "noCard": "No card required",
-        "afterTrial": "Then free: {employees, number} employee and {journals, number} log — you choose which",
+        "trialAll": "All logs, employees and sites",
+        "noCard": "No card",
+        "afterTrial": "Then free: {employees, number} employee and {journals, number} log",
         "employees": "Up to {count, number} employees per location",
-        "allJournals": "All food safety and HACCP logs, Telegram bot and PDF for inspections",
-        "storageOrders": "{mb, number} MB for log orders and your own documents",
-        "ownPackage": "“Document pack” section — you fill it yourself",
-        "storageAll": "{gb, number} GB for all documents",
-        "photoAutofill": "Photo of a temperature sensor — readings fill in automatically",
-        "equipmentConnect": "Equipment connection: on your own or as a subscription",
-        "equipmentDelivery": "Delivery of pre-connected equipment — order in your account",
-        "typicalPackage": "Template document pack: print and fill in",
-        "employeesPremium": "Up to {count, number} employees per location, more by arrangement",
-        "mercury": "Mercury (VetIS): incoming vet certificates and clearance from the acceptance journal",
-        "checklists": "Checklists for shifts and inspections",
+        "allJournals": "All logs, Telegram bot and PDF for inspections",
+        "storageOrders": "{mb, number} MB for documents",
+        "ownPackage": "Your own document pack",
+        "storageAll": "{gb, number} GB for documents",
+        "photoAutofill": "Sensor readings from a photo",
+        "equipmentConnect": "Equipment connection",
+        "equipmentDelivery": "Delivery of ready-to-use equipment",
+        "typicalPackage": "Template document pack",
+        "employeesPremium": "Up to {count, number} employees per site, more on request",
+        "mercury": "Mercury (VetIS): vet certificate clearance",
+        "checklists": "Checklists",
         "ppkElectronic": "Digital HACCP-based production control programme",
-        "hotline": "Hotline — up to {hours, number} hours a month",
+        "hotline": "Hotline — up to {hours, number} h a month",
         "dataBank": "Extended data bank",
         "consultant": "Personal consultant"
       },
@@ -6137,12 +6137,12 @@
       },
       "note": {
         "trial": "{trialDays, number} days — all Premium features with no card; then 1 employee and 1 log for free or a paid plan.",
-        "switch": "Upgrades apply right away with a charge for the remaining days; downgrades apply from the end of the paid period."
+        "switch": "Upgrade right away with a top-up; downgrade from the end of the paid period."
       },
       "ppk": {
-        "title": "Production control programme based on HACCP principles",
-        "text": "A specialist will develop a programme for your site: control points, lab testing, responsible staff. Available with any plan.",
-        "cta": "Order a custom programme"
+        "title": "HACCP-based production control programme",
+        "text": "A specialist writes the programme for your site. Available with any plan.",
+        "cta": "Order a programme"
       },
       "table": {
         "title": "Compare plans",

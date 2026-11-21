@@ -50,7 +50,8 @@ test("главная: «Четыре тарифа», «ВИП» в размет�
   assert.match(page, /name: copy\("landingComponents\.tariffs\.tiers\.vip\.name"\),\s*price: vipFrom,/);
   assert.match(page, /hotlineHours: VIP_HOTLINE_HOURS,/);
   assert.equal(VIP_HOTLINE_HOURS, 10);
-  const titles = { ru: /^Четыре тарифа\./, en: /^Four plans\./, uz: /^To‘rtta tarif\./ };
+  // Правки 21.11.2026 («поменьше текста»): заголовок — только «Четыре тарифа».
+  const titles = { ru: /^Четыре тарифа$/, en: /^Four plans$/, uz: /^To‘rtta tarif$/ };
   for (const locale of ["ru", "en", "uz"] as const) {
     const m = JSON.parse(src(`i18n/messages/${locale}.json`)) as {
       landing: { pricingTitle: string; seo: { vipDescription?: string } };
