@@ -28,6 +28,9 @@ type Strings = {
  * слот — «Добавить в избранное» с выбором страницы из своего меню, заполненный
  * — ссылка на страницу и «×», чтобы открепить. Список хранится на сервере
  * (`PUT /api/me/home-favorites`), поэтому одинаков на всех устройствах.
+ *
+ * Телефон (владелец, 2026-11-21: «избранное в строчку поуже»): три плитки в
+ * один ряд — значок и короткая подпись; с 768px — прежние карточки.
  */
 export function HomeFavorites({
   pinned,
@@ -94,15 +97,20 @@ export function HomeFavorites({
               type="button"
               onClick={() => setPicking(true)}
               disabled={busy}
+              aria-label={strings.add}
               data-home-favorite-empty
               data-nav-row
               style={{ "--nav-i": index + 1 } as CSSProperties}
-              className="group flex min-h-[148px] flex-col items-start justify-between rounded-3xl border-2 border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-left transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60"
+              className="group flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-[#dcdfed] bg-[#fafbff] px-1.5 py-2 text-center transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60 md:min-h-[148px] md:items-start md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
             >
-              <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-[#5566f6] shadow-[0_0_0_1px_rgba(220,223,237,0.9)] transition-colors duration-150 group-hover:bg-[#5566f6] group-hover:text-white">
-                <Plus className="size-5" aria-hidden />
+              <span className="flex size-8 items-center justify-center rounded-xl bg-white text-[#5566f6] shadow-[0_0_0_1px_rgba(220,223,237,0.9)] transition-colors duration-150 group-hover:bg-[#5566f6] group-hover:text-white md:size-10 md:rounded-2xl">
+                <Plus className="size-4 md:size-5" aria-hidden />
               </span>
-              <span>
+              {/* Телефон: только «Избранное» под плюсом. */}
+              <span className="max-w-full text-[12.5px] font-medium leading-tight text-[#3848c7] hyphens-auto [overflow-wrap:anywhere] md:hidden">
+                {strings.title}
+              </span>
+              <span className="hidden md:block">
                 <span className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.14em] text-[#9b9fb3] uppercase">
                   <Star className="size-3.5 text-[#c27803]" aria-hidden />
                   {strings.title}
@@ -120,12 +128,14 @@ export function HomeFavorites({
               data-tone={navTone(page.icon)}
               data-nav-row
               style={{ "--nav-i": index + 1 } as CSSProperties}
-              className="group flex min-h-[148px] flex-col justify-between rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[var(--tone-glow)] hover:shadow-[0_16px_40px_-24px_var(--tone-glow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              className="group flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#ececf4] bg-white px-1.5 py-2 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[var(--tone-glow)] hover:shadow-[0_16px_40px_-24px_var(--tone-glow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 md:min-h-[148px] md:items-stretch md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
             >
-              <NavIconChip name={page.icon} className="size-10 rounded-2xl" iconClassName="size-5" />
-              <span className="pr-6">
-                <span className="block text-[11.5px] font-medium text-[#9b9fb3]">{page.sectionLabel}</span>
-                <span className="mt-0.5 block text-[15px] font-semibold leading-tight text-[#0b1024]">{page.label}</span>
+              <NavIconChip name={page.icon} className="size-8 rounded-xl md:size-10 md:rounded-2xl" iconClassName="size-4 md:size-5" />
+              <span className="w-full min-w-0 md:pr-6">
+                <span className="hidden text-[11.5px] font-medium text-[#9b9fb3] md:block">{page.sectionLabel}</span>
+                <span className="line-clamp-2 block text-[12.5px] font-semibold leading-tight text-[#0b1024] hyphens-auto [overflow-wrap:anywhere] md:mt-0.5 md:text-[15px]">
+                  {page.label}
+                </span>
               </span>
             </Link>
             <button
@@ -134,9 +144,9 @@ export function HomeFavorites({
               disabled={busy}
               aria-label={`${strings.remove}: ${page.label}`}
               title={strings.remove}
-              className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#fff4f2] hover:text-[#a13a32] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60"
+              className="absolute top-1 right-1 flex size-7 items-center justify-center rounded-full text-[#9b9fb3] transition-colors duration-150 hover:bg-[#fff4f2] hover:text-[#a13a32] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60 md:top-3 md:right-3 md:size-8"
             >
-              <X className="size-4" aria-hidden />
+              <X className="size-3.5 md:size-4" aria-hidden />
             </button>
           </div>
         );

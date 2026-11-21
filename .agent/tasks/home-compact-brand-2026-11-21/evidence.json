@@ -1,0 +1,70 @@
+{
+  "task": "home-compact-brand-2026-11-21",
+  "branch": "claude/friendly-hawking-8iy5h0",
+  "base": "41a67df18",
+  "mergedMasterIntoBranch": "18b7dff4c",
+  "verifiedAt": "f823353c6",
+  "checkedAt": "2026-11-21",
+  "verdict": "PASS",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": ["src/lib/create-organization.ts", "src/lib/create-organization-logo.test.ts", "raw/stand-brand-check.txt"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/i18n/messages/ru.json",
+        "src/i18n/messages/en.json",
+        "src/i18n/messages/uz.json",
+        "src/lib/organization-profile-patch.ts",
+        "src/lib/organization-profile-error-adapter.ts",
+        "src/components/settings/organization-pages.test.ts",
+        "raw/verify/ui-run.log"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/inherited-org-brand.ts",
+        "src/lib/inherited-org-brand.test.ts",
+        "scripts/repair-inherited-org-brand.ts",
+        "raw/stand-brand-check.txt"
+      ],
+      "note": "Production run is a separate step after deploy (dry-run, then --apply); not run from this session."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/home/page.tsx",
+        "src/components/home/home-favorites.tsx",
+        "src/components/home/home-contacts-spoiler.tsx",
+        "src/components/home/home-compact.test.ts",
+        "raw/before/measure-normal-before.json",
+        "raw/verify/measure-normal-final.json",
+        "raw/verify/measure-large-final.json",
+        "raw/verify/measure-xlarge-final.json"
+      ],
+      "metrics": {
+        "phone390x664": { "pageHeightBefore": 1505, "pageHeightAfter": 664, "heroBefore": 191, "heroAfter": 100, "setupBefore": 148, "setupAfter": 71, "favoriteBefore": 253, "favoriteAfter": 94, "contactsRowAfter": 58 },
+        "desktop1440x900": { "unchanged": true, "hero": 400, "cards": 286, "pageHeight": 900 }
+      }
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/components/layout/mobile-nav-sheet.tsx",
+        "src/components/ui/bottom-sheet.tsx",
+        "src/components/layout/mobile-nav-sheet.test.ts",
+        "raw/verify/ui-run.log"
+      ],
+      "metrics": { "logoHeightBefore": 40, "logoHeightAfter": 80, "visibleMenuTitle": false, "logoClick": "/home, sheet closed" }
+    },
+    "AC6": { "status": "PASS", "evidence": ["src/i18n/message-contract.d.ts", "raw/verify/i18n-check.txt"] },
+    "AC7": {
+      "status": "PASS",
+      "evidence": ["raw/verify/typecheck.txt", "raw/verify/test-gate.txt", "raw/verify/eslint.txt"],
+      "results": { "typecheck": "exit 0", "testGate": "75 files, 360 pass, 0 fail", "eslint": "18 files, exit 0", "i18nCheck": "101/101" }
+    }
+  }
+}

@@ -1,0 +1,152 @@
+[
+  {
+    "name": "switch-home",
+    "status": 200
+  },
+  {
+    "name": "home-phone-normal",
+    "innerHeight": 664,
+    "scrollHeight": 664,
+    "overflowX": 0,
+    "hero": {
+      "top": 72,
+      "bottom": 172,
+      "height": 100,
+      "width": 358
+    },
+    "setup": {
+      "top": 192,
+      "bottom": 262,
+      "height": 71,
+      "width": 358
+    },
+    "favorites": [
+      {
+        "top": 272,
+        "height": 94,
+        "width": 113
+      },
+      {
+        "top": 272,
+        "height": 94,
+        "width": 113
+      },
+      {
+        "top": 272,
+        "height": 94,
+        "width": 113
+      }
+    ],
+    "contacts": {
+      "top": 386,
+      "bottom": 444,
+      "height": 58,
+      "width": 358
+    },
+    "footer": {
+      "top": 471,
+      "bottom": 664,
+      "height": 193,
+      "width": 390
+    }
+  },
+  {
+    "name": "contacts-open",
+    "expanded": "true",
+    "panelVisible": true,
+    "tabs": [
+      "Поддержка",
+      "Продажи",
+      "Консалтинг"
+    ],
+    "channels": [
+      "data-contact-telegram",
+      "data-contact-max",
+      "data-contact-chat",
+      "data-contact-email"
+    ]
+  },
+  {
+    "name": "contacts-closed-again",
+    "expanded": "false"
+  },
+  {
+    "name": {
+      "text": "ООО «Доброе кафе»",
+      "fontSize": "16px",
+      "top": 201
+    },
+    "titleText": "Меню",
+    "titleVisible": false,
+    "logo": {
+      "top": 109,
+      "height": 80,
+      "width": 175
+    },
+    "dialogTop": 80
+  },
+  {
+    "name": "menu-logo-click",
+    "path": "/home",
+    "dialogOpen": false
+  },
+  {
+    "name": "switch-gym",
+    "status": 200
+  },
+  {
+    "name": "branding-gym",
+    "logoSrc": null,
+    "sitePlaceholder": "example.ru",
+    "siteValue": "",
+    "brandColor": "",
+    "bodyHasDobroe": false
+  },
+  {
+    "name": "home-desktop-normal",
+    "innerHeight": 900,
+    "scrollHeight": 900,
+    "overflowX": 0,
+    "hero": {
+      "top": 97,
+      "bottom": 497,
+      "height": 400,
+      "width": 1120
+    },
+    "setup": {
+      "top": 517,
+      "bottom": 803,
+      "height": 286,
+      "width": 191
+    },
+    "favorites": [
+      {
+        "top": 517,
+        "height": 286,
+        "width": 191
+      },
+      {
+        "top": 517,
+        "height": 286,
+        "width": 191
+      },
+      {
+        "top": 517,
+        "height": 286,
+        "width": 191
+      }
+    ],
+    "contacts": {
+      "top": 517,
+      "bottom": 803,
+      "height": 286,
+      "width": 300
+    },
+    "footer": {
+      "top": 827,
+      "bottom": 900,
+      "height": 73,
+      "width": 1184
+    }
+  }
+]

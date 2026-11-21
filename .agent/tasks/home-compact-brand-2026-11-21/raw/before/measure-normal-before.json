@@ -1,0 +1,123 @@
+[
+  {
+    "name": "switch-home",
+    "status": 200
+  },
+  {
+    "name": "home-phone-normal",
+    "innerHeight": 664,
+    "scrollHeight": 1505,
+    "overflowX": 0,
+    "hero": {
+      "top": 72,
+      "bottom": 263,
+      "height": 191,
+      "width": 358
+    },
+    "setup": {
+      "top": 283,
+      "bottom": 431,
+      "height": 148,
+      "width": 358
+    },
+    "favorites": [
+      {
+        "top": 443,
+        "height": 253,
+        "width": 173
+      },
+      {
+        "top": 443,
+        "height": 253,
+        "width": 173
+      },
+      {
+        "top": 707,
+        "height": 253,
+        "width": 173
+      }
+    ],
+    "contacts": {
+      "top": 980,
+      "bottom": 1296,
+      "height": 316,
+      "width": 358
+    },
+    "footer": {
+      "top": 1312,
+      "bottom": 1505,
+      "height": 193,
+      "width": 390
+    }
+  },
+  {
+    "name": null,
+    "titleText": "Меню",
+    "titleVisible": true,
+    "logo": {
+      "top": 182,
+      "height": 40,
+      "width": 87
+    },
+    "dialogTop": 80
+  },
+  {
+    "name": "switch-gym",
+    "status": 200
+  },
+  {
+    "name": "branding-gym",
+    "logoSrc": "/api/org-assets/cmwqp6o1b00067g7dm1vxu07r/logo?v=1",
+    "sitePlaceholder": "dobroe-kafe.ru",
+    "siteValue": "",
+    "brandColor": "#1f9d3a",
+    "bodyHasDobroe": false
+  },
+  {
+    "name": "home-desktop-normal",
+    "innerHeight": 900,
+    "scrollHeight": 900,
+    "overflowX": 0,
+    "hero": {
+      "top": 97,
+      "bottom": 497,
+      "height": 400,
+      "width": 1120
+    },
+    "setup": {
+      "top": 517,
+      "bottom": 803,
+      "height": 286,
+      "width": 191
+    },
+    "favorites": [
+      {
+        "top": 517,
+        "height": 286,
+        "width": 191
+      },
+      {
+        "top": 517,
+        "height": 286,
+        "width": 191
+      },
+      {
+        "top": 517,
+        "height": 286,
+        "width": 191
+      }
+    ],
+    "contacts": {
+      "top": 517,
+      "bottom": 803,
+      "height": 286,
+      "width": 300
+    },
+    "footer": {
+      "top": 827,
+      "bottom": 900,
+      "height": 73,
+      "width": 1184
+    }
+  }
+]

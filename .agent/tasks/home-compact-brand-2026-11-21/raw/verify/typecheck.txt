@@ -1,0 +1,5 @@
+### HEAD f823353c6 (origin/master 18b7dff4c)
+### npm run typecheck
+> node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck --incremental --tsBuildInfoFile tsconfig.typecheck.tsbuildinfo -p tsconfig.typecheck.json
+
+typecheck exit=0

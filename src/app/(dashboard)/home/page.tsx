@@ -19,6 +19,7 @@ import {
 import type { NavTone } from "@/lib/nav-tones";
 import { TAGLINE_VIEW_WIDTH, taglineLayout } from "@/lib/wordmark-tagline";
 import { BrandLogo, WORDMARK_INK, WORDMARK_RATIO } from "@/components/brand/logo";
+import { HomeContactsSpoiler } from "@/components/home/home-contacts-spoiler";
 import { HomeFavorites } from "@/components/home/home-favorites";
 import { ContactUsPanel } from "@/components/contact/contact-us-dialog";
 import { NavIconChip, ToneChip } from "@/components/layout/nav-icons";
@@ -42,6 +43,11 @@ const CONTACT_TONES: Record<HomeContact["id"], NavTone> = {
  *
  * Знак — градиентом, как на визитке, а подпись под ним — ровно по его
  * ширине (владелец, 2026-10-29: «симметрично, как в визитке»).
+ *
+ * Телефон (владелец, 2026-11-21: «чтобы помещалось на 1 страницу с контактами
+ * снизу»): знак ниже, «Начальная настройка» — иконка и текст в строку, три
+ * слота «Избранного» в один ряд, «Мы на связи» свёрнуто в строку-спойлер.
+ * С 768px — прежняя раскладка.
  *
  * Компьютер (владелец, 2026-11-19: «чтобы прокрутки не было и всё помещалось»):
  * страница занимает ровно высоту окна — блок со знаком забирает то, что
@@ -83,7 +89,7 @@ export default async function HomePage() {
     <div className="space-y-5 lg:flex lg:flex-1 lg:flex-col lg:gap-5 lg:space-y-0" data-home-page>
       <section
         data-home-hero
-        className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-white px-6 py-14 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:py-20 lg:flex lg:max-h-[460px] lg:min-h-[150px] lg:flex-1 lg:items-center lg:justify-center lg:py-5"
+        className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-white px-5 py-5 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:px-6 md:py-20 lg:flex lg:max-h-[460px] lg:min-h-[150px] lg:flex-1 lg:items-center lg:justify-center lg:py-5"
       >
         {/* Три мягких пятна в цветах знака: индиго, бирюза, лаванда. */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -95,8 +101,8 @@ export default async function HomePage() {
           {branding ? (
             // Кабинет партнёра (white-label): нашего знака нет, только его название.
             <>
-              <div className="text-[34px] font-semibold tracking-[-0.02em] text-[#0b1024] md:text-[48px]">{branding.brandName}</div>
-              <p className="mt-5 text-[19px] font-semibold tracking-[-0.01em] text-[#3c4053] md:text-[24px]">{tagline}</p>
+              <div className="text-[26px] font-semibold tracking-[-0.02em] text-[#0b1024] md:text-[48px]">{branding.brandName}</div>
+              <p className="mt-1.5 text-[16px] font-semibold tracking-[-0.01em] text-[#3c4053] md:mt-5 md:text-[24px]">{tagline}</p>
             </>
           ) : (
             // Знак и подпись — одна колонка шириной со знак (`--logo-h` —
@@ -106,7 +112,7 @@ export default async function HomePage() {
             // стоят ровно по центру. Под буквами у файла пустая полоса —
             // подпись подтянута к ним, как на визитке.
             <div
-              className="mx-auto flex flex-col [--logo-h:64px] md:[--logo-h:104px] lg:[--logo-h:clamp(64px,11vh,104px)]"
+              className="mx-auto flex flex-col [--logo-h:48px] md:[--logo-h:104px] lg:[--logo-h:clamp(64px,11vh,104px)]"
               style={{
                 width: `calc(var(--logo-h) * ${WORDMARK_RATIO})`,
                 translate: `${((WORDMARK_INK.right - WORDMARK_INK.left) / 2) * 100}% 0`,
@@ -150,7 +156,8 @@ export default async function HomePage() {
       {/* Карточки и контакты — одной высоты: нижний край ровный. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch">
         {/* Карточки появляются каскадом при открытии (`data-nav-rise`). */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-nav-rise>
+        {/* `no-mobile-shrink`: общее правило телефона делает из трёх колонок две (globals.css). */}
+        <div className="no-mobile-shrink grid grid-cols-3 gap-2.5 md:grid-cols-4 md:gap-3" data-nav-rise>
           <Link
             href="/settings/onboarding"
             data-home-setup
@@ -158,20 +165,20 @@ export default async function HomePage() {
             data-nav-row
             data-motion
             style={{ "--nav-i": 0 } as CSSProperties}
-            className="group col-span-2 flex min-h-[148px] flex-col justify-between rounded-3xl bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#7a5cff)] p-5 newd:bg-[#111114] newd:bg-none text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_18px_40px_-14px_rgba(85,102,246,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1"
+            className="group col-span-3 flex items-center gap-3 rounded-3xl bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#7a5cff)] px-4 py-3.5 newd:bg-[#111114] newd:bg-none text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_18px_40px_-14px_rgba(85,102,246,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1 md:min-h-[148px] md:flex-col md:items-stretch md:justify-between md:gap-0 md:p-5"
           >
             <span
               data-motion
-              className="flex size-10 items-center justify-center rounded-2xl bg-white/15 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:-rotate-12"
+              className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white/15 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:-rotate-12"
             >
               <Rocket className="size-5" aria-hidden />
             </span>
-            <span>
+            <span className="min-w-0">
               <span className="flex items-center gap-1.5 text-[16px] font-semibold leading-tight">
                 {t("setupTitle")}
                 <ArrowRight data-motion className="size-4 group-hover:translate-x-0.5" aria-hidden />
               </span>
-              <span className="mt-1 block text-[13px] leading-snug text-white/80">{t("setupBody")}</span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-white/80 md:mt-1">{t("setupBody")}</span>
             </span>
           </Link>
           <HomeFavorites
@@ -191,11 +198,7 @@ export default async function HomePage() {
           />
         </div>
 
-        <aside
-          className="rounded-3xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
-          data-home-contacts
-        >
-          <div className="mb-2.5 px-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">{t("contactsTitle")}</div>
+        <HomeContactsSpoiler title={t("contactsTitle")}>
           {branding ? (
             <>
             <ul className="space-y-1">
@@ -260,7 +263,7 @@ export default async function HomePage() {
               consultingHref="/inspection/experts"
             />
           )}
-        </aside>
+        </HomeContactsSpoiler>
       </div>
     </div>
   );

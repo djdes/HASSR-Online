@@ -103,3 +103,23 @@ test("новые страницы закрыты так же, как «Рекв�
     assert.ok(text.includes("<PageGuide"), page);
   }
 });
+
+test("пример сайта в «Фирменном стиле» нейтральный во всех языках — без «dobroe-kafe.ru»", () => {
+  // Серая подсказка «dobroe-kafe.ru» стояла в поле «Сайт» у каждой организации, и её
+  // принимали за данные «Доброго кафе» (владелец, 2026-11-21).
+  const expected = { ru: "example.ru", en: "example.com", uz: "example.uz" } as const;
+  for (const [locale, site] of Object.entries(expected)) {
+    const raw = read(`src/i18n/messages/${locale}.json`);
+    assert.doesNotMatch(raw, /dobroe|доброе кафе/i, locale);
+    const profile = (JSON.parse(raw) as {
+      settingsManagement: {
+        organizationProfile: { brandingPage: { sitePlaceholder: string }; form: { apiErrors: { invalidWebsite: string } } };
+      };
+    }).settingsManagement.organizationProfile;
+    assert.equal(profile.brandingPage.sitePlaceholder, site, locale);
+    assert.ok(profile.form.apiErrors.invalidWebsite.includes(site), locale);
+  }
+  for (const file of ["src/lib/organization-profile-patch.ts", "src/lib/organization-profile-error-adapter.ts", BRANDING]) {
+    assert.doesNotMatch(read(file), /dobroe/i, file);
+  }
+});

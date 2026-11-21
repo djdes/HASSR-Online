@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import type { MouseEvent } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -8,7 +8,7 @@ import { NavAccordion } from "@/components/layout/app-sidebar-accordion";
 import { ClassicNavAccordion } from "@/components/layout/app-sidebar-accordion-classic";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { NavIconChip } from "@/components/layout/nav-icons";
-import { OrganizationMark } from "@/components/layout/organization-brand";
+import { OrganizationBrand } from "@/components/layout/organization-brand";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 // Строка мобильного меню: от 52px высотой, шрифт 17px, иконка 24px —
@@ -20,9 +20,10 @@ const ROW =
 /**
  * Меню на телефоне и планшете (<1024px) — листом снизу, в шаблоне «Новый»
  * (владелец, 2026-11-11): то же дерево меню, что в сайдбаре (`NavAccordion`),
- * все уровни раскрываются прямо в листе. Сверху —
- * компания одной строкой, последней строкой — «Выйти»; список прокручивается
- * внутри листа. Точку выбирают в шапке.
+ * все уровни раскрываются прямо в листе. Сверху, на месте слова «Меню», —
+ * бренд организации как в сайдбаре компьютера: логотип, краткое название и
+ * ИНН (владелец, 2026-11-21: «и так понимают, что это меню»). Последней
+ * строкой — «Выйти»; список прокручивается внутри листа. Точку выбирают в шапке.
  */
 export function MobileNavSheet({
   open,
@@ -44,30 +45,39 @@ export function MobileNavSheet({
   const t = useTranslations("navigation.shell");
   const newDesign = useNewDesign();
   const close = onClose;
+  // Переход по ссылке закрывает лист (логотип ведёт на главную).
+  const closeOnLink = (event: MouseEvent) => {
+    if ((event.target as HTMLElement).closest("a")) close();
+  };
 
   return (
-    <BottomSheet open={open} onClose={close} title={t("menu")}>
+    <BottomSheet
+      open={open}
+      onClose={close}
+      title={t("menu")}
+      header={
+        <div onClick={closeOnLink} data-mobile-nav-brand>
+          <OrganizationBrand
+            logoUrl={brand.logoUrl}
+            name={brand.name}
+            identity={brand.identity}
+            homeHref={brand.homeHref}
+            canEditBranding={brand.canEditBranding}
+            large
+          />
+        </div>
+      }
+    >
       <nav
         data-sheet-menu="mobile"
         // Плоские иконки и строки шаблона «Новый» — те же правила, что у сайдбара.
         data-sidebar-layout="new"
-        onClick={(event) => {
-          // Раскрытие раздела сюда не доходит (`NavAccordion` гасит всплытие):
-          // лист закрывает только переход по ссылке.
-          if ((event.target as HTMLElement).closest("a")) close();
-        }}
+        // Раскрытие раздела сюда не доходит (`NavAccordion` гасит всплытие):
+        // лист закрывает только переход по ссылке.
+        onClick={closeOnLink}
         className="flex flex-col gap-1 pb-1"
         data-mobile-nav
       >
-        {/* Компания — одной строкой: логотип или инициалы и название. Лист —
-            про меню, а не про бренд: раньше блок с логотипом съедал треть. */}
-        <Link
-          href={brand.homeHref}
-          className="mb-1 flex min-h-12 items-center gap-2.5 rounded-2xl px-2.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-          data-mobile-nav-brand
-        >
-          <OrganizationMark logoUrl={brand.logoUrl} name={brand.name} />
-        </Link>
         {newDesign ? <NavAccordion touch /> : <ClassicNavAccordion touch />}
         <div className="mt-2 border-t border-[#ececf4] pt-2">
           <button

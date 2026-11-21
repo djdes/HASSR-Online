@@ -35,13 +35,20 @@ export function BottomSheet({
   onClose,
   title,
   subtitle,
+  header,
   children,
   footer,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Название листа. С `header` — только для экранного диктора. */
   title: ReactNode;
   subtitle?: ReactNode;
+  /**
+   * Своя шапка вместо видимого заголовка — по центру, крестик справа (лист
+   * меню: бренд организации на месте слова «Меню», владелец, 2026-11-21).
+   */
+  header?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
 }) {
@@ -68,16 +75,27 @@ export function BottomSheet({
                 чтобы закрыть свайпом. */}
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#dcdfed]" />
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <Drawer.Title className="truncate text-[16px] font-semibold leading-tight text-[#0b1024]">
-                  {title}
-                </Drawer.Title>
-                {subtitle ? (
-                  <div className="mt-0.5 truncate text-[12.5px] text-[#6f7282]">
-                    {subtitle}
+              {header ? (
+                <>
+                  {/* Пустое место размером с крестик — шапка встаёт ровно по центру. */}
+                  <span aria-hidden className="size-9 shrink-0" />
+                  <div className="min-w-0 flex-1" data-sheet-header>
+                    <Drawer.Title className="sr-only">{title}</Drawer.Title>
+                    {header}
                   </div>
-                ) : null}
-              </div>
+                </>
+              ) : (
+                <div className="min-w-0">
+                  <Drawer.Title className="truncate text-[16px] font-semibold leading-tight text-[#0b1024]">
+                    {title}
+                  </Drawer.Title>
+                  {subtitle ? (
+                    <div className="mt-0.5 truncate text-[12.5px] text-[#6f7282]">
+                      {subtitle}
+                    </div>
+                  ) : null}
+                </div>
+              )}
               <Drawer.Close
                 aria-label={t("close")}
                 className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#6f7282] transition-colors hover:bg-[#eef1ff] hover:text-[#0b1024]"
