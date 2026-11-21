@@ -1,0 +1,18 @@
+# Subtest: post-deploy-check.sh
+ok 1 - post-deploy-check.sh
+# Subtest: deploy-rollback.sh
+ok 2 - deploy-rollback.sh
+# Subtest: prewarm-routes.sh
+ok 3 - prewarm-routes.sh
+# Subtest: wait-for-port.sh
+ok 4 - wait-for-port.sh
+# Subtest: deploy-tarball.sh и deploy-tree-digest.sh
+ok 5 - deploy-tarball.sh и deploy-tree-digest.sh
+# tests 17
+# suites 5
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7302.19084

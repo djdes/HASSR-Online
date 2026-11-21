@@ -1,0 +1,12 @@
+Run 44875685515 (Deploy to production #2383, head 3114684102), job 136759759141 "Upload tarball", step "Wait for SSH":
+2026-11-21T06:28:40Z [ssh] порт сервера не отвечает, попытка 1/8
+2026-11-21T06:29:05Z [ssh] порт сервера не отвечает, попытка 2/8
+2026-11-21T06:29:30Z [ssh] порт сервера не отвечает, попытка 3/8
+2026-11-21T06:29:55Z [ssh] порт сервера не отвечает, попытка 4/8
+2026-11-21T06:30:20Z [ssh] порт сервера не отвечает, попытка 5/8
+2026-11-21T06:30:45Z [ssh] порт сервера не отвечает, попытка 6/8
+2026-11-21T06:31:10Z [ssh] порт сервера не отвечает, попытка 7/8
+2026-11-21T06:31:35Z [ssh] порт сервера не отвечает, попытка 8/8
+##[error]SSH-порт сервера не отвечает из GitHub Actions — проверьте сервер (sshd, файрвол, fail2ban). Код до прода не дошёл.
+Other jobs of the run: Type-check success, Full Tests 1/4..4/4 success, deploy skipped.
+run_workflow (deploy.yml, ref master) from this session: 403 Resource not accessible by integration (twice).

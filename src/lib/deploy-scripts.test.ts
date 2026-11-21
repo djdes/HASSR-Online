@@ -235,6 +235,19 @@ describe("wait-for-port.sh", () => {
     assert.equal(result.status, 1);
     assert.match(result.stdout, /SSH-порт сервера не отвечает/);
   });
+
+  // Выкат #2383 (21.11.2026) упал: порт молчал все 3 минуты ожидания, хотя
+  // сайт работал; в тот день сервер через раз не принимал соединения из
+  // зарубежных дата-центров. Поэтому по умолчанию ждём дольше — но не столько,
+  // чтобы выгрузка (30 мин на job, два ожидания и скачивание) не успевала.
+  it("по умолчанию ждёт порт 8–10 минут", () => {
+    const source = fs.readFileSync(path.join(SCRIPTS, "wait-for-port.sh"), "utf8");
+    const attempts = Number(source.match(/ATTEMPTS="\$\{3:-(\d+)\}"/)?.[1]);
+    const pause = Number(source.match(/PAUSE="\$\{4:-(\d+)\}"/)?.[1]);
+    const connect = Number(source.match(/timeout (\d+) bash -c/)?.[1]);
+    const windowSec = attempts * connect + (attempts - 1) * pause;
+    assert.ok(windowSec >= 480 && windowSec <= 600, `окно ожидания ${windowSec} с`);
+  });
 });
 
 // Сервер собирает deploy.tar сам из скачанного с GitHub коммита и сверяет

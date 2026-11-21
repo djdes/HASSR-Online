@@ -1,0 +1,4 @@
+RED  (before the script change): node --import tsx --test --test-name-pattern="8–10 минут" src/lib/deploy-scripts.test.ts
+     not ok 1 - по умолчанию ждёт порт 8–10 минут   error: 'окно ожидания 185 с'   (8×10 + 7×15)
+GREEN (ATTEMPTS default 20): window 20×10 + 19×15 = 485 с; deploy-scripts.test.ts 17/17 pass
+typecheck: ok (no errors); npm run test:changed: 1 file, pass=17 fail=0; eslint src/lib/deploy-scripts.test.ts: ok; bash -n scripts/wait-for-port.sh: ok
