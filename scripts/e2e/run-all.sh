@@ -29,6 +29,7 @@ SCENARIOS=(
   pool-check
   versioning-check
   new-lists-check
+  pay-from-account-check
 )
 if [ "$#" -gt 0 ]; then
   SCENARIOS=("$@")
