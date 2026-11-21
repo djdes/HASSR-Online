@@ -1,0 +1,3 @@
+{ "task_id": "quick-setup-3-minutes-2026-11-21", "base": "fd6c6bca2",
+  "criteria": { "AC1": {"status":"PASS","evidence":["raw/checks.txt"]}, "AC2": {"status":"PASS","evidence":["raw/checks.txt"]}, "AC3": {"status":"PASS","evidence":["raw/checks.txt"]}, "AC4": {"status":"PASS","evidence":["raw/checks.txt"]}, "AC5": {"status":"PASS","evidence":["raw/checks.txt"]} },
+  "raw": ["raw/checks.txt"] }
