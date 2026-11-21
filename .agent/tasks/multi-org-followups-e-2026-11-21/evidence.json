@@ -1,0 +1,21 @@
+{
+  "task": "multi-org-followups-e-2026-11-21",
+  "spec": ".agent/tasks/multi-org-followups-e-2026-11-21/spec.md",
+  "base": "master fd6c6bca2 (+ merge 876b7dfe3, #290)",
+  "verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "evidence": "alert.test.ts 5/5; raw/cleanup-check.log 15/15 (alert part: once per Moscow day, retry after a failed delivery)" },
+    { "id": "AC2", "status": "PASS", "evidence": "nightly-e2e.yml pull_request + paths; YAML parses; PR runs 2,3,5,9 green; run 8 red fixed (problems.md #8, raw/e2e-ci-simulation.log)" },
+    { "id": "AC3", "status": "PASS", "evidence": "raw/load-exchange.log: first 1012 s (lock expired) -> 362.7 s, repeat 3.0 s; peak RSS 1585 MB vs 1536 MB target, reasons and next steps described as the AC allows" },
+    { "id": "AC4", "status": "PASS", "evidence": "cleanup.test.ts 3/3; raw/cleanup-check.log 15/15" },
+    { "id": "AC5", "status": "PASS", "evidence": "account-roles.test.ts 5/5; raw/manager-check.log 151/151; raw/series-e-live.log (appoint, rights, 403s, removal, exchange card); payment scope note problems.md #1" },
+    { "id": "AC6", "status": "PASS", "evidence": "network-period.test.ts 6/6; network-export.test.ts 6/6; raw/period-digest-check.log 39/39; live Excel/PDF content checked" },
+    { "id": "AC7", "status": "PASS", "evidence": "weekly-digest.test.ts 5/5; raw/period-digest-check.log (events, empty week, no repeat, parallel runs -> one send)" },
+    { "id": "AC8", "status": "PASS", "evidence": "raw/series-e-live.log: /mini/network for owner and manager, denied for others; «Сеть» in sections only for them" },
+    { "id": "AC9", "status": "PASS", "evidence": "account-pay.test.ts 9/9; raw/pay-from-account-check.log 68/68; live: confirmation with sources, balances, plan and ledger after payment" },
+    { "id": "AC10", "status": "PASS", "evidence": "raw/wrappers-check.log (15 wrappers); series E scenarios in scripts/e2e with wrappers; raw/e2e-run-all.log 19/19, 985/0" },
+    { "id": "AC11", "status": "PASS", "evidence": "additive schema (AccountNetworkManager); i18n:check 101/101; typecheck clean; eslint 67 files clean; test:gate full 6993/0 (after merging master); e2e 19/19; live 35/0" }
+  ],
+  "reviewFixes": { "status": "PASS", "evidence": "problems.md items 1-9 (1 documented as intended, 2-9 fixed and re-verified)" },
+  "deploy": "apply-safe-schema adds AccountNetworkManager; scheduled exchange cleans service tables, sends a daily-capped ROOT alert, batches products; weekly digest; e2e workflow also on PRs"
+}
