@@ -1,0 +1,18 @@
+{
+  "taskId": "journal-ukep-signing-2026-11-21",
+  "branch": "claude/hopeful-euler-lb6cie",
+  "base": "6bc5c9b9",
+  "verdict": "PASS",
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/ukep-signing.test.ts#AC1", "src/lib/cms-signature.fixtures.ts"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/ukep-signing.test.ts#AC2"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/ukep-signing.test.ts#AC3", "raw/01-fake-plugin-3-signed.png", "raw/02-no-plugin-2-no-plugin.png"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/ukep-signing.test.ts#AC4"] },
+    "AC5": { "status": "PASS", "evidence": ["src/lib/ukep-signing.test.ts#AC5", "docs/ukep-signing.md"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/eslint.txt", "raw/tests.txt"] }
+  },
+  "limits": [
+    "Server does not verify GOST R 34.10-2012 signature math or the CA chain; verification on gosuslugi.ru/eds or CryptoARM.",
+    "Not tested with a real CryptoPro token: fake plug-in with the documented API."
+  ]
+}

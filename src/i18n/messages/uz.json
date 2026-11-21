@@ -4232,7 +4232,9 @@
       "mainQr": "Jurnalning asosiy QR kodi — doim ishlaydi",
       "documentQr": "Ushbu hujjatning QR kodi",
       "qrAfterSave": "QR kod hujjat saqlangandan keyin paydo bo‘ladi.",
-      "automaticFilling": "Jurnalni avtomatik to‘ldirish"
+      "automaticFilling": "Jurnalni avtomatik to‘ldirish",
+      "ukep": "UKEP imzosi",
+      "ukepHint": "Hujjatni malakali elektron imzo bilan imzolash"
     },
     "confirm": {
       "confirm": "Tasdiqlash",
@@ -5666,6 +5668,34 @@
       "restoreFailed": "Hujjatni tiklab bo‘lmadi",
       "moveToActiveFailed": "Hujjatni faol holatga o‘tkazib bo‘lmadi",
       "genericStatusFailed": "Xato"
+    },
+    "ukep": {
+      "title": "Malakali elektron imzo (UKEP)",
+      "intro": "Hujjat CryptoPro ЭЦП Browser plug-in orqali malakali elektron imzo bilan imzolanadi. PDF va alohida imzo WeSetup’da saqlanadi — ularni yuklab olib, tekshiruvchiga berish mumkin.",
+      "loading": "Imzolar yuklanmoqda…",
+      "empty": "Hujjat hali UKEP bilan imzolanmagan.",
+      "signedAt": "Imzolangan: {when}",
+      "issuer": "Tasdiqlovchi markaz: {name}",
+      "downloadPdf": "PDF’ni yuklab olish",
+      "downloadSig": "Imzoni yuklab olish (.sig)",
+      "verifyHint": "Haqiqiyligi «PDF + .sig» juftligi bo‘yicha Gosuslugi yoki KriptoARM’da tekshiriladi:",
+      "verifyLink": "Gosuslugi’da tekshirish",
+      "onlyManagers": "Jurnalni rahbar imzolashi mumkin.",
+      "start": "UKEP bilan imzolash",
+      "searching": "CryptoPro plagini qidirilmoqda…",
+      "certificate": "Sertifikat",
+      "certificateOption": "{name} · {until} gacha",
+      "sign": "Imzolash",
+      "signing": "Imzolanmoqda…",
+      "pinHint": "Plagin so‘rasa — token PIN-kodini kiriting.",
+      "signed": "Imzolandi: {name}",
+      "installCsp": "CryptoPro CSP’ni o‘rnatish",
+      "installPlugin": "Plaginni o‘rnatish",
+      "errors": {
+        "load": "Imzolarni yuklab bo‘lmadi",
+        "plugin": "CryptoPro plagini javob bermadi — sahifani yangilab, qaytadan urinib ko‘ring",
+        "failed": "Imzolab bo‘lmadi. Qaytadan urinib ko‘ring."
+      }
     }
   },
   "publicChrome": {

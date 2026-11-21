@@ -7,6 +7,7 @@ import { TOUR } from "@/lib/tour-anchors";
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
+  FileSignature,
   MoreHorizontal,
   Printer,
   PrinterCheck,
@@ -24,6 +25,7 @@ import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrFillPreview } from "@/components/qr/qr-fill-preview";
+import { UkepSignDialog } from "@/components/journals/ukep-sign-dialog";
 import {
   JOURNAL_DIALOG_CONTENT_CLASS,
   JOURNAL_DIALOG_HEADER_CLASS,
@@ -143,6 +145,9 @@ export function DocumentActionsBar({
   // наклейке на самом объекте. Пункт ведёт на наклейки объектов документа.
   const objectQr = hasQr && isJournalObjectQrCode(journalCode);
   const [qrOpen, setQrOpen] = useState(false);
+  // Подпись УКЭП (journal-ukep-signing-2026-11-21) — руководству, у сохранённого документа.
+  const hasUkep = Boolean(canManage && documentId);
+  const [ukepOpen, setUkepOpen] = useState(false);
 
   // Панель рендерят почти все журналы — публикуем состояние отмены в
   // шапку отсюда, чтобы не звать хук в каждом клиенте по отдельности.
@@ -180,7 +185,7 @@ export function DocumentActionsBar({
       toast.error(t("sendFailed"), { id: toastId });
     }
   }
-  const hasMenu = hasPrint || hasQr || items.length > 0;
+  const hasMenu = hasPrint || hasQr || hasUkep || items.length > 0;
 
   return (
     <>
@@ -299,6 +304,17 @@ export function DocumentActionsBar({
                         },
                       ]
                     : []),
+                ...(hasUkep
+                  ? [
+                      {
+                        key: "ukep-sign",
+                        label: t("ukep"),
+                        icon: <FileSignature className="size-4 text-[#5566f6]" />,
+                        title: t("ukepHint"),
+                        onSelect: () => setUkepOpen(true),
+                      },
+                    ]
+                  : []),
                 ...items.map((item) => ({
                   key: item.key,
                   label: item.label,
@@ -325,6 +341,7 @@ export function DocumentActionsBar({
         </div>
       </div>
       {children}
+      {hasUkep ? <UkepSignDialog documentId={documentId as string} open={ukepOpen} onOpenChange={setUkepOpen} /> : null}
       {hasQr && !objectQr ? (
         <Dialog open={qrOpen} onOpenChange={setQrOpen}>
           <DialogContent className={JOURNAL_DIALOG_CONTENT_CLASS}>
