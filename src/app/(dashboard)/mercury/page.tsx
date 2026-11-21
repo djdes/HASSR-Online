@@ -64,6 +64,7 @@ export default async function MercuryPage() {
         transportInfo: true,
         processError: true,
         journalDocumentId: true,
+        batchKey: true,
       },
     }),
   ]);

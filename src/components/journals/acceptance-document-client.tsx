@@ -13,6 +13,7 @@ import {
   Archive,
   CalendarDays,
   ChevronDown,
+  FileCheck2,
   Package,
   Paperclip,
   Pencil,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DocumentActionsBar } from "@/components/journals/document-actions-bar";
+import { MERCURY_INCOMING_HREF, iikoTarget, showMercuryStrip, type AcceptanceSources } from "@/lib/acceptance-sources";
 import {
   DOC_ADD_ROW_CLASS,
   DOC_AUTOFILL_LABEL_CLASS,
@@ -135,6 +137,12 @@ type Props = {
   /** Optional witness of persisted source and normalization dependencies, never generated row IDs. */
   sourceIdentity?: string;
   users: User[];
+  /**
+   * ВСД из Меркурия и накладные iiko (спека mercury-iiko-acceptance-2026-11-21).
+   * null — человек не руководитель: оформлять ВСД и принимать накладные ему
+   * нельзя, поэтому ни полосы, ни пунктов меню.
+   */
+  sources?: AcceptanceSources | null;
   /** Design v2 toggle. */
   useV2?: boolean;
 };
@@ -2074,17 +2082,70 @@ function AddMultipleRowsDialog(props: {
   );
 }
 
-function IikoDialog(props: { open: boolean; onOpenChange: (open: boolean) => void }) {
+/**
+ * «Из iiko»: накладные iiko приходят во «Входящие» и принимаются оттуда
+ * кнопкой «Принять» — строки ложатся в этот журнал. Не подключён — ведём
+ * в настройки интеграции.
+ */
+function IikoDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; connected: boolean }) {
   const { t } = useAcceptanceCopy();
+  const target = iikoTarget(props.connected);
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent closeLabel={t("common.close")} className={JOURNAL_DIALOG_CONTENT_CLASS}>
         <DialogHeader className={JOURNAL_DIALOG_HEADER_CLASS}>
           <DialogTitle className={JOURNAL_DIALOG_TITLE_CLASS}>{t("journalAcceptance.iiko.title")}</DialogTitle>
         </DialogHeader>
-        <div className="px-6 py-5 text-[15px] text-[#555]">{t("journalAcceptance.iiko.description")}</div>
+        <div className="space-y-4 px-6 py-5">
+          <p className="text-[15px] leading-relaxed text-[#3c4053]">
+            {target.kind === "inbox" ? t("journalAcceptance.iiko.connected") : t("journalAcceptance.iiko.notConnected")}
+          </p>
+          <Link
+            href={target.href}
+            className="inline-flex h-11 items-center rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          >
+            {target.kind === "inbox" ? t("journalAcceptance.iiko.openInbox") : t("journalAcceptance.iiko.connect")}
+          </Link>
+        </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Полоса над таблицей: ВСД из Меркурия ждут приёмки на точке документа.
+ * Оформление — на «Входящих ВСД»: физконтроль, строка журнала и гашение.
+ */
+function MercuryPendingStrip(props: { pending: number; overdue: number }) {
+  const { t } = useAcceptanceCopy();
+  return (
+    <div
+      data-testid="acceptance-mercury-strip"
+      className="mb-4 flex flex-col gap-3 rounded-2xl border border-[#dcdfed] bg-[#f5f6ff] px-4 py-3 print:hidden newd:border-[#b6d6f0] newd:bg-[#eef6fd] sm:flex-row sm:items-center"
+    >
+      {/* Телефон: иконка и текст сверху, кнопка во всю ширину снизу —
+          в одну строку текст сжимался между ними до узкой колонки. */}
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#5566f6] newd:text-[#2f80c9]">
+          <FileCheck2 className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1 text-[13px] leading-[1.5] text-[#3c4053]">
+          <div className="text-[15px] font-semibold text-[#0b1024]">
+            {t("journalAcceptance.mercury.pending", { count: props.pending })}
+            {props.overdue > 0 ? (
+              <span className="font-semibold text-[#a13a32]"> {t("journalAcceptance.mercury.overdue", { count: props.overdue })}</span>
+            ) : null}
+          </div>
+          {t("journalAcceptance.mercury.hint")}
+        </div>
+      </div>
+      <Link
+        href={MERCURY_INCOMING_HREF}
+        className="inline-flex h-10 w-full shrink-0 items-center justify-center rounded-lg bg-[#5566f6] px-4 text-[14px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:w-auto"
+      >
+        {t("journalAcceptance.mercury.process")}
+      </Link>
+    </div>
   );
 }
 
@@ -2686,6 +2747,10 @@ function AcceptanceDocumentEditor(props: Props) {
           </div>
         ) : null}
 
+        {!isClosed && showMercuryStrip(props.sources) && props.sources?.mercury ? (
+          <MercuryPendingStrip pending={props.sources.mercury.pending} overdue={props.sources.mercury.overdue} />
+        ) : null}
+
         {/* Toolbar */}
         {!isClosed && (
           <div className={DOC_ADD_ROW_CLASS}>
@@ -2714,12 +2779,27 @@ function AcceptanceDocumentEditor(props: Props) {
                   icon: <Upload className="size-4 text-[#6f7282]" />,
                   onSelect: () => setRowsImportOpen(true),
                 },
-                {
-                  key: "add-iiko",
-                  label: t("journalAcceptance.screen.addIiko"),
-                  icon: <span aria-hidden>📋</span>,
-                  onSelect: () => setIikoOpen(true),
-                },
+                // Оформить ВСД и принять накладную может только руководство.
+                ...(props.sources?.mercury
+                  ? [
+                      {
+                        key: "add-mercury",
+                        label: t("journalAcceptance.mercury.menu"),
+                        icon: <FileCheck2 className="size-4 text-[#6f7282]" />,
+                        onSelect: () => router.push(MERCURY_INCOMING_HREF),
+                      },
+                    ]
+                  : []),
+                ...(props.sources
+                  ? [
+                      {
+                        key: "add-iiko",
+                        label: t("journalAcceptance.screen.addIiko"),
+                        icon: <span aria-hidden>📋</span>,
+                        onSelect: () => setIikoOpen(true),
+                      },
+                    ]
+                  : []),
               ]}
               trigger={
                 <Button type="button" className="h-11 gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white hover:bg-[#4a5bf0]">
@@ -3043,7 +3123,7 @@ function AcceptanceDocumentEditor(props: Props) {
         onSubmit={addMultipleRows}
         onPhotoItems={addRowsFromPhoto}
       />
-      <IikoDialog open={iikoOpen} onOpenChange={setIikoOpen} />
+      <IikoDialog open={iikoOpen} onOpenChange={setIikoOpen} connected={props.sources?.iikoConnected ?? false} />
     </div>
   );
 }

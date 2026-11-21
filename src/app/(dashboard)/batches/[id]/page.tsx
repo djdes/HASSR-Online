@@ -139,6 +139,14 @@ export default async function BatchDetailPage({
 
       <BatchStatusActions batchId={batch.id} currentStatus={batch.status} />
 
+      {/* Вся история партии: приёмка по ВСД, записи журналов по ключу. */}
+      <Link
+        href={`/journals/traceability/${encodeURIComponent(batch.code)}`}
+        className="inline-flex text-sm font-medium text-primary hover:underline"
+      >
+        {t("batchHistory")}
+      </Link>
+
       {/* Traceability chain */}
       {relatedEntries.length > 0 && (
         <Card>

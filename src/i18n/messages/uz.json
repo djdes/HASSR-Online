@@ -1361,7 +1361,18 @@
         "step": "{number, number}-qadam",
         "supplier": "· yetkazib beruvchi: {name}",
         "noteTitle": "HACCP kuzatuvchanligi:",
-        "noteBody": "TR TS 021/2011 bo‘yicha istalgan partiya yo‘lini bir daqiqada tiklash kerak. Bu ekran bitta kalit bo‘yicha barcha yozuvlarni ko‘rsatadi — qabul qilish → brakeraj → jo‘natish/hisobdan chiqarish. Agar to‘ldirishda kalit «batchNumber» yoki «batchKey» maydoniga yozilsa, partiya avtomatik bog‘lanadi."
+        "noteBody": "TR TS 021/2011 bo‘yicha istalgan partiya yo‘lini bir daqiqada tiklash kerak. Bu ekran bitta kalit bo‘yicha barcha yozuvlarni ko‘rsatadi — qabul qilish → brakeraj → jo‘natish/hisobdan chiqarish. Agar to‘ldirishda kalit «batchNumber» yoki «batchKey» maydoniga yozilsa, partiya avtomatik bog‘lanadi. Merkuriydagi VSD bo‘yicha qabul o‘zi bog‘lanadi.",
+        "batchOnlyDescription": "Partiya bor, lekin u bo‘yicha jurnal yozuvlari hali yo‘q.",
+        "batchSection": "Partiya",
+        "vsdSection": "VSD bo‘yicha qabul",
+        "entriesSection": "Jurnal yozuvlari",
+        "supplierLabel": "yetkazib beruvchi: {name}",
+        "receivedOn": "qabul qilingan: {date}",
+        "openBatch": "Partiyani ochish",
+        "vsdUntitled": "Nomsiz",
+        "vsdNumber": "VSD № {number}",
+        "openAcceptanceJournal": "Qabul jurnalini ochish",
+        "batchRejected": "Qabul qilinmagan"
       },
       "brakerageDate": {
         "placeholder": "KK-OO-YYYY",
@@ -7729,7 +7740,8 @@
       "forbidden": "Bu amal rahbarlar uchun mavjud.",
       "notFound": "Partiya topilmadi.",
       "statusInvalid": "Partiya holati noma’lum."
-    }
+    },
+    "batchHistory": "Partiya tarixi"
   },
   "cleaningGrid": {
     "cleaning": {
@@ -24042,7 +24054,7 @@
       "addDeliveryDesktop": "Qo‘shish",
       "addDeliveryMobile": "Yetkazib berishni qo‘shish",
       "editLists": "Ro‘yxatlarni tahrirlash",
-      "addIiko": "Iiko’dan qo‘shish",
+      "addIiko": "iiko’dan qo‘shish",
       "tableEmpty": "Hozircha qatorlar yo‘q"
     },
     "row": {
@@ -24163,8 +24175,18 @@
       "countRange": "1 dan 100 gacha qator sonini kiriting."
     },
     "iiko": {
-      "title": "Iiko’dan ro‘yxat qo‘shish (kirim yuk xatlari)",
-      "description": "Iiko bilan sinxronlashni sozlash uchun WeSetup ishlab chiquvchilariga murojaat qiling."
+      "title": "iiko’dan yuk xatlari",
+      "connected": "iiko’dan yuk xatlari «Kiruvchi yuk xatlari»ga keladi. Yuk xatini oching, mahsulotni tekshiring va «Qabul qilish»ni bosing — qatorlar shu jurnalda paydo bo‘ladi.",
+      "notConnected": "iiko hali ulanmagan. Uni ulang — kirim yuk xatlari «Kiruvchi yuk xatlari»ga tushadi, u yerdan esa bitta tugma bilan shu jurnalga.",
+      "openInbox": "«Kiruvchi yuk xatlari»ni ochish",
+      "connect": "iiko’ni ulash"
+    },
+    "mercury": {
+      "menu": "Merkuriydan VSD",
+      "pending": "{count, plural, one {Merkuriyda # ta VSD qabul qilinishini kutmoqda} other {Merkuriyda # ta VSD qabul qilinishini kutmoqda}}",
+      "overdue": "(muddati o‘tgan: {count, number})",
+      "hint": "Mahsulotni tekshiring va qabulni rasmiylashtiring: qator shu jurnalda paydo bo‘ladi, VSD esa Merkuriyda so‘ndiriladi.",
+      "process": "Rasmiylashtirish"
     },
     "confirm": {
       "deleteTitle": "Tanlangan qatorlar o‘chirilsinmi?",
@@ -28179,7 +28201,8 @@
       "withdrawHint": "Agar kabinetda o‘zingiz so‘ndirsangiz, belgini olib tashlang — jurnal qatori baribir yaratiladi.",
       "submitWithdraw": "Qabul qilish va so‘ndirish",
       "submitJournal": "Jurnalga kiritish",
-      "cancel": "Bekor qilish"
+      "cancel": "Bekor qilish",
+      "batchHistory": "Partiya tarixi"
     }
   },
   "miniUi": {
