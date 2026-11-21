@@ -1,0 +1,14 @@
+ok 1 - neutral-palette.css matches the indigo classes in src/ (npm run palette:neutral)
+ok 2 - all implemented catalogs have complete keys and matching ICU arguments
+ok 3 - catalog validation rejects missing messages, broken ICU and lost arguments
+ok 4 - different plural categories are valid but nested parameter loss is not
+ok 5 - AC1: из откреплённой подписи — сертификат подписанта с русскими полями, хэш PDF сверен
+ok 6 - AC1: отказы — мусор, присоединённая подпись, чужой PDF, сертификат не действует, ГОСТ без сверки хэша
+ok 7 - AC2: токен — только для своего документа, человека, организации и PDF, 15 минут
+ok 8 - AC3: сертификаты — «Личное», только с закрытым ключом и действующие; подпись — CAdES-BES, откреплённая
+ok 9 - AC3: нет плагина или сертификатов, ошибка подписи — понятным текстом
+ok 10 - AC4: API — сессия, организация, точка, доступ к журналу, право подписи, аудит
+ok 11 - AC5/AC6: меню документа, тексты ru/en/uz, документация, таблица в схеме
+# tests 11
+# pass 11
+# fail 0

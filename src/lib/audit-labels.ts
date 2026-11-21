@@ -51,6 +51,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "journal.fill.photo": { label: "Фото загружено", variant: "outline" },
   "journal.fill.completed": { label: "Журнал заполнен", variant: "default" },
   "journal.fill.reopened": { label: "Повторное открытие", variant: "secondary" },
+  "journal.ukep_sign": { label: "Журнал подписан УКЭП", variant: "default" },
   "journal.entry.create": { label: "Запись создана", variant: "default" },
   "journal.entry.update": { label: "Запись изменена", variant: "secondary" },
   "journal.entry.delete": { label: "Запись удалена", variant: "destructive" },

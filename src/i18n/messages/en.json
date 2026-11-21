@@ -4232,7 +4232,9 @@
       "mainQr": "Main log QR code — permanent",
       "documentQr": "This document’s QR code",
       "qrAfterSave": "The QR code will appear after saving the document.",
-      "automaticFilling": "Fill in the log automatically"
+      "automaticFilling": "Fill in the log automatically",
+      "ukep": "QES signature",
+      "ukepHint": "Sign the document with a qualified electronic signature"
     },
     "confirm": {
       "confirm": "Confirm",
@@ -5666,6 +5668,34 @@
       "restoreFailed": "Could not restore the document",
       "moveToActiveFailed": "Could not move the document to active",
       "genericStatusFailed": "Error"
+    },
+    "ukep": {
+      "title": "Qualified electronic signature",
+      "intro": "The document is signed with a qualified electronic signature via the CryptoPro CSP browser plug-in. The PDF and the detached signature are stored in WeSetup — you can download them and hand them to the inspector.",
+      "loading": "Loading signatures…",
+      "empty": "The document has not been signed yet.",
+      "signedAt": "Signed {when}",
+      "issuer": "CA: {name}",
+      "downloadPdf": "Download PDF",
+      "downloadSig": "Download signature (.sig)",
+      "verifyHint": "Authenticity is checked with the “PDF + .sig” pair on Gosuslugi or in CryptoARM:",
+      "verifyLink": "verify on Gosuslugi",
+      "onlyManagers": "Only a manager can sign the journal.",
+      "start": "Sign with QES",
+      "searching": "Looking for the CryptoPro plug-in…",
+      "certificate": "Certificate",
+      "certificateOption": "{name} · until {until}",
+      "sign": "Sign",
+      "signing": "Signing…",
+      "pinHint": "If the plug-in asks, enter the token PIN.",
+      "signed": "Signed: {name}",
+      "installCsp": "Install CryptoPro CSP",
+      "installPlugin": "Install the plug-in",
+      "errors": {
+        "load": "Could not load the signatures",
+        "plugin": "The CryptoPro plug-in did not respond — reload the page and try again",
+        "failed": "Could not sign. Please try again."
+      }
     }
   },
   "publicChrome": {

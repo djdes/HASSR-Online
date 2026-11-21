@@ -701,6 +701,7 @@ model Organization {
   journalPreviews                JournalPreview[]
   kioskDevices                   KioskDevice[]
   signatureEvents                SignatureEvent[]
+  journalDocumentSignatures      JournalDocumentSignature[]
   qrPinRequests                  QrPinRequest[]
 
   /// Общий планшет (2026-09-20): режим «киоск» — планшет привязан к орге,
@@ -1063,6 +1064,42 @@ model WebAuthnChallenge {
 /// Пишется при разблокировке киоска (method "kiosk_pin"), а в фазах 3–4 —
 /// с фото (photoUrl) и по passkey. Отдельно от AuditLog: показывается инспектору
 /// и в PDF, привязан к записи журнала через entryRef.
+/// Документ журнала, подписанный УКЭП (спека journal-ukep-signing-2026-11-21):
+/// PDF ровно в том виде, в каком его подписали, и откреплённая подпись CAdES-BES
+/// (КриптоПро ЭЦП Browser plug-in). Байты — здесь, а не в /uploads: загрузки
+/// отдаются по ссылке без входа, а журнал с ФИО сотрудников — нет. Данные
+/// подписанта — из сертификата внутри подписи, не со слов браузера.
+model JournalDocumentSignature {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documentId     String
+  /// Кто подписывал в WeSetup (связь мягкая — запись переживёт архивацию).
+  userId         String
+  fileName       String
+  pdf            Bytes
+  pdfSha256      String
+  /// CMS SignedData (DER), откреплённая.
+  signature      Bytes
+  /// sha256 | gost2012-256 | gost2012-512 | …; хэш PDF сверен сервером только для SHA-2.
+  digest         String
+  digestChecked  Boolean      @default(false)
+  signerName     String
+  signerOrg      String?
+  signerTitle    String?
+  signerInn      String?
+  signerSnils    String?
+  signerOgrn     String?
+  issuerName     String?
+  certSerial     String?
+  certValidFrom  DateTime?
+  certValidTo    DateTime?
+  signedAt       DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, documentId, createdAt])
+}
+
 model SignatureEvent {
   id             String       @id @default(cuid())
   organizationId String
