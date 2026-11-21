@@ -101,13 +101,13 @@ export function HomeFavorites({
               data-home-favorite-empty
               data-nav-row
               style={{ "--nav-i": index + 1 } as CSSProperties}
-              className="group flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-[#dcdfed] bg-[#fafbff] p-2.5 text-center transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60 md:min-h-[148px] md:items-start md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
+              className="group flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-[#dcdfed] bg-[#fafbff] px-1.5 py-2 text-center transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60 md:min-h-[148px] md:items-start md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
             >
               <span className="flex size-8 items-center justify-center rounded-xl bg-white text-[#5566f6] shadow-[0_0_0_1px_rgba(220,223,237,0.9)] transition-colors duration-150 group-hover:bg-[#5566f6] group-hover:text-white md:size-10 md:rounded-2xl">
                 <Plus className="size-4 md:size-5" aria-hidden />
               </span>
               {/* Телефон: только «Избранное» под плюсом. */}
-              <span className="max-w-full truncate text-[12.5px] font-medium leading-tight text-[#3848c7] md:hidden">
+              <span className="max-w-full text-[12.5px] font-medium leading-tight text-[#3848c7] hyphens-auto [overflow-wrap:anywhere] md:hidden">
                 {strings.title}
               </span>
               <span className="hidden md:block">
@@ -128,12 +128,12 @@ export function HomeFavorites({
               data-tone={navTone(page.icon)}
               data-nav-row
               style={{ "--nav-i": index + 1 } as CSSProperties}
-              className="group flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#ececf4] bg-white px-2 py-2.5 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[var(--tone-glow)] hover:shadow-[0_16px_40px_-24px_var(--tone-glow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 md:min-h-[148px] md:items-stretch md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
+              className="group flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#ececf4] bg-white px-1.5 py-2 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[var(--tone-glow)] hover:shadow-[0_16px_40px_-24px_var(--tone-glow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 md:min-h-[148px] md:items-stretch md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
             >
               <NavIconChip name={page.icon} className="size-8 rounded-xl md:size-10 md:rounded-2xl" iconClassName="size-4 md:size-5" />
               <span className="w-full min-w-0 md:pr-6">
                 <span className="hidden text-[11.5px] font-medium text-[#9b9fb3] md:block">{page.sectionLabel}</span>
-                <span className="line-clamp-2 block text-[12.5px] font-semibold leading-tight text-[#0b1024] [overflow-wrap:anywhere] md:mt-0.5 md:text-[15px]">
+                <span className="line-clamp-2 block text-[12.5px] font-semibold leading-tight text-[#0b1024] hyphens-auto [overflow-wrap:anywhere] md:mt-0.5 md:text-[15px]">
                   {page.label}
                 </span>
               </span>

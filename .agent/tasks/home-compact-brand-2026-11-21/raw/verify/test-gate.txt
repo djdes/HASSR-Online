@@ -1,0 +1,7 @@
+### npm run test:gate
+
+> haccp-online@0.1.0 test:gate
+→ [test:changed] Отобрано 75 связанных тестовых файлов для 35 изменённых файлов:
+=== Targeted test stats (75 files, 23.7s): pass=360, fail=0 ===
+✓ Все затронутые тесты прошли.
+test:gate exit=0

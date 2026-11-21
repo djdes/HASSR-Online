@@ -1,0 +1,31 @@
+### normal 390x664
+switch-home {"status":200}
+home-phone-normal {"innerHeight":664,"scrollHeight":664,"overflowX":0,"hero":{"top":72,"bottom":172,"height":100,"width":358},"setup":{"top":192,"bottom":262,"height":71,"width":358},"favorites":[{"top":272,"height":84,"width":113},{"top":272,"height":84,"width":113},{"top":272,"height":84,"width":113}],"contacts":{"top":376,"bottom":434,"height":58,"width":358},"footer":{"top":471,"bottom":664,"height":193,"width":390}}
+contacts-open {"expanded":"true","panelVisible":true,"tabs":["Поддержка","Продажи","Консалтинг"],"channels":["data-contact-telegram","data-contact-max","data-contact-chat","data-contact-email"]}
+contacts-closed-again {"expanded":"false"}
+menu-phone {"titleText":"Меню","titleVisible":false,"logo":{"top":109,"height":80,"width":175},"name":{"text":"ООО «Доброе кафе»","fontSize":"16px","top":201},"dialogTop":80}
+menu-logo-click {"path":"/home","dialogOpen":false}
+switch-gym {"status":200}
+branding-gym {"logoSrc":null,"sitePlaceholder":"example.ru","siteValue":"","brandColor":"","bodyHasDobroe":false}
+home-desktop-normal {"innerHeight":900,"scrollHeight":900,"overflowX":0,"hero":{"top":97,"bottom":497,"height":400,"width":1120},"setup":{"top":517,"bottom":803,"height":286,"width":191},"favorites":[{"top":517,"height":286,"width":191},{"top":517,"height":286,"width":191},{"top":517,"height":286,"width":191}],"contacts":{"top":517,"bottom":803,"height":286,"width":300},"footer":{"top":827,"bottom":900,"height":73,"width":1184}}
+### large 390x844
+switch-home {"status":200}
+home-phone-large {"innerHeight":844,"scrollHeight":844,"overflowX":0,"hero":{"top":72,"bottom":172,"height":100,"width":358},"setup":{"top":192,"bottom":268,"height":77,"width":358},"favorites":[{"top":278,"height":84,"width":113},{"top":278,"height":84,"width":113},{"top":278,"height":84,"width":113}],"contacts":{"top":382,"bottom":440,"height":58,"width":358},"footer":{"top":642,"bottom":844,"height":202,"width":390}}
+contacts-open {"expanded":"true","panelVisible":true,"tabs":["Поддержка","Продажи","Консалтинг"],"channels":["data-contact-telegram","data-contact-max","data-contact-chat","data-contact-email"]}
+contacts-closed-again {"expanded":"false"}
+menu-phone {"titleText":"Меню","titleVisible":false,"logo":{"top":225,"height":80,"width":175},"name":{"text":"ООО «Доброе кафе»","fontSize":"18.4px","top":316},"dialogTop":196}
+menu-logo-click {"path":"/home","dialogOpen":false}
+switch-gym {"status":200}
+branding-gym {"logoSrc":null,"sitePlaceholder":"example.ru","siteValue":"","brandColor":"","bodyHasDobroe":false}
+home-desktop-large {"innerHeight":900,"scrollHeight":900,"overflowX":0,"hero":{"top":97,"bottom":479,"height":382,"width":1120},"setup":{"top":499,"bottom":803,"height":304,"width":191},"favorites":[{"top":499,"height":304,"width":191},{"top":499,"height":304,"width":191},{"top":499,"height":304,"width":191}],"contacts":{"top":499,"bottom":803,"height":304,"width":300},"footer":{"top":827,"bottom":900,"height":73,"width":1184}}
+### xlarge 390x844
+switch-home {"status":200}
+home-phone-xlarge {"innerHeight":844,"scrollHeight":844,"overflowX":0,"hero":{"top":72,"bottom":172,"height":100,"width":358},"setup":{"top":192,"bottom":301,"height":110,"width":358},"favorites":[{"top":311,"height":86,"width":113},{"top":311,"height":86,"width":113},{"top":311,"height":86,"width":113}],"contacts":{"top":418,"bottom":476,"height":58,"width":358},"footer":{"top":602,"bottom":844,"height":243,"width":390}}
+contacts-open {"expanded":"true","panelVisible":true,"tabs":["Поддержка","Продажи","Консалтинг"],"channels":["data-contact-telegram","data-contact-max","data-contact-chat","data-contact-email"]}
+contacts-closed-again {"expanded":"false"}
+menu-phone {"titleText":"Меню","titleVisible":false,"logo":{"top":211,"height":80,"width":175},"name":{"text":"ООО «Доброе кафе»","fontSize":"20.8px","top":303},"dialogTop":182}
+menu-logo-click {"path":"/home","dialogOpen":false}
+switch-gym {"status":200}
+branding-gym {"logoSrc":null,"sitePlaceholder":"example.ru","siteValue":"","brandColor":"","bodyHasDobroe":false}
+home-desktop-xlarge {"innerHeight":900,"scrollHeight":900,"overflowX":0,"hero":{"top":97,"bottom":458,"height":361,"width":1120},"setup":{"top":478,"bottom":803,"height":325,"width":191},"favorites":[{"top":478,"height":325,"width":191},{"top":478,"height":325,"width":191},{"top":478,"height":325,"width":191}],"contacts":{"top":478,"bottom":803,"height":325,"width":300},"footer":{"top":827,"bottom":900,"height":73,"width":1184}}
+e2e exit=0
