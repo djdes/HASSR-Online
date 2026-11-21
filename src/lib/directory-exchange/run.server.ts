@@ -483,6 +483,8 @@ async function exchangeEntity(params: {
   };
 
   for (const op of ops) {
+    // Пачка продуктов пишется по мере накопления, а не одним куском в конце прохода.
+    if (productBatch?.full) await flushProducts();
     const key = linkKey(op.groupId, op.organizationId);
     if (op.type === "tombstone") {
       writes.set(key, { groupId: op.groupId, organizationId: op.organizationId, entityId: null, hash: stored.get(key)?.hash ?? "" });

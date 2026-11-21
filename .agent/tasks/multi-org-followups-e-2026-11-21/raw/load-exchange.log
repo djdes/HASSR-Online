@@ -10,8 +10,11 @@
 #                                         первый обмен            повторный   пик RSS процесса
 #  до (HEAD c792c2742)                    1012.6 s — ОШИБКА*       —           2845 MB
 #  + пачка продуктов (1000) и связей      332.9 s                  3.2 s       2304 MB
-#  + пачки по 200, история по 50 (итог)   365.3 s                  3.2 s       1482 MB
-#  (промежуточные прогоны итоговой версии: 357.3 s / 1499 MB; 345.3 s / 1524 MB — RSS у границы, см. ниже)
+#  + пачки по 200, история по 50          365.3 s                  3.2 s       1482 MB
+#  (промежуточные прогоны этой версии: 357.3 s / 1499 MB; 345.3 s / 1524 MB — RSS у границы, см. ниже)
+#  после ревью (перепроверка названий     362.7 s                  3.0 s       1585 MB — выше цели на 3 %
+#  перед каждой записью, запись каждые                                         (база процесса до обмена 412 MB,
+#  1 000 продуктов) — см. конец файла                                          раньше 363–396 MB)
 #
 #  * «A commit cannot be executed on an expired transaction. The timeout for this transaction was 600000 ms,
 #    however 1012580 ms passed» — замок обмена (транзакция на 10 мин) истёк, обмен записан как ошибка.
@@ -111,3 +114,56 @@ RESULT: all checks passed
 real	6m15.568s
 user	2m53.792s
 sys	0m18.457s
+
+################ после ревью (2026-11-21): перепроверка занятых названий перед каждой записью пачки
+# Находка 3 ревью: названия получателя читались один раз, а записывались позже — продукт, заведённый руками
+# в это время, задвоился бы (уникальности (organizationId, name) в таблице нет). Теперь перед каждой записью
+# пачки названия её продуктов проверяются в базе одним запросом (LOWER(name) IN …, активные и выключенные):
+# занятое — «занято», как у создания по одному; названия с % _ \ — по одному (createEntityRow, ILIKE).
+# Проверка: scripts/e2e/product-batch-check.ts (10 проверок; на прежнем коде 3 из них падают).
+# Заодно пачка пишется каждые 1 000 продуктов, а не одним куском в конце прохода (очередь не держит
+# все 95 000 созданий). Один прогон после этого:
+load-exchange: scale 1; 20 organizations, 5000 products, 500 staff on 10 positions, 50 buildings × 2 rooms, 2 areas per organization, 300 equipment
+seed: 2.6 s, peak RSS 412 MB, peak heap used 174 MB
+first exchange: 362.7 s, peak RSS 1564 MB, peak heap used 1248 MB
+PASS first exchange within 600.0 s (362.7 s)
+PASS first exchange skipped nothing (limits and names)
+PASS every organization has every record after the first exchange
+second exchange: 3.0 s, peak RSS 1584 MB, peak heap used 865 MB
+PASS second exchange within 60.0 s (3.0 s)
+PASS second exchange changes nothing
+FAIL peak RSS within 1536 MB (1584 MB)
+PASS both runs recorded as ok
+
+phase            wall time  peak RSS  peak heap  created  updated  skipped
+seed             2.6 s      412 MB    174 MB                              
+first exchange   362.7 s    1564 MB   1248 MB    113810   0        0      
+second exchange  3.0 s      1584 MB   865 MB     0        0        0      
+process peak RSS (resourceUsage.maxRSS): 1585 MB
+cleanup (2.2 s): organizations left 0, users left 0, products left 0
+PASS cleanup removed everything
+RESULT: 1 check(s) failed
+
+real	6m11.998s
+user	2m50.997s
+sys	0m18.523s
+
+# ЧТО ЗНАЧИТ ЧИСЛО RSS И ЧТО ДОБАВИТ ПРОД (честно)
+#  • Замер — весь отдельный процесс `npx tsx scripts/e2e/load-exchange.ts`: загрузчик tsx/esbuild, клиент
+#    Prisma с компилятором запросов (wasm), все модули, которые тянет обмен, данные засева и сам обмен.
+#    До обмена процесс уже занимает 363–412 MB; прирост от обмена — ~1,1–1,2 GB на пике. Живой кучи после
+#    полной сборки — до ~450 MB (замер с --expose-gc); остальное — мусор записи через Prisma, который V8
+#    собирает лениво (его продлевает история отладки Prisma, см. выше). Между прогонами ±50 MB.
+#  • На проде обмен идёт внутри процесса сайта: `next start` под PM2 (deploy.yml, шаг 3/3: `npx pm2 start
+#    "npx next start -p 3002" --name haccp-online`), плановый обмен — из крона GET /api/cron/auto-create-journals
+#    (route.ts → runAllDirectoryExchanges). К этому приросту добавится своя база процесса Next (среда Next,
+#    модули маршрутов, кеши) и параллельные запросы; за 6 минут большого первого обмена паузы сборщика могут
+#    замедлять ответы сайта.
+#  • Лимита памяти PM2 в репозитории нет: ни ecosystem-файла, ни `--max-memory-restart`; NODE_OPTIONS с
+#    --max-old-space-size=8192 в deploy.yml — только для сборки (шаг 2/3), сайт стартует с кучей Node по
+#    умолчанию (по комментарию в deploy.yml ~4,1 GB на сервере). PM2 процесс за память не перезапустит,
+#    свободной памяти на сервере — десятки GB (deploy.yml: ~36 GB при сборке).
+#  • Следующий шаг, если сеть такого размера появится: посмотреть `pm2 monit` во время её первого обмена;
+#    при заметном влиянии — вынести плановый обмен из процесса сайта (отдельный `tsx`-скрипт по крону, как
+#    `haccp-telegram-poller`) или писать связи и историю одним INSERT … SELECT FROM unnest(...) через
+#    $executeRaw (id строк и их порядок тогда заводить самим). Без такой сети не делали.

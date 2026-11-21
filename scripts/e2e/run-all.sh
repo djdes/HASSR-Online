@@ -32,6 +32,8 @@ SCENARIOS=(
   manager-check
   pay-from-account-check
   period-digest-check
+  cleanup-check
+  product-batch-check
 )
 if [ "$#" -gt 0 ]; then
   SCENARIOS=("$@")
