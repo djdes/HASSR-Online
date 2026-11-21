@@ -7,17 +7,23 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { TariffComparison } from "@/components/pricing/tariff-comparison";
+import { AccountCollectPay, type AccountCollectHint } from "@/components/settings/account-collect-pay";
 import type { BillingCycle, PaidTier } from "@/lib/tariff-plans";
 
 /**
  * Витрина тарифов в кабинете: та же `TariffComparison`, что на лендинге,
  * плюс запрос «перейти с конца срока» и его отмена. Повышение и продление —
  * ссылками на /order (сумму считает сервер), здесь только понижение,
- * за которое сейчас платить нечего.
+ * за которое сейчас платить нечего. Владельцу аккаунта (`accountPay`) под
+ * кнопкой оплаты — «Собрать с организаций аккаунта и оплатить».
  */
-export function CabinetTariffs(
-  props: Omit<ComponentProps<typeof TariffComparison>, "mode" | "onSchedule" | "onCancelSchedule" | "scheduleBusy">
-) {
+export function CabinetTariffs({
+  accountPay = null,
+  ...props
+}: Omit<ComponentProps<typeof TariffComparison>, "mode" | "onSchedule" | "onCancelSchedule" | "scheduleBusy" | "payExtra"> & {
+  /** Балансы для сбора с организаций аккаунта; null — не владелец, одна организация, «войти как». */
+  accountPay?: AccountCollectHint | null;
+}) {
   const t = useTranslations("settingsUi.subscriptionPage");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -48,6 +54,19 @@ export function CabinetTariffs(
       scheduleBusy={busy}
       onSchedule={(target) => void send("POST", target)}
       onCancelSchedule={() => void send("DELETE")}
+      payExtra={
+        accountPay
+          ? ({ tier, cycle, points, payRub, dark }) => (
+              <AccountCollectPay
+                target={{ tier, cycle, points }}
+                payRub={payRub}
+                hint={accountPay}
+                promoCode={props.promoCode ?? null}
+                dark={dark}
+              />
+            )
+          : undefined
+      }
     />
   );
 }

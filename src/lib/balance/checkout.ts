@@ -282,6 +282,11 @@ export type BalanceOrderInput = Omit<
    * списание на срок — второй параллельный запуск откатится по unique.
    */
   spendDedupeKey: string;
+  /**
+   * Откуда оплата — пометка в `rawResult` заказа: автопродление (по
+   * умолчанию) или кнопка «Собрать с организаций аккаунта и оплатить».
+   */
+  source?: "auto-renew" | "account-collect";
 };
 
 export type BalanceOrderResult =
@@ -328,7 +333,10 @@ export async function createOrderPaidFromBalance(input: BalanceOrderInput): Prom
           basePlanJson: input.basePlanJson ?? undefined,
           status: "paid",
           paidAt: new Date(),
-          rawResult: { paidBy: "balance", autoRenew: true, pointsSpent: gross },
+          rawResult:
+            input.source === "account-collect"
+              ? { paidBy: "balance", accountCollect: true, pointsSpent: gross }
+              : { paidBy: "balance", autoRenew: true, pointsSpent: gross },
         },
         select: { id: true },
       });

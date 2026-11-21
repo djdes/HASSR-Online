@@ -48,9 +48,14 @@ import {
   type DatedLinkRow,
   type ExchangeCompanies,
   type ExchangeLinkRow,
+  type ExchangeOp,
 } from "@/lib/directory-exchange/plan";
+import { ProductCreateBatch } from "@/lib/directory-exchange/product-batch.server";
 import type { ExchangeTrigger } from "@/lib/directory-exchange/runs";
 import { finishExchangeRun, pruneExchangeLogs, startExchangeRun } from "@/lib/directory-exchange/runs.server";
+import { alertExchangeProblems, type ExchangeAlertResult } from "@/lib/directory-exchange/alert.server";
+import { emptyCleanupCounts, type ExchangeCleanupCounts } from "@/lib/directory-exchange/cleanup";
+import { cleanupExchangeTables } from "@/lib/directory-exchange/cleanup.server";
 import type { ExchangeSkipRecord } from "@/lib/directory-exchange/skips";
 import { recordExchangeSkips } from "@/lib/directory-exchange/skips-record.server";
 import {
@@ -122,6 +127,10 @@ export type ExchangeBatchResult = {
   updated: number;
   skipped: number;
   errors: string[];
+  /** Уборка служебных таблиц (серия E, Р4): сколько строк удалено. */
+  cleanup: ExchangeCleanupCounts;
+  /** Тревога владельцу платформы о сбоях обмена (серия E, Р1). */
+  alert: ExchangeAlertResult;
 };
 
 type SkipReason = "limit" | "conflict";
@@ -135,6 +144,7 @@ type Participant = {
   accountKey: string;
 };
 type LinkWrite = { groupId: string; organizationId: string; entityId: string | null; hash: string };
+type CreateOp = Extract<ExchangeOp, { type: "create" }>;
 /** Компания — аккаунт; организация, которой больше нет, — компания сама по себе. */
 const companyLookup = (known: ReadonlyMap<string, string>) => (organizationId: string) => known.get(organizationId) ?? `missing:${organizationId}`;
 
@@ -198,6 +208,15 @@ const TRANSFER_LOCK_PREFIX = "directory-transfer";
 const RUN_TIMEOUT_MS = 10 * 60_000;
 /** Запись одной сущности может завести запись другой (цех — помещение): второй проход их подбирает. */
 const MAX_PASSES = 3;
+/**
+ * Строк связей и истории в одном запросе записи. Небольшие пачки — не только
+ * из-за размера запроса: Prisma держит аргументы последних 100 вызовов своего
+ * журнала отладки в памяти (`@prisma/debug`, история для отчёта об ошибке), и
+ * пачки по 1000 строк держали бы сотни мегабайт (серия E, Р3). У истории
+ * строки тяжелее (поля до и после) — пачка меньше.
+ */
+const LINK_CHUNK = 200;
+const HISTORY_CHUNK = 50;
 export const EXCHANGE_BUSY_CODE = "exchange_busy";
 const BUSY_MESSAGE = "Обмен уже выполняется. Подождите минуту и повторите.";
 const FAILED_NOTE = "Часть записей не удалось обработать из-за ошибки — они будут обработаны при следующем обмене.";
@@ -429,6 +448,40 @@ async function exchangeEntity(params: {
     mirrorId?: string;
   }> = [];
 
+  /** Итог создания: запись, связь и история — или пропуск со строкой разбора. */
+  const settleCreate = (op: CreateOp, key: string, source: EntityRow, outcome: CreateOutcome) => {
+    const skipKey = `${entity}|${op.groupId}`;
+    if (outcome.status === "created") {
+      writes.set(key, { groupId: op.groupId, organizationId: op.organizationId, entityId: outcome.id, hash: op.hash });
+      touch(op.organizationId, outcome.id);
+      tally.created(op.organizationId, kind);
+      applied.push({
+        op: "create",
+        organizationId: op.organizationId,
+        entityId: outcome.id,
+        groupId: op.groupId,
+        from: op.fromOrganizationId,
+        source,
+        before: null,
+        mirrorId: outcome.mirrorId,
+      });
+      changes += 1;
+    } else {
+      blocked.set(`${skipKey}|${op.organizationId}`, outcome.status);
+      tally.skipped(op.organizationId, kind, outcome.status, skipKey);
+      skipped.set(key, skipRecord(op, source.name, outcome.status));
+    }
+  };
+  // Продукты создаются пачкой (серия E, Р3): те же правила, меньше запросов (product-batch.server.ts).
+  const productBatch = entity === "product" ? new ProductCreateBatch<{ op: CreateOp; key: string; source: EntityRow }>() : null;
+  const flushProducts = async () => {
+    if (!productBatch || productBatch.size === 0) return;
+    for (const { item, outcome, failed } of await productBatch.flush()) {
+      if (failed) notes.add(FAILED_NOTE);
+      settleCreate(item.op, item.key, item.source, outcome);
+    }
+  };
+
   for (const op of ops) {
     const key = linkKey(op.groupId, op.organizationId);
     if (op.type === "tombstone") {
@@ -471,39 +524,30 @@ async function exchangeEntity(params: {
 
       let outcome: CreateOutcome;
       try {
-        outcome = await createEntityRow(entity, op.organizationId, source, parentId, {
-          // Помещения участника, который обменивается объектами, приходят обменом.
-          mirrorRoom: !sharesObjects.has(op.organizationId),
-          scope,
-        });
+        if (productBatch) {
+          if ((await productBatch.add({ op, key, source }, op.organizationId, source)) === "queued") continue;
+          outcome = { status: "conflict" };
+        } else {
+          outcome = await createEntityRow(entity, op.organizationId, source, parentId, {
+            // Помещения участника, который обменивается объектами, приходят обменом.
+            mirrorRoom: !sharesObjects.has(op.organizationId),
+            scope,
+          });
+        }
       } catch (error) {
         console.error("[directory-exchange] create failed", { entity, organizationId: op.organizationId, error });
         notes.add(FAILED_NOTE);
         outcome = { status: "conflict" };
       }
-      if (outcome.status === "created") {
-        writes.set(key, { groupId: op.groupId, organizationId: op.organizationId, entityId: outcome.id, hash: op.hash });
-        touch(op.organizationId, outcome.id);
-        tally.created(op.organizationId, kind);
-        applied.push({
-          op: "create",
-          organizationId: op.organizationId,
-          entityId: outcome.id,
-          groupId: op.groupId,
-          from: op.fromOrganizationId,
-          source,
-          before: null,
-          mirrorId: outcome.mirrorId,
-        });
-        changes += 1;
-      } else {
-        blocked.set(`${skipKey}|${op.organizationId}`, outcome.status);
-        tally.skipped(op.organizationId, kind, outcome.status, skipKey);
-        skipped.set(key, skipRecord(op, source.name, outcome.status));
-      }
+      settleCreate(op, key, source, outcome);
       continue;
     }
 
+    // Правка продукта видит созданные до неё в этом проходе и меняет занятые названия (пачка).
+    if (productBatch) {
+      await flushProducts();
+      productBatch.forget(op.organizationId);
+    }
     // update: родителя меняем, только когда у образца он другой и здесь он есть.
     const target = rowIndex.get(op.organizationId)?.get(op.entityId);
     const parentId =
@@ -536,6 +580,8 @@ async function exchangeEntity(params: {
       if (outcome.status === "conflict" || outcome.status === "limit") tally.skipped(op.organizationId, kind, outcome.status, skipKey);
     }
   }
+
+  await flushProducts();
 
   // Отпечаток образца обновляется, только когда правку получили все.
   for (const op of ops) {
@@ -580,36 +626,41 @@ async function exchangeEntity(params: {
       data: { entityId: write.entityId, hash: write.hash },
     });
   }
-  if (inserts.length > 0) {
+  // Новые связи — пачками (`LINK_CHUNK`): первый обмен большой сети пишет их сотнями тысяч (серия E, Р3).
+  for (let index = 0; index < inserts.length; index += LINK_CHUNK) {
     await db.directoryExchangeLink.createMany({
-      data: inserts.map((write) => ({ masterOrganizationId, entity, ...write, originOrganizationId: groupOrigin.get(write.groupId) ?? null })),
+      data: inserts
+        .slice(index, index + LINK_CHUNK)
+        .map((write) => ({ masterOrganizationId, entity, ...write, originOrganizationId: groupOrigin.get(write.groupId) ?? null })),
       skipDuplicates: true,
     });
   }
   await syncSkips();
-  // История — одной пачкой; сбой записи обмен не останавливает.
-  await recordExchangeChanges(
-    applied.map((change): ExchangeChangeRecord => {
-      const row = saved.get(change.organizationId)?.get(change.entityId) ?? null;
-      return {
-        runId,
-        masterOrganizationId,
-        organizationId: change.organizationId,
-        entity,
-        entityId: change.entityId,
-        groupId: change.groupId,
-        op: change.op,
-        sourceOrganizationId: change.from,
-        name: row?.name ?? change.source.name,
-        before: change.before ? changeSnapshot(entity, change.before, scope) : null,
-        // Запись не перечиталась (выпала из обмена сразу после записи) — поля образца без отпечатка.
-        after: {
-          ...(row ? changeSnapshot(entity, row, scope) : { scope, parentId: null, fields: change.source.fields, hash: null }),
-          ...(change.mirrorId ? { mirrorId: change.mirrorId } : {}),
-        },
-      };
-    }),
-  );
+  // История — пачками (строки собираются по пачке, а не все сразу); сбой записи обмен не останавливает.
+  for (let index = 0; index < applied.length; index += HISTORY_CHUNK) {
+    await recordExchangeChanges(
+      applied.slice(index, index + HISTORY_CHUNK).map((change): ExchangeChangeRecord => {
+        const row = saved.get(change.organizationId)?.get(change.entityId) ?? null;
+        return {
+          runId,
+          masterOrganizationId,
+          organizationId: change.organizationId,
+          entity,
+          entityId: change.entityId,
+          groupId: change.groupId,
+          op: change.op,
+          sourceOrganizationId: change.from,
+          name: row?.name ?? change.source.name,
+          before: change.before ? changeSnapshot(entity, change.before, scope) : null,
+          // Запись не перечиталась (выпала из обмена сразу после записи) — поля образца без отпечатка.
+          after: {
+            ...(row ? changeSnapshot(entity, row, scope) : { scope, parentId: null, fields: change.source.fields, hash: null }),
+            ...(change.mirrorId ? { mirrorId: change.mirrorId } : {}),
+          },
+        };
+      }),
+    );
+  }
   return changes;
 }
 
@@ -944,12 +995,26 @@ export async function runDirectoryExchangeWithin(
 /**
  * Плановый обмен: каждый кабинет с двумя и более участниками; сбой одного не
  * мешает остальным. Заодно чистит журнал обменов (старше 90 дней) и историю
- * изменений (старше 30 дней).
+ * изменений (старше 30 дней), после обменов — служебные таблицы (серия E,
+ * Р4: пропуски, закрытые запросы, старые переносы; cleanup.server.ts) и шлёт
+ * владельцу платформы тревогу о кабинетах со сбоем или без успешного обмена
+ * за сутки — не чаще раза в сутки (Р1, alert.server.ts). Ни уборка, ни
+ * тревога не бросают.
  */
 export async function runAllDirectoryExchanges(options: { now?: Date } = {}): Promise<ExchangeBatchResult> {
-  const result: ExchangeBatchResult = { cabinets: 0, busy: 0, created: 0, updated: 0, skipped: 0, errors: [] };
+  const result: ExchangeBatchResult = {
+    cabinets: 0,
+    busy: 0,
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [],
+    cleanup: emptyCleanupCounts(),
+    alert: { status: "healthy", cabinets: 0 },
+  };
   await pruneExchangeLogs(options.now ?? new Date());
   const groups = await db.directoryExchangeMember.groupBy({ by: ["masterOrganizationId"], _count: { _all: true } });
+  const failedCabinetIds: string[] = [];
   for (const group of groups) {
     if (group._count._all < 2) continue;
     result.cabinets += 1;
@@ -964,10 +1029,21 @@ export async function runAllDirectoryExchanges(options: { now?: Date } = {}): Pr
         continue;
       }
       console.error("[directory-exchange] scheduled exchange failed", { masterOrganizationId: group.masterOrganizationId, error });
+      failedCabinetIds.push(group.masterOrganizationId);
       result.errors.push(`cabinet=${group.masterOrganizationId}: ${(error as Error)?.message ?? "ошибка"}`);
     }
   }
   result.errors = result.errors.slice(0, 10);
+  const now = options.now ?? new Date();
+  result.cleanup = await cleanupExchangeTables(now);
+  result.alert = await alertExchangeProblems({ now, failedCabinetIds });
+  console.info("[directory-exchange] scheduled run done", {
+    cabinets: result.cabinets,
+    busy: result.busy,
+    errors: failedCabinetIds.length,
+    cleanup: result.cleanup,
+    alert: result.alert,
+  });
   return result;
 }
 

@@ -1,0 +1,140 @@
+price: 14203 ₽ (renew, 5 points, promotion none, discount none)
+PASS setup: renewal of the paid plan, price > 0
+PASS page hint for the owner: active balance and account total without demo, cabinet and deleting
+PASS button shown: active short, account enough
+PASS preview: price equals the /order pay-from-balance price
+PASS preview: active balance, missing, account total, canPay
+PASS preview: sources largest first, exact sum, no overdraw (Большая all, Средняя the rest)
+PASS preview moved nothing
+PASS manager (not the owner): preview and pay → 403 not_owner
+PASS manager: no page hint
+PASS network manager of this account: preview and pay still → 403 (tariff and payment — owner only)
+PASS another account's owner, active here → 403; owner with a foreign active org → 403
+PASS refusals moved nothing (no ledger rows, balances as set)
+PASS expected price differs → 409 price_changed with the new price, nothing moved
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS pay: status paid with the price
+PASS pay: transfers Большая → Средняя (largest first), amounts as planned, not duplicates
+PASS balances: active a + missing − price = 0
+PASS balances: Большая → 0, Средняя − the rest, Малая untouched
+PASS demo, master cabinet and the deleting organization untouched
+PASS account total went down by exactly the price
+PASS history: one «Оплата тарифа» −price on the active organization, tied to the order
+PASS history: transfer_out −7102 on Большая, transfer_in +7102 on the active, comment «сбор на оплату тарифа»
+PASS history: transfer_out −4261 on Средняя, transfer_in +4261 on the active, comment «сбор на оплату тарифа»
+PASS history list of the active organization shows the two transfers in and the charge
+PASS order: paid from balance (amount 0, pointsSpent = price), renew of the chosen points, marked accountCollect
+PASS one new order for the active organization
+PASS audit: billing.account_pay with the order and transfers; balance.transfer in both organizations of each transfer
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS twin: the /order path paid fully by points with the same price
+PASS account plan, cycle, points and subscriptionEnd — identical to the /order pay-from-balance
+PASS subscriptionEnd moved from END by one month (renewal)
+PASS active organization plan and end — identical to the twin
+PASS same key again → already, the same order
+PASS same key again: no new ledger rows, no new order, balances unchanged
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS parallel ×3 with one key: exactly one paid, the others «already»
+PASS parallel: one charge row, one transfer pair per source
+PASS parallel: balances as after one payment
+PASS parallel: subscription extended once (one more month)
+[balance] account pay charge failed {
+  accountId: 'cmwqdw3bq0002qb7d57743nzd',
+  organizationId: 'cmwqdw39g0000qb7dr4gk8hqh',
+  error: PrismaClientKnownRequestError: 
+  Invalid `tx.balanceTransaction.create()` invocation in
+  /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
+  
+    73 }
+    74 
+    75 try {
+  → 76   await tx.balanceTransaction.create(
+  Database error. Code: `P0001`. Message: `e2e: subscription_charge blocked`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async applyBalanceChange (/home/user/HASSR-Online/src/lib/balance/ledger.ts:76:5)
+      at async <anonymous> (/home/user/HASSR-Online/src/lib/balance/checkout.ts:343:7)
+      at async Proxy._transactionWithCallback (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:859:18)
+      at async createOrderPaidFromBalance (/home/user/HASSR-Online/src/lib/balance/checkout.ts:308:12)
+      at async payFromAccountBalances (/home/user/HASSR-Online/src/lib/balance/account-pay.server.ts:400:15) {
+    code: 'P2039',
+    meta: {
+      modelName: 'BalanceTransaction',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS charge fails after transfers → 409 charge_failed with what was moved and where
+  message: Оплата не прошла (ошибка сервера). 11 363 ₽ уже на балансе «M Активная paychkmwqdw315» — переводы видны в истории баланса. Повторите оплату или оплатите тариф обычным способом
+PASS charge failed: the collected money stays on the active organization (= price), sources drained as planned
+PASS charge failed: no order, no charge row, subscription unchanged
+PASS charge failed: both transfers are in the history of the active organization
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS repeat with the same key: paid without new transfers
+PASS repeat: active 0, sources not touched again, exactly one transfer pair per source for the key
+[balance] account pay transfer failed {
+  accountId: 'cmwqdw3bq0002qb7d57743nzd',
+  from: 'cmwqdw3dd0004qb7d3605opkf',
+  error: PrismaClientKnownRequestError: 
+  Invalid `tx.balanceTransaction.create()` invocation in
+  /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
+  
+    73 }
+    74 
+    75 try {
+  → 76   await tx.balanceTransaction.create(
+  Database error. Code: `P0001`. Message: `e2e: transfer_out blocked`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async applyBalanceChange (/home/user/HASSR-Online/src/lib/balance/ledger.ts:76:5)
+      at async <anonymous> (/home/user/HASSR-Online/src/lib/balance/account-transfer.server.ts:236:7)
+      at async Proxy._transactionWithCallback (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:859:18)
+      at async transferBetweenOwnOrganizations (/home/user/HASSR-Online/src/lib/balance/account-transfer.server.ts:220:17)
+      at async payFromAccountBalances (/home/user/HASSR-Online/src/lib/balance/account-pay.server.ts:356:24) {
+    code: 'P2039',
+    meta: {
+      modelName: 'BalanceTransaction',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS second transfer fails → 409 transfer_failed naming the source, with the amount already moved
+  message: Перевод из «M Средняя paychkmwqdw315» не прошёл (ошибка сервера). 7 102 ₽ уже на балансе «M Активная paychkmwqdw315» — переводы видны в истории баланса. Оплата не списана: повторите её, уже переведённое второй раз не переведётся
+PASS transfer failed: Большая's money is on the active organization, Средняя untouched, nothing charged
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS repeat: paid, only Средняя transferred now
+PASS repeat: Большая transferred exactly once for the key, active 0
+PASS active covers: no button
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS active covers alone: paid, no transfers, active −price, others unchanged
+PASS account short: preview canPay false, no sources
+PASS account short: no button
+PASS account short → 409 account_short with how much is missing
+PASS account short: nothing moved, no order (deleting/demo/cabinet money is not counted)
+PASS ledger invariant for M Активная
+PASS ledger invariant for M Большая
+PASS ledger invariant for M Средняя
+PASS ledger invariant for M Малая
+PASS ledger invariant for M Демо
+PASS ledger invariant for M Кабинет
+PASS ledger invariant for M Закрывается
+PASS ledger invariant for T Активная
+PASS ledger invariant for T Большая
+PASS reminder: the +1 point price is computed for the paid account
+PASS reminder: the short account is 1 ₽ short
+  letter (covered): [email/dev] Body:    wesetup.ru Бесплатные дни организации заканчиваются Здравствуйте! Бесплатные дни организации Рrich Вторая paychkmwqdw315 закончатся через 3 дня. Последний бесплатный день — 24 ноября включительно. После него организация закроется, пока для неё не добавлена точка в тарифе. Остальные организации аккаунта работают как обычно. На балансах организаций аккаунта хватает денег — точку
+PASS reminder: letter to the covered account carries the sentence
+PASS reminder: letter to the short account (1 ₽ short) without the sentence
+PASS reminder: one mark per account, the second run sends nothing
+PASS reminder bell: the covered account has the «хватает» line (orgTrialAccountCovers), the link stays ?addPoints=1
+PASS reminder bell: the short account has no such line
+cleanup: organizations left 0, ledger rows left 0, triggers left 0
+TOTAL: 68 PASS, 0 FAIL

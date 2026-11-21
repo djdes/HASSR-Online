@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-b-2026-11-20/raw/balance-check.ts (series B); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-b-2026-11-20/raw/balance-check.ts (series B); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series B, AC2 (item 10): account balance summary and transfers between own organizations.
  * One account with three working organizations (5 000 / 1 000 / 0 ₽) plus a demo org and a master

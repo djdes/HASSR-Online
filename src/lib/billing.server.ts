@@ -85,6 +85,7 @@ import {
 import { isManagementRole } from "@/lib/user-roles";
 import { COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-contacts";
 import { ADD_POINTS_HREF } from "@/lib/add-points";
+import { accountPayReminderLine } from "@/lib/balance/account-pay";
 
 /**
  * Серверная часть тарифов 2026-10: настройки пробного периода из
@@ -1666,7 +1667,8 @@ export async function sendTrialReminderNow(organizationId: string, now: Date = n
  * организации кончаются (серия A, Р2). Письмо всегда, Telegram — если привязан.
  * «Добавить точку» ведёт на страницу тарифа, которая сразу открывает выбор
  * с точкой больше оплаченного (`?addPoints=1`, серия D, Р12). Push в
- * приложение — от колокольчика (`notifyOrgTrialBell`), не отсюда.
+ * приложение — от колокольчика (`notifyOrgTrialBell`), не отсюда. Если по
+ * балансам организаций аккаунта хватает на точку — строка об этом (серия E, Р9).
  */
 async function sendOrgTrialReminder(
   unit: BillingUnit,
@@ -1680,10 +1682,11 @@ async function sendOrgTrialReminder(
   const payUrl = `${APP_URL}${ADD_POINTS_HREF}`;
   const after =
     "После него организация закроется, пока для неё не добавлена точка в тарифе. Остальные организации аккаунта работают как обычно.";
+  const payLine = await orgTrialAccountPayLine(unit);
   return sendOwnerNotice({
     organizationId: unit.organizationId,
     kind: `billing.org_trial_reminder.${stage}`,
-    telegramText: `⏳ Бесплатные дни организации «${name}» закончатся ${when}: последний бесплатный день — ${last}. ${after}`,
+    telegramText: `⏳ Бесплатные дни организации «${name}» закончатся ${when}: последний бесплатный день — ${last}. ${after}${payLine ? ` ${payLine}` : ""}`,
     email: {
       subject: orgTrialReminderSubject(stage, entry.name),
       title: stage === 1 ? "Бесплатные дни организации заканчиваются завтра" : "Бесплатные дни организации заканчиваются",
@@ -1691,6 +1694,7 @@ async function sendOrgTrialReminder(
         `<p ${P}>Здравствуйте!</p>` +
         `<p ${P}>Бесплатные дни организации <strong>${name}</strong> закончатся ${when}. Последний бесплатный день — <strong>${last}</strong> включительно.</p>` +
         `<div ${BOX}>${after}</div>` +
+        (payLine ? `<p ${P}>${payLine}</p>` : "") +
         `<a href="${payUrl}" ${BUTTON}>Добавить точку</a>` +
         `<p style="margin:20px 0 0;color:#3f3f46;line-height:1.6">Вопросы — звоните ${COMPANY_PHONE.display} или пишите ${COMPANY_TELEGRAM.handle}.</p>`,
     },
@@ -1699,6 +1703,28 @@ async function sendOrgTrialReminder(
     buttonHref: ADD_POINTS_HREF,
     appPush: false,
   });
+}
+
+/**
+ * Р9 (серия E): по балансам организаций аккаунта хватает на «Добавить точку»
+ * до конца срока — строка для напоминания (`accountPayReminderLine`), иначе
+ * null. Один расчёт на единицу за прогон: письмо и колокольчик берут один
+ * ответ. Сбой расчёта — null, напоминание уходит как раньше.
+ */
+const orgTrialPayLines = new WeakMap<BillingUnit, Promise<string | null>>();
+function orgTrialAccountPayLine(unit: BillingUnit): Promise<string | null> {
+  let pending = orgTrialPayLines.get(unit);
+  if (!pending) {
+    pending = import("@/lib/balance/account-pay.server")
+      .then(({ addPointAccountCover }) => addPointAccountCover({ accountId: unit.accountId, organizationId: unit.organizationId }))
+      .then((cover) => (cover ? accountPayReminderLine(cover) : null))
+      .catch((error) => {
+        console.error("[billing] org trial account pay line failed", { unit: unit.key, error });
+        return null;
+      });
+    orgTrialPayLines.set(unit, pending);
+  }
+  return pending;
 }
 
 /** Ключ колокольчика напоминания: организация, срок и ступень — по одному на каждую. */
@@ -1726,6 +1752,7 @@ async function notifyOrgTrialBell(
     });
     if (!owner || !owner.isActive || owner.archivedAt) return false;
     const lastDay = lastDayBefore(entry.trialEndsAt);
+    const payLine = await orgTrialAccountPayLine(unit);
     const { upsertNotification } = await import("@/lib/notifications");
     await upsertNotification({
       organizationId: owner.organizationId,
@@ -1748,6 +1775,7 @@ async function notifyOrgTrialBell(
           labelKey: "orgTrialLastDay",
           labelParams: { day: mskDayKey(lastDay) },
         },
+        ...(payLine ? [{ id: `org-trial-pay:${entry.organizationId}`, label: payLine, labelKey: "orgTrialAccountCovers" as const }] : []),
       ],
     });
     return true;

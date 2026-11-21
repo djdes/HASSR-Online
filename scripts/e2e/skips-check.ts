@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-b-2026-11-20/raw/skips-check.ts (series B); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-b-2026-11-20/raw/skips-check.ts (series B); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * End-to-end check of item 9 (AC1, rules Р9.1–Р9.3) against the local DB:
  * skipped creations become `DirectoryExchangeSkip` rows, repeated exchanges do

@@ -4159,7 +4159,8 @@
       "open": "Ochish",
       "orgTrialEnding": "{stage, select, tomorrow {«{name}» tashkilotining bepul kunlari ertaga tugaydi} other {«{name}» tashkilotining bepul kunlari tugamoqda}}",
       "orgTrialLastDay": "Oxirgi bepul kun — {date}",
-      "addPoint": "Nuqta qo‘shish"
+      "addPoint": "Nuqta qo‘shish",
+      "orgTrialAccountCovers": "Akkaunt tashkilotlari balanslarida pul yetarli — nuqtani balansdan bir qadamda to‘lash mumkin."
     }
   },
   "journalControls": {
@@ -11243,7 +11244,70 @@
       },
       "go": "O‘tish",
       "goFailed": "Almashtirib bo‘lmadi",
-      "truncated": "Yaratilgan sanasi bo‘yicha dastlabki {count} ta tashkilot ko‘rsatilgan."
+      "truncated": "Yaratilgan sanasi bo‘yicha dastlabki {count} ta tashkilot ko‘rsatilgan.",
+      "period": {
+        "label": "Davr",
+        "options": {
+          "today": "Bugun",
+          "7": "7 kun",
+          "30": "30 kun"
+        },
+        "range": "{from} — {to}: to‘liq kunlar, bugun kirmaydi.",
+        "hint": "Tashkilot yuritadigan har bir kundalik jurnalda yozuv bo‘lsa yoki kun yopilgan bo‘lsa, kun hisobga olinadi. Tashkilot yaratilishidan oldingi va yopilganidan keyingi kunlar hisoblanmaydi.",
+        "columns": {
+          "filled": "Jurnallar to‘ldirilgan kunlar",
+          "records": "Jurnal yozuvlari"
+        },
+        "value": "{days} tadan {filled} ta",
+        "percent": "{percent}%",
+        "status": {
+          "done": "har kuni",
+          "partial": "har kuni emas",
+          "none": "birorta kun ham emas",
+          "empty": "jurnallar yo‘q",
+          "unknown": "hisoblab bo‘lmadi"
+        },
+        "totals": {
+          "filled": "Jurnallar to‘ldirilgan kunlar",
+          "records": "Davrdagi jurnal yozuvlari"
+        }
+      },
+      "export": {
+        "label": "Yuklab olish",
+        "excel": "Excel",
+        "pdf": "PDF",
+        "title": "Tarmoq: tashkilotlar bo‘yicha hisobot",
+        "sheet": "Tarmoq",
+        "today": "Bugun, {date}",
+        "range": "{from} — {to} ({count, plural, other {# kun}})",
+        "generated": "Tuzilgan: {date}",
+        "total": "Jami",
+        "status": "Holat",
+        "percent": "Kunlar ulushi, %"
+      },
+      "managers": {
+        "title": "Tarmoq boshqaruvchilari",
+        "description": "Boshqaruvchi «Tarmoq» sahifasini ko‘radi, ma’lumotnomalar almashinuvini sozlaydi va ishga tushiradi, ma’lumotlarni ko‘chiradi va ko‘chirishni bekor qiladi, o‘tkazib yuborilgan yozuvlar va almashinuv tarixini ko‘rib chiqadi, master-kabinet kodini beradi, akkaunt bo‘yicha balansni ko‘radi va tashkilotlar o‘rtasida pul o‘tkazadi. Boshqa kompaniya so‘rovlari, boshqaruvchilarni tayinlash, tarif va to‘lov egasida qoladi. Boshqaruvchining barcha amallari jurnalga uning nomi bilan yoziladi.",
+        "empty": "Hozircha boshqaruvchilar yo‘q — tarmoqni faqat ega boshqaradi.",
+        "inactive": "huquqlar amal qilmaydi: to‘liq kirish yo‘q",
+        "since": "{date} da tayinlangan",
+        "candidate": "{name} — {organizations}",
+        "choose": "Rahbarni tanlang",
+        "add": "Tayinlash",
+        "noCandidates": "Akkaunt tashkilotining to‘liq kirish huquqiga ega rahbarini tayinlash mumkin — hozircha bunday rahbar yo‘q.",
+        "remove": "Olib tashlash",
+        "removeTitle": "{name} tarmoq boshqaruvidan olinsinmi?",
+        "removeDescription": "Boshqaruvchi huquqlari darhol tugaydi. Tashkilotlarda u o‘z roli bilan qoladi.",
+        "added": "{name} endi tarmoqni boshqaradi",
+        "removed": "{name} endi tarmoqni boshqarmaydi",
+        "failed": "Saqlab bo‘lmadi — qayta urinib ko‘ring"
+      },
+      "mini": {
+        "eyebrow": "Tarmoq",
+        "title": "Akkaunt tashkilotlari",
+        "unfilled": "To‘ldirilmagan jurnallari bor",
+        "full": "To‘liq hisobot «Tarmoq» sahifasida"
+      }
     }
   },
   "sanpinReference": {
@@ -20817,7 +20881,11 @@
     "search": {
       "label": "Bo‘limlarni qidirish"
     },
-    "emptySearch": "Bo‘lim topilmadi. Boshqa so‘zni sinab ko‘ring, masalan, “jurnal”, “hisobot” yoki “xodim”."
+    "emptySearch": "Bo‘lim topilmadi. Boshqa so‘zni sinab ko‘ring, masalan, “jurnal”, “hisobot” yoki “xodim”.",
+    "network": {
+      "label": "Tarmoq",
+      "hint": "Akkaunt tashkilotlari: bugungi jurnallar, balanslar, o‘z 14 kuni"
+    }
   },
   "specializedHygieneGlassPdf": {
     "hygieneTitle": "Gigiyena jurnali (xodimlar)",
@@ -27079,7 +27147,7 @@
         "description": "«{name}» va akkauntning boshqa tashkilotlari ma’lumotnomalari: ularni bog‘lang yoki tanlanganini bir marta ko‘chiring.",
         "loading": "Tashkilotlar yuklanmoqda…",
         "loadFailed": "Akkaunt tashkilotlarini yuklab bo‘lmadi",
-        "ownerOnly": "Ma’lumotnomalar almashinuvini akkaunt egasi sozlaydi.",
+        "ownerOnly": "Ma’lumotnomalar almashinuvini akkaunt egasi yoki tarmoq boshqaruvchisi sozlaydi.",
         "noSiblings": "Akkauntda hozircha bitta tashkilot bor. Ikkinchisini qo‘shganingizda almashinuv paydo bo‘ladi.",
         "modeLegend": "Usul",
         "modeLink": "Master-kabinet orqali bog‘lash",
@@ -30757,7 +30825,34 @@
       "orgTrialLocked": "“{name}” — yopilgan: bepul kunlar {date} da tugagan",
       "orgTrialLockedHint": "Yopilgan tashkilotlarni ochish uchun jami {points, plural, other {# ta nuqta}} kerak. Quyidagi variantlar ular bilan hisoblangan.",
       "orgTrialsLeft": "Yangi tashkilotlar uchun qolgan bepul 14 kunlik davrlar: {count}.",
-      "addPointsNote": "Nuqta qo‘shilmoqda: quyidagi tanlovda allaqachon {count, plural, other {# ta nuqta}}. Tarifni tanlang va odatdagidek to‘lang."
+      "addPointsNote": "Nuqta qo‘shilmoqda: quyidagi tanlovda allaqachon {count, plural, other {# ta nuqta}}. Tarifni tanlang va odatdagidek to‘lang.",
+      "accountPay": {
+        "button": "Akkaunt tashkilotlaridan yig‘ib to‘lash",
+        "confirmTitle": "{amount} akkaunt balanslaridan to‘lansinmi?",
+        "confirmDescription": "«{name}» balansida {balance} — {missing} yetmaydi. Yetishmayotgan summani akkauntning boshqa tashkilotlaridan o‘tkazamiz va tarifni darhol to‘laymiz. O‘tkazmalar balans tarixida ko‘rinadi.",
+        "confirmEnough": "«{name}» balansida yetarli — o‘tkazmalarsiz undan to‘laymiz.",
+        "sourceLine": "«{name}»dan o‘tkazma — {amount}",
+        "chargeLine": "«{name}» balansidan tarif to‘lovi — {amount}",
+        "confirmCollect": "O‘tkazish va to‘lash",
+        "confirm": "To‘lash",
+        "loading": "Summa va uni qayerdan olish hisoblanmoqda…",
+        "success": "Tarif balansdan to‘landi: {amount}",
+        "successCollected": "Akkaunt tashkilotlaridan {moved} yig‘ildi va tarif to‘landi: {amount}",
+        "already": "Bu to‘lov allaqachon o‘tgan",
+        "errors": {
+          "notOwner": "Akkaunt tashkilotlari balanslaridan faqat akkaunt egasi to‘lay oladi",
+          "accountShort": "Akkaunt tashkilotlari balanslarida {amount} yetmaydi. Tarifni odatdagi usulda to‘lang.",
+          "priceChanged": "Summa qayta hisoblandi: endi {amount}. Tekshiring va yana tasdiqlang.",
+          "deleting": "«{name}» tashkiloti o‘chirilmoqda — uning balansiga yig‘ib bo‘lmaydi.",
+          "transferFailed": "«{source}»dan o‘tkazma o‘tmadi. {moved} allaqachon «{name}» balansida — o‘tkazmalar balans tarixida ko‘rinadi. To‘lov yechilmadi: qayta urinib ko‘ring, o‘tkazilgan pul ikkinchi marta o‘tkazilmaydi.",
+          "transferFailedNothing": "«{source}»dan o‘tkazma o‘tmadi. Hech narsa o‘tkazilmadi va yechilmadi — sahifani yangilang va qayta urinib ko‘ring.",
+          "chargeFailed": "To‘lov o‘tmadi. {moved} allaqachon «{name}» balansida — o‘tkazmalar balans tarixida ko‘rinadi. Qayta urinib ko‘ring yoki tarifni odatdagi usulda to‘lang.",
+          "chargeFailedNothing": "To‘lov o‘tmadi, balansdan hech narsa yechilmadi. Qayta urinib ko‘ring.",
+          "network": "Server bilan aloqa yo‘q. Qayta urinib ko‘ring — pul ikki marta yechilmaydi.",
+          "tooMany": "Ketma-ket juda ko‘p urinish. Bir daqiqa kuting.",
+          "failed": "To‘lab bo‘lmadi. Sahifani yangilang va qayta urinib ko‘ring."
+        }
+      }
     },
     "journalResponsiblesClient": {
       "commissionTitle": "Komissiya — brakerajni imzolaydi",

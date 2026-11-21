@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-a-2026-11-20/raw/background-check.ts (series A); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-a-2026-11-20/raw/background-check.ts (series A); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series A, AC5: an exchange that runs longer than the wait answers `running: true`
  * and finishes in the background — the result lands in the members' `lastSyncJson`

@@ -1,3 +1,5 @@
+import { canManageNetworkRole } from "@/lib/account-roles";
+import { accountRoleForOrganization } from "@/lib/account-roles.server";
 import { runWithConcurrency } from "@/lib/bounded-concurrency";
 import { loadAccountBilling } from "@/lib/billing.server";
 import { db } from "@/lib/db";
@@ -41,13 +43,14 @@ export type NetworkSummaryRefusal = "not_owner" | "single_org";
 
 export class NetworkSummaryAccessError extends Error {
   constructor(readonly code: NetworkSummaryRefusal) {
-    super(code === "not_owner" ? "Сводка по сети доступна владельцу аккаунта" : "В аккаунте одна организация");
+    super(code === "not_owner" ? "Сводка по сети доступна владельцу аккаунта и управляющему сетью" : "В аккаунте одна организация");
     this.name = "NetworkSummaryAccessError";
   }
 }
 
 /**
- * Данные страницы «Сеть». Не владелец аккаунта активной организации —
+ * Данные страницы «Сеть». Не владелец аккаунта активной организации и не
+ * управляющий сетью —
  * `NetworkSummaryAccessError("not_owner")`, одна организация — `single_org`.
  * Проверки сессии (полный доступ, «войти как», точка) — на странице.
  */
@@ -55,12 +58,14 @@ export async function loadNetworkSummary(input: {
   ownerUserId: string;
   activeOrgId: string;
   now?: Date;
+  /** false — без журналов за сегодня (страница и выгрузка за 7/30 дней их не показывают, серия E, Р6). */
+  journals?: boolean;
 }): Promise<NetworkSummary> {
   const now = input.now ?? new Date();
-  const account = await db.account.findUnique({ where: { ownerUserId: input.ownerUserId }, select: { id: true } });
-  if (!account) throw new NetworkSummaryAccessError("not_owner");
-  const active = await db.organization.findUnique({ where: { id: input.activeOrgId }, select: { accountId: true } });
-  if (!active || active.accountId !== account.id) throw new NetworkSummaryAccessError("not_owner");
+  // Владелец аккаунта активной организации или управляющий сетью (серия E, Р5); `ownerUserId` — кто смотрит.
+  const access = await accountRoleForOrganization(input.ownerUserId, input.activeOrgId);
+  if (!access || !canManageNetworkRole(access.role)) throw new NetworkSummaryAccessError("not_owner");
+  const account = { id: access.accountId };
 
   const found = await db.organization.findMany({
     where: networkOrgWhere(account.id),
@@ -87,7 +92,7 @@ export async function loadNetworkSummary(input: {
 
   // Как на главной при «Вся организация»: набор организации без точки,
   // непериодические журналы без записи сегодня — не заполнены.
-  const counted = await runWithConcurrency(orgs, NETWORK_CONCURRENCY, async (org): Promise<MonitoringMetric> => {
+  const counted = await runWithConcurrency(input.journals === false ? [] : orgs, NETWORK_CONCURRENCY, async (org): Promise<MonitoringMetric> => {
     const disabled = parseDisabledCodes(org.disabledJournalCodes);
     const filled = await getTemplatesFilledToday(org.id, now, templates, disabled, {
       treatAperiodicAsFilled: false,

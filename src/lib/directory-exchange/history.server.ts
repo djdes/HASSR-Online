@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { canManageNetwork } from "@/lib/account-roles.server";
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
 import {
@@ -143,7 +144,7 @@ export type ExchangeHistoryItem = {
 
 /**
  * Изменения обмена у организации за 30 дней, новые первыми. Вызывающий
- * проверил, что смотрит владелец её аккаунта (`requireExchangeOwner`).
+ * проверил, что смотрит владелец её аккаунта или управляющий сетью (`requireExchangeManager`).
  */
 export async function listExchangeHistory(
   owner: { organizationId: string },
@@ -400,11 +401,12 @@ export async function undoExchangeChange(input: {
       beforeJson: true,
       afterJson: true,
       sourceOrganizationId: true,
-      organization: { select: { accountId: true, account: { select: { ownerUserId: true } } } },
+      organization: { select: { accountId: true } },
     },
   });
   const accountId = found?.organization.accountId;
-  if (!found || !accountId || found.organization.account?.ownerUserId !== input.actor.userId) {
+  // Владелец аккаунта или управляющий сетью (серия E, Р5); чужое — как несуществующее.
+  if (!found || !accountId || !(await canManageNetwork(input.actor.userId, accountId))) {
     throw new DirectoryExchangeError(CHANGE_NOT_FOUND_MESSAGE, 404);
   }
   const entity = found.entity;

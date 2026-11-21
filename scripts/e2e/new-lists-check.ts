@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-c2-2026-11-20/raw/new-lists-check.ts (series C2); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-c2-2026-11-20/raw/new-lists-check.ts (series C2); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series C2, items Р8.1 («Журналы»), Р8.4 («Чек-листы») and Р8.5 (the new lists everywhere) —
  * AC2, AC5, AC6 — end to end against the local DB.

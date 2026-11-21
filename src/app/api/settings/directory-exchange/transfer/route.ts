@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { exchangeErrorResponse, requireExchangeOwner } from "@/lib/directory-exchange/access.server";
+import { exchangeErrorResponse, requireExchangeManager } from "@/lib/directory-exchange/access.server";
 import { transferOnce, transferPreview } from "@/lib/directory-exchange/run.server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
@@ -35,7 +35,7 @@ const transferSchema = z.object({
  * уже есть (у настроек журналов — такие же).
  */
 export async function GET(request: Request) {
-  const owner = await requireExchangeOwner();
+  const owner = await requireExchangeManager();
   if (!owner.ok) return owner.response;
   const { organizationId: toOrganizationId, actor } = owner.context;
   if (!previewLimiter.consume(`directory-exchange:preview:${actor.userId}`)) {
@@ -55,11 +55,11 @@ export async function GET(request: Request) {
 /**
  * POST /api/settings/directory-exchange/transfer `{ fromOrganizationId,
  * selection }` — разовый перенос в активную организацию → `{ ok: true,
- * summary }`. Связь не сохраняется, дубли пропускаются. Только владелец
+ * summary }`. Связь не сохраняется, дубли пропускаются. Владелец или управляющий сетью
  * аккаунта; организация не из его аккаунта — 404, закрытая — 409.
  */
 export async function POST(request: Request) {
-  const owner = await requireExchangeOwner();
+  const owner = await requireExchangeManager();
   if (!owner.ok) return owner.response;
   const { organizationId: toOrganizationId, actor } = owner.context;
   if (!transferLimiter.consume(`directory-exchange:transfer:${actor.userId}`)) {

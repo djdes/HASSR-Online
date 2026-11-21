@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-c1-2026-11-20/raw/part3-foreign-check.ts (series C1); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-c1-2026-11-20/raw/part3-foreign-check.ts (series C1); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * End-to-end check of the exchange with a foreign account (part 3) against the local DB,
  * extended for series A: bell and Telegram to the cabinet owner (AC4) and the first

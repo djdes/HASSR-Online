@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-a-2026-11-20/raw/part2-exchange-check.ts (series A); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-a-2026-11-20/raw/part2-exchange-check.ts (series A); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * End-to-end check of the directory exchange inside one account against the local DB
  * (part 2 scenario, updated for series A: saving the exchange no longer connects

@@ -8,20 +8,36 @@ name: Nightly e2e (directory exchange)
 #
 # База — одноразовый PostgreSQL этого запуска (service container): на прод
 # ничего не пишется, секретов прода здесь нет. Почта без SMTP только пишется
-# в лог. Сбой — сообщение в Telegram тем же ботом и в тот же чат, что сбой
-# выката (job notify-failure, как в deploy.yml).
+# в лог. Сбой ночного прогона — сообщение в Telegram тем же ботом и в тот же
+# чат, что сбой выката (job notify-failure, как в deploy.yml).
+#
+# Серия E (Р2): те же сценарии идут и на pull request в master, если он
+# меняет обмен, балансы, свои 14 дней организации, оплату, сами сценарии,
+# схему базы или этот файл. Сбой на PR виден в проверках PR — в Telegram о
+# нём не пишем (только ночной запуск).
 on:
   schedule:
     # 01:17 UTC = 04:17 МСК — ночью и не в начале часа.
     - cron: "17 1 * * *"
   workflow_dispatch: {}
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/lib/directory-exchange/**"
+      - "src/lib/balance/**"
+      - "src/lib/org-trial*"
+      - "src/lib/billing.server.ts"
+      - "scripts/e2e/**"
+      - "prisma/schema.prisma"
+      - ".github/workflows/nightly-e2e.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: nightly-e2e
-  cancel-in-progress: false
+  # Ночной и ручной прогоны — по одному; на PR новый пуш отменяет прежний прогон этого PR.
+  group: nightly-e2e-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   e2e:
@@ -87,8 +103,8 @@ jobs:
   notify-failure:
     name: Notify Telegram on failure
     needs: [e2e]
-    # cancelled — в том числе превышение timeout-minutes.
-    if: always() && (needs.e2e.result == 'failure' || needs.e2e.result == 'cancelled')
+    # Только ночной запуск; cancelled — в том числе превышение timeout-minutes.
+    if: always() && github.event_name == 'schedule' && (needs.e2e.result == 'failure' || needs.e2e.result == 'cancelled')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 

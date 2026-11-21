@@ -1,4 +1,4 @@
-// E2E copy of .agent/tasks/multi-org-followups-c1-2026-11-20/raw/multi-company-check.ts (series C1); the task copy stays as that series' evidence.
+// Moved here from .agent/tasks/multi-org-followups-c1-2026-11-20/raw/multi-company-check.ts (series C1); that file is now a wrapper that runs this one, and its logs stay as that series' evidence.
 /*
  * Series C1, item 6 (AC1, AC2): several companies of other accounts at one master cabinet
  * («star»), checked end to end against the local DB.

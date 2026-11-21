@@ -49,6 +49,8 @@ model Account {
   organizations      Organization[]
   /// Скидка навсегда (lifetime-промокод, привязан первой оплатой).
   lifetimeDiscount   AccountLifetimeDiscount?
+  /// Управляющие сетью (серия E): права владельца на сеть, обмен и переводы.
+  networkManagers    AccountNetworkManager[]
 }
 
 /// Членство человека в организации сверх «домашней» (`User.organizationId`).
@@ -6216,6 +6218,22 @@ model DirectoryExchangeSkip {
 
   @@unique([masterOrganizationId, entity, groupId, organizationId])
   @@index([organizationId])
+}
+
+/// Управляющий сетью аккаунта (серия E, 2026-11-21): владелец аккаунта назначает
+/// руководителя одной из своих организаций; тот получает права владельца на страницу
+/// «Сеть», обмен справочниками и переводы между организациями. Решения по запросам
+/// другой компании, тариф и оплата — только у владельца.
+model AccountNetworkManager {
+  id              String   @id @default(cuid())
+  accountId       String
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId          String
+  grantedByUserId String?
+  createdAt       DateTime @default(now())
+
+  @@unique([accountId, userId])
+  @@index([userId])
 }
 
 /// Один обмен справочниками кабинета (серия D, 2026-11-20): для страницы ROOT

@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { canManageNetwork } from "@/lib/account-roles.server";
 import { advisoryLockKey, withAdvisoryTryLock } from "@/lib/advisory-lock";
 import { db } from "@/lib/db";
 import {
@@ -274,8 +275,8 @@ function isForeignTransfer(source: { accountId: string | null } | null, toAccoun
 }
 
 /**
- * Переносы последних 7 дней в организации аккаунта, владелец которого —
- * `userId`: новые первыми. Перенос от другой компании (по её подтверждённому
+ * Переносы последних 7 дней в организации аккаунта, если `userId` — его
+ * владелец или управляющий сетью: новые первыми. Перенос от другой компании (по её подтверждённому
  * запросу) показывается названием её мастер-кабинета — организации другого
  * аккаунта получателю не называются.
  */
@@ -284,10 +285,12 @@ export async function listRecentTransfers(
   options: { now?: Date; limit?: number } = {},
 ): Promise<RecentTransfer[]> {
   const now = options.now ?? new Date();
+  // Владелец аккаунта или управляющий сетью (серия E, Р5); остальным — пусто.
+  if (!(await canManageNetwork(owner.userId, owner.accountId))) return [];
   const rows = await db.directoryTransfer.findMany({
     where: {
       createdAt: { gte: new Date(now.getTime() - TRANSFER_UNDO_MS) },
-      toOrganization: { accountId: owner.accountId, account: { ownerUserId: owner.userId } },
+      toOrganization: { accountId: owner.accountId },
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: Math.max(1, Math.min(options.limit ?? RECENT_LIMIT, 100)),
@@ -855,7 +858,8 @@ export async function underExchangeLocks<T>(cabinetIds: readonly string[], fn: (
 }
 
 /**
- * Отменить перенос (Р12.2). Только владелец аккаунта организации-получателя:
+ * Отменить перенос (Р12.2). Только владелец аккаунта организации-получателя
+ * или управляющий его сетью:
  * чужое и несуществующее — одно и то же 404. Срок вышел или уже отменён — 409;
  * идёт обмен кабинета организации или другой перенос в неё — 409, ничего не сделано.
  * Возвращает, что отменено и что осталось и почему.
@@ -876,14 +880,15 @@ export async function undoTransfer(input: {
       createdJson: true,
       requestId: true,
       toOrganizationId: true,
-      toOrganization: { select: { accountId: true, account: { select: { ownerUserId: true } } } },
+      toOrganization: { select: { accountId: true } },
       fromOrganizationId: true,
       fromOrganizationName: true,
       fromOrganization: { select: { name: true, accountId: true } },
     },
   });
   const accountId = transfer?.toOrganization.accountId;
-  if (!transfer || !accountId || transfer.toOrganization.account?.ownerUserId !== input.ownerUserId) {
+  // `ownerUserId` — кто отменяет: владелец аккаунта получателя или управляющий сетью (серия E, Р5).
+  if (!transfer || !accountId || !(await canManageNetwork(input.ownerUserId, accountId))) {
     throw new DirectoryExchangeError(NOT_FOUND_MESSAGE, 404);
   }
   const allowed = canUndoTransfer({ createdAt: transfer.createdAt, undoneAt: transfer.undoneAt, now });

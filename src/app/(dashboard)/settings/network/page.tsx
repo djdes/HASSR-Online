@@ -5,6 +5,9 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageHeaderStat } from "@/components/ui/page-header";
 import { NetworkGoButton } from "@/components/settings/network-go-button";
+import { NetworkPeriodBar } from "@/components/settings/network-period-bar";
+import { NetworkPeriodView } from "@/components/settings/network-period-view";
+import { NetworkManagersSection } from "@/components/settings/network-managers-section";
 import type { Locale } from "@/i18n/locales";
 import { ADD_POINTS_HREF } from "@/lib/add-points";
 import { getActiveOrgId, isImpersonating, requireAuth } from "@/lib/auth-helpers";
@@ -17,6 +20,8 @@ import {
   type NetworkPlan,
 } from "@/lib/network-summary";
 import { NetworkSummaryAccessError, loadNetworkSummary } from "@/lib/network-summary.server";
+import { networkPeriodDays, parseNetworkPeriod } from "@/lib/network-period";
+import { loadNetworkPeriod } from "@/lib/network-period.server";
 import { isPointScoped } from "@/lib/point-scope";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { cn } from "@/lib/utils";
@@ -47,16 +52,25 @@ const JOURNAL_TONE: Record<JournalDayStatus, keyof typeof PILL_TONE> = {
  * владелец аккаунта активной организации с двумя организациями и больше
  * (`loadNetworkSummary`); остальным — 403, пункта меню у них нет.
  */
-export default async function NetworkSettingsPage() {
+export default async function NetworkSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [name: string]: string | string[] | undefined }>;
+}) {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) || isImpersonating(session) || isPointScoped(session.user)) forbidden();
-  const summary = await loadNetworkSummary({ ownerUserId: session.user.id, activeOrgId: getActiveOrgId(session) }).catch(
+  // «Сегодня / 7 дней / 30 дней» (серия E, Р6): за период журналы за сегодня не считаем.
+  const period = parseNetworkPeriod((await searchParams).period);
+  const days = networkPeriodDays(period);
+  const summary = await loadNetworkSummary({ ownerUserId: session.user.id, activeOrgId: getActiveOrgId(session), journals: days === null }).catch(
     (error: unknown) => {
       if (error instanceof NetworkSummaryAccessError) return null;
       throw error;
     },
   );
   if (!summary) forbidden();
+  const periodSummary =
+    days === null ? null : await loadNetworkPeriod(summary.accountId, days, { activeOrgId: summary.activeOrganizationId });
 
   const [t, tTariffs, locale] = await Promise.all([
     getTranslations("settingsManagement.network"),
@@ -120,6 +134,10 @@ export default async function NetworkSettingsPage() {
         description={t("description")}
         actions={<PageHeaderStat>{t("plan.label", { plan: planText(summary.plan) })}</PageHeaderStat>}
       />
+
+      {/* Период и выгрузка (серия E, Р6): за 7/30 дней — своя таблица, иначе — «Сегодня» как было. */}
+      <NetworkPeriodBar period={period} />
+      {periodSummary ? <NetworkPeriodView summary={periodSummary} /> : (<>
 
       <section className="grid gap-3 sm:grid-cols-3" data-network-totals>
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5">
@@ -212,6 +230,10 @@ export default async function NetworkSettingsPage() {
       {summary.truncated ? (
         <p className="text-[13px] text-[#6f7282]">{t("truncated", { count: String(rows.length) })}</p>
       ) : null}
+      </>)}
+
+      {/* Управляющие сетью (серия E, Р5) — только владельцу аккаунта. */}
+      <NetworkManagersSection accountId={summary.accountId} viewerId={session.user.id} />
     </div>
   );
 }
