@@ -1,0 +1,14 @@
+Sentry end-to-end, 21.11.2026 (organization wesetup, project javascript-nextjs, EU).
+
+Server (initSentryServer with production env; a test sets user id+email on the scope):
+  issue 162858265 "Sentry smoke test (server)" — platform node, environment production, release wesetup@smoke01
+  stored user: id/email/ip_address = null (only geo derived by Sentry from the sending IP, IP not stored)
+  the test email appears only in source context lines of the test script itself, not in user data
+
+Browser (local `next start` of the production build, wesetup.ru mapped to it, error thrown on /login):
+  tunnel: 200 POST http://wesetup.ru/api/monitoring  (Sentry client loaded lazily after page load)
+  issue 162860212 "Sentry smoke test (browser)" — platform javascript, release wesetup@57dec94cf
+  request: url http://wesetup.ru/login (no query), headers: User-Agent only, cookies: none; user: no id/email/ip
+  project setting allowedDomains=[wesetup.ru, www.wesetup.ru] does not block tunnelled events
+
+Tunnel unit test: our DSN → https://o4512471790911488.ingest.de.sentry.io/api/4512471804346448/envelope/, foreign DSN → 403.

@@ -2,8 +2,8 @@
 
 - **Task ID:** `cloud-testing-2026-11-21`
 - **Ветка:** `claude/hopeful-euler-lb6cie` от `origin/master` `230e9e70` (#297).
-- **Verdict:** AC1–AC4 — PASS; AC6 — PASS после зелёного CI на PR; **AC5 (Sentry) — открыт**: аккаунт
-  зарегистрирован, ждём ссылку подтверждения из письма владельца, подключение SDK — отдельным PR.
+- **Verdict:** AC1–AC6 — PASS (AC5: сервер проверен событием в проекте; браузер на проде — после выкладки,
+  см. «Проверка на проде»).
 
 | AC | Статус | Доказательство |
 |----|--------|----------------|
@@ -11,7 +11,7 @@
 | AC2 | PASS | `.mcp.json` → `scripts/dev/playwright-mcp.mjs` (`@playwright/mcp@0.0.84`): `raw/playwright-mcp-handshake.log` — рукопожатие, 25 инструментов, открыта локальная страница, снимок с кнопкой, клик, внешний сайт через прокси сессии. Почему `.mcp.json`, а не плагин: облачная сессия не ставит плагины из настроек репозитория, а `.mcp.json` подхватывает (docs cloud-environments). |
 | AC3 | PASS | `scripts/monitor/prod-check.mjs` + `.github/workflows/prod-monitor.yml` (каждые 15 мин). `src/lib/prod-monitor.test.ts` — 22/22. Живой прогон по wesetup.ru: `raw/prod-check-live.log` — `/login` не ответил за 6 попыток (ECONNRESET), остальные ответили → «помеха», запуск в порядке, тревоги нет. |
 | AC4 | PASS | Скрипт подготовки прогнан из `/home/user`: `raw/setup-script.log` — `npm ci` (1372 пакета), `prisma generate`, `@playwright/mcp` 0.0.84, 43 с. Окружение «HASSR-Online» создано (личное, репозиторий djdes/HASSR-Online, сеть: пакеты + GitHub + `binaries.prisma.sh` по умолчанию, плюс `wesetup.ru`). |
-| AC5 | OPEN | Sentry: регистрация отправлена 21.11 20:00 UTC (регион EU, организация WeSetup), Sentry прислал ссылку подтверждения на почту владельца (2 часа). Дальше — проект, DSN и `@sentry/nextjs` отдельным PR. |
+| AC5 | PASS | Аккаунт подтверждён ссылкой владельца: организация `wesetup`, проект `javascript-nextjs` (EU); в проекте не хранить IP, чистка данных, приём только с wesetup.ru. Сервер: `@sentry/nextjs` 11.11.0 без `withSentryConfig` (сборка не трогается) — `src/lib/sentry-server.ts` + `onRequestError` в `src/instrumentation.ts`. Браузер: минимальный клиент `@sentry/browser`, загружается после открытия страницы (`src/lib/sentry-lazy.ts`, `src/instrumentation-client.ts`), туннель `src/app/api/monitoring/route.ts` (только наш DSN), `useReportError` в error.tsx. В v11 `sendDefaultPii` заменён на `dataCollection`, по умолчанию собирающий всё, — выключено явно (`SENTRY_DATA_COLLECTION`). Тесты: `sentry-config.test.ts` 9/9, `sentry-lazy.test.ts` 2/2. Вес первого экрана: +1,4 КБ gzip (`raw/sentry-bundle-weight.txt`; `Sentry.init` из @sentry/nextjs дал бы +88 КБ). Сквозные проверки: событие сервера и событие браузера через туннель пришли в проект без пользователя, IP, кук и параметров адреса (`raw/sentry-e2e.txt`). Продакшен-сборка `next build --webpack` — ок. Запись сессий не включена (вес и персональные данные) — описано в docs. Подключено в том же PR #299 (спека планировала отдельный): перезапуск CI через API недоступен (403). |
 | AC6 | PASS* | `npm run typecheck` — 0 ошибок; `npm run test:changed` — 22/22; eslint по `src/lib/prod-monitor.test.ts` — 0. *CI — на PR. |
 
 ## Что нашли по дороге и исправили

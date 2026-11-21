@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { emergencyLocale, emergencyTranslator } from "@/i18n/emergency-messages";
 import { localizedHref } from "@/i18n/site-locale";
+import { useReportError } from "@/lib/report-client-error";
 
 const subscribe = () => () => {};
 const serverLocale = () => "ru" as const;
@@ -27,6 +28,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useReportError(error);
   // Server fallback is deterministic; browser preference applies after hydration.
   const locale = useSyncExternalStore(subscribe, browserLocale, serverLocale);
   const t = emergencyTranslator(locale);
