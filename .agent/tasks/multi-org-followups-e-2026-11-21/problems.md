@@ -13,3 +13,10 @@ The reviewer read commits 674528a5d and 13a61a8c1. There were no critical findin
 | 7 | UX | On the site, «Перейти» was shown for organizations a manager is not a member of, and switching failed. | Fixed: the site uses the same `canOpen` rule as the mini app. |
 
 Results after the fixes are recorded in `evidence.md` / `evidence.json`.
+
+## Found after the review
+
+| # | Found by | Problem | Resolution |
+|---|----------|---------|------------|
+| 8 | CI on PR (`E2E scenarios (DB level)`, run 44912917090) | `cleanup-check` failed 4 alert checks in the throwaway CI database. The alert writes its mark into the platform organization's AuditLog, and the CI seed has no `ROOT_EMAIL`, so it does not create that organization (FK error). Production and local databases have it. | The scenario creates the platform organization for the run when it is missing and deletes it only if it created it. Reproduced on a fresh local database with the platform organization removed: before, 4 FAIL; after, 15/15 (`raw/e2e-ci-simulation.log`). PR CI green again (run 44913416449). |
+| 9 | Live browser run (`raw/series-e-live.cjs`, first run 34 PASS / 1 FAIL) | A network manager had no exchange UI: on «Мастер-кабинеты» the «Обмен справочниками» card was drawn only for the account owner (`viewerIsOwner`), although the API already allowed the manager (Р5). | `loadOrgMasterCabinets` returns `viewerManagesExchange` (owner or `canManageNetwork`). The page shows the card to that viewer. The card loads foreign requests only for the account owner (`isAccountOwner`), so a manager makes no refused call. Creating cabinets and managing their people stay owner-only. Live rerun: see `evidence.md`. |
