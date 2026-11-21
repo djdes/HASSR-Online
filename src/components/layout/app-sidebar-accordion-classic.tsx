@@ -17,10 +17,10 @@ import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
-// Строка раздела — как в стандартном меню: плашка 32px, свой тон.
+// Строка раздела — как в стандартном меню: иконка в коробке 32px.
 const ROW =
   "relative flex min-h-11 items-center gap-2.5 rounded-2xl py-1.5 pr-2.5 pl-1.5 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
-// Пункт раскрытого списка — ниже и с плашкой поменьше: второй уровень.
+// Пункт раскрытого списка — ниже и с иконкой поменьше: второй уровень.
 const SUB_ROW =
   "relative flex min-h-10 items-center gap-2.5 rounded-xl py-1 pr-2.5 pl-1.5 text-[14px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 // Вес шрифта у выбранного не меняется: жирная «Мастер-кабинет» рядом с «PRO»
@@ -101,7 +101,7 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
             touch && ROW_TOUCH,
             "group",
             action && !active
-              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
+              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-edge)] hover:bg-[var(--tone-row)]"
               : active
                 ? ROW_ACTIVE
                 : ROW_IDLE,
@@ -158,7 +158,7 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
                         )}
                       >
                         {quiet ? (
-                          <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center rounded-[9px] bg-[#f1f2f8] text-[#6f7282]">
+                          <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center text-[#6f7282]">
                             <Component className="size-4" />
                           </span>
                         ) : (

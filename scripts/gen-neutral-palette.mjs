@@ -238,6 +238,7 @@ const header = `/*
 // Theme tokens that menus, popovers and hovers read (`var(--app-indigo)`, …).
 const tokens = `${SCOPE} .app-shell, ${SCOPE} body {
   --app-tint-indigo: #f4f4f6;
+  --app-tint-indigo-2: #ececef;
   --app-indigo: #111114;
   --app-indigo-hover: #2c2d36;
   --app-indigo-deep: #111114;

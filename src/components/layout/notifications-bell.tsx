@@ -1,5 +1,4 @@
 "use client";
-import { navTone } from "@/lib/nav-tones";
 import { cn } from "@/lib/utils";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
@@ -97,9 +96,10 @@ const REFRESH_INTERVAL_MS = 60 * 1000;
 /** Ссылка уведомлений поддержки — см. support-threads.ts. */
 const SUPPORT_CHAT_HREF = "/dashboard?support=chat";
 
-// Янтарная подложка (тон иконки Bell, `lib/nav-tones.ts`); подъём при
-// наведении и покачивание колокольчика — `[data-tone-button]` в app-theme.css.
-const TRIGGER_CLASS = "relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg";
+// Нейтральная кнопка шапки, как «Выход» (владелец, 2026-11-21): без своего
+// цвета и без покачивания. Цветом говорит только счётчик непрочитанного.
+const TRIGGER_CLASS =
+  "relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 hover:bg-[#eef1ff] hover:text-[#3848c7]";
 /** «Новая» тема: светлая кнопка с рамкой, голубой колокольчик. */
 const TRIGGER_CLASS_NEW =
   "relative inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e7e7ec] bg-white text-[#2f80c9] transition-colors duration-150 hover:bg-[#f1f1f4] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10";
@@ -389,9 +389,6 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
         type="button"
         aria-label={t("title")}
         onClick={() => (open ? closePanel() : openPanel())}
-        data-tone={newDesign ? undefined : navTone("Bell")}
-        data-tone-button={newDesign ? undefined : true}
-        data-bell
         className={cn(newDesign ? TRIGGER_CLASS_NEW : TRIGGER_CLASS, triggerClassName)}
       >
         <Bell className={newDesign ? "size-[18px] stroke-[1.75]" : "size-5"} />

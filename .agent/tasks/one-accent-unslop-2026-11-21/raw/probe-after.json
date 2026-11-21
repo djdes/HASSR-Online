@@ -1,0 +1,700 @@
+{
+  "classic-light": {
+    "/home": {
+      "url": "/home",
+      "sidebarIdleIconColours": [
+        "rgb(85, 102, 246)"
+      ],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 1.66
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(10, 10, 10)",
+          "iconContrast": 19.8
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(244, 245, 251)",
+          "icon": "rgb(111, 114, 130)",
+          "iconContrast": 4.38
+        },
+        {
+          "label": "Выйти",
+          "background": "rgb(244, 245, 251)",
+          "icon": "rgb(111, 114, 130)",
+          "iconContrast": 4.38
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": 4.55,
+      "navBadges": [],
+      "minMenuTextContrast": 10.24,
+      "menuTextCount": 6,
+      "minCrumbContrast": null,
+      "crumbCount": 0
+    },
+    "/settings/master-cabinet": {
+      "url": "/settings/master-cabinet",
+      "sidebarIdleIconColours": [
+        "rgb(85, 102, 246)"
+      ],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 1.66
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(10, 10, 10)",
+          "iconContrast": 19.8
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(244, 245, 251)",
+          "icon": "rgb(111, 114, 130)",
+          "iconContrast": 4.38
+        },
+        {
+          "label": "Выйти",
+          "background": "rgb(244, 245, 251)",
+          "icon": "rgb(111, 114, 130)",
+          "iconContrast": 4.38
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": 4.55,
+      "navBadges": [
+        "none | contrast 9.1"
+      ],
+      "minMenuTextContrast": 4.77,
+      "menuTextCount": 11,
+      "minCrumbContrast": 4.56,
+      "crumbCount": 2,
+      "hoveredChip": {
+        "translate": "none",
+        "rotate": "none",
+        "scale": "none",
+        "animation": "none",
+        "iconAnimation": "none"
+      },
+      "hoveredBell": {
+        "translate": "none",
+        "boxShadow": "none",
+        "iconAnimation": "none"
+      }
+    },
+    "/staff": {
+      "url": "/settings/users",
+      "sidebarIdleIconColours": [
+        "rgb(85, 102, 246)"
+      ],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 1.66
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(10, 10, 10)",
+          "iconContrast": 19.8
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(244, 245, 251)",
+          "icon": "rgb(111, 114, 130)",
+          "iconContrast": 4.38
+        },
+        {
+          "label": "Выйти",
+          "background": "rgb(244, 245, 251)",
+          "icon": "rgb(111, 114, 130)",
+          "iconContrast": 4.38
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": 4.55,
+      "navBadges": [
+        "none | contrast 10.24"
+      ],
+      "minMenuTextContrast": 4.77,
+      "menuTextCount": 11,
+      "minCrumbContrast": 4.56,
+      "crumbCount": 3
+    }
+  },
+  "classic-dark": {
+    "/home": {
+      "url": "/home",
+      "sidebarIdleIconColours": [
+        "rgb(112, 129, 248)"
+      ],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 6.78
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(242, 243, 251)",
+          "iconContrast": 10.19
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(50, 47, 75)",
+          "icon": "rgb(169, 172, 192)",
+          "iconContrast": 5.69
+        },
+        {
+          "label": "Выйти",
+          "background": "rgb(50, 47, 75)",
+          "icon": "rgb(169, 172, 192)",
+          "iconContrast": 5.69
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": 3.32,
+      "navBadges": [],
+      "minMenuTextContrast": 7.23,
+      "menuTextCount": 6,
+      "minCrumbContrast": null,
+      "crumbCount": 0
+    },
+    "/settings/master-cabinet": {
+      "url": "/settings/master-cabinet",
+      "sidebarIdleIconColours": [
+        "rgb(112, 129, 248)"
+      ],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 6.78
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(242, 243, 251)",
+          "iconContrast": 10.19
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(50, 47, 75)",
+          "icon": "rgb(169, 172, 192)",
+          "iconContrast": 5.69
+        },
+        {
+          "label": "Выйти",
+          "background": "rgb(50, 47, 75)",
+          "icon": "rgb(169, 172, 192)",
+          "iconContrast": 5.69
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": 3.32,
+      "navBadges": [
+        "none | contrast 5.67"
+      ],
+      "minMenuTextContrast": 5.02,
+      "menuTextCount": 11,
+      "minCrumbContrast": 5.95,
+      "crumbCount": 2,
+      "hoveredChip": {
+        "translate": "none",
+        "rotate": "none",
+        "scale": "none",
+        "animation": "none",
+        "iconAnimation": "none"
+      },
+      "hoveredBell": {
+        "translate": "none",
+        "boxShadow": "none",
+        "iconAnimation": "none"
+      }
+    },
+    "/staff": {
+      "url": "/settings/users",
+      "sidebarIdleIconColours": [
+        "rgb(112, 129, 248)"
+      ],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 6.78
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(242, 243, 251)",
+          "iconContrast": 10.19
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(50, 47, 75)",
+          "icon": "rgb(169, 172, 192)",
+          "iconContrast": 5.69
+        },
+        {
+          "label": "Выйти",
+          "background": "rgb(50, 47, 75)",
+          "icon": "rgb(169, 172, 192)",
+          "iconContrast": 5.69
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": 3.32,
+      "navBadges": [
+        "none | contrast 7.23"
+      ],
+      "minMenuTextContrast": 5.02,
+      "menuTextCount": 11,
+      "minCrumbContrast": 5.95,
+      "crumbCount": 3
+    }
+  },
+  "new-light": {
+    "/home": {
+      "url": "/home",
+      "sidebarIdleIconColours": [],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(17, 17, 20)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(17, 17, 20, 0.247) 0px 6px 16px -10px",
+        "rgba(17, 17, 20, 0.247) 0px 4px 14px -8px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 1.66
+        },
+        {
+          "label": "Поиск",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(60, 61, 72)",
+          "iconContrast": 10.75
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(10, 10, 10)",
+          "iconContrast": 19.8
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(47, 128, 201)",
+          "iconContrast": 4.16
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": null,
+      "navBadges": [],
+      "minMenuTextContrast": 13.82,
+      "menuTextCount": 5,
+      "minCrumbContrast": null,
+      "crumbCount": 0
+    },
+    "/settings/master-cabinet": {
+      "url": "/settings/master-cabinet",
+      "sidebarIdleIconColours": [],
+      "chipBackgrounds": [],
+      "primaryFill": [
+        "rgb(17, 17, 20)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [],
+      "shadowsOfFormerGlow": [
+        "rgba(17, 17, 20, 0.247) 0px 6px 16px -10px",
+        "rgba(17, 17, 20, 0.247) 0px 10px 30px -12px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 1.66
+        },
+        {
+          "label": "Поиск",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(60, 61, 72)",
+          "iconContrast": 10.75
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(10, 10, 10)",
+          "iconContrast": 19.8
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(47, 128, 201)",
+          "iconContrast": 4.16
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": null,
+      "navBadges": [],
+      "minMenuTextContrast": 8.35,
+      "menuTextCount": 10,
+      "minCrumbContrast": 5.86,
+      "crumbCount": 2,
+      "hoveredBell": {
+        "translate": "none",
+        "boxShadow": "none",
+        "iconAnimation": "none"
+      }
+    },
+    "/staff": {
+      "url": "/settings/users",
+      "sidebarIdleIconColours": [],
+      "chipBackgrounds": [],
+      "primaryFill": [
+        "rgb(17, 17, 20)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [],
+      "shadowsOfFormerGlow": [
+        "rgba(17, 17, 20, 0.247) 0px 6px 16px -10px",
+        "rgba(17, 17, 20, 0.294) 0px 12px 36px -16px",
+        "rgba(17, 17, 20, 0.27) 0px 8px 20px -12px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 1.66
+        },
+        {
+          "label": "Поиск",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(60, 61, 72)",
+          "iconContrast": 10.75
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(10, 10, 10)",
+          "iconContrast": 19.8
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(255, 255, 255)",
+          "icon": "rgb(47, 128, 201)",
+          "iconContrast": 4.16
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": null,
+      "navBadges": [],
+      "minMenuTextContrast": 8.35,
+      "menuTextCount": 33,
+      "minCrumbContrast": 5.86,
+      "crumbCount": 3
+    }
+  },
+  "new-dark": {
+    "/home": {
+      "url": "/home",
+      "sidebarIdleIconColours": [],
+      "chipBackgrounds": [
+        "none | rgb(0, 0, 0) / 0 | none"
+      ],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [
+        "rgb(255, 255, 255) / 0.15"
+      ],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 6.78
+        },
+        {
+          "label": "Поиск",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(204, 206, 224)",
+          "iconContrast": 7.23
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(242, 243, 251)",
+          "iconContrast": 10.19
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(140, 194, 238)",
+          "iconContrast": 5.94
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": null,
+      "navBadges": [],
+      "minMenuTextContrast": 10.19,
+      "menuTextCount": 5,
+      "minCrumbContrast": null,
+      "crumbCount": 0
+    },
+    "/settings/master-cabinet": {
+      "url": "/settings/master-cabinet",
+      "sidebarIdleIconColours": [],
+      "chipBackgrounds": [],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 6.78
+        },
+        {
+          "label": "Поиск",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(204, 206, 224)",
+          "iconContrast": 7.23
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(242, 243, 251)",
+          "iconContrast": 10.19
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(140, 194, 238)",
+          "iconContrast": 5.94
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": null,
+      "navBadges": [],
+      "minMenuTextContrast": 7.05,
+      "menuTextCount": 10,
+      "minCrumbContrast": 5.95,
+      "crumbCount": 2,
+      "hoveredBell": {
+        "translate": "none",
+        "boxShadow": "none",
+        "iconAnimation": "none"
+      }
+    },
+    "/staff": {
+      "url": "/settings/users",
+      "sidebarIdleIconColours": [],
+      "chipBackgrounds": [],
+      "primaryFill": [
+        "rgb(85, 102, 246)"
+      ],
+      "primaryBackgroundImage": [
+        "none"
+      ],
+      "veilOnBrand": [],
+      "shadowsOfFormerGlow": [
+        "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(11, 16, 36, 0.06) 0px 1px 2px 0px"
+      ],
+      "headerButtons": [
+        {
+          "label": "Партнёрская программа: ваш логотип вместо WeSetup",
+          "background": "rgb(0, 0, 0) / 0",
+          "icon": "rgb(197, 200, 217)",
+          "iconContrast": 6.78
+        },
+        {
+          "label": "Поиск",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(204, 206, 224)",
+          "iconContrast": 7.23
+        },
+        {
+          "label": "MAX",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(242, 243, 251)",
+          "iconContrast": 10.19
+        },
+        {
+          "label": "Уведомления",
+          "background": "rgb(58, 55, 87)",
+          "icon": "rgb(140, 194, 238)",
+          "iconContrast": 5.94
+        }
+      ],
+      "avatarBackgroundImage": [
+        "none"
+      ],
+      "minSidebarIconContrast": null,
+      "navBadges": [],
+      "minMenuTextContrast": 7.05,
+      "menuTextCount": 33,
+      "minCrumbContrast": 5.95,
+      "crumbCount": 3
+    }
+  }
+}

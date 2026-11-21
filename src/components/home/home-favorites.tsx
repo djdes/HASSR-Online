@@ -128,7 +128,7 @@ export function HomeFavorites({
               data-tone={navTone(page.icon)}
               data-nav-row
               style={{ "--nav-i": index + 1 } as CSSProperties}
-              className="group flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#ececf4] bg-white px-1.5 py-2 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-[border-color,box-shadow] duration-150 hover:border-[var(--tone-glow)] hover:shadow-[0_16px_40px_-24px_var(--tone-glow)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 md:min-h-[148px] md:items-stretch md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
+              className="group flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#ececf4] bg-white px-1.5 py-2 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] transition-colors duration-150 hover:border-[var(--tone-edge)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 md:min-h-[148px] md:items-stretch md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
             >
               <NavIconChip name={page.icon} className="size-8 rounded-xl md:size-10 md:rounded-2xl" iconClassName="size-4 md:size-5" />
               <span className="w-full min-w-0 md:pr-6">
