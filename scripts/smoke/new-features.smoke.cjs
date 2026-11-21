@@ -216,8 +216,9 @@ async function main() {
   const links = await ukep.locator("[data-ukep-signatures] a").evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute("href")));
   const pdfHref = links.find((href) => href.endsWith("file=pdf"));
   const sigHref = links.find((href) => href.endsWith("file=sig"));
-  const pdfRes = await page.request.get(`${BASE}${pdfHref}`);
-  const sigRes = await page.request.get(`${BASE}${sigHref}`);
+  // API-маршруты в next dev компилируются при первом запросе — ждём, как и страницы.
+  const pdfRes = await page.request.get(`${BASE}${pdfHref}`, { timeout: 180_000 });
+  const sigRes = await page.request.get(`${BASE}${sigHref}`, { timeout: 180_000 });
   const pdfBody = await pdfRes.body();
   check("УКЭП: PDF скачивается", pdfRes.status() === 200 && pdfRes.headers()["content-type"] === "application/pdf" && pdfBody.subarray(0, 5).toString() === "%PDF-", { status: pdfRes.status() });
   check("УКЭП: подпись .sig скачивается", sigRes.status() === 200 && /pkcs7-signature/.test(sigRes.headers()["content-type"] || "") && (await sigRes.body()).length > 500, { status: sigRes.status() });
@@ -243,7 +244,7 @@ async function main() {
   check("Poster: токен не показывается", !posterText.includes("4164553abf6a031302898da7800b59fb"));
 
   // 6. Подсказки блюд бракеража
-  const suggestions = await page.request.get(`${BASE}/api/name-suggestions?scope=dish`);
+  const suggestions = await page.request.get(`${BASE}/api/name-suggestions?scope=dish`, { timeout: 180_000 });
   const values = (await suggestions.json()).values || [];
   check("бракераж: блюдо из справочника в подсказках", values.includes("Борщ с говядиной"), values.slice(0, 5));
 

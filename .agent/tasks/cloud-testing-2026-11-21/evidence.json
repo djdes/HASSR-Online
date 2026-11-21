@@ -1,0 +1,14 @@
+{
+  "taskId": "cloud-testing-2026-11-21",
+  "branch": "claude/hopeful-euler-lb6cie",
+  "base": "230e9e70",
+  "verdict": "PARTIAL",
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/smoke-local.log", "raw/smoke-local-repeat.log", "scripts/smoke/run-local.sh"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/playwright-mcp-handshake.log", ".mcp.json", "scripts/dev/playwright-mcp.mjs"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/prod-monitor.test.ts: 22 pass", "raw/prod-check-live.log", ".github/workflows/prod-monitor.yml"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/setup-script.log", "environment HASSR-Online created (personal, djdes/HASSR-Online, limited + wesetup.ru)"] },
+    "AC5": { "status": "OPEN", "evidence": ["Sentry signup submitted 2026-11-21T20:00Z (EU, org WeSetup); waiting for the owner's verification link"] },
+    "AC6": { "status": "PASS", "evidence": ["typecheck 0 errors", "test:changed 22/22", "CI on the PR"] }
+  }
+}

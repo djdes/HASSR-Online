@@ -55,6 +55,11 @@ const nextConfig: NextConfig = {
     // (journal-order-scans.ts), плюс обёртка multipart: без запаса файл
     // ровно в лимит приходил бы обрезанным.
     proxyClientMaxBodySize: "27mb",
+    // Постоянный кэш Turbopack в `next dev` (в Next 16.1 включён по умолчанию). Смоук
+    // (`npm run smoke:local`) ставит NEXT_DEV_FS_CACHE=0: на кэше прошлого запуска next dev отдавал
+    // 404 на /login и бесконечно компилировал /api/name-suggestions (21.11.2026). Сборку прода
+    // (`next build --webpack`) не трогает.
+    turbopackFileSystemCacheForDev: process.env.NEXT_DEV_FS_CACHE !== "0",
     // `forbidden()` в guard'ах страниц кабинета: «Нет доступа» рисуется
     // внутри макета (`(dashboard)/forbidden.tsx`) вместо тихого редиректа.
     authInterrupts: true,

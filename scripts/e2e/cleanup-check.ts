@@ -218,8 +218,11 @@ async function alertPart() {
   const stale = await cabinet("Кабинет без успеха");
   const mine = new Set([healthy.id, broken.id, stale.id]);
 
-  // Время тревоги — через месяц: сегодняшние отметки и обмены ей не мешают.
+  // Время тревоги — через месяц: сегодняшние отметки и обмены ей не мешают. В полдень по Москве:
+  // «+2 часа» и «+1 час» ниже не должны перескакивать через полночь МСК (при запуске в 22–24 МСК
+  // «тот же день» иначе оказывался следующим и сценарий падал).
   const T = new Date(STARTED.getTime() + 30 * DAY);
+  T.setUTCHours(9, 0, 0, 0);
   const run = (masterOrganizationId: string, status: string, at: Date, error: string | null = null) =>
     db.directoryExchangeRun.create({ data: { masterOrganizationId, trigger: "schedule", status, startedAt: at, finishedAt: at, durationMs: 10, error } });
   await run(healthy.id, "ok", new Date(T.getTime() - 1 * HOUR));

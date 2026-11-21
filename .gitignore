@@ -126,3 +126,8 @@ dispatcher/logs/
 # Рабочие файлы планов и субагентов superpowers (ledger, брифы) — не в репозиторий;
 # заодно их не сканирует Tailwind (пути Windows в брифах ломали сборку CSS).
 /.superpowers/
+
+# Smoke screenshots (npm run smoke:local) and prod monitor state (prod-monitor.yml)
+/smoke-shots/
+/.prod-monitor/
+/.playwright-mcp/

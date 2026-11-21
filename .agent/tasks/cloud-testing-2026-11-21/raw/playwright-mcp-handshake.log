@@ -1,0 +1,15 @@
+server: {"name":"Playwright","version":"1.65.0-alpha-2026-10-30"}
+click schema: {"type":"string","description":"Exact target element reference from the page snapshot, or a unique element selector"}
+tools: 25 browser_close, browser_resize, browser_console_messages, browser_handle_dialog, browser_emulate_media, browser_evaluate, browser_file_upload, browser_drop, browser_find, browser_fill_form, browser_press_key, browser_type
+local navigate: Page Title: MCP smoke page | 
+snapshot line: - button "Нажми" [ref=e3]
+snapshot: ?
+click: no change ### Ran Playwright code
+```js
+await page.getByRole('button', { name: 'Нажми' }).click();
+```
+### Page
+- Page URL: http://127.0.0.1:8765/index.html
+- Page Title: MCP smoke page
+- Console: 1 errors, 0 w
+external navigate: Page Title: Example Domain
