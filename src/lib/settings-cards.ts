@@ -89,6 +89,7 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "settings_integrations_mercury", href: "/settings/integrations/mercury", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS, pro: true },
   { id: "settings_integrations_edo", href: "/settings/integrations/edo", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_integrations_iiko", href: "/settings/integrations/iiko", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
+  { id: "settings_integrations_poster", href: "/settings/integrations/poster", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_integrations_1c", href: "/settings/integrations/1c", icon: "Plug", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_webhooks", href: "/settings/webhooks", icon: "Webhook", section: "more", group: "connections", access: FULL_ACCESS },
   { id: "settings_calendar", href: "/settings/calendar", icon: "CalendarDays", section: "more", group: "connections", access: FULL_ACCESS },

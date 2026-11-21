@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       ok: result.ok,
       error: result.error,
       created: result.created,
-      ...(result.provider === "iiko" ? { losses: result.losses ?? 0, products: result.products ?? 0 } : {}),
+      ...(result.provider === "iiko" || result.provider === "poster" ? { losses: result.losses ?? 0, products: result.products ?? 0 } : {}),
     })),
   });
 }

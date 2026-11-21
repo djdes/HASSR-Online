@@ -11,20 +11,24 @@ import {
   syncFromDate,
   type DiadocStoredCredentials,
   type IikoStoredCredentials,
+  type PosterStoredCredentials,
   type SabyStoredCredentials,
   type SupplyProvider,
 } from "./connections";
 import { createDiadocClient, DiadocError, type FetchLike } from "./diadoc";
 import { saveSupplyDocument } from "./documents.server";
 import { createIikoClient, IikoError } from "./iiko";
+import type { IikoLoss } from "./iiko-map";
+import { createPosterClient, PosterError } from "./poster";
 import { addMissingProducts } from "./products.server";
 import { assertPublicServerUrl, UnsafeUrlError } from "./safe-url";
 import { createSabyIncomingApi, isAllowedSabyFileUrl } from "./saby-incoming";
 import { iikoStoreDecision, readIikoStorePoints } from "./supply-points";
-import { syncDiadocDocuments, syncIikoData, syncSabyDocuments, type SyncCounters, type SyncSink } from "./sync";
+import { syncDiadocDocuments, syncIikoData, syncPosterData, syncSabyDocuments, type SyncCounters, type SyncSink } from "./sync";
 
 /**
- * Загрузка входящих УПД по подключениям организации: Диадок и СБИС. Ошибка
+ * Загрузка по подключениям организации: УПД из Диадока и СБИС, накладные,
+ * списания и номенклатура iiko и Poster. Ошибка
  * одного подключения не мешает другому и записывается в него (её видно в
  * настройках); ключи и токены в текст ошибки не попадают.
  */
@@ -33,7 +37,7 @@ export type ConnectionSyncResult = SyncCounters & {
   provider: SupplyProvider;
   ok: boolean;
   error: string | null;
-  /** iiko: новые строки потерь и товары в справочнике. */
+  /** iiko и Poster: новые строки потерь и товары в справочнике. */
   losses?: number;
   products?: number;
 };
@@ -49,12 +53,37 @@ function sinkFor(organizationId: string, source: SupplyProvider): SyncSink {
   };
 }
 
+/** Строки «Потерь» из учётной системы (акты iiko, списания Poster): без повторов по `sourceEntryId`. */
+function lossesSink(organizationId: string) {
+  return {
+    exists: async (sourceEntryId: string) => (await db.lossRecord.count({ where: { organizationId, sourceEntryId } })) > 0,
+    save: async (loss: IikoLoss, buildingId: string | null) => {
+      await db.lossRecord.create({
+        data: {
+          organizationId,
+          buildingId,
+          date: new Date(`${loss.date}T12:00:00.000Z`),
+          category: "writeoff",
+          productName: loss.productName,
+          quantity: loss.quantity,
+          unit: loss.unit,
+          costRub: loss.costRub,
+          cause: loss.cause,
+          sourceEntryId: loss.sourceEntryId,
+        },
+      });
+    },
+  };
+}
+
 /** Причина, которую можно показать человеку как есть. */
 class SupplySyncError extends Error {}
 
 /** Понятная причина без секретов: свои ошибки — как есть, чужие — общими словами. */
 function describe(error: unknown): string {
-  if (error instanceof DiadocError || error instanceof IikoError || error instanceof UnsafeUrlError) return error.message;
+  if (error instanceof DiadocError || error instanceof IikoError || error instanceof PosterError || error instanceof UnsafeUrlError) {
+    return error.message;
+  }
   if (error instanceof SabyRpcError) return describeSabyError(error);
   if (error instanceof SupplySyncError) return error.message;
   return "Не удалось загрузить документы — повторим при следующей проверке";
@@ -97,27 +126,25 @@ export async function syncSupplyConnection(
         toDate: now.toISOString().slice(0, 10),
         options: readIikoOptions(creds.options),
         sink,
-        losses: {
-          exists: async (sourceEntryId) => (await db.lossRecord.count({ where: { organizationId, sourceEntryId } })) > 0,
-          save: async (loss, buildingId) => {
-            await db.lossRecord.create({
-              data: {
-                organizationId,
-                buildingId,
-                date: new Date(`${loss.date}T12:00:00.000Z`),
-                category: "writeoff",
-                productName: loss.productName,
-                quantity: loss.quantity,
-                unit: loss.unit,
-                costRub: loss.costRub,
-                cause: loss.cause,
-                sourceEntryId: loss.sourceEntryId,
-              },
-            });
-          },
-        },
+        losses: lossesSink(organizationId),
         products: { addMissing: (items) => addMissingProducts(organizationId, items) },
         // «Не загружать» действует всегда; точка — только пока точки включены.
+        storeDecision: (storeId) => iikoStoreDecision(storeId, storeMap, livePoints),
+      });
+    } else if (provider === "poster") {
+      const creds = JSON.parse(decryptSecret(connection.credentialsEnc)) as PosterStoredCredentials;
+      const organizationId = connection.organizationId;
+      // Склад Poster → точка — то же сопоставление, что у складов iiko.
+      const storeMap = readIikoStorePoints(connection.storePoints).map;
+      const livePoints = new Set((await buildingTargets(organizationId)).filter((id): id is string => id !== null));
+      counters = await syncPosterData({
+        client: createPosterClient({ token: creds.token }, { fetch: fetchImpl }),
+        fromDate,
+        toDate: now.toISOString().slice(0, 10),
+        options: readIikoOptions(creds.options),
+        sink,
+        losses: lossesSink(organizationId),
+        products: { addMissing: (items) => addMissingProducts(organizationId, items) },
         storeDecision: (storeId) => iikoStoreDecision(storeId, storeMap, livePoints),
       });
     } else if (provider === "diadoc") {

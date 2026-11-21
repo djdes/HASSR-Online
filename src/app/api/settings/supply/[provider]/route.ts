@@ -11,19 +11,22 @@ import {
   iikoCredentialsSchema,
   iikoOptionsSchema,
   isSupplyProvider,
+  posterCredentialsSchema,
+  posterOptionsSchema,
   sabyCredentialsSchema,
 } from "@/lib/supply/connections";
 import { createDiadocClient, DiadocError } from "@/lib/supply/diadoc";
 import { guardSupply } from "@/lib/supply/guard.server";
 import { createIikoClient, IikoError } from "@/lib/supply/iiko";
+import { createPosterClient, posterAccountNumber, PosterError } from "@/lib/supply/poster";
 import { assertPublicServerUrl, UnsafeUrlError } from "@/lib/supply/safe-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * PUT /api/settings/supply/[diadoc|saby|iiko] — подключить ЭДО для входящих
- * накладных или iiko (накладные, списания, номенклатура). Ключи проверяются входом и только потом сохраняются —
+ * PUT /api/settings/supply/[diadoc|saby|iiko|poster] — подключить ЭДО для входящих
+ * накладных, iiko или Poster (накладные/поставки, списания, номенклатура). Ключи проверяются входом и только потом сохраняются —
  * зашифрованными; в ответе — только маска (логин, ящик), без секретов.
  * У Диадока с несколькими ящиками первый ответ — список ящиков (`needBox`),
  * второй запрос — с выбранным `boxId`.
@@ -54,6 +57,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ prov
       await createIikoClient({ ...parsed.data, serverUrl }).withSession(async () => true);
       credentials = { ...parsed.data, serverUrl, options };
       boxTitle = serverUrl;
+    } else if (provider === "poster") {
+      const parsed = posterCredentialsSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Вставьте токен личной интеграции Poster" }, { status: 400 });
+      }
+      const options = posterOptionsSchema.parse((body as { options?: unknown }).options ?? {});
+      // Проверка токена лёгким запросом — склады нужны и для сопоставления с точками.
+      await createPosterClient(parsed.data).storages();
+      credentials = { ...parsed.data, options };
+      boxTitle = `Poster № ${posterAccountNumber(parsed.data.token) ?? "—"}`;
     } else if (provider === "diadoc") {
       const parsed = diadocCredentialsSchema.safeParse(body);
       if (!parsed.success) return NextResponse.json({ error: "Заполните ключ разработчика, логин и пароль" }, { status: 400 });
@@ -78,7 +91,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ prov
       sessionEnc = encryptSecret(JSON.stringify(sessionValue));
     }
   } catch (error) {
-    if (error instanceof DiadocError || error instanceof IikoError || error instanceof UnsafeUrlError) {
+    if (error instanceof DiadocError || error instanceof IikoError || error instanceof PosterError || error instanceof UnsafeUrlError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     if (error instanceof SabyRpcError) return NextResponse.json({ error: describeSabyError(error) }, { status: 400 });

@@ -1,0 +1,27 @@
+ok 1 - neutral-palette.css matches the indigo classes in src/ (npm run palette:neutral)
+ok 2 - all implemented catalogs have complete keys and matching ICU arguments
+ok 3 - catalog validation rejects missing messages, broken ICU and lost arguments
+ok 4 - different plural categories are valid but nested parameter loss is not
+ok 5 - 155 static routes and dynamic journal-task route resolve typed localized titles without changing paths
+ok 6 - localized switcher search retains original names/codes for visible and hidden journals
+ok 7 - real server menu builders isolate explicit locales and retain ACL, tenant, statuses and raw document names
+ok 8 - iiko: password goes as sha1, session always logs out — also when work fails
+ok 9 - iiko: wrong password and busy license are clear errors without the password
+ok 10 - iiko parsing: invoices, suppliers, products, units, write-offs in both shapes
+ok 11 - iiko mapping: invoice like a UPD, write-offs to losses, goods and semi-finished to the directory
+ok 12 - iiko sync: one session, invoices without duplicates, losses once, options respected
+ok 13 - server address: public hosts only; localhost only outside production
+ok 14 - iiko sync по складам: накладная склада — на его точку, акт склада «не загружать» — пропущен
+ok 15 - iiko: склады и подразделения за одну сессию
+ok 16 - AC3: адрес, токен и формат запроса — по документации; даты — Ymd
+ok 17 - AC3: разбор поставок, строк (копейки → рубли), списаний, меню, ингредиентов
+ok 18 - AC3: ошибки токена, частоты и сети — понятным текстом и без токена
+ok 19 - AC4: поставка → накладная «Входящих»; списание → строки потерь; меню → справочник с видами
+ok 20 - AC4: загрузка — без повторов, удалённые и «не загружать» пропускаются, справочник с видами
+ok 21 - AC4: ошибка Poster посреди загрузки прерывает её понятной причиной
+ok 22 - AC2: подсказки блюд — своя память, затем справочник, без повторов и в пределах лимита
+ok 23 - AC5: подключение Poster — провайдер, схема токена, маска, все места источника
+ok 24 - AC5: документация — Poster и почему без r_keeper
+# tests 24
+# pass 24
+# fail 0

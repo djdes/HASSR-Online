@@ -3445,6 +3445,7 @@
       "settings_integrations_mercury": "Mercury federal information system",
       "settings_integrations_edo": "E-documents: Diadoc and SBIS",
       "settings_integrations_iiko": "iiko",
+      "settings_integrations_poster": "Poster",
       "settings_integrations_1c": "1C: HR",
       "mercury": "Incoming veterinary documents",
       "edo": "Incoming invoices",
@@ -9309,6 +9310,7 @@
     "source": "Source",
     "fromWriteoff": "from write-off record dated {date}",
     "fromIiko": "from iiko",
+    "fromPoster": "from Poster",
     "manual": "manual entry",
     "empty": "No records yet",
     "categories": {
@@ -10259,7 +10261,11 @@
         },
         "settings_integrations_iiko": {
           "title": "iiko",
-          "description": "Invoices go to “Incoming”, write-offs — to “Losses”, goods — to the product directory"
+          "description": "Invoices go to “Incoming”, write-offs — to “Losses”, goods and dishes — to the product directory"
+        },
+        "settings_integrations_poster": {
+          "title": "Poster",
+          "description": "Supplies go to “Incoming”, write-offs — to “Losses”, the menu — to the product directory and quality control"
         },
         "settings_integrations_1c": {
           "title": "1C: HR",
@@ -11236,9 +11242,9 @@
       "period": {
         "label": "Period",
         "options": {
-          "today": "Today",
           "7": "7 days",
-          "30": "30 days"
+          "30": "30 days",
+          "today": "Today"
         },
         "range": "{from} — {to}: full days, today not included.",
         "hint": "A day counts when every daily journal the organization keeps has an entry or the day is closed. Days before the organization was created and after it was closed are not counted.",
@@ -32378,11 +32384,13 @@
         "upload": "File",
         "diadoc": "Diadoc",
         "saby": "SBIS",
-        "iiko": "iiko"
+        "iiko": "iiko",
+        "poster": "Poster"
       },
       "items": "{count, plural, one {# item} other {# items}}",
       "number": "UPD No. {number}",
       "invoiceNumber": "Invoice No. {number}",
+      "supplyNumber": "Supply No. {number}",
       "date": "of {date}",
       "total": "for {sum}",
       "errors": {
@@ -32394,6 +32402,7 @@
     "document": {
       "title": "UPD No. {number} of {date}",
       "invoiceTitle": "Receipt invoice No. {number} of {date}",
+      "supplyTitle": "Supply No. {number} of {date}",
       "seller": "Supplier",
       "inn": "TIN {inn}",
       "basis": "Basis",
@@ -32471,7 +32480,7 @@
     "iiko": {
       "eyebrow": "Connections",
       "title": "iiko",
-      "description": "iiko receipt invoices go to “Incoming invoices” (then the same acceptance as for UPDs), write-off acts — to “Losses”, new goods and semi-finished products — to the product directory.",
+      "description": "iiko receipt invoices go to “Incoming invoices” (then the same acceptance as for UPDs), write-off acts — to “Losses”, new goods, semi-finished products and menu dishes — to the product directory (dishes also become quality control suggestions).",
       "hint": "You need an iiko server (iikoOffice): address, login and password of a user allowed to sign in via API.",
       "serverUrl": "Server address",
       "serverHint": "For example, https://name.iiko.it or http://address:8080",
@@ -32481,7 +32490,7 @@
         "title": "What to import",
         "invoices": "Receipt invoices",
         "writeoffs": "Write-off acts",
-        "products": "Goods and semi-finished products"
+        "products": "Goods, semi-finished products and dishes"
       },
       "connect": "Connect",
       "connecting": "Checking…",
@@ -32519,6 +32528,59 @@
         "save": "Save",
         "saving": "Saving…",
         "saved": "Stores and locations saved",
+        "unsaved": "You have unsaved changes",
+        "failed": "Something went wrong. Please try again."
+      }
+    },
+    "poster": {
+      "eyebrow": "Connections",
+      "title": "Poster",
+      "description": "Poster supplies go to “Incoming invoices” (then the same acceptance as for UPDs), write-offs — to “Losses”, menu dishes, semi-finished products and ingredients — to the product directory (dishes also become quality control suggestions).",
+      "hint": "You need a personal integration token: in Poster open “Access → Integrations → Personal integration” and copy the key.",
+      "token": "Token",
+      "tokenHint": "For example, 123456:4164553abf6a031302898da7800b59fb",
+      "options": {
+        "title": "What to import",
+        "invoices": "Supplies",
+        "writeoffs": "Write-offs",
+        "products": "Menu and ingredients"
+      },
+      "connect": "Connect",
+      "connecting": "Checking…",
+      "connected": "Connected",
+      "reconnect": "Reconnect",
+      "disconnect": "Disconnect",
+      "disconnected": "Disconnected",
+      "account": "Account: {account}",
+      "lastSync": "Checked {when}",
+      "never": "Not checked yet",
+      "sync": "Import now",
+      "syncing": "Importing…",
+      "synced": "Supplies: {invoices}, loss rows: {losses}, new products: {products}",
+      "status": {
+        "active": "Working",
+        "error": "Error"
+      },
+      "openInbox": "Incoming invoices",
+      "openLosses": "Losses",
+      "openProducts": "Product directory",
+      "secretsNote": "The token is stored encrypted and is not shown after connecting.",
+      "limitNote": "One import takes up to 100 supplies and 100 write-offs — the rest comes with the next check.",
+      "errors": {
+        "failed": "Could not connect. Check the token."
+      },
+      "stores": {
+        "title": "Poster storages and locations",
+        "hint": "Supplies and write-offs of a storage go to its location. “Don't import” skips the storage's documents. Without a location, it is chosen when the supply is accepted.",
+        "load": "Load storages from Poster",
+        "reload": "Refresh storage list",
+        "loading": "Loading storages…",
+        "empty": "Click “Load storages from Poster” to see the list of storages.",
+        "none": "No location — choose on acceptance",
+        "skip": "Don't import",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Storages and locations saved",
         "unsaved": "You have unsaved changes",
         "failed": "Something went wrong. Please try again."
       }

@@ -24,6 +24,7 @@ export type AuditAction =
   | "supply.disconnect"
   /** iiko: склады сервера сопоставлены с объектами. */
   | "supply.iiko_stores"
+  | "supply.poster_stores"
   /** 1С кадры: прогон синхронизации сотрудников (сводка в details). */
   | "hr1c.sync"
   /** Сотрудник задал пароль по ссылке руководителя и вошёл без Telegram. */

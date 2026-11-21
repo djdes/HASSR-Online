@@ -177,10 +177,12 @@ test("iiko mapping: invoice like a UPD, write-offs to losses, goods and semi-fin
   assert.deepEqual(losses, [
     { sourceEntryId: "iiko:wo-1:1", date: "2026-10-31", productName: "Молоко 3,2%", quantity: 2, unit: "л", costRub: 157, cause: "Истёк срок годности" },
   ]);
+  // Виды продукции (pos-menu-poster-2026-11-21, AC1): блюдо меню — готовая продукция, удалённое — нет.
   assert.deepEqual(iikoProductsForDirectory(dir), [
-    { name: "Молоко 3,2%", unit: "л" },
-    { name: "Творог 9%", unit: "кг" },
-    { name: "Котлеты куриные п/ф", unit: "кг" },
+    { name: "Молоко 3,2%", unit: "л", kind: "raw" },
+    { name: "Творог 9%", unit: "кг", kind: "raw" },
+    { name: "Котлеты куриные п/ф", unit: "кг", kind: "semi" },
+    { name: "Суп гороховый", unit: "шт", kind: "finished" },
   ]);
 });
 
@@ -209,10 +211,10 @@ test("iiko sync: one session, invoices without duplicates, losses once, options 
       losses: { exists: async (id) => lossIds.has(id), save: async (loss) => void lossIds.add(loss.sourceEntryId) },
       products: { addMissing: async (items) => (added.push(...items.map((item) => item.name)), items.length) },
     });
-  assert.deepEqual(await run(), { created: 1, skipped: 1, failed: 0, losses: 1, products: 3 });
+  assert.deepEqual(await run(), { created: 1, skipped: 1, failed: 0, losses: 1, products: 4 });
   assert.deepEqual(saved, ["inv-1=МД-1031"]);
   assert.equal(fake.calls.filter((call) => call === "/resto/api/auth").length, 1, "одна сессия на всё");
-  assert.deepEqual(await run(), { created: 0, skipped: 2, failed: 0, losses: 0, products: 3 });
+  assert.deepEqual(await run(), { created: 0, skipped: 2, failed: 0, losses: 0, products: 4 });
   const before = fake.calls.length;
   await run({ invoices: false, writeoffs: false, products: false });
   const third = fake.calls.slice(before);

@@ -3446,6 +3446,7 @@ export type MessageContract = {
       "settings_integrations_mercury": "ФГИС «Меркурий»",
       "settings_integrations_edo": "ЭДО: Диадок и СБИС",
       "settings_integrations_iiko": "iiko",
+      "settings_integrations_poster": "Poster",
       "settings_integrations_1c": "1С: кадры",
       "mercury": "Входящие ВСД",
       "edo": "Входящие накладные",
@@ -9310,6 +9311,7 @@ export type MessageContract = {
     "source": "Откуда",
     "fromWriteoff": "из акта списания от {date}",
     "fromIiko": "из iiko",
+    "fromPoster": "из Poster",
     "manual": "вручную",
     "empty": "Записей пока нет",
     "categories": {
@@ -10260,7 +10262,11 @@ export type MessageContract = {
         },
         "settings_integrations_iiko": {
           "title": "iiko",
-          "description": "Накладные — во «Входящие», списания — в «Потери», товары — в справочник продуктов"
+          "description": "Накладные — во «Входящие», списания — в «Потери», товары и блюда — в справочник продуктов"
+        },
+        "settings_integrations_poster": {
+          "title": "Poster",
+          "description": "Поставки — во «Входящие», списания — в «Потери», меню — в справочник и бракераж"
         },
         "settings_integrations_1c": {
           "title": "1С: кадры",
@@ -32379,11 +32385,13 @@ export type MessageContract = {
         "upload": "Файл",
         "diadoc": "Диадок",
         "saby": "СБИС",
-        "iiko": "iiko"
+        "iiko": "iiko",
+        "poster": "Poster"
       },
       "items": "{count, plural, one {# позиция} few {# позиции} many {# позиций} other {# позиции}}",
       "number": "УПД № {number}",
       "invoiceNumber": "Накладная № {number}",
+      "supplyNumber": "Поставка № {number}",
       "date": "от {date}",
       "total": "на {sum}",
       "errors": {
@@ -32395,6 +32403,7 @@ export type MessageContract = {
     "document": {
       "title": "УПД № {number} от {date}",
       "invoiceTitle": "Приходная накладная № {number} от {date}",
+      "supplyTitle": "Поставка № {number} от {date}",
       "seller": "Поставщик",
       "inn": "ИНН {inn}",
       "basis": "Основание",
@@ -32472,7 +32481,7 @@ export type MessageContract = {
     "iiko": {
       "eyebrow": "Подключения",
       "title": "iiko",
-      "description": "Приходные накладные iiko — во «Входящие накладные» (дальше та же приёмка, что у УПД), акты списания — в «Потери», новые товары и заготовки — в справочник продуктов.",
+      "description": "Приходные накладные iiko — во «Входящие накладные» (дальше та же приёмка, что у УПД), акты списания — в «Потери», новые товары, заготовки и блюда меню — в справочник продуктов (блюда — в подсказки бракеража).",
       "hint": "Нужен сервер iiko (iikoOffice): адрес, логин и пароль пользователя с правом входа по API.",
       "serverUrl": "Адрес сервера",
       "serverHint": "Например, https://name.iiko.it или http://адрес:8080",
@@ -32482,7 +32491,7 @@ export type MessageContract = {
         "title": "Что забирать",
         "invoices": "Приходные накладные",
         "writeoffs": "Акты списания",
-        "products": "Товары и заготовки"
+        "products": "Товары, заготовки и блюда"
       },
       "connect": "Подключить",
       "connecting": "Проверяем…",
@@ -32519,7 +32528,60 @@ export type MessageContract = {
         "skip": "Не загружать",
         "save": "Сохранить",
         "saving": "Сохраняем…",
-        "saved": "Склады и объекта сохранены",
+        "saved": "Склады и объекты сохранены",
+        "unsaved": "Есть несохранённые изменения",
+        "failed": "Не получилось. Попробуйте ещё раз."
+      }
+    },
+    "poster": {
+      "eyebrow": "Подключения",
+      "title": "Poster",
+      "description": "Поставки Poster — во «Входящие накладные» (дальше та же приёмка, что у УПД), списания — в «Потери», блюда меню, полуфабрикаты и ингредиенты — в справочник продуктов (блюда — в подсказки бракеража).",
+      "hint": "Нужен токен личной интеграции: в Poster откройте «Доступ → Интеграции → Личная интеграция» и скопируйте ключ.",
+      "token": "Токен",
+      "tokenHint": "Например, 123456:4164553abf6a031302898da7800b59fb",
+      "options": {
+        "title": "Что забирать",
+        "invoices": "Поставки",
+        "writeoffs": "Списания",
+        "products": "Меню и ингредиенты"
+      },
+      "connect": "Подключить",
+      "connecting": "Проверяем…",
+      "connected": "Подключено",
+      "reconnect": "Подключить заново",
+      "disconnect": "Отключить",
+      "disconnected": "Отключено",
+      "account": "Аккаунт: {account}",
+      "lastSync": "Проверено {when}",
+      "never": "Ещё не проверяли",
+      "sync": "Забрать сейчас",
+      "syncing": "Забираем…",
+      "synced": "Поставок: {invoices}, строк потерь: {losses}, новых продуктов: {products}",
+      "status": {
+        "active": "Работает",
+        "error": "Ошибка"
+      },
+      "openInbox": "Входящие накладные",
+      "openLosses": "Потери",
+      "openProducts": "Справочник продуктов",
+      "secretsNote": "Токен хранится зашифрованным и после подключения не показывается.",
+      "limitNote": "За одну загрузку забираем до 100 поставок и 100 списаний — остальное подтянется при следующей проверке.",
+      "errors": {
+        "failed": "Не удалось подключить. Проверьте токен."
+      },
+      "stores": {
+        "title": "Склады Poster и объекты",
+        "hint": "Поставки и списания склада попадают на его объект. «Не загружать» — документы склада пропускаются. Без объекта — объект выберут при приёмке поставки.",
+        "load": "Загрузить склады из Poster",
+        "reload": "Обновить список складов",
+        "loading": "Загружаем склады…",
+        "empty": "Нажмите «Загрузить склады из Poster» — появится список складов.",
+        "none": "Без объекта — выбрать при приёмке",
+        "skip": "Не загружать",
+        "save": "Сохранить",
+        "saving": "Сохраняем…",
+        "saved": "Склады и объекты сохранены",
         "unsaved": "Есть несохранённые изменения",
         "failed": "Не получилось. Попробуйте ещё раз."
       }

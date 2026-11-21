@@ -108,6 +108,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "supply.connect": { label: "ЭДО подключён", variant: "default" },
   "supply.disconnect": { label: "ЭДО отключён", variant: "secondary" },
   "supply.iiko_stores": { label: "Склады iiko сопоставлены с точками", variant: "secondary" },
+  "supply.poster_stores": { label: "Склады Poster сопоставлены с точками", variant: "secondary" },
   "hr1c.sync": { label: "Сотрудники синхронизированы с 1С", variant: "default" },
 
   // --- Задачи сотрудников -----------------------------------------------

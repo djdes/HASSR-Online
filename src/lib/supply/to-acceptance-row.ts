@@ -11,7 +11,7 @@ import { createAcceptanceRow, type AcceptanceRow } from "@/lib/acceptance-docume
 
 import type { SupplyItem, SupplyParty } from "./upd";
 
-export const SUPPLY_SOURCES = ["upload", "diadoc", "saby", "iiko"] as const;
+export const SUPPLY_SOURCES = ["upload", "diadoc", "saby", "iiko", "poster"] as const;
 export type SupplySource = (typeof SUPPLY_SOURCES)[number];
 
 export const SUPPLY_SOURCE_LABEL: Record<SupplySource, string> = {
@@ -19,6 +19,7 @@ export const SUPPLY_SOURCE_LABEL: Record<SupplySource, string> = {
   diadoc: "Диадок",
   saby: "СБИС",
   iiko: "iiko",
+  poster: "Poster",
 };
 
 export type SupplyDocumentRef = {
@@ -39,10 +40,11 @@ function ruDate(dateKey: string): string {
 
 /**
  * «УПД № МД-1031 от 31.10.2026 (Диадок); Договор поставки № 12/26 от 10.01.2026»;
- * из iiko — «Приходная накладная № 1044 от 31.10.2026 (iiko)».
+ * из iiko — «Приходная накладная № 1044 от 31.10.2026 (iiko)», из Poster —
+ * «Поставка № 46 от 18.11.2026 (Poster)».
  */
 export function supplyAccompanyingDocs(doc: SupplyDocumentRef): string {
-  const title = doc.source === "iiko" ? "Приходная накладная" : "УПД";
+  const title = doc.source === "iiko" ? "Приходная накладная" : doc.source === "poster" ? "Поставка" : "УПД";
   const parts = [`${title} № ${doc.number} от ${ruDate(doc.date)} (${SUPPLY_SOURCE_LABEL[doc.source]})`];
   if (doc.basis) parts.push(doc.basis);
   return parts.join("; ");

@@ -1,0 +1,39 @@
+URL: https://dev.joinposter.com/en/docs/v3/web/spots/getSpots
+spots.getSpots: Locations List
+Request Example:
+<?php
+$url = 'https://joinposter.com/api/spots.getSpots'
+ . '?token=687409:4164553abf6a031302898da7800b59fb';
+$data = sendRequest($url);
+Copy to clipboard
+Error
+Copied
+Response Example:
+{  
+   "response":[  
+      {  
+         "spot_id":1,
+         "name":"Cafe on Polyanka",
+         "address":"Kyiv, Velyka Polyanka St., 44"
+      },
+      {  
+         "spot_id":2,
+         "name":"Lviv Coffee House",
+         "address":"Lviv, Rynok Square, 11"
+      }
+   ]
+}
+Copy to clipboard
+Error
+Copied
+This method returns a list of locations.
+HTTP Request
+GET https://joinposter.com/api/spots.getSpots
+Response Parameters for spots.getSpots
+Parameter	Description
+response	Array of objects
+Inside the response parameter, there is an array where each element contains the following parameters:
+Parameter	Description
+spot_id	Location ID
+name	Location name
+address	Location address

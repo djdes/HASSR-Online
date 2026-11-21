@@ -52,6 +52,25 @@ export function suggestionKey(value: string): string {
 }
 export const NAME_SUGGESTION_LIMIT = 200;
 
+/**
+ * Дописать к подсказкам новые значения: без повторов (ключ —
+ * `suggestionKey`), пустое и слишком длинное отбрасываем, всего не больше
+ * `cap`. Порядок источников задаёт вызывающий: свои — первыми.
+ */
+export function appendSuggestionValues(values: string[], extra: readonly unknown[], cap: number): string[] {
+  const seen = new Set(values.map(suggestionKey));
+  for (const raw of extra) {
+    if (values.length >= cap) break;
+    const value = normalizeSuggestionValue(raw);
+    if (!value) continue;
+    const key = suggestionKey(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    values.push(value);
+  }
+  return values;
+}
+
 export function isNameSuggestionScope(value: unknown): value is NameSuggestionScope {
   return typeof value === "string" && (NAME_SUGGESTION_SCOPES as readonly string[]).includes(value);
 }

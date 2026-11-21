@@ -310,6 +310,9 @@ export default async function LossesPage() {
                     ) : r.sourceEntryId?.startsWith("iiko:") ? (
                       // Акт списания из iiko (`/settings/integrations/iiko`).
                       <span className="text-[#3c4053]">{t("fromIiko")}</span>
+                    ) : r.sourceEntryId?.startsWith("poster:") ? (
+                      // Списание из Poster (`/settings/integrations/poster`).
+                      <span className="text-[#3c4053]">{t("fromPoster")}</span>
                     ) : (
                       <span className="text-[#9b9fb3]">{t("manual")}</span>
                     )}
