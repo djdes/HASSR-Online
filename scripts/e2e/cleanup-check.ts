@@ -303,9 +303,24 @@ async function cleanup() {
   const left = await db.organization.count({ where: { name: { contains: TAG } } });
   const leftUsers = await db.user.count({ where: { email: { contains: TAG } } });
   console.log(`cleanup: organizations left ${left}, users left ${leftUsers}, alert marks removed ${marks.count}`);
+  if (createdPlatform) {
+    await db.organization.delete({ where: { id: PLATFORM } }).catch((error) => console.log(`cleanup: ${PLATFORM} — ${(error as Error).message.split("\n").pop()}`));
+  }
 }
 
-cleanupPart()
+// Отметка тревоги пишется в журнал действий организации платформы. На проде и в местной базе
+// она есть (prisma/seed.ts), а в одноразовой базе CI сид без ROOT_EMAIL её не создаёт — заводим на
+// время сценария и удаляем, только если завели сами.
+let createdPlatform = false;
+async function ensurePlatform() {
+  if (await db.organization.findUnique({ where: { id: PLATFORM }, select: { id: true } })) return;
+  await db.organization.create({ data: { id: PLATFORM, name: "WeSetup", type: "platform", subscriptionPlan: "platform" } });
+  createdPlatform = true;
+  console.log(`platform organization ${PLATFORM} created for this run`);
+}
+
+ensurePlatform()
+  .then(cleanupPart)
   .then(alertPart)
   .catch((error) => {
     failed += 1;
