@@ -17,3 +17,5 @@ coincidental match — it failed once during this task); it now probes «example
 intent, no random collisions.
 
 Not changed: team-only notices (CRM, ROOT, SEO), marketing promo designs and proposals (own layouts).
+
+**Выкат.** Первый выкат #2383 (`3114684`) упал до выгрузки: SSH-порт сервера не ответил за 3 минуты. Письма на проде со сборки `6c90210` (выкат #2384, 21.11.2026 11:05 UTC, success); подробности в `.agent/tasks/deploy-ssh-wait-2026-11-21`.

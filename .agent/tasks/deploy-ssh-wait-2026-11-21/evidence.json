@@ -4,7 +4,7 @@
   "criteria": {
     "AC1": { "status": "PASS", "evidence": ["raw/red-green.txt", "raw/deploy-scripts-test.txt"] },
     "AC2": { "status": "PASS", "evidence": ["raw/red-green.txt"] },
-    "AC3": { "status": "PENDING", "evidence": [] }
+    "AC3": { "status": "PASS", "evidence": ["raw/after-deploy.txt"] }
   },
-  "raw": ["raw/deploy-2383-wait-log.txt", "raw/connectivity-probe.txt", "raw/red-green.txt", "raw/deploy-scripts-test.txt"]
+  "raw": ["raw/deploy-2383-wait-log.txt", "raw/connectivity-probe.txt", "raw/red-green.txt", "raw/deploy-scripts-test.txt", "raw/after-deploy.txt"]
 }

@@ -1,0 +1,9 @@
+Deploy to production #2384 (run 44896785508, head 6c90210d32): conclusion success, 10:57:48–11:06:05 UTC
+  Upload tarball: Wait for SSH ok on attempt 1 (10:58:04), Prepare ok, Server downloads the commit from GitHub ok (33 s)
+  deploy: Wait for SSH ok; step 1/3 ok (5 s); step 2/3 build + verify ok (10:59:02–11:05:25); step 3/3 db push + seeds + pm2 restart + prewarm ok (11:05:25–11:05:55); IndexNow
+  Type-check & Targeted tests: success
+/api/health: 11:05:46 buildSha=6c90210 uptimeSec=11; 11:06:00, 11:06:46, 11:09:21 still 6c90210 (no rollback)
+git merge-base --is-ancestor 311468410 6c90210d3 -> true (#283 emails in the live build); email.ts in 6c90210 has class="ws-title"; wait-for-port.sh ATTEMPTS default 20
+Homepage on 6c90210 (Chromium, isMobile): 390/393 px seal tap -> 4 WAAPI animations in 4/4 hydrated loads;
+  consent one text line, 16 px at 390 and 430 px; no horizontal scroll.
+  (Loads where a JS chunk failed through this session's link — 502 from the proxy — stay unhydrated and a tap does nothing; not a site defect.)

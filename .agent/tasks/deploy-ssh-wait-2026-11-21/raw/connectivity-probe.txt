@@ -9,3 +9,11 @@ homepage x12: 3 x 200, 9 x "curl: (35) Recv failure: Connection reset by peer" a
 [agent-proxy] wesetup.ru:443 — ws_closed_mid_exchange (the tunnel to the egress proxy closed before the exchange completed)
 wesetup.ru A 79.137.237.2 — RIPE: 79.137.231.0-79.137.237.255 DINETHOSTING-NEXT, RU, "Hosting and Colocation Services"
 Playwright (Chromium) page loads: 5 of 6 OK, 1 x 502 for the document; several CSS/JS chunks failed (proxy error bodies, text/plain).
+
+Landing re-check on prod (bb1f3a2), Chromium, isMobile, ~10:45–11:10 UTC:
+- seal: words ХАССП / СЕРТИФИЦИРОВАНО, solid fills #fff4c6 + #6a4300, scale(0.82 1) / scale(0.62 1); 84 px (92 px at 430)
+- consent: «Принимаю оферту и обработку данных», one text line at 360 (14.69 px), 390 and 430 (16 px); checkbox 22×22
+- trial: «14 дней всё бесплатно (до 05.12.2026). Подробнее», one line at 360/390/430
+- header: logo 16 px from the left, «Войти» 16 px from the right at 360/390/430; no horizontal scroll
+- seal tap: 4 WAAPI animations when the page hydrated; 0 only when a JS chunk failed to load through this session's flaky link (502 from the proxy, hydrated=false)
+- download dialog (/blanki → PDF): seal + «Разработан при консультации…» under «Скачать PDF», «Добавить титульный лист первой страницей» checked, no reCAPTCHA iframe/script
