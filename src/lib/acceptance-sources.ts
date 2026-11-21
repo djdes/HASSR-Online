@@ -12,6 +12,19 @@ import { buildingWhere } from "@/lib/building-scope";
 /** Статусы ВСД, которые ждут приёмки, — как на экране «Входящие ВСД». */
 export const MERCURY_PENDING_STATUSES = ["new", "acknowledged"] as const;
 
+/**
+ * Журнал, куда ложатся строки из ВСД («Входящие ВСД») и накладных
+ * («Входящие накладные»): `mercury/process-incoming.ts` и
+ * `supply/documents.server.ts` пишут в `incoming_control`. Журнал приёмки
+ * сырья их не получает — «строка появится в этом журнале» там была бы
+ * неправдой, поэтому подсказок в нём нет.
+ */
+export const SUPPLY_ROWS_TEMPLATE_CODE = "incoming_control";
+
+export function receivesSupplyRows(templateCode: string): boolean {
+  return templateCode === SUPPLY_ROWS_TEMPLATE_CODE;
+}
+
 /** «Входящие ВСД»: оформление приёмки по ВСД. */
 export const MERCURY_INCOMING_HREF = "/mercury";
 /** «Входящие»: накладные iiko, Диадока, СБИС — кнопка «Принять». */

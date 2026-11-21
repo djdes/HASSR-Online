@@ -7,10 +7,13 @@ import {
   IIKO_SETTINGS_HREF,
   MERCURY_INCOMING_HREF,
   SUPPLY_INBOX_HREF,
+  SUPPLY_ROWS_TEMPLATE_CODE,
   iikoTarget,
   mercuryPendingWhere,
+  receivesSupplyRows,
   showMercuryStrip,
 } from "@/lib/acceptance-sources";
+import { ACCEPTANCE_DOCUMENT_TEMPLATE_CODES, RAW_MATERIAL_ACCEPTANCE_TEMPLATE_CODE } from "@/lib/acceptance-document";
 import { loadAcceptanceSources, type AcceptanceSourcesDeps } from "@/lib/acceptance-sources.server";
 
 /**
@@ -85,7 +88,7 @@ test("AC1: не руководитель — null и ни одного запр�
 
 test("AC1: журнал получает подсказку только для руководства, полоса и пункт меню — по ней", () => {
   const page = readFileSync(new URL("../app/(dashboard)/journals/[code]/documents/[docId]/page.tsx", import.meta.url), "utf8");
-  assert.match(page, /loadAcceptanceSources\(\{\s*organizationId: getActiveOrgId\(session\),\s*buildingId: document\.buildingId,\s*canManage: hasFullWorkspaceAccess\(session\.user\),/);
+  assert.match(page, /receivesSupplyRows\(document\.template\.code\)\s*\?\s*await loadAcceptanceSources\(\{\s*organizationId: getActiveOrgId\(session\),\s*buildingId: document\.buildingId,\s*canManage: hasFullWorkspaceAccess\(session\.user\),/);
   assert.match(page, /sources=\{acceptanceSources\}/);
   const client = readFileSync(new URL("../components/journals/acceptance-document-client.tsx", import.meta.url), "utf8");
   assert.match(client, /showMercuryStrip\(props\.sources\)/);
@@ -122,4 +125,14 @@ test("AC2/AC4: тексты Меркурия и iiko на ru, en, uz; «обра
     assert.match(mercury.pending, /\{count, (plural|number)/, `${locale}: счёт ВСД`);
     assert.match(mercury.overdue, /\{count, number\}/, `${locale}: просрочено`);
   }
+});
+
+test("AC1/AC2: подсказки — только в журнале, куда ложатся строки ВСД и накладных, не в журнале сырья", () => {
+  assert.ok((ACCEPTANCE_DOCUMENT_TEMPLATE_CODES as readonly string[]).includes(SUPPLY_ROWS_TEMPLATE_CODE));
+  assert.equal(receivesSupplyRows(SUPPLY_ROWS_TEMPLATE_CODE), true);
+  assert.equal(receivesSupplyRows(RAW_MATERIAL_ACCEPTANCE_TEMPLATE_CODE), false);
+  const vsd = readFileSync(new URL("./mercury/process-incoming.ts", import.meta.url), "utf8");
+  assert.match(vsd, new RegExp(`const ACCEPTANCE_TEMPLATE_CODE = "${SUPPLY_ROWS_TEMPLATE_CODE}"`), "строка ВСД — в этот журнал");
+  const supply = readFileSync(new URL("./supply/documents.server.ts", import.meta.url), "utf8");
+  assert.match(supply, new RegExp(`export const ACCEPTANCE_TEMPLATE_CODE = "${SUPPLY_ROWS_TEMPLATE_CODE}"`), "накладная — в этот журнал");
 });

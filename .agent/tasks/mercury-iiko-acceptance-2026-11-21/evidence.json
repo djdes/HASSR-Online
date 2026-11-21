@@ -1,0 +1,17 @@
+{
+  "taskId": "mercury-iiko-acceptance-2026-11-21",
+  "branch": "claude/hopeful-euler-lb6cie",
+  "mergedMaster": "efcf26193",
+  "verdict": "PASS",
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/acceptance-sources.test.ts", "raw/tests.txt", "raw/01-strip-mobile-strip.png", "raw/02-strip-desktop-strip.png", "raw/03-no-strip-empty.png", "raw/04-menu-mercury.png", "raw/07-staff-menu.png"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/acceptance-sources.test.ts", "raw/05-iiko-connected.png", "raw/06-iiko-not-connected.png"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/batch-traceability.test.ts", "raw/tests.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["src/i18n/catalog-validation.test.ts", "src/lib/batch-traceability.test.ts", "docs/MERCURY.md"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/eslint.txt", "raw/palette.txt", "npm run test:gate: 67 files, pass 297, fail 0"] }
+  },
+  "notes": [
+    "Only eslint error in touched files (page.tsx:576 <a href=/settings/journals>) exists on origin/master; untouched.",
+    "Traceability page not screenshotted: no local database; data logic and queries covered by tests."
+  ]
+}

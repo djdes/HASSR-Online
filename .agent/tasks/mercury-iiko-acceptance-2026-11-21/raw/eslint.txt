@@ -1,0 +1,13 @@
+
+/home/user/HASSR-Online/src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx
+   71:3  warning  'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                      @typescript-eslint/no-unused-vars
+  188:3  warning  'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+  576:9  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+/home/user/HASSR-Online/src/components/journals/acceptance-document-client.tsx
+    14:3  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   171:7  warning  'POSITION_OPTIONS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  2634:9  warning  'pageTitle' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+✖ 6 problems (1 error, 5 warnings)
+
