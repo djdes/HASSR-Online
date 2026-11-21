@@ -2,7 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
-import { getOrgTemplate } from "@/lib/onboarding-templates";
+import { z } from "zod";
+import {
+  QUICK_SETUP_LIMITS,
+  customizeTemplate,
+  getOrgTemplate,
+  isKnownZone,
+  plannedDisabledJournals,
+} from "@/lib/onboarding-templates";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { positionMatchKey } from "@/lib/sphere-positions";
 import { pickMirrorArea } from "@/lib/area-building";
@@ -13,7 +20,13 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/settings/onboarding-template
- * Body: { kind: "stand" | "cafe-small" | "restaurant" | "school" | "production" }
+ * Body: { kind: "stand" | "cafe-small" | "restaurant" | "school" | "production" | "medical" | "hotel",
+ *         answers?: { fridges, freezers, uvLamps, fryer, zones } }
+ *
+ * `answers` — «Настройка за 3 минуты» (21.11.2026): шаблон подгоняется под
+ * заведение (`customizeTemplate`): столько холодильников, сколько есть,
+ * только отмеченные помещения, оборудование — по помещениям, журналы — по
+ * ответам. Без `answers` — шаблон как есть.
  *
  * Применяет шаблон к текущей организации:
  *   1. Создаёт JobPositions (idempotent — пропускает существующие).
@@ -28,6 +41,14 @@ export const dynamic = "force-dynamic";
  * Идемпотентно: повторное применение того же шаблона не дублирует.
  * Применение другого шаблона — добавит новые элементы, не удалит старые.
  */
+const answersSchema = z.object({
+  fridges: z.number().int().min(0).max(QUICK_SETUP_LIMITS.fridges),
+  freezers: z.number().int().min(0).max(QUICK_SETUP_LIMITS.freezers),
+  uvLamps: z.number().int().min(0).max(QUICK_SETUP_LIMITS.uvLamps),
+  fryer: z.boolean(),
+  zones: z.array(z.string().min(1).max(80)).min(1).max(QUICK_SETUP_LIMITS.zones),
+});
+
 export async function POST(request: NextRequest) {
   const auth = await requireApiAuth();
   if (!auth.ok) return auth.response;
@@ -45,21 +66,37 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  const template = getOrgTemplate(kind);
-  if (!template) {
+  const base = getOrgTemplate(kind);
+  if (!base) {
     return NextResponse.json(
       { error: `Неизвестный тип шаблона: ${kind}` },
       { status: 400 },
     );
   }
+  const rawAnswers = (body as { answers?: unknown } | null)?.answers;
+  let answers: z.infer<typeof answersSchema> | null = null;
+  if (rawAnswers !== undefined && rawAnswers !== null) {
+    const parsed = answersSchema.safeParse(rawAnswers);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Ответы мастера не похожи на правду — обновите страницу" }, { status: 400 });
+    }
+    const unknownZone = parsed.data.zones.find((name) => !isKnownZone(base, name));
+    if (unknownZone) {
+      return NextResponse.json({ error: `Неизвестное помещение: ${unknownZone}` }, { status: 400 });
+    }
+    answers = parsed.data;
+  }
+  const plan = customizeTemplate(base, answers);
+  const template = plan.template;
 
-  // Набор журналов шаблона — проверяем ДО любых записей: на бесплатном
-  // тарифе после пробного включённым может быть один журнал, и шаблон не
-  // должен примениться наполовину.
-  const templateEnabled = template.enabledJournals !== null ? new Set(template.enabledJournals) : null;
-  const templateDisabled = templateEnabled
-    ? ACTIVE_JOURNAL_CATALOG.map((j) => j.code).filter((c) => !templateEnabled.has(c))
-    : null;
+  // Набор журналов — проверяем ДО любых записей: на бесплатном тарифе после
+  // пробного включённым может быть один журнал, и шаблон не должен
+  // примениться наполовину. Шаблон «все журналы» с ответами — текущий
+  // выбор организации с поправками ответов.
+  const currentDisabled = template.enabledJournals === null && (plan.enable.length || plan.disable.length)
+    ? ((await db.organization.findUnique({ where: { id: organizationId }, select: { disabledJournalCodes: true } }))?.disabledJournalCodes as string[] | null) ?? []
+    : [];
+  const templateDisabled = plannedDisabledJournals(plan, ACTIVE_JOURNAL_CATALOG.map((j) => j.code), currentDisabled);
   if (templateDisabled) {
     const journals = await checkJournalLimit(organizationId, templateDisabled, { source: `onboarding-template:${template.kind}` });
     if (!journals.ok) return limitResponse(journals);
@@ -170,13 +207,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Equipment — привязываем к первой подходящей area (kitchen/storage/wash)
+  // Equipment — в помещение, которое выбрал `customizeTemplate` (холод —
+  // склад/камера, УФ — цеха по кругу, фритюр — горячий цех); нет такого
+  // помещения — в первое.
   const allAreas = await db.area.findMany({
     where: { organizationId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, buildingId: true },
   });
   if (allAreas.length > 0) {
     const defaultAreaId = allAreas[0].id;
+    const areaIdFor = (name: string | undefined) =>
+      (name && (allAreas.find((area) => area.name === name && area.buildingId === buildingId) ?? allAreas.find((area) => area.name === name))?.id) || defaultAreaId;
     for (const e of template.equipment) {
       const existing = await db.equipment.findFirst({
         where: { area: { organizationId }, name: e.name },
@@ -184,7 +225,7 @@ export async function POST(request: NextRequest) {
       if (existing) continue;
       await db.equipment.create({
         data: {
-          areaId: defaultAreaId,
+          areaId: areaIdFor(e.areaName),
           name: e.name,
           type: e.type,
           tempMin: e.tempMin ?? null,
@@ -215,5 +256,6 @@ export async function POST(request: NextRequest) {
     positionsUpdated,
     areasCreated,
     equipmentCreated,
+    journalsEnabled: templateDisabled ? ACTIVE_JOURNAL_CATALOG.length - templateDisabled.length : null,
   });
 }
