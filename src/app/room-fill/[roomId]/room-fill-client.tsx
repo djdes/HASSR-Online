@@ -9,6 +9,7 @@ import { SuccessCheck } from "@/components/qr-fill/success-check";
 import { Button } from "@/components/ui/button";
 import { DeviationCorrection } from "@/components/qr-fill/deviation-correction";
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
+import type { QrPageBrand } from "@/lib/qr-page-brand";
 import { WhoRow } from "@/components/qr-fill/who-row";
 import { EmployeePicker } from "@/components/qr-fill/employee-picker";
 import { ReadingField } from "@/components/qr-fill/reading-field";
@@ -33,7 +34,7 @@ type Metric = { enabled: boolean; min: number | null; max: number | null };
 
 type Props = {
   token: string;
-  room: { id: string; name: string; buildingName: string; organizationName: string };
+  room: { id: string; name: string; buildingName: string; organizationName: string; brand?: QrPageBrand | null };
   norms: { temperature: Metric; humidity: Metric };
   /** На сегодня есть активный журнал температуры — иначе записать некуда. */
   hasActiveDocument: boolean;
@@ -351,7 +352,7 @@ export function RoomFillClient({ token, room, norms, hasActiveDocument, nextSlot
   // После сохранения текущий объект в списке сразу «снят» — с введёнными значениями.
 
   return (
-    <QrPageShell orgName={room.organizationName} title={journalTitle}>
+    <QrPageShell orgName={room.organizationName} title={journalTitle} brand={room.brand}>
         <QrPinUiStyles />
         {/* Смены помещения на плакате нет (владелец, 2026-09-22): каждое
             помещение — своим QR, чтобы замер делали на месте. */}

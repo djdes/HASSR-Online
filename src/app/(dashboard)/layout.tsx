@@ -91,6 +91,7 @@ import {
   isPartnerHiddenForOrg,
 } from "@/lib/partners/branding";
 import { toConsultantContact } from "@/lib/partners/consultant-contact";
+import { brandAccent } from "@/lib/qr-page-brand";
 import { getPartnerMembership } from "@/lib/partners/service";
 import { getPartnerHintRates } from "@/lib/partners/partner-hint";
 import { getServerSession } from "@/lib/server-session";
@@ -200,6 +201,8 @@ export default async function DashboardLayout({
       where: { id: activeOrgId },
       select: {
         brandColor: true,
+        // «Кабинет в цветах компании» (2026-11-21): акцент из основного цвета.
+        brandCabinet: true,
         logoUrl: true,
         name: true,
         // Краткое название и ИНН под логотипом в меню (`inn` — ниже).
@@ -454,6 +457,11 @@ export default async function DashboardLayout({
     /^#[0-9a-fA-F]{6}$/.test(consultant.accentHover)
       ? { color: consultant.accentColor, hover: consultant.accentHover }
       : null;
+  // «Кабинет в цветах компании» (2026-11-21, `qr-page-brand.ts`): основной цвет
+  // организации, затемнённый до читаемости белого текста, — важнее акцента
+  // партнёра. Те же правила перекраски (`data-partner-accent` в app-theme.css).
+  const ownAccent = brandedOrg?.brandCabinet ? brandAccent(brandedOrg.brandColor) : null;
+  const cabinetAccent = ownAccent ? { color: ownAccent.accent, hover: ownAccent.hover } : partnerAccent;
   const partnerCabinet =
     partnerMembership && partnerMembership.partner.status === "active"
       ? { brandName: partnerMembership.partner.brandName }
@@ -478,17 +486,17 @@ export default async function DashboardLayout({
         {/* Акцент партнёра: переменные подхватывают правила
             `.app-shell[data-partner-accent]` в app-theme.css — кнопки и
             активные элементы перекрашиваются без правки компонентов. */}
-        {partnerAccent ? (
+        {cabinetAccent ? (
           <style
             dangerouslySetInnerHTML={{
-              __html: `.app-shell { --brand-accent: ${partnerAccent.color}; --brand-accent-hover: ${partnerAccent.hover}; }`,
+              __html: `.app-shell { --brand-accent: ${cabinetAccent.color}; --brand-accent-hover: ${cabinetAccent.hover}; }`,
             }}
           />
         ) : null}
         <div
           className="app-shell flex min-h-screen flex-col bg-gray-50"
           data-app-theme={initialTheme}
-          data-partner-accent={partnerAccent ? "" : undefined}
+          data-partner-accent={cabinetAccent ? "" : undefined}
           suppressHydrationWarning
         >
           {/* Первым ребёнком: скрипт видит уже открытую оболочку и красит её

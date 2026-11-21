@@ -1,5 +1,6 @@
 import { QrPageShell } from "@/components/qr-fill/qr-page-shell";
 import { resolvePersonalLoginToken } from "@/lib/personal-login";
+import { qrPageBrand } from "@/lib/qr-page-brand";
 
 import { PersonalQrLogin } from "./personal-qr-login";
 
@@ -28,7 +29,7 @@ export default async function PersonalQrPage({ params }: { params: Promise<{ tok
     );
   }
   return (
-    <QrPageShell orgName={resolved.user.organization.name} title="Вход в кабинет">
+    <QrPageShell orgName={resolved.user.organization.name} title="Вход в кабинет" brand={qrPageBrand(resolved.user.organization)}>
       <PersonalQrLogin token={token} name={resolved.user.name} hasPin={Boolean(resolved.user.qrPinHash)} />
     </QrPageShell>
   );

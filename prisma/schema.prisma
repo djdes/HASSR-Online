@@ -408,6 +408,9 @@ model Organization {
   qrBrandFrame                   Boolean                        @default(true)
   /// QR-коды: значок или логотип организации в центре вместо знака WeSetup.
   qrCenterLogo                   Boolean                        @default(true)
+  /// Кабинет в цветах компании (2026-11-21): кнопки и активные пункты — в основном цвете
+  /// (`brandAccent`, `(dashboard)/layout.tsx`). По умолчанию — цвета WeSetup.
+  brandCabinet                   Boolean                        @default(false)
   yookassaShopId                 String?
   /// Ответственный менеджер платформы (продажи/сопровождение): менеджер с
   /// охватом «свои» видит в панели только закреплённых за ним клиентов.

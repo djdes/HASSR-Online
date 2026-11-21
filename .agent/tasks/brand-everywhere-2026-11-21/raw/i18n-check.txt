@@ -1,0 +1,4 @@
+# tests 101
+# pass 101
+# fail 0
+i18n exit=0

@@ -1,0 +1,8 @@
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+PASS same day: nothing more
+PASS next day: sent again, the cabinet that failed in this run is listed
+PASS failed delivery: no mark, the next call retries
+RESULT: all checks passed

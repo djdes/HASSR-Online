@@ -3,10 +3,18 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Info } from "lucide-react";
+import { Info, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { OrgLogoUpload } from "@/components/settings/org-logo-upload";
-import { LabelPreview, PosterPreview, QrStickerPreview } from "@/components/settings/brand-style-preview";
+import {
+  CabinetPreview,
+  LabelPreview,
+  PosterPreview,
+  QrPagePreview,
+  QrStickerPreview,
+} from "@/components/settings/brand-style-preview";
+import { extractLogoPalette } from "@/lib/logo-palette.client";
+import { brandAccent, qrPageBrand } from "@/lib/qr-page-brand";
 import { normalizeBrandColor } from "@/lib/document-brand";
 import { ORG_LOGO_PATH_PATTERN } from "@/lib/org-logo-file";
 import {
@@ -32,6 +40,8 @@ export type BrandStyleInitial = {
   website: string | null;
   qrBrandFrame: boolean;
   qrCenterLogo: boolean;
+  /** Кабинет в цветах компании (2026-11-21). */
+  brandCabinet: boolean;
   logoUrl: string | null;
   qrIconUrl: string | null;
 };
@@ -48,7 +58,12 @@ type ColorKey = "brandColor" | "brandColor2" | "brandColor3";
  * «Моя компания → Фирменный стиль»: ① логотип, ② три необязательных цвета,
  * ③ сайт для шапки, ④ QR-коды, ⑤ живой предпросмотр плаката, QR-наклейки и
  * этикетки (с переключателем «Ч/б»). Файлы сохраняются сразу, остальное —
- * одной кнопкой «Сохранить». Интерфейс кабинета не перекрашивается.
+ * одной кнопкой «Сохранить».
+ *
+ * 2026-11-21: цвета подбираются из логотипа (кнопка и сами после загрузки,
+ * если своих ещё нет), страницы сотрудников по QR — в стиле компании,
+ * кабинет — в её цветах по переключателю; в предпросмотре — телефон
+ * сотрудника и кабинет.
  */
 export function OrganizationBrandingForm({
   initial,
@@ -68,6 +83,7 @@ export function OrganizationBrandingForm({
   const [colorErrors, setColorErrors] = useState<Partial<Record<ColorKey, string>>>({});
   const [siteError, setSiteError] = useState<string | null>(null);
   const [logoUrlError, setLogoUrlError] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
   // Ссылка на картинку раскрыта сразу, если логотип задан ссылкой (а не файлом).
   const [linkOpen] = useState(() => Boolean(initial.logoUrl && !ORG_LOGO_PATH_PATTERN.test(initial.logoUrl)));
 
@@ -97,6 +113,35 @@ export function OrganizationBrandingForm({
     { mono },
   );
   const qrStrip = qrFrameColor({ colors, mono: false, qr: { brandFrame: true, centerLogo: true } });
+  // Телефон сотрудника и кабинет — из своих цветов, как на настоящих страницах.
+  const qrPage = qrPageBrand({ logoUrl, brandColor: own("brandColor") });
+  const cabinetAccent = brandAccent(own("brandColor"));
+
+  /**
+   * Цвета из логотипа: основной и дополнительный — в черновик, фон — сам из
+   * основного. `auto` — сразу после загрузки логотипа: молча, если не вышло.
+   */
+  async function pickColorsFromLogo(url: string | null, auto = false) {
+    if (!url || picking) return;
+    setPicking(true);
+    try {
+      const result = await extractLogoPalette(url);
+      if (!result.ok) {
+        if (!auto) toast.error(t("brandingPage.paletteFailed"));
+        return;
+      }
+      if (!result.palette) {
+        if (!auto) toast.info(t("brandingPage.paletteNone"));
+        return;
+      }
+      const { primary, secondary } = result.palette;
+      setDraft((prev) => ({ ...prev, brandColor: primary, brandColor2: secondary, brandColor3: null }));
+      setColorErrors({});
+      toast.success(t(auto ? "brandingPage.paletteAuto" : "brandingPage.paletteApplied"));
+    } finally {
+      setPicking(false);
+    }
+  }
 
   function setColor(key: ColorKey, value: string | null) {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -129,6 +174,7 @@ export function OrganizationBrandingForm({
       if ((draft.website ?? "") !== (saved.website ?? "")) payload.website = siteTyped;
       if (draft.qrBrandFrame !== saved.qrBrandFrame) payload.qrBrandFrame = draft.qrBrandFrame;
       if (draft.qrCenterLogo !== saved.qrCenterLogo) payload.qrCenterLogo = draft.qrCenterLogo;
+      if (draft.brandCabinet !== saved.brandCabinet) payload.brandCabinet = draft.brandCabinet;
       if ((draft.logoUrl ?? "") !== (saved.logoUrl ?? "")) payload.logoUrl = logoUrl ?? "";
       const result = await patchOrganization(payload);
       if (!result.ok) {
@@ -228,6 +274,8 @@ export function OrganizationBrandingForm({
                 setDraft((prev) => ({ ...prev, logoUrl: url }));
                 setLogoUrlError(null);
                 router.refresh();
+                // Своих цветов ещё нет — подбираем по новому логотипу сразу.
+                if (url && nothingChosen) void pickColorsFromLogo(url, true);
               }}
             />
             <p className="text-[12.5px] leading-snug text-[#6f7282]">{t("form.logoHint")}</p>
@@ -256,6 +304,24 @@ export function OrganizationBrandingForm({
 
           {/* ② Цвета */}
           <StepCard n={2} id="color" title={t("brandingPage.colorTitle")} lead={t("brandingPage.colorLead")}>
+            {logoUrl ? (
+              <div
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3"
+                data-palette-from-logo
+              >
+                <span className="min-w-0 flex-1 text-[13px] leading-snug text-[#3c4053]">{t("brandingPage.paletteHint")}</span>
+                <button
+                  type="button"
+                  onClick={() => void pickColorsFromLogo(logoUrl)}
+                  disabled={picking}
+                  className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60"
+                  data-pick-palette
+                >
+                  {picking ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Wand2 className="size-4" aria-hidden />}
+                  {t("brandingPage.paletteFromLogo")}
+                </button>
+              </div>
+            ) : null}
             {colorRows.map((row) => {
               const value = draft[row.key] ?? "";
               const ownValue = own(row.key);
@@ -305,6 +371,19 @@ export function OrganizationBrandingForm({
               <p className="flex items-start gap-1.5 rounded-2xl bg-[#f5f6ff] px-3 py-2.5 text-[12.5px] leading-snug text-[#3848c7]">
                 <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 {t("brandingPage.colorDefaultNote")}
+              </p>
+            ) : null}
+            <Toggle
+              checked={draft.brandCabinet}
+              onChange={(value) => setDraft((prev) => ({ ...prev, brandCabinet: value }))}
+              label={t("brandingPage.cabinetLabel")}
+              hint={t("brandingPage.cabinetHint")}
+              testId="brand-cabinet"
+            />
+            {draft.brandCabinet && !cabinetAccent ? (
+              <p className="flex items-start gap-1.5 text-[12px] leading-snug text-[#b45309]" data-brand-cabinet-needs-color>
+                <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                {t("brandingPage.cabinetNeedsColor")}
               </p>
             ) : null}
           </StepCard>
@@ -395,9 +474,18 @@ export function OrganizationBrandingForm({
           <Figure caption={t("brandingPage.previewQrCaption")}>
             <QrStickerPreview brand={brand} orgName={orgName || t("brandingPage.sampleOrgName")} />
           </Figure>
+          {/* Сразу за наклейкой — что сотрудник увидит, когда её отсканирует. */}
+          <Figure caption={t("brandingPage.previewQrPageCaption")}>
+            <QrPagePreview brand={qrPage} orgName={orgName || t("brandingPage.sampleOrgName")} />
+          </Figure>
           <Figure caption={t("brandingPage.previewLabelCaption")}>
             <LabelPreview brand={brand} />
           </Figure>
+          {draft.brandCabinet && cabinetAccent ? (
+            <Figure caption={t("brandingPage.previewCabinetCaption")}>
+              <CabinetPreview accent={cabinetAccent} />
+            </Figure>
+          ) : null}
         </StepCard>
       </div>
     </div>
