@@ -1,0 +1,9 @@
+quick-setup checks, 2026-11-21:
+- node --import tsx --test src/lib/onboarding-templates.test.ts: 10/10 (+ onboarding-presets 4/4)
+- npm run test:changed: 66 related files, pass=280 fail=0
+- npm run typecheck: 0 errors; eslint on changed files: clean; npm run i18n:types and npm run palette:neutral: regenerated
+- Wizard walkthrough (dev preview without auth, API answer stubbed in the browser), 1440 and 390 px:
+  step 1: 7 kinds; step 2 (hotel): summary 8 positions / 8 rooms / 5 equipment / 21 logs -> +1 fridge, +pool, fryer=no -> 8 / 9 / 6 / 22;
+  POST body: {"kind":"hotel","answers":{"fridges":4,"freezers":1,"uvLamps":1,"fryer":false,"zones":[... 9 rooms incl. "Бассейн"]}};
+  step 3: result with links to /settings/qr-posters, /settings/users, /journals; no horizontal scroll (390/390, 1440/1440); no page errors.
+  Screenshots: raw/qs-{desktop,phone}-step{1,2,3}.png (local only, .gitignore .agent/**/*.png).

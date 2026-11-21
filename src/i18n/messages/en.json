@@ -30000,11 +30000,14 @@
       "phaseDocuments": "Documents",
       "phaseDocumentsSubtitle": "Orders and checklists, so that everything is filled in for an inspection, not just the journals.",
       "title": "Quick start",
-      "subtitle": "4 steps: employees get tasks, and both the journals and the orders are ready for an inspection."
+      "subtitle": "4 steps: employees get tasks, and both the journals and the orders are ready for an inspection.",
+      "quickSetupTitle": "Set up in 3 minutes",
+      "quickSetupText": "Type of business and five questions — we'll add positions, rooms, equipment and logs for you.",
+      "quickSetupAction": "Start"
     },
     "onboardingTemplatePage": {
-      "title": "Establishment templates",
-      "description": "One click and your organisation is set up: positions, rooms, equipment and required journals. You add employees and their phone numbers yourself later. You can apply several templates in a row; they add to the setup rather than replace it."
+      "title": "Set up the account in 3 minutes",
+      "description": "Choose the type of business and answer five questions — we'll add positions, rooms, equipment and logs. You can set up several types in a row: we only add, nothing is deleted."
     },
     "createPaperDocumentDialog": {
       "titleRequired": "Enter the document name",
@@ -31096,21 +31099,6 @@
       "creating": "Creating…",
       "createAll": "Create pipelines for all"
     },
-    "onboardingTemplateClient": {
-      "applyFailed": "Could not apply",
-      "applied": "Template applied: created {positions, plural, one {# position} other {# positions}}, {areas, plural, one {# room} other {# rooms}}, {equipment, plural, one {# piece of equipment} other {# pieces of equipment}}.",
-      "networkError": "Network error",
-      "positions": "positions",
-      "areas": "rooms",
-      "all": "all",
-      "journals": "journals",
-      "applyTemplate": "Apply template",
-      "confirmTitle": "Apply the template?",
-      "confirmDescription": "Positions, rooms and equipment will be created and the mandatory journals enabled for the “<strong>{label}</strong>” type.",
-      "bullet1": "Existing positions and rooms are not deleted — only new ones are added.",
-      "bullet2": "After applying, go to /settings/users and create employees with phone numbers.",
-      "confirmLabel": "Apply"
-    },
     "onboardingWizard": {
       "step1Title": "Positions and journals",
       "applyTemplateLabel": "Apply the template for the “{orgType}” type — creates positions and links journals",
@@ -31389,6 +31377,78 @@
       "disabledToast": "Auto-renewal is off",
       "renewedNow": "Auto-renewal is on: the subscription has already been renewed from the balance",
       "failed": "Could not change auto-renewal"
+    },
+    "quickSetup": {
+      "stepsLabel": "Setup steps",
+      "step1": "Type of business",
+      "step2": "Five questions",
+      "step3": "Done",
+      "choose": "Choose",
+      "questionsHint": "Answer as things are — we'll add positions, rooms, equipment and logs. Nothing is deleted, only added.",
+      "fridges": "How many fridges?",
+      "freezers": "How many freezers?",
+      "uvLamps": "How many germicidal (UV) lamps?",
+      "fryer": "Is there a deep fryer?",
+      "yes": "Yes",
+      "no": "No",
+      "less": "Fewer",
+      "more": "More",
+      "zones": "Which rooms do you have?",
+      "zonesHint": "Tick everything you have: cleaning, entries and QR posters follow the rooms.",
+      "zonesRequired": "Tick at least one room",
+      "summary": "We'll create {positions, plural, one {# position} other {# positions}}, {zones, plural, one {# room} other {# rooms}} and {equipment, plural, one {# piece of equipment} other {# pieces of equipment}}.",
+      "summaryJournals": "Logs to turn on: {count, number}.",
+      "summaryJournalsKeep": "Logs: your set, adjusted by the answers.",
+      "back": "Back",
+      "apply": "Set up the account",
+      "applying": "Setting up…",
+      "failed": "Could not set up — please try again",
+      "doneTitle": "Account is set up",
+      "doneBody": "Added {positions, plural, one {# position} other {# positions}}, {zones, plural, one {# room} other {# rooms}} and {equipment, plural, one {# piece of equipment} other {# pieces of equipment}}. Existing items are not duplicated.",
+      "nextQr": "Print QR posters",
+      "nextQrHint": "For fridges and rooms: an employee scans and makes an entry right away.",
+      "nextStaff": "Add employees",
+      "nextStaffHint": "Positions are ready — add people and give them access.",
+      "nextJournals": "Open logs",
+      "nextJournalsHint": "Logs are turned on for your business — you can start making entries.",
+      "again": "Set up another type of business",
+      "kinds": {
+        "stand": {
+          "label": "Counter / takeaway point",
+          "description": "Baked goods and ready meals to go. A minimal set of logs.",
+          "staffSize": "2–4 people"
+        },
+        "cafe-small": {
+          "label": "Café up to 30 seats",
+          "description": "A small café with its own kitchen. The full set of logs except highly specialised ones.",
+          "staffSize": "5–10 people"
+        },
+        "restaurant": {
+          "label": "Restaurant 100+ seats",
+          "description": "A full kitchen with workshops and a large menu. All logs and audits.",
+          "staffSize": "15–30 people"
+        },
+        "school": {
+          "label": "School canteen / kindergarten",
+          "description": "Children's catering under SanPiN 2.3/2.4: quality checks, vitaminisation, portion control.",
+          "staffSize": "5–15 people"
+        },
+        "production": {
+          "label": "Food production",
+          "description": "Industrial processing: HACCP, traceability, metal impurities, audits.",
+          "staffSize": "20+ people"
+        },
+        "medical": {
+          "label": "Medical centre / clinic",
+          "description": "Treatment rooms and sterilisation: UV irradiators, disinfectants, class B waste, a medicine fridge.",
+          "staffSize": "5–20 people"
+        },
+        "hotel": {
+          "label": "Hotel with breakfasts",
+          "description": "Breakfast kitchen, rooms, laundry and pool: catering, cleaning and water logs.",
+          "staffSize": "10–40 people"
+        }
+      }
     }
   },
   "teamUi": {

@@ -1,10 +1,13 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import {
+  ArrowRight,
   Building2,
   ClipboardList,
   FileSignature,
   ListChecks,
+  Sparkles,
   Users,
   Wrench,
 } from "lucide-react";
@@ -260,6 +263,29 @@ export default async function OnboardingPage() {
           {t("subtitle")}
         </p>
       </header>
+
+      {/* «Настройка за 3 минуты» (21.11.2026): вместо четырёх этапов по
+          одному — вид деятельности и пять вопросов. Пока основное не
+          настроено — первым на странице. */}
+      {!status.coreComplete ? (
+        <Link
+          href="/settings/onboarding-template"
+          data-testid="onboarding-quick-setup"
+          className="group flex flex-wrap items-center gap-4 rounded-3xl border border-[#5566f6]/25 bg-white p-5 shadow-[0_10px_30px_-15px_rgba(85,102,246,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#5566f6]/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/20"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
+            <Sparkles className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[17px] font-semibold tracking-[-0.01em] text-[#0b1024]">{t("quickSetupTitle")}</span>
+            <span className="mt-0.5 block text-[14px] leading-snug text-[#6f7282]">{t("quickSetupText")}</span>
+          </span>
+          <span className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[14px] font-medium text-white">
+            {t("quickSetupAction")}
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </Link>
+      ) : null}
 
       <ol className="space-y-4">
         {phases.map((phase, idx) => (

@@ -30000,11 +30000,14 @@
       "phaseDocuments": "Hujjatlar",
       "phaseDocumentsSubtitle": "Buyruqlar va chek-listlar — tekshiruvga faqat jurnallar emas, hammasi to‘ldirilgan bo‘lishi uchun.",
       "title": "Tez boshlash",
-      "subtitle": "4 qadam — xodimlar vazifa oladi, tekshiruvga esa jurnallar ham, buyruqlar ham tayyor."
+      "subtitle": "4 qadam — xodimlar vazifa oladi, tekshiruvga esa jurnallar ham, buyruqlar ham tayyor.",
+      "quickSetupTitle": "3 daqiqada sozlash",
+      "quickSetupText": "Faoliyat turi va beshta savol — lavozimlar, xonalar, uskunalar va jurnallarni o‘zimiz qo‘shamiz.",
+      "quickSetupAction": "Boshlash"
     },
     "onboardingTemplatePage": {
-      "title": "Muassasa shablonlari",
-      "description": "Bir marta bosish — va tashkilotda lavozimlar, xonalar, uskunalar, majburiy jurnallar sozlanadi. Xodimlar va ularning telefonlarini keyin o‘zingiz qo‘shasiz. Bir nechta shablonni ketma-ket qo‘llash mumkin — almashtirilmaydi, qo‘shiladi."
+      "title": "Kabinetni 3 daqiqada sozlash",
+      "description": "Faoliyat turini tanlang va beshta savolga javob bering — lavozimlar, xonalar, uskunalar va jurnallarni qo‘shamiz. Bir nechta turni ketma-ket sozlash mumkin: faqat qo‘shamiz, hech narsa o‘chirilmaydi."
     },
     "createPaperDocumentDialog": {
       "titleRequired": "Hujjat nomini kiriting",
@@ -31096,21 +31099,6 @@
       "creating": "Yaratilmoqda…",
       "createAll": "Barchasi uchun pipeline yaratish"
     },
-    "onboardingTemplateClient": {
-      "applyFailed": "Qo‘llab bo‘lmadi",
-      "applied": "Shablon qo‘llandi: {positions, plural, one {# lavozim} other {# lavozim}}, {areas, plural, one {# xona} other {# xona}}, {equipment, plural, one {# birlik uskuna} other {# birlik uskuna}} yaratildi.",
-      "networkError": "Tarmoq xatosi",
-      "positions": "lavozim",
-      "areas": "xona",
-      "all": "barchasi",
-      "journals": "jurnal",
-      "applyTemplate": "Shablonni qo‘llash",
-      "confirmTitle": "Shablon qo‘llansinmi?",
-      "confirmDescription": "“<strong>{label}</strong>” turi uchun lavozimlar, xonalar, uskunalar yaratiladi va majburiy jurnallar yoqiladi.",
-      "bullet1": "Mavjud lavozimlar va xonalar o‘chirilmaydi — faqat yangilari qo‘shiladi.",
-      "bullet2": "Qo‘llagandan so‘ng /settings/users sahifasiga kirib, xodimlarni telefon raqamlari bilan yarating.",
-      "confirmLabel": "Qo‘llash"
-    },
     "onboardingWizard": {
       "step1Title": "Lavozimlar va jurnallar",
       "applyTemplateLabel": "“{orgType}” turi uchun shablonni qo‘llash — lavozimlarni yaratadi va jurnallarni bog‘laydi",
@@ -31389,6 +31377,78 @@
       "disabledToast": "Avtomatik uzaytirish o‘chirildi",
       "renewedNow": "Avtomatik uzaytirish yoqildi — obuna balansdan uzaytirildi",
       "failed": "Avtomatik uzaytirishni o‘zgartirib bo‘lmadi"
+    },
+    "quickSetup": {
+      "stepsLabel": "Sozlash bosqichlari",
+      "step1": "Faoliyat turi",
+      "step2": "Beshta savol",
+      "step3": "Tayyor",
+      "choose": "Tanlash",
+      "questionsHint": "Bor holicha javob bering — lavozimlar, xonalar, uskunalar va jurnallarni qo‘shamiz. Hech narsa o‘chirilmaydi, faqat qo‘shiladi.",
+      "fridges": "Nechta muzlatgich bor?",
+      "freezers": "Nechta muzlatish kamerasi bor?",
+      "uvLamps": "Nechta bakteritsid (UB) chiroq bor?",
+      "fryer": "Frityurnitsa bormi?",
+      "yes": "Ha",
+      "no": "Yo‘q",
+      "less": "Kamroq",
+      "more": "Ko‘proq",
+      "zones": "Qaysi xonalar bor?",
+      "zonesHint": "Borini belgilang: tozalash, yozuvlar va QR-plakatlar xonalar bo‘yicha bo‘ladi.",
+      "zonesRequired": "Kamida bitta xonani belgilang",
+      "summary": "Yaratiladi: {positions, plural, other {# ta lavozim}}, {zones, plural, other {# ta xona}}, {equipment, plural, other {# ta uskuna}}.",
+      "summaryJournals": "Yoqiladigan jurnallar: {count, number}.",
+      "summaryJournalsKeep": "Jurnallar — sizning to‘plamingiz, javoblarga ko‘ra tuzatilgan.",
+      "back": "Orqaga",
+      "apply": "Kabinetni sozlash",
+      "applying": "Sozlanmoqda…",
+      "failed": "Sozlab bo‘lmadi — qayta urinib ko‘ring",
+      "doneTitle": "Kabinet sozlandi",
+      "doneBody": "Qo‘shildi: {positions, plural, other {# ta lavozim}}, {zones, plural, other {# ta xona}}, {equipment, plural, other {# ta uskuna}}. Mavjudlari takrorlanmaydi.",
+      "nextQr": "QR-plakatlarni chop etish",
+      "nextQrHint": "Muzlatgichlar va xonalar uchun: xodim skanerlaydi va darhol yozadi.",
+      "nextStaff": "Xodimlarni qo‘shish",
+      "nextStaffHint": "Lavozimlar tayyor — odamlarni qo‘shib, ruxsat bering.",
+      "nextJournals": "Jurnallarni ochish",
+      "nextJournalsHint": "Jurnallar korxonangiz uchun yoqilgan — yozuvlarni boshlash mumkin.",
+      "again": "Boshqa faoliyat turini sozlash",
+      "kinds": {
+        "stand": {
+          "label": "Peshtaxta / o‘tirish joysiz nuqta",
+          "description": "Pishiriqlar va olib ketish uchun tayyor taomlar. Jurnallarning minimal to‘plami.",
+          "staffSize": "2–4 kishi"
+        },
+        "cafe-small": {
+          "label": "30 o‘ringacha kafe",
+          "description": "O‘z oshxonasi bor kichik kafe. Maxsus jurnallardan tashqari to‘liq to‘plam.",
+          "staffSize": "5–10 kishi"
+        },
+        "restaurant": {
+          "label": "100+ o‘rinli restoran",
+          "description": "Sexlari va katta menyusi bor to‘liq oshxona. Barcha jurnallar va auditlar.",
+          "staffSize": "15–30 kishi"
+        },
+        "school": {
+          "label": "Maktab oshxonasi / bolalar bog‘chasi",
+          "description": "SanPiN 2.3/2.4 bo‘yicha bolalar ovqatlanishi: brakeraj, vitaminlash, porsiya nazorati.",
+          "staffSize": "5–15 kishi"
+        },
+        "production": {
+          "label": "Oziq-ovqat ishlab chiqarish",
+          "description": "Sanoat qayta ishlash: HACCP, kuzatuvchanlik, metall aralashmalari, auditlar.",
+          "staffSize": "20+ kishi"
+        },
+        "medical": {
+          "label": "Tibbiyot markazi / klinika",
+          "description": "Muolaja xonalari va sterilizatsiya: UB nurlatgichlar, dezinfeksiya vositalari, B sinf chiqindilari, dori muzlatgichi.",
+          "staffSize": "5–20 kishi"
+        },
+        "hotel": {
+          "label": "Nonushtali mehmonxona",
+          "description": "Nonushta oshxonasi, xonalar, kirxona va basseyn: ovqatlanish bloki, tozalash va suv jurnallari.",
+          "staffSize": "10–40 kishi"
+        }
+      }
     }
   },
   "teamUi": {
