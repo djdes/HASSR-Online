@@ -347,7 +347,7 @@ export type CapturedEmail = {
   html: string;
   text: string;
   replyTo?: string;
-  attachments: number;
+  attachments: EmailAttachment[];
 };
 
 const emailCapture = new AsyncLocalStorage<CapturedEmail[]>();
@@ -377,7 +377,7 @@ async function sendEmail(
   const text = options?.text?.trim() || emailHtmlToText(html) || undefined;
   const captured = emailCapture.getStore();
   if (captured) {
-    captured.push({ to, subject, html, text: text ?? "", ...(replyTo ? { replyTo } : {}), attachments: attachments?.length ?? 0 });
+    captured.push({ to, subject, html, text: text ?? "", ...(replyTo ? { replyTo } : {}), attachments: attachments ?? [] });
     return true;
   }
   if (!isSmtpConfigured()) {

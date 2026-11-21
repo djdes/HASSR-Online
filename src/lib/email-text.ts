@@ -69,10 +69,14 @@ export function decodeEmailEntities(value: string): string {
     .replace(/ /g, " ");
 }
 
-const GREETING = /^(здравствуйте|добрый\s+(день|вечер)|доброе\s+утро|привет|hello|hi|dear|good\s+(morning|afternoon|evening)|assalomu\s+alaykum|salom)(?=[\s,!.]|$)/i;
+const GREETING_WORDS = "здравствуйте|добрый\\s+(?:день|вечер)|доброе\\s+утро|привет|hello|hi|dear|good\\s+(?:morning|afternoon|evening)|assalomu\\s+alaykum|salom";
+/** Строка — одно приветствие: «Здравствуйте!», «Hello, Anna!». */
+const GREETING_ONLY = new RegExp(`^(?:${GREETING_WORDS})(?:,\\s*[^!.?]{1,40})?[!.]?$`, "i");
+/** «Здравствуйте, Анна! Вы начали…» → «Вы начали…»: приветствие в начале абзаца. */
+const GREETING_PREFIX = new RegExp(`^(?:${GREETING_WORDS})(?:,\\s*[^!.?]{1,40})?[!.]\\s+(?=\\S)`, "i");
 
 function isGreeting(line: string): boolean {
-  return line.length <= 60 && GREETING.test(line);
+  return GREETING_ONLY.test(line);
 }
 
 function joinLines(first: string, second: string): string {
@@ -94,7 +98,9 @@ function blockLines(html: string): string[] {
   const text = html
     .replace(/<(style|script|head)\b[\s\S]*?<\/\1>/gi, " ")
     .replace(/<div[^>]*display:\s*none[\s\S]*?<\/div>/gi, " ")
-    .replace(/<br\s*\/?>|<\/(p|div|h[1-6]|li|tr|td|th|table|ul|ol|blockquote)>/gi, "\n")
+    // Ячейки строки таблицы — одной строкой: «Заполнено журналов 86%».
+    .replace(/<\/(td|th)>/gi, " ")
+    .replace(/<br\s*\/?>|<\/(p|div|h[1-6]|li|tr|table|ul|ol|blockquote)>/gi, "\n")
     .replace(/<[^>]+>/g, "");
   return decodeEmailEntities(text)
     .split("\n")
@@ -112,7 +118,7 @@ export function emailPreheaderFromBody(bodyHtml: string, max = PREHEADER_MAX): s
   let index = 0;
   while (index < lines.length && isGreeting(lines[index])) index += 1;
   if (index >= lines.length) return null;
-  let text = lines[index];
+  let text = lines[index].replace(GREETING_PREFIX, "");
   index += 1;
   // Короткая подпись или строка с двоеточием продолжается следующей строкой.
   while ((text.length < PREHEADER_MIN || text.endsWith(":")) && index < lines.length) {

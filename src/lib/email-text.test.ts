@@ -37,6 +37,13 @@ test("строка во входящих: первая содержательн�
     emailPreheaderFromBody("<p>Здравствуйте!</p><p>Мы ответили на ваше обращение — Алексей:</p><blockquote>Исправили — обновите страницу.</blockquote>"),
     "Мы ответили на ваше обращение — Алексей: Исправили — обновите страницу.",
   );
+  // Приветствие в начале абзаца тоже не нужно, и ячейки таблицы — одной строкой.
+  assert.equal(emailPreheaderFromBody("<p>Здравствуйте, Анна! Вы начали оформлять тариф, но оплата не дошла.</p>"), "Вы начали оформлять тариф, но оплата не дошла.");
+  assert.equal(emailPreheaderFromBody("<p>Hello! Your payment did not go through, please try again.</p>"), "Your payment did not go through, please try again.");
+  assert.equal(
+    emailPreheaderFromBody("<p>Неделя 16.11 — 22.11</p><table><tr><td>Заполнено журналов</td><td>86%</td></tr></table>"),
+    "Неделя 16.11 — 22.11. Заполнено журналов 86%",
+  );
   assert.equal(emailPreheaderFromBody("<p>Здравствуйте!</p>"), null, "кроме приветствия ничего нет");
   assert.equal(emailPreheaderFromBody(""), null);
 });
