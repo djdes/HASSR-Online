@@ -5799,52 +5799,52 @@
     "popularBadge": "Ommabop",
     "contactSupport": "Yordam xizmatiga murojaat qilish",
     "refundHeading": "Ma’qul kelmasa — pulingizni qaytaramiz",
-    "refundDetails": "To‘lovdan keyin 14 kun ichida mablag‘ to‘liq qaytariladi, hech qanday savol va ushlab qolishlarsiz.",
-    "refundTerms": "Shartlar oferta shartnomasida keltirilgan",
+    "refundDetails": "To‘lovdan keyin 14 kun ichida to‘liq qaytaramiz.",
+    "refundTerms": "Oferta shartlari",
     "faqHeading": "Ko‘p beriladigan savollar",
-    "finalCtaHeading": "QR-stikerni joylashtiring — jurnallar uskuna yonida yuritiladi",
-    "finalCtaDetails": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va bank kartasisiz. Stikerlarni kabinetdan chop eting; xodimlarga hech narsa o‘rnatish kerak emas.",
+    "finalCtaHeading": "Bepul boshlang",
+    "finalCtaDetails": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar, kartasiz. Xodimlarga hech narsa o‘rnatish kerak emas.",
     "qrCameraInstruction": "Xodim jurnalni qanday ochishini ko‘rish uchun telefon kamerangizni shu yerga qarating.",
     "faq": {
       "refund": {
-        "question": "Xizmat menga mos kelmasa, pulni qaytarib olsam bo‘ladimi?",
-        "answer": "Ha. Obuna uchun to‘lov qilganingizdan keyin 14 kun ichida admin@wesetup.ru manziliga murojaat qilsangiz, to‘liq summa savollarsiz va ushlab qolishlarsiz qaytariladi. Qaytarish shartlari oferta shartnomasida belgilangan — bu reklama va’dasi emas, majburiyatdir."
+        "question": "Pulni qaytarib olsa bo‘ladimi?",
+        "answer": "Ha. To‘lovdan keyin 14 kun ichida admin@wesetup.ru manziliga yozing — to‘liq summani qaytaramiz. Bu oferta shartnomasi sharti."
       },
       "employeeAccess": {
-        "question": "Xodimlarga ilova o‘rnatish yoki parolni eslab qolish kerakmi?",
-        "answer": "Yo‘q. Telefon kamerasida QR-stikerni skanerlash kerakli jurnal sahifasini ochadi. Xodim ro‘yxatdan o‘zini tanlaydi va yozuvni 4–6 xonali shaxsiy PIN-kodi bilan tasdiqlaydi. Ilova o‘rnatish yoki kabinetga kirish shart emas."
+        "question": "Xodimlarga ilova yoki parol kerakmi?",
+        "answer": "Yo‘q. Xodim QR-kodni telefon kamerasida skanerlaydi, ro‘yxatdan o‘zini tanlaydi va PIN-kodini kiritadi."
       },
       "missedEntry": {
-        "question": "Xodim QR-kodni skanerlamasa va jurnalni to‘ldirmasa nima bo‘ladi?",
-        "answer": "Katak bo‘sh qoladi va xizmat buni aniqlaydi. Rahbarga Telegram orqali soat 12:00 da eslatma, 17:00 da takroriy eslatma va elektron xat, 21:00 da esa shoshilinch ogohlantirish yuboriladi. Gigiyena jurnali bo‘yicha smena oxirida mas’ullar qayd kiritmagan xodimlar ro‘yxatini oladi."
+        "question": "Xodim jurnalni to‘ldirishni unutsa-chi?",
+        "answer": "Xizmat buni sezadi va rahbarga Telegram orqali 12:00, 17:00 (yana xat bilan) va 21:00 da eslatadi."
       },
       "qrSecurity": {
         "question": "QR orqali kiritilgan yozuvni soxtalashtirish mumkinmi?",
-        "answer": "Yozuv xodimning shaxsiy PIN-kodi bilan tasdiqlanadi; PIN-kod besh marta noto‘g‘ri kiritilsa, kiritish 15 daqiqaga bloklanadi. Vaqtni server belgilaydi, amallar jurnalida esa kim, qachon va nimani kiritgani saqlanadi. Har bir muzlatkichning o‘z stikeri bor, formadagi uskunani almashtirib bo‘lmaydi."
+        "answer": "Yozuvni shaxsiy PIN-kod tasdiqlaydi, vaqtni server qo‘yadi, amallar jurnali kim nima yozganini saqlaydi. PIN besh marta noto‘g‘ri kiritilsa, kiritish 15 daqiqaga bloklanadi."
       },
       "electronicLogs": {
         "question": "Elektron SanPiN jurnali nima?",
-        "answer": "Jurnallarni yuritish uchun veb-xizmat: xodimlar telefon yoki kompyuterdan yozuv kiritadi, rahbar ularni tekshiradi va hujjatlarni yuklab oladi. Jurnallar, mas’ullar va to‘ldirish tartibini tashkilotingiz sohasi va talablariga qarab tanlang."
+        "answer": "O‘sha jurnal, faqat telefon va kompyuterda: xodimlar yozuv kiritadi, rahbar tekshiradi va hujjatlarni yuklab oladi."
       },
       "inspection": {
         "question": "Rospotrebnadzor tekshiruvi qanday o‘tadi?",
-        "answer": "Inspektorga so‘ralgan davrdagi barcha yozuvlar PDF ko‘rinishida chiqarib beriladi. Chop etish shaklida talab qilinadigan ma’lumotlar bo‘ladi: F.I.Sh., lavozim, elektron imzo, sana va asosiy qiymatlar."
+        "answer": "Inspektorga kerakli davr uchun PDF beriladi: F.I.Sh., lavozim, imzo, sana va qiymatlar."
       },
       "integrations": {
         "question": "iiko va 1C bilan sinxronlash bormi?",
-        "answer": "Ha. Yetkazib beruvchilar, mahsulotlar, qabul qilingan tovarlar va sifat tekshiruvlari qo‘lda kiritmaslik uchun avtomatik sinxronlanadi. Muhandisimiz bilan sozlash taxminan 30 daqiqa oladi."
+        "answer": "Ha. Yetkazib beruvchilar, mahsulotlar, qabul va sifat tekshiruvlari o‘zi sinxronlanadi. Muhandisimiz bilan sozlash — taxminan 30 daqiqa."
       },
       "offline": {
         "question": "Internet uzilib qolsa nima bo‘ladi?",
-        "answer": "Xavotirga o‘rin yo‘q: interfeys planshetda ishlashda davom etadi, yozuvlar qurilmada saqlanadi va tarmoq tiklangach serverga avtomatik yuboriladi. Wi-Fi muammolari sababli smenani o‘tkazib yubormaysiz."
+        "answer": "Yozuvlar qurilmada saqlanadi va tarmoq tiklangach serverga yuboriladi."
       },
       "dataSecurity": {
         "question": "Ma’lumotlarim xavfsizmi?",
-        "answer": "Barcha jurnallar Rossiyadagi serverlarda himoyalangan PostgreSQL bazasida saqlanadi. Zaxira nusxalar har 6 soatda olinadi. Ma’lumotlar HTTPS va TLS 1.3 orqali uzatiladi. Kirish login va parol bilan, rollarga asoslangan ruxsatlar bo‘yicha amalga oshiriladi; tekshiruvlar uchun PDF eksport faqat administrator hisobidan mumkin."
+        "answer": "Ma’lumotlar Rossiyadagi serverlarda saqlanadi, har 6 soatda zaxiralanadi va HTTPS orqali uzatiladi. Kirish — login va parol bilan, ruxsat — rol bo‘yicha."
       },
       "import": {
-        "question": "Excel yoki qog‘ozdagi ma’lumotlarni ko‘chirish mumkinmi?",
-        "answer": "Ha. Xodimlar, uskunalar va yetkazib beruvchilar haqidagi ma’lumotlarni Excel jadvalidan import qilish mumkin. Eski qog‘oz yozuvlaringiz o‘zingizda qoladi, yangilari WeSetup’da yuritiladi; arxivni haq evaziga raqamlashtirish xizmatidan ham foydalanishingiz mumkin."
+        "question": "Excel’dan ma’lumotlarni ko‘chirsa bo‘ladimi?",
+        "answer": "Ha. Xodimlar, uskunalar va yetkazib beruvchilarni Excel’dan yuklash mumkin. Qog‘oz arxivni haq evaziga raqamlashtiramiz."
       }
     },
     "capabilities": {
@@ -5873,15 +5873,15 @@
     "qrSteps": {
       "equipment": {
         "title": "Uskunalarni qo‘shing",
-        "text": "Muzlatkichlar, lampalar va fritozlarni sozlamalarda bir necha daqiqada qo‘shing."
+        "text": "Muzlatkichlar, lampalar va boshqalar — bir necha daqiqada."
       },
       "stickers": {
         "title": "Stikerlarni chop eting",
-        "text": "QR-stikerlar varag‘ini oddiy printerda chop eting va kerakli joylarga yopishtiring."
+        "text": "Oddiy printerda — va joy-joyiga."
       },
       "scan": {
         "title": "Xodimlar skanerlaydi",
-        "text": "Telefon kamerasi, PIN-kod, ko‘rsatkich — jurnal avtomatik yuritiladi."
+        "text": "Kamera, PIN, qiymat — tayyor."
       }
     },
     "popularJournals": {
@@ -5975,13 +5975,13 @@
         }
       }
     },
-    "pricingTitle": "To‘rtta tarif. Bepulidan boshlang",
+    "pricingTitle": "To‘rtta tarif",
     "brandTagline": "Sizning elektron HACCP tizimingiz",
     "presentationPdf": "Setup taqdimoti — PDF, 7 MB (rus tilida)",
     "knowledgeBaseLink": "Bilimlar bazasi",
     "workspaceShort": "Kabinet",
     "allFeaturesLink": "Xizmatning barcha imkoniyatlari",
-    "faqKnowledgeBase": "Javob topilmadimi? <link>WeSetup bilimlar bazasi</link>ga qarang.",
+    "faqKnowledgeBase": "Javob topilmadimi? <link>Bilimlar bazasi</link>ga qarang.",
     "faqMore": {
       "refund": "Oferta shartnomasidagi qaytarish shartlari",
       "employeeAccess": "Xodimlar jurnallarni QR-kod orqali qanday to‘ldiradi",
@@ -6020,18 +6020,18 @@
       "title": "«Premium» uchun uskunalar",
       "bundlePrice": "Uskunalar to‘plami narxi {price} ₽ dan boshlanadi.",
       "oneTime": "Bir martalik to‘lov",
-      "sensorBenefit": "Muzlatkich datchiklari haroratni avtomatik qayd etadi",
-      "tabletBenefit": "Ish joyidagi planshet va smena uchun NFC breloklar",
-      "setupBenefit": "Joyiga borib sozlash, o‘rnatish va smenani o‘qitish",
+      "sensorBenefit": "Muzlatkich datchiklari",
+      "tabletBenefit": "Planshet va NFC breloklar",
+      "setupBenefit": "O‘rnatish va o‘qitish",
       "collapse": "Tanlovni yopish",
       "choose": "Uskunalarni tanlash",
       "calculatorTitle": "Uskunalarni tanlash",
-      "calculatorDescription": "Keraklisini tanlang — narx qayta hisoblanadi. Planshet yoki datchiklar bormi? Belgini olib tashlang, faqat «Premium» tarifi qoladi.",
-      "premiumNote": "Harorat datchiklari va planshet hisobingizga ulangan holda keladi: ko‘rsatkichlar jurnallarga o‘zi yoziladi. Yetkazib berish va ulash — «Premium» tarifida.",
+      "calculatorDescription": "Keraklisini belgilang — narx qayta hisoblanadi. Uskunangiz bormi? Belgini olib tashlang.",
+      "premiumNote": "Datchiklar va planshet sozlangan holda keladi — ko‘rsatkichlar jurnallarga o‘zi yoziladi.",
       "printerBenefit": "«Setup yordamchisi» printeri"
     },
     "testimonials": {
-      "title": "Mijozlarimiz fikri",
+      "title": "Mijozlar fikri",
       "originalLanguageNote": "Mijozlar fikrlari asl tilida ko‘rsatiladi.",
       "ratingLabel": "5 balldan {rating, number} ball.",
       "statsLabel": "Muassasaning WeSetup’dagi raqamlari",
@@ -6051,24 +6051,24 @@
         "label": "Nuqtalar",
         "decrease": "Nuqtani olib tashlash",
         "increase": "Nuqta qo‘shish",
-        "hint": "Nuqta — bitta tashkilot ichidagi alohida jurnallar va xodimlar: kafe, sex, filial. Har biri — yana bir tarif narxida. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %, 50 tadan — individual taklif."
+        "hint": "Nuqta — kafe, sex yoki filial. Barcha nuqtalarga chegirma: 5 tadan — 5 %, 10 tadan — 10 %, 15 tadan — 20 %, 35 tadan — 25 %, 50 tadan — so‘rov bo‘yicha."
       },
       "tiers": {
         "free": {
           "name": "Bepul",
-          "tagline": "Hammasini cheklovsiz sinab ko‘ring"
+          "tagline": "Hammasini sinab ko‘ring"
         },
         "standard": {
           "name": "Standart",
-          "tagline": "Elektron jurnallar va chek-listlar, har bir nuqtada 25 kishigacha jamoa"
+          "tagline": "Jurnallar va chek-listlar"
         },
         "premium": {
           "name": "Premium",
-          "tagline": "HACCP tamoyillariga asoslangan elektron ishlab chiqarish nazorati dasturi, avtomatlashtirish va uskunalar"
+          "tagline": "Nazorat dasturi, avtomatlashtirish va uskunalar"
         },
         "vip": {
           "name": "VIP",
-          "tagline": "Ishonch telefoni, kengaytirilgan ma’lumotlar banki va shaxsiy maslahatchi"
+          "tagline": "Shaxsiy maslahatchi va ishonch telefoni"
         }
       },
       "badges": {
@@ -6094,21 +6094,21 @@
         "vip": "«Premium»dagi hammasi, qo‘shimcha:"
       },
       "features": {
-        "trialAll": "Barcha jurnallar, xodimlar va nuqtalar — cheklovsiz",
-        "noCard": "Karta bog‘lash shart emas",
-        "afterTrial": "Keyin bepul: {employees, number} xodim va {journals, number} jurnal — o‘zingiz belgilaysiz",
+        "trialAll": "Barcha jurnallar, xodimlar va nuqtalar",
+        "noCard": "Kartasiz",
+        "afterTrial": "Keyin bepul: {employees, number} xodim va {journals, number} jurnal",
         "employees": "Har bir nuqtaga {count, number} nafargacha xodim",
-        "allJournals": "SanPiN va HACCP jurnallari, Telegram-bot va tekshiruv uchun PDF",
-        "storageOrders": "Jurnal buyruqlari va o‘z hujjatlaringiz uchun {mb, number} MB",
-        "ownPackage": "«Hujjatlar to‘plami» bo‘limi — o‘zingiz to‘ldirasiz",
-        "storageAll": "Barcha hujjatlar uchun {gb, number} GB",
-        "photoAutofill": "Harorat datchigi fotosi — ko‘rsatkichlar o‘zi to‘ladi",
-        "equipmentConnect": "Uskunani ulash: mustaqil yoki obuna bo‘yicha",
-        "equipmentDelivery": "Ulangan uskunani yetkazib berish — kabinetda buyurtma",
-        "typicalPackage": "Namunaviy hujjatlar to‘plami: chop etib to‘ldiring",
-        "employeesPremium": "Har bir nuqtaga {count, number} nafargacha xodim, undan ko‘pi — kelishuv bo‘yicha",
-        "mercury": "«Merkuriy» FDAT: kiruvchi VSDlar va qabul jurnalidan so‘ndirish",
-        "checklists": "Smenalar va tekshiruvlar uchun chek-listlar",
+        "allJournals": "Barcha jurnallar, Telegram-bot va tekshiruv uchun PDF",
+        "storageOrders": "Hujjatlar uchun {mb, number} MB",
+        "ownPackage": "O‘z «Hujjatlar to‘plami»",
+        "storageAll": "Hujjatlar uchun {gb, number} GB",
+        "photoAutofill": "Datchik ko‘rsatkichlari fotodan",
+        "equipmentConnect": "Uskunani ulash",
+        "equipmentDelivery": "Tayyor uskunani yetkazib berish",
+        "typicalPackage": "Namunaviy hujjatlar to‘plami",
+        "employeesPremium": "Har bir nuqtaga {count, number} nafargacha xodim, ko‘prog‘i — so‘rov bo‘yicha",
+        "mercury": "«Merkuriy» FDAT: VSDlarni so‘ndirish",
+        "checklists": "Chek-listlar",
         "ppkElectronic": "HACCP tamoyillariga asoslangan elektron ishlab chiqarish nazorati dasturi",
         "hotline": "Ishonch telefoni — oyiga {hours, number} soatgacha",
         "dataBank": "Kengaytirilgan ma’lumotlar banki",
@@ -6137,12 +6137,12 @@
       },
       "note": {
         "trial": "{trialDays, number} kun — «Premium»ning barcha imkoniyatlari kartasiz; keyin bepul 1 xodim va 1 jurnal yoki pullik tarif.",
-        "switch": "Tarifni oshirish — darhol, qolgan kunlar uchun qo‘shimcha to‘lov bilan; pasaytirish — to‘langan muddat tugagach."
+        "switch": "Tarifni oshirish — darhol qo‘shimcha to‘lov bilan, pasaytirish — to‘langan muddat oxiridan."
       },
       "ppk": {
-        "title": "HACCP tamoyillariga asoslangan ishlab chiqarish nazorati dasturi",
-        "text": "Mutaxassis obyektingiz uchun dastur ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
-        "cta": "Individual buyurtma berish"
+        "title": "HACCP tamoyillariga asoslangan nazorat dasturi",
+        "text": "Mutaxassis obyektingiz uchun dastur tuzadi. Har qanday tarifda.",
+        "cta": "Dastur buyurtma qilish"
       },
       "table": {
         "title": "Tariflarni solishtirish",

@@ -1,0 +1,14 @@
+dashboard-desktop.webp 144276
+dashboard-mobile.webp 59532
+grid-desktop.webp 130112
+grid-mobile.webp 50902
+inspection-desktop.webp 141880
+inspection-mobile.webp 63448
+journals-desktop.webp 143330
+journals-mobile.webp 43886
+monitoring-desktop.webp 74692
+monitoring-mobile.webp 27682
+qr-desktop.webp 127866
+qr-mobile.webp 66882
+staff-desktop.webp 91224
+staff-mobile.webp 48840
