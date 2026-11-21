@@ -16560,7 +16560,8 @@
     "sberBusiness": "SberBusiness",
     "timesheet": "Timesheet",
     "correspondence": "Letters",
-    "directoryExchange": "Directory exchange"
+    "directoryExchange": "Directory exchange",
+    "emailTemplates": "Emails"
   },
   "rootEdo": {
     "metadata": {
@@ -20151,7 +20152,7 @@
       "invalid": "Check the email address."
     },
     "company": {
-      "placeholder": "Company name for the log header (optional)"
+      "placeholder": "Company (for the log header)"
     },
     "extras": {
       "toggle": "More details",
@@ -32824,5 +32825,189 @@
     "result": "created {created}, updated {updated}, skipped {skipped}",
     "seconds": "{value} s",
     "unknownOwner": "owner not found"
+  },
+  "rootEmails": {
+    "title": "Emails",
+    "description": "All emails the site sends to clients, with sample data — as they look in the inbox. “Send to me” delivers the selected email to your work address.",
+    "note": "Proposals and marketing mailings are in “Mailings”; internal team emails are not shown here.",
+    "groups": {
+      "access": "Sign-in and access",
+      "billing": "Trial and payment",
+      "support": "Requests and reviews",
+      "journals": "Logs and notifications",
+      "blanks": "Log templates from the site"
+    },
+    "labels": {
+      "subject": "Subject",
+      "inbox": "In the inbox",
+      "attachments": "Attachments",
+      "when": "When it is sent",
+      "language": "Language",
+      "onlyRussian": "Russian only",
+      "view": "View",
+      "viewEmail": "Email",
+      "viewText": "Text",
+      "widthPhone": "Phone",
+      "widthDesktop": "Desktop",
+      "preview": "Email preview",
+      "list": "Site emails"
+    },
+    "send": {
+      "action": "Send to me",
+      "sending": "Sending…",
+      "sent": "Sent to {email}",
+      "logged": "Mail is not configured on the server — the email was written to the server log",
+      "failed": "Could not send, please try again",
+      "noEmail": "Your account has no work email — add it in “Email & Telegram”",
+      "rateLimited": "Too often — wait a couple of minutes",
+      "unknown": "There is no such email"
+    },
+    "samplePrefix": "[Sample]",
+    "templates": {
+      "verification": {
+        "title": "Verification code",
+        "when": "Sign-up: a 6-digit code"
+      },
+      "invite-link": {
+        "title": "Invitation link",
+        "when": "A manager invited an employee — a link to set a password"
+      },
+      "invite-password": {
+        "title": "Invitation with a password",
+        "when": "An employee was added with a password"
+      },
+      "account-landing": {
+        "title": "Access after sign-up on the homepage",
+        "when": "Account created by email on the homepage: password for other devices"
+      },
+      "account-blank": {
+        "title": "Access after a template download",
+        "when": "Account created with “Quick sign-up” in the download window"
+      },
+      "welcome": {
+        "title": "Welcome",
+        "when": "Right after sign-up"
+      },
+      "password-changed": {
+        "title": "New password",
+        "when": "The password was changed in the account or set by a manager"
+      },
+      "password-reset": {
+        "title": "Password reset",
+        "when": "Clicked “Forgot password?”"
+      },
+      "new-device": {
+        "title": "Sign-in from a new device",
+        "when": "Signed in from an unfamiliar phone or computer"
+      },
+      "trial-idle": {
+        "title": "Trial: logs not started",
+        "when": "4 working days before the trial ends, if there are no entries"
+      },
+      "trial-first": {
+        "title": "Trial ending soon",
+        "when": "4 working days before the trial ends"
+      },
+      "trial-second": {
+        "title": "Trial: last days",
+        "when": "2 working days before the trial ends"
+      },
+      "grace-last": {
+        "title": "Grace period ending",
+        "when": "The trial or payment has ended — last days of the grace period"
+      },
+      "renewal-early": {
+        "title": "Annual plan renewal",
+        "when": "A month before the paid year ends"
+      },
+      "offer": {
+        "title": "Personal offer",
+        "when": "A manager sent a plan offer"
+      },
+      "invoice": {
+        "title": "Invoice",
+        "when": "An invoice for a subscription or a top-up was issued"
+      },
+      "payment-receipt": {
+        "title": "Payment received",
+        "when": "The subscription was paid"
+      },
+      "balance-topup": {
+        "title": "Balance topped up",
+        "when": "The points balance was topped up"
+      },
+      "abandoned-order": {
+        "title": "Payment not completed",
+        "when": "A plan was ordered but not paid — after 1–72 hours"
+      },
+      "completion-link": {
+        "title": "Link to open the account",
+        "when": "Paid without an account — a link to set a password"
+      },
+      "referral-invite": {
+        "title": "Recommendation from a colleague",
+        "when": "A client recommended WeSetup to a colleague"
+      },
+      "feedback-received": {
+        "title": "Request received",
+        "when": "Someone wrote to support"
+      },
+      "feedback-reply": {
+        "title": "Reply to a request",
+        "when": "Support replied"
+      },
+      "guest-reply": {
+        "title": "Reply from the site chat",
+        "when": "An operator replied to a chat guest"
+      },
+      "trial-feedback": {
+        "title": "How was the trial?",
+        "when": "A survey after the trial"
+      },
+      "review-request": {
+        "title": "Review request",
+        "when": "The client has actively kept logs for 30 days"
+      },
+      "temperature-alert": {
+        "title": "Temperature out of range",
+        "when": "A temperature outside the allowed range was recorded"
+      },
+      "deviation-alert": {
+        "title": "Deviation in a log",
+        "when": "A deviation was marked in a log"
+      },
+      "compliance-reminder": {
+        "title": "Logs not filled in",
+        "when": "A reminder about the day's unfilled logs"
+      },
+      "weekly-digest": {
+        "title": "Weekly summary",
+        "when": "Once a week to the manager"
+      },
+      "journey-first-qr": {
+        "title": "First steps: QR code",
+        "when": "For a newcomer with no entries: start with one fridge"
+      },
+      "journey-invite-team": {
+        "title": "First steps: invite the shift",
+        "when": "The first entries are in — invite employees"
+      },
+      "journey-demo-expiring": {
+        "title": "First steps: the demo will be deleted",
+        "when": "Before the demo organization is deleted"
+      },
+      "journey-inspector-view": {
+        "title": "First steps: what the inspector sees",
+        "when": "How to show logs during an inspection"
+      },
+      "blank-download": {
+        "title": "Template link",
+        "when": "A log template was downloaded on the site"
+      },
+      "blank-followup": {
+        "title": "Template tips",
+        "when": "The day after the download"
+      }
+    }
   }
 }
