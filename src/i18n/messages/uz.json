@@ -1361,7 +1361,7 @@
         "step": "{number, number}-qadam",
         "supplier": "· yetkazib beruvchi: {name}",
         "noteTitle": "HACCP kuzatuvchanligi:",
-        "noteBody": "TR TS 021/2011 bo‘yicha istalgan partiya yo‘lini bir daqiqada tiklash kerak. Bu ekran bitta kalit bo‘yicha barcha yozuvlarni ko‘rsatadi — qabul qilish → brakeraj → jo‘natish/hisobdan chiqarish. Agar to‘ldirishda kalit «batchNumber» yoki «batchKey» maydoniga yozilsa, partiya avtomatik bog‘lanadi. Merkuriydagi VSD bo‘yicha qabul o‘zi bog‘lanadi.",
+        "noteBody": "TR TS 021/2011 bo‘yicha istalgan partiya yo‘lini bir daqiqada tiklash kerak. Bu yerda partiya kalitli barcha yozuvlar: qabul, brakeraj, jo‘natish va hisobdan chiqarish.",
         "batchOnlyDescription": "Partiya bor, lekin u bo‘yicha jurnal yozuvlari hali yo‘q.",
         "batchSection": "Partiya",
         "vsdSection": "VSD bo‘yicha qabul",
@@ -5671,15 +5671,15 @@
     },
     "ukep": {
       "title": "Malakali elektron imzo (UKEP)",
-      "intro": "Hujjat CryptoPro ЭЦП Browser plug-in orqali malakali elektron imzo bilan imzolanadi. PDF va alohida imzo WeSetup’da saqlanadi — ularni yuklab olib, tekshiruvchiga berish mumkin.",
+      "intro": "CryptoPro plagini orqali imzo. PDF va imzo fayli shu yerda saqlanadi — tekshiruvchi uchun yuklab olish mumkin.",
       "loading": "Imzolar yuklanmoqda…",
-      "empty": "Hujjat hali UKEP bilan imzolanmagan.",
+      "empty": "Hozircha imzolar yo‘q.",
       "signedAt": "Imzolangan: {when}",
       "issuer": "Tasdiqlovchi markaz: {name}",
-      "downloadPdf": "PDF’ni yuklab olish",
-      "downloadSig": "Imzoni yuklab olish (.sig)",
-      "verifyHint": "Haqiqiyligi «PDF + .sig» juftligi bo‘yicha Gosuslugi yoki KriptoARM’da tekshiriladi:",
-      "verifyLink": "Gosuslugi’da tekshirish",
+      "downloadPdf": "PDF",
+      "downloadSig": "Imzo (.sig)",
+      "verifyHint": "Haqiqiyligini tekshirish uchun PDF va .sig’ni yuklang:",
+      "verifyLink": "Gosuslugi",
       "onlyManagers": "Jurnalni rahbar imzolashi mumkin.",
       "start": "UKEP bilan imzolash",
       "searching": "CryptoPro plagini qidirilmoqda…",
@@ -5694,7 +5694,10 @@
       "errors": {
         "load": "Imzolarni yuklab bo‘lmadi",
         "plugin": "CryptoPro plagini javob bermadi — sahifani yangilab, qaytadan urinib ko‘ring",
-        "failed": "Imzolab bo‘lmadi. Qaytadan urinib ko‘ring."
+        "failed": "Imzolab bo‘lmadi. Qaytadan urinib ko‘ring.",
+        "noPlugin": "CryptoPro plagini topilmadi. CryptoPro CSP va plaginni o‘rnating, so‘ng sahifani yangilang.",
+        "noCertificates": "Kalitli amaldagi sertifikatlar yo‘q. UKEP tokenini ulang.",
+        "signFailed": "Plagin hujjatni imzolamadi: {reason}"
       }
     }
   },
@@ -24212,8 +24215,8 @@
     },
     "iiko": {
       "title": "iiko’dan yuk xatlari",
-      "connected": "iiko’dan yuk xatlari «Kiruvchi yuk xatlari»ga keladi. Yuk xatini oching, mahsulotni tekshiring va «Qabul qilish»ni bosing — qatorlar shu jurnalda paydo bo‘ladi.",
-      "notConnected": "iiko hali ulanmagan. Uni ulang — kirim yuk xatlari «Kiruvchi yuk xatlari»ga tushadi, u yerdan esa bitta tugma bilan shu jurnalga.",
+      "connected": "iiko yuk xatlari «Kiruvchi yuk xatlari»ga keladi. U yerda «Qabul qilish»ni bosing — qatorlar shu jurnalda paydo bo‘ladi.",
+      "notConnected": "iiko ulanmagan. Ulangandan keyin yuk xatlari «Kiruvchi yuk xatlari»ga keladi.",
       "openInbox": "«Kiruvchi yuk xatlari»ni ochish",
       "connect": "iiko’ni ulash"
     },
@@ -24221,7 +24224,7 @@
       "menu": "Merkuriydan VSD",
       "pending": "{count, plural, one {Merkuriyda # ta VSD qabul qilinishini kutmoqda} other {Merkuriyda # ta VSD qabul qilinishini kutmoqda}}",
       "overdue": "(muddati o‘tgan: {count, number})",
-      "hint": "Mahsulotni tekshiring va qabulni rasmiylashtiring: qator shu jurnalda paydo bo‘ladi, VSD esa Merkuriyda so‘ndiriladi.",
+      "hint": "Qator shu jurnalda paydo bo‘ladi, VSD Merkuriyda so‘ndiriladi.",
       "process": "Rasmiylashtirish"
     },
     "confirm": {
@@ -30134,7 +30137,7 @@
     },
     "onboardingTemplatePage": {
       "title": "Kabinetni 3 daqiqada sozlash",
-      "description": "Faoliyat turini tanlang va beshta savolga javob bering — lavozimlar, xonalar, uskunalar va jurnallarni qo‘shamiz. Bir nechta turni ketma-ket sozlash mumkin: faqat qo‘shamiz, hech narsa o‘chirilmaydi."
+      "description": "Faoliyat turi va beshta savol — kabinet tayyor: lavozimlar, xonalar, uskunalar, jurnallar. Hech narsa o‘chirilmaydi."
     },
     "createPaperDocumentDialog": {
       "titleRequired": "Hujjat nomini kiriting",
@@ -31538,7 +31541,7 @@
       "step2": "Beshta savol",
       "step3": "Tayyor",
       "choose": "Tanlash",
-      "questionsHint": "Bor holicha javob bering — lavozimlar, xonalar, uskunalar va jurnallarni qo‘shamiz. Hech narsa o‘chirilmaydi, faqat qo‘shiladi.",
+      "questionsHint": "Hammasini keyin o‘zgartirish mumkin.",
       "fridges": "Nechta muzlatgich bor?",
       "freezers": "Nechta muzlatish kamerasi bor?",
       "uvLamps": "Nechta bakteritsid (UB) chiroq bor?",
@@ -31548,23 +31551,24 @@
       "less": "Kamroq",
       "more": "Ko‘proq",
       "zones": "Qaysi xonalar bor?",
-      "zonesHint": "Borini belgilang: tozalash, yozuvlar va QR-plakatlar xonalar bo‘yicha bo‘ladi.",
+      "zonesHint": "Tozalash va QR-plakatlar xonalar bo‘yicha sozlanadi.",
       "zonesRequired": "Kamida bitta xonani belgilang",
       "summary": "Yaratiladi: {positions, plural, other {# ta lavozim}}, {zones, plural, other {# ta xona}}, {equipment, plural, other {# ta uskuna}}.",
       "summaryJournals": "Yoqiladigan jurnallar: {count, number}.",
-      "summaryJournalsKeep": "Jurnallar — sizning to‘plamingiz, javoblarga ko‘ra tuzatilgan.",
+      "summaryJournalsKeep": "Jurnallar — javoblarga ko‘ra tuzatilgan sizning to‘plamingiz.",
       "back": "Orqaga",
       "apply": "Kabinetni sozlash",
       "applying": "Sozlanmoqda…",
       "failed": "Sozlab bo‘lmadi — qayta urinib ko‘ring",
       "doneTitle": "Kabinet sozlandi",
       "doneBody": "Qo‘shildi: {positions, plural, other {# ta lavozim}}, {zones, plural, other {# ta xona}}, {equipment, plural, other {# ta uskuna}}. Mavjudlari takrorlanmaydi.",
+      "doneNothing": "Bularning barchasi kabinetda allaqachon bor — yangi narsa qo‘shilmadi.",
       "nextQr": "QR-plakatlarni chop etish",
-      "nextQrHint": "Muzlatgichlar va xonalar uchun: xodim skanerlaydi va darhol yozadi.",
+      "nextQrHint": "Xodim skanerlaydi va darhol yozuv qiladi.",
       "nextStaff": "Xodimlarni qo‘shish",
-      "nextStaffHint": "Lavozimlar tayyor — odamlarni qo‘shib, ruxsat bering.",
+      "nextStaffHint": "Lavozimlar tayyor — odamlarni qo‘shing.",
       "nextJournals": "Jurnallarni ochish",
-      "nextJournalsHint": "Jurnallar korxonangiz uchun yoqilgan — yozuvlarni boshlash mumkin.",
+      "nextJournalsHint": "Yozuvlarni boshlash mumkin.",
       "again": "Boshqa faoliyat turini sozlash",
       "kinds": {
         "stand": {
@@ -32510,7 +32514,7 @@
     "iiko": {
       "eyebrow": "Ulanishlar",
       "title": "iiko",
-      "description": "iiko kirim yuk xatlari — «Kiruvchi yuk xatlari»ga (keyin UPD bilan bir xil qabul), hisobdan chiqarish dalolatnomalari — «Yo‘qotishlar»ga, yangi tovarlar, yarim tayyor mahsulotlar va menyu taomlari — mahsulotlar ma’lumotnomasiga (taomlar brakeraj takliflariga ham tushadi).",
+      "description": "Yuk xatlari — «Kiruvchi yuk xatlari»ga, hisobdan chiqarish dalolatnomalari — «Yo‘qotishlar»ga, tovarlar, yarim tayyor mahsulotlar va taomlar — mahsulotlar ma’lumotnomasiga.",
       "hint": "iiko serveri (iikoOffice) kerak: manzil, API orqali kirish huquqiga ega foydalanuvchining logini va paroli.",
       "serverUrl": "Server manzili",
       "serverHint": "Masalan, https://name.iiko.it yoki http://manzil:8080",
@@ -32565,8 +32569,8 @@
     "poster": {
       "eyebrow": "Ulanishlar",
       "title": "Poster",
-      "description": "Poster yetkazib berishlari — «Kiruvchi yuk xatlari»ga (keyin UPD bilan bir xil qabul), hisobdan chiqarishlar — «Yo‘qotishlar»ga, menyu taomlari, yarim tayyor mahsulotlar va ingrediyentlar — mahsulotlar ma’lumotnomasiga (taomlar brakeraj takliflariga ham tushadi).",
-      "hint": "Shaxsiy integratsiya tokeni kerak: Poster’da «Kirish → Integratsiyalar → Shaxsiy integratsiya»ni oching va kalitni nusxalang.",
+      "description": "Yetkazib berishlar — «Kiruvchi yuk xatlari»ga, hisobdan chiqarishlar — «Yo‘qotishlar»ga, menyu va ingrediyentlar — mahsulotlar ma’lumotnomasiga.",
+      "hint": "Tokenni Poster’da nusxalang: «Kirish → Integratsiyalar → Shaxsiy integratsiya».",
       "token": "Token",
       "tokenHint": "Masalan, 123456:4164553abf6a031302898da7800b59fb",
       "options": {
@@ -32595,13 +32599,13 @@
       "openLosses": "Yo‘qotishlar",
       "openProducts": "Mahsulotlar ma’lumotnomasi",
       "secretsNote": "Token shifrlangan holda saqlanadi va ulangandan keyin ko‘rsatilmaydi.",
-      "limitNote": "Bir yuklashda 100 tagacha yetkazib berish va 100 tagacha hisobdan chiqarish olinadi — qolgani keyingi tekshiruvda keladi.",
+      "limitNote": "Bir martada — 100 tagacha yetkazib berish va 100 tagacha hisobdan chiqarish, qolgani — keyingi tekshiruvda.",
       "errors": {
         "failed": "Ulab bo‘lmadi. Tokenni tekshiring."
       },
       "stores": {
         "title": "Poster omborlari va obyektlar",
-        "hint": "Ombor yetkazib berishlari va hisobdan chiqarishlari uning nuqtasiga tushadi. «Yuklamaslik» — ombor hujjatlari o‘tkazib yuboriladi. Nuqtasiz — nuqta yetkazib berishni qabul qilishda tanlanadi.",
+        "hint": "Ombor hujjatlari uning nuqtasiga tushadi. «Yuklamaslik» — ombor o‘tkazib yuboriladi.",
         "load": "Omborlarni Poster’dan yuklash",
         "reload": "Omborlar ro‘yxatini yangilash",
         "loading": "Omborlar yuklanmoqda…",

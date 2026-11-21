@@ -37,10 +37,15 @@ export type UkepCertificate = {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+/**
+ * Ошибка плагина: `code` — для текста в окне (переводы ru/en/uz), `reason` — что
+ * ответил сам плагин (для `sign_failed`). `message` — по-русски, для логов и тестов.
+ */
 export class UkepPluginError extends Error {
   constructor(
     readonly code: "no_plugin" | "no_certificates" | "sign_failed",
     message: string,
+    readonly reason: string = "",
   ) {
     super(message);
     this.name = "UkepPluginError";
@@ -176,7 +181,8 @@ export async function signDetached(plugin: CadesPlugin, certificate: UkepCertifi
     const signature = await data.SignCades(signer, plugin.CADESCOM_CADES_BES ?? 1, true);
     return String(signature).replace(/\s+/g, "");
   } catch (error) {
-    throw new UkepPluginError("sign_failed", `Плагин не подписал документ: ${pluginMessage(plugin, error)}`);
+    const reason = pluginMessage(plugin, error);
+    throw new UkepPluginError("sign_failed", `Плагин не подписал документ: ${reason}`, reason);
   }
 }
 

@@ -242,7 +242,8 @@ test("AC5/AC6: меню документа, тексты ru/en/uz, докуме�
     for (const key of ["title", "intro", "empty", "start", "sign", "signing", "verifyHint", "verifyLink", "onlyManagers", "installCsp", "installPlugin", "downloadPdf", "downloadSig"] as const) {
       assert.ok(controls.ukep[key].trim(), `${locale}: ukep.${key}`);
     }
-    for (const key of ["load", "plugin", "failed"] as const) assert.ok(controls.ukep.errors[key].trim(), `${locale}: errors.${key}`);
+    for (const key of ["load", "plugin", "failed", "noPlugin", "noCertificates"] as const) assert.ok(controls.ukep.errors[key].trim(), `${locale}: errors.${key}`);
+    assert.match(controls.ukep.errors.signFailed, /\{reason\}/, `${locale}: errors.signFailed`);
   }
   const doc = read("../../docs/ukep-signing.md");
   assert.match(doc, /Не проверяет математику подписи ГОСТ Р 34\.10-2012/);

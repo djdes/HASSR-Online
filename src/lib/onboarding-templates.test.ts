@@ -131,7 +131,7 @@ test("тексты мастера и всех видов — на ru, en, uz", a
       const texts = quick.kinds[template.kind as keyof typeof quick.kinds];
       assert.ok(texts?.label && texts.description && texts.staffSize, `${locale}: ${template.kind}`);
     }
-    for (const key of ["fridges", "freezers", "uvLamps", "fryer", "zones", "summary", "apply", "doneTitle", "nextQr", "nextStaff", "nextJournals"] as const) {
+    for (const key of ["fridges", "freezers", "uvLamps", "fryer", "zones", "summary", "apply", "doneTitle", "doneNothing", "nextQr", "nextStaff", "nextJournals"] as const) {
       assert.ok(quick[key].trim(), `${locale}: ${key}`);
     }
     assert.ok((await loadMessages(locale)).settingsUi.onboardingPage.quickSetupTitle.trim());

@@ -1361,7 +1361,7 @@
         "step": "Step {number, number}",
         "supplier": "· supplier: {name}",
         "noteTitle": "HACCP traceability:",
-        "noteBody": "under TR CU 021/2011 you must be able to reconstruct the path of any batch within a minute. This screen shows all records with one key — receiving → quality control → dispatch/write-off. A batch is linked automatically if the key is entered in the “batchNumber” or “batchKey” field when filling in. Acceptance by a Mercury VSD is linked automatically.",
+        "noteBody": "under TR CU 021/2011 the path of any batch must be traced within a minute. Here are all records with the batch key: receiving, quality control, dispatch and write-off.",
         "batchOnlyDescription": "The batch exists, but there are no journal records for it yet.",
         "batchSection": "Batch",
         "vsdSection": "Acceptance by VSD",
@@ -5671,15 +5671,15 @@
     },
     "ukep": {
       "title": "Qualified electronic signature",
-      "intro": "The document is signed with a qualified electronic signature via the CryptoPro CSP browser plug-in. The PDF and the detached signature are stored in WeSetup — you can download them and hand them to the inspector.",
+      "intro": "Signed via the CryptoPro plug-in. The PDF and the signature file are stored here — download them for the inspector.",
       "loading": "Loading signatures…",
-      "empty": "The document has not been signed yet.",
+      "empty": "No signatures yet.",
       "signedAt": "Signed {when}",
       "issuer": "CA: {name}",
-      "downloadPdf": "Download PDF",
-      "downloadSig": "Download signature (.sig)",
-      "verifyHint": "Authenticity is checked with the “PDF + .sig” pair on Gosuslugi or in CryptoARM:",
-      "verifyLink": "verify on Gosuslugi",
+      "downloadPdf": "PDF",
+      "downloadSig": "Signature (.sig)",
+      "verifyHint": "To verify, upload the PDF and .sig to",
+      "verifyLink": "Gosuslugi",
       "onlyManagers": "Only a manager can sign the journal.",
       "start": "Sign with QES",
       "searching": "Looking for the CryptoPro plug-in…",
@@ -5694,7 +5694,10 @@
       "errors": {
         "load": "Could not load the signatures",
         "plugin": "The CryptoPro plug-in did not respond — reload the page and try again",
-        "failed": "Could not sign. Please try again."
+        "failed": "Could not sign. Please try again.",
+        "noPlugin": "CryptoPro plug-in not found. Install CryptoPro CSP and the plug-in, then reload the page.",
+        "noCertificates": "No valid certificates with a private key. Connect a token with a QES.",
+        "signFailed": "The plug-in did not sign the document: {reason}"
       }
     }
   },
@@ -24212,8 +24215,8 @@
     },
     "iiko": {
       "title": "Invoices from iiko",
-      "connected": "Invoices from iiko arrive in Incoming invoices. Open an invoice, check the goods and press “Accept”: the rows will appear in this journal.",
-      "notConnected": "iiko is not connected yet. Connect it and receipt invoices will arrive in Incoming invoices, and from there go into this journal with one button.",
+      "connected": "iiko invoices arrive in Incoming invoices. Press “Accept” there — the rows appear in this journal.",
+      "notConnected": "iiko is not connected. Once connected, invoices arrive in Incoming invoices.",
       "openInbox": "Open Incoming invoices",
       "connect": "Connect iiko"
     },
@@ -24221,7 +24224,7 @@
       "menu": "VSD from Mercury",
       "pending": "{count, plural, one {# VSD in Mercury is waiting for acceptance} other {# VSD in Mercury are waiting for acceptance}}",
       "overdue": "(overdue: {count, number})",
-      "hint": "Check the goods and process the acceptance: the row appears in this journal and the VSD is redeemed in Mercury.",
+      "hint": "The row appears in this journal, the VSD is redeemed in Mercury.",
       "process": "Process"
     },
     "confirm": {
@@ -30134,7 +30137,7 @@
     },
     "onboardingTemplatePage": {
       "title": "Set up the account in 3 minutes",
-      "description": "Choose the type of business and answer five questions — we'll add positions, rooms, equipment and logs. You can set up several types in a row: we only add, nothing is deleted."
+      "description": "Pick your type of business and answer five questions — positions, rooms, equipment and journals are set up. Nothing gets deleted."
     },
     "createPaperDocumentDialog": {
       "titleRequired": "Enter the document name",
@@ -31538,7 +31541,7 @@
       "step2": "Five questions",
       "step3": "Done",
       "choose": "Choose",
-      "questionsHint": "Answer as things are — we'll add positions, rooms, equipment and logs. Nothing is deleted, only added.",
+      "questionsHint": "You can change everything later.",
       "fridges": "How many fridges?",
       "freezers": "How many freezers?",
       "uvLamps": "How many germicidal (UV) lamps?",
@@ -31548,23 +31551,24 @@
       "less": "Fewer",
       "more": "More",
       "zones": "Which rooms do you have?",
-      "zonesHint": "Tick everything you have: cleaning, entries and QR posters follow the rooms.",
+      "zonesHint": "Cleaning and QR posters are set up per room.",
       "zonesRequired": "Tick at least one room",
       "summary": "We'll create {positions, plural, one {# position} other {# positions}}, {zones, plural, one {# room} other {# rooms}} and {equipment, plural, one {# piece of equipment} other {# pieces of equipment}}.",
       "summaryJournals": "Logs to turn on: {count, number}.",
-      "summaryJournalsKeep": "Logs: your set, adjusted by the answers.",
+      "summaryJournalsKeep": "Journals: your set, adjusted to your answers.",
       "back": "Back",
       "apply": "Set up the account",
       "applying": "Setting up…",
       "failed": "Could not set up — please try again",
       "doneTitle": "Account is set up",
       "doneBody": "Added {positions, plural, one {# position} other {# positions}}, {zones, plural, one {# room} other {# rooms}} and {equipment, plural, one {# piece of equipment} other {# pieces of equipment}}. Existing items are not duplicated.",
+      "doneNothing": "All of this is already in your account — nothing new was added.",
       "nextQr": "Print QR posters",
-      "nextQrHint": "For fridges and rooms: an employee scans and makes an entry right away.",
+      "nextQrHint": "Staff scan it and make a record right away.",
       "nextStaff": "Add employees",
-      "nextStaffHint": "Positions are ready — add people and give them access.",
+      "nextStaffHint": "Positions are ready — add the people.",
       "nextJournals": "Open logs",
-      "nextJournalsHint": "Logs are turned on for your business — you can start making entries.",
+      "nextJournalsHint": "You can start recording.",
       "again": "Set up another type of business",
       "kinds": {
         "stand": {
@@ -32510,7 +32514,7 @@
     "iiko": {
       "eyebrow": "Connections",
       "title": "iiko",
-      "description": "iiko receipt invoices go to “Incoming invoices” (then the same acceptance as for UPDs), write-off acts — to “Losses”, new goods, semi-finished products and menu dishes — to the product directory (dishes also become quality control suggestions).",
+      "description": "Invoices go to “Incoming invoices”, write-off acts — to “Losses”, goods, semi-finished products and dishes — to the product directory.",
       "hint": "You need an iiko server (iikoOffice): address, login and password of a user allowed to sign in via API.",
       "serverUrl": "Server address",
       "serverHint": "For example, https://name.iiko.it or http://address:8080",
@@ -32565,8 +32569,8 @@
     "poster": {
       "eyebrow": "Connections",
       "title": "Poster",
-      "description": "Poster supplies go to “Incoming invoices” (then the same acceptance as for UPDs), write-offs — to “Losses”, menu dishes, semi-finished products and ingredients — to the product directory (dishes also become quality control suggestions).",
-      "hint": "You need a personal integration token: in Poster open “Access → Integrations → Personal integration” and copy the key.",
+      "description": "Supplies go to “Incoming invoices”, write-offs — to “Losses”, the menu and ingredients — to the product directory.",
+      "hint": "Copy the token in Poster: “Access → Integrations → Personal integration”.",
       "token": "Token",
       "tokenHint": "For example, 123456:4164553abf6a031302898da7800b59fb",
       "options": {
@@ -32595,13 +32599,13 @@
       "openLosses": "Losses",
       "openProducts": "Product directory",
       "secretsNote": "The token is stored encrypted and is not shown after connecting.",
-      "limitNote": "One import takes up to 100 supplies and 100 write-offs — the rest comes with the next check.",
+      "limitNote": "Up to 100 supplies and 100 write-offs at a time; the rest comes with the next check.",
       "errors": {
         "failed": "Could not connect. Check the token."
       },
       "stores": {
         "title": "Poster storages and locations",
-        "hint": "Supplies and write-offs of a storage go to its location. “Don't import” skips the storage's documents. Without a location, it is chosen when the supply is accepted.",
+        "hint": "A storage's documents go to its location. “Don't import” skips the storage.",
         "load": "Load storages from Poster",
         "reload": "Refresh storage list",
         "loading": "Loading storages…",
