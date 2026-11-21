@@ -101,5 +101,10 @@ test("фирменный стиль: цвета, сайт и переключа�
 
   assert.deepEqual(parseOrganizationProfilePatch({ website: "  " }, ORG_PROFILE_FIELDS), { ok: true, data: { website: null } });
   assert.equal(parseOrganizationProfilePatch({ website: "кафе" }, ORG_PROFILE_FIELDS).ok, false);
+  // Пример в ошибке — нейтральный: «dobroe-kafe.ru» в каждой организации принимали за чужие данные.
+  assert.deepEqual(parseOrganizationProfilePatch({ website: "кафе" }, ORG_PROFILE_FIELDS), {
+    ok: false,
+    error: "Укажите сайт вида example.ru",
+  });
   assert.equal(parseOrganizationProfilePatch({ brandColor2: "красный" }, ORG_PROFILE_FIELDS).ok, false);
 });

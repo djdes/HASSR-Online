@@ -1,0 +1,40 @@
+{
+  "email": "owner@local.test",
+  "password": "OwnerPass123!",
+  "ownerId": "cmwqp6nyt00017g7dc391zoc2",
+  "accountId": "cmwqp6nz200027g7di3sy6799",
+  "homeId": "cmwqp6nv600007g7d4rjy2irr",
+  "gymId": "cmwqp6o1b00067g7dm1vxu07r",
+  "bakeryId": "cmwqp6o1t00087g7dspvpqfb7",
+  "canteenId": "cmwqp6o1x000a7g7d2bf1e6al",
+  "rows": [
+    {
+      "id": "cmwqp6nv600007g7d4rjy2irr",
+      "name": "Доброе кафе",
+      "logoUrl": "/api/org-assets/cmwqp6nv600007g7d4rjy2irr/logo?v=1",
+      "brandColor": "#1f9d3a",
+      "website": null
+    },
+    {
+      "id": "cmwqp6o1b00067g7dm1vxu07r",
+      "name": "Одинцовская гимназия",
+      "logoUrl": "/api/org-assets/cmwqp6o1b00067g7dm1vxu07r/logo?v=1",
+      "brandColor": "#1f9d3a",
+      "website": null
+    },
+    {
+      "id": "cmwqp6o1t00087g7dspvpqfb7",
+      "name": "Пекарня Колос",
+      "logoUrl": null,
+      "brandColor": null,
+      "website": null
+    },
+    {
+      "id": "cmwqp6o1x000a7g7d2bf1e6al",
+      "name": "Столовая №5",
+      "logoUrl": "/api/org-assets/cmwqp6o1x000a7g7d2bf1e6al/logo?v=2",
+      "brandColor": "#1f9d3a",
+      "website": null
+    }
+  ]
+}

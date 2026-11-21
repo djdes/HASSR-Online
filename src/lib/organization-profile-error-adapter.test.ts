@@ -27,3 +27,8 @@ test("ошибки КПП и ОГРН переводятся в ключи фо�
     ["invalidKpp", "invalidOgrn"],
   );
 });
+
+test("ошибка сайта — с нейтральным примером, без «dobroe-kafe.ru»", () => {
+  assert.deepEqual(mapOrganizationProfileApiError("Укажите сайт вида example.ru"), ["invalidWebsite"]);
+  assert.equal(mapOrganizationProfileApiError("Укажите сайт вида dobroe-kafe.ru"), null);
+});

@@ -14,7 +14,7 @@ const PROFILE_ERRORS = {
   "Страна — двухбуквенный код ISO: RU": "invalidCountry",
   "Брендовый цвет в формате #RRGGBB": "invalidBrandColor",
   "Цвет в формате #RRGGBB": "invalidBrandColor",
-  "Укажите сайт вида dobroe-kafe.ru": "invalidWebsite",
+  "Укажите сайт вида example.ru": "invalidWebsite",
   "URL логотипа должен начинаться с http:// или https://": "invalidLogoUrl",
   "Час окончания смены должен быть от 0 до 23": "invalidShiftEnd",
   "КПП — 9 знаков, например 770101001": "invalidKpp",

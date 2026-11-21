@@ -73,7 +73,7 @@ export type PrintBrand = {
   logoUrl: string | null;
   /** Квадратный значок для центра QR (загруженный файл). */
   qrIconUrl: string | null;
-  /** Сайт справа в шапке, без протокола: «wesetup.ru», «dobroe-kafe.ru». */
+  /** Сайт справа в шапке, без протокола: «wesetup.ru», «example.ru». */
   site: string;
   colors: PrintColors;
   /** Режим «Ч/б»: все цвета чёрные. */

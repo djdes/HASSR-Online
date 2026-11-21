@@ -3,8 +3,6 @@ import { db } from "@/lib/db";
 import { normalizeSphere, type OrgSphere } from "@/lib/org-profile";
 import { defaultDisabledCodesFor } from "@/lib/sphere-journal-rules";
 import { defaultJournalAutomationJson } from "@/lib/journal-automation";
-import { copyOrgLogo } from "@/lib/org-logo";
-import { orgLogoAssetOwner } from "@/lib/org-logo-file";
 
 /**
  * Создание организации внутри аккаунта.
@@ -16,7 +14,11 @@ import { orgLogoAssetOwner } from "@/lib/org-logo-file";
  *
  * Шаблоны журналов глобальные, поэтому seed'ить новую организацию не
  * нужно — копируем только то, что живёт per-org: должности с их доступом
- * к журналам и оформление.
+ * к журналам, набор журналов и язык.
+ *
+ * Фирменный стиль (логотип, цвета, сайт, значок QR) не копируется: у каждой
+ * организации он свой (владелец, 2026-11-21: «во всех организациях в
+ * фирменном стиле отображается доброе кафе» — копия логотипа донора).
  */
 
 export type CreateOrganizationInput = {
@@ -30,7 +32,7 @@ export type CreateOrganizationInput = {
   id?: string;
   /** Общая демо: флаг, срок переустановки и набор журналов пресета. */
   demo?: { expiresAt: Date; autoJournalCodes: string[]; disabledJournalCodes: string[] };
-  /** Организация-донор: копируем должности и набор журналов. */
+  /** Организация-донор: копируем должности, набор журналов и язык (не фирменный стиль). */
   copyFromOrganizationId?: string | null;
   /** Отметка бесплатного периода дополнительной организации (`org-trial.ts`). */
   trialEndsAt?: Date | null;
@@ -50,8 +52,6 @@ export async function createOrganization(
           disabledJournalCodes: true,
           autoJournalCodes: true,
           locale: true,
-          brandColor: true,
-          logoUrl: true,
         },
       })
     : null;
@@ -78,11 +78,6 @@ export async function createOrganization(
         ? {
             autoJournalCodes: donor.autoJournalCodes as never,
             locale: donor.locale,
-            brandColor: donor.brandColor,
-            // Загруженный файл донора копируется ниже — своя копия и свой
-            // адрес (2026-11-01): общий адрес делал логотип общим на обе
-            // организации. Внешнюю ссылку берём как есть.
-            logoUrl: orgLogoAssetOwner(donor.logoUrl) ? null : donor.logoUrl,
           }
         : {}),
       ...(input.demo
@@ -112,11 +107,7 @@ export async function createOrganization(
     update: { role: "owner" },
   });
 
-  if (donor) {
-    await copyPositions(donor.id, organization.id);
-    const logoOwner = orgLogoAssetOwner(donor.logoUrl);
-    if (logoOwner) await copyOrgLogo(logoOwner, organization.id);
-  }
+  if (donor) await copyPositions(donor.id, organization.id);
 
   return { organizationId: organization.id };
 }

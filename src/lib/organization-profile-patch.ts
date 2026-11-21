@@ -172,7 +172,7 @@ export function parseOrganizationProfilePatch(
     if (raw === "") data.website = null;
     else {
       const site = normalizeWebsite(raw);
-      if (site === null) errors.push("Укажите сайт вида dobroe-kafe.ru");
+      if (site === null) errors.push("Укажите сайт вида example.ru");
       else data.website = site;
     }
   }

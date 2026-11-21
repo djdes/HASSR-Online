@@ -1,0 +1,31 @@
+### Состояние стенда до починки
+  «Доброе кафе»: logoUrl=/api/org-assets/cmwqp6nv600007g7d4rjy2irr/logo?v=1 file=v1 brandColor=#1f9d3a
+  «Одинцовская гимназия»: logoUrl=/api/org-assets/cmwqp6o1b00067g7dm1vxu07r/logo?v=1 file=v1 brandColor=#1f9d3a
+  «Пекарня Колос»: logoUrl=— file=— brandColor=—
+  «Столовая №5»: logoUrl=/api/org-assets/cmwqp6o1x000a7g7d2bf1e6al/logo?v=2 file=v2 brandColor=#1f9d3a
+### AC1: новая организация «как текущая» после исправления
+PASS donor has a logo and a colour (precondition) — {"logoUrl":"/api/org-assets/cmwqp6nv600007g7d4rjy2irr/logo?v=1","brandColor":"#1f9d3a","locale":"ru","disabledJournalCodes":["med_books"]}
+PASS AC1 new org «как текущая»: no logo url — null
+PASS AC1 new org: no logo file — null
+PASS AC1 new org: no brand colours, site, QR icon — {"logoUrl":null,"brandColor":null,"brandColor2":null,"brandColor3":null,"website":null,"qrIconUrl":null,"locale":"ru","disabledJournalCodes":["med_books"],"logo":null,"jobPositions":[{"name":"Повар (стенд)"}]}
+PASS AC1 new org: positions copied — [{"name":"Повар (стенд)"}]
+PASS AC1 new org: journal set and locale copied — {"disabled":["med_books"],"locale":"ru"}
+{"newOrgId":"cmwqpfm2b0001d97dp17j5xvb"}
+### AC3: npx tsx scripts/repair-inherited-org-brand.ts (показ)
+Организаций в аккаунтах с несколькими организациями: 5; с унаследованным фирменным стилем: 2 (только показ, --apply — исправить)
+  cmwqp6o1b00067g7dm1vxu07r «Одинцовская гимназия» (аккаунт cmwqp6nz200027g7di3sy6799): логотип — копия файла донора, цвет #1f9d3a
+  cmwqp6o1x000a7g7d2bf1e6al «Столовая №5» (аккаунт cmwqp6nz200027g7di3sy6799): цвет #1f9d3a
+### AC3: npx tsx scripts/repair-inherited-org-brand.ts --apply
+Организаций в аккаунтах с несколькими организациями: 5; с унаследованным фирменным стилем: 2
+  cmwqp6o1b00067g7dm1vxu07r «Одинцовская гимназия» (аккаунт cmwqp6nz200027g7di3sy6799): логотип — копия файла донора, цвет #1f9d3a
+    убрано
+  cmwqp6o1x000a7g7d2bf1e6al «Столовая №5» (аккаунт cmwqp6nz200027g7di3sy6799): цвет #1f9d3a
+    убрано
+### Повторный показ (должно быть 0)
+Организаций в аккаунтах с несколькими организациями: 5; с унаследованным фирменным стилем: 0 (только показ, --apply — исправить)
+### Состояние стенда после починки
+  «Доброе кафе»: logoUrl=/api/org-assets/cmwqp6nv600007g7d4rjy2irr/logo?v=1 file=v1 brandColor=#1f9d3a
+  «Одинцовская гимназия»: logoUrl=— file=— brandColor=—
+  «Пекарня Колос»: logoUrl=— file=— brandColor=—
+  «Столовая №5»: logoUrl=/api/org-assets/cmwqp6o1x000a7g7d2bf1e6al/logo?v=2 file=v2 brandColor=—
+  «Новая после исправления»: logoUrl=— file=— brandColor=—
