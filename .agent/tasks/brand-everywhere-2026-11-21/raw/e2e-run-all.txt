@@ -1,0 +1,23 @@
+================ summary ================
+PASS  part2-exchange-check (6s): 88 checks passed
+PASS  background-check (2s): 14 checks passed
+PASS  locked-check (2s): 6 checks passed
+PASS  reminder-check (2s): 7 checks passed
+PASS  skips-check (3s): 39 checks passed
+PASS  balance-check (2s): 47 checks passed
+PASS  root-org-trial-check (1s): 25 checks passed
+PASS  transfer-undo-check (7s): 65 checks passed
+PASS  cabinet-code-check (2s): 37 checks passed
+PASS  multi-company-check (5s): 49 checks passed
+PASS  part3-foreign-check (5s): 180 checks passed
+PASS  pool-check (3s): 49 checks passed
+PASS  versioning-check (4s): 41 checks passed
+PASS  new-lists-check (3s): 55 checks passed
+PASS  manager-check (3s): 151 checks passed
+PASS  pay-from-account-check (3s): 68 checks passed
+PASS  period-digest-check (5s): 39 checks passed
+PASS  cleanup-check (2s): 15 checks passed
+PASS  product-batch-check (1s): 10 checks passed
+PASS  new-features-check (3s): 15 checks passed
+scenarios: 20, passed: 20, failed: 0; checks: 1000 passed, 0 failed; time: 65s
+RESULT: all scenarios passed
