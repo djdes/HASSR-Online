@@ -3659,47 +3659,47 @@
       "greeting": "Hello!",
       "codeIntro": "Your registration verification code:",
       "codeValue": "{code}",
-      "expiryNotice": "This code is valid for 10 minutes. If you did not request an account, you can ignore this email."
+      "expiryNotice": "The code is valid for 10 minutes. Didn't request it? Just delete this email."
     },
     "invitation": {
       "subject": "You’re invited to {organization} — WeSetup",
       "greeting": "Hello, {name}!",
-      "body": "You’ve been invited to join {organization}. Select the button below to set your password and sign in.",
+      "body": "You’ve been invited to {organization}. Set a password to sign in.",
       "loginLabel": "Sign-in email: {email}",
       "setPasswordAction": "Set password",
-      "expiryNotice": "This link is valid for 7 days. The invitation expires after you set your password."
+      "expiryNotice": "The link is valid for 7 days."
     },
     "inviteWithPassword": {
       "subject": "You’re invited to {organization} — WeSetup",
       "title": "Invitation to join",
       "greeting": "Hello, {name}!",
-      "body": "You’ve been invited to {organization} to work with its digital HACCP logs.",
+      "body": "You’ve been invited to {organization} to keep HACCP logs.",
       "credentialsIntro": "Your sign-in details:",
       "emailLabel": "Email:",
       "passwordLabel": "Password:",
       "signInAction": "Sign in",
-      "passwordHint": "We recommend changing your password after your first sign-in."
+      "passwordHint": "Change the password after your first sign-in."
     },
     "accountPassword": {
       "subject": "Your WeSetup account is ready — your password is inside",
       "title": "Account created",
       "greeting": "Hello!",
-      "createdNotice": "Your account is ready and you’re signed in. Save these details to sign in on other devices:",
-      "blankCreatedNotice": "You downloaded a template with “Quick sign-up” checked, so your workspace is ready. Sign in with the button, no password needed, or use these details:",
+      "createdNotice": "Your workspace is ready and you’re signed in. Details for other devices:",
+      "blankCreatedNotice": "Your workspace was created with “Quick sign-up”. Sign in with the button or these details:",
       "loginLabel": "Email:",
       "passwordLabel": "Password:",
       "openCabinetAction": "Open workspace",
       "autoLoginAction": "Sign in to your workspace",
-      "autoLoginNotice": "The button signs you in without a password and works once within {days, number} {days, plural, one {day} other {days}}. After that, sign in with your email and password.",
+      "autoLoginNotice": "The button signs you in without a password — once, within {days, number} {days, plural, one {day} other {days}}.",
       "benefitsTitle": "What WeSetup gives you",
       "benefits": {
         "qr": {
           "title": "Logs on a phone",
-          "text": "staff scan the QR code on the equipment and the entry goes into the log in the SanPiN and HACCP format."
+          "text": "scan the QR code on the equipment — the entry lands in the SanPiN and HACCP log."
         },
         "reminders": {
           "title": "Reminders",
-          "text": "if an entry is missed or a temperature is out of range, the person responsible gets a Telegram message and an email."
+          "text": "a missed entry or an out-of-range temperature — a Telegram message and an email."
         },
         "autofill": {
           "title": "Data comes in by itself",
@@ -3707,11 +3707,11 @@
         },
         "inspection": {
           "title": "Inspection-ready PDFs",
-          "text": "all records for the requested period for the inspector in one click."
+          "text": "all records for any period for the inspector — in one click."
         }
       },
       "trial": "{trialDays, number} {trialDays, plural, one {day} other {days}} — all logs without limits and no card required.",
-      "nextSteps": "You can change your password in your profile settings. Add your organization details in the workspace so they appear on log headers and inspection PDFs."
+      "nextSteps": "Add your organization details — they go into log headers and PDFs."
     },
     "welcome": {
       "subject": "Thank you for choosing WeSetup",
@@ -3719,10 +3719,10 @@
       "greeting": "Hello!",
       "greetingNamed": "Hello, {name}!",
       "thanks": "Thank you for choosing WeSetup — electronic software for production control.",
-      "value": "WeSetup takes the routine off your hands: HACCP and SanPiN journals are filled in from a phone via QR, reminders arrive on their own, and you control every process journal by journal — what was done, by whom and when.",
+      "value": "WeSetup takes the routine off your hands: logs are filled in by phone via QR, and you control every process journal by journal.",
       "posterTitle": "A QR poster — and the journal keeps itself",
-      "posterBody": "Hang it by the fridge or in the kitchen: an employee scans the code and makes an entry in half a minute. Posters are printed from your account.",
-      "support": "We are here to help: write to support or call us in Moscow at {phone} — we will help, explain and teach.",
+      "posterBody": "Hang it by the fridge — staff scan the code and make an entry in half a minute.",
+      "support": "We are here: call {phone} — we will help, explain and teach.",
       "channels": "Support:",
       "openCabinet": "Open your account",
       "tryFree": "Try it free",
@@ -3742,7 +3742,7 @@
       "subject": "Your WeSetup sign-in password has changed",
       "title": "Password updated",
       "greeting": "Hello!",
-      "body": "A new password was set in your organization profile. The password from your first email no longer works. Save these sign-in details:",
+      "body": "A new password was set for your organization — the old one no longer works. Your sign-in details:",
       "loginLabel": "Email:",
       "dashboardAction": "Open your workspace",
       "changeNotice": "You can change your password in your profile settings."
@@ -3751,20 +3751,20 @@
       "subject": "Reset your WeSetup password",
       "title": "Set a new password",
       "greeting": "Hello!",
-      "body": "You requested password recovery for the account {email}. Select the button below to set a new password.",
+      "body": "Access recovery for {email}. Press the button to set a new password.",
       "action": "Set a new password",
-      "expiryNotice": "This link is valid for 7 days. If you did not request a reset, ignore this email and your password will stay the same."
+      "expiryNotice": "The link is valid for 7 days. Didn't request it? Do nothing — your password stays the same."
     },
     "newDevice": {
       "subject": "New sign-in to WeSetup",
       "title": "New account sign-in",
       "greeting": "Hello!",
       "greetingNamed": "Hello, {name}!",
-      "body": "Your account was just accessed from a device we have not seen before.",
+      "body": "Someone signed in to your account from a new device.",
       "deviceLabel": "Device:",
       "timeLabel": "Time (Moscow):",
       "methodLabel": "Sign-in method:",
-      "securityNotice": "If this was you, no action is needed. If you do not recognize this sign-in, open security settings, end all sessions, and change your password.",
+      "securityNotice": "If it was you, no action is needed. If not, end all sessions and change your password.",
       "securityAction": "Open security settings",
       "support": "Questions? Contact admin@wesetup.ru.",
       "methodPassword": "email and password",
@@ -3873,13 +3873,13 @@
       "subject": "Ticket {ticket} received — WeSetup",
       "layoutTitle": "Ticket received",
       "greeting": "Hello!",
-      "intro": "We’ve received your report and passed it to the team. You’ll get a reply by email and as a notification in your workspace.",
+      "intro": "We’ve received your request. The reply will come to this email and your workspace.",
       "ticketLabel": "Ticket number",
       "messageLabel": "Your report",
       "pageLabel": "Page",
       "attachmentsLabel": "Attachments: {count, number}",
       "openWorkspace": "Open WeSetup",
-      "footer": "To add details, write to support chat in your workspace or to the @wesetupbot Telegram bot."
+      "footer": "Add details in the workspace support chat or the @wesetupbot bot."
     },
     "feedbackReply": {
       "subject": "Reply to your message — WeSetup",
@@ -3888,7 +3888,7 @@
       "introWithName": "{respondentName} replied to your message:",
       "originalMessageLabel": "Your message",
       "openWorkspace": "Open WeSetup",
-      "footer": "You can reply directly to this email or message the @wesetupbot bot on Telegram.",
+      "footer": "Reply to this email or message the @wesetupbot bot.",
       "layoutTitle": "Support reply"
     },
     "adminTest": {
@@ -3903,25 +3903,25 @@
     "blankDownload": {
       "subject": "{journalTitle} journal template — WeSetup",
       "greeting": "Hello!",
-      "downloadNotice": "You downloaded the “{journalTitle}” journal template from WeSetup. The copy is available from the link below for {expiresDays, number} days.",
+      "downloadNotice": "A copy of the “{journalTitle}” template — use the button below; the link works for {expiresDays, number} days.",
       "fallbackLinkNotice": "If the button does not open, copy this address:",
-      "journalPageIntro": "See the journal page for what to record and the requirements it follows.",
+      "journalPageIntro": "What to record and why — on the journal page.",
       "paperlessTitle": "You can use this journal without printing it",
-      "paperlessBody": "In WeSetup, staff fill it in on a phone using the same QR code shown on the template. No paper, and reminders help when a shift forgets to check in. {freeTier}.",
+      "paperlessBody": "In WeSetup it is kept by phone via the QR code on the template — no paper, with reminders. {freeTier}.",
       "startUsingAction": "Use the journal in WeSetup",
-      "disclaimer": "This email was sent because this address was entered when downloading a template from wesetup.ru. If you did not download it, simply ignore this message.",
+      "disclaimer": "This address was entered when downloading a template on wesetup.ru. If it wasn’t you, just delete this email.",
       "freeTier": "{count, number} {count, plural, one {day} other {days}} free, no card required"
     },
     "blankFollowup": {
       "subject": "How to keep the “{journalTitle}” log: tips",
       "greeting": "Hello!",
-      "intro": "You downloaded the “{journalTitle}” log template on WeSetup. To make sure the records pass an inspection, keep in mind:",
-      "pageIntro": "A filled-in sample, who must keep the log and answers to common questions are on the log page:",
+      "intro": "You downloaded the “{journalTitle}” template. To pass an inspection:",
+      "pageIntro": "A filled-in sample and answers to common questions are on the log page:",
       "paperlessTitle": "Keep the log on your phone",
-      "paperlessBody": "Staff make an entry by QR code in seconds, the time is recorded automatically and WeSetup reminds about gaps. {freeTier}.",
+      "paperlessBody": "An entry by QR code takes seconds, the time is set automatically, and we remind about gaps. {freeTier}.",
       "action": "Try for free",
-      "help": "Need help with your logs? Reply to this email or call {phone} — we will advise and set things up.",
-      "disclaimer": "This is the only email about your download: the address was entered when downloading the template on wesetup.ru. There will be no more emails about it."
+      "help": "Need help? Reply to this email or call {phone}.",
+      "disclaimer": "This is the only email about your download."
     }
   },
   "journalWidgets": {

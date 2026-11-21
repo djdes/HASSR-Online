@@ -3659,47 +3659,47 @@
       "greeting": "Assalomu alaykum!",
       "codeIntro": "Ro‘yxatdan o‘tishni tasdiqlash kodingiz:",
       "codeValue": "{code}",
-      "expiryNotice": "Kod 10 daqiqa amal qiladi. Agar ro‘yxatdan o‘tishni so‘ramagan bo‘lsangiz, bu xatni e’tiborsiz qoldiring."
+      "expiryNotice": "Kod 10 daqiqa amal qiladi. So‘ramagan bo‘lsangiz — xatni o‘chirib tashlang."
     },
     "invitation": {
       "subject": "Sizni {organization} tashkilotiga taklif qilishdi — WeSetup",
       "greeting": "Assalomu alaykum, {name}!",
-      "body": "Siz {organization} tashkilotiga taklif qilindingiz. Parol o‘rnatish va tizimga kirish uchun quyidagi tugmani bosing.",
+      "body": "Siz {organization} tashkilotiga taklif qilindingiz. Parol o‘rnating — va kiring.",
       "loginLabel": "Kirish uchun elektron pochta: {email}",
       "setPasswordAction": "Parol o‘rnatish",
-      "expiryNotice": "Havola 7 kun amal qiladi. Parol o‘rnatilgach, taklifnoma kuchini yo‘qotadi."
+      "expiryNotice": "Havola 7 kun amal qiladi."
     },
     "inviteWithPassword": {
       "subject": "Sizni {organization} tashkilotiga taklif qilishdi — WeSetup",
       "title": "Tizimga taklif",
       "greeting": "Assalomu alaykum, {name}!",
-      "body": "Siz {organization} tashkilotining HACCP elektron jurnallarini yuritish uchun taklif qilindingiz.",
+      "body": "Siz {organization} tashkilotiga HACCP jurnallarini yuritish uchun taklif qilindingiz.",
       "credentialsIntro": "Tizimga kirish ma’lumotlari:",
       "emailLabel": "Elektron pochta:",
       "passwordLabel": "Parol:",
       "signInAction": "Tizimga kirish",
-      "passwordHint": "Birinchi marta kirganingizdan so‘ng parolni almashtirishni tavsiya qilamiz."
+      "passwordHint": "Birinchi kirishdan keyin parolni almashtiring."
     },
     "accountPassword": {
       "subject": "WeSetup hisobingiz tayyor — parolingiz xat ichida",
       "title": "Hisob yaratildi",
       "greeting": "Assalomu alaykum!",
-      "createdNotice": "Hisobingiz yaratildi va tizimga kirdingiz. Boshqa qurilmalardan kirish uchun ma’lumotlarni saqlab qo‘ying:",
-      "blankCreatedNotice": "Siz shablonni “Tezkor ro‘yxatdan o‘tish” belgisi bilan yuklab oldingiz — kabinet allaqachon yaratildi. Tugma orqali parolsiz yoki quyidagi ma’lumotlar bilan kiring:",
+      "createdNotice": "Kabinet yaratildi, siz allaqachon kirdingiz. Boshqa qurilmalar uchun ma’lumotlar:",
+      "blankCreatedNotice": "Kabinet “Tezkor ro‘yxatdan o‘tish” belgisi bilan yaratildi. Tugma orqali yoki shu ma’lumotlar bilan kiring:",
       "loginLabel": "Kirish nomi:",
       "passwordLabel": "Parol:",
       "openCabinetAction": "Kabinetni ochish",
       "autoLoginAction": "Kabinetga kirish",
-      "autoLoginNotice": "Tugma parolsiz kiritadi va {days, number} {days, plural, other {kun}} ichida bir marta ishlaydi. Keyin — login va parol bilan kirish.",
+      "autoLoginNotice": "Tugma parolsiz kiritadi — bir marta, {days, number} {days, plural, other {kun}} ichida.",
       "benefitsTitle": "WeSetup nima beradi",
       "benefits": {
         "qr": {
           "title": "Jurnallar telefonda",
-          "text": "xodim uskunadagi QR-kodni skanerlaydi va yozuv SanPiN va HACCP shaklidagi jurnalga tushadi."
+          "text": "uskunadagi QR-kodni skanerlang — yozuv SanPiN va HACCP jurnaliga tushadi."
         },
         "reminders": {
           "title": "Eslatmalar",
-          "text": "yozuv qoldirilsa yoki harorat me’yordan chiqsa, mas’ul xodimga Telegram va elektron pochta orqali xabar boradi."
+          "text": "yozuv qoldirilsa yoki harorat me’yordan chiqsa — Telegram va pochtaga xabar."
         },
         "autofill": {
           "title": "Ma’lumotlar o‘zi keladi",
@@ -3707,11 +3707,11 @@
         },
         "inspection": {
           "title": "Tekshiruv uchun PDF",
-          "text": "kerakli davrdagi barcha yozuvlar inspektorga bir bosishda."
+          "text": "inspektor uchun istalgan davrdagi barcha yozuvlar — bir bosishda."
         }
       },
       "trial": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar cheklovsiz va kartasiz.",
-      "nextSteps": "Parolni profil sozlamalarida almashtirishingiz mumkin. Jurnal sarlavhalari va tekshiruv PDF hujjatlarida ko‘rinishi uchun kabinetda tashkilot ma’lumotlarini to‘ldiring."
+      "nextSteps": "Tashkilot ma’lumotlarini to‘ldiring — ular jurnal sarlavhalari va PDFga tushadi."
     },
     "welcome": {
       "subject": "WeSetup’ni tanlaganingiz uchun rahmat",
@@ -3719,10 +3719,10 @@
       "greeting": "Assalomu alaykum!",
       "greetingNamed": "Assalomu alaykum, {name}!",
       "thanks": "Ishlab chiqarish nazoratining elektron dasturi — WeSetup’ni tanlaganingiz uchun rahmat.",
-      "value": "WeSetup sizni bir xil ishlardan xalos qiladi: HACCP va SanPiN jurnallari telefondan QR orqali to‘ldiriladi, eslatmalar o‘zi keladi, siz esa har bir jurnal bo‘yicha jarayonlarni nazorat qilasiz — nima, kim va qachon qilingan.",
+      "value": "WeSetup bir xil ishlardan xalos qiladi: jurnallar telefondan QR orqali, siz esa har bir jurnal bo‘yicha jarayonlarni nazorat qilasiz.",
       "posterTitle": "QR plakat — jurnal o‘zi yuritiladi",
-      "posterBody": "Uni muzlatkich yoniga yoki oshxonaga osib qo‘ying: xodim kodni skanerlaydi va yarim daqiqada yozuv qiladi. Plakatlar kabinetdan chop etiladi.",
-      "support": "Biz yoningizdamiz: qo‘llab-quvvatlashga yozing yoki Moskvadagi {phone} raqamiga qo‘ng‘iroq qiling — yordam beramiz, tushuntiramiz va o‘rgatamiz.",
+      "posterBody": "Muzlatkich yoniga osib qo‘ying — xodim kodni skanerlab, yarim daqiqada yozuv qiladi.",
+      "support": "Biz yoningizdamiz: {phone} raqamiga qo‘ng‘iroq qiling — yordam beramiz, tushuntiramiz va o‘rgatamiz.",
       "channels": "Qo‘llab-quvvatlash:",
       "openCabinet": "Kabinetni ochish",
       "tryFree": "Bepul sinab ko‘rish",
@@ -3742,7 +3742,7 @@
       "subject": "WeSetup tizimiga kirish paroli o‘zgartirildi",
       "title": "Parol yangilandi",
       "greeting": "Assalomu alaykum!",
-      "body": "Tashkilot anketasida yangi parol o‘rnatildi. Birinchi xatdagi parol endi ishlamaydi. Kirish ma’lumotlarini saqlab qo‘ying:",
+      "body": "Tashkilot uchun yangi parol o‘rnatildi — eskisi endi ishlamaydi. Kirish ma’lumotlari:",
       "loginLabel": "Kirish nomi:",
       "dashboardAction": "Kabinetni ochish",
       "changeNotice": "Parolni profil sozlamalarida o‘zgartirishingiz mumkin."
@@ -3751,20 +3751,20 @@
       "subject": "WeSetup hisobiga kirishni tiklash",
       "title": "Yangi parol o‘rnating",
       "greeting": "Assalomu alaykum!",
-      "body": "Siz {email} hisobi uchun kirishni tiklashni so‘radingiz. Yangi parol o‘rnatish uchun quyidagi tugmani bosing.",
+      "body": "{email} hisobi uchun kirishni tiklash. Yangi parol o‘rnatish uchun tugmani bosing.",
       "action": "Yangi parol o‘rnatish",
-      "expiryNotice": "Havola 7 kun amal qiladi. Agar tiklashni so‘ramagan bo‘lsangiz, bu xatni e’tiborsiz qoldiring — parolingiz o‘zgarishsiz qoladi."
+      "expiryNotice": "Havola 7 kun amal qiladi. So‘ramagan bo‘lsangiz — hech narsa qilmang, parol o‘zgarmaydi."
     },
     "newDevice": {
       "subject": "WeSetup hisobiga yangi qurilmadan kirildi",
       "title": "Hisobga yangi kirish",
       "greeting": "Assalomu alaykum!",
       "greetingNamed": "Assalomu alaykum, {name}!",
-      "body": "Hisobingizga biz avval ko‘rmagan qurilmadan kirildi.",
+      "body": "Hisobingizga yangi qurilmadan kirildi.",
       "deviceLabel": "Qurilma:",
       "timeLabel": "Moskva vaqti:",
       "methodLabel": "Kirish usuli:",
-      "securityNotice": "Agar bu siz bo‘lsangiz, hech narsa qilishingiz shart emas. Agar kirish sizniki bo‘lmasa, xavfsizlik sozlamalarini oching, barcha seanslarni yakunlang va parolni o‘zgartiring.",
+      "securityNotice": "Bu siz bo‘lsangiz — hech narsa qilish shart emas. Aks holda barcha seanslarni yakunlang va parolni almashtiring.",
       "securityAction": "Xavfsizlik sozlamalarini ochish",
       "support": "Savollaringiz bormi? admin@wesetup.ru manziliga yozing.",
       "methodPassword": "elektron pochta va parol",
@@ -3873,13 +3873,13 @@
       "subject": "{ticket}-murojaat qabul qilindi — WeSetup",
       "layoutTitle": "Murojaat qabul qilindi",
       "greeting": "Assalomu alaykum!",
-      "intro": "Murojaatingizni oldik va jamoaga topshirdik. Javob shu pochtaga va kabinetdagi bildirishnoma orqali keladi.",
+      "intro": "Murojaatingiz qabul qilindi. Javob shu pochtaga va kabinetga keladi.",
       "ticketLabel": "Murojaat raqami",
       "messageLabel": "Murojaat matni",
       "pageLabel": "Sahifa",
       "attachmentsLabel": "Ilovalar: {count, number}",
       "openWorkspace": "WeSetup’ni ochish",
-      "footer": "Murojaatni kabinetdagi qo‘llab-quvvatlash chatida yoki @wesetupbot Telegram-botida to‘ldirishingiz mumkin."
+      "footer": "Murojaatni kabinetdagi qo‘llab-quvvatlash chatida yoki @wesetupbot botida to‘ldiring."
     },
     "feedbackReply": {
       "subject": "Murojaatingizga javob — WeSetup",
@@ -3888,7 +3888,7 @@
       "introWithName": "Murojaatingizga {respondentName} javob berdi:",
       "originalMessageLabel": "Murojaatingiz",
       "openWorkspace": "WeSetup’ni ochish",
-      "footer": "Ushbu xatga to‘g‘ridan-to‘g‘ri javob berishingiz yoki Telegram’da @wesetupbot botiga yozishingiz mumkin.",
+      "footer": "Shu xatga javob bering yoki @wesetupbot botiga yozing.",
       "layoutTitle": "Yordam xizmati javobi"
     },
     "adminTest": {
@@ -3903,25 +3903,25 @@
     "blankDownload": {
       "subject": "{journalTitle} jurnali shabloni — WeSetup",
       "greeting": "Assalomu alaykum!",
-      "downloadNotice": "Siz WeSetup saytidan “{journalTitle}” jurnali shablonini yuklab oldingiz. Nusxa quyidagi havola orqali {expiresDays, number} kun davomida mavjud.",
+      "downloadNotice": "“{journalTitle}” shablonining nusxasi — quyidagi tugmada, havola {expiresDays, number} kun amal qiladi.",
       "fallbackLinkNotice": "Tugma ochilmasa, ushbu manzilni nusxalang:",
-      "journalPageIntro": "Nimalarni qayd etish va jurnal qaysi talablarga asoslanishini jurnal sahifasida ko‘ring.",
+      "journalPageIntro": "Nimani qayd etish va qaysi asosda — jurnal sahifasida.",
       "paperlessTitle": "Bu jurnalni chop etmasdan ishlatish mumkin",
-      "paperlessBody": "WeSetup’da xodimlar shablondagi ayni QR-kod orqali telefonda to‘ldiradi. Qog‘oz kerak emas; smena belgilashni unutsa, eslatmalar yordam beradi. {freeTier}.",
+      "paperlessBody": "WeSetup’da u shablondagi QR-kod orqali telefondan yuritiladi — qog‘ozsiz va eslatmalar bilan. {freeTier}.",
       "startUsingAction": "Jurnalni WeSetup’da yuritish",
-      "disclaimer": "Bu xat shablonni wesetup.ru saytidan yuklab olayotganda ushbu manzil ko‘rsatilgani uchun yuborildi. Agar uni siz yuklab olmagan bo‘lsangiz, xatga javob bermang.",
+      "disclaimer": "Bu manzil wesetup.ru saytida shablon yuklab olinganda ko‘rsatilgan. Bu siz bo‘lmasangiz — xatni o‘chirib tashlang.",
       "freeTier": "{count, number} {count, plural, other {kun}} bepul, kartasiz"
     },
     "blankFollowup": {
       "subject": "«{journalTitle}» jurnalini qanday yuritish: maslahatlar",
       "greeting": "Assalomu alaykum!",
-      "intro": "Siz WeSetup saytida «{journalTitle}» jurnali shablonini yuklab oldingiz. Yozuvlar tekshiruvdan o‘tishi uchun quyidagilarga e’tibor bering:",
-      "pageIntro": "To‘ldirish namunasi, kim yuritishi shartligi va ko‘p beriladigan savollarga javoblar jurnal sahifasida:",
+      "intro": "Siz «{journalTitle}» shablonini yuklab oldingiz. Yozuvlar tekshiruvdan o‘tishi uchun:",
+      "pageIntro": "To‘ldirish namunasi va ko‘p beriladigan savollarga javoblar — jurnal sahifasida:",
       "paperlessTitle": "Jurnalni telefonda yuritish",
-      "paperlessBody": "Xodim QR-kod orqali bir necha soniyada yozuv qiladi, vaqt avtomatik qo‘yiladi, WeSetup esa o‘tkazib yuborilganlarni eslatadi. {freeTier}.",
+      "paperlessBody": "QR-kod orqali yozuv — soniyalarda, vaqt o‘zi qo‘yiladi, o‘tkazib yuborilganlarini eslatamiz. {freeTier}.",
       "action": "Bepul sinab ko‘rish",
-      "help": "Jurnallar bo‘yicha yordam kerakmi? Ushbu xatga javob bering yoki {phone} raqamiga qo‘ng‘iroq qiling — maslahat beramiz va sozlab beramiz.",
-      "disclaimer": "Bu yuklab olishingiz bo‘yicha yagona xat: manzil wesetup.ru saytida shablonni yuklab olishda ko‘rsatilgan. U bo‘yicha boshqa xat bo‘lmaydi."
+      "help": "Yordam kerakmi? Xatga javob bering yoki {phone} raqamiga qo‘ng‘iroq qiling.",
+      "disclaimer": "Bu yuklab olishingiz bo‘yicha yagona xat."
     }
   },
   "journalWidgets": {

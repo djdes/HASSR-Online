@@ -54,7 +54,9 @@ test("токен: почта и журнал внутри, прочитать п
   const issuedAt = Date.parse("2026-09-25T12:00:00Z");
   const token = sealBlankQrToken({ target: HYGIENE, email: "zav@example.com", issuedAt });
   assert.match(token, /^[A-Z2-7]+$/);
-  assert.ok(!token.toLowerCase().includes("zav"), "почта не видна открытым текстом");
+  // Токен — base32 (A–Z, 2–7) от шифротекста со случайным IV: три буквы «zav» в нём иногда выпадают
+  // случайно (≈ 0,2 % запусков, падало 21.11.2026). Почта открытым текстом дала бы и «example» — его и ищем.
+  assert.ok(!token.toLowerCase().includes("example"), "почта не видна открытым текстом");
   const opened = openBlankQrToken(token);
   assert.deepEqual(opened, { target: HYGIENE, email: "zav@example.com", issuedAt: new Date(issuedAt) });
   assert.deepEqual(openBlankQrToken(token.toLowerCase()), opened);

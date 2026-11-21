@@ -30,7 +30,7 @@ test("followup email: tips, page link, register link, one-off disclaimer", async
   assert.doesNotMatch(html, /Совет 4/, "не больше трёх подсказок");
   assert.match(html, /journals-info\/cleaning/);
   assert.match(html, /register\?email=a%40example\.com/);
-  assert.match(html, /Больше писем по нему не будет/);
+  assert.match(html, /единственное письмо по вашему скачиванию/, "одно письмо — без продолжения");
   assert.doesNotMatch(html, /бланк/i);
 });
 
