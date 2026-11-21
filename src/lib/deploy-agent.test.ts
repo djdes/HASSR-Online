@@ -168,9 +168,11 @@ describe("runDeploy — на заглушках, без сети и pm2", () => 
     fs.mkdirSync(appDir, { recursive: true });
     const calls: string[] = [];
     let lockDuringSteps = false;
+    let curlArgs: string[] = [];
     const exec = async (command: string, args: string[], opts: { cwd?: string; env?: NodeJS.ProcessEnv } = {}) => {
       if (command === "curl") {
         calls.push("curl");
+        curlArgs = args;
         return { code: 0 };
       }
       if (command === "tar") {
@@ -195,7 +197,7 @@ describe("runDeploy — на заглушках, без сети и pm2", () => 
     };
     const result = await runDeploy({ sha: MASTER, appDir, stateDir, lockDir, exec, now: NOW });
     const trace = fs.existsSync(path.join(appDir, "trace")) ? fs.readFileSync(path.join(appDir, "trace"), "utf8").trim().split("\n") : [];
-    return { result, calls, trace, appDir, lockDir, stateDir, lockDuringSteps };
+    return { result, calls, trace, appDir, lockDir, stateDir, lockDuringSteps, curlArgs };
   }
 
   const step = (n: number, extra = "") => `set -eo pipefail\ncd \${{ env.APP_DIR }}\nexport GITHUB_SHA="\${{ github.sha }}"\necho "step${n} $GITHUB_SHA $WESETUP_DEPLOY_LOCKED" >> trace${extra}`;
@@ -209,6 +211,11 @@ describe("runDeploy — на заглушках, без сети и pm2", () => 
     assert.ok(run.lockDuringSteps, "замок держится во время шагов");
     assert.equal(fs.existsSync(run.lockDir), false, "замок снят");
     assert.equal(fs.existsSync(path.join(run.stateDir, "work")), false, "временный каталог убран");
+    // Медленное скачивание (~0,8 МБ/с, 21.11.2026) успевает: предел — не 330 с шага GitHub.
+    const maxTime = Number(run.curlArgs[run.curlArgs.indexOf("--max-time") + 1]);
+    assert.ok(maxTime >= 900, `--max-time ${maxTime}`);
+    assert.ok(run.curlArgs.includes("--speed-limit"), "вставшее скачивание обрывается");
+    assert.ok(run.curlArgs.at(-1)?.endsWith(`/tar.gz/${MASTER}`));
   });
 
   it("упал шаг 2 — шаг 3 не запускается, замок снят", async () => {

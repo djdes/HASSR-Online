@@ -259,10 +259,14 @@ export async function runDeploy({ sha, appDir, stateDir, lockDir, exec = runComm
     rmSync(work, { recursive: true, force: true });
     mkdirSync(src, { recursive: true });
     const archive = path.join(work, "code.tar.gz");
+    // До 20 минут, а не 330 с, как в шаге GitHub: там предел ставит таймаут
+    // SSH-сессии, а у агента его нет. 21.11.2026 сервер качал коммит со
+    // скоростью ~0,8 МБ/с и упёрся в 330 с. Совсем вставшее скачивание
+    // (< 100 КБ/с дольше 45 с) по-прежнему обрывается.
     const download = await exec(
       "curl",
-      ["-fsS", "--retry", "1", "--retry-delay", "5", "--connect-timeout", "20", "--speed-limit", "102400", "--speed-time", "45", "--max-time", "330", "-o", archive, `https://codeload.github.com/${REPO}/tar.gz/${sha}`],
-      { cwd: work, env, logFile },
+      ["-fsS", "--retry", "1", "--retry-delay", "5", "--connect-timeout", "20", "--speed-limit", "102400", "--speed-time", "45", "--max-time", "1200", "-o", archive, `https://codeload.github.com/${REPO}/tar.gz/${sha}`],
+      { cwd: work, env, logFile, timeoutMs: 45 * 60_000 },
     );
     if (download.code !== 0) return { ok: false, step: "download" };
     if ((await exec("tar", ["xzf", archive, "-C", src, "--strip-components=1"], { cwd: work, env, logFile })).code !== 0) return { ok: false, step: "download" };
