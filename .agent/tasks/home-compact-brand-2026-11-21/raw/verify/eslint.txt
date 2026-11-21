@@ -1,0 +1,2 @@
+### npx eslint <18 changed src files>
+eslint exit=0

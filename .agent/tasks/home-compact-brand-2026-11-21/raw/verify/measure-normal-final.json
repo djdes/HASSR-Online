@@ -4,9 +4,9 @@
     "status": 200
   },
   {
-    "name": "home-phone-large",
-    "innerHeight": 844,
-    "scrollHeight": 844,
+    "name": "home-phone-normal",
+    "innerHeight": 664,
+    "scrollHeight": 664,
     "overflowX": 0,
     "hero": {
       "top": 72,
@@ -16,37 +16,37 @@
     },
     "setup": {
       "top": 192,
-      "bottom": 268,
-      "height": 77,
+      "bottom": 262,
+      "height": 71,
       "width": 358
     },
     "favorites": [
       {
-        "top": 278,
-        "height": 84,
+        "top": 272,
+        "height": 94,
         "width": 113
       },
       {
-        "top": 278,
-        "height": 84,
+        "top": 272,
+        "height": 94,
         "width": 113
       },
       {
-        "top": 278,
-        "height": 84,
+        "top": 272,
+        "height": 94,
         "width": 113
       }
     ],
     "contacts": {
-      "top": 382,
-      "bottom": 440,
+      "top": 386,
+      "bottom": 444,
       "height": 58,
       "width": 358
     },
     "footer": {
-      "top": 642,
-      "bottom": 844,
-      "height": 202,
+      "top": 471,
+      "bottom": 664,
+      "height": 193,
       "width": 390
     }
   },
@@ -73,17 +73,17 @@
   {
     "name": {
       "text": "ООО «Доброе кафе»",
-      "fontSize": "18.4px",
-      "top": 316
+      "fontSize": "16px",
+      "top": 201
     },
     "titleText": "Меню",
     "titleVisible": false,
     "logo": {
-      "top": 225,
+      "top": 109,
       "height": 80,
       "width": 175
     },
-    "dialogTop": 196
+    "dialogTop": 80
   },
   {
     "name": "menu-logo-click",
@@ -103,43 +103,43 @@
     "bodyHasDobroe": false
   },
   {
-    "name": "home-desktop-large",
+    "name": "home-desktop-normal",
     "innerHeight": 900,
     "scrollHeight": 900,
     "overflowX": 0,
     "hero": {
       "top": 97,
-      "bottom": 479,
-      "height": 382,
+      "bottom": 497,
+      "height": 400,
       "width": 1120
     },
     "setup": {
-      "top": 499,
+      "top": 517,
       "bottom": 803,
-      "height": 304,
+      "height": 286,
       "width": 191
     },
     "favorites": [
       {
-        "top": 499,
-        "height": 304,
+        "top": 517,
+        "height": 286,
         "width": 191
       },
       {
-        "top": 499,
-        "height": 304,
+        "top": 517,
+        "height": 286,
         "width": 191
       },
       {
-        "top": 499,
-        "height": 304,
+        "top": 517,
+        "height": 286,
         "width": 191
       }
     ],
     "contacts": {
-      "top": 499,
+      "top": 517,
       "bottom": 803,
-      "height": 304,
+      "height": 286,
       "width": 300
     },
     "footer": {
