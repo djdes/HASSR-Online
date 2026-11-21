@@ -51,6 +51,7 @@ import { PublicThemeBootstrap, PublicThemeScope } from "@/components/theme/site-
 import { QrIndustryPlayer, type QrIndustryMedia } from "@/components/landing/qr-player/qr-industry-player";
 import { QR_INDUSTRIES, type QrIndustry } from "@/components/landing/qr-player/industries";
 import { InterfaceShowcase, type ShowcaseIcon } from "@/components/landing/interface-showcase";
+import { SHOWCASE_SCREENS_DIR } from "@/components/landing/showcase-screens";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { buildQrMatrix } from "@/components/landing/qr-player/qr-matrix";
 import { narratedVideoFor, presentationPdfFor } from "@/components/landing/qr-player/narrated-video";
@@ -149,8 +150,8 @@ const CAPABILITIES = [
 
 /**
  * Экраны кабинета для слайдера «Кабинет руководителя». Снимки — настоящие
- * страницы на демо-данных (public/landing/screens: desktop 1440×900,
- * mobile 390×800 при плотности 2×). Порядок — от «что видно каждый день»
+ * страницы на демо-данных (`SHOWCASE_SCREENS_DIR`: desktop 1440×900,
+ * mobile 390×800 при плотности 2×; «Сотрудники» — нейтральная организация). Порядок — от «что видно каждый день»
  * к «что нужно раз в квартал».
  */
 const SHOWCASE_SLIDES: ReadonlyArray<{ id: "dashboard" | "monitoring" | "journals" | "grid" | "qr" | "inspection" | "staff"; icon: ShowcaseIcon; address: string }> = [
@@ -816,8 +817,8 @@ export default async function LandingPage() {
             tab: copy(`landing.showcase.slides.${slide.id}.tab`),
             title: copy(`landing.showcase.slides.${slide.id}.title`),
             text: copy(`landing.showcase.slides.${slide.id}.text`),
-            desktop: { src: `/landing/screens/${slide.id === "staff" ? "staff-neutral" : slide.id}-desktop.webp`, width: 1440, height: 900 },
-            mobile: { src: `/landing/screens/${slide.id === "staff" ? "staff-neutral" : slide.id}-mobile.webp`, width: 390, height: 800 },
+            desktop: { src: `${SHOWCASE_SCREENS_DIR}/${slide.id}-desktop.webp`, width: 1440, height: 900 },
+            mobile: { src: `${SHOWCASE_SCREENS_DIR}/${slide.id}-mobile.webp`, width: 390, height: 800 },
           }))}
           labels={{
             region: copy("landing.showcase.region"),

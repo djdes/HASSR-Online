@@ -12,6 +12,7 @@ import { COMPANY_EMAIL, COMPANY_PHONE, COMPANY_TELEGRAM } from "@/lib/company-co
 import { jsonLdSafeString } from "@/lib/json-ld";
 import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
+import { SHOWCASE_SCREENS_DIR } from "@/components/landing/showcase-screens";
 
 const SITE = "https://wesetup.ru";
 const PATH = "/about";
@@ -116,7 +117,7 @@ export default async function AboutPage() {
               </Link>
             </div>
             <Image
-              src="/landing/screens/journals-desktop.webp"
+              src={`${SHOWCASE_SCREENS_DIR}/journals-desktop.webp`}
               alt={t("hero.imageAlt")}
               width={1440}
               height={900}

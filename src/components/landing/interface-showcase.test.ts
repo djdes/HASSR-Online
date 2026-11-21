@@ -3,6 +3,8 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
+import { SHOWCASE_SCREENS_DIR } from "./showcase-screens";
+
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
 
@@ -20,9 +22,13 @@ test("слайдер кабинета стоит на главной сразу 
 });
 
 test("у каждого экрана есть десктопный и мобильный снимок разумного веса", () => {
+  // Снимки — в папке с датой съёмки: под старым именем браузеры неделю
+  // показывали бы прежнюю картинку (кэш `/landing/*`).
+  assert.match(SHOWCASE_SCREENS_DIR, /^\/landing\/screens\/\d{4}-\d{2}-\d{2}$/);
+  assert.ok(page.includes("`${SHOWCASE_SCREENS_DIR}/${slide.id}-desktop.webp`"), "слайдер берёт снимки из этой папки");
   for (const id of slideIds) {
     for (const variant of ["desktop", "mobile"]) {
-      const file = path.join(ROOT, "public/landing/screens", `${id}-${variant}.webp`);
+      const file = path.join(ROOT, "public", SHOWCASE_SCREENS_DIR, `${id}-${variant}.webp`);
       assert.ok(existsSync(file), `нет ${id}-${variant}.webp`);
       const size = statSync(file).size;
       assert.ok(size > 8_000, `${id}-${variant}.webp подозрительно мал: ${size} байт`);
