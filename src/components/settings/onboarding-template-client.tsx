@@ -251,7 +251,10 @@ export function OnboardingTemplateClient({ templates }: Props) {
             <div className="min-w-0">
               <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">{t("doneTitle")}</h2>
               <p className="mt-1 text-[14px] leading-relaxed text-[#3c4053]">
-                {t("doneBody", { positions: result.positionsCreated, zones: result.areasCreated, equipment: result.equipmentCreated })}
+                {result.positionsCreated + result.areasCreated + result.equipmentCreated === 0
+                  ? // Повторная настройка того же вида: всё уже есть — не «Добавлено: 0, 0, 0».
+                    t("doneNothing")
+                  : t("doneBody", { positions: result.positionsCreated, zones: result.areasCreated, equipment: result.equipmentCreated })}
               </p>
             </div>
           </div>

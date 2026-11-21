@@ -1,0 +1,12 @@
+{
+  "taskId": "smoke-new-features-2026-11-21",
+  "branch": "claude/hopeful-euler-lb6cie",
+  "base": "41a67df1",
+  "verdict": "PASS",
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/db-smoke.log", "scripts/e2e/new-features-check.ts"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/browser-smoke.log", "raw/01-quick-setup.png", "raw/06-ukep-signed.png", "raw/08-traceability.png", "raw/10-poster.png"] },
+    "AC3": { "status": "PASS", "evidence": ["src/i18n/messages/ru.json", "src/components/journals/ukep-sign-dialog.tsx"] },
+    "AC4": { "status": "PASS", "evidence": ["typecheck 0 errors", "test:changed full: 7023 pass, 0 fail"] }
+  }
+}

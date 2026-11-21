@@ -31,6 +31,23 @@ on:
       - "src/lib/network-*"
       - "src/app/api/settings/**"
       - "scripts/e2e/**"
+      # Смоук новинок 21.11.2026 (scripts/e2e/new-features-check.ts).
+      - "src/lib/supply/**"
+      - "src/lib/acceptance-sources*"
+      - "src/lib/mercury/**"
+      - "src/lib/name-suggestions*"
+      - "src/lib/cms-signature*"
+      - "src/lib/ukep-*"
+      - "src/app/api/journal-documents/**/ukep/**"
+      # Смоук в браузере (scripts/smoke/new-features.smoke.cjs): экраны новинок.
+      - "scripts/smoke/**"
+      - "src/components/journals/acceptance-document-client.tsx"
+      - "src/components/journals/ukep-sign-dialog.tsx"
+      - "src/components/journals/document-actions-bar.tsx"
+      - "src/components/settings/onboarding-template-client.tsx"
+      - "src/app/(dashboard)/settings/integrations/poster/**"
+      - "src/app/(dashboard)/journals/traceability/**"
+      - "src/app/(dashboard)/mercury/**"
       - "prisma/schema.prisma"
       - ".github/workflows/nightly-e2e.yml"
 
@@ -103,11 +120,95 @@ jobs:
       - name: Run e2e scenarios
         run: npm run e2e:exchange
 
+  # Смоук новинок в браузере (iPhone 13): вход руководителя, мастер настройки, журнал приёмки с
+  # Меркурием и iiko, подпись УКЭП целиком (подставной плагин + openssl), «Входящие ВСД», история
+  # партии, Poster. Своя одноразовая база, приложение — `next dev`.
+  browser-smoke:
+    name: Browser smoke (new features)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: haccp_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d haccp_smoke"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/haccp_smoke?sslmode=disable
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@localhost:5432/haccp_smoke?sslmode=disable
+      NEXTAUTH_SECRET: browser-smoke-dummy-secret-0123456789
+      NEXTAUTH_URL: http://localhost:3005
+      INTEGRATION_KEY_SECRET: browser-smoke-dummy-integration-key-0123456789
+      CRON_SECRET: browser-smoke-dummy-cron-secret
+      PLATFORM_ORG_ID: platform
+      SMTP_HOST: ""
+      TELEGRAM_BOT_TOKEN: ""
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare the throwaway database
+        run: |
+          npx prisma generate
+          npx prisma db push
+          npx tsx prisma/seed.ts
+
+      - name: Start the app
+        run: |
+          (npx next dev -p 3005 > dev.log 2>&1 &)
+          for i in $(seq 1 120); do
+            if curl -s -o /dev/null -w "%{http_code}" -m 60 http://localhost:3005/login | grep -q 200; then exit 0; fi
+            sleep 5
+          done
+          echo "the app did not start"; tail -50 dev.log; exit 1
+
+      - name: Smoke data
+        run: echo "SMOKE_DATA=$(npx tsx scripts/smoke/new-features-setup.ts | tail -1)" >> "$GITHUB_ENV"
+
+      - name: Browser smoke
+        run: node scripts/smoke/new-features.smoke.cjs smoke-shots
+
+      - name: App log on failure
+        if: failure()
+        run: tail -80 dev.log || true
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-smoke-screenshots
+          path: smoke-shots
+          retention-days: 7
+
   notify-failure:
     name: Notify Telegram on failure
-    needs: [e2e]
+    needs: [e2e, browser-smoke]
     # Только ночной запуск; cancelled — в том числе превышение timeout-minutes.
-    if: always() && github.event_name == 'schedule' && (needs.e2e.result == 'failure' || needs.e2e.result == 'cancelled')
+    if: always() && github.event_name == 'schedule' && (needs.e2e.result == 'failure' || needs.e2e.result == 'cancelled' || needs.browser-smoke.result == 'failure' || needs.browser-smoke.result == 'cancelled')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 

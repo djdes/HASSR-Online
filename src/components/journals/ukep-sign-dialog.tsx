@@ -40,6 +40,8 @@ type Step = "idle" | "plugin" | "choose" | "signing";
 const BUTTON =
   "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#5566f6] px-5 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60";
 const LINK = "inline-flex items-center gap-1 text-[13px] font-medium text-[#3848c7] hover:underline";
+/** Ссылка внутри строки текста: без inline-flex, иначе строка вырастает в высоту. */
+const TEXT_LINK = "font-medium text-[#3848c7] hover:underline";
 
 /**
  * «Подпись УКЭП» документа журнала (спека journal-ukep-signing-2026-11-21):
@@ -65,6 +67,13 @@ export function UkepSignDialog({
   const [error, setError] = useState<{ message: string; noPlugin: boolean } | null>(null);
   const plugin = useRef<CadesPlugin | null>(null);
   const base = `/api/journal-documents/${encodeURIComponent(documentId)}/ukep`;
+  // Ошибки плагина — по коду, из переводов; ответ сервера — как пришёл.
+  const pluginErrorText = (failure: unknown): string | null => {
+    if (!(failure instanceof UkepPluginError)) return null;
+    if (failure.code === "no_plugin") return t("errors.noPlugin");
+    if (failure.code === "no_certificates") return t("errors.noCertificates");
+    return t("errors.signFailed", { reason: failure.reason || "—" });
+  };
 
   const refresh = useCallback(async () => {
     const res = await fetch(base, { cache: "no-store" }).catch(() => null);
@@ -96,7 +105,7 @@ export function UkepSignDialog({
       setStep("choose");
     } catch (failure) {
       setError({
-        message: failure instanceof UkepPluginError ? failure.message : t("errors.plugin"),
+        message: pluginErrorText(failure) ?? t("errors.plugin"),
         noPlugin: failure instanceof UkepPluginError && failure.code === "no_plugin",
       });
       setStep("idle");
@@ -128,7 +137,10 @@ export function UkepSignDialog({
       setStep("idle");
       await refresh();
     } catch (failure) {
-      setError({ message: failure instanceof Error && failure.message ? failure.message : t("errors.failed"), noPlugin: false });
+      setError({
+        message: pluginErrorText(failure) ?? (failure instanceof Error && failure.message ? failure.message : t("errors.failed")),
+        noPlugin: false,
+      });
       setStep("choose");
     }
   }
@@ -170,7 +182,7 @@ export function UkepSignDialog({
                         {t("signedAt", { when: when(row.createdAt) })}
                         {row.issuerName ? ` · ${t("issuer", { name: row.issuerName })}` : ""}
                       </div>
-                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
                         <a className={LINK} href={`${base}/${row.id}?file=pdf`}>
                           <Download className="size-3.5" aria-hidden />
                           {t("downloadPdf")}
@@ -189,7 +201,7 @@ export function UkepSignDialog({
 
           <p className="text-[13px] text-[#6f7282]">
             {t("verifyHint")}{" "}
-            <a className={LINK} href={GOSUSLUGI_VERIFY_URL} target="_blank" rel="noopener noreferrer">
+            <a className={TEXT_LINK} href={GOSUSLUGI_VERIFY_URL} target="_blank" rel="noopener noreferrer">
               {t("verifyLink")}
             </a>
           </p>
