@@ -11,7 +11,7 @@ const read = (file: string) => readFileSync(path.join(process.cwd(), file), "utf
 
 test("подвал: на телефоне группы свёрнуты, ссылки в HTML, с 640 px всё открыто (правки 21.11.2026)", () => {
   const html = renderToStaticMarkup(
-    createElement(FooterDisclosure, { title: "Документы", titleClassName: "title" }, createElement("a", { href: "/oferta" }, "Договор-оферта")),
+    createElement(FooterDisclosure, { title: "Документы", titleClassName: "title", children: createElement("a", { href: "/oferta" }, "Договор-оферта") }),
   );
   assert.match(html, /<button type="button" aria-expanded="false"[^>]*class="[^"]*sm:hidden"/, "кнопка — только на телефоне");
   assert.match(html, /<div class="title max-sm:hidden">Документы<\/div>/, "заголовок без кнопки — с 640 px");
