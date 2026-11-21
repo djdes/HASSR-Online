@@ -205,28 +205,29 @@ test("AC4: API — сессия, организация, точка, досту�
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
   const access = read("./ukep-access.server.ts");
   assert.match(access, /db\.journalDocument\.findFirst\(\{\s*where: \{ id: documentId, organizationId \}/);
-  assert.match(access, /canSeeDocumentPoint\(session, document\.buildingId\)/);
-  assert.match(access, /hasJournalAccess\(actor, document\.template\.code\)/);
-  assert.match(access, /hasFullWorkspaceAccess\(session\.user\) \|\| \(await canFinalizeJournal\(actor, document\.template\.code\)\)/);
+  assert.match(access, /hasJournalAccess\(actor, templateCode\)/);
+  assert.match(access, /hasFullWorkspaceAccess\(session\.user\) \|\| \(await canFinalizeJournal\(actor, templateCode\)\)/);
 
   const prepare = read("../app/api/journal-documents/[id]/ukep/prepare/route.ts");
   const route = read("../app/api/journal-documents/[id]/ukep/route.ts");
   const download = read("../app/api/journal-documents/[id]/ukep/[signatureId]/route.ts");
   for (const source of [prepare, route, download]) {
     assert.match(source, /getServerSession\(authOptions\)/);
-    assert.match(source, /loadUkepDocument\(session, id\)/);
+    // Точка документа — в самом маршруте, как у всех маршрутов journal-documents/[id].
+    assert.match(source, /const found = await findUkepDocument\(session, id\);\s*if \(!found \|\| !\(await canSeeDocumentPoint\(session, found\.document\.buildingId\)\)\) \{/);
+    assert.match(source, /ukepJournalAccess\(session, found\.document\.templateCode\)/);
   }
   for (const source of [prepare, route]) {
     assert.match(source, /if \(!access\.canSign\) return NextResponse\.json\(\{ error: "Подписывать журнал может руководитель" \}, \{ status: 403 \}\)/);
-    assert.match(source, /orgLockedResponse\(access\.organizationId\)/);
+    assert.match(source, /orgLockedResponse\(found\.organizationId\)/);
   }
-  assert.match(prepare, /generateJournalDocumentPdf\(\{ documentId: id, organizationId: access\.organizationId, locale \}\)/);
-  assert.match(route, /verifyUkepToken\(body\.token, secret, \{\s*documentId: id,\s*userId: session\.user\.id,\s*organizationId: access\.organizationId,\s*sha256: pdfSha256,/);
+  assert.match(prepare, /generateJournalDocumentPdf\(\{ documentId: id, organizationId: found\.organizationId, locale \}\)/);
+  assert.match(route, /verifyUkepToken\(body\.token, secret, \{\s*documentId: id,\s*userId: session\.user\.id,\s*organizationId: found\.organizationId,\s*sha256: pdfSha256,/);
   assert.ok(route.indexOf("verifyUkepToken(") < route.indexOf("parseCmsSignature("), "сначала токен и хэш, потом разбор");
   assert.ok(route.indexOf("checkSignatureForPdf(") < route.indexOf("db.journalDocumentSignature.create("), "сохраняем только проверенное");
   assert.match(route, /action: "journal\.ukep_sign"/);
-  assert.match(route, /where: \{ organizationId: access\.organizationId, documentId: id \}/);
-  assert.match(download, /where: \{ id: signatureId, documentId: id, organizationId: access\.organizationId \}/);
+  assert.match(route, /where: \{ organizationId: found\.organizationId, documentId: id \}/);
+  assert.match(download, /where: \{ id: signatureId, documentId: id, organizationId: found\.organizationId \}/);
 });
 
 test("AC5/AC6: меню документа, тексты ru/en/uz, документация, таблица в схеме", async () => {

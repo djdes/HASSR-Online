@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 import { getServerSession } from "@/lib/server-session";
-import { attachmentDisposition, loadUkepDocument } from "@/lib/ukep-access.server";
+import { attachmentDisposition, findUkepDocument, ukepJournalAccess } from "@/lib/ukep-access.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,11 +19,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   const { id, signatureId } = await params;
-  const access = await loadUkepDocument(session, id);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const found = await findUkepDocument(session, id);
+  if (!found || !(await canSeeDocumentPoint(session, found.document.buildingId))) {
+    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+  }
+  if (!(await ukepJournalAccess(session, found.document.templateCode)).read) {
+    return NextResponse.json({ error: "Нет доступа к этому журналу" }, { status: 403 });
+  }
   const file = new URL(request.url).searchParams.get("file") === "sig" ? "sig" : "pdf";
   const row = await db.journalDocumentSignature.findFirst({
-    where: { id: signatureId, documentId: id, organizationId: access.organizationId },
+    where: { id: signatureId, documentId: id, organizationId: found.organizationId },
     select: { fileName: true, pdf: file === "pdf", signature: file === "sig" },
   });
   if (!row) return NextResponse.json({ error: "Подпись не найдена" }, { status: 404 });

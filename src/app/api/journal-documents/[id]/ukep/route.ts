@@ -5,9 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit-log";
 import { checkSignatureForPdf, CmsError, parseCmsSignature } from "@/lib/cms-signature";
 import { db } from "@/lib/db";
+import { canSeeDocumentPoint } from "@/lib/document-point-access";
 import { orgLockedResponse } from "@/lib/org-trial.server";
 import { getServerSession } from "@/lib/server-session";
-import { loadUkepDocument, ukepPdfFileName } from "@/lib/ukep-access.server";
+import { findUkepDocument, ukepJournalAccess, ukepPdfFileName } from "@/lib/ukep-access.server";
 import { ukepSecret, verifyUkepToken } from "@/lib/ukep-token";
 
 export const runtime = "nodejs";
@@ -49,10 +50,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   const { id } = await params;
-  const access = await loadUkepDocument(session, id);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const found = await findUkepDocument(session, id);
+  if (!found || !(await canSeeDocumentPoint(session, found.document.buildingId))) {
+    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+  }
+  const access = await ukepJournalAccess(session, found.document.templateCode);
+  if (!access.read) return NextResponse.json({ error: "Нет доступа к этому журналу" }, { status: 403 });
   const signatures = await db.journalDocumentSignature.findMany({
-    where: { organizationId: access.organizationId, documentId: id },
+    where: { organizationId: found.organizationId, documentId: id },
     orderBy: { createdAt: "desc" },
     take: 50,
     select: SIGNATURE_LIST_SELECT,
@@ -71,10 +76,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
   const { id } = await params;
-  const access = await loadUkepDocument(session, id);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const found = await findUkepDocument(session, id);
+  if (!found || !(await canSeeDocumentPoint(session, found.document.buildingId))) {
+    return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
+  }
+  const access = await ukepJournalAccess(session, found.document.templateCode);
+  if (!access.read) return NextResponse.json({ error: "Нет доступа к этому журналу" }, { status: 403 });
   if (!access.canSign) return NextResponse.json({ error: "Подписывать журнал может руководитель" }, { status: 403 });
-  const locked = await orgLockedResponse(access.organizationId);
+  const locked = await orgLockedResponse(found.organizationId);
   if (locked) return locked;
   const secret = ukepSecret();
   if (!secret) return NextResponse.json({ error: "На сервере не настроен ключ подписи сессий" }, { status: 500 });
@@ -89,7 +98,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const token = verifyUkepToken(body.token, secret, {
     documentId: id,
     userId: session.user.id,
-    organizationId: access.organizationId,
+    organizationId: found.organizationId,
     sha256: pdfSha256,
   });
   if (!token.ok) return NextResponse.json({ error: token.error }, { status: 400 });
@@ -107,7 +116,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { signer } = parsed;
   const saved = await db.journalDocumentSignature.create({
     data: {
-      organizationId: access.organizationId,
+      organizationId: found.organizationId,
       documentId: id,
       userId: session.user.id,
       fileName: ukepPdfFileName(body.fileName),
@@ -133,7 +142,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   await recordAuditLog({
     request,
     session,
-    organizationId: access.organizationId,
+    organizationId: found.organizationId,
     action: "journal.ukep_sign",
     entity: "JournalDocument",
     entityId: id,
