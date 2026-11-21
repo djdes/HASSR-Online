@@ -373,13 +373,18 @@ async function undoUpdatedChange(change: ChangeRow, actorUserId: string, now: Da
 
 /**
  * Отменить одно изменение обмена. Только владелец аккаунта организации, у
- * которой оно было: чужое и несуществующее — одно и то же 404. Уже отменено
- * или старше 30 дней — 409; идёт обмен или перенос — 409; запись правили или
- * она используется — 409 `change_kept` с причиной, изменение не отмечается.
+ * которой оно было, или управляющий его сетью, работающий в этом же аккаунте
+ * (`accountId` — аккаунт активной организации сессии; маршрут передаёт его
+ * всегда): чужое, из другого аккаунта и несуществующее — одно и то же 404.
+ * Уже отменено или старше 30 дней — 409; идёт обмен или перенос — 409; запись
+ * правили или она используется — 409 `change_kept` с причиной, изменение не
+ * отмечается.
  */
 export async function undoExchangeChange(input: {
   id: string;
   actor: { userId: string; userName: string | null };
+  /** Аккаунт активной организации сессии: изменение в организации другого аккаунта — 404. */
+  accountId?: string;
   now?: Date;
 }): Promise<ExchangeChangeUndoResult> {
   // Пауза обмена (откат версий отпечатка): отмена пишет связи — не во время паузы (`pause.ts`).
@@ -405,8 +410,10 @@ export async function undoExchangeChange(input: {
     },
   });
   const accountId = found?.organization.accountId;
-  // Владелец аккаунта или управляющий сетью (серия E, Р5); чужое — как несуществующее.
-  if (!found || !accountId || !(await canManageNetwork(input.actor.userId, accountId))) {
+  // Владелец аккаунта или управляющий сетью (серия E, Р5), из организации того же аккаунта;
+  // чужое и из другого аккаунта — как несуществующее.
+  const otherAccount = input.accountId !== undefined && input.accountId !== accountId;
+  if (!found || !accountId || otherAccount || !(await canManageNetwork(input.actor.userId, accountId))) {
     throw new DirectoryExchangeError(CHANGE_NOT_FOUND_MESSAGE, 404);
   }
   const entity = found.entity;

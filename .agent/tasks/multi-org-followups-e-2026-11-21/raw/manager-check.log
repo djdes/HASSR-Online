@@ -33,6 +33,7 @@ PASS owner: requests allowed
 PASS M: network summary — both organizations, B current
 PASS M: mini page rows (A, B)
 PASS M: mini «Перейти» only where M is a member (B yes, A no)
+PASS M: site «Перейти» (same rule) — B yes, A no
 PASS owner: mini page rows, «Перейти» everywhere
 PASS cook: mini page refused
 PASS M: exchange card — canManage, not the account owner, sees A
@@ -95,6 +96,20 @@ PASS impersonation: no menu item «Сеть»
 PASS M as a point manager: exchange → 403
 PASS M as a point manager: mini page refused
 PASS owner in «войти как»: managers API → 403
+--- undo stays inside the session's account
+PASS F: network manager of X and owner of Y
+PASS sync 2 ran
+PASS history: «Сметана» created in B
+PASS transfer «Творог» A → B listed
+PASS F working in Z: the route context is account Y
+PASS F working in A: the route context is account X
+PASS F working in Y: undo X's transfer by id → 404
+PASS F working in Y: undo X's exchange change by id → 404
+PASS refused undos changed nothing (transfer and change not undone, «Сметана» and «Творог» active in B)
+PASS M with a session in another account (Y): transfer undo → 404
+PASS F working in X: the same transfer undo works
+PASS F working in X: the same exchange change undo works («Сметана» turned off in B)
+PASS audit transfer_undone and change_undone by F in B
 --- removal and archiving
 PASS audit account.network_manager_removed
 PASS remove again → 404
@@ -142,5 +157,5 @@ PASS NetworkManagerError is exported for the route
 PASS AccountTransferError still maps refusals
 PASS DirectoryExchangeError still maps refusals
 cleanup: organizations left 0, users left 0, manager rows left 0
-TOTAL: 137 PASS, 0 FAIL
+TOTAL: 151 PASS, 0 FAIL
 RESULT: all checks passed

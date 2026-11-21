@@ -4,6 +4,7 @@ import { NetworkGoButton } from "@/components/settings/network-go-button";
 import { formatNumber, type Locale } from "@/i18n/locales";
 import { periodPercent, type NetworkPeriodRow, type PeriodStatus } from "@/lib/network-period";
 import type { NetworkPeriodSummary } from "@/lib/network-period.server";
+import { canOpenNetworkOrg } from "@/lib/network-mini.server";
 import { formatNetworkDay } from "@/lib/network-summary";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +33,16 @@ const dayOf = (dayKey: string) => new Date(`${dayKey}T12:00:00.000Z`);
  * заполненными обязательными журналами (из дней периода, когда организация
  * работала) и записи журналов. Широкий экран — таблица, телефон — карточки.
  */
-export async function NetworkPeriodView({ summary }: { summary: NetworkPeriodSummary }) {
+export async function NetworkPeriodView({
+  summary,
+  openableIds,
+}: {
+  summary: NetworkPeriodSummary;
+  /** Куда человек может переключиться (`openableNetworkOrgIds`): у управляющего сетью — не во все организации. */
+  openableIds: readonly string[];
+}) {
   const [t, locale] = await Promise.all([getTranslations("settingsManagement.network"), getLocale() as Promise<Locale>]);
+  const openable = new Set(openableIds);
   const { rows, totals } = summary;
   const totalPercent = periodPercent(totals);
 
@@ -56,9 +65,10 @@ export async function NetworkPeriodView({ summary }: { summary: NetworkPeriodSum
       {row.deletionRequested ? <span className={cn(PILL, PILL_TONE.danger)}>{t("deleting")}</span> : null}
     </span>
   );
-  const goButton = (row: NetworkPeriodRow) => (
-    <NetworkGoButton organizationId={row.id} current={row.current} label={t("go")} failedLabel={t("goFailed")} />
-  );
+  const goButton = (row: NetworkPeriodRow) =>
+    canOpenNetworkOrg(row, openable) ? (
+      <NetworkGoButton organizationId={row.id} current={row.current} label={t("go")} failedLabel={t("goFailed")} />
+    ) : null;
 
   return (
     <div className="space-y-5" data-network-period-view={summary.days}>
@@ -145,7 +155,7 @@ export async function NetworkPeriodView({ summary }: { summary: NetworkPeriodSum
               <dt className="text-[#6f7282]">{t("period.columns.records")}</dt>
               <dd className="font-semibold tabular-nums text-[#0b1024]">{recordsText(row)}</dd>
             </dl>
-            <div className="mt-3 flex justify-end">{goButton(row)}</div>
+            {canOpenNetworkOrg(row, openable) ? <div className="mt-3 flex justify-end">{goButton(row)}</div> : null}
           </li>
         ))}
       </ul>

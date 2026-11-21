@@ -23,14 +23,15 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function POST(_request: Request, ctx: Ctx) {
   const owner = await requireExchangeManager({ allowLocked: true });
   if (!owner.ok) return owner.response;
-  const { actor } = owner.context;
+  const { actor, accountId } = owner.context;
   if (!limiter.consume(`directory-exchange:transfer-undo:${actor.userId}`)) {
     return NextResponse.json({ error: "Слишком много запросов. Подождите минуту." }, { status: 429 });
   }
   const { id } = await ctx.params;
   if (!ID_PATTERN.test(id)) return NextResponse.json({ error: "Перенос не найден" }, { status: 404 });
   try {
-    const result = await undoTransfer({ id, ownerUserId: actor.userId, ownerName: actor.userName });
+    // Только перенос в организацию аккаунта, в котором человек сейчас работает.
+    const result = await undoTransfer({ id, ownerUserId: actor.userId, ownerName: actor.userName, accountId });
     return NextResponse.json({ ok: true, result });
   } catch (error) {
     return exchangeErrorResponse(error);

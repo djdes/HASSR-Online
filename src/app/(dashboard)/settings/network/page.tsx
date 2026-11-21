@@ -19,6 +19,7 @@ import {
   type NetworkOrgRow,
   type NetworkPlan,
 } from "@/lib/network-summary";
+import { canOpenNetworkOrg, openableNetworkOrgIds } from "@/lib/network-mini.server";
 import { NetworkSummaryAccessError, loadNetworkSummary } from "@/lib/network-summary.server";
 import { networkPeriodDays, parseNetworkPeriod } from "@/lib/network-period";
 import { loadNetworkPeriod } from "@/lib/network-period.server";
@@ -72,10 +73,11 @@ export default async function NetworkSettingsPage({
   const periodSummary =
     days === null ? null : await loadNetworkPeriod(summary.accountId, days, { activeOrgId: summary.activeOrganizationId });
 
-  const [t, tTariffs, locale] = await Promise.all([
+  const [t, tTariffs, locale, openable] = await Promise.all([
     getTranslations("settingsManagement.network"),
     getTranslations("landingComponents.tariffs"),
     getLocale() as Promise<Locale>,
+    openableNetworkOrgIds(session.user.id),
   ]);
 
   const planText = (plan: NetworkPlan): string => {
@@ -124,9 +126,11 @@ export default async function NetworkSettingsPage({
       {row.deletionRequested ? <span className={cn(PILL, PILL_TONE.danger)}>{t("deleting")}</span> : null}
     </span>
   );
-  const goButton = (row: NetworkOrgRow) => (
-    <NetworkGoButton organizationId={row.id} current={row.current} label={t("go")} failedLabel={t("goFailed")} />
-  );
+  // «Перейти» — только туда, куда человек может переключиться (управляющий сетью — не везде участник).
+  const goButton = (row: NetworkOrgRow) =>
+    canOpenNetworkOrg(row, openable) ? (
+      <NetworkGoButton organizationId={row.id} current={row.current} label={t("go")} failedLabel={t("goFailed")} />
+    ) : null;
 
   return (
     <div className="space-y-5" data-network-summary>
@@ -137,7 +141,7 @@ export default async function NetworkSettingsPage({
 
       {/* Период и выгрузка (серия E, Р6): за 7/30 дней — своя таблица, иначе — «Сегодня» как было. */}
       <NetworkPeriodBar period={period} />
-      {periodSummary ? <NetworkPeriodView summary={periodSummary} /> : (<>
+      {periodSummary ? <NetworkPeriodView summary={periodSummary} openableIds={[...openable]} /> : (<>
 
       <section className="grid gap-3 sm:grid-cols-3" data-network-totals>
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5">
@@ -222,7 +226,7 @@ export default async function NetworkSettingsPage({
               <dt className="text-[#6f7282]">{t("columns.exchange")}</dt>
               <dd className="text-[#3c4053]">{exchangeText(row)}</dd>
             </dl>
-            <div className="mt-3 flex justify-end">{goButton(row)}</div>
+            {canOpenNetworkOrg(row, openable) ? <div className="mt-3 flex justify-end">{goButton(row)}</div> : null}
           </li>
         ))}
       </ul>

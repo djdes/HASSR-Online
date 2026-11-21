@@ -20,6 +20,20 @@ export type MiniNetworkRow = Pick<NetworkOrgRow, "id" | "name" | "current" | "jo
   canOpen: boolean;
 };
 
+/**
+ * Организации, в которые человек может переключиться («Перейти»): домашняя и
+ * те, где он участник (`listAccessibleOrganizations` — та же проверка, что у
+ * смены организации). У управляющего сетью это не все организации аккаунта.
+ */
+export async function openableNetworkOrgIds(userId: string): Promise<ReadonlySet<string>> {
+  return new Set((await listAccessibleOrganizations(userId)).map((organization) => organization.id));
+}
+
+/** «Перейти» показываем, только если переключиться получится (текущая открывается всегда). */
+export function canOpenNetworkOrg(row: { id: string; current: boolean }, openable: ReadonlySet<string>): boolean {
+  return row.current || openable.has(row.id);
+}
+
 export type MiniNetworkView = {
   rows: MiniNetworkRow[];
   totals: NetworkTotals;
@@ -44,7 +58,7 @@ export async function loadMiniNetwork(session: Session, now?: Date): Promise<Min
     },
   );
   if (!summary) return null;
-  const accessible = new Set((await listAccessibleOrganizations(user.id)).map((organization) => organization.id));
+  const openable = await openableNetworkOrgIds(user.id);
   return {
     rows: summary.rows.map((row) => ({
       id: row.id,
@@ -54,7 +68,7 @@ export async function loadMiniNetwork(session: Session, now?: Date): Promise<Min
       journalStatus: row.journalStatus,
       balanceRub: row.balanceRub,
       trial: row.trial,
-      canOpen: row.current || accessible.has(row.id),
+      canOpen: canOpenNetworkOrg(row, openable),
     })),
     totals: summary.totals,
     truncated: summary.truncated,

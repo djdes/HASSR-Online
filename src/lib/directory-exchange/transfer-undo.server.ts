@@ -859,15 +859,18 @@ export async function underExchangeLocks<T>(cabinetIds: readonly string[], fn: (
 
 /**
  * Отменить перенос (Р12.2). Только владелец аккаунта организации-получателя
- * или управляющий его сетью:
- * чужое и несуществующее — одно и то же 404. Срок вышел или уже отменён — 409;
- * идёт обмен кабинета организации или другой перенос в неё — 409, ничего не сделано.
- * Возвращает, что отменено и что осталось и почему.
+ * или управляющий его сетью, работающий в этом же аккаунте (`accountId` —
+ * аккаунт активной организации сессии; маршрут передаёт его всегда): чужое,
+ * из другого аккаунта и несуществующее — одно и то же 404. Срок вышел или уже
+ * отменён — 409; идёт обмен кабинета организации или другой перенос в неё —
+ * 409, ничего не сделано. Возвращает, что отменено и что осталось и почему.
  */
 export async function undoTransfer(input: {
   id: string;
   ownerUserId: string;
   ownerName?: string | null;
+  /** Аккаунт активной организации сессии: перенос в организацию другого аккаунта — 404. */
+  accountId?: string;
   now?: Date;
 }): Promise<TransferUndoResult> {
   const now = input.now ?? new Date();
@@ -887,8 +890,10 @@ export async function undoTransfer(input: {
     },
   });
   const accountId = transfer?.toOrganization.accountId;
-  // `ownerUserId` — кто отменяет: владелец аккаунта получателя или управляющий сетью (серия E, Р5).
-  if (!transfer || !accountId || !(await canManageNetwork(input.ownerUserId, accountId))) {
+  // `ownerUserId` — кто отменяет: владелец аккаунта получателя или управляющий сетью (серия E, Р5),
+  // и только из организации того же аккаунта — права в одном аккаунте не открывают отмену из другого.
+  const otherAccount = input.accountId !== undefined && input.accountId !== accountId;
+  if (!transfer || !accountId || otherAccount || !(await canManageNetwork(input.ownerUserId, accountId))) {
     throw new DirectoryExchangeError(NOT_FOUND_MESSAGE, 404);
   }
   const allowed = canUndoTransfer({ createdAt: transfer.createdAt, undoneAt: transfer.undoneAt, now });
