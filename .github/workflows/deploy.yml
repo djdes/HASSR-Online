@@ -276,6 +276,14 @@ jobs:
             rm -rf "$WORK"
             mkdir -p "$WORK/src"
             trap 'rm -rf "$WORK"' EXIT
+
+            # Один выкат за раз: сервер сам выкатывает master, если выкат из GitHub
+            # не дошёл (scripts/deploy-agent.mjs, docs/deploy-agent.md). Пока идёт
+            # его выкат — ждём до 25 минут. На первом выкате скрипта ещё нет.
+            if [ -f "${{ env.APP_DIR }}/scripts/deploy-lock.sh" ]; then
+              . "${{ env.APP_DIR }}/scripts/deploy-lock.sh"
+              deploy_lock_acquire "github: скачивание ${{ github.sha }}" 1500 || exit 1
+            fi
             # Обычно полминуты, но бывали провалы до ~1 МБ/с (~5 мин на 286 МБ).
             # Ниже 100 КБ/с дольше 45 с — обрыв и одна новая попытка.
             curl -fsS --retry 1 --retry-delay 5 --connect-timeout 20 \
@@ -414,6 +422,14 @@ jobs:
             set -eo pipefail
             cd ${{ env.APP_DIR }}
             export GITHUB_SHA="${{ github.sha }}"
+
+            # Один выкат за раз: сервер сам выкатывает master, если выкат из GitHub
+            # не дошёл (scripts/deploy-agent.mjs, docs/deploy-agent.md). Пока идёт
+            # его выкат — ждём до 25 минут. На первом выкате скрипта ещё нет.
+            if [ -f scripts/deploy-lock.sh ]; then
+              . scripts/deploy-lock.sh
+              deploy_lock_acquire "github: шаг 1/3 $GITHUB_SHA" 1500 || exit 1
+            fi
 
             echo "=== Rescuing user uploads before the wipe ==="
             # public/uploads — файлы, загруженные ЛЮДЬМИ: фото в журналах
@@ -603,6 +619,14 @@ jobs:
             set -eo pipefail
             cd ${{ env.APP_DIR }}
             export GITHUB_SHA="${{ github.sha }}"
+
+            # Один выкат за раз: сервер сам выкатывает master, если выкат из GitHub
+            # не дошёл (scripts/deploy-agent.mjs, docs/deploy-agent.md). Пока идёт
+            # его выкат — ждём до 25 минут. На первом выкате скрипта ещё нет.
+            if [ -f scripts/deploy-lock.sh ]; then
+              . scripts/deploy-lock.sh
+              deploy_lock_acquire "github: шаг 2/3 $GITHUB_SHA" 1500 || exit 1
+            fi
 
             echo "=== Запись .build-sha (на случай если step 1 не записал) ==="
             echo "$GITHUB_SHA" > .build-sha
@@ -856,6 +880,14 @@ jobs:
             cd ${{ env.APP_DIR }}
             export GITHUB_SHA="${{ github.sha }}"
 
+            # Один выкат за раз: сервер сам выкатывает master, если выкат из GitHub
+            # не дошёл (scripts/deploy-agent.mjs, docs/deploy-agent.md). Пока идёт
+            # его выкат — ждём до 25 минут. На первом выкате скрипта ещё нет.
+            if [ -f scripts/deploy-lock.sh ]; then
+              . scripts/deploy-lock.sh
+              deploy_lock_acquire "github: шаг 3/3 $GITHUB_SHA" 1500 || exit 1
+            fi
+
             echo "=== Pushing schema to DB & Seeding ==="
             # prisma db push зависит от `dotenv/config` в prisma.config.ts.
             # В node_modules он есть, но иногда резолвер prisma его не
@@ -1051,6 +1083,9 @@ jobs:
             # Строку ставит и обновляет сам деплой (docs/crm.md): сбой — не повод
             # ронять выкатку, CRM работает и по кнопке «Обновить сейчас».
             bash scripts/install-crm-cron.sh 2>&1 | tail -3 || echo "[warn] install-crm-cron failed — deploy continues"
+            echo "=== Агент выката: сервер сам выкатывает master, если выкат из GitHub не дошёл (crontab, идемпотентно) ==="
+            # docs/deploy-agent.md. Сбой установки — не повод ронять выкатку.
+            bash scripts/install-deploy-agent-cron.sh 2>&1 | tail -3 || echo "[warn] install-deploy-agent-cron failed — deploy continues"
             echo "=== GoGetLinks: periodic sync and donor review ==="
             bash scripts/cron-gogetlinks.sh
 

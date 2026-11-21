@@ -1,4 +1,5 @@
 import Link from "@/components/i18n/localized-link";
+import { FooterDisclosure } from "@/components/public/footer-disclosure";
 import { getSiteLocale } from "@/i18n/site-locale-server";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitch } from "@/components/i18n/language-switch";
@@ -177,6 +178,9 @@ function getInitials(name: string): string {
 /** Ряды сквозных ссылок под подвалом; страница может не показывать свой. */
 type FooterRow = "niches" | "journals" | "features";
 
+/** Заголовок группы ссылок подвала. */
+const FOOTER_TITLE_CLASS = "text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]";
+
 const FOOTER_LINK_CLASS =
   "inline-flex min-h-9 items-center py-1.5 leading-snug transition-colors duration-150 hover:text-[#0b1024] sm:min-h-8 sm:py-1";
 
@@ -308,10 +312,11 @@ export async function PublicFooter({ omitRows = [] }: { omitRows?: ReadonlyArray
           {inApp ? null : <AppStoresTeaser />}
         </div>
 
-        <nav aria-label={t("sections")} className="grid grid-cols-2 gap-x-5 gap-y-7 text-[13px] text-[#6f7282] sm:grid-cols-4 sm:gap-x-6">
+        {/* На телефоне группы свёрнуты и раскрываются по заголовку
+            (`FooterDisclosure`, правки 21.11.2026); с 640 px — всё открыто. */}
+        <nav aria-label={t("sections")} className="grid grid-cols-1 text-[13px] text-[#6f7282] max-sm:divide-y max-sm:divide-[#ececf4] max-sm:border-y max-sm:border-[#ececf4] sm:grid-cols-4 sm:gap-x-6 sm:gap-y-7">
           {groups.map((group) => (
-            <div key={group.title}>
-              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">{group.title}</div>
+            <FooterDisclosure key={group.title} title={group.title} titleClassName={`${FOOTER_TITLE_CLASS} sm:mb-1.5`} bodyClassName="max-sm:pb-2">
               <ul>
                 {group.links.map((link) => (
                   <li key={link.href}>
@@ -327,7 +332,7 @@ export async function PublicFooter({ omitRows = [] }: { omitRows?: ReadonlyArray
                   </li>
                 ))}
               </ul>
-            </div>
+            </FooterDisclosure>
           ))}
         </nav>
       </div>
@@ -339,7 +344,7 @@ export async function PublicFooter({ omitRows = [] }: { omitRows?: ReadonlyArray
           обходились редко и получали мало внутреннего веса. */}
       {visibleRows.length > 0 ? (
         <div className="border-t border-[#ececf4]">
-          <div className="mx-auto max-w-[1200px] space-y-4 px-4 py-6 sm:px-6">
+          <div className="mx-auto max-w-[1200px] px-4 py-2 max-sm:divide-y max-sm:divide-[#ececf4] sm:space-y-4 sm:px-6 sm:py-6">
             {visibleRows.map((row) => (
               <FooterLinkRow key={row.id} title={row.title} links={row.links} hub={row.hub} />
             ))}
@@ -382,10 +387,13 @@ function FooterLinkRow({
   hub?: { href: string; label: string };
 }) {
   return (
-    <nav aria-label={title} className="flex flex-col gap-1.5 sm:flex-row sm:gap-4">
-      <div className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3] sm:w-[168px] sm:pt-0.5">
-        {title}
-      </div>
+    <nav aria-label={title}>
+      <FooterDisclosure
+        title={title}
+        titleClassName={`${FOOTER_TITLE_CLASS} shrink-0 sm:w-[168px] sm:pt-0.5`}
+        className="sm:flex sm:gap-4"
+        bodyClassName="max-sm:pb-3"
+      >
       <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-[#6f7282]">
         {links.map((link) => (
           <li key={link.href}>
@@ -402,6 +410,7 @@ function FooterLinkRow({
           </li>
         ) : null}
       </ul>
+      </FooterDisclosure>
     </nav>
   );
 }

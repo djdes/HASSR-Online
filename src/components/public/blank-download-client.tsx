@@ -302,6 +302,8 @@ export function BlankDownloadClient({
     const result = await requestDownload({ captchaToken, stamp, cover, email: saved.email, company: saved.company, target, format, locale, remembered: saved, layout });
     if (!result.ok && result.errorKey === "captchaRequired") {
       // Сервер просит «Я не робот» — то же короткое окно, уже с виджетом.
+      // Цель Метрики: сколько людей вообще видят проверку (docs/blank-download-analytics.md).
+      ymGoal("blank_download_challenge", { ...goal, remembered: "1" });
       challenge.requireCaptcha();
       setNotice(null);
       setSavedDownload(saved);
@@ -398,8 +400,10 @@ export function BlankDownloadClient({
     });
     if (!result.ok) {
       // Сервер просит «Я не робот»: показываем виджет над кнопкой, без красной ошибки.
-      if (result.errorKey === "captchaRequired") challenge.requireCaptcha();
-      else setError(result.errorKey);
+      if (result.errorKey === "captchaRequired") {
+        ymGoal("blank_download_challenge", goal);
+        challenge.requireCaptcha();
+      } else setError(result.errorKey);
       setPhase("form");
       return;
     }

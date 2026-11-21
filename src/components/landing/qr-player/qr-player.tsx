@@ -2,7 +2,7 @@
 import { useTranslations } from "next-intl";
 import { useSiteLocale } from "@/components/i18n/site-locale-provider";
 import { formatNumber } from "@/i18n/locales";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Player, type PlayerRef } from "@remotion/player";
 import { ChevronDown, ChevronLeft, ChevronRight, CookingPot, FileText, Maximize2, Pause, Play, SlidersHorizontal, Thermometer, Refrigerator } from "lucide-react";
 
@@ -11,18 +11,15 @@ import { useMediaQuery, usePrefersReducedMotion } from "@/lib/use-media-query";
 import { useOnScreen } from "./clock";
 import {
   BODY_RANGE,
-  CHAPTERS,
-  DURATION_IN_FRAMES,
   FPS,
   FRIDGE_NORM,
   FRIDGE_RANGE,
   FRYER_QUALITY,
   bodyFever,
-  chapterAt,
+  chapterTimeline,
   fridgeOutOfRange,
   fryerQualityKey,
   fryerQualityPoor,
-  resultFrameOf,
   type ChapterId,
 } from "./chapters";
 import { QrComposition } from "./composition";
@@ -45,7 +42,9 @@ import { WatchVideoButton, type NarratedVideo } from "./video-lightbox";
  * плеером — в `qr-industry-player.tsx`. По бокам вкладок глав — стрелки
  * «предыдущая / следующая глава»: строка вкладок прокручивается, и без
  * стрелок этого не видно. «Попробуйте сами» — три примера: два ползунка
- * температуры и оценка масла во фритюре кнопками 1–5.
+ * температуры и оценка масла во фритюре кнопками 1–5 — каждый, только если
+ * его глава есть в ролике. `chapterIds` — набор глав (у медцентра и отеля
+ * свой ролик из подходящих сцен); без него — все шесть.
  * Ролик идёт сам только в зоне видимости и на видимой вкладке; при
  * `prefers-reduced-motion` — без автозапуска, раскадровка из итоговых
  * кадров глав.
@@ -56,20 +55,28 @@ const SEEK_STEP_SECONDS = 2;
 /** Презентация рядом с кнопкой видео: полная подпись — с `sm`, на телефоне — короткая. */
 export type QrPresentation = { href: string; label: string; short: string };
 
-/** Номер главы «Фритюр» — её итог показывает пример с оценкой масла. */
-const FRYER_CHAPTER_INDEX = CHAPTERS.findIndex((item) => item.id === "fryer");
-
 export function QrPlayer({
   qr,
   today,
   video = null,
   presentation = null,
+  chapterIds,
 }: {
   qr: QrMatrix;
   today: SceneDay;
   video?: NarratedVideo | null;
   presentation?: QrPresentation | null;
+  chapterIds?: readonly ChapterId[];
 }) {
+  const timeline = useMemo(() => chapterTimeline(chapterIds), [chapterIds]);
+  const CHAPTERS = timeline.chapters;
+  const DURATION_IN_FRAMES = timeline.durationInFrames;
+  const { resultFrameOf } = timeline;
+  // Примеры «Попробуйте сами» — по главам ролика: итог своей главы.
+  const fridgeIndex = CHAPTERS.findIndex((item) => item.id === "fridge");
+  const lockerIndex = CHAPTERS.findIndex((item) => item.id === "locker");
+  const fryerIndex = CHAPTERS.findIndex((item) => item.id === "fryer");
+  const tryExamples = [fridgeIndex, lockerIndex, fryerIndex].filter((value) => value >= 0).length;
   const t = useTranslations("qrPlayer");
   const sceneT = useTranslations("qrScene");
   const locale = useSiteLocale();
@@ -126,7 +133,7 @@ export function QrPlayer({
     }
     const timer = window.setTimeout(load, 2500);
     return () => window.clearTimeout(timer);
-  }, [onScreen]);
+  }, [onScreen, CHAPTERS]);
 
   // PlayerRef через callback-ref в state: слушатели вешаются, когда
   // Плеер реально смонтирован, а не по таймеру.
@@ -169,13 +176,13 @@ export function QrPlayer({
     wantsPlay.current = false;
     player.pause();
     player.seekTo(resultFrameOf(0));
-  }, [reduced, player]);
+  }, [reduced, player, resultFrameOf]);
 
   const seek = useCallback(
     (target: number) => {
       player?.seekTo(Math.min(DURATION_IN_FRAMES - 1, Math.max(0, Math.round(target))));
     },
-    [player]
+    [player, DURATION_IN_FRAMES]
   );
 
   const togglePlay = useCallback(() => {
@@ -207,7 +214,7 @@ export function QrPlayer({
     stageRef.current?.focus({ preventScroll: true });
   }, [expanded]);
 
-  const { chapter, index, local } = chapterAt(frame);
+  const { chapter, index, local } = timeline.at(frame);
   const storyboard = reduced && !playing;
 
   // Активная вкладка сама подъезжает в видимую зону строки (только её
@@ -352,7 +359,7 @@ export function QrPlayer({
         {/* Подложка до маунта Плеера (и в SSR-HTML): тот же кадр 0. */}
         {player === null ? (
           <div aria-hidden="true" className="absolute inset-0 @container">
-            <SceneFrame frame={0} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} fryerQuality={fryerQuality} today={today} qr={qr} />
+            <SceneFrame frame={0} fridgeTemp={fridgeTemp} bodyTemp={bodyTemp} fryerQuality={fryerQuality} today={today} qr={qr} chapterIds={timeline.ids} />
           </div>
         ) : null}
         {mounted ? (
@@ -360,7 +367,7 @@ export function QrPlayer({
             <Player
               ref={playerRef}
               component={QrComposition}
-              inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr }}
+              inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr, chapterIds: timeline.ids }}
               durationInFrames={DURATION_IN_FRAMES}
               fps={FPS}
               compositionWidth={composition.width}
@@ -420,8 +427,9 @@ export function QrPlayer({
             : chapterText[chapter.id].short}
         </p>
         {/* Кнопка 44 px и с подписью на любой ширине (правки 19.11.2026:
-            на телефоне в значок 32 px было не попасть). */}
-        <button
+            на телефоне в значок 32 px было не попасть). Нет в ролике глав
+            с примерами — нет и кнопки. */}
+        {tryExamples > 0 ? <button
           type="button"
           onClick={() => setTryOpen((value) => !value)}
           aria-expanded={tryOpen}
@@ -432,7 +440,7 @@ export function QrPlayer({
           <SlidersHorizontal className="size-4 text-[#7cf5c0]" />
           {t("chrome.tryIt")}
           <ChevronDown className={`size-4 transition-transform duration-150 ${tryOpen ? "rotate-180" : ""}`} />
-        </button>
+        </button> : null}
       </div>
 
       {/* Спойлер: три примера сразу — сдвиг перематывает на итог своей
@@ -440,13 +448,13 @@ export function QrPlayer({
       <div
         id="qrp-try-panel"
         data-qrp-try=""
-        hidden={!tryOpen}
+        hidden={!tryOpen || tryExamples === 0}
         className="mt-2.5 rounded-2xl border border-[rgba(255,255,255,0.12)] p-4"
         style={{ background: "rgba(255,255,255,0.04)" }}
       >
         {/* `grid-cols-1` = minmax(0, 1fr): длинная подпись не раздвигает панель шире экрана. */}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-          <TrySlider
+        <div className={`grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 ${tryExamples > 2 ? "lg:grid-cols-3" : ""}`}>
+          {fridgeIndex >= 0 ? <TrySlider
             icon="fridge"
             label={t("chrome.fridgeTemperature")}
             value={fridgeTemp}
@@ -458,10 +466,10 @@ export function QrPlayer({
             verdict={fridgeBad ? t("chrome.fridgeOutOfRange", { min: FRIDGE_NORM.min, max: FRIDGE_NORM.max }) : t("chrome.fridgeWithinRange", { min: FRIDGE_NORM.min, max: FRIDGE_NORM.max })}
             onChange={(value) => {
               setFridgeTemp(value);
-              showResult(0);
+              showResult(fridgeIndex);
             }}
-          />
-          <TrySlider
+          /> : null}
+          {lockerIndex >= 0 ? <TrySlider
             icon="body"
             label={t("chrome.lockerThermometer")}
             value={bodyTemp}
@@ -473,11 +481,11 @@ export function QrPlayer({
             verdict={fever ? t("chrome.bodyTemperatureHigh") : t("chrome.bodyTemperatureNormal")}
             onChange={(value) => {
               setBodyTemp(value);
-              showResult(1);
+              showResult(lockerIndex);
             }}
-          />
+          /> : null}
           {/* Не только температура: оценка масла во фритюре, кнопками. */}
-          <div role="group" aria-labelledby="qrp-try-fryer-label" data-qrp-try-fryer="">
+          {fryerIndex >= 0 ? <div role="group" aria-labelledby="qrp-try-fryer-label" data-qrp-try-fryer="">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <span id="qrp-try-fryer-label" className="flex min-w-0 items-center gap-2 text-[14px] text-white/85">
                 <CookingPot className="size-4 shrink-0 text-[#8b97ff]" aria-hidden="true" />
@@ -501,12 +509,12 @@ export function QrPlayer({
                     aria-pressed={active}
                     onClick={() => {
                       setFryerQuality(score);
-                      showResult(FRYER_CHAPTER_INDEX);
+                      showResult(fryerIndex);
                     }}
-                    className="flex h-11 items-center justify-center rounded-xl text-[16px] font-semibold tabular-nums ring-1 ring-inset transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50"
+                    className={`flex h-11 items-center justify-center rounded-xl text-[16px] font-semibold tabular-nums ring-1 ring-inset transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#8b97ff]/50 ${active ? "landing-on-light" : ""}`}
                     style={
                       active
-                        ? { background: oilPoor ? "#ff8f86" : "#7cf5c0", color: "#0b1024", boxShadow: "none" }
+                        ? { background: oilPoor ? "#ff8f86" : "#7cf5c0", boxShadow: "none" }
                         : { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.85)", ["--tw-ring-color" as string]: "rgba(255,255,255,0.15)" }
                     }
                   >
@@ -518,7 +526,7 @@ export function QrPlayer({
             <p className="mt-2 text-[13px] leading-[1.45]" style={{ color: oilPoor ? "#ffb3ab" : "rgba(255,255,255,0.72)" }} aria-live="polite">
               {t(oilPoor ? "chrome.fryerQualityPoor" : "chrome.fryerQualityOk", { score: fryerQuality, label: oilLabel })}
             </p>
-          </div>
+          </div> : null}
         </div>
       </div>
 
@@ -545,6 +553,7 @@ export function QrPlayer({
           startFrame={expandedFrom}
           autoPlay={!reduced}
           chapterLabels={chapterLabels}
+          chapterIds={timeline.ids}
           onClose={closeExpanded}
         />
       ) : null}
@@ -552,7 +561,7 @@ export function QrPlayer({
   );
 }
 
-/** Фон сцены ролика — и у плашки «в разработке» на её месте. */
+/** Фон сцены ролика. */
 export const STAGE_SURFACE_STYLE = {
   background: STAGE_BACKGROUND,
   backgroundImage:

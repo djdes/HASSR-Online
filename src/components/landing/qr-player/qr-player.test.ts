@@ -28,6 +28,7 @@ import {
   TIME_SCALE,
   bodyFever,
   chapterAt,
+  chapterTimeline,
   finalFrameOf,
   fridgeOutOfRange,
   fryerQualityKey,
@@ -36,6 +37,7 @@ import {
   sceneFrame,
   sceneSeconds,
 } from "./chapters";
+import { INDUSTRY_CHAPTERS } from "./industries";
 
 const ROOT = process.cwd();
 const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
@@ -235,7 +237,7 @@ test("«Попробуйте сами»: оценка масла — подпи�
   }
   const player = read("src/components/landing/qr-player/qr-player.tsx");
   assert.ok(player.includes("data-qrp-try-fryer"), "пример с маслом в панели");
-  assert.ok(player.includes("inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr }}"), "оценка уходит в сцену");
+  assert.ok(player.includes("inputProps={{ fridgeTemp, bodyTemp, fryerQuality, today, qr, chapterIds: timeline.ids }}"), "оценка уходит в сцену");
 });
 
 test("хром 19.11.2026: стрелки глав, PDF рядом с видео, организация по-русски", () => {
@@ -288,17 +290,29 @@ test("блок QR 20.11.2026: без «QR-код», шаги с жирным, п
   assert.ok(nav >= 0 && stage > nav && tryPanel > stage && media > tryPanel, "главы → сцена → «Попробуйте сами» → видео и PDF");
 });
 
-test("вкладки вида деятельности: общепит по умолчанию, медцентр и отель — «в разработке»", () => {
+test("вкладки вида деятельности: у каждого свой ролик, без кухни у медцентра и отеля", () => {
   const source = read("src/components/landing/qr-player/qr-industry-player.tsx");
   assert.ok(source.includes('role="tablist"') && source.includes('role="tab"'), "вкладки");
   assert.ok(source.includes("useState<QrIndustry>(DEFAULT_QR_INDUSTRY)"), "по умолчанию — общепит");
-  assert.ok(source.includes("data-qr-industry-pending"), "плашка «в разработке»");
-  assert.ok(source.includes("<QrMediaButtons video={media.video} presentation={media.presentation} />"), "у вида свои видео и PDF");
+  assert.doesNotMatch(source, /pending/i, "плашки «в разработке» больше нет");
+  assert.ok(source.includes("chapterIds={INDUSTRY_CHAPTERS[active]}"), "ролик вида — свой набор глав");
+  assert.ok(source.includes("video={media[active].video}") && source.includes("presentation={media[active].presentation}"), "у вида свои видео и PDF");
+  // Общепит — весь ролик (0:48), у медцентра и отеля кухни нет.
+  assert.deepEqual([...INDUSTRY_CHAPTERS.food], CHAPTERS.map((chapter) => chapter.id));
+  for (const industry of ["medical", "hotel"] as const) {
+    assert.ok(!INDUSTRY_CHAPTERS[industry].includes("fryer"), `${industry}: без фритюра`);
+    assert.ok(INDUSTRY_CHAPTERS[industry].length >= 3, `${industry}: хотя бы три главы`);
+  }
+  // У медцентра нет раздевалки: её запись идёт в гигиенический журнал общепита.
+  assert.ok(!INDUSTRY_CHAPTERS.medical.includes("locker"));
+  assert.equal(INDUSTRY_CHAPTERS.medical[0], "uv", "медцентр начинается с бактерицидной лампы");
   for (const catalog of ["ru", "en", "uz"]) {
     const industries = JSON.parse(read(`src/i18n/messages/${catalog}.json`)).qrPlayer.industries;
-    for (const key of ["label", "pendingBadge", "pendingText", "pendingBack"]) assert.ok(industries[key]?.length > 0, `${catalog}: ${key}`);
+    assert.ok(industries.label?.length > 0, `${catalog}: label`);
+    assert.equal(industries.pendingBadge, undefined, `${catalog}: строк «в разработке» нет`);
     for (const id of ["food", "medical", "hotel"]) {
-      for (const key of ["label", "short", "pending"]) assert.ok(industries[id]?.[key]?.length > 0, `${catalog}: ${id}.${key}`);
+      for (const key of ["label", "short"]) assert.ok(industries[id]?.[key]?.length > 0, `${catalog}: ${id}.${key}`);
+      assert.equal(industries[id].pending, undefined, `${catalog}: ${id}.pending убран`);
       assert.ok(industries[id].short.length <= 11, `${catalog}: «${industries[id].short}» не влезет в треть строки телефона`);
     }
   }
@@ -306,6 +320,37 @@ test("вкладки вида деятельности: общепит по ум
     [messages.qrPlayer.industries.food.label, messages.qrPlayer.industries.medical.label, messages.qrPlayer.industries.hotel.label],
     ["Общепит", "Медицинский центр", "Отель"],
   );
+});
+
+test("набор глав: та же сцена, своя раскладка по времени", () => {
+  const all = chapterTimeline();
+  assert.equal(all.durationInFrames, DURATION_IN_FRAMES);
+  assert.deepEqual(all.at(CHAPTER_FRAMES + 1), chapterAt(CHAPTER_FRAMES + 1));
+  for (let index = 0; index < CHAPTERS.length; index += 1) assert.equal(all.resultFrameOf(index), resultFrameOf(index));
+
+  const medical = chapterTimeline(INDUSTRY_CHAPTERS.medical);
+  assert.equal(medical.durationInFrames, 3 * CHAPTER_FRAMES);
+  assert.equal(formatClock(medical.durationInFrames / FPS), "0:24");
+  assert.deepEqual(medical.at(0), { chapter: medical.chapters[0], index: 0, local: 0 });
+  assert.equal(medical.at(0).chapter.id, "uv");
+  // Первая глава набора — без входа «на скорости»: индекс 0, хоть в общем ролике она третья.
+  assert.equal(medical.at(CHAPTER_FRAMES).chapter.id, "fridge");
+  assert.equal(medical.at(CHAPTER_FRAMES).index, 1);
+  assert.equal(medical.at(10 * CHAPTER_FRAMES).chapter.id, "forgot", "за концом — последняя глава");
+  assert.equal(medical.resultFrameOf(1), CHAPTER_FRAMES + sceneFrame(RESULT_SECONDS));
+  assert.throws(() => chapterTimeline([]), /Пустой набор/);
+
+  // Плеер, плеер на весь экран и сцена берут раскладку из набора, а «Попробуйте сами»
+  // показывает только примеры глав этого ролика.
+  const player = read("src/components/landing/qr-player/qr-player.tsx");
+  assert.ok(player.includes("chapterIds: timeline.ids"), "набор уходит в композицию");
+  assert.ok(player.includes("chapterIds={timeline.ids}"), "и в плеер на весь экран");
+  for (const token of ["fridgeIndex >= 0 ? <TrySlider", "lockerIndex >= 0 ? <TrySlider", "fryerIndex >= 0 ? <div", "tryExamples > 0 ? <button"]) {
+    assert.ok(player.includes(token), token);
+  }
+  assert.doesNotMatch(player, /showResult\(\d\)/, "итог примера — по месту главы в наборе, не по номеру");
+  assert.ok(read("src/components/landing/qr-player/fullscreen-player.tsx").includes("chapterTimeline(chapterIds)"));
+  assert.ok(read("src/components/landing/qr-player/scene.tsx").includes("chapterTimeline(chapterIds).at(frame)"));
 });
 
 test("напоминания 12:00 / 17:00 / 21:00 — ступени крона compliance", () => {

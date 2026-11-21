@@ -1,0 +1,6 @@
+Stage 1 (AC1–AC4) checks, 2026-11-21:
+- node --import tsx --test src/lib/email-text.test.ts: 7/7 pass
+- email-related files (email-layout, welcome-email, blank-download-email, lifecycle/emails, mailing promo, client-email, blank-followup, email-text): 78/78 pass
+- src/components/public/blank-download-goals.test.ts 3/3, blank-download-localization.test.ts 11/11
+- npm run test:changed (escalated to the full suite): pass=6906 fail=0
+- npm run typecheck: ok; eslint on changed files: clean; npm run i18n:types: regenerated

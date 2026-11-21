@@ -217,6 +217,9 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/root/timings", gate: "monitoring" },
   { pattern: "/root/page-limit", gate: "monitoring" },
   { pattern: "/api/root/status", gate: "monitoring" },
+  // Письма сайта на примерах и «Прислать мне» (21.11.2026).
+  { pattern: "/root/emails", gate: "monitoring" },
+  { pattern: "/api/root/emails", gate: "monitoring" },
 
   // Owner only: who has access, impersonation, bot setup.
   { pattern: "/root/team", gate: "superadmin" },

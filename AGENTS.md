@@ -278,6 +278,7 @@ Production runs only code that is on `origin/master`. Everyone may deploy, and o
 - **Do not use Re-run on an old deploy run.** A re-run deploys that run's old commit with its old workflow file. Runs created before 2026-10-24 also lack the checks below, and runs from before 2026-10-16 still run `prisma db push --accept-data-loss`.
 - **Manual deploy** (`scripts/deploy.sh`, SSH) is only for when Actions is unavailable, and only from a clean checkout of the current `origin/master`, e.g. `git worktree add ../wesetup-deploy origin/master`. The script refuses anything else.
 - **Roll back** with `git revert` on master. The workflow refuses to deploy a commit older than the master commit production is serving.
+- **Server catch-up agent** (`scripts/deploy-agent.mjs`, `docs/deploy-agent.md`): every 5 minutes the server compares its build with master; if the GitHub deploy of the master head failed before step 3/3 or never started, the server deploys that same commit itself with the step scripts from that commit's `deploy.yml`, under the shared lock `~/.wesetup-deploy.lock.d`, and reports to Telegram. It never touches a step 3/3 failure or a master that is not ahead of production. Pause it during manual work on the server with `touch ~/.wesetup-deploy-agent-off`.
 - **Keep branches fresh.** A branch carries its own copy of `deploy.yml`, and "Run workflow" on a branch uses that copy. Base branches on a fresh master and delete them after merging.
 
 ### Production Environment

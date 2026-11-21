@@ -5805,6 +5805,7 @@
     "faqHeading": "Ko‘p beriladigan savollar",
     "finalCtaHeading": "Bepul boshlang",
     "finalCtaDetails": "{trialDays, number} {trialDays, plural, other {kun}} — barcha jurnallar, kartasiz. Xodimlarga hech narsa o‘rnatish kerak emas.",
+    "demoOffer": "O‘zingiz tushunishni xohlamaysizmi? 15 daqiqada ko‘rsatamiz",
     "qrCameraInstruction": "Xodim jurnalni qanday ochishini ko‘rish uchun telefon kamerangizni shu yerga qarating.",
     "faq": {
       "refund": {
@@ -5823,18 +5824,6 @@
         "question": "QR orqali kiritilgan yozuvni soxtalashtirish mumkinmi?",
         "answer": "Yozuvni shaxsiy PIN-kod tasdiqlaydi, vaqtni server qo‘yadi, amallar jurnali kim nima yozganini saqlaydi. PIN besh marta noto‘g‘ri kiritilsa, kiritish 15 daqiqaga bloklanadi."
       },
-      "electronicLogs": {
-        "question": "Elektron SanPiN jurnali nima?",
-        "answer": "O‘sha jurnal, faqat telefon va kompyuterda: xodimlar yozuv kiritadi, rahbar tekshiradi va hujjatlarni yuklab oladi."
-      },
-      "inspection": {
-        "question": "Rospotrebnadzor tekshiruvi qanday o‘tadi?",
-        "answer": "Inspektorga kerakli davr uchun PDF beriladi: F.I.Sh., lavozim, imzo, sana va qiymatlar."
-      },
-      "integrations": {
-        "question": "iiko va 1C bilan sinxronlash bormi?",
-        "answer": "Ha. Yetkazib beruvchilar, mahsulotlar, qabul va sifat tekshiruvlari o‘zi sinxronlanadi. Muhandisimiz bilan sozlash — taxminan 30 daqiqa."
-      },
       "offline": {
         "question": "Internet uzilib qolsa nima bo‘ladi?",
         "answer": "Yozuvlar qurilmada saqlanadi va tarmoq tiklangach serverga yuboriladi."
@@ -5842,10 +5831,6 @@
       "dataSecurity": {
         "question": "Ma’lumotlarim xavfsizmi?",
         "answer": "Ma’lumotlar Rossiyadagi serverlarda saqlanadi, har 6 soatda zaxiralanadi va HTTPS orqali uzatiladi. Kirish — login va parol bilan, ruxsat — rol bo‘yicha."
-      },
-      "import": {
-        "question": "Excel’dan ma’lumotlarni ko‘chirsa bo‘ladimi?",
-        "answer": "Ha. Xodimlar, uskunalar va yetkazib beruvchilarni Excel’dan yuklash mumkin. Qog‘oz arxivni haq evaziga raqamlashtiramiz."
       }
     },
     "capabilities": {
@@ -5988,9 +5973,6 @@
       "employeeAccess": "Xodimlar jurnallarni QR-kod orqali qanday to‘ldiradi",
       "missedEntry": "Smena eslatmalari qanday ishlaydi",
       "qrSecurity": "Rollar bo‘yicha kirish va harakatlar jurnali",
-      "electronicLogs": "SanPiN 2.3/2.4.4282-26 nimalarni talab qiladi",
-      "inspection": "Rospotrebnadzor jarimalari kalkulyatori",
-      "integrations": "iiko va 1C bilan sinxronlash haqida batafsil",
       "dataSecurity": "Ma’lumotlar qanday himoyalanadi va qayerda saqlanadi"
     },
     "qrScanSteps": {
@@ -6330,22 +6312,16 @@
       "label": "Faoliyat turi",
       "food": {
         "label": "Umumiy ovqatlanish",
-        "short": "Ovqatlanish",
-        "pending": "Umumiy ovqatlanish uchun video"
+        "short": "Ovqatlanish"
       },
       "medical": {
         "label": "Tibbiyot markazi",
-        "short": "Tibbiyot",
-        "pending": "Tibbiyot markazi uchun video"
+        "short": "Tibbiyot"
       },
       "hotel": {
         "label": "Mehmonxona",
-        "short": "Mehmonxona",
-        "pending": "Mehmonxona uchun video"
-      },
-      "pendingBadge": "Ishlab chiqilmoqda",
-      "pendingText": "Tartib bir xil: skan — PIN — yozuv. Hozircha umumiy ovqatlanishda qanday ishlashini ko‘ring.",
-      "pendingBack": "Umumiy ovqatlanish misoli"
+        "short": "Mehmonxona"
+      }
     }
   },
   "glassInventory": {
@@ -16648,7 +16624,8 @@
     "sberBusiness": "SberBiznes",
     "timesheet": "Tabel",
     "correspondence": "Xatlar",
-    "directoryExchange": "Ma’lumotnomalar almashinuvi"
+    "directoryExchange": "Ma’lumotnomalar almashinuvi",
+    "emailTemplates": "Xatlar"
   },
   "rootEdo": {
     "metadata": {
@@ -20239,7 +20216,7 @@
       "invalid": "Pochta manzilini tekshiring."
     },
     "company": {
-      "placeholder": "Tashkilot nomi (jurnal sarlavhasi uchun)"
+      "placeholder": "Tashkilot (sarlavha uchun)"
     },
     "extras": {
       "toggle": "Qo‘shimcha",
@@ -32943,5 +32920,189 @@
     "result": "yaratildi {created}, yangilandi {updated}, o‘tkazib yuborildi {skipped}",
     "seconds": "{value} s",
     "unknownOwner": "egasi topilmadi"
+  },
+  "rootEmails": {
+    "title": "Xatlar",
+    "description": "Saytning mijozlarga yuboradigan barcha xatlari namunalarda — pochtada qanday ko‘rinadi. «Menga yuborish» tanlangan xatni ish pochtangizga yuboradi.",
+    "note": "Tijoriy takliflar va reklama tarqatmalari — «Xabarlar tarqatish» bo‘limida; jamoaga xizmat xatlari bu yerda ko‘rsatilmaydi.",
+    "groups": {
+      "access": "Kirish va ruxsat",
+      "billing": "Sinov muddati va to‘lov",
+      "support": "Murojaatlar va fikrlar",
+      "journals": "Jurnallar va bildirishnomalar",
+      "blanks": "Saytdagi jurnal shablonlari"
+    },
+    "labels": {
+      "subject": "Mavzu",
+      "inbox": "Kiruvchilarda",
+      "attachments": "Ilovalar",
+      "when": "Qachon yuboriladi",
+      "language": "Til",
+      "onlyRussian": "Faqat rus tilida",
+      "view": "Ko‘rinish",
+      "viewEmail": "Xat",
+      "viewText": "Matn",
+      "widthPhone": "Telefon",
+      "widthDesktop": "Kompyuter",
+      "preview": "Xatni oldindan ko‘rish",
+      "list": "Sayt xatlari"
+    },
+    "send": {
+      "action": "Menga yuborish",
+      "sending": "Yuborilmoqda…",
+      "sent": "{email} manziliga yuborildi",
+      "logged": "Serverda pochta sozlanmagan — xat server jurnaliga yozildi",
+      "failed": "Yuborib bo‘lmadi, qayta urinib ko‘ring",
+      "noEmail": "Hisobingizda ish pochtasi yo‘q — uni «Pochta va Telegram» bo‘limida kiriting",
+      "rateLimited": "Juda tez-tez — bir-ikki daqiqa kuting",
+      "unknown": "Bunday xat yo‘q"
+    },
+    "samplePrefix": "[Namuna]",
+    "templates": {
+      "verification": {
+        "title": "Tasdiqlash kodi",
+        "when": "Ro‘yxatdan o‘tish: 6 xonali kod"
+      },
+      "invite-link": {
+        "title": "Havola orqali taklif",
+        "when": "Rahbar xodimni taklif qildi — parol o‘rnatish havolasi"
+      },
+      "invite-password": {
+        "title": "Parol bilan taklif",
+        "when": "Xodim darhol parol bilan qo‘shildi"
+      },
+      "account-landing": {
+        "title": "Bosh sahifada ro‘yxatdan o‘tgandan keyin kirish",
+        "when": "Kabinet bosh sahifada pochta orqali yaratildi: boshqa qurilmalar uchun parol"
+      },
+      "account-blank": {
+        "title": "Shablon yuklab olingandan keyin kirish",
+        "when": "Kabinet yuklab olish oynasidagi «Tez ro‘yxatdan o‘tish» belgisi bilan yaratildi"
+      },
+      "welcome": {
+        "title": "Salomlashuv",
+        "when": "Ro‘yxatdan o‘tgandan so‘ng darhol"
+      },
+      "password-changed": {
+        "title": "Yangi parol",
+        "when": "Parol kabinetda o‘zgartirildi yoki rahbar berdi"
+      },
+      "password-reset": {
+        "title": "Parolni tiklash",
+        "when": "«Parolni unutdingizmi?» bosildi"
+      },
+      "new-device": {
+        "title": "Yangi qurilmadan kirish",
+        "when": "Notanish telefon yoki kompyuterdan kirildi"
+      },
+      "trial-idle": {
+        "title": "Sinov: jurnallar boshlanmagan",
+        "when": "Sinov tugashidan 4 ish kuni oldin, yozuvlar bo‘lmasa"
+      },
+      "trial-first": {
+        "title": "Sinov muddati tugayapti",
+        "when": "Sinov tugashidan 4 ish kuni oldin"
+      },
+      "trial-second": {
+        "title": "Sinov: oxirgi kunlar",
+        "when": "Sinov tugashidan 2 ish kuni oldin"
+      },
+      "grace-last": {
+        "title": "Imtiyozli muddat tugayapti",
+        "when": "Sinov yoki to‘lov tugadi — imtiyozli muddatning oxirgi kunlari"
+      },
+      "renewal-early": {
+        "title": "Yillik tarifni uzaytirish",
+        "when": "To‘langan yil tugashidan bir oy oldin"
+      },
+      "offer": {
+        "title": "Shaxsiy taklif",
+        "when": "Menejer tarif bo‘yicha taklif yubordi"
+      },
+      "invoice": {
+        "title": "To‘lov uchun hisob",
+        "when": "Obuna yoki to‘ldirish uchun hisob chiqarildi"
+      },
+      "payment-receipt": {
+        "title": "To‘lov qabul qilindi",
+        "when": "Obuna to‘landi"
+      },
+      "balance-topup": {
+        "title": "Balans to‘ldirildi",
+        "when": "Ballar balansi to‘ldirildi"
+      },
+      "abandoned-order": {
+        "title": "To‘lov yakunlanmagan",
+        "when": "Tarif rasmiylashtirildi, lekin to‘lanmadi — 1–72 soatdan keyin"
+      },
+      "completion-link": {
+        "title": "Kabinetni ochish havolasi",
+        "when": "Kabinetsiz to‘landi — parol o‘rnatish havolasi"
+      },
+      "referral-invite": {
+        "title": "Hamkasbdan tavsiya",
+        "when": "Mijoz WeSetup’ni hamkasbiga tavsiya qildi"
+      },
+      "feedback-received": {
+        "title": "Murojaat qabul qilindi",
+        "when": "Qo‘llab-quvvatlashga yozildi"
+      },
+      "feedback-reply": {
+        "title": "Murojaatga javob",
+        "when": "Qo‘llab-quvvatlash javob berdi"
+      },
+      "guest-reply": {
+        "title": "Saytdagi chatdan javob",
+        "when": "Operator chat mehmoniga javob berdi"
+      },
+      "trial-feedback": {
+        "title": "Sinov qanday o‘tdi?",
+        "when": "Sinov muddatidan keyingi so‘rovnoma"
+      },
+      "review-request": {
+        "title": "Fikr so‘rash",
+        "when": "Mijoz 30 kun davomida jurnallarni faol yuritmoqda"
+      },
+      "temperature-alert": {
+        "title": "Harorat me’yordan tashqarida",
+        "when": "Ruxsat etilgan oraliqdan tashqari harorat yozildi"
+      },
+      "deviation-alert": {
+        "title": "Jurnalda og‘ish",
+        "when": "Jurnalda og‘ish belgilandi"
+      },
+      "compliance-reminder": {
+        "title": "Jurnallar to‘ldirilmagan",
+        "when": "Kun davomida to‘ldirilmagan jurnallar haqida eslatma"
+      },
+      "weekly-digest": {
+        "title": "Haftalik hisobot",
+        "when": "Haftada bir marta rahbarga"
+      },
+      "journey-first-qr": {
+        "title": "Ilk qadamlar: QR-kod",
+        "when": "Yozuvsiz yangi foydalanuvchiga: bitta muzlatgichdan boshlash"
+      },
+      "journey-invite-team": {
+        "title": "Ilk qadamlar: smenani taklif qilish",
+        "when": "Ilk yozuvlar bor — xodimlarni taklif qilish"
+      },
+      "journey-demo-expiring": {
+        "title": "Ilk qadamlar: demo tez orada o‘chadi",
+        "when": "Demo tashkilot o‘chirilishidan oldin"
+      },
+      "journey-inspector-view": {
+        "title": "Ilk qadamlar: tekshiruvchi nimani ko‘radi",
+        "when": "Tekshiruvda jurnallarni qanday ko‘rsatish"
+      },
+      "blank-download": {
+        "title": "Shablon havolasi",
+        "when": "Saytda jurnal shabloni yuklab olindi"
+      },
+      "blank-followup": {
+        "title": "Shablon bo‘yicha maslahatlar",
+        "when": "Yuklab olingandan keyingi kun"
+      }
+    }
   }
 }

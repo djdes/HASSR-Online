@@ -205,18 +205,17 @@ const POPULAR_JOURNALS = [
  * `more` — ссылка «подробнее» под ответом (перелинковка, правки 18.11.2026):
  * главная отдаёт вес профильной странице, а текст ссылки называет её тему, а
  * не «читать далее». В разметку FAQPage ссылки не идут — там только ответ.
+ *
+ * Шесть вопросов (правки 21.11.2026): про iiko/1С, Excel, проверку и «что
+ * такое электронный журнал» — в базе знаний; ссылки на эти страницы есть в подвале.
  */
 const FAQ = [
   { q: "landing.faq.refund.question", a: "landing.faq.refund.answer", more: { href: "/oferta", label: "landing.faqMore.refund" } },
   { q: "landing.faq.employeeAccess.question", a: "landing.faq.employeeAccess.answer", more: { href: "/features/qr", label: "landing.faqMore.employeeAccess" } },
   { q: "landing.faq.missedEntry.question", a: "landing.faq.missedEntry.answer", more: { href: "/features/reminders", label: "landing.faqMore.missedEntry" } },
   { q: "landing.faq.qrSecurity.question", a: "landing.faq.qrSecurity.answer", more: { href: "/features/role-access", label: "landing.faqMore.qrSecurity" } },
-  { q: "landing.faq.electronicLogs.question", a: "landing.faq.electronicLogs.answer", more: { href: "/sanpin-2-3-2-4-4282-26", label: "landing.faqMore.electronicLogs" } },
-  { q: "landing.faq.inspection.question", a: "landing.faq.inspection.answer", more: { href: "/calc/fines", label: "landing.faqMore.inspection" } },
-  { q: "landing.faq.integrations.question", a: "landing.faq.integrations.answer", more: { href: "/features/sync-iiko-1c", label: "landing.faqMore.integrations" } },
   { q: "landing.faq.offline.question", a: "landing.faq.offline.answer", more: null },
   { q: "landing.faq.dataSecurity.question", a: "landing.faq.dataSecurity.answer", more: { href: "/security", label: "landing.faqMore.dataSecurity" } },
-  { q: "landing.faq.import.question", a: "landing.faq.import.answer", more: null },
 ] as const;
 
 /**
@@ -955,6 +954,7 @@ export default async function LandingPage() {
           contactTelegramUrl={contactTelegramUrl(process.env)}
           startHref="#start"
           showTable
+          tableCollapsed
           className="mt-2"
         />
 
@@ -1096,7 +1096,7 @@ export default async function LandingPage() {
                     показ по видеосвязи. Звонят по-русски — только в ru. */}
                 {!isAuthed && locale === "ru" ? (
                   <DemoRequestButton place="home:final" variant="link" className="mt-3">
-                    Не хотите разбираться сами? Покажем за 15 минут
+                    {copy("landing.demoOffer")}
                   </DemoRequestButton>
                 ) : null}
               </div>

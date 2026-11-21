@@ -1,0 +1,13 @@
+{
+  "task_id": "emails-preheader-text-root-catalog-2026-11-21",
+  "base": "6c90210d3",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/catalog-subjects-and-inbox-lines.txt", "raw/targeted-tests.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/targeted-tests.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/stage1-checks.txt", "raw/targeted-tests.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/targeted-tests.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/targeted-tests.txt", "raw/catalog-subjects-and-inbox-lines.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/full-suite-precommit.txt", "raw/targeted-tests.txt", "raw/stage1-checks.txt"] }
+  },
+  "raw": ["raw/stage1-checks.txt", "raw/targeted-tests.txt", "raw/full-suite-precommit.txt", "raw/catalog-subjects-and-inbox-lines.txt"]
+}

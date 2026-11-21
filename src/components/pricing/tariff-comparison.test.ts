@@ -426,3 +426,18 @@ test("from 50 points the paid cards call the manager instead of the order page",
     if (locale !== "ru") assert.doesNotMatch(visibleText(html), /\p{Script=Cyrillic}/u, `${locale}: Cyrillic leaked`);
   }
 });
+
+test("главная: таблица сравнения свёрнута до кнопки, содержимое остаётся в HTML (правки 21.11.2026)", async () => {
+  const messages = await loadMessages("ru");
+  const t = createTranslator({ locale: "ru", messages, namespace: "landingComponents.tariffs" });
+  const props = { mode: "public" as const, rates: DEFAULT_PLAN_RATES, available, promotion: null, ppkHref: "/uslugi", showTable: true };
+  const collapsed = await render("ru", createElement(TariffComparison, { ...props, tableCollapsed: true }));
+  const table = collapsed.slice(collapsed.indexOf('data-testid="tariff-table"'));
+  assert.match(table, /aria-expanded="false"[^>]*data-testid="tariff-table-toggle"/, "кнопка свёрнута");
+  assert.match(table, /<div id="tariff-table-body" hidden="">/, "тело таблицы скрыто");
+  assert.ok(table.includes(t("rows.mercury")) && table.includes(t("table.trialNote", { trialDays: 14 })), "строки таблицы в HTML");
+  // /pricing и кабинет — без свёртки, как раньше.
+  const open = await render("ru", createElement(TariffComparison, props));
+  assert.ok(!open.includes('data-testid="tariff-table-toggle"'));
+  assert.match(open, /<div id="tariff-table-body">/);
+});

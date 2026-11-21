@@ -5,7 +5,7 @@
  * Light theme only: the old brand indigo classes (#141821, #5566f6, #4a5bf0, #3848c7, #3343cf, #4c5ae0, #f5f6ff, #eef1ff, #eef0ff, #eef0fe, #e8ebff, #dfe3ff, #5563ff, #4554ff, #4b57ff, #5863f8, #7a5cff, #1f3a8a, #0b1024, #3c4053, #5b6170, #6f7282, #73738a, #7a7c8e, #9b9fb3, #c7ccea, #c8cbe0, #d8dae6, #dcdfed, #dfe1ec, #ececf4, #eef0f6, #f1f2f8, #f2f3f8, #f3f4fb, #f4f5fb, #fafbff)
  * are repainted to black, graphite and greys. Dark theme, partner accent
  * and the Mini App keep their own colours.
- * 310 rules from 960 files (src/).
+ * 310 rules from 963 files (src/).
  */
 
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .app-shell, html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) body {
@@ -287,7 +287,6 @@ html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-acc
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_12px_30px_-14px_rgba\(85\,102\,246\,0\.65\)\] { box-shadow: 0 12px 30px -14px rgba(17,17,20,0.293); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_12px_32px_-12px_rgba\(85\,102\,246\,0\.4\)\] { box-shadow: 0 12px 32px -12px rgba(17,17,20,0.18); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_12px_32px_-12px_rgba\(85\,102\,246\,0\.65\)\] { box-shadow: 0 12px 32px -12px rgba(17,17,20,0.293); }
-html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_12px_32px_-14px_rgba\(85\,102\,246\,0\.9\)\] { box-shadow: 0 12px 32px -14px rgba(17,17,20,0.405); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_12px_36px_-12px_rgba\(85\,102\,246\,0\.65\)\] { box-shadow: 0 12px 36px -12px rgba(17,17,20,0.293); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_12px_36px_-16px_rgba\(85\,102\,246\,0\.65\)\] { box-shadow: 0 12px 36px -16px rgba(17,17,20,0.293); }
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .shadow-\[0_14px_30px_-10px_rgba\(85\,102\,246\,0\.6\)\] { box-shadow: 0 14px 30px -10px rgba(17,17,20,0.27); }
@@ -339,6 +338,9 @@ html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-acc
 html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .text-\[\#dfe3ff\] { color: rgb(220 221 227); }
 @media (width >= 64rem) {
   html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .lg\:bg-\[\#f5f6ff\] { background-color: rgb(244 244 246); }
+}
+@media (width < 40rem) {
+  html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .max-sm\:border-\[\#ececf4\] { border-color: rgb(231 231 236); }
 }
 @media (width >= 40rem) {
   html[data-view-design="new"]:not(:has([data-app-theme="dark"], [data-partner-accent], .mini-root)) .sm\:bg-\[\#f4f5fb\] { background-color: rgb(244 244 246); }

@@ -59,3 +59,11 @@ test("подписи экранов есть во всех трёх катало
     }
   }
 });
+
+test("рамка телефона: «чёлка» в строке состояния, а не поверх шапки снимка (правки 21.11.2026)", () => {
+  const showcase = read("src/components/landing/interface-showcase.tsx");
+  assert.ok(showcase.includes('data-phone-status-bar=""'), "строка состояния есть");
+  const bar = showcase.slice(showcase.indexOf("data-phone-status-bar"));
+  assert.ok(bar.indexOf("rounded-full bg-black") < bar.indexOf("slide.mobile.src"), "чёлка — в строке состояния, снимок — под ней");
+  assert.ok(showcase.includes('className="relative min-h-0 flex-1"'), "снимок занимает место под строкой состояния");
+});
