@@ -142,6 +142,26 @@ async function ensureBuilding(page: Page, organizationId: string, name: string, 
   return id;
 }
 
+/**
+ * Ждём, пока страница перестанет переходить сама на себя: «Сегодня» после
+ * загрузки ещё раз-два обновляется (на холодном dev-сервере — через
+ * несколько секунд), и снимок в этот момент рвался бы.
+ */
+async function settle(page: Page, quietMs = 2500, maxMs = 60_000) {
+  let last = Date.now();
+  const onNavigate = (frame: unknown) => {
+    if (frame === page.mainFrame()) last = Date.now();
+  };
+  page.on("framenavigated", onNavigate);
+  const started = Date.now();
+  try {
+    while (Date.now() - last < quietMs && Date.now() - started < maxMs) await page.waitForTimeout(250);
+    await page.waitForLoadState("load");
+  } finally {
+    page.off("framenavigated", onNavigate);
+  }
+}
+
 /** Снимок одного экрана на ПК и на телефоне. `scroll` — px или `text:Надпись`. */
 async function capture(browser: Browser, state: Awaited<ReturnType<BrowserContext["storageState"]>>, id: string, route: string, scroll: { desktop?: number | string; mobile?: number | string } = {}) {
   for (const [variant, options] of [["desktop", DESKTOP], ["mobile", MOBILE]] as const) {
@@ -149,26 +169,12 @@ async function capture(browser: Browser, state: Awaited<ReturnType<BrowserContex
     const page = await ctx.newPage();
     await page.goto(BASE + route, { waitUntil: "load", timeout: 300_000 });
     await page.waitForTimeout(4000);
-    await page.addStyleTag({ content: HIDE_CSS });
-    await page.evaluate(() => {
-      for (const link of document.querySelectorAll<HTMLElement>("header a")) {
-        const label = (link.getAttribute("aria-label") || link.getAttribute("title") || link.textContent || "").trim();
-        if (label === "MAX") link.style.display = "none";
-      }
+    await settle(page);
+    await prepareFrame(page, scroll[variant] ?? 0).catch(async () => {
+      // Страница всё же ушла на новый адрес — ждём и пробуем ещё раз.
+      await settle(page);
+      await prepareFrame(page, scroll[variant] ?? 0);
     });
-    const target = scroll[variant] ?? 0;
-    await page.evaluate((target) => {
-      if (typeof target === "number") {
-        window.scrollTo(0, target);
-        return;
-      }
-      const wanted = target.replace(/^text:/, "");
-      const element = [...document.querySelectorAll("main *")].find((node) => node.childElementCount === 0 && node.textContent?.trim() === wanted);
-      const header = document.querySelector("header");
-      const offset = header && getComputedStyle(header).position !== "static" ? header.getBoundingClientRect().height : 0;
-      if (element) window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - offset - 20);
-    }, target);
-    await page.waitForTimeout(1200);
     const png = path.join(TMP, `${id}-${variant}.png`);
     await page.screenshot({ path: png });
     const webp = path.join(OUT, `${id}-${variant}.webp`);
@@ -178,6 +184,29 @@ async function capture(browser: Browser, state: Awaited<ReturnType<BrowserContex
     console.log(`  ${path.relative(process.cwd(), webp)}`);
     await ctx.close();
   }
+}
+
+/** Прячет служебное и прокручивает к нужному месту. */
+async function prepareFrame(page: Page, target: number | string) {
+  await page.addStyleTag({ content: HIDE_CSS });
+  await page.evaluate(() => {
+    for (const link of document.querySelectorAll<HTMLElement>("header a")) {
+      const label = (link.getAttribute("aria-label") || link.getAttribute("title") || link.textContent || "").trim();
+      if (label === "MAX") link.style.display = "none";
+    }
+  });
+  await page.evaluate((target) => {
+    if (typeof target === "number") {
+      window.scrollTo(0, target);
+      return;
+    }
+    const wanted = target.replace(/^text:/, "");
+    const element = [...document.querySelectorAll("main *")].find((node) => node.childElementCount === 0 && node.textContent?.trim() === wanted);
+    const header = document.querySelector("header");
+    const offset = header && getComputedStyle(header).position !== "static" ? header.getBoundingClientRect().height : 0;
+    if (element) window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - offset - 20);
+  }, target);
+  await page.waitForTimeout(1200);
 }
 
 async function prepareFood(page: Page, organizationId: string) {
