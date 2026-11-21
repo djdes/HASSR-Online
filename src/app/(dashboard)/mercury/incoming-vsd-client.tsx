@@ -38,6 +38,8 @@ export type VsdRow = {
   transportInfo: string | null;
   processError: string | null;
   journalDocumentId: string | null;
+  /** Ключ партии после приёмки — ссылка на историю партии. */
+  batchKey: string | null;
   deadline: Deadline;
 };
 
@@ -221,7 +223,15 @@ export function IncomingVsdClient({
                   ) : null}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  {doc.batchKey ? (
+                    <Link
+                      href={`/journals/traceability/${encodeURIComponent(doc.batchKey)}`}
+                      className="inline-flex h-10 items-center rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13px] font-medium text-[#0b1024] hover:bg-[#f5f6ff]"
+                    >
+                      {t("batchHistory")}
+                    </Link>
+                  ) : null}
                   {doc.journalDocumentId ? (
                     <Link
                       href={`/journals/incoming_control/documents/${doc.journalDocumentId}`}

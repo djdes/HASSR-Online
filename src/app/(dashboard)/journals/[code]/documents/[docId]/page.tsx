@@ -1,4 +1,6 @@
 import { captureAcceptanceSource } from "@/lib/acceptance-source.server";
+import { loadAcceptanceSources } from "@/lib/acceptance-sources.server";
+import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { captureStaffTrainingSource } from "@/lib/staff-training-source.server";
 import { captureMaintenanceSource } from "@/lib/equipment-maintenance-presentation";
 import { getTranslations } from "next-intl/server";
@@ -1264,6 +1266,12 @@ async function JournalDocumentBody({
       (source) => auditProtocolConfigSourceIdentity([source, enrichedEmployees, summarySource])
     );
     const generatedSummaries = bindAcceptanceSummarySource(summarySource, acceptanceConfig);
+    // ВСД из Меркурия и накладные iiko — подсказка руководству над таблицей.
+    const acceptanceSources = await loadAcceptanceSources({
+      organizationId: getActiveOrgId(session),
+      buildingId: document.buildingId,
+      canManage: hasFullWorkspaceAccess(session.user),
+    }).catch(() => null);
     return (
       <DomainMessagesBoundary namespaces={["journalAcceptance", "foodControlPdf", "common", "journalControls", "journalWidgets", "journals"]}>
       <AcceptanceDocumentClient
@@ -1280,6 +1288,7 @@ async function JournalDocumentBody({
         config={acceptanceConfig}
         sourceIdentity={acceptanceSourceIdentity}
         generatedSummaries={generatedSummaries}
+        sources={acceptanceSources}
         useV2={organization?.experimentalUiV2 ?? true}
       />
       </DomainMessagesBoundary>

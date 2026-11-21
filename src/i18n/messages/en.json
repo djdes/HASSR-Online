@@ -1361,7 +1361,18 @@
         "step": "Step {number, number}",
         "supplier": "· supplier: {name}",
         "noteTitle": "HACCP traceability:",
-        "noteBody": "under TR CU 021/2011 you must be able to reconstruct the path of any batch within a minute. This screen shows all records with one key — receiving → quality control → dispatch/write-off. A batch is linked automatically if the key is entered in the “batchNumber” or “batchKey” field when filling in."
+        "noteBody": "under TR CU 021/2011 you must be able to reconstruct the path of any batch within a minute. This screen shows all records with one key — receiving → quality control → dispatch/write-off. A batch is linked automatically if the key is entered in the “batchNumber” or “batchKey” field when filling in. Acceptance by a Mercury VSD is linked automatically.",
+        "batchOnlyDescription": "The batch exists, but there are no journal records for it yet.",
+        "batchSection": "Batch",
+        "vsdSection": "Acceptance by VSD",
+        "entriesSection": "Journal records",
+        "supplierLabel": "supplier: {name}",
+        "receivedOn": "received {date}",
+        "openBatch": "Open batch",
+        "vsdUntitled": "Untitled",
+        "vsdNumber": "VSD No. {number}",
+        "openAcceptanceJournal": "Open the receiving journal",
+        "batchRejected": "Rejected"
       },
       "brakerageDate": {
         "placeholder": "DD-MM-YYYY",
@@ -7728,7 +7739,8 @@
       "forbidden": "This action is available to managers.",
       "notFound": "Batch not found.",
       "statusInvalid": "Unknown batch status."
-    }
+    },
+    "batchHistory": "Batch history"
   },
   "cleaningGrid": {
     "cleaning": {
@@ -23974,7 +23986,7 @@
       "addDeliveryDesktop": "Add",
       "addDeliveryMobile": "Add delivery",
       "editLists": "Edit lists",
-      "addIiko": "Add from Iiko",
+      "addIiko": "Add from iiko",
       "tableEmpty": "No rows yet"
     },
     "row": {
@@ -24095,8 +24107,18 @@
       "countRange": "Enter a row count from 1 to 100."
     },
     "iiko": {
-      "title": "Add list from Iiko (goods receipt notes)",
-      "description": "Contact the WeSetup developers to configure synchronization with Iiko."
+      "title": "Invoices from iiko",
+      "connected": "Invoices from iiko arrive in Incoming invoices. Open an invoice, check the goods and press “Accept”: the rows will appear in this journal.",
+      "notConnected": "iiko is not connected yet. Connect it and receipt invoices will arrive in Incoming invoices, and from there go into this journal with one button.",
+      "openInbox": "Open Incoming invoices",
+      "connect": "Connect iiko"
+    },
+    "mercury": {
+      "menu": "VSD from Mercury",
+      "pending": "{count, plural, one {# VSD in Mercury is waiting for acceptance} other {# VSD in Mercury are waiting for acceptance}}",
+      "overdue": "(overdue: {count, number})",
+      "hint": "Check the goods and process the acceptance: the row appears in this journal and the VSD is redeemed in Mercury.",
+      "process": "Process"
     },
     "confirm": {
       "deleteTitle": "Delete selected rows?",
@@ -28111,7 +28133,8 @@
       "withdrawHint": "Untick this if you clear it yourself in the Mercury account — the journal line will still be created.",
       "submitWithdraw": "Accept and clear",
       "submitJournal": "Add to the journal",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "batchHistory": "Batch history"
     }
   },
   "miniUi": {
