@@ -60,7 +60,7 @@ PASS transfer into a foreign organization → 404
 PASS cabinet for a foreign account → 403
 PASS foreign organization got nothing
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -69,28 +69,28 @@ PASS foreign organization got nothing
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio640031ox7d4ojjlb01',
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -99,31 +99,31 @@ PASS foreign organization got nothing
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio640031ox7d4ojjlb01',
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
-DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/1/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Чужая-2",{"products":"0/0/0/0","staff":"1/0/1/0","objects":"0/0/2/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[] otherCabinet cmwqgio7p003cox7dla96m7ea
+DEBUG limited [["Чужая",{"products":"0/0/0/0","staff":"0/0/0/0","objects":"0/0/1/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}],["Чужая-2",{"products":"0/0/0/0","staff":"1/0/1/0","objects":"0/0/2/0","equipment":"0/0/0/0","journals":"0/0/0/0","checklists":"0/0/0/0"}]] notes=[] otherCabinet cmwqhmkhb003cpn7dklz16df6
 PASS tariff: employee over the seat limit skipped and reported
 PASS tariff: objects over the point limit skipped and reported
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -132,21 +132,21 @@ PASS tariff: objects over the point limit skipped and reported
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio640031ox7d4ojjlb01',
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -155,7 +155,7 @@ PASS tariff: objects over the point limit skipped and reported
 PASS tariff: skipped records are retried, nothing else changes
 PASS empty kinds: member and its links removed
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -164,21 +164,21 @@ PASS empty kinds: member and its links removed
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio6v0035ox7d7n1b9bjn',
+  organizationId: 'cmwqhmkgb0035pn7d12x1ec02',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
   limit: 1
 }
 [billing] point limit: blocked {
-  organizationId: 'cmwqgio640031ox7d4ojjlb01',
+  organizationId: 'cmwqhmkf20031pn7ddy29roev',
   source: 'directory-exchange',
   tier: 'free',
   pointsInUse: 3,
@@ -276,11 +276,11 @@ cleanup: organizations left 0
 TOTAL: 6 PASS, 0 FAIL
 
 ================ reminder-check ================
-letter 3 days before: [{"to":"remchkmwqgiuyi-paid@example.test","subject":"Через 3 дня закончатся бесплатные дни организации «Вторая remchkmwqgiuyi»"}]
+letter 3 days before: [{"to":"remchkmwqhmtb1-paid@example.test","subject":"Через 3 дня закончатся бесплатные дни организации «Вторая remchkmwqhmtb1»"}]
 PASS 3 days before: one letter «Через 3 дня закончатся бесплатные дни организации …» to the account owner
 PASS 3 days before: one AuditLog mark with stage 3
 PASS second run the same day: no letter, no new mark
-letter 1 day before: [{"to":"remchkmwqgiuyi-paid@example.test","subject":"Завтра закончатся бесплатные дни организации «Вторая remchkmwqgiuyi»"}]
+letter 1 day before: [{"to":"remchkmwqhmtb1-paid@example.test","subject":"Завтра закончатся бесплатные дни организации «Вторая remchkmwqhmtb1»"}]
 PASS 1 day before: the second letter «Завтра закончатся бесплатные дни организации …»
 PASS 1 day before: two marks in total, stages 3 and 1
 PASS account in its own trial: no letter, no mark
@@ -290,7 +290,7 @@ TOTAL: 7 PASS, 0 FAIL
 
 ================ skips-check ================
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -299,7 +299,7 @@ TOTAL: 7 PASS, 0 FAIL
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -308,7 +308,7 @@ TOTAL: 7 PASS, 0 FAIL
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -317,7 +317,7 @@ TOTAL: 7 PASS, 0 FAIL
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -333,7 +333,7 @@ PASS rows match the summary counters (B products, B staff, A products)
 PASS row carries source organization and record
 PASS the other direction: A has a conflict row for B's «МОЛОКО»
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -342,7 +342,7 @@ PASS the other direction: A has a conflict row for B's «МОЛОКО»
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -364,7 +364,7 @@ PASS ignore: tombstone link written (entityId null)
 PASS ignore: row removed
 PASS ignore: audit directory_exchange.skip_ignored in B
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -373,7 +373,7 @@ PASS ignore: audit directory_exchange.skip_ignored in B
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -387,7 +387,7 @@ PASS link: row removed
 PASS link: the record's own lonely group is released, A's row for it is gone
 PASS link: audit directory_exchange.skip_linked in B
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -396,7 +396,7 @@ PASS link: audit directory_exchange.skip_linked in B
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -407,7 +407,7 @@ PASS link: audit directory_exchange.skip_linked in B
 PASS link: next exchange leaves B's record data unchanged
 PASS link: next exchange creates and updates no products, no «Молоко» rows anywhere
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -416,7 +416,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -425,7 +425,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -434,7 +434,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -444,7 +444,7 @@ PASS link: next exchange creates and updates no products, no «Молоко» ro
 }
 PASS link: a later edit of the source reaches the linked record
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -455,7 +455,7 @@ PASS link: a later edit of the source reaches the linked record
 PASS re-activated product in B: its row is gone
 PASS employee added in B by hand: the limit row is gone
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -464,7 +464,7 @@ PASS employee added in B by hand: the limit row is gone
   limit: 1
 }
 [billing] seat limit: blocked {
-  organizationId: 'cmwqgixdw0004x97dcax1qox4',
+  organizationId: 'cmwqhmw9t0004vl7db866o3qe',
   source: 'staff.create',
   kind: 'needs_decision',
   tier: 'free',
@@ -530,10 +530,10 @@ PASS route mapper: 409 { code: deleting, params: { name } }
 PASS transfer OUT of an organization being deleted is allowed (closing 300 → 0, A 3 500 → 3 800)
 PASS 4 × (A→B and B→A) at once: all 8 transfers succeed
 PASS opposite transfers: A and B balances back where they were
-PASS ledger invariant for Кафе А balchkmwqgizm2
-PASS ledger invariant for Бар Б balchkmwqgizm2
-PASS ledger invariant for Столовая В balchkmwqgizm2
-PASS ledger invariant for Закрывается balchkmwqgizm2
+PASS ledger invariant for Кафе А balchkmwqhmy7w
+PASS ledger invariant for Бар Б balchkmwqhmy7w
+PASS ledger invariant for Столовая В balchkmwqhmy7w
+PASS ledger invariant for Закрывается balchkmwqhmy7w
 cleanup: organizations left 0, ledger rows left 0, audit rows left 0
 TOTAL: 47 PASS, 0 FAIL
 
@@ -1128,20 +1128,441 @@ cleanup: organizations left 0, users left 0, accounts left 0, links left 0, temp
 TOTAL: 55 PASS, 0 FAIL
 RESULT: all checks passed
 
+================ manager-check ================
+--- before the appointment
+PASS M: no account role
+PASS M: no menu item «Сеть»
+PASS M: exchange routes → 403
+PASS M: network summary refused
+PASS M: mini page refused
+PASS M: account balances → 403
+PASS owner: menu item «Сеть» (2 organizations)
+--- appointment
+PASS owner: managers API access
+PASS candidates: M (manager of B) is offered
+PASS candidates: not the owner, not a cook, not another company
+PASS candidates: M is shown with her organization
+PASS no managers yet
+PASS appoint another company's owner → 404
+PASS appoint a cook → 404
+PASS appoint the owner himself → 409
+PASS owner appoints M
+PASS appoint M again → 409
+PASS row: account, user, granted by the owner
+PASS audit account.network_manager_added in the owner's organization, names M
+PASS list: M is an active manager, no longer a candidate
+PASS M: managers API → 403
+PASS M: appoint a manager (lib) → 403
+PASS M: remove a manager (lib) → 403
+--- the manager can
+PASS M: role network_manager
+PASS M: canManageNetwork
+PASS M: menu item «Сеть»
+PASS M: exchange routes allowed — actor M, cabinet owner O
+PASS M: another company's requests (owner only) → 403
+PASS owner: requests allowed
+PASS M: network summary — both organizations, B current
+PASS M: mini page rows (A, B)
+PASS M: mini «Перейти» only where M is a member (B yes, A no)
+PASS M: site «Перейти» (same rule) — B yes, A no
+PASS owner: mini page rows, «Перейти» everywhere
+PASS cook: mini page refused
+PASS M: exchange card — canManage, not the account owner, sees A
+PASS owner: exchange card — isAccountOwner
+PASS M impersonated session: card closed
+PASS M: save exchange members → cabinet created
+PASS cabinet: in account X, the owner is its member (owner), the manager is not
+PASS members: created by M
+PASS audit directory_exchange.configured by M (name)
+PASS ensureExchangeCabinet by M returns the same cabinet
+PASS M: sync ran
+PASS sync: «Сыр» created in B
+PASS audit directory_exchange.synced by M
+PASS skips: B has «Молоко» (link) and «Кефир» (ignore)
+PASS M: skip ignored — audit by M
+PASS M: skip linked — audit by M
+PASS history: «Сыр» created in B
+PASS M: history undo — «Сыр» turned off
+PASS audit directory_exchange.change_undone by M
+PASS M: transfer A → B listed for M
+PASS transfer row: actor M
+PASS staff «Иванов Иван» in B
+PASS owner sees the same transfer
+PASS another company's owner sees nothing
+PASS another company's owner: undo → 404
+PASS M: undo transfer — staff archived
+PASS transfer row: undone by M
+PASS audit directory_exchange.transfer_undone by M (name)
+PASS M: regenerate cabinet code — a new code
+PASS audit directory_exchange.code_regenerated by M
+PASS M: exchange card shows the cabinet code
+PASS M: account balances — A + B = 6 000
+PASS M: balance page block shown
+PASS M: transfer 300 ₽ A → B
+PASS balances: A 4 700, B 1 300
+PASS audit balance.transfer by M in both organizations
+PASS ledger rows: actor M
+--- the manager cannot
+PASS another company asks for a link (pending)
+PASS M: open another company's request by link → 403
+PASS M: open the request by id → 404
+PASS M: approve another company's request → 403
+PASS M: decline another company's request → 403
+PASS request still pending
+PASS M: incoming requests list is empty
+PASS owner: sees the incoming request
+PASS M: send a request to another company → 403
+PASS M: pay the plan from the account balances → 403
+--- others
+PASS another company's owner with an X organization active: exchange → 403
+PASS another company's owner: canManageNetwork(X) false
+PASS another company's owner: X balances → 403
+PASS another company's owner: X summary refused
+PASS another company's owner: mini page for X refused
+PASS another company's owner in his own Z: allowed, account Y
+PASS impersonation: exchange → 403
+PASS impersonation: managers API → 403
+PASS impersonation: mini page refused
+PASS impersonation: no menu item «Сеть»
+PASS M as a point manager: exchange → 403
+PASS M as a point manager: mini page refused
+PASS owner in «войти как»: managers API → 403
+--- undo stays inside the session's account
+PASS F: network manager of X and owner of Y
+PASS sync 2 ran
+PASS history: «Сметана» created in B
+PASS transfer «Творог» A → B listed
+PASS F working in Z: the route context is account Y
+PASS F working in A: the route context is account X
+PASS F working in Y: undo X's transfer by id → 404
+PASS F working in Y: undo X's exchange change by id → 404
+PASS refused undos changed nothing (transfer and change not undone, «Сметана» and «Творог» active in B)
+PASS M with a session in another account (Y): transfer undo → 404
+PASS F working in X: the same transfer undo works
+PASS F working in X: the same exchange change undo works («Сметана» turned off in B)
+PASS audit transfer_undone and change_undone by F in B
+--- removal and archiving
+PASS audit account.network_manager_removed
+PASS remove again → 404
+PASS removed: no account role
+PASS removed: exchange → 403
+PASS removed: no menu item
+PASS removed: summary refused
+PASS removed: mini page refused
+PASS removed: exchange card closed
+PASS removed: transfers list empty
+PASS removed: save members → 403
+PASS removed: cabinet → 403
+PASS removed: cabinet code → 403
+PASS removed: transfer undo → 404
+PASS removed: history undo → 404
+PASS removed: balances → 403
+PASS removed: money transfer → 403
+PASS removed: balance page block hidden
+PASS re-appointed: role back
+PASS archived: no account role
+PASS archived: exchange → 403
+PASS archived: no menu item
+PASS archived: summary refused
+PASS archived: mini page refused
+PASS archived: exchange card closed
+PASS archived: transfers list empty
+PASS archived: save members → 403
+PASS archived: cabinet → 403
+PASS archived: cabinet code → 403
+PASS archived: transfer undo → 404
+PASS archived: history undo → 404
+PASS archived: balances → 403
+PASS archived: money transfer → 403
+PASS archived: balance page block hidden
+PASS list: archived M shown as inactive, not a candidate
+PASS unarchived: role back
+PASS lost management role: no account role
+PASS lost management role: exchange → 403
+PASS candidates: a member of A from another company is offered (A)
+PASS member appointed: role network_manager
+PASS membership removed: role gone at once
+PASS no access in Y for X's manager
+PASS managers route module: GET/POST/DELETE, nodejs, force-dynamic
+PASS NetworkManagerError is exported for the route
+PASS AccountTransferError still maps refusals
+PASS DirectoryExchangeError still maps refusals
+cleanup: organizations left 0, users left 0, manager rows left 0
+TOTAL: 151 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ pay-from-account-check ================
+price: 14203 ₽ (renew, 5 points, promotion none, discount none)
+PASS setup: renewal of the paid plan, price > 0
+PASS page hint for the owner: active balance and account total without demo, cabinet and deleting
+PASS button shown: active short, account enough
+PASS preview: price equals the /order pay-from-balance price
+PASS preview: active balance, missing, account total, canPay
+PASS preview: sources largest first, exact sum, no overdraw (Большая all, Средняя the rest)
+PASS preview moved nothing
+PASS manager (not the owner): preview and pay → 403 not_owner
+PASS manager: no page hint
+PASS network manager of this account: preview and pay still → 403 (tariff and payment — owner only)
+PASS another account's owner, active here → 403; owner with a foreign active org → 403
+PASS refusals moved nothing (no ledger rows, balances as set)
+PASS expected price differs → 409 price_changed with the new price, nothing moved
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS pay: status paid with the price
+PASS pay: transfers Большая → Средняя (largest first), amounts as planned, not duplicates
+PASS balances: active a + missing − price = 0
+PASS balances: Большая → 0, Средняя − the rest, Малая untouched
+PASS demo, master cabinet and the deleting organization untouched
+PASS account total went down by exactly the price
+PASS history: one «Оплата тарифа» −price on the active organization, tied to the order
+PASS history: transfer_out −7102 on Большая, transfer_in +7102 on the active, comment «сбор на оплату тарифа»
+PASS history: transfer_out −4261 on Средняя, transfer_in +4261 on the active, comment «сбор на оплату тарифа»
+PASS history list of the active organization shows the two transfers in and the charge
+PASS order: paid from balance (amount 0, pointsSpent = price), renew of the chosen points, marked accountCollect
+PASS one new order for the active organization
+PASS audit: billing.account_pay with the order and transfers; balance.transfer in both organizations of each transfer
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS twin: the /order path paid fully by points with the same price
+PASS account plan, cycle, points and subscriptionEnd — identical to the /order pay-from-balance
+PASS subscriptionEnd moved from END by one month (renewal)
+PASS active organization plan and end — identical to the twin
+PASS same key again → already, the same order
+PASS same key again: no new ledger rows, no new order, balances unchanged
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS parallel ×3 with one key: exactly one paid, the others «already»
+PASS parallel: one charge row, one transfer pair per source
+PASS parallel: balances as after one payment
+PASS parallel: subscription extended once (one more month)
+[balance] account pay charge failed {
+  accountId: 'cmwqho3070002nm7d8d6pnsie',
+  organizationId: 'cmwqho2xr0000nm7d6zq38n15',
+  error: PrismaClientKnownRequestError: 
+  Invalid `tx.balanceTransaction.create()` invocation in
+  /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
+  
+    73 }
+    74 
+    75 try {
+  → 76   await tx.balanceTransaction.create(
+  Database error. Code: `P0001`. Message: `e2e: subscription_charge blocked`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async applyBalanceChange (/home/user/HASSR-Online/src/lib/balance/ledger.ts:76:5)
+      at async <anonymous> (/home/user/HASSR-Online/src/lib/balance/checkout.ts:343:7)
+      at async Proxy._transactionWithCallback (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:859:18)
+      at async createOrderPaidFromBalance (/home/user/HASSR-Online/src/lib/balance/checkout.ts:308:12)
+      at async payFromAccountBalances (/home/user/HASSR-Online/src/lib/balance/account-pay.server.ts:400:15) {
+    code: 'P2039',
+    meta: {
+      modelName: 'BalanceTransaction',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS charge fails after transfers → 409 charge_failed with what was moved and where
+  message: Оплата не прошла (ошибка сервера). 11 363 ₽ уже на балансе «M Активная paychkmwqho2qo» — переводы видны в истории баланса. Повторите оплату или оплатите тариф обычным способом
+PASS charge failed: the collected money stays on the active organization (= price), sources drained as planned
+PASS charge failed: no order, no charge row, subscription unchanged
+PASS charge failed: both transfers are in the history of the active organization
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS repeat with the same key: paid without new transfers
+PASS repeat: active 0, sources not touched again, exactly one transfer pair per source for the key
+[balance] account pay transfer failed {
+  accountId: 'cmwqho3070002nm7d8d6pnsie',
+  from: 'cmwqho3210004nm7dowb71cas',
+  error: PrismaClientKnownRequestError: 
+  Invalid `tx.balanceTransaction.create()` invocation in
+  /home/user/HASSR-Online/src/lib/balance/ledger.ts:76:33
+  
+    73 }
+    74 
+    75 try {
+  → 76   await tx.balanceTransaction.create(
+  Database error. Code: `P0001`. Message: `e2e: transfer_out blocked`
+      at vn.handleRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+      at vn.handleAndLogRequestError (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+      at vn.request (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async a (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+      at async applyBalanceChange (/home/user/HASSR-Online/src/lib/balance/ledger.ts:76:5)
+      at async <anonymous> (/home/user/HASSR-Online/src/lib/balance/account-transfer.server.ts:236:7)
+      at async Proxy._transactionWithCallback (/home/user/HASSR-Online/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:859:18)
+      at async transferBetweenOwnOrganizations (/home/user/HASSR-Online/src/lib/balance/account-transfer.server.ts:220:17)
+      at async payFromAccountBalances (/home/user/HASSR-Online/src/lib/balance/account-pay.server.ts:356:24) {
+    code: 'P2039',
+    meta: {
+      modelName: 'BalanceTransaction',
+      driverAdapterError: [DriverAdapterError]
+    },
+    clientVersion: '7.10.1'
+  }
+}
+PASS second transfer fails → 409 transfer_failed naming the source, with the amount already moved
+  message: Перевод из «M Средняя paychkmwqho2qo» не прошёл (ошибка сервера). 7 102 ₽ уже на балансе «M Активная paychkmwqho2qo» — переводы видны в истории баланса. Оплата не списана: повторите её, уже переведённое второй раз не переведётся
+PASS transfer failed: Большая's money is on the active organization, Средняя untouched, nothing charged
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS repeat: paid, only Средняя transferred now
+PASS repeat: Большая transferred exactly once for the key, active 0
+PASS active covers: no button
+[platform-admin] нет Telegram-чата админа: PLATFORM_ADMIN_TELEGRAM_CHAT_ID пуст и никто из администраторов не привязал Telegram
+PASS active covers alone: paid, no transfers, active −price, others unchanged
+PASS account short: preview canPay false, no sources
+PASS account short: no button
+PASS account short → 409 account_short with how much is missing
+PASS account short: nothing moved, no order (deleting/demo/cabinet money is not counted)
+PASS ledger invariant for M Активная
+PASS ledger invariant for M Большая
+PASS ledger invariant for M Средняя
+PASS ledger invariant for M Малая
+PASS ledger invariant for M Демо
+PASS ledger invariant for M Кабинет
+PASS ledger invariant for M Закрывается
+PASS ledger invariant for T Активная
+PASS ledger invariant for T Большая
+PASS reminder: the +1 point price is computed for the paid account
+PASS reminder: the short account is 1 ₽ short
+  letter (covered): [email/dev] Body:    Бесплатные дни организации Рrich Вторая paychkmwqho2qo закончатся через 3 дня. Последний бесплатный день…&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbs
+PASS reminder: letter to the covered account carries the sentence
+PASS reminder: letter to the short account (1 ₽ short) without the sentence
+PASS reminder: one mark per account, the second run sends nothing
+PASS reminder bell: the covered account has the «хватает» line (orgTrialAccountCovers), the link stays ?addPoints=1
+PASS reminder bell: the short account has no such line
+cleanup: organizations left 0, ledger rows left 0, triggers left 0
+TOTAL: 68 PASS, 0 FAIL
+
+================ period-digest-check ================
+PASS setup: B is locked after its own 14 days, A and C are not
+7 days 2026-11-14 … 2026-11-20: [{"name":"Кафе «Ёлка» & <бар> perdigmwqho6w6","stats":{"days":7,"filledDays":4,"keptDays":7,"records":21},"status":"partial"},{"name":"Бар Б perdigmwqho6w6","stats":{"days":3,"filledDays":3,"keptDays":3,"records":3},"status":"done"},{"name":"Столовая В perdigmwqho6w6","stats":{"days":3,"filledDays":0,"keptDays":0,"records":2},"status":"empty"}]
+PASS 7 days: range is the 7 full days before today (Moscow)
+PASS 7 days: three working organizations, the active one marked
+PASS 7 days A: 4 of 7 days filled, 21 records, «partial»
+PASS 7 days B (locked from T-4): 3 of 3 days, 3 records, «done»
+PASS 7 days C (Yekaterinburg, created T-3): 3 days, no journals kept, 2 records, «empty»
+PASS 7 days totals: 13 days, 7 filled, 26 records
+PASS 30 days A: 5 of 30 days, 30 records
+PASS 30 days B: 6 of 16 days, 6 records
+PASS 30 days C: 3 days, 2 records
+PASS access: an employee is refused (403 on the page and the export)
+PASS access: the network manager is allowed
+PASS export name: set-7d-<day>.xlsx
+xlsx rows: [["Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям","Сеть: сводка по организациям"],["14 ноября — 20 ноября (7 дней)"],["Организация","Дни с заполненными журналами","Доля дней, %","Статус","Записей журналов"],["Кафе «Ёлка» & <бар> perdigmwqho6w6 (текущая)","4 из 7",57,"не каждый день",21],["Бар Б perdigmwqho6w6","3 из 3",100,"каждый день",3],["Столовая В perdigmwqho6w6","0 из 3",0,"журналов нет",2],["Итого","7 из 13",54,null,26],["День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются."],["Сформировано 21 ноября в 17:14"]]
+PASS Excel: sheet «Сеть», title, period and header
+PASS Excel: row A — «4 из 7», 57 %, «не каждый день», 21
+PASS Excel: row B — «3 из 3», 100 %, «каждый день», 3
+PASS Excel: row C — «0 из 3», 0 %, «журналов нет», 2
+PASS Excel: totals — «7 из 13», 54 %, 26
+PASS Excel «Сегодня»: set-<day>.xlsx, balances and total 1 750
+PASS PDF: set-7d-<day>.pdf, starts with %PDF, not empty
+pdf text: Сеть: сводка по организациям 14 ноября — 20 ноября (7 дней) Организация Дни с заполненными журналами Доля дней, % Статус Записей журналов Кафе «Ёлка» & <бар> perdigmwqho6w6 (текущая) 4 из 7 57% не каждый день 21 Бар Б perdigmwqho6w6 3 из 3 100% каждый день 3 Столовая В perdigmwqho6w6 0 из 3 0% журналов нет 2 Итого 7 из 13 54% 26 Сформировано 21 ноября в 17:14 1 День засчитан, если в каждом ежедневном журнале, который ведёт организация, есть запись или день закрыт. Дни до создания организации и после её закрытия не считаются. 
+PASS PDF text: Cyrillic title, organization names, values and totals
+PASS PDF in English (30 days): «5 of 30», set-30d-<day>.pdf
+[email/dev] SMTP не настроен — письмо не отправлено на владелец-perdigmwqho6w6@example.test.
+[email/dev] Subject: Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой
+[email/dev] Body:    Что принёс обмен справочниками за последние 7 дней.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp; wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqho6w6 3 1 2 Столовая В perdigmwqho6w6 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
+[email/dev] SMTP не настроен — письмо не отправлено на управляющий-perdigmwqho6w6@example.test.
+[email/dev] Subject: Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой
+[email/dev] Body:    Что принёс обмен справочниками за последние 7 дней.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp; wesetup.ru Обмен справочниками за неделю Что принёс обмен справочниками за последние 7 дней. Организация Создано Изменено Ждёт разбора Кафе «Ёлка» &amp; &lt;бар&gt; perdigmwqho6w6 3 1 2 Столовая В perdigmwqho6w6 0 1 1 За неделю 1 обмен с ошибкой. Посмотрите итог последнего обмена в карточке. Открыть «Обмен справочниками» &copy; 2026 WeSetup · Ваш электронный ХАССП
+[exchange-digest] sent {
+  accountId: 'cmwqho75s0002q87dbecnl5me',
+  week: '2026-W47',
+  recipients: 2,
+  emails: 2,
+  telegram: 0
+}
+digest #1 (two at once): [{"weekKey":"2026-W47","accounts":1,"sent":1,"results":[{"accountId":"cmwqho75s0002q87dbecnl5me","reason":"sent","recipients":2,"emails":2,"telegram":0}]},{"weekKey":"2026-W47","accounts":1,"sent":0,"results":[{"accountId":"cmwqho75s0002q87dbecnl5me","reason":"already-sent"}]}]
+letters #1: [{"to":"владелец-perdigmwqho6w6@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"},{"to":"управляющий-perdigmwqho6w6@example.test","subject":"Обмен справочниками за неделю: пришло 5, ждёт разбора 3, 1 обмен с ошибкой"}]
+PASS digest #1: two runs at the same time → exactly one sends, the other finds the week taken
+PASS digest #1: sent to 2 recipients (owner + network manager)
+PASS digest #1: exactly one letter per recipient
+PASS digest #1: subject counts A 3+1, C 1 created/updated, 3 pending, 1 error run
+PASS digest #1: table with own organizations only (A, C), not locked B and not the other company
+PASS digest #1: the organization name is HTML-escaped
+PASS digest #1: link to the «Обмен справочниками» card
+PASS digest #1: Telegram to the manager (has Telegram), none to the owner (no Telegram)
+PASS digest #1: one mark in the action log
+PASS digest #2 (same week): nothing sent
+PASS digest #2: no new Telegram
+PASS empty week: nothing to report — nothing sent
+PASS account without events: nothing sent
+[exchange-digest] nothing delivered — will retry { accountId: 'cmwqho940002lq87dyw01g9nk', week: '2026-W47' }
+PASS nothing delivered (Telegram only, bot not configured): «not-delivered», no letter, the claim is released
+[exchange-digest] nothing delivered — will retry { accountId: 'cmwqho940002lq87dyw01g9nk', week: '2026-W47' }
+PASS nothing delivered: the next run in the same week tries again (not «already-sent»)
+2 000 legacy rows in B: expected +666 (7 days), +1110 (30 days); both periods loaded in 79 ms
+PASS 2 000 sensor rows in B: 7 days — records 3 + rows of T-7 … T-5 by Moscow day, other organizations unchanged
+PASS 2 000 sensor rows in B: 30 days — records 6 + rows of T-9 … T-5
+cleanup: organizations left 0, users left 0, accounts left 0
+TOTAL: 39 PASS, 0 FAIL
+RESULT: all checks passed
+
+================ cleanup-check ================
+--- Р4: cleanup
+cleanupExchangeTables: {"skips":4,"requests":4,"transfers":1}
+PASS skips: unseen 30+ days, unticked list, member gone, list not exchanged — removed; fresh and 29-day-old kept
+PASS requests: declined/cancelled/expired 180+ days and long-expired pending — removed; approved, young, open kept
+PASS transfers: older than 180 days removed, 170 days and fresh kept
+PASS counts cover this scenario's rows (4 skips, 4 requests, 1 transfer)
+PASS second cleanup keeps the survivors
+[directory-exchange] scheduled run done {
+  cabinets: 10,
+  busy: 0,
+  errors: 0,
+  cleanup: { skips: 4, requests: 4, transfers: 1 },
+  alert: { status: 'healthy', cabinets: 0 }
+}
+runAllDirectoryExchanges: {"cabinets":10,"errors":0,"cleanup":{"skips":4,"requests":4,"transfers":1},"alert":{"status":"healthy","cabinets":0}}
+PASS scheduled run removes the same rows and keeps the same
+PASS scheduled run reports cleanup counts and the alert status
+--- Р1: alert
+PASS healthy night: nothing sent, no mark
+PASS journal problems: the failed cabinet (error) and the one without success for 24 h (no_success); healthy is not there
+PASS problems: one message sent
+PASS message: count, cabinet names with owner, the error, link to /root/directory-exchange
+PASS mark in the platform's AuditLog with the cabinets
+PASS same day: nothing more
+PASS next day: sent again, the cabinet that failed in this run is listed
+PASS failed delivery: no mark, the next call retries
+cleanup: organizations left 0, users left 0, alert marks removed 3
+RESULT: all checks passed
+
+================ product-batch-check ================
+PASS taken at read time (any case, turned off too) — conflict at once
+PASS ten creations queued
+flush: {"a:Сметана":"conflict","a:Творог":"conflict","a:Сыр":"created","a:Масло":"created","a:Мас_о":"conflict","a:Сыр_1":"conflict","a:100% сок":"created","a:Йогурт":"created","b:Сметана":"created","b:Ряженка":"conflict"}
+PASS every queued creation has one result, in queue order
+PASS names taken after the read are «conflict», not errors
+PASS free names are created
+PASS no duplicates: one «сметана» and one «творог» in A, one «ряженка» in B; B's «Сметана» created (other organization)
+PASS wildcard names follow the one-by-one rule in queue order
+PASS the one-by-one path gives the same answer for «Сыр_1» next to «Сыр-1»
+PASS after the flush the created and hand-made names are taken
+PASS an empty flush is a no-op
+cleanup: organizations left 0
+RESULT: all checks passed
+
 ================ summary ================
-PASS  part2-exchange-check (5s): 88 checks passed
-PASS  background-check (2s): 14 checks passed
-PASS  locked-check (3s): 6 checks passed
-PASS  reminder-check (2s): 7 checks passed
+PASS  part2-exchange-check (8s): 88 checks passed
+PASS  background-check (3s): 14 checks passed
+PASS  locked-check (4s): 6 checks passed
+PASS  reminder-check (3s): 7 checks passed
 PASS  skips-check (3s): 39 checks passed
-PASS  balance-check (3s): 47 checks passed
+PASS  balance-check (2s): 47 checks passed
 PASS  root-org-trial-check (2s): 25 checks passed
 PASS  transfer-undo-check (9s): 65 checks passed
-PASS  cabinet-code-check (4s): 37 checks passed
-PASS  multi-company-check (9s): 49 checks passed
+PASS  cabinet-code-check (3s): 37 checks passed
+PASS  multi-company-check (8s): 49 checks passed
 PASS  part3-foreign-check (9s): 180 checks passed
 PASS  pool-check (4s): 49 checks passed
 PASS  versioning-check (6s): 41 checks passed
 PASS  new-lists-check (4s): 55 checks passed
-scenarios: 14, passed: 14, failed: 0; checks: 702 passed, 0 failed; time: 66s
+PASS  manager-check (5s): 151 checks passed
+PASS  pay-from-account-check (5s): 68 checks passed
+PASS  period-digest-check (6s): 39 checks passed
+PASS  cleanup-check (3s): 15 checks passed
+PASS  product-batch-check (2s): 10 checks passed
+scenarios: 19, passed: 19, failed: 0; checks: 985 passed, 0 failed; time: 89s
 RESULT: all scenarios passed
+e2e exit=0
