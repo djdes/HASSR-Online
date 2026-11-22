@@ -1,0 +1,33 @@
+{
+  "task": "mobile-shell-polish-20261122",
+  "status": "READY_FOR_REVIEW",
+  "builtAt": "2026-11-22",
+  "commit": "a136baab5 (+ merge of origin/master f70b791ce → 32d6b60db)",
+  "pr": "https://github.com/djdes/HASSR-Online/pull/302",
+  "criteria": {
+    "AC1": { "status": "PASS", "proof": ["raw/after-home-measure.json", "raw/verify/verify-home-measure.json"], "summary": "390x664 scroll 664 = inner 664, last row 633; 430x740 and 360x700 fit; no toggle; footer hidden on phone home" },
+    "AC2": { "status": "PASS", "proof": ["raw/after-objects-measure.json"], "summary": "title 22px/700 centred with close (delta 0), no body border, selected icon transparent" },
+    "AC3": { "status": "PASS", "proof": ["raw/after-objects-measure.json#api", "src/app/api/settings/buildings/[id]/icon/route.test.ts", "src/lib/building-icons.test.ts"], "summary": "library 200, bad key 400, foreign 404, upload 200 served as image/png with sandbox CSP; icons in sheet, dropdown, bar, settings picker" },
+    "AC4": { "status": "PASS", "proof": ["raw/after-max-flow.json", "src/components/max/max-link-icon.test.ts"], "summary": "unlinked chain / linked check in header, labels in ru/en/uz, /home return path" },
+    "AC5": { "status": "PASS", "proof": ["raw/after-max-flow.json", "src/lib/max/link-code.test.ts"], "summary": "6-digit code shown, wrong code ignored, right code nominates, site confirms, header linked; hash-only storage, unique code, 5 attempts/15 min" },
+    "AC6": { "status": "PASS", "proof": ["raw/after-menu-measure.json"], "summary": "visible ScrollArea bar when overflowing in sheet and «Новая» sidebar; none when content fits" },
+    "AC7": { "status": "PASS", "proof": ["raw/after-menu-measure.json", "src/components/layout/mobile-nav-sheet.test.ts"], "summary": "no logout in sheet; dock sticky top+bottom always visible; idle transparent + warning hairline, active warning fill + aria-current, dark theme values" },
+    "AC8": { "status": "PASS", "proof": ["raw/after-toast-measure.json", "raw/verify/after-toast-measure.json"], "summary": "phone 390/430: top 8, left 8, right 8; desktop 1440: top 84, centred on content column" },
+    "AC9": { "status": "PASS", "summary": "see checks" }
+  },
+  "checks": {
+    "typecheck": "PASS (npm run typecheck, exit 0)",
+    "eslintChangedFiles": "PASS (0 errors; 1 pre-existing warning react-hooks/purity Date.now in more/page.tsx)",
+    "fullSuitePreCommit": "PASS (escalated by prisma/schema.prisma: pass=7134 fail=0)",
+    "firstFullRunFindings": "5 failures fixed before commit: mini-shell and QR equipment/room fixtures/pages missing sharedUi (real bug on QR pages), stale borderless.css and neutral-palette.css",
+    "designGuards": "PASS (one-accent, borderless, neutral-palette)",
+    "i18n": "PASS (ru/en/uz keys added, npm run i18n:types regenerated)",
+    "browser": "PASS (local Postgres + next dev + Playwright; phone 390x664/430x740/360x700, desktop 1280/1440; light/dark; classic/new)"
+  },
+  "schema": ["Building.icon String? (nullable)", "model BuildingIconFile", "MaxLinkRequest.codeHash String? + @@index([codeHash])"],
+  "notMeasured": [
+    "Real iOS Safari/Yandex Browser (fonts and safe-area insets differ from headless Chromium; 10px slack kept at 390x664)",
+    "Real MAX bot reply delivery (sandbox has no MAX API; webhook returned 503 after the claim was stored)",
+    "Mini-app and QR shells do not know the link state, so they always show the chain badge"
+  ]
+}

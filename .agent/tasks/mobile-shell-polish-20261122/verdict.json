@@ -1,0 +1,13 @@
+{
+  "task": "mobile-shell-polish-20261122",
+  "verifier": "Separate in-thread verification pass on the current branch head, no delegation requested",
+  "head": "32d6b60db",
+  "verdict": "PASS",
+  "reran": [
+    "browser: home-measure (6 combinations), objects + icon API, menu (sheet 4 combinations, inspection section, desktop 4 combinations), toast (390, 430, 1440), MAX code flow end to end — outputs in raw/verify/",
+    "tests: 17 task-related files, 90 tests, 0 failures (raw/verify/targeted-tests.txt)",
+    "full suite: pre-commit run on a136baab5, pass=7134 fail=0; merge f70b791ce touched only .agent/tasks/cloud-testing-2026-11-21/evidence.md"
+  ],
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS", "AC8": "PASS", "AC9": "PASS" },
+  "problems": "none open; issues found during build (sheet shift under focus, toast offset root cause, inspection row scrolling away inside its own section, missing sharedUi on QR pages) were fixed and re-measured"
+}

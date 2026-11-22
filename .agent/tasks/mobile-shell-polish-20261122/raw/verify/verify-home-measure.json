@@ -1,0 +1,200 @@
+[
+  {
+    "w": 390,
+    "h": 664,
+    "dark": false,
+    "design": "classic",
+    "inner": 664,
+    "scroll": 664,
+    "header": [
+      0,
+      56
+    ],
+    "bar": [
+      56,
+      121
+    ],
+    "hero": [
+      131,
+      201
+    ],
+    "setup": [
+      213,
+      276
+    ],
+    "contacts": [
+      370,
+      644
+    ],
+    "toggle": false,
+    "rows": 4,
+    "lastRowBottom": 633,
+    "footerVisible": false,
+    "fits": true
+  },
+  {
+    "w": 430,
+    "h": 740,
+    "dark": false,
+    "design": "classic",
+    "inner": 740,
+    "scroll": 740,
+    "header": [
+      0,
+      56
+    ],
+    "bar": [
+      56,
+      121
+    ],
+    "hero": [
+      131,
+      201
+    ],
+    "setup": [
+      213,
+      276
+    ],
+    "contacts": [
+      370,
+      644
+    ],
+    "toggle": false,
+    "rows": 4,
+    "lastRowBottom": 633,
+    "footerVisible": false,
+    "fits": true
+  },
+  {
+    "w": 360,
+    "h": 700,
+    "dark": false,
+    "design": "classic",
+    "inner": 700,
+    "scroll": 700,
+    "header": [
+      0,
+      56
+    ],
+    "bar": [
+      56,
+      121
+    ],
+    "hero": [
+      131,
+      201
+    ],
+    "setup": [
+      213,
+      276
+    ],
+    "contacts": [
+      370,
+      644
+    ],
+    "toggle": false,
+    "rows": 4,
+    "lastRowBottom": 633,
+    "footerVisible": false,
+    "fits": true
+  },
+  {
+    "w": 390,
+    "h": 664,
+    "dark": false,
+    "design": "new",
+    "inner": 664,
+    "scroll": 664,
+    "header": [
+      0,
+      56
+    ],
+    "bar": [
+      56,
+      121
+    ],
+    "hero": [
+      131,
+      201
+    ],
+    "setup": [
+      213,
+      276
+    ],
+    "contacts": [
+      370,
+      644
+    ],
+    "toggle": false,
+    "rows": 4,
+    "lastRowBottom": 633,
+    "footerVisible": false,
+    "fits": true
+  },
+  {
+    "w": 390,
+    "h": 664,
+    "dark": true,
+    "design": "classic",
+    "inner": 664,
+    "scroll": 664,
+    "header": [
+      0,
+      56
+    ],
+    "bar": [
+      56,
+      121
+    ],
+    "hero": [
+      131,
+      201
+    ],
+    "setup": [
+      213,
+      276
+    ],
+    "contacts": [
+      370,
+      644
+    ],
+    "toggle": false,
+    "rows": 4,
+    "lastRowBottom": 633,
+    "footerVisible": false,
+    "fits": true
+  },
+  {
+    "w": 390,
+    "h": 664,
+    "dark": true,
+    "design": "new",
+    "inner": 664,
+    "scroll": 664,
+    "header": [
+      0,
+      56
+    ],
+    "bar": [
+      56,
+      121
+    ],
+    "hero": [
+      131,
+      201
+    ],
+    "setup": [
+      213,
+      276
+    ],
+    "contacts": [
+      370,
+      644
+    ],
+    "toggle": false,
+    "rows": 4,
+    "lastRowBottom": 633,
+    "footerVisible": false,
+    "fits": true
+  }
+]
