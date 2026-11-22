@@ -78,7 +78,7 @@ describe("брошенные заказы", () => {
     const page = read("src/app/order/page.tsx");
     assert.match(page, /const guestInvoiceReady = !sessionEmail && invoiceRequisitesReady\(await readPlatformRequisites\(\)\);/);
     const client = read("src/app/order/order-client.tsx");
-    assert.match(client, /\{guestInvoiceReady && plan && amountAfterPromo > 0 \? \(/);
+    assert.match(client, /const invoiceAvailable = Boolean\(plan\) && amountAfterPromo > 0 && \(guest \? guestInvoiceReady : Boolean\(orgInvoice\)\);/);
     assert.match(client, /href=\{guestInvoice && order\?\.tariffKey \? continueOrderPath/);
     assert.match(read("src/lib/abandoned-orders.server.ts"), /composeAbandonedOrderEmail\(order, appUrl, \{ invoice \}\)/);
   });
@@ -94,7 +94,7 @@ describe("брошенные заказы", () => {
     const client = read("src/app/order/order-client.tsx");
     assert.match(client, /ymGoal\(PAYMENT_GOALS\.start/);
     assert.equal((client.match(/reportPaymentSuccess\(data\)/g) ?? []).length, 2);
-    assert.match(read("src/app/order/guest-invoice-panel.tsx"), /ymGoal\(PAYMENT_GOALS\.invoice/);
+    assert.match(read("src/app/order/invoice-panel.tsx"), /ymGoal\(PAYMENT_GOALS\.invoice/);
     assert.deepEqual(PAYMENT_GOALS, { start: "order_start", success: "payment_success", invoice: "invoice_request" });
   });
 });

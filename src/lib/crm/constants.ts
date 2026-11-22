@@ -29,6 +29,8 @@ export const CRM_CHANNEL_LABELS: Record<string, string> = {
   demo: "Показ за 15 минут",
   service: "Заявка на услугу",
   invoice: "Счёт по ИНН",
+  checkout: "Оформление оплаты",
+  payment: "Оплата",
   signup: "Регистрация",
   blank: "Скачал шаблон",
   partner: "Заявка партнёра",

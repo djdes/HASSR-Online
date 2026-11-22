@@ -29,7 +29,11 @@ describe("оплата понятна заранее (AC1)", () => {
 
   it("строка стоит на /pricing и под кнопкой оплаты на /order", () => {
     assert.match(read("src/app/pricing/page.tsx"), /\{PAYMENT_METHODS_NOTE\} \{REFUND_NOTE\}/);
-    assert.match(read("src/app/order/order-client.tsx"), /\{PAYMENT_METHODS_NOTE\} \{REFUND_NOTE\}\{" "\}\s*<Link href=\{REFUND_HREF\}/);
+    // На /order способы оплаты — в списке «Способ оплаты» (checkout-conversion-2026-11-22),
+    // условия возврата — под кнопкой, до нажатия.
+    const client = read("src/app/order/order-client.tsx");
+    assert.match(client, /\{REFUND_NOTE\}\{" "\}\s*<Link href=\{REFUND_HREF\}/);
+    assert.match(client, /<SelectItem value="card"[\s\S]*<SelectItem value="invoice"/);
   });
 });
 

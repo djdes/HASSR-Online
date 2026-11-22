@@ -2,6 +2,7 @@ import { NextResponse, after } from "next/server";
 
 import { getActiveOrgId, isImpersonating, requireAuth } from "@/lib/auth-helpers";
 import { createInvoiceOrder, deliverInvoice } from "@/lib/invoices/service";
+import { fillOrganizationInn } from "@/lib/invoices/org-buyer.server";
 import { db } from "@/lib/db";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { parseCheckoutTarget } from "@/lib/plan-checkout.server";
@@ -11,7 +12,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/payments/invoice { plan?, cycle?, points?, tariffKey?, promoCode? } —
+ * POST /api/payments/invoice { plan?, cycle?, points?, tariffKey?, promoCode?, buyer? } —
  * выставить счёт по безналу на активную организацию. Сумму по тарифу и виду
  * перехода, со скидкой (промокод или скидка навсегда аккаунта), считает
  * сервер (`quoteCheckout`). Без тарифа — «Стандарт» за год. Письмо со счётом
@@ -32,6 +33,22 @@ export async function POST(request: Request) {
   };
   const promoCode = typeof body.promoCode === "string" && body.promoCode.trim() ? body.promoCode.slice(0, 64) : null;
   const organizationId = getActiveOrgId(session);
+
+  // /order: у организации нет ИНН — его ввели прямо в форме счёта. Записываем
+  // (журнал действий, сверка пробного), затем выставляем счёт на него.
+  const buyer = body.buyer && typeof body.buyer === "object" ? (body.buyer as Record<string, unknown>) : null;
+  if (buyer && typeof buyer.inn === "string" && buyer.inn.trim()) {
+    const filled = await fillOrganizationInn({
+      organizationId,
+      inn: buyer.inn,
+      companyName: typeof buyer.companyName === "string" ? buyer.companyName : null,
+      session,
+      request,
+    });
+    if (!filled.ok) {
+      return NextResponse.json({ error: filled.error, ...(filled.code ? { code: filled.code } : {}) }, { status: filled.status });
+    }
+  }
 
   const result = await createInvoiceOrder({
     organizationId,
@@ -66,5 +83,6 @@ export async function POST(request: Request) {
     dueAt: result.order.invoiceDueAt,
     created: result.created,
     pdfUrl: `/api/payments/invoice/${result.order.id}/pdf`,
+    email: result.order.email,
   });
 }

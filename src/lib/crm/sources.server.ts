@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { BLANK_CONSENT_SOURCE, BLANK_DOWNLOAD_AUDIT_ACTION } from "@/lib/blank-download";
 import { syncPdfLeadsBackfill } from "@/lib/blank-download-lead.server";
 import { CRM_CURSOR_OVERLAP_MS, CRM_SOURCES_BACKFILL_MS } from "@/lib/crm/constants";
+import { CHECKOUT_ABANDON_GIVE_UP_MS, mapCheckoutOrder } from "@/lib/crm/checkout";
 import { ingestCrmItems } from "@/lib/crm/ingest.server";
 import {
   mapBlankDownload,
@@ -122,6 +123,31 @@ const SOURCES: Record<string, SourceLoader> = {
       }),
     (row) => row.createdAt,
     (row) => [mapGuestInvoice({ ...row, amountRub: Number(row.amountRub) })],
+  ),
+  // Нажал «Перейти к оплате» — запись оформления (тот же ключ дня, что у захода
+  // на страницу): гость мог не уйти с поля почты, а автозаполнение — не дать blur.
+  checkout: loader(
+    (since) =>
+      db.paymentOrder.findMany({
+        // Без 90-дневной истории: незавершённая оплата старше трёх суток — уже не звонок.
+        where: {
+          createdAt: { gte: new Date(Math.max(since.getTime(), Date.now() - CHECKOUT_ABANDON_GIVE_UP_MS)) },
+          paymentMethod: "card",
+          isTest: false,
+          tariffKey: { not: "balance_topup" },
+          recurringChargeOf: null,
+          // Проверочные оплаты команды из организации платформы — не клиенты.
+          OR: [{ organizationId: null }, { organizationId: { not: platformOrgId() } }],
+        },
+        orderBy: { createdAt: "asc" },
+        take: BATCH,
+        select: { id: true, email: true, tariffKey: true, points: true, amountRub: true, pointsSpent: true, createdAt: true, organizationId: true, userId: true },
+      }),
+    (row) => row.createdAt,
+    (row) => {
+      const item = mapCheckoutOrder({ ...row, amountRub: Number(row.amountRub) + row.pointsSpent }, process.env.NEXTAUTH_URL || "https://wesetup.ru");
+      return item ? [item] : [];
+    },
   ),
   signup: loader(
     async (since) => {

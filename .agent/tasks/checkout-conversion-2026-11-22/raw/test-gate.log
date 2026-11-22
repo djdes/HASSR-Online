@@ -1,0 +1,8 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Эскалация до полного прогона: Найдено 91 связанных тестовых файлов (порог 80)
+
+=== Test stats: pass=7163, fail=0 ===
+✓ Все тесты прошли.

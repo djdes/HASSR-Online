@@ -69,7 +69,7 @@ describe("счёт по ИНН без регистрации", () => {
     assert.match(read("src/app/api/payments/invoice/[id]/guest-pdf/route.ts"), /verifyGuestInvoice\(orderId, order\.email, signature\)/);
     assert.match(read("src/lib/payment-fulfillment.ts"), /\.\.\.guestBuyerOrganizationData\(order\.buyerJson\)/);
     assert.equal(matchPlatformRule("/root/invoices")?.gate, "billing");
-    assert.match(read("src/app/order/order-client.tsx"), /guestInvoiceReady && plan && amountAfterPromo > 0 \? \(\s*<GuestInvoicePanel/);
+    assert.match(read("src/app/order/order-client.tsx"), /activeMethod === "invoice" && plan \? \(\s*<InvoicePanel/);
     assert.match(read("prisma/schema.prisma"), /buyerJson\s+Json\?/);
   });
 });

@@ -57,11 +57,13 @@ function legalProfileOf(raw: unknown): LegalProfile | null {
 async function loadOrganizationParty(organizationId: string) {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { name: true, inn: true, address: true, legalProfileJson: true, subscriptionEnd: true },
+    select: { name: true, inn: true, address: true, legalProfileJson: true, legalFullName: true, subscriptionEnd: true },
   });
   if (!org) return null;
   return {
-    name: org.name,
+    // Без снимка ЕГРЮЛ покупатель — юридическое название из реквизитов (его
+    // вводят и на /order, когда ЕГРЮЛ не нашёл ИНН), иначе название кабинета.
+    name: org.legalFullName?.trim() || org.name,
     inn: org.inn,
     address: org.address,
     legalProfile: legalProfileOf(org.legalProfileJson),
@@ -315,6 +317,26 @@ export async function deliverInvoice(orderId: number, organizationName: string):
       client: { organizationId: order.organizationId, email: order.email },
     }
   ).catch((error) => console.error("[invoices] admin notify failed", error));
+}
+
+/**
+ * Тот же счёт ещё на одну почту — «Отправить бухгалтеру» на /order после
+ * выставления. Права проверяет маршрут; здесь — только письмо с PDF.
+ */
+export async function sendInvoiceCopy(orderId: number, to: string): Promise<boolean> {
+  const rendered = await renderInvoice(orderId);
+  if (!rendered) return false;
+  const { order, pdf } = rendered;
+  return sendInvoiceEmail({
+    to,
+    number: String(order.id),
+    amountRub: Number(order.amountRub),
+    dueAt: order.invoiceDueAt ?? new Date(order.createdAt.getTime() + INVOICE_VALID_DAYS * DAY_MS),
+    organizationId: order.organizationId,
+    pdf,
+    purpose: isTopupOrder(order) ? "topup" : "subscription",
+    locale: "ru",
+  });
 }
 
 export async function markInvoicePaid(

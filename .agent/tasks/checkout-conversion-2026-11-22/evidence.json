@@ -1,0 +1,37 @@
+{
+  "task": "checkout-conversion-2026-11-22",
+  "status": "PASS",
+  "base": "24d38f54e4a71f65529c9a1ae91a75abf4c630ec",
+  "verifier": "Fresh current-code pass in-thread: typecheck, test:gate (full), eslint, Playwright e2e and DB-level CRM run rerun on the final files",
+  "stand": "next dev on localhost:3000, PostgreSQL 16 haccp_smoke, Chromium 390x844 @2x",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS"
+  },
+  "notes": {
+    "AC5": "Send-to-another-email reaches the mail transport; stand has no SMTP so the route answers 502 there. Production SMTP path returns 200.",
+    "AC7": "Telegram delivery is the existing notifyPlatformAdmin; stand has no admin chat, the call is logged. Message text covered by unit tests."
+  },
+  "raw": [
+    "raw/e2e.cjs",
+    "raw/e2e.log",
+    "raw/e2e-results.json",
+    "raw/stand-setup.ts",
+    "raw/stand-crm.ts",
+    "raw/stand-crm.log",
+    "raw/stand-crm-results.json",
+    "raw/dark.cjs",
+    "raw/test-gate.log",
+    "raw/typecheck.txt",
+    "raw/eslint.txt"
+  ]
+}

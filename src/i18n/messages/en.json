@@ -33351,5 +33351,98 @@
         "when": "The day after the download"
       }
     }
+  },
+  "orderCheckout": {
+    "title": "Subscription checkout",
+    "subtitle": "All SanPiN and HACCP logs ({journals}) in one account.",
+    "summaryLabel": "Your order",
+    "period": {
+      "upgrade": "Top-up for {days} days — until {end}; the end date stays the same",
+      "renew": "Renewal: from {start} to {end}",
+      "switch": "New term — until {end}",
+      "switchCredit": "New term — until {end}; the unused balance of the current plan is credited",
+      "append": "{days} days after the current term ends: from {start} to {end}",
+      "fromPayment": "{days} days from payment — until {end}",
+      "fromPaymentNoDate": "{days} days from payment"
+    },
+    "lines": {
+      "plan": "Plan for {days} days",
+      "upgrade": "Top-up for {days} days",
+      "switchCredit": "Plan with credit for the unused term",
+      "credit": "Credit for unused days (plan {price})",
+      "upgradeHint": "Price difference per term {price} × remaining days",
+      "points": "Paid with points"
+    },
+    "total": "Total",
+    "perMonth": "≈ {amount} per month",
+    "promo": {
+      "open": "Have a promo code?",
+      "placeholder": "Promo code",
+      "apply": "Apply",
+      "checking": "Checking…",
+      "applied": "Promo code {code}",
+      "remove": "Remove promo code",
+      "personalPending": "Personal code — we will check it by email at payment",
+      "priceChanged": "The price has changed — we updated the total, apply the code again",
+      "failed": "This promo code does not apply",
+      "offline": "No connection — try again"
+    },
+    "method": {
+      "label": "Payment method",
+      "card": "Card or SBP",
+      "cardHint": "The plan is activated right after payment",
+      "invoice": "Invoice for a company or sole trader",
+      "invoiceHint": "PDF right away and by email, pay by bank transfer"
+    },
+    "email": {
+      "label": "Email",
+      "hint": "We will send the receipt and access to your account",
+      "invoiceLabel": "Email — the invoice will be sent here"
+    },
+    "pay": "Proceed to payment · {amount}",
+    "paying": "Opening payment…",
+    "processing": "Processing payment…",
+    "payPoints": "Pay with points",
+    "payFree": "Activate without payment",
+    "waiting": "Waiting for payment confirmation — the page will update itself",
+    "orderFailed": "Could not create the order",
+    "offline": "Network unavailable. Try again",
+    "trust": {
+      "secure": "Payment via Robokassa",
+      "receipt": "Receipt by email",
+      "refund": "14-day refund"
+    },
+    "refundTerms": "Refund terms",
+    "question": "Question about payment?",
+    "questionAction": "Message us",
+    "questionSubject": "Question about payment",
+    "invoice": {
+      "inn": "Company or sole trader INN",
+      "innPlaceholder": "10 or 12 digits",
+      "name": "Name as in documents",
+      "namePlaceholder": "Romashka LLC",
+      "buyer": "Buyer",
+      "buyerInn": "INN {inn}",
+      "otherRequisites": "Other details",
+      "innMissing": "Your organization has no INN — enter it and we will save it to your details",
+      "issue": "Issue an invoice for {amount}",
+      "issuing": "Issuing the invoice…",
+      "consent": "By clicking “Issue an invoice”, you accept the <oferta>public offer</oferta> and the <privacy>privacy policy</privacy> and give <consent>consent to personal data processing</consent>.",
+      "issued": "Invoice No. {number} for {amount} issued",
+      "issuedBuyer": "Buyer — {buyer}.",
+      "alreadyIssued": "This invoice was issued earlier and is still valid.",
+      "due": "Pay by {date}.",
+      "sentTo": "We sent the PDF to {email}.",
+      "afterPayGuest": "Once the money arrives, we will send a sign-in link to this email — the plan activates automatically.",
+      "afterPayOrg": "Once the money arrives, the plan activates automatically — we will email you.",
+      "download": "Download PDF",
+      "sendOther": "Send to another email",
+      "sendPlaceholder": "accounting@company.com",
+      "send": "Send",
+      "sending": "Sending…",
+      "sent": "Sent to {email}",
+      "sendFailed": "Could not send",
+      "failed": "Could not issue the invoice. Try again or call us"
+    }
   }
 }

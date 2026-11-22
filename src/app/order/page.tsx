@@ -14,6 +14,14 @@ import { PROMO_COOKIE } from "@/lib/promo/personal-link";
 import { OrderClient, type OrderDiscountState, type OrderPlanView } from "./order-client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { SiteLocaleProvider } from "@/components/i18n/site-locale-provider";
+import { loadMessages, pickMessages } from "@/i18n/messages";
+import { getSiteLocale } from "@/i18n/site-locale-server";
+import { recordCheckoutVisit } from "@/lib/crm/checkout.server";
+import { db } from "@/lib/db";
+import { readLegalProfile } from "@/lib/org-legal-profile";
+import type { OrderOrgInvoice } from "./invoice-panel";
 import { isMobileAppRequest, MOBILE_APP_HOME } from "@/lib/mobile-app-payments";
 import { readPlatformRequisites } from "@/lib/closing-documents/requisites";
 import { invoiceRequisitesReady } from "@/lib/invoices/build";
@@ -36,6 +44,27 @@ function headcountFor(
   if (promo) params.set("promo", promo);
   return { team, limit, upgradeHref: `/order?${params.toString()}` };
 }
+
+/**
+ * Покупатель счёта организации на /order: ЕГРЮЛ → юридическое название →
+ * название кабинета (как в PDF счёта, `invoices/service.ts`). null —
+ * организации нет.
+ */
+async function loadOrgInvoice(organizationId: string): Promise<OrderOrgInvoice | null> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true, inn: true, legalFullName: true, legalProfileJson: true },
+  });
+  if (!org) return null;
+  const profile = readLegalProfile(org.legalProfileJson);
+  return {
+    buyerName: profile?.nameShort?.trim() || profile?.nameFull?.trim() || org.legalFullName?.trim() || org.name,
+    inn: profile?.inn?.trim() || org.inn?.trim() || null,
+  };
+}
+
+/** Словари клиентской части /order: общие публичные и тексты оформления. */
+const ORDER_NAMESPACES = ["common", "language", "auth", "publicSupport", "publicUi", "sharedUi", "layoutUi", "errorSurface", "orderCheckout"] as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -190,6 +219,12 @@ export default async function OrderPage({
   // Счёт гостю — как счёт из кабинета: только когда WeSetup заполнил свои
   // реквизиты и банк (иначе форма всегда отвечала бы «недоступно»).
   const guestInvoiceReady = !sessionEmail && invoiceRequisitesReady(await readPlatformRequisites());
+  // Руководитель — счёт на свою организацию прямо здесь (без ИНН — дозаполнит
+  // его в форме счёта). Не в «войти как»: canSpendPoints это уже учёл.
+  const orgInvoice =
+    canSpendPoints && offer && plan && invoiceRequisitesReady(await readPlatformRequisites())
+      ? await loadOrgInvoice(getActiveOrgId(session!)).catch(() => null)
+      : null;
   const initialDiscount: OrderDiscountState = {
     applied: withLabel(discount?.ok ? discount.applied : lifetimeFallback),
     // Код из cookie, который не подошёл, в поле не подставляем и ошибкой
@@ -201,10 +236,42 @@ export default async function OrderPage({
     personalPending: discount?.ok ? discount.personalPending : false,
   };
 
+  // Вошедший открыл оформление — запись в CRM после ответа (спека
+  // checkout-conversion-2026-11-22): полчаса без оплаты — задача позвонить и
+  // сообщение админам. Гостя записывает /api/checkout/track, когда он ввёл почту.
+  if (offer && plan && sessionEmail && session?.user && !session.user.isRoot && !impersonating) {
+    const user = session.user;
+    const organizationId = getActiveOrgId(session);
+    const visitRub = Math.max(0, offer.priceRub - (initialDiscount.applied?.discountRub ?? 0));
+    after(async () => {
+      const [org, profile] = await Promise.all([
+        db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }).catch(() => null),
+        db.user.findUnique({ where: { id: user.id }, select: { phone: true } }).catch(() => null),
+      ]);
+      await recordCheckoutVisit({
+        email: sessionEmail,
+        tariffKey: offer.tariffKey,
+        points: plan.points,
+        amountRub: visitRub,
+        at: new Date(),
+        source: "page",
+        userId: user.id,
+        organizationId,
+        name: user.name ?? null,
+        phone: profile?.phone ?? null,
+        company: org?.name ?? null,
+      });
+    });
+  }
+
+  const locale = await getSiteLocale();
+  const messages = pickMessages(await loadMessages(locale), ORDER_NAMESPACES);
+
   return (
     <div className="min-h-screen bg-white text-[#0b1024]">
       <PublicHeader />
       <main className="mx-auto w-full max-w-[720px] px-4 py-10 sm:px-6 md:py-14">
+        <SiteLocaleProvider locale={locale} messages={messages} timeZone="Europe/Moscow">
         <OrderClient
           tariff={tariff}
           offer={offer}
@@ -214,6 +281,7 @@ export default async function OrderPage({
           amountRub={amountRub}
           sessionEmail={sessionEmail}
           guestInvoiceReady={guestInvoiceReady}
+          orgInvoice={orgInvoice}
           pointsAvailable={pointsAvailable}
           pointsCap={offer?.priceRub ?? 0}
           // Пришли из кабинета по кнопке «Включить автопродление» — только
@@ -227,6 +295,7 @@ export default async function OrderPage({
             completeToken: first("complete"),
           }}
         />
+        </SiteLocaleProvider>
       </main>
       <PublicFooter />
     </div>

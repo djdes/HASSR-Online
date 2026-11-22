@@ -235,6 +235,22 @@ export const guestInvoiceRateLimiter = createRateLimiter({
   intervalMs: 10 * 60 * 1000,
 });
 
+/**
+ * Запись «гость открыл оформление» (/api/checkout/track): заводит контакт CRM
+ * и через полчаса — сообщение админам. Десять почт за десять минут на IP —
+ * человеку, который исправляет опечатку, хватит, рассылке — нет.
+ */
+export const checkoutTrackRateLimiter = createRateLimiter({
+  tokensPerInterval: 10,
+  intervalMs: 10 * 60 * 1000,
+});
+
+/** «Отправить счёт на другую почту» (бухгалтеру): пять писем за десять минут на счёт. */
+export const invoiceSendRateLimiter = createRateLimiter({
+  tokensPerInterval: 5,
+  intervalMs: 10 * 60 * 1000,
+});
+
 export const registrationCodeRateLimiter = createRateLimiter({
   tokensPerInterval: 5,
   intervalMs: 10 * 60 * 1000,

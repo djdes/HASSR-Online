@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { runCheckoutFollowups, type CheckoutFollowupReport } from "@/lib/crm/checkout.server";
 import { syncAllMailboxes, type MailboxSyncResult } from "@/lib/crm/mailbox.server";
 import { notifyNewMail, runCrmDigest, runCrmReminders } from "@/lib/crm/notify.server";
 import { syncCrmSources, type SourceSyncResult } from "@/lib/crm/sources.server";
@@ -9,7 +10,8 @@ import { recordCronRun } from "@/lib/platform-alerts";
 
 /**
  * Один прогон CRM (крон раз в 5 минут и кнопка «Обновить сейчас»):
- * обращения из таблиц сайта → звонки Телфина → рабочий Telegram → почта IMAP → напоминания → утренняя сводка
+ * обращения из таблиц сайта → звонки Телфина → рабочий Telegram → почта IMAP → напоминания
+ * → незавершённые оплаты → утренняя сводка
  * → сделки воронки (регистрации, договоры, оплаты).
  * Шаги независимы: сбой почты не останавливает напоминания.
  */
@@ -23,6 +25,8 @@ export type CrmCycleResult = {
   telegram: TelegramUserSyncResult | null;
   newMailAlerts: number;
   reminders: { planned: number; sent: number };
+  /** Незавершённые оплаты: задача «позвонить» и сообщение админам. */
+  checkouts: CheckoutFollowupReport | null;
   digest: boolean;
   deals: DealSyncResult | null;
   errors: string[];
@@ -53,6 +57,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
   const mail = await step("почта", () => syncAllMailboxes(now, rules), { results: [], ingested: [] });
   const newMailAlerts = await step("письма РОП", () => notifyNewMail(mail.ingested, now), 0);
   const reminders = await step("напоминания", () => runCrmReminders(now), { planned: 0, sent: 0 });
+  const checkouts = await step("незавершённые оплаты", () => runCheckoutFollowups(now), null);
   const digest = await step("сводка", () => runCrmDigest(now), false);
   const deals = await step("воронка", () => syncDeals(now), null);
 
@@ -70,6 +75,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
     telegram,
     newMailAlerts,
     reminders,
+    checkouts,
     digest,
     deals,
     errors,

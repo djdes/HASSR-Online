@@ -4,16 +4,25 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   ArrowRight,
   CheckCircle2,
   Coins,
+  CreditCard,
+  FileText,
   Loader2,
+  MessageCircle,
+  Receipt,
+  RotateCcw,
   ShieldCheck,
   XCircle,
   Ticket,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   HARDWARE_DEVICES,
   type HardwareDevice,
@@ -23,10 +32,10 @@ import type { Tariff } from "@/lib/tariffs";
 import type { SubscriptionOffer } from "@/lib/promo/promotions";
 import type { AppliedDiscount } from "@/lib/promo/discounts";
 import { PromoPrice } from "@/components/pricing/promo-price";
-import { PAYMENT_METHODS_NOTE, REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
+import { REFUND_HREF, REFUND_NOTE } from "@/lib/payment-copy";
 import { PAYMENT_GOALS, reportPaymentSuccess } from "@/lib/payment-goals";
 import { useRegistrationChallenge } from "@/components/auth/registration-challenge";
-import { GuestInvoicePanel } from "./guest-invoice-panel";
+import { InvoicePanel, type OrderOrgInvoice } from "./invoice-panel";
 import { continueOrderPath } from "@/lib/abandoned-orders";
 import { ymGoal } from "@/lib/signup-source";
 import {
@@ -161,6 +170,7 @@ export function OrderClient({
   returnParams,
   sessionEmail = "",
   guestInvoiceReady = false,
+  orgInvoice = null,
   recurringDefault = false,
   pointsAvailable = 0,
   pointsCap = 0,
@@ -183,6 +193,8 @@ export function OrderClient({
   sessionEmail?: string;
   /** Гость и реквизиты WeSetup для счёта заполнены — можно счёт по ИНН. */
   guestInvoiceReady?: boolean;
+  /** Руководитель и реквизиты WeSetup заполнены — счёт на его организацию. */
+  orgInvoice?: OrderOrgInvoice | null;
   /// Пришли по кнопке «Включить автопродление» — галочка уже отмечена.
   /// Это не нарушает требование Робокассы «не проставлено по умолчанию»:
   /// человек сам нажал кнопку с этим смыслом, а снять отметку он может.
@@ -207,6 +219,7 @@ export function OrderClient({
       amountRub={amountRub}
       sessionEmail={sessionEmail}
       guestInvoiceReady={guestInvoiceReady}
+      orgInvoice={orgInvoice}
       recurringDefault={recurringDefault}
       pointsAvailable={pointsAvailable}
       pointsCap={pointsCap}
@@ -226,6 +239,7 @@ function Checkout({
   amountRub,
   sessionEmail,
   guestInvoiceReady = false,
+  orgInvoice = null,
   recurringDefault = false,
   pointsAvailable = 0,
   pointsCap = 0,
@@ -239,12 +253,14 @@ function Checkout({
   amountRub: number;
   sessionEmail: string;
   guestInvoiceReady?: boolean;
+  orgInvoice?: OrderOrgInvoice | null;
   recurringDefault?: boolean;
   pointsAvailable?: number;
   pointsCap?: number;
   initialDiscount?: OrderDiscountState;
 }) {
   const router = useRouter();
+  const t = useTranslations("orderCheckout");
   const [email, setEmail] = useState(sessionEmail);
   // Без входа — невидимая проверка от ботов перед заказом (боты заводили заказы на чужие
   // почты). Вошедшему проверка не нужна: сервер её у него не спрашивает.
@@ -266,6 +282,10 @@ function Checkout({
   const [personalPending, setPersonalPending] = useState(initialDiscount?.personalPending ?? false);
   const [promoBusy, setPromoBusy] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(initialDiscount?.error ?? null);
+  // Поле промокода раскрыто: нажали «Есть промокод?» или код пришёл ссылкой.
+  const [promoOpen, setPromoOpen] = useState(Boolean(initialDiscount?.input));
+  // Способ оплаты: карта/СБП или счёт для юрлица (`#invoice` — сразу счёт).
+  const [method, setMethod] = useState<"card" | "invoice">("card");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Заказ, оформленный раньше, протух вместе с холдом баллов — их уже
@@ -279,6 +299,52 @@ function Checkout({
     null,
   );
   const [paid, setPaid] = useState<OrderStatus | null>(null);
+
+  // Ссылка «…#invoice» (письмо о брошенном заказе, экран неудачной оплаты) —
+  // сразу счёт для юрлица.
+  useEffect(() => {
+    try {
+      if (window.location.hash === "#invoice") queueMicrotask(() => setMethod("invoice"));
+    } catch {
+      /* без window — остаётся карта */
+    }
+  }, []);
+
+  // Гость ввёл почту — запись «открыл оформление» в CRM (спека
+  // checkout-conversion-2026-11-22): через 30 минут без оплаты менеджер
+  // получит задачу позвонить. Один раз на адрес; вошедшего пишет сервер.
+  const trackedEmail = useRef<string | null>(null);
+  const trackGuestEmail = useCallback(
+    async (raw: string) => {
+      if (!guest || !plan) return;
+      const value = raw.trim().toLowerCase();
+      if (!TRACK_EMAIL_RE.test(value) || trackedEmail.current === value) return;
+      trackedEmail.current = value;
+      try {
+        await fetch("/api/checkout/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
+            email: value,
+            plan: plan.tier,
+            cycle: plan.cycle,
+            points: plan.points,
+            captchaToken: await challenge.getToken(),
+            website: challenge.website,
+          }),
+        });
+      } catch {
+        /* запись — не повод мешать оплате */
+      }
+    },
+    [guest, plan, challenge],
+  );
+  useEffect(() => {
+    // Автозаполнение браузера не даёт blur — ловим и паузу в наборе.
+    const timer = setTimeout(() => void trackGuestEmail(email), 2500);
+    return () => clearTimeout(timer);
+  }, [email, trackGuestEmail]);
 
   useEffect(() => {
     if (!watch || paid) return;
@@ -432,8 +498,13 @@ function Checkout({
   // согласие не действует, даже если пришло из ссылки (`?recurring=1`).
   // Пока автосписаний нет (RECURRING_CHARGES_LIVE), платёж всегда разовый.
   const autopay = RECURRING_CHARGES_LIVE && recurringConsent && amountAfterPromo > 0;
+  // Счёт для юрлица: гостю — когда реквизиты WeSetup заполнены, руководителю —
+  // на свою организацию; к оплате 0 ₽ — счёт не нужен.
+  const invoiceAvailable = Boolean(plan) && amountAfterPromo > 0 && (guest ? guestInvoiceReady : Boolean(orgInvoice));
+  const activeMethod = invoiceAvailable ? method : "card";
+  // Баллы списываются только при оплате картой: счёт выставляется на всю сумму.
   const pointsSpent =
-    usePoints && !autopay
+    activeMethod === "card" && usePoints && !autopay
       ? Math.min(pointsAvailable, Math.min(capAfterPromo, amountAfterPromo))
       : 0;
   const netRub = Math.max(0, amountAfterPromo - pointsSpent);
@@ -473,7 +544,7 @@ function Checkout({
         setDiscount(null);
         setTypedCode(null);
         setPromoNotice(null);
-        setPromoError("Цена подписки изменилась — обновили сумму. Нажмите «Применить» ещё раз");
+        setPromoError(t("promo.priceChanged"));
         router.refresh();
         return;
       }
@@ -483,7 +554,7 @@ function Checkout({
         setTypedCode(null);
         setPromoNotice(null);
         setPersonalPending(false);
-        setPromoError(data.message ?? "Промокод не подошёл");
+        setPromoError(data.message ?? t("promo.failed"));
         return;
       }
       setDiscount(data.applied ?? null);
@@ -491,7 +562,32 @@ function Checkout({
       setPromoNotice(data.notice ?? null);
       setPersonalPending(Boolean(data.personalPending));
     } catch {
-      setPromoError("Нет связи — попробуйте ещё раз");
+      setPromoError(t("promo.offline"));
+    } finally {
+      setPromoBusy(false);
+    }
+  }
+
+  /** Убрать введённый код: пересчёт без него — скидка навсегда аккаунта остаётся. */
+  async function removePromo() {
+    if (!tariff) return;
+    setPromoBusy(true);
+    setPromoError(null);
+    try {
+      const res = await fetch("/api/promo/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: "", tariffKey: tariff.key, plan: plan?.tier, cycle: plan?.cycle, points: plan?.points }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; applied?: OrderDiscountView | null; fallback?: OrderDiscountView | null };
+      setDiscount((data.ok ? data.applied : data.fallback) ?? null);
+      setTypedCode(null);
+      setPromoNotice(null);
+      setPersonalPending(false);
+      setPromoInput("");
+      setPromoOpen(false);
+    } catch {
+      setPromoError(t("promo.offline"));
     } finally {
       setPromoBusy(false);
     }
@@ -523,7 +619,7 @@ function Checkout({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Не удалось создать заказ");
+        setError(data.error ?? t("orderFailed"));
         setLoading(false);
         if (data.code === "price-changed") {
           // Сервер прислал скидку, посчитанную по текущей цене (в том числе
@@ -555,27 +651,36 @@ function Checkout({
       }
       window.location.href = data.paymentUrl;
     } catch {
-      setError("Сеть недоступна. Попробуйте ещё раз");
+      setError(t("offline"));
       setLoading(false);
     }
   }
 
+  const periodText =
+    plan?.kind === "upgrade"
+      ? t("period.upgrade", { days: String(plan.remainingDays), end: plan.periodEndLabel })
+      : plan?.kind === "renew"
+        ? t("period.renew", { start: plan.periodStartLabel, end: plan.periodEndLabel })
+        : plan?.kind === "switch"
+          ? plan.creditRub > 0
+            ? t("period.switchCredit", { end: plan.periodEndLabel })
+            : t("period.switch", { end: plan.periodEndLabel })
+          : plan?.appendsToCurrent
+            ? t("period.append", { days: String(tariff.periodDays), start: plan.periodStartLabel, end: plan.periodEndLabel })
+            : plan
+              ? t("period.fromPayment", { days: String(tariff.periodDays), end: plan.periodEndLabel })
+              : t("period.fromPaymentNoDate", { days: String(tariff.periodDays) });
+  // Годовой полный период — «≈ N ₽ в месяц»: так годовую сумму сравнивают с помесячной.
+  const perMonthRub =
+    plan?.cycle === "year" && (plan.kind === "new" || plan.kind === "renew") && netRub > 0 ? Math.round(netRub / 12) : null;
+  const codeApplied = discount?.source === "code" ? discount : null;
+  const promoExpanded = promoOpen || Boolean(promoError) || Boolean(typedCode && !codeApplied);
+
   return (
     <Card>
-      <h1 className="text-[26px] font-semibold tracking-[-0.02em] sm:text-[32px]">
-        Оформление подписки
-      </h1>
-      <p className="mt-3 text-[15px] leading-[1.7] text-[#3c4053]">
-        {tariff.title} — все журналы СанПиН и ХАССП ({JOURNALS_TOTAL}).{" "}
-        {plan?.kind === "upgrade"
-          ? `Доплата за повышение на оставшиеся ${plan.remainingDays} дн. — до ${plan.periodEndLabel}; дата окончания не меняется.`
-          : plan?.kind === "renew"
-            ? `Продление: новый срок — с ${plan.periodStartLabel} до ${plan.periodEndLabel}.`
-            : plan?.kind === "switch"
-              ? `Новый срок — до ${plan.periodEndLabel}${plan.creditRub > 0 ? `; неиспользованный остаток текущего тарифа зачтён` : ""}.`
-              : plan?.appendsToCurrent
-                ? `Срок — ${tariff.periodDays} дней после окончания текущего (${plan.periodStartLabel}), до ${plan.periodEndLabel}.`
-                : `Срок — ${tariff.periodDays} дней с оплаты${plan ? `, до ${plan.periodEndLabel}` : ""}.`}
+      <h1 className="text-[26px] font-semibold tracking-[-0.02em] sm:text-[32px]">{t("title")}</h1>
+      <p className="mt-2 text-[15px] leading-[1.6] text-[#3c4053]">
+        {t("subtitle", { journals: String(JOURNALS_TOTAL) })}
       </p>
 
       {plan?.headcount ? (
@@ -608,137 +713,176 @@ function Checkout({
         </div>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[13px] uppercase tracking-[0.14em] text-[#9b9fb3]">
-            К оплате
-          </span>
-          <span className="text-[26px] font-semibold tabular-nums tracking-[-0.01em]">
-            {formatRub(netRub)}
-          </span>
+      {/* Чек: что покупают, на какой срок, из чего сумма и итог. Строки видны
+          всегда, а не только при скидке, — человек сверяет, за что платит. */}
+      <section data-testid="order-summary" aria-label={t("summaryLabel")} className="mt-6 rounded-2xl bg-[#f4f5fb] p-5">
+        <div className="text-[15px] font-semibold leading-[1.4] text-[#0b1024]">{tariff.title}</div>
+        <div data-testid="order-period" className="mt-0.5 text-[13px] leading-[1.5] text-[#6f7282]">
+          {periodText}
         </div>
-        {items.length > 0 || pointsSpent > 0 || discountRub > 0 || subscriptionPrice.promotion || (plan && plan.kind !== "new" && plan.kind !== "renew") ? (
-          <ul className="mt-4 space-y-1.5 border-t border-[#ececf4] pt-4">
-            {/* Акция и персональная скидка (промокод или скидка навсегда)
-                — прямо в строке подписки: старая цена зачёркнута, новая и
-                плашки «−N % до …», «Ваша скидка −10 % навсегда». Скидка
-                считается от цены с акцией; баллы — ниже. */}
-            <li
-              data-testid="order-subscription-line"
-              className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-[#3c4053]"
-            >
-              <span>
-                {plan?.kind === "upgrade"
-                  ? `Доплата за ${plan.remainingDays} дн.`
-                  : plan?.kind === "switch" && plan.creditRub > 0
-                    ? "Тариф с зачётом остатка"
-                    : `Тариф на ${tariff.periodDays} дн.`}
-              </span>
-              <PromoPrice
-                price={subscriptionPrice}
-                personal={discount}
-                size="text"
-                tone="inherit"
-                className="justify-end"
-              />
+        <ul className="mt-4 space-y-2">
+          {/* Акция и персональная скидка (промокод или скидка навсегда) — прямо
+              в строке тарифа: старая цена зачёркнута, новая и плашки. Скидка
+              считается от цены с акцией; баллы — ниже. */}
+          <li
+            data-testid="order-subscription-line"
+            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[14px] text-[#3c4053]"
+          >
+            <span>
+              {plan?.kind === "upgrade"
+                ? t("lines.upgrade", { days: String(plan.remainingDays) })
+                : plan?.kind === "switch" && plan.creditRub > 0
+                  ? t("lines.switchCredit")
+                  : t("lines.plan", { days: String(tariff.periodDays) })}
+            </span>
+            <PromoPrice price={subscriptionPrice} personal={discount} size="text" tone="inherit" className="justify-end" />
+          </li>
+          {plan?.kind === "switch" && plan.creditRub > 0 ? (
+            <li data-testid="order-credit-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
+              <span>{t("lines.credit", { price: formatRub(plan.periodPriceRub) })}</span>
+              <span className="tabular-nums">−{formatRub(plan.creditRub)}</span>
             </li>
-            {plan?.kind === "switch" && plan.creditRub > 0 ? (
-              <li data-testid="order-credit-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
-                <span>
-                  Цена тарифа {formatRub(plan.periodPriceRub)}, зачтено за неиспользованные дни
-                </span>
-                <span className="tabular-nums">−{formatRub(plan.creditRub)}</span>
-              </li>
+          ) : null}
+          {plan?.kind === "upgrade" ? (
+            <li data-testid="order-upgrade-line" className="text-[13px] text-[#6f7282]">
+              {t("lines.upgradeHint", { price: formatRub(plan.differenceRub) })}
+            </li>
+          ) : null}
+          {items.map(({ device, qty }) => (
+            <li key={device.id} className="flex justify-between gap-3 text-[14px] text-[#3c4053]">
+              <span>
+                {device.title}
+                {device.mode === "per-unit" ? ` × ${qty}` : ""}
+              </span>
+              <span className="tabular-nums">{formatRub(device.price * qty)}</span>
+            </li>
+          ))}
+          {pointsSpent > 0 ? (
+            <li data-testid="order-points-line" className="flex justify-between gap-3 text-[14px] font-medium text-[#116b2a]">
+              <span>{t("lines.points")}</span>
+              <span className="tabular-nums">−{formatRub(pointsSpent)}</span>
+            </li>
+          ) : null}
+        </ul>
+        <div className="mt-4 flex items-start justify-between gap-3 border-t border-[#e7e7ec] pt-4">
+          <span className="pt-2 text-[15px] font-medium text-[#0b1024]">{t("total")}</span>
+          <span className="text-right">
+            <span data-testid="order-total" className="block text-[30px] font-semibold leading-none tabular-nums tracking-[-0.02em] text-[#0b1024]">
+              {formatRub(netRub)}
+            </span>
+            {perMonthRub ? (
+              <span data-testid="order-per-month" className="mt-1.5 block text-[12.5px] text-[#6f7282]">
+                {t("perMonth", { amount: formatRub(perMonthRub) })}
+              </span>
             ) : null}
-            {plan?.kind === "upgrade" ? (
-              <li data-testid="order-upgrade-line" className="flex justify-between gap-3 text-[13px] text-[#6f7282]">
-                <span>
-                  Разница цен за период {formatRub(plan.differenceRub)} × оставшиеся дни
-                </span>
-              </li>
-            ) : null}
-            {items.map(({ device, qty }) => (
-              <li
-                key={device.id}
-                className="flex justify-between gap-3 text-[13px] text-[#3c4053]"
-              >
-                <span>
-                  {device.title}
-                  {device.mode === "per-unit" ? ` × ${qty}` : ""}
-                </span>
-                <span className="tabular-nums">
-                  {formatRub(device.price * qty)}
-                </span>
-              </li>
-            ))}
-            {pointsSpent > 0 ? (
-              <li className="flex justify-between gap-3 text-[13px] font-medium text-[#116b2a]">
-                <span>Баллами</span>
-                <span className="tabular-nums">−{formatRub(pointsSpent)}</span>
-              </li>
-            ) : null}
-          </ul>
-        ) : null}
-      </div>
-
-      {/* Промокод — отдельным блоком под итогом: клиент видит, как
-          меняется сумма, до нажатия «Оплатить». */}
-      <div className="mt-4 rounded-2xl border border-[#dcdfed] bg-white p-5">
-        <div className="flex items-center gap-2 text-[15px] font-medium text-[#0b1024]">
-          <Ticket className="size-4 text-[#5566f6]" />
-          Промокод
+          </span>
         </div>
-        <div className="mt-3 flex gap-2">
-          <input
-            value={promoInput}
-            onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void applyPromo();
-              }
-            }}
-            placeholder="Например, WELCOME10"
-            aria-label="Промокод"
-            className="h-11 min-w-0 flex-1 rounded-2xl border border-[#dcdfed] bg-white px-4 font-mono text-[14px] text-[#0b1024] placeholder:font-sans placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          />
+      </section>
+
+      {/* Промокод — одной строкой: ссылка «Есть промокод?», раскрытое поле или
+          плашка применённого кода с крестиком. Сумма в чеке меняется сразу. */}
+      <div data-testid="order-promo" className="mt-3">
+        {codeApplied ? (
+          <div
+            data-testid="promo-applied"
+            className="flex items-center justify-between gap-3 rounded-2xl bg-[#ecfdf5] px-4 py-2.5 text-[14px] text-[#116b2a]"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <Ticket className="size-4 shrink-0" aria-hidden />
+              <span className="truncate">
+                {t("promo.applied", { code: codeApplied.code })}
+                <span className="font-semibold tabular-nums"> · −{formatRub(codeApplied.discountRub)}</span>
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => void removePromo()}
+              disabled={promoBusy}
+              aria-label={t("promo.remove")}
+              title={t("promo.remove")}
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[#116b2a] transition-colors hover:bg-white/70 disabled:opacity-50"
+            >
+              {promoBusy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <X className="size-4" aria-hidden />}
+            </button>
+          </div>
+        ) : promoExpanded ? (
+          <div className="flex gap-2">
+            <input
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void applyPromo();
+                }
+              }}
+              autoFocus={promoOpen && !promoInput}
+              placeholder={t("promo.placeholder")}
+              aria-label={t("promo.placeholder")}
+              className="h-11 min-w-0 flex-1 rounded-2xl border border-[#dcdfed] bg-white px-4 font-mono text-[16px] text-[#0b1024] placeholder:font-sans placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+            />
+            <button
+              type="button"
+              onClick={() => void applyPromo()}
+              disabled={promoBusy || !promoInput.trim()}
+              className="inline-flex h-11 shrink-0 items-center rounded-2xl bg-[#f4f5fb] px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:bg-[#eef1ff] disabled:opacity-50"
+            >
+              {promoBusy ? t("promo.checking") : t("promo.apply")}
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
-            onClick={() => void applyPromo()}
-            disabled={promoBusy || !promoInput.trim()}
-            className="inline-flex h-11 shrink-0 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
+            data-testid="promo-open"
+            onClick={() => setPromoOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl px-1 text-[14px] font-medium text-[#3848c7] transition-colors hover:text-[#5566f6]"
           >
-            {promoBusy ? "Проверяем…" : typedCode ? "Обновить" : "Применить"}
+            <Ticket className="size-4" aria-hidden />
+            {t("promo.open")}
           </button>
-        </div>
+        )}
         {promoError ? (
-          <p data-testid="promo-error" className="mt-2 text-[12px] text-[#a13a32]">
+          <p data-testid="promo-error" className="mt-1.5 px-1 text-[13px] text-[#a13a32]">
             {promoError}
-          </p>
-        ) : discount?.source === "code" ? (
-          <p data-testid="promo-applied" className="mt-2 text-[12px] text-[#116b2a]">
-            Промокод {discount.code} применён: −{formatRub(discount.discountRub)} от подписки
-            {subscriptionPrice.promotion ? " (считается от цены по акции)" : ""}.
-          </p>
-        ) : discount?.source === "lifetime" && !typedCode ? (
-          <p data-testid="lifetime-applied" className="mt-2 text-[12px] text-[#116b2a]">
-            {discount.label}: −{formatRub(discount.discountRub)} от подписки — применяется сама,
-            вводить ничего не нужно.
           </p>
         ) : null}
         {promoNotice ? (
-          <p data-testid="promo-notice" className="mt-2 text-[12px] leading-[1.5] text-[#3848c7]">
+          <p data-testid="promo-notice" className="mt-1.5 px-1 text-[13px] leading-[1.5] text-[#3848c7]">
             {promoNotice}
           </p>
         ) : null}
-        {personalPending ? (
-          <p className="mt-2 text-[12px] text-[#6f7282]">
-            Персональный промокод — проверим по почте при оплате.
-          </p>
-        ) : null}
+        {personalPending ? <p className="mt-1.5 px-1 text-[13px] text-[#6f7282]">{t("promo.personalPending")}</p> : null}
       </div>
-      {showPointsBlock ? (
-        <div className="mt-4 rounded-2xl border border-[#dcdfed] bg-white p-5">
+
+      {/* Способ оплаты — выпадающим списком, когда счёт доступен: карта/СБП
+          или счёт для юрлица. От выбора зависят форма и кнопка ниже. */}
+      {invoiceAvailable ? (
+        <div className="mt-6">
+          <span id="order-method-label" className="block text-[13px] font-medium text-[#0b1024]">
+            {t("method.label")}
+          </span>
+          <Select value={activeMethod} onValueChange={(value) => setMethod(value === "invoice" ? "invoice" : "card")}>
+            <SelectTrigger
+              aria-labelledby="order-method-label"
+              data-testid="order-method"
+              className="mt-2 h-auto min-h-14 w-full rounded-2xl border-[#dcdfed] bg-white px-4 py-2.5 text-left"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" className="w-[var(--radix-select-trigger-width)]">
+              <SelectItem value="card" textValue={t("method.card")}>
+                <MethodOption icon={CreditCard} title={t("method.card")} hint={t("method.cardHint")} />
+              </SelectItem>
+              <SelectItem value="invoice" textValue={t("method.invoice")}>
+                <MethodOption icon={FileText} title={t("method.invoice")} hint={t("method.invoiceHint")} />
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
+      {showPointsBlock && activeMethod === "card" ? (
+        <div className="mt-4 rounded-2xl bg-[#f4f5fb] p-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-[15px] font-medium text-[#0b1024]">
@@ -777,16 +921,26 @@ function Checkout({
         </div>
       ) : null}
 
+      {/* Счёт для юрлица — гостю по ИНН без регистрации, руководителю — на свою
+          организацию (без ИНН — дозаполнит его здесь же). */}
+      {activeMethod === "invoice" && plan ? (
+        <InvoicePanel
+          email={email}
+          onEmailChange={setEmail}
+          plan={{ tier: plan.tier, cycle: plan.cycle, points: plan.points }}
+          promoCode={typedCode}
+          expectedGrossRub={amountAfterPromo}
+          org={guest ? null : orgInvoice}
+        />
+      ) : (
       <form onSubmit={submit} className="mt-6">
         <label
           htmlFor="order-email"
           className="block text-[13px] font-medium text-[#0b1024]"
         >
-          Электронная почта
+          {t("email.label")}
         </label>
-        <p className="mt-1 text-[12px] text-[#9b9fb3]">
-          На неё придёт чек и ссылка для входа в кабинет.
-        </p>
+        <p className="mt-1 text-[12.5px] text-[#6f7282]">{t("email.hint")}</p>
         {/* У вошедшего адрес не редактируется: сервер всё равно возьмёт
             почту из сессии, иначе баллы организации ушли бы на заказ с
             чужим адресом. Показываем то же, что уйдёт в чек. */}
@@ -798,6 +952,7 @@ function Checkout({
           value={email}
           readOnly={Boolean(sessionEmail)}
           onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => void trackGuestEmail(email)}
           placeholder="you@company.ru"
           className={`mt-2 h-12 w-full rounded-2xl border border-[#dcdfed] px-4 text-[16px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 ${
             sessionEmail ? "bg-[#fafbff]" : "bg-white"
@@ -819,7 +974,7 @@ function Checkout({
             галочку у неё не учитывает), поэтому её не показываем; как и
             при сумме 0 ₽ (зачёт остатка или скидка). */}
         {!RECURRING_CHARGES_LIVE || plan?.kind === "upgrade" || amountAfterPromo === 0 ? null : (
-          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl bg-[#f4f5fb] px-4 py-3">
             <input
               type="checkbox"
               checked={recurringConsent}
@@ -856,22 +1011,23 @@ function Checkout({
         <button
           type="submit"
           disabled={loading}
-          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
+          data-testid="order-pay"
+          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              {netRub === 0 ? "Проводим оплату…" : "Открываем оплату…"}
+              {netRub === 0 ? t("processing") : t("paying")}
             </>
           ) : netRub === 0 ? (
             <>
               <Coins className="size-4" />
               {/* Ноль бывает и без баллов — промокод на 100 %. */}
-              {pointsSpent > 0 ? "Оплатить баллами" : "Оформить без оплаты"}
+              {pointsSpent > 0 ? t("payPoints") : t("payFree")}
             </>
           ) : (
             <>
-              Перейти к оплате
+              {t("pay", { amount: formatRub(netRub) })}
               <ArrowRight className="size-4" />
             </>
           )}
@@ -880,22 +1036,38 @@ function Checkout({
         {watch ? (
           <p className="mt-3 flex items-center justify-center gap-2 text-[13px] text-[#6f7282]">
             <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
-            Ждём подтверждение оплаты — страница обновится сама.
+            {t("waiting")}
           </p>
         ) : null}
-      </form>
 
-      {/* Как платить и что с возвратом — до нажатия, а не мелким шрифтом в оферте. */}
-      <p className="mt-4 text-center text-[13px] leading-[1.6] text-[#3c4053]">
-        {PAYMENT_METHODS_NOTE} {REFUND_NOTE}{" "}
+        {/* Доверие — коротко под кнопкой: касса, чек, возврат со ссылкой на условия. */}
+        <ul data-testid="order-trust" className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[12.5px] text-[#6f7282]">
+          <li className="flex items-center gap-1.5">
+            <ShieldCheck className="size-3.5 text-[#5566f6]" aria-hidden />
+            {t("trust.secure")}
+          </li>
+          <li className="flex items-center gap-1.5">
+            <Receipt className="size-3.5 text-[#5566f6]" aria-hidden />
+            {t("trust.receipt")}
+          </li>
+          <li className="flex items-center gap-1.5">
+            <RotateCcw className="size-3.5 text-[#5566f6]" aria-hidden />
+            {t("trust.refund")}
+          </li>
+        </ul>
+      </form>
+      )}
+
+      {/* Что с возвратом — до нажатия, а не мелким шрифтом в оферте. */}
+      <p className="mt-4 text-center text-[12.5px] leading-[1.6] text-[#6f7282]">
+        {REFUND_NOTE}{" "}
         <Link href={REFUND_HREF} target="_blank" className="text-[#3848c7] underline-offset-4 hover:underline">
-          Условия возврата
+          {t("refundTerms")}
         </Link>
       </p>
 
-      <p className="mt-4 flex items-start gap-2 text-[12px] leading-[1.6] text-[#9b9fb3]">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
-        <span>
+      {activeMethod === "card" ? (
+        <p className="mt-3 text-[12px] leading-[1.6] text-[#9b9fb3]">
           Оплата проходит на стороне сервиса «Робокасса», данные карты нам не
           передаются. Нажимая «Перейти к оплате», вы принимаете условия{" "}
           <Link href="/oferta" className="text-[#3848c7]">
@@ -914,20 +1086,17 @@ function Checkout({
             согласия на обработку персональных данных
           </Link>
           .
-        </span>
-      </p>
-
-      {/* Счёт по ИНН без регистрации (2026-11-01) — только гостю: вошедший
-          выставляет счёт на свою организацию в «Настройки → Тариф». */}
-      {guestInvoiceReady && plan && amountAfterPromo > 0 ? (
-        <GuestInvoicePanel
-          email={email}
-          onEmailChange={setEmail}
-          plan={{ tier: plan.tier, cycle: plan.cycle, points: plan.points }}
-          promoCode={typedCode}
-          expectedGrossRub={amountAfterPromo}
-        />
+        </p>
       ) : null}
+
+      {/* Вопрос перед оплатой — сразу человеку, а не уход со страницы. */}
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl bg-[#f4f5fb] px-4 py-3 text-[13.5px] text-[#3c4053]">
+        <MessageCircle className="size-4 text-[#5566f6]" aria-hidden />
+        <span>{t("question")}</span>
+        <ContactSupportButton subject={t("questionSubject")} testId="order-question" className="font-medium text-[#3848c7] underline-offset-4 hover:underline">
+          {t("questionAction")}
+        </ContactSupportButton>
+      </div>
     </Card>
   );
 }
@@ -1344,6 +1513,22 @@ function CompleteForm({
 }
 
 /* ------------------------------------------------------------------- вспом. */
+
+/** Почта, которую уже можно записать в CRM: с доменом и зоной от двух букв. */
+const TRACK_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/** Строка списка «Способ оплаты»: иконка, название, пояснение. */
+function MethodOption({ icon: Icon, title, hint }: { icon: LucideIcon; title: string; hint: string }) {
+  return (
+    <span className="flex items-center gap-3 py-0.5 whitespace-normal">
+      <Icon className="size-5 shrink-0 text-[#5566f6]" aria-hidden />
+      <span className="flex min-w-0 flex-col text-left">
+        <span className="text-[15px] font-medium leading-[1.3] text-[#0b1024]">{title}</span>
+        <span className="text-[12.5px] leading-[1.35] text-[#6f7282]">{hint}</span>
+      </span>
+    </span>
+  );
+}
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
