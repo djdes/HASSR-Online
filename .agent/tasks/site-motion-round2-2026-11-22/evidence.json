@@ -1,6 +1,7 @@
 {
   "task": "site-motion-round2-2026-11-22",
-  "status": "READY_FOR_VERIFICATION",
+  "status": "READY_FOR_RELEASE",
+  "commit": "15e20bed8",
   "base": "ca7cf2be3 (origin/master)",
   "criteria": {
     "AC1": { "status": "PASS", "proof": "raw/measure.json AC1.enter-after-placeholder: delays 0/45/90 ms, 320 ms, rise only where nothing is fixed, 0 animations without a placeholder" },

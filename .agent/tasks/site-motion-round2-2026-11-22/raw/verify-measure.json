@@ -1,0 +1,272 @@
+{
+ "base": "http://localhost:3005",
+ "at": "2026-11-22T21:13:18.165Z",
+ "passed": 19,
+ "failed": 0,
+ "results": [
+  {
+   "id": "AC1.enter-after-placeholder",
+   "ok": true,
+   "detail": {
+    "enter": [
+     {
+      "delay": 0,
+      "duration": 320,
+      "keys": [
+       "opacity",
+       "translate"
+      ]
+     },
+     {
+      "delay": 45,
+      "duration": 320,
+      "keys": [
+       "opacity",
+       "translate"
+      ]
+     },
+     {
+      "delay": 90,
+      "duration": 320,
+      "keys": [
+       "opacity"
+      ]
+     }
+    ],
+    "withoutPlaceholder": 0
+   }
+  },
+  {
+   "id": "AC2.new-row",
+   "ok": true,
+   "detail": {
+    "newRow": {
+     "marked": true,
+     "row": "motion-row-in",
+     "cell": "motion-row-new"
+    },
+    "firstRow": true,
+    "listItem": true,
+    "cleared": true
+   }
+  },
+  {
+   "id": "AC2.not-on-bulk-or-reorder",
+   "ok": true,
+   "detail": {
+    "bulkMarked": 0,
+    "movedMarked": false
+   }
+  },
+  {
+   "id": "AC3.saved-mark",
+   "ok": true,
+   "detail": {
+    "saved": {
+     "insideCell": true,
+     "animation": "motion-saved",
+     "opacity": "0.78",
+     "background": "rgb(28, 150, 85)"
+    },
+    "gone": true,
+    "replyUntouched": true
+   }
+  },
+  {
+   "id": "AC3.silent-otherwise",
+   "ok": true,
+   "detail": {
+    "afterFailure": 0,
+    "afterGet": 0,
+    "withoutCell": 0
+   }
+  },
+  {
+   "id": "AC4.window-plays-out",
+   "ok": true,
+   "detail": {
+    "frames": 6,
+    "first": {
+     "opacity": 1,
+     "scale": 1
+    },
+    "last": {
+     "opacity": 0.397589,
+     "scale": 0.981928,
+     "backdrop": 0.406153
+    },
+    "livedMs": 205,
+    "leftovers": 0
+   }
+  },
+  {
+   "id": "AC4.copy-is-inert",
+   "ok": true,
+   "detail": {
+    "t": 151,
+    "real": 0,
+    "opacity": 1,
+    "scale": 1,
+    "backdrop": 1,
+    "pointer": "none",
+    "inert": true,
+    "hidden": "true",
+    "ids": 0,
+    "own": "none",
+    "value": "Проверка копии"
+   }
+  },
+  {
+   "id": "AC6.segments.ideas",
+   "ok": true,
+   "detail": {
+    "look": {
+     "track": "rgba(11, 16, 36, 0.043)",
+     "chosen": "rgb(255, 255, 255)",
+     "idle": "rgba(0, 0, 0, 0)",
+     "idleBorder": "0px"
+    },
+    "frames": 43,
+    "moved": 110,
+    "minInset": 2.92637,
+    "shape": "rgb(255, 255, 255)",
+    "left": 0
+   }
+  },
+  {
+   "id": "AC6.segments.batches-links",
+   "ok": true,
+   "detail": {
+    "look": {
+     "track": "rgba(11, 16, 36, 0.043)",
+     "chosen": "rgb(255, 255, 255)",
+     "idle": "rgba(0, 0, 0, 0)",
+     "idleBorder": "0px"
+    },
+    "frames": 44,
+    "moved": 228,
+    "minInset": 4,
+    "shape": "rgb(255, 255, 255)",
+    "left": 0,
+    "url": "/batches?status=finished"
+   }
+  },
+  {
+   "id": "AC6.segments.labels",
+   "ok": true,
+   "detail": {
+    "look": {
+     "track": "rgba(11, 16, 36, 0.043)",
+     "chosen": "rgb(255, 255, 255)",
+     "idle": "rgba(0, 0, 0, 0)",
+     "idleBorder": "0px"
+    },
+    "frames": 44,
+    "moved": 166,
+    "minInset": 1.63117,
+    "shape": "rgb(255, 255, 255)",
+    "left": 0
+   }
+  },
+  {
+   "id": "AC7.empty.table",
+   "ok": true,
+   "detail": {
+    "text": "Строк пока нет",
+    "icon": true,
+    "iconPrintHidden": true,
+    "inCell": true,
+    "dashed": "solid"
+   }
+  },
+  {
+   "id": "errors.desktop",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC6.segments.dark",
+   "ok": true,
+   "detail": {
+    "theme": "dark",
+    "track": "rgba(255, 255, 255, 0.06)",
+    "chosen": "rgba(255, 255, 255, 0.14)"
+   }
+  },
+  {
+   "id": "AC5.short-pull-springs-back",
+   "ok": true,
+   "detail": {
+    "sheetTop": 40,
+    "handle": true,
+    "pulled": {
+     "top": 95,
+     "left": 0,
+     "width": 390,
+     "translate": "0px 55px",
+     "handle": true
+    },
+    "back": {
+     "top": 40,
+     "left": 0,
+     "width": 390,
+     "translate": "",
+     "handle": true
+    }
+   }
+  },
+  {
+   "id": "AC5.only-the-top-zone",
+   "ok": true,
+   "detail": {
+    "top": 40,
+    "left": 0,
+    "width": 390,
+    "translate": "",
+    "handle": true
+   }
+  },
+  {
+   "id": "AC5.long-pull-closes",
+   "ok": true,
+   "detail": {
+    "during": {
+     "real": 0,
+     "ghost": 1
+    },
+    "after": {
+     "real": 0,
+     "ghost": 0
+    }
+   }
+  },
+  {
+   "id": "AC7.empty.cards",
+   "ok": true,
+   "detail": {
+    "text": "Поставок пока не зарегистрировано.",
+    "icon": true,
+    "border": "solid 0px",
+    "background": "rgba(11, 16, 36, 0.043)"
+   }
+  },
+  {
+   "id": "errors.phone",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC9.still",
+   "ok": true,
+   "detail": {
+    "flag": true,
+    "entered": 0,
+    "rowMarked": false,
+    "savedShown": true,
+    "savedAnimation": "none",
+    "savedOpacity": "1",
+    "ghostsSeen": 0
+   }
+  }
+ ]
+}
