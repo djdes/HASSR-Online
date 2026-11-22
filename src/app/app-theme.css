@@ -37,6 +37,8 @@
   --app-soft-surface: #fafbff;
   --app-tint-indigo: #f5f6ff;
   --app-tint-indigo-2: #eef1ff;
+  /* Плашка выбранного сегмента (`ui/segment-styles.ts`) на мягкой подложке. */
+  --app-segment-pill: #ffffff;
   --app-border: #ececf4;
   --app-border-strong: #dcdfed;
   --app-text: #0b1024;
@@ -128,6 +130,8 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
   --app-soft-surface: #2f2c47;
   --app-tint-indigo: rgba(126, 140, 255, 0.16);
   --app-tint-indigo-2: rgba(126, 140, 255, 0.26);
+  /* В тёмной плашка светлее подложки, а не «дырка» в ней. */
+  --app-segment-pill: rgba(255, 255, 255, 0.14);
   /* Рамки на светлом фоне теряются — подняли непрозрачность. */
   --app-border: rgba(255, 255, 255, 0.12);
   --app-border-strong: rgba(255, 255, 255, 0.2);

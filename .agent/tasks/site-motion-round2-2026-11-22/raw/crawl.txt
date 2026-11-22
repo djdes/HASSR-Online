@@ -1,0 +1,8 @@
+desktop pages 24 clicks 5 flights 2
+no leftovers
+page errors: []
+console errors: []
+phone pages 24 clicks 5 flights 2
+no leftovers
+page errors: []
+console errors: []

@@ -57,6 +57,7 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import { localDayKey } from "@/lib/entry-defaults";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 type EmployeeItem = {
   id: string;
   name: string;
@@ -849,7 +850,7 @@ function TrackedDocumentClientImpl({
                   colSpan={status === "active" ? fields.length + 4 : fields.length + 2}
                   className="border border-[#eceef5] p-8 text-center text-[16px] text-[#7d8196]"
                 >
-                  {tk("noRowsYet")}
+                  <JournalEmpty variant="cell">{tk("noRowsYet")}</JournalEmpty>
                 </td>
               </tr>
             )}

@@ -1,0 +1,16 @@
+{
+  "task": "site-motion-round2-2026-11-22",
+  "verifier": "Separate in-thread pass on commit 15e20bed8, every check rerun from the tree (no delegation: the owner did not ask for it)",
+  "verdict": "PASS",
+  "reran": [
+    "npm run typecheck: exit 0 (raw/typecheck.txt)",
+    "pre-commit gate on the commit: 5 files, pass 56, fail 0",
+    "design guards and every test that reads the touched files: 302 / 302; motion tests 44 / 44",
+    "browser, round 2: raw/measure-round2.cjs against next dev on this commit — 19 / 19 (raw/verify-measure.json)",
+    "browser, round 1 regression: 46 / 46 (raw/verify-round1.json)",
+    "crawl of 24 cabinet pages on desktop and on a phone: no errors, no leftovers (raw/crawl.txt)",
+    "production minifier on motion.css: 65 rules, 122 declarations, 8 keyframes in and out (raw/prod-minify.json)"
+  ],
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS", "AC8": "PASS", "AC9": "PASS", "AC10": "PASS" },
+  "notes": "AC1–AC3 are measured on DOM changes made inside the live page and a stubbed journal URL; touch is CDP touch events; the «Продукты» tabs were converted but the local catalogue is empty, so they were not seen in the browser. AC8 was ruled out: the Select list is whole, the arcs are a button of the next form row under the rounded panel."
+}

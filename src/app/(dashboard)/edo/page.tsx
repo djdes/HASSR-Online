@@ -12,6 +12,7 @@ import { readSupplyItems } from "@/lib/supply/documents.server";
 import { loadSupplyPointAccess } from "@/lib/supply/point-access.server";
 
 import { EdoInboxActions } from "./edo-inbox-actions";
+import { SEGMENT_TRACK_CLASS, segmentClass } from "@/components/ui/segment-styles";
 
 export const dynamic = "force-dynamic";
 
@@ -79,12 +80,8 @@ export default async function EdoInboxPage({
   const sourceLabel = (source: string) =>
     t(`source.${source === "diadoc" || source === "saby" || source === "iiko" || source === "poster" ? source : "upload"}`);
   const money = (value: number) => formatNumber(locale, value, { style: "currency", currency: "RUB", maximumFractionDigits: 2 });
-  const tabClass = (active: boolean) =>
-    `inline-flex h-10 items-center rounded-2xl px-4 text-[13.5px] font-medium transition-colors ${
-      active
-        ? "bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]"
-        : "border border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-    }`;
+  // Вкладки — сегменты: выбор один, заливка перетекает (`ui/segment-styles.ts`).
+  const tabClass = (active: boolean) => segmentClass(active, "min-h-10 px-4 text-[13.5px]");
 
   return (
     <div className="space-y-5">
@@ -114,7 +111,7 @@ export default async function EdoInboxPage({
         }))}
       />
 
-      <div className="flex flex-wrap gap-2" data-edo-tabs>
+      <div className={SEGMENT_TRACK_CLASS} data-edo-tabs>
         <Link href="/edo" aria-current={tab === "new" ? "page" : undefined} className={tabClass(tab === "new")}>
           {t("tabs.new")}
         </Link>

@@ -133,6 +133,7 @@ import {
 import { useTodayKey } from "@/lib/use-today-key";
 import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
  * `cleaning-document-client.tsx` / `hygiene-document-client.tsx`).
@@ -2948,7 +2949,7 @@ export function ClimateDocumentClient({
                     colSpan={3 + totalMeasurementColumns}
                     className={`${GRID_CELL_CLASS} px-4 py-10 text-center text-[13px] text-[#6f7282] leading-tight`}
                   >
-                    {t("emptyRows")}
+                    <JournalEmpty variant="cell">{t("emptyRows")}</JournalEmpty>
                   </td>
                 </tr>
               )}

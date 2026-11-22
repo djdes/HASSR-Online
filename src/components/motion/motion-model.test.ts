@@ -2,19 +2,27 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  ENTER_MAX_STEPS,
+  ENTER_STEP_MS,
+  SHEET_DISMISS_PX,
   boxInsets,
   classifyChange,
   colorAlpha,
   depthBelow,
   differingProperties,
+  enterDelays,
   flightDirection,
   isChosen,
   isFarFlight,
+  isJournalSave,
+  isSoleAddition,
   joinsLiquid,
   leadingEdgeNeedsSoftLanding,
+  looksLikePlaceholder,
   onOneTrack,
   pairSelections,
   planLiquid,
+  sheetDragCloses,
   type Look,
   type TreeNode,
 } from "./motion-model";
@@ -234,4 +242,51 @@ test("план: непрозрачные обычные пункты закры�
 test("план: эллиптический радиус сводится к одной длине на угол", () => {
   const chosen: Look = { ...IDLE, "background-color": "rgb(255, 255, 255)", "border-top-left-radius": "10px 6px" };
   assert.equal(planLiquid(chosen, IDLE)?.shape["--lq-radius"], "10px 12px 12px 12px");
+});
+
+/* ── Round 2 (spec `.agent/tasks/site-motion-round2-2026-11-22`) ─────────────────────────── */
+
+test("круг 2, AC1: содержимое появляется по очереди, не больше шести шагов", () => {
+  assert.deepEqual(enterDelays(0), []);
+  assert.deepEqual(enterDelays(3), [0, ENTER_STEP_MS, ENTER_STEP_MS * 2]);
+  const many = enterDelays(12);
+  assert.equal(many.length, 12);
+  assert.equal(Math.max(...many), ENTER_STEP_MS * ENTER_MAX_STEPS, "хвост длинного списка не ждёт дольше шести шагов");
+  assert.equal(many[11], many[6]);
+});
+
+test("круг 2, AC1: заглушка — мерцание без настоящего текста", () => {
+  assert.equal(looksLikePlaceholder(true, 0), true);
+  assert.equal(looksLikePlaceholder(true, 22), true, "подпись для экранного диктора");
+  assert.equal(looksLikePlaceholder(true, 900), false, "страница, где ещё грузится один блок, — не заглушка");
+  assert.equal(looksLikePlaceholder(false, 0), false);
+});
+
+test("круг 2, AC2: новая строка — одна пришла, ни одна не ушла", () => {
+  assert.equal(isSoleAddition(1, 0, 0), true);
+  assert.equal(isSoleAddition(2, 0, 0), true, "запись и её строка с подробностями");
+  assert.equal(isSoleAddition(1, 1, 1), true, "первая запись сменила строку «Строк пока нет»");
+  assert.equal(isSoleAddition(5, 0, 0), false, "загрузка списка");
+  assert.equal(isSoleAddition(1, 1, 0), false, "строку заменили — это правка или фильтр");
+  assert.equal(isSoleAddition(3, 4, 0), false, "смена фильтра");
+  assert.equal(isSoleAddition(0, 0, 0), false);
+});
+
+test("круг 2, AC3: сохранение — запрос к API журналов, меняющий данные", () => {
+  assert.equal(isJournalSave("PATCH", "/api/journal-documents/abc/entries"), true);
+  assert.equal(isJournalSave("post", "/api/journal-documents"), true);
+  assert.equal(isJournalSave("PUT", "https://wesetup.ru/api/journals/hygiene/entries?x=1"), true);
+  assert.equal(isJournalSave("DELETE", "/api/journal-entries/1"), true);
+  assert.equal(isJournalSave("GET", "/api/journal-documents/abc"), false, "чтение — не сохранение");
+  assert.equal(isJournalSave(undefined, "/api/journal-documents/abc"), false, "метод по умолчанию — GET");
+  assert.equal(isJournalSave("POST", "/api/settings/journals"), false);
+  assert.equal(isJournalSave("POST", "/api/journal-documentsx"), false);
+  assert.equal(isJournalSave("POST", "/api/staff"), false);
+});
+
+test("круг 2, AC5: лист закрывается, если протянули дальше порога", () => {
+  assert.equal(sheetDragCloses(SHEET_DISMISS_PX + 1), true);
+  assert.equal(sheetDragCloses(SHEET_DISMISS_PX), false);
+  assert.equal(sheetDragCloses(40), false);
+  assert.equal(sheetDragCloses(0), false);
 });

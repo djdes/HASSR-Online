@@ -190,3 +190,92 @@ test("AC11: «Без анимации» и «Уменьшить движение
   // The global «Без анимации» rule zeroes every duration — the layer relies on it for keyframes.
   assert.match(read("src/app/view-prefs.css"), /:root\[data-view-still\] \*::after \{\s*animation-duration: 0\.01ms !important;/);
 });
+
+/* ── Round 2 (spec `.agent/tasks/site-motion-round2-2026-11-22`) ─────────────────────────── */
+
+const PRESENCE = read("src/components/motion/motion-presence.ts");
+
+test("круг 2: модуль появления и ухода запускается из рантайма и останавливается вместе с ним", () => {
+  assert.match(RUNTIME, /const stopPresence = startPresence\(\);/);
+  assert.match(RUNTIME, /stopPresence\(\);/);
+  assert.match(PRESENCE, /function onTree\(records: MutationRecord\[\]\): void \{\s*if \(motionOff\(\)\) return;/);
+  assert.match(PRESENCE, /observer\.observe\(document\.body, \{ childList: true, subtree: true \}\)/);
+});
+
+test("круг 2, AC2: новая строка — появление и гаснущая подсветка", () => {
+  assert.match(RULES, /:root :where\(tr\[data-row-new\]\) \{\s*animation: motion-row-in 0\.3s ease-out backwards;/);
+  assert.match(RULES, /:root :where\(tr\[data-row-new\]\) > :where\(td, th\) \{\s*animation: motion-row-new 1\.6s ease-out backwards;/);
+  assert.match(RULES, /@keyframes motion-row-new \{\s*from \{\s*background-color: color-mix\(in srgb, var\(--app-indigo, #5566f6\) 16%, transparent\);/);
+  assert.match(read("src/components/journals/record-cards-view.tsx"), /data-motion-list/);
+});
+
+test("круг 2, AC3: отметка «сохранено» — только после принятого сохранения, запрос не трогаем", () => {
+  assert.match(PRESENCE, /const promise = original\.call\(window, input, init\);/);
+  assert.match(PRESENCE, /return promise;/, "вызывающий получает исходный ответ");
+  assert.match(PRESENCE, /if \(response\.ok\) showSaved\(\);/);
+  assert.match(PRESENCE, /if \(originalFetch && window\.fetch === wrappedFetch\) window\.fetch = originalFetch;/);
+  assert.match(RULES, /:root :where\(\[data-motion-saved\]\) \{[^}]*animation: motion-saved 1\.4s ease-out both;/);
+  assert.match(RULES, /:root\[data-view-still\] :where\(\[data-motion-saved\]\) \{\s*animation: none !important;/, "без анимации отметка всё равно видна");
+});
+
+test("круг 2, AC4: копия уходящего окна не ловит нажатия и фокус и не остаётся на странице", () => {
+  for (const line of ['setAttribute("data-motion-ghost", "")', 'setAttribute("aria-hidden", "true")', 'setAttribute("inert", "")', 'removeAttribute("id")', 'removeAttribute("name")']) {
+    assert.ok(PRESENCE.includes(line), line);
+  }
+  assert.match(PRESENCE, /window\.setTimeout\(done, SHEET_OUT_MS \+ 400\);/, "копия убирается в любом случае");
+  assert.match(PRESENCE, /if \(node\.hasAttribute\("data-motion-ghost"\)\) return null;/, "уход копии не порождает новую копию");
+  assert.match(PRESENCE, /:not\(\[data-slot\], \[data-state\], \[data-vaul-drawer\], \[data-motion-ghost\]\)/, "Radix и vaul не трогаем");
+  assert.match(RULES, /:root :where\(\[data-motion-ghost\]\),\s*:root :where\(\[data-motion-ghost\]\) \* \{\s*animation: none !important;\s*transition: none !important;\s*pointer-events: none !important;/);
+  assert.match(PRESENCE, /const WINDOW_OUT_MS = 1[0-8]\d;/);
+  assert.match(PRESENCE, /const SHEET_OUT_MS = 2[0-4]\d;/);
+});
+
+test("круг 2, AC5: лист тянут за верх, закрывает его собственная кнопка", () => {
+  assert.match(PRESENCE, /if \(window\.innerWidth >= PHONE_WIDTH \|\| event\.touches\.length !== 1 \|\| motionOff\(\)\) return;/);
+  assert.match(PRESENCE, /if \(!close\) return; \/\/ a sheet that cannot be closed stays put/);
+  assert.match(PRESENCE, /current\.close\.click\(\);/);
+  assert.match(RULES, /@media \(width < 40rem\) \{[\s\S]*:has\(button > svg\.lucide-x, button\[aria-label\*="акрыть"\], button\[aria-label\*="lose"\]\),[\s\S]*background-size: 40px 4px;/);
+});
+
+test("круг 2, AC6: сегменты — общие стили и шесть переведённых групп", () => {
+  const styles = read("src/components/ui/segment-styles.ts");
+  assert.match(styles, /SEGMENT_TRACK_CLASS = "[^"]*bg-\[var\(--app-veil\)\][^"]*"/);
+  assert.match(styles, /SEGMENT_ON_CLASS = "bg-\[var\(--app-segment-pill,#ffffff\)\]/);
+  assert.doesNotMatch(styles, /border-\[|bg-\[#5566f6\]/, "без рамок и без сплошной заливки акцентом");
+  const theme = read("src/app/app-theme.css");
+  assert.match(theme, /--app-segment-pill: #ffffff;/);
+  assert.match(theme, /--app-segment-pill: rgba\(255, 255, 255, 0\.14\);/, "в тёмной плашка светлее подложки");
+  for (const file of [
+    "src/components/settings/choice-pills.tsx",
+    "src/app/(dashboard)/ideas/ideas-client.tsx",
+    "src/app/(dashboard)/batches/page.tsx",
+    "src/app/(dashboard)/edo/page.tsx",
+    "src/app/(dashboard)/settings/products/page.tsx",
+    "src/app/(dashboard)/settings/print-agent/labels/page.tsx",
+  ]) {
+    assert.match(read(file), /@\/components\/ui\/segment-styles/, file);
+  }
+  // A filter made of links tells the runtime which one is chosen.
+  assert.match(read("src/app/(dashboard)/batches/page.tsx"), /aria-current=\{isActive \? "true" : undefined\}/);
+});
+
+test("круг 2, AC7: пустое состояние журнала — значок и тот же текст, без пунктирной рамки", () => {
+  const empty = read("src/components/journals/journal-empty.tsx");
+  assert.match(empty, /print:hidden/, "на бумаге остаётся только текст");
+  assert.doesNotMatch(empty, /border-dashed/);
+  const cards = read("src/components/journals/record-cards-view.tsx");
+  assert.match(cards, /<JournalEmpty>\{emptyLabel \?\? t\("empty"\)\}<\/JournalEmpty>/);
+  assert.doesNotMatch(cards, /border-dashed/);
+  for (const file of ["acceptance", "climate", "equipment-maintenance", "intensive-cooling", "tracked", "traceability"]) {
+    assert.match(read(`src/components/journals/${file}-document-client.tsx`), /<JournalEmpty variant="cell">/, file);
+  }
+});
+
+test("круг 2, AC9: сдержанность нового модуля", () => {
+  assert.doesNotMatch(PRESENCE, /will-change|gradient\(|--spring-lively|ease-out-back/);
+  for (const curve of PRESENCE.matchAll(/cubic-bezier\(([^)]*)\)/g)) {
+    const [, y1, , y2] = curve[1].split(",").map((value) => Number(value.trim()));
+    assert.ok(y1 >= 0 && y1 <= 1 && y2 >= 0 && y2 <= 1, `кривая без подпрыгивания: ${curve[0]}`);
+  }
+  assert.match(RULES, /@media print \{\s*:root :where\(\[data-motion-saved\], \[data-motion-ghost\]\) \{\s*display: none;/);
+});

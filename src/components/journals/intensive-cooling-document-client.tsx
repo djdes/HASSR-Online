@@ -75,6 +75,7 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { attachLifecycleErrorMetadata, presentLifecycleError, useLifecycleFeedbackRef, type LifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 
 type UserItem = {
   id: string;
@@ -1047,7 +1048,7 @@ export function IntensiveCoolingDocumentClient(props: Props) {
               <tr>
                 <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`} />
                 <td className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#8a8ea4]`} colSpan={7}>
-                  {tCooling("noRows")}
+                  <JournalEmpty variant="cell">{tCooling("noRows")}</JournalEmpty>
                 </td>
               </tr>
             ) : null}

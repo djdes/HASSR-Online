@@ -18,6 +18,7 @@ import { getTranslations } from "next-intl/server";
 import { productPageUnit } from "@/lib/settings-products-presentation";
 import { PRODUCT_KINDS, isProductKind, productKindOf, productShelfLife, type ProductKind } from "@/lib/product-kinds";
 import { cn } from "@/lib/utils";
+import { SEGMENT_TRACK_CLASS, segmentClass } from "@/components/ui/segment-styles";
 
 const KIND_TONE: Record<ProductKind, string> = {
   raw: "bg-[#eef1ff] text-[#3848c7]",
@@ -93,7 +94,7 @@ export default async function ProductsSettingsPage({
       </div>
 
       {allProducts.length > 0 ? (
-        <nav aria-label={t("tabs.label")} className="flex flex-wrap gap-2">
+        <nav aria-label={t("tabs.label")} className={SEGMENT_TRACK_CLASS}>
           {tabs.map((tab) => {
             const active = tab.kind === activeKind;
             return (
@@ -102,15 +103,10 @@ export default async function ProductsSettingsPage({
                 href={tab.kind ? `/settings/products?kind=${tab.kind}` : "/settings/products"}
                 aria-current={active ? "page" : undefined}
                 scroll={false}
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-2 rounded-2xl border px-3.5 py-2 text-[14px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15",
-                  active
-                    ? "border-[#5566f6] bg-[#5566f6] text-white hover:bg-[#4a5bf0]"
-                    : "border-[#ececf4] bg-white text-[#3c4053] hover:border-[#c7ccea] hover:bg-[#f5f6ff]",
-                )}
+                className={segmentClass(active, "shrink-0 gap-2 text-[14px]")}
               >
                 {tab.label}
-                <span className={cn("rounded-full px-1.5 text-[12px]", active ? "bg-white/20 text-white" : "bg-[#f3f4fb] text-[#6f7282]")}>{tab.count}</span>
+                <span className="text-[12px] font-normal tabular-nums text-[#6f7282]">{tab.count}</span>
               </Link>
             );
           })}

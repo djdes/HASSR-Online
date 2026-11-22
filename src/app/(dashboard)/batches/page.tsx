@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { loadBuildingContext } from "@/lib/active-building";
 import { viewedPointId } from "@/lib/building-scope";
 import { pointRecordsWhere } from "@/lib/point-records";
+import { SEGMENT_TRACK_CLASS, segmentClass } from "@/components/ui/segment-styles";
 
 const STATUS_CLASSES: Record<BatchStatus, string> = {
   received: "bg-[#eef1ff] text-[#3848c7]",
@@ -154,19 +155,16 @@ export default async function BatchesPage({
         />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      {/* Фильтр — сегменты: выбор один, заливка перетекает (`ui/segment-styles.ts`). */}
+      <div className={SEGMENT_TRACK_CLASS}>
         {BATCH_FILTERS.map((key) => {
           const isActive = activeFilter === key;
           return (
             <Link
               key={key}
               href={key === "all" ? "/batches" : `/batches?status=${key}`}
-              className={
-                isActive
-                  ? "inline-flex h-9 items-center rounded-2xl bg-[#0b1024] px-4 text-[13px] font-medium text-white"
-                  : "inline-flex h-9 items-center rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13px] font-medium text-[#3c4053] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-              }
+              aria-current={isActive ? "true" : undefined}
+              className={segmentClass(isActive)}
             >
               {t(`filters.${key}`)}
             </Link>
