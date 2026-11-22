@@ -19,6 +19,7 @@ import {
   type LiquidPlan,
   type Look,
 } from "@/components/motion/motion-model";
+import { startPresence } from "@/components/motion/motion-presence";
 
 /**
  * Motion that CSS alone cannot play, because it depends on the previous state (spec
@@ -36,6 +37,9 @@ import {
  *   area fades in on a route change.
  *
  * «Без анимации» / «Reduce motion» (`data-view-still`, AC11): nothing here runs.
+ *
+ * Round 2 (`motion-presence.ts`, started from here): content after placeholders, a new table
+ * row, the saved mark, hand-built windows that play out and can be pulled down on a phone.
  */
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -371,8 +375,11 @@ export function MotionRuntime() {
       attributeFilter: [...SELECTION_ATTRIBUTES],
       subtree: true,
     });
+    // What appears and disappears: content after placeholders, new rows, closing windows.
+    const stopPresence = startPresence();
     return () => {
       observer.disconnect();
+      stopPresence();
       for (const flight of [...flights.values()]) land(flight);
     };
   }, []);

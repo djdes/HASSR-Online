@@ -19,6 +19,7 @@ import {
 } from "@/lib/label-prints";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { orgDayStartInstant } from "@/lib/timezone";
+import { SEGMENT_TRACK_CLASS, segmentClass } from "@/components/ui/segment-styles";
 
 export const dynamic = "force-dynamic";
 
@@ -117,20 +118,19 @@ export default async function LabelLogPage({
       <PageHeader eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
 
       <div className="flex flex-wrap items-center gap-2" data-label-log-filters>
-        {LABEL_PERIODS.map((item) => (
-          <Link
-            key={item}
-            href={href({ period: item })}
-            aria-current={item === period ? "page" : undefined}
-            className={`inline-flex h-10 items-center rounded-2xl px-4 text-[13.5px] font-medium transition-colors ${
-              item === period
-                ? "bg-[#5566f6] text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)]"
-                : "border border-[#dcdfed] bg-white text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-            }`}
-          >
-            {t(`periods.${item}`)}
-          </Link>
-        ))}
+        {/* Период — сегменты: выбор один, заливка перетекает (`ui/segment-styles.ts`). */}
+        <div className={SEGMENT_TRACK_CLASS}>
+          {LABEL_PERIODS.map((item) => (
+            <Link
+              key={item}
+              href={href({ period: item })}
+              aria-current={item === period ? "page" : undefined}
+              className={segmentClass(item === period, "min-h-10 px-4 text-[13.5px]")}
+            >
+              {t(`periods.${item}`)}
+            </Link>
+          ))}
+        </div>
         <Link
           href={href({ attention: !attention })}
           role="switch"

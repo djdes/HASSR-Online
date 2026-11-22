@@ -1,0 +1,27 @@
+
+/home/user/HASSR-Online/src/components/journals/acceptance-document-client.tsx
+    14:3  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   172:7  warning  'POSITION_OPTIONS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  2635:9  warning  'pageTitle' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/components/journals/climate-document-client.tsx
+  108:8  warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/components/journals/intensive-cooling-document-client.tsx
+    5:30  warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+    6:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   52:3   warning  'formatIntensiveCoolingDate' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   72:8   warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  104:10  warning  'hourOptions' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  108:10  warning  'minuteOptions' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/components/journals/traceability-document-client.tsx
+   31:10  warning  'DropdownMenu' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   31:24  warning  'DropdownMenuContent' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   31:45  warning  'DropdownMenuItem' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   31:63  warning  'DropdownMenuTrigger' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  735:9   warning  'roleOptions' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 15 problems (0 errors, 15 warnings)
+
+eslint exit: 0 files: 20

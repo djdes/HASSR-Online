@@ -427,7 +427,107 @@
   }
 }
 
+/* ════ Round 2 (spec `.agent/tasks/site-motion-round2-2026-11-22`) — driven by
+   `src/components/motion/motion-presence.ts` ════ */
+
+/* ---- 8. A new row: it fades in and carries a tint that fades away. `data-row-new` is set on a
+   row added alone to a table that was already on the screen (not on a load, a filter, a sort),
+   and on an item added alone to a `data-motion-list`. ---- */
+@keyframes motion-row-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes motion-row-new {
+  from {
+    background-color: color-mix(in srgb, var(--app-indigo, #5566f6) 16%, transparent);
+  }
+}
+:root :where(tr[data-row-new]) {
+  animation: motion-row-in 0.3s ease-out backwards;
+}
+:root :where(tr[data-row-new]) > :where(td, th) {
+  animation: motion-row-new 1.6s ease-out backwards;
+}
+:root :where([data-motion-list]) > :where([data-row-new]) {
+  animation:
+    motion-row-in 0.3s ease-out backwards,
+    motion-row-new 1.6s ease-out backwards;
+}
+
+/* ---- 9. Saved mark: a small check at the corner of the cell touched last, after the journal
+   API accepted the save. A node of its own on <body>; a status colour (success). ---- */
+@keyframes motion-saved {
+  0% {
+    opacity: 0;
+    scale: 0.5;
+  }
+  14% {
+    opacity: 1;
+    scale: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+:root :where([data-motion-saved]) {
+  position: absolute;
+  z-index: 60;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  /* One green for both themes: the theme's success ink is a pale mint in the dark one, and the
+     check on it is white. */
+  background: #1c9655
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center / 9px 9px no-repeat;
+  pointer-events: none;
+  animation: motion-saved 1.4s ease-out both;
+}
+
+/* ---- 10. The copy of a hand-built window that plays its exit: it must not replay the
+   entrance of section 7, react to the pointer or run its own transitions. ---- */
+:root :where([data-motion-ghost]),
+:root :where([data-motion-ghost]) * {
+  animation: none !important;
+  transition: none !important;
+  pointer-events: none !important;
+}
+
+/* ---- 11. A hand-built sheet on a phone can be pulled down by its top; the handle says so.
+   Only where the sheet has a close button of its own — a sheet that cannot be closed has none. ---- */
+@media (width < 40rem) {
+  :root
+    :where([role="dialog"], [role="alertdialog"]):where(
+      :not([data-slot], [data-state], [data-vaul-drawer], [class~="inset-0"])
+    ):where([class*="rounded-t-"]):has(button > svg.lucide-x, button[aria-label*="акрыть"], button[aria-label*="lose"]),
+  :root
+    :where([role="dialog"], [role="alertdialog"]):where([class~="inset-0"]):where(:not([data-slot], [data-state], [data-vaul-drawer]))
+    > :where([class*="rounded-t-"]:not([class~="absolute"], [class~="fixed"])):has(
+      button > svg.lucide-x,
+      button[aria-label*="акрыть"],
+      button[aria-label*="lose"]
+    ) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='4'%3E%3Crect width='40' height='4' rx='2' fill='%238a8ea4' fill-opacity='0.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center 6px;
+    background-size: 40px 4px;
+  }
+}
+
 /* ---- Off: «Без анимации», the system «Reduce motion», print ---- */
+/* The saved mark still says «saved» — it appears and goes without motion. */
+:root[data-view-still] :where([data-motion-saved]) {
+  animation: none !important;
+}
+:root[data-view-still] :where(tr[data-row-new]),
+:root[data-view-still] :where(tr[data-row-new]) > :where(td, th),
+:root[data-view-still] :where([data-motion-list]) > :where([data-row-new]) {
+  animation: none;
+}
 :root[data-view-still]
   :where(
     button,
@@ -496,8 +596,17 @@
     content: none;
     transition: none;
   }
+  :root :where([data-motion-saved]),
+  :root :where(tr[data-row-new]),
+  :root :where(tr[data-row-new]) > :where(td, th),
+  :root :where([data-motion-list]) > :where([data-row-new]) {
+    animation: none;
+  }
 }
 @media print {
+  :root :where([data-motion-saved], [data-motion-ghost]) {
+    display: none;
+  }
   :root :where([data-liquid-host])::before,
   :root :where([data-liquid-host])::after {
     content: none;

@@ -1,6 +1,7 @@
 "use client";
 
 import { Lightbulb, MessageSquareQuote, Plus, ThumbsUp } from "lucide-react";
+import { SEGMENT_TRACK_CLASS, segmentClass } from "@/components/ui/segment-styles";
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -37,9 +38,9 @@ const STATUS_TONE: Record<IdeaStatus, string> = {
   declined: "bg-[#f4f4f7] text-[#6f7282]",
 };
 
-const CHIP = "inline-flex h-9 items-center rounded-full border px-3.5 text-[13px] font-medium transition-colors";
-const CHIP_ON = `${CHIP} border-[#5566f6] bg-[#5566f6] text-white`;
-const CHIP_OFF = `${CHIP} border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]`;
+// Сортировка и фильтр — сегменты: выбор один, заливка перетекает (`ui/segment-styles.ts`).
+const CHIP_ON = segmentClass(true);
+const CHIP_OFF = segmentClass(false);
 const INPUT =
   "w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15";
 
@@ -136,7 +137,7 @@ export function IdeasClient() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex gap-2" role="tablist" aria-label={t("sortLabel")}>
+        <div className={SEGMENT_TRACK_CLASS} role="tablist" aria-label={t("sortLabel")}>
           <button type="button" role="tab" aria-selected={sort === "top"} onClick={() => setSort("top")} className={sort === "top" ? CHIP_ON : CHIP_OFF}>
             {t("sortTop")}
           </button>
@@ -145,7 +146,7 @@ export function IdeasClient() {
           </button>
         </div>
         <span className="mx-1 hidden h-6 w-px bg-[#ececf4] sm:block" />
-        <div className="flex gap-2" role="tablist" aria-label={t("filterLabel")}>
+        <div className={SEGMENT_TRACK_CLASS} role="tablist" aria-label={t("filterLabel")}>
           <button type="button" role="tab" aria-selected={filter === "open"} onClick={() => setFilter("open")} className={filter === "open" ? CHIP_ON : CHIP_OFF}>
             {t("filterOpen")}
           </button>

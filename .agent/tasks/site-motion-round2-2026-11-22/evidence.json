@@ -1,0 +1,17 @@
+{
+  "task": "site-motion-round2-2026-11-22",
+  "status": "READY_FOR_VERIFICATION",
+  "base": "ca7cf2be3 (origin/master)",
+  "criteria": {
+    "AC1": { "status": "PASS", "proof": "raw/measure.json AC1.enter-after-placeholder: delays 0/45/90 ms, 320 ms, rise only where nothing is fixed, 0 animations without a placeholder" },
+    "AC2": { "status": "PASS", "proof": "raw/measure.json AC2.new-row, AC2.not-on-bulk-or-reorder" },
+    "AC3": { "status": "PASS", "proof": "raw/measure.json AC3.saved-mark (inside the cell, reply untouched), AC3.silent-otherwise (failure, GET, no cell)" },
+    "AC4": { "status": "PASS", "proof": "raw/measure.json AC4.window-plays-out (opacity 1 → 0.40, removed, none left), AC4.copy-is-inert" },
+    "AC5": { "status": "PASS", "proof": "raw/measure.json AC5.short-pull-springs-back, AC5.only-the-top-zone, AC5.long-pull-closes", "limit": "CDP touch events, not a real finger" },
+    "AC6": { "status": "PASS", "proof": "raw/measure.json AC6.segments.ideas, .batches-links, .labels, .dark; motion.test.ts (six files use ui/segment-styles)", "limit": "«Продукты» tabs not seen in the browser: the local catalogue is empty" },
+    "AC7": { "status": "PASS", "proof": "raw/measure.json AC7.empty.table, AC7.empty.cards; motion.test.ts (cards view and six tables)" },
+    "AC8": { "status": "PASS", "proof": "evidence.md: the list is 45 px with one option and no overflow; the arcs are the «+» button of the next row under the rounded panel — ruled out, nothing changed" },
+    "AC9": { "status": "PASS", "proof": "raw/measure.json AC9.still; motion.test.ts round-2 guards" },
+    "AC10": { "status": "PASS", "proof": "raw/typecheck.txt exit 0; raw/test-gate.txt pass 56 fail 0; raw/unit-tests.txt 44/44; raw/eslint.txt 0 errors; raw/measure.json 19/19; round-1 measure 46/46; raw/crawl.txt clean; raw/prod-minify.json" }
+  }
+}

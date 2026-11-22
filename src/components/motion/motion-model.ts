@@ -238,3 +238,54 @@ export const LOOK_PROPERTIES: readonly string[] = [
   "border-bottom-right-radius",
   "border-bottom-left-radius",
 ];
+
+/* ── Round 2 (spec `.agent/tasks/site-motion-round2-2026-11-22`) ─────────────────────────── */
+
+/** Step between elements that appear one after another, and how many steps there are at most. */
+export const ENTER_STEP_MS = 45;
+export const ENTER_MAX_STEPS = 6;
+
+/** Delays for `count` elements entering in sequence: 0, 45, 90 … capped at six steps. */
+export function enterDelays(count: number, step = ENTER_STEP_MS, maxSteps = ENTER_MAX_STEPS): number[] {
+  return Array.from({ length: Math.max(0, count) }, (_, index) => Math.min(index, maxSteps) * step);
+}
+
+/**
+ * A row (or a list item) counts as newly added when it arrives alone into a body that keeps its
+ * other rows: one or two rows in (a record and its detail row), none out — except the «no rows
+ * yet» line it replaces. A bulk load, a filter change or a reorder moves several rows at once.
+ */
+export function isSoleAddition(added: number, removed: number, removedEmptyMarkers: number): boolean {
+  return added >= 1 && added <= 2 && removed - removedEmptyMarkers === 0;
+}
+
+/**
+ * Is this request a save of journal data? Any method that changes something, sent to the journal
+ * API — the one signal all journal screens share (each of them calls `fetch` on its own).
+ */
+export function isJournalSave(method: string | undefined, url: string): boolean {
+  const verb = (method || "GET").toUpperCase();
+  if (verb === "GET" || verb === "HEAD" || verb === "OPTIONS") return false;
+  let path = url;
+  try {
+    path = new URL(url, "http://local").pathname;
+  } catch {
+    /* a relative path that URL cannot parse is matched as it is */
+  }
+  return /^\/api\/(journal-documents|journals|journal-entries)(\/|$)/.test(path);
+}
+
+/** How far a sheet has to be pulled down to close, and the zone at its top that can be grabbed. */
+export const SHEET_DISMISS_PX = 90;
+export const SHEET_GRAB_ZONE_PX = 72;
+
+export function sheetDragCloses(offset: number): boolean {
+  return offset > SHEET_DISMISS_PX;
+}
+
+/** A placeholder subtree: carries the shimmer and no real text (a screen-reader label at most). */
+export const PLACEHOLDER_TEXT_LIMIT = 60;
+
+export function looksLikePlaceholder(hasShimmer: boolean, textLength: number): boolean {
+  return hasShimmer && textLength <= PLACEHOLDER_TEXT_LIMIT;
+}
