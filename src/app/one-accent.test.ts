@@ -72,7 +72,7 @@ test("цветное свечение под кнопками гасится д�
   assert.deepEqual([...missing], [], "добавьте разброс в правило «Без цветного свечения» в app-theme.css");
 });
 
-test("аватар, бейдж PRO и «Начальная настройка» — сплошная заливка", () => {
+test("аватар, бейдж «Премиум» и «Начальная настройка» — без градиента", () => {
   for (const file of [
     "src/components/layout/header.tsx",
     "src/components/layout/section-menu-list.tsx",

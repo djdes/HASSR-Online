@@ -103,7 +103,7 @@ export function HomeFavorites({
               style={{ "--nav-i": index + 1 } as CSSProperties}
               className="group flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-[#dcdfed] bg-[#fafbff] px-1.5 py-2 text-center transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60 md:min-h-[148px] md:items-start md:justify-between md:gap-0 md:rounded-3xl md:p-5 md:text-left"
             >
-              <span className="flex size-8 items-center justify-center rounded-xl bg-white text-[#5566f6] shadow-[0_0_0_1px_rgba(220,223,237,0.9)] transition-colors duration-150 group-hover:bg-[#5566f6] group-hover:text-white md:size-10 md:rounded-2xl">
+              <span className="flex size-8 items-center justify-center rounded-xl bg-white text-[#5566f6] transition-colors duration-150 group-hover:bg-[#5566f6] group-hover:text-white md:size-10 md:rounded-2xl">
                 <Plus className="size-4 md:size-5" aria-hidden />
               </span>
               {/* Телефон: только «Избранное» под плюсом. */}

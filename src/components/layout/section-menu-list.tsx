@@ -206,10 +206,17 @@ export function SectionStack({
   );
 }
 
-/** Метка у пункта меню («PRO»): тихая контурная, читается в обеих темах. */
+/**
+ * Метка у пункта меню («Премиум», тариф, на котором доступен раздел). Без
+ * рамки и подложки — просто мелкая подпись: с ними «Мастер-кабинет» в меню
+ * слева не помещался в одну строку.
+ */
 export function NavBadge({ children }: { children: string }) {
   return (
-    <span className="shrink-0 rounded-full border border-[var(--app-border-strong,#dcdfed)] px-[7px] py-px text-[11px] font-bold tracking-[0.04em] text-[var(--app-text-secondary,#3c4053)]">
+    <span
+      data-nav-badge
+      className="shrink-0 text-[10.5px] font-semibold text-[var(--app-text-muted,#6f7282)]"
+    >
       {children}
     </span>
   );

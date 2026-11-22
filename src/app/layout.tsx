@@ -17,6 +17,8 @@ import "./public-theme.css";
 import "./view-prefs.css";
 // Last: light theme repaints the old indigo classes to black and greys.
 import "./neutral-palette.css";
+// After the palettes: neutral box borders give way to fills (scripts/gen-borderless.mjs).
+import "./borderless.css";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";

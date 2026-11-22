@@ -214,6 +214,14 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-wh
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-white\/10 { background-color: color-mix(in srgb, var(--app-surface) 10%, transparent); }
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-white\/5 { background-color: color-mix(in srgb, var(--app-surface) 5%, transparent); }
 
+/* У элемента только `hover:bg-white/…` (невыбранная вкладка «Поддержка /
+   Продажи / Консалтинг»), своей заливки нет — общее правило выше ловит
+   подстроку `bg-white/` и красило его в `--app-surface` всегда: вкладки
+   стояли тёмными коробками. В покое заливки нет. */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [class*="hover:bg-white/"]:not([class^="bg-"], [class*=" bg-"]):not(:hover) {
+  background-color: transparent;
+}
+
 /* Светлая вуаль (белый до 25 %) кладётся только на тёмную или фирменную
    заливку: «Завершить» на баннере, плашка ракеты на «Начальной настройке»,
    чипы на hero. В тёмной теме она остаётся собой (`revert-layer` — значение
@@ -1831,7 +1839,8 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover
   background-color: var(--app-tint-indigo);
 }
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[\#ececef\],
-body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .newd\:bg-\[\#ececef\] {
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .newd\:bg-\[\#ececef\],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hover\:bg-\[\#ececef\]:hover {
   background-color: var(--app-tint-indigo-2);
 }
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .bg-\[\#dcdde3\] {
