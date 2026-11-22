@@ -2,8 +2,7 @@
 
 - **Task ID:** `cloud-testing-2026-11-21`
 - **Ветка:** `claude/hopeful-euler-lb6cie` от `origin/master` `230e9e70` (#297).
-- **Verdict:** AC1–AC6 — PASS (AC5: сервер проверен событием в проекте; браузер на проде — после выкладки,
-  см. «Проверка на проде»).
+- **Verdict:** AC1–AC6 — PASS; Sentry и проверка прода подтверждены на проде (см. «Проверка на проде»).
 
 | AC | Статус | Доказательство |
 |----|--------|----------------|
@@ -13,6 +12,22 @@
 | AC4 | PASS | Скрипт подготовки прогнан из `/home/user`: `raw/setup-script.log` — `npm ci` (1372 пакета), `prisma generate`, `@playwright/mcp` 0.0.84, 43 с. Окружение «HASSR-Online» создано (личное, репозиторий djdes/HASSR-Online, сеть: пакеты + GitHub + `binaries.prisma.sh` по умолчанию, плюс `wesetup.ru`). |
 | AC5 | PASS | Аккаунт подтверждён ссылкой владельца: организация `wesetup`, проект `javascript-nextjs` (EU); в проекте не хранить IP, чистка данных, приём только с wesetup.ru. Сервер: `@sentry/nextjs` 11.11.0 без `withSentryConfig` (сборка не трогается) — `src/lib/sentry-server.ts` + `onRequestError` в `src/instrumentation.ts`. Браузер: минимальный клиент `@sentry/browser`, загружается после открытия страницы (`src/lib/sentry-lazy.ts`, `src/instrumentation-client.ts`), туннель `src/app/api/monitoring/route.ts` (только наш DSN), `useReportError` в error.tsx. В v11 `sendDefaultPii` заменён на `dataCollection`, по умолчанию собирающий всё, — выключено явно (`SENTRY_DATA_COLLECTION`). Тесты: `sentry-config.test.ts` 9/9, `sentry-lazy.test.ts` 2/2. Вес первого экрана: +1,4 КБ gzip (`raw/sentry-bundle-weight.txt`; `Sentry.init` из @sentry/nextjs дал бы +88 КБ). Сквозные проверки: событие сервера и событие браузера через туннель пришли в проект без пользователя, IP, кук и параметров адреса (`raw/sentry-e2e.txt`). Продакшен-сборка `next build --webpack` — ок. Запись сессий не включена (вес и персональные данные) — описано в docs. Подключено в том же PR #299 (спека планировала отдельный): перезапуск CI через API недоступен (403). |
 | AC6 | PASS* | `npm run typecheck` — 0 ошибок; `npm run test:changed` — 22/22; eslint по `src/lib/prod-monitor.test.ts` — 0. *CI — на PR. |
+
+## Проверка на проде
+
+- **Выкладка.** #299 → master `178077f`; прод на `178077f` с 21.11 22:09:25 UTC (`/api/health`).
+- **Sentry, браузер на проде.** https://wesetup.ru/login на iPhone: Sentry загрузился после открытия страницы,
+  тестовая ошибка ушла через `POST /api/monitoring` (200) → issue 162860212. В событии: release
+  `wesetup@178077f`, environment production, адрес `https://wesetup.ru/login` без параметров, из заголовков только
+  User-Agent, кук нет, у пользователя нет id, почты и IP (геолокация RU — это адрес сервера-туннеля).
+- **Sentry, сервер.** Событие из `initSentryServer` → issue 162858265 без пользователя и IP.
+- **Проверка прода по расписанию.** Первый запуск — 22.11 02:05 UTC (run 44974451848): все пять проверок `ok`
+  с первой попытки, `run: ok (clean)`, тревоги нет, состояние сохранено в кэш Actions. GitHub запускает cron
+  с большими задержками: первый запуск — примерно через 4 часа после первого слота, за 7,5 часа один запуск вместо
+  ~30; ночной e2e 21.11 стартовал в 08:14 вместо 01:17 UTC. Для надёжных 15 минут нужен внешний запуск
+  (например, cron-job.org через API GitHub с токеном владельца) — предложено владельцу.
+- **Playwright MCP.** Облачная сессия этой задачи после появления `.mcp.json` в репозитории подхватила сервер
+  `playwright` сама: инструменты `mcp__playwright__*` стали доступны без установки.
 
 ## Что нашли по дороге и исправили
 
