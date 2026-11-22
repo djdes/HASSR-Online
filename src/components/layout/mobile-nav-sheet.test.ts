@@ -14,7 +14,9 @@ const SIDEBAR = readFileSync("src/components/layout/app-sidebar-accordion.tsx", 
 
 test("в шапке листа меню — бренд организации, как в сайдбаре компьютера", () => {
   const header = SHEET.slice(SHEET.indexOf("header={"), SHEET.indexOf("<nav"));
-  assert.match(header, /<OrganizationBrand[\s\S]*identity=\{brand\.identity\}[\s\S]*canEditBranding=\{brand\.canEditBranding\}[\s\S]*large/);
+  assert.match(header, /<OrganizationBrand[\s\S]*identity=\{brand\.identity\}[\s\S]*canEditBranding=\{false\}[\s\S]*large/);
+  // Оформление — круглой кнопкой слева, напротив крестика (2026-11-22), не плашкой под логотипом.
+  assert.match(SHEET, /headerStart=\{brand\.canEditBranding \? <BrandHeaderAction logoUrl=\{brand\.logoUrl\} onNavigate=\{close\} \/> : undefined\}/);
   assert.match(header, /data-mobile-nav-brand/);
   // Логотип ведёт на главную и закрывает лист.
   assert.match(header, /onClick=\{closeOnLink\}/);
@@ -52,9 +54,10 @@ test("в листе меню нет «Выйти»; выход остаётся 
 
 test("видимая полоса прокрутки: лист меню и оба сайдбара — `ScrollPane` с `type=\"auto\"`", () => {
   assert.match(SHEET, /scrollbar\n/);
-  assert.match(BOTTOM, /\{scrollbar \? \(\s*<ScrollPane>/);
+  // В листе свайп по списку только прокручивает его (`noDrag` → `data-vaul-no-drag`).
+  assert.match(BOTTOM, /\{scrollbar \? \(\s*<ScrollPane noDrag>/);
   assert.match(SCROLL, /export function ScrollPane/);
-  assert.match(SCROLL, /<ScrollArea\.Root type="auto"[^>]*data-scroll-pane/);
+  assert.match(SCROLL, /<ScrollArea\.Root\s+type="auto"[^>]*data-scroll-pane\s+data-vaul-no-drag=\{noDrag \? "" : undefined\}/);
   assert.match(SCROLL, /data-vaul-no-drag/);
   assert.match(CLASSIC, /<ScrollPane>\s*<div className="flex min-h-full flex-col px-3 pt-4">\s*<ClassicNavAccordion \/>/);
   assert.match(SIDEBAR, /<ScrollPane viewportRef=\{ref\}>/);
@@ -77,7 +80,7 @@ test("«Пришла проверка» — не нажатый пункт: в �
   assert.match(STYLE, /INSPECTION_IDLE =\s*"border border-\[color-mix\(in_srgb,var\(--app-warn-fg\)_24%,transparent\)\] bg-transparent/);
   assert.match(STYLE, /INSPECTION_ACTIVE =\s*"[^"]*bg-\[var\(--app-warn-bg\)\] text-\[var\(--app-warn-fg\)\]"/);
   for (const source of [CLASSIC, SIDEBAR]) {
-    assert.match(source, /action \? \((active|inside) \? INSPECTION_ACTIVE : INSPECTION_IDLE\)/);
+    assert.match(source, /action\s*\?\s*\(?(active|inside) \? INSPECTION_ACTIVE : INSPECTION_IDLE/);
     assert.doesNotMatch(source, /border border-\[#dcdfed\] bg-white text-\[#0b1024\] shadow/);
     assert.doesNotMatch(source, /active \? "bg-\[#ececef\]" : "bg-\[#f1f1f4\]"/);
   }

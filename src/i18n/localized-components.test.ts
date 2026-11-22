@@ -17,7 +17,7 @@ import { ExportLanguageChoice } from "../components/journals/export-language-cho
 import { LOCALES, LOCALE_NAMES, offeredLocales } from "./locales";
 
 // Узбекский в резерве (правки 05.11.2026): предлагаем ru и en, а уже выбранный uz не пропадает.
-test("export selection defaults to the employee language and offers ru, en and the current language", async () => {
+test("export selection defaults to the employee language and offers ru, en and uz (owner, 2026-11-22)", async () => {
   for (const locale of LOCALES) {
     const messages = await loadMessages(locale);
     const label = messages.journalControls.documentActions.exportLanguage;
@@ -26,7 +26,8 @@ test("export selection defaults to the employee language and offers ru, en and t
     assert.match(html, new RegExp(`<option(?=[^>]*value="${locale}")(?=[^>]*selected="")[^>]*>`));
     assert.equal((html.match(/selected=""/g) ?? []).length, 1);
     for (const value of offeredLocales(locale)) assert.ok(html.includes(LOCALE_NAMES[value]));
-    if (locale !== "uz") assert.ok(!html.includes(LOCALE_NAMES.uz), `${locale}: reserve language offered`);
+    // Узбекский снова в переключателях (владелец, 2026-11-22: «узбекского языка нет»).
+    for (const value of LOCALES) assert.ok(html.includes(LOCALE_NAMES[value]), `${locale}: ${value} offered`);
   }
 });
 

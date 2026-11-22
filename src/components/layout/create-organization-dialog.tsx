@@ -177,14 +177,14 @@ export function CreateOrganizationDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0b1024]/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[120] flex items-end justify-center bg-[#0b1024]/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <BodyScrollLock />
       <form
         onSubmit={submit}
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-[440px] rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_30px_80px_-30px_rgba(11,16,36,0.5)]"
+        className="w-full max-w-[440px] rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_30px_80px_-30px_rgba(11,16,36,0.5)] max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
       >
         <h2 className="text-[18px] font-semibold text-[#0b1024]">
           {t("title")}

@@ -1,0 +1,46 @@
+{
+  "swipe": {
+    "start": {
+      "scrollTop": 0,
+      "max": 86,
+      "sheetTop": 80,
+      "sheetTransform": "none",
+      "x": 195,
+      "y": 445.84375
+    },
+    "afterFingerUp": {
+      "scrollTop": 0,
+      "max": 86,
+      "sheetTop": 80,
+      "sheetTransform": "none",
+      "x": 195,
+      "y": 445.84375
+    },
+    "afterFingerDownAtTop": {
+      "scrollTop": 0,
+      "max": 86,
+      "sheetTop": 80,
+      "sheetTransform": "none",
+      "x": 195,
+      "y": 445.84375
+    },
+    "sheetStillOpen": true
+  },
+  "profile": {
+    "demo": true,
+    "branding": true,
+    "demoBelowBranding": true,
+    "switcherDemo": 1
+  },
+  "createOrgModal": {
+    "bottom": 664,
+    "left": 0,
+    "width": 390,
+    "vw": 390,
+    "vh": 664,
+    "radius": [
+      "22px",
+      "0px"
+    ]
+  }
+}

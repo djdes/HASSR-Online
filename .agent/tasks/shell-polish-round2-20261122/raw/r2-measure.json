@@ -1,0 +1,126 @@
+{
+  "menu-light": {
+    "parentBg": "rgba(0, 0, 0, 0)",
+    "parentColor": "rgb(56, 72, 199)",
+    "parentActive": true,
+    "leafBg": "rgb(238, 241, 255)",
+    "leafText": "Сводка",
+    "action": "upload",
+    "actionOverlapsLogo": false,
+    "cornerUploadInSheet": false,
+    "paneNoDrag": true
+  },
+  "swipe": {
+    "before": {
+      "scrollTop": 86,
+      "scrollH": 520,
+      "clientH": 434,
+      "sheetTop": 80,
+      "vr": [
+        1,
+        228.6875,
+        388,
+        434.3125
+      ]
+    },
+    "afterUp": {
+      "scrollTop": 86,
+      "scrollH": 520,
+      "clientH": 434,
+      "sheetTop": 80,
+      "vr": [
+        1,
+        228.6875,
+        388,
+        434.3125
+      ]
+    },
+    "top": {
+      "scrollTop": 0,
+      "scrollH": 520,
+      "clientH": 434,
+      "sheetTop": 80,
+      "vr": [
+        1,
+        228.6875,
+        388,
+        434.3125
+      ]
+    },
+    "afterDown": {
+      "scrollTop": 0,
+      "scrollH": 520,
+      "clientH": 434,
+      "sheetTop": 80,
+      "vr": [
+        1,
+        228.6875,
+        388,
+        434.3125
+      ]
+    },
+    "sheetOpenAfter": 1
+  },
+  "menu-dark": {
+    "parentBg": "rgba(0, 0, 0, 0)",
+    "parentColor": "rgb(201, 206, 255)",
+    "parentActive": true,
+    "leafBg": "rgba(163, 173, 255, 0.13)",
+    "leafText": "Сводка",
+    "action": "upload",
+    "actionOverlapsLogo": false,
+    "cornerUploadInSheet": false,
+    "paneNoDrag": true
+  },
+  "branding-phone": {
+    "previews": 3,
+    "step5": false,
+    "saveDisabled": true,
+    "saveBg": "rgb(200, 203, 224)",
+    "toggleHints": [
+      "Кнопки, ссылки и выбранные пункты меню — в основном цвете (темнее, если так лучше читается). Журналы и документы остаются чёрно-белыми.",
+      "Включено — рамка в основном цвете компании.",
+      "Включено — в центре значок или логотип компании."
+    ]
+  },
+  "branding-desktop": {
+    "previews": 3,
+    "step5": false,
+    "saveDisabled": true,
+    "saveBg": "rgb(200, 203, 224)",
+    "toggleHints": [
+      "Кнопки, ссылки и выбранные пункты меню — в основном цвете (темнее, если так лучше читается). Журналы и документы остаются чёрно-белыми.",
+      "Включено — рамка в основном цвете компании.",
+      "Включено — в центре значок или логотип компании."
+    ]
+  },
+  "profile": {
+    "emailCount": 1,
+    "footerHasSelect": true,
+    "languages": [
+      "Русский",
+      "English",
+      "O‘zbekcha"
+    ],
+    "planLabel": true,
+    "planChange": "Сменить",
+    "myCabinet": false,
+    "demoAfterBranding": null
+  },
+  "wizard": {
+    "bottom": 664,
+    "left": 0,
+    "width": 390,
+    "vw": 390,
+    "vh": 664,
+    "radius": [
+      "22px",
+      "0px"
+    ],
+    "steps": 4,
+    "disabledSteps": 4,
+    "autoRegister": true,
+    "promoCode": false,
+    "demoNote": true
+  }
+}

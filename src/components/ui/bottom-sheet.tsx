@@ -37,6 +37,7 @@ export function BottomSheet({
   title,
   subtitle,
   header,
+  headerStart,
   children,
   footer,
   scrollbar = false,
@@ -51,6 +52,12 @@ export function BottomSheet({
    * меню: бренд организации на месте слова «Меню», владелец, 2026-11-21).
    */
   header?: ReactNode;
+  /**
+   * Кнопка слева в своей шапке — напротив крестика, того же размера 40px
+   * (лист меню: загрузить логотип или «Фирменный стиль»). Без неё слева
+   * пустое место, чтобы шапка стояла по центру.
+   */
+  headerStart?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   /**
@@ -88,7 +95,7 @@ export function BottomSheet({
               {header ? (
                 <>
                   {/* Пустое место размером с крестик — шапка встаёт ровно по центру. */}
-                  <span aria-hidden className="size-10 shrink-0" />
+                  {headerStart ?? <span aria-hidden className="size-10 shrink-0" />}
                   <div className="min-w-0 flex-1" data-sheet-header>
                     <Drawer.Title className="sr-only">{title}</Drawer.Title>
                     {header}
@@ -120,7 +127,7 @@ export function BottomSheet({
           {/* Без черты под шапкой (владелец, 2026-11-22: «убери полоску над
               поиском»; кабинет без разделительных линий в меню). */}
           {scrollbar ? (
-            <ScrollPane>
+            <ScrollPane noDrag>
               <div className="flex min-h-full flex-col pr-4 pb-2 pl-3" data-sheet-body>
                 {children}
               </div>

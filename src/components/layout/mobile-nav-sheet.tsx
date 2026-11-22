@@ -6,7 +6,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { NavAccordion } from "@/components/layout/app-sidebar-accordion";
 import { ClassicNavAccordion } from "@/components/layout/app-sidebar-accordion-classic";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
-import { OrganizationBrand } from "@/components/layout/organization-brand";
+import { BrandHeaderAction, OrganizationBrand } from "@/components/layout/organization-brand";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 /**
@@ -48,6 +48,9 @@ export function MobileNavSheet({
       onClose={close}
       title={t("menu")}
       scrollbar
+      // Оформление — круглой кнопкой слева, напротив крестика, а не плашкой
+      // под логотипом (владелец, 2026-11-22).
+      headerStart={brand.canEditBranding ? <BrandHeaderAction logoUrl={brand.logoUrl} onNavigate={close} /> : undefined}
       header={
         <div onClick={closeOnLink} data-mobile-nav-brand>
           <OrganizationBrand
@@ -55,7 +58,7 @@ export function MobileNavSheet({
             name={brand.name}
             identity={brand.identity}
             homeHref={brand.homeHref}
-            canEditBranding={brand.canEditBranding}
+            canEditBranding={false}
             large
           />
         </div>

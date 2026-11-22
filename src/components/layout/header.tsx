@@ -115,8 +115,6 @@ type HeaderProps = {
    * сотрудники, сумма в месяц, «Изменить тариф» (`buildCabinetPlanCard`).
    */
   cabinetPlan: CabinetPlanCard;
-  /** Свой кабинет — не ROOT «под видом» и не консультант партнёра: пометка «сейчас». */
-  ownCabinet: boolean;
   /**
    * Пользователь состоит в активном партнёре — в шапке появляется вход
    * в партнёрский кабинет и переключатель контекста «Моя организация /
@@ -162,7 +160,6 @@ export function Header({
   canCreateOrganization,
   organizationSphere,
   cabinetPlan,
-  ownCabinet,
   partnerCabinet = null,
   partnerHint = null,
   whiteLabel = false,
@@ -397,7 +394,6 @@ export function Header({
               plan={
                 <CabinetPlanCardView
                   card={cabinetPlan}
-                  ownCabinet={ownCabinet}
                   variant="menu"
                   onNavigate={() => setProfileMenuOpen(false)}
                 />
@@ -440,13 +436,10 @@ export function Header({
               <DropdownMenuSeparator className="my-0" />
 
               <div className="p-1">
-                {/* «Мой кабинет» (как в листе на телефоне): тариф,
-                    организации, сотрудники, сумма и «Изменить тариф».
-                    Нажатие — в свой кабинет; прежний пункт «Моя
-                    организация» заменён этой карточкой. */}
+                {/* Тариф организации (как в листе на телефоне): тариф,
+                    «Сменить», точки, сотрудники и сумма. */}
                 <CabinetPlanCardView
                   card={cabinetPlan}
-                  ownCabinet={ownCabinet}
                   variant="menu"
                   onNavigate={() => setProfileMenuOpen(false)}
                 />
@@ -647,7 +640,6 @@ export function Header({
         userName={userName}
         userEmail={userEmail}
         cabinetPlan={cabinetPlan}
-        ownCabinet={ownCabinet}
         organizations={regularOrganizations}
         masterCabinets={masterCabinets}
         activeOrganizationId={activeOrganizationId}

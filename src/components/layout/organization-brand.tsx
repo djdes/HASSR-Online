@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import { ImagePlus, Loader2, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ORG_LOGO_ACCEPT, uploadOrgLogoFile } from "@/components/settings/org-logo-upload";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
+import { BRANDING_SETTINGS_HREF } from "@/components/theme/theme-tiles";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
@@ -72,6 +73,91 @@ export function OrganizationMark({
 }
 
 /**
+ * Загрузка логотипа одним нажатием: выбор файла, отправка, тост, обновление
+ * разметки. Общая для значка на плитке логотипа и кнопки в шапке листа меню.
+ */
+function useLogoUpload(onUploaded?: (url: string) => void) {
+  const t = useTranslations("navigation.shell");
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function upload(file: File) {
+    setBusy(true);
+    try {
+      const url = await uploadOrgLogoFile(file, { failedMessage: t("logoFailed") });
+      onUploaded?.(url);
+      toast.success(t("logoUploaded"));
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("logoFailed"));
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  const picker = (
+    <input
+      ref={input}
+      type="file"
+      accept={ORG_LOGO_ACCEPT}
+      className="hidden"
+      onChange={(event) => {
+        const file = event.target.files?.[0];
+        if (file) void upload(file);
+      }}
+    />
+  );
+  return { busy, pick: () => input.current?.click(), picker };
+}
+
+/** Круглая кнопка листа меню — того же вида и размера, что крестик напротив. */
+const ROUND_ACTION =
+  "flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#3848c7] transition-colors hover:bg-[#eef1ff] disabled:opacity-70";
+
+/**
+ * Кнопка оформления в шапке листа меню на телефоне (владелец, 2026-11-22:
+ * «логотип и кнопка загрузки друг на друге — кнопку настройки сбоку»). Стоит
+ * слева, напротив крестика: логотипа нет — загрузить, есть — «Фирменный стиль».
+ */
+export function BrandHeaderAction({ logoUrl, onNavigate }: { logoUrl: string | null; onNavigate?: () => void }) {
+  const t = useTranslations("navigation.shell");
+  const { busy, pick, picker } = useLogoUpload();
+  if (logoUrl) {
+    return (
+      <Link
+        href={BRANDING_SETTINGS_HREF}
+        onClick={onNavigate}
+        aria-label={t("brandingSettings")}
+        title={t("brandingSettings")}
+        data-brand-action="settings"
+        className={cn(ROUND_ACTION, FOCUS)}
+      >
+        <Settings2 className="size-[18px]" aria-hidden />
+      </Link>
+    );
+  }
+  return (
+    <>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={pick}
+        aria-label={t("uploadLogo")}
+        title={t("uploadLogoHint")}
+        data-brand-action="upload"
+        data-logo-upload
+        className={cn(ROUND_ACTION, FOCUS)}
+      >
+        {busy ? <Loader2 className="size-[18px] animate-spin" aria-hidden /> : <ImagePlus className="size-[18px]" aria-hidden />}
+      </button>
+      {picker}
+    </>
+  );
+}
+
+/**
  * Шапка меню (эскизы руководителя 2026-10-28): по центру логотип компании,
  * под ним краткое название и ИНН. Логотипа нет — заглушка с инициалами, а
  * руководителю (`admin.full`) ещё и компактная кнопка «Загрузить логотип»:
@@ -100,32 +186,16 @@ export function OrganizationBrand({
   className?: string;
 }) {
   const t = useTranslations("navigation.shell");
-  const router = useRouter();
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
   // Только что загруженный логотип стоит на месте заглушки, пока страница
   // обновляется; пришёл логотип с сервера — свой больше не нужен.
   const [uploaded, setUploaded] = useState<string | null>(null);
   if (uploaded && logoUrl) setUploaded(null);
+  const { busy, pick, picker } = useLogoUpload(setUploaded);
   // Битая ссылка на логотип — снова заглушка (и кнопка, если её можно показать).
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const candidate = logoUrl ?? uploaded;
   const logo = candidate && candidate !== failedSrc ? candidate : null;
   const canUpload = canEditBranding && !logo;
-
-  async function upload(file: File) {
-    setBusy(true);
-    try {
-      setUploaded(await uploadOrgLogoFile(file, { failedMessage: t("logoFailed") }));
-      toast.success(t("logoUploaded"));
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("logoFailed"));
-    } finally {
-      setBusy(false);
-      if (input.current) input.current.value = "";
-    }
-  }
 
   return (
     <div
@@ -133,69 +203,60 @@ export function OrganizationBrand({
       data-organization-brand
       data-has-logo={logo ? "" : undefined}
     >
-      <Link
-        href={homeHref}
-        aria-label={logo ? undefined : name}
-        className={cn(
-          "flex max-w-full items-center justify-center rounded-2xl transition-opacity duration-150 hover:opacity-90",
-          FOCUS,
-        )}
-      >
-        {logo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logo}
-            alt={name}
-            className={cn("w-auto max-w-full object-contain", large ? "max-h-20" : "max-h-14")}
-            referrerPolicy="no-referrer"
-            onError={() => setFailedSrc(logo)}
-          />
-        ) : (
-          <span
-            aria-hidden
-            data-logo-placeholder
-            className={cn(
-              "flex items-center justify-center rounded-2xl bg-[#eef1ff] font-semibold tracking-[-0.02em] text-[#3848c7] ring-1 ring-inset ring-[#5566f6]/10",
-              large ? "size-[72px] text-[24px]" : "size-14 text-[20px]",
-            )}
-          >
-            {initialsOf(name)}
-          </span>
-        )}
-      </Link>
-      {canUpload ? (
-        <>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => input.current?.click()}
-            title={t("uploadLogoHint")}
-            data-logo-upload
-            className={cn(
-              "relative -mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-full border border-[#dcdfed] bg-white px-3 text-[12.5px] font-medium text-[#3848c7] shadow-[0_6px_16px_-10px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-70",
-              FOCUS,
-            )}
-          >
-            {busy ? (
-              <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-            ) : (
-              <Upload className="size-3.5 shrink-0" aria-hidden />
-            )}
-            {busy ? t("logoUploading") : t("uploadLogo")}
-          </button>
-          <input
-            ref={input}
-            type="file"
-            accept={ORG_LOGO_ACCEPT}
-            className="hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void upload(file);
-            }}
-          />
-        </>
-      ) : null}
-      <div className={cn("flex w-full min-w-0 flex-col items-center gap-0.5", canUpload ? "mt-2.5" : "mt-3")}>
+      {/* Плитка логотипа; у руководителя без логотипа — круглый значок
+          загрузки на её углу, а не плашка поверх (владелец, 2026-11-22). */}
+      <div className="relative max-w-full">
+        <Link
+          href={homeHref}
+          aria-label={logo ? undefined : name}
+          className={cn(
+            "flex max-w-full items-center justify-center rounded-2xl transition-opacity duration-150 hover:opacity-90",
+            FOCUS,
+          )}
+        >
+          {logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logo}
+              alt={name}
+              className={cn("w-auto max-w-full object-contain", large ? "max-h-20" : "max-h-14")}
+              referrerPolicy="no-referrer"
+              onError={() => setFailedSrc(logo)}
+            />
+          ) : (
+            <span
+              aria-hidden
+              data-logo-placeholder
+              className={cn(
+                "flex items-center justify-center rounded-2xl bg-[#eef1ff] font-semibold tracking-[-0.02em] text-[#3848c7] ring-1 ring-inset ring-[#5566f6]/10",
+                large ? "size-[72px] text-[24px]" : "size-14 text-[20px]",
+              )}
+            >
+              {initialsOf(name)}
+            </span>
+          )}
+        </Link>
+        {canUpload ? (
+          <>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={pick}
+              aria-label={t("uploadLogo")}
+              title={t("uploadLogoHint")}
+              data-logo-upload
+              className={cn(
+                "absolute -right-2 -bottom-2 flex size-8 items-center justify-center rounded-full bg-[var(--app-surface,#fff)] text-[#3848c7] shadow-[0_1px_4px_rgba(11,16,36,0.18)] transition-colors duration-150 hover:bg-[#f5f6ff] disabled:opacity-70",
+                FOCUS,
+              )}
+            >
+              {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ImagePlus className="size-4" aria-hidden />}
+            </button>
+            {picker}
+          </>
+        ) : null}
+      </div>
+      <div className="mt-3 flex w-full min-w-0 flex-col items-center gap-0.5">
         <span
           className={cn(
             "line-clamp-2 font-semibold leading-snug text-[#0b1024] [overflow-wrap:anywhere]",

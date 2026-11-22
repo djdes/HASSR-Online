@@ -604,7 +604,6 @@ export default async function DashboardLayout({
             platformPanel={session.user.isRoot === true || (profile ? effectivePlatformSections(profile).length > 0 : false)}
             balanceRub={balanceRub}
             cabinetPlan={cabinetPlan}
-            ownCabinet={!isImpersonating(session) && !partnerAccess}
             organizations={organizations}
             activeOrganizationId={activeOrgId}
             currentPoint={{

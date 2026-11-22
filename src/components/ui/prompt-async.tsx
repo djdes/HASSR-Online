@@ -114,7 +114,7 @@ function PromptDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="prompt-async-title"
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 z-50 flex items-end justify-center px-0 sm:items-center sm:px-4"
     >
       <button
         type="button"
@@ -123,7 +123,7 @@ function PromptDialog({
         className="absolute inset-0 bg-[#0b1024]/40 backdrop-blur-sm transition-opacity"
       />
 
-      <div className="relative w-full max-w-[480px] overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)]">
+      <div className="relative w-full max-w-[480px] overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-30px_rgba(11,16,36,0.55)] max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[env(safe-area-inset-bottom)]">
         <div className="relative overflow-hidden bg-gradient-to-br from-[#f5f6ff] to-white p-6">
           <div className="pointer-events-none absolute -right-12 -top-12 size-[200px] rounded-full bg-[#5566f6]/8 blur-3xl" />
           <div className="relative flex items-start gap-3">

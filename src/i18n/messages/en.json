@@ -3180,7 +3180,8 @@
       "scrollDown": "Scroll menu down",
       "scrollLeft": "Scroll menu left",
       "scrollRight": "Scroll menu right",
-      "openSection": "Open section"
+      "openSection": "Open section",
+      "brandingSettings": "Brand style"
     },
     "header": {
       "staff": "Staff",
@@ -11099,7 +11100,9 @@
         "previewCabinetCaption": "Workspace",
         "previewCabinetMenuActive": "Journals",
         "previewCabinetMenu": "Staff",
-        "previewCabinetButton": "Add entry"
+        "previewCabinetButton": "Add entry",
+        "qrFrameHintOn": "On — the frame uses the company's main colour.",
+        "qrCenterHintOn": "On — the company's icon or logo is in the centre."
       },
       "contactsPage": {
         "description": "Phone and email for documents and reports, time zone and language — and where notifications go.",
@@ -26234,7 +26237,8 @@
       "fullIntro": " — tasks for employees with a link to the journals. Promo code ",
       "fullBenefit": " — {benefit}. ",
       "copyTitle": "Copy promo code",
-      "go": "Open"
+      "go": "Open",
+      "autoRegister": "Automatic sign-up with this phone number"
     },
     "contactUs": {
       "cta": "Contact us",
@@ -27113,7 +27117,7 @@
       "locationsNote": "We will create {count, plural, one {# location} other {# locations}}: separate journals for each, shared staff. Names and addresses are in the settings.",
       "preparing": "Preparing…",
       "showDemo": "Show demo",
-      "demoNote": "Separate organisation, 7 days",
+      "demoNote": "Demo organisation, 7 days",
       "done": "Done",
       "pointPlaceholder": "Location {index, number}",
       "pointNameLabel": "Name of location {index, number}",
@@ -27783,7 +27787,9 @@
       "myCabinet": "My cabinet",
       "orgCabinet": "Organisation cabinet",
       "current": "current",
-      "perMonth": "{price}/month"
+      "perMonth": "{price}/month",
+      "label": "Organisation plan:",
+      "change": "Change"
     },
     "commandPalette": {
       "closeDayLabel": "Close the day",
