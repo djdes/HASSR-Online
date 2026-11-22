@@ -921,9 +921,13 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
   background-color: var(--app-surface);
 }
 
-/* --- Dashboard smooth transition between themes ----------------------- */
+/* --- Dashboard smooth transition between themes -----------------------
+   Elements with their own motion class (landing: button → loader → check,
+   the liquid tab indicator, the toggle knob) keep their transition lists —
+   public pages carry `.app-shell` on <body> too. `:where()` keeps the
+   specificity at 0-1-0; `motion.css` relies on it. */
 .app-shell,
-.app-shell * {
+.app-shell :where(:not(.motion-submit, .motion-submit-label, .motion-fab, .motion-liquid, .motion-knob, .motion-card-arrow)) {
   transition-property: background-color, border-color, color, box-shadow;
   transition-duration: 0.18s;
   transition-timing-function: ease-out;

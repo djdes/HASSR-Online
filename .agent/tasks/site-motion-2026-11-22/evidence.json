@@ -1,0 +1,20 @@
+{
+  "task": "site-motion-2026-11-22",
+  "status": "READY_FOR_RELEASE",
+  "commit": "3be53c18a",
+  "base": "10f087f8f (origin/master)",
+  "criteria": {
+    "AC1": { "status": "PASS", "proof": "motion.test.ts (import order, runtime mounted, :root/:where selectors); raw/measure.json AC1.login, AC1.landing-keeps-own-motion and every surface below" },
+    "AC2": { "status": "PASS", "proof": "raw/measure.json AC2.press.*: held 0.919 / 0.970 / 0.985, release peak 1.001, disabled and drag handle none, nested button squeezes alone, tap highlight transparent, hover adds nothing" },
+    "AC3": { "status": "PASS", "proof": "raw/measure.json AC3.field.*: ring 1.2 → 4.06 → 4.0 px, caret rgb(85,102,246), placeholder 0.6, default ring 4px, none inside a table" },
+    "AC4": { "status": "PASS", "proof": "raw/measure.json AC4.toggle: knob 1.18 held, 1.32 peak, 2.4 px inside the track, translate 0.46s; Switch primitive checked on a journal document (1.6 px inside)" },
+    "AC5": { "status": "PASS", "proof": "raw/measure.json AC5.check: 0 ticked on load, dash offset 24 → 0, attribute removed, box held 0.919" },
+    "AC6": { "status": "PASS", "proof": "raw/measure.json AC6.liquid.* (top menu, sidebar, segments, aria-pressed, retarget, skips, cleanup, new-light, new-dark, classic-dark) + AC9.mini.nav-liquid; motion-model.test.ts 17 tests" },
+    "AC7": { "status": "PASS", "proof": "raw/measure.json AC7.menu (enter 0.3s linear(), exit 0.1s), AC7.window.desktop (motion-window-in), AC7.window.phone-sheet (tops 578 → 40); Dialog primitive enter 0.3s on the spring" },
+    "AC8": { "status": "PASS", "proof": "raw/measure.json AC8.page-fade (220 ms, opacity only), AC8.first-load-still (0 animations), AC8.tab-panel (opacity + filter + translate, 420 ms)", "limit": "tab panel measured on a synthetic tab group with aria-controls" },
+    "AC9": { "status": "PASS", "proof": "raw/measure.json AC9.mini.* and AC9.qr.press; motion.test.ts (mini-theme.css, qr-motion-css.ts, .qr-success-pop)" },
+    "AC10": { "status": "PASS", "proof": "motion.test.ts AC10 (spring peaks ≤ 1.05, no will-change / gradient / :hover / lively spring); raw/rest-compare.json: 17 screens unchanged at rest" },
+    "AC11": { "status": "PASS", "proof": "raw/measure.json AC11.still (flag set, held scale none, 0 shapes, 0 page animations); motion.test.ts AC11" },
+    "AC12": { "status": "PASS", "proof": "raw/typecheck.txt exit 0; raw/test-gate.txt pass 95 fail 0; raw/eslint.txt exit 0; raw/unit-tests.txt 31/31; raw/measure.json and raw/verify-measure.json 46/46; raw/prod-minify.json nothing dropped; next build --webpack exit 0" }
+  }
+}

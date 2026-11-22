@@ -1,0 +1,31 @@
+{
+ "file": "src/app/motion.css",
+ "bytes": {
+  "source": 18500,
+  "minified": 11048
+ },
+ "before": {
+  "rules": 49,
+  "declarations": 92,
+  "keyframes": 5
+ },
+ "after": {
+  "rules": 49,
+  "declarations": 92,
+  "keyframes": 5
+ },
+ "kept": {
+  ":has(": true,
+  ":before": true,
+  "[data-liquid-dir=up]": true,
+  "motion-sheet-in": true,
+  "@layer base": true,
+  "(width < 40rem)": true,
+  "--lq-lead": true,
+  "data-view-still": true,
+  "prefers-reduced-motion": true,
+  "var(--spring-soft)": true,
+  "@media print": true
+ },
+ "nothingDropped": true
+}
