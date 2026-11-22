@@ -9737,6 +9737,43 @@ export type MessageContract = {
         "openAuto": "Автоматика",
         "openCommission": "Комиссия",
         "failed": "Не удалось открыть объект"
+      },
+      "icon": {
+        "title": "Значок объекта",
+        "change": "Сменить",
+        "dialogTitle": "Значок объекта",
+        "dialogHint": "Его видно в списке объектов, в меню объектов и в строке текущего объекта.",
+        "upload": "Загрузить свой",
+        "uploadHint": "Свой значок — квадратная картинка PNG, JPG, WebP или SVG до 300 КБ.",
+        "reset": "Как было",
+        "default": "Обычный — магазин",
+        "defaultOffice": "Обычный — здание",
+        "custom": "Свой значок",
+        "saved": "Значок сохранён",
+        "failed": "Не удалось сохранить значок",
+        "tooLarge": "Значок больше 300 КБ",
+        "library": {
+          "store": "Магазин",
+          "cart": "Супермаркет",
+          "coffee": "Кафе",
+          "chef": "Ресторан",
+          "canteen": "Столовая",
+          "bakery": "Пекарня",
+          "pizza": "Пиццерия",
+          "confectionery": "Кондитерская",
+          "school": "Школа",
+          "kindergarten": "Детский сад",
+          "college": "Колледж, вуз",
+          "hospital": "Больница",
+          "hotel": "Гостиница",
+          "camp": "Лагерь",
+          "fitness": "Фитнес",
+          "factory": "Производство",
+          "warehouse": "Склад",
+          "delivery": "Доставка",
+          "fuel": "АЗС",
+          "office": "Офис"
+        }
       }
     },
     "appearance": {
@@ -26240,6 +26277,14 @@ export type MessageContract = {
         "sales": "Продажи",
         "consulting": "Консалтинг"
       }
+    },
+    "maxLink": {
+      "connect": "Привязать MAX к аккаунту",
+      "linked": "MAX привязан к аккаунту",
+      "codeLead": "MAX на другом телефоне? Откройте там бота WeSetup и отправьте ему этот код:",
+      "codeCopy": "Скопировать код",
+      "codeCopied": "Скопировано",
+      "codeHint": "Код действует 10 минут. После него бот попросит подтвердить привязку здесь."
     }
   },
   "checklistsUi": {

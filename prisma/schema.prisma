@@ -104,10 +104,15 @@ model MaxLinkRequest {
   claimedMaxUserId   String?
   claimedChatId      String?
   claimedDisplayName String?
+  /// Шестизначный код для бота (2026-11-22): вместо ссылки человек может
+  /// отправить код боту в MAX. Хранится только хэш; живёт столько же, сколько
+  /// сама заявка (src/lib/max/link-code.ts).
+  codeHash           String?
   createdAt          DateTime      @default(now())
 
   @@index([userId, createdAt])
   @@index([expiresAt])
+  @@index([codeHash])
 }
 
 model MaxOrganizationIntegration {
@@ -877,6 +882,18 @@ model OrganizationLogo {
   updatedAt      DateTime     @updatedAt
 }
 
+/// Свой значок объекта (2026-11-22): квадратная картинка (PNG, ужатая
+/// браузером до 128px, или очищенный SVG), которую объект показывает в
+/// списках вместо типового значка. Раздаётся по адресу из `Building.icon`.
+model BuildingIconFile {
+  buildingId String   @id
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  bytes      Bytes
+  mime       String
+  version    Int      @default(1)
+  updatedAt  DateTime @updatedAt
+}
+
 /// Квадратный значок организации для центра QR-кодов (2026-10-27). Без него в
 /// центр идёт логотип, если он почти квадратный, иначе — первая буква названия.
 /// Отдаётся через /api/org-assets/<organizationId>/icon?v=<version>.
@@ -1245,6 +1262,11 @@ model Building {
   /// Мастер-кабинет подключает по нему одну точку, а не всю организацию.
   /// Выдаётся при первом показе в настройках журнала (src/lib/dish-pool.ts).
   serviceCode                 String?                @unique
+  /// Значок объекта (2026-11-22): ключ библиотеки (src/lib/building-icons.ts)
+  /// или адрес своего файла `/api/org-assets/<org>/building-icon/<id>?v=N`.
+  /// null — значок по виду: магазин у объекта, здание у офиса.
+  icon                        String?
+  iconFile                    BuildingIconFile?
   createdAt                   DateTime               @default(now())
   updatedAt                   DateTime               @updatedAt
   inspectorTokens             InspectorToken[]

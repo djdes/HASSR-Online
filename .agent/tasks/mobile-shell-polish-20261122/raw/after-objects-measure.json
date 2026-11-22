@@ -1,0 +1,147 @@
+{
+  "api": {
+    "school": [
+      200,
+      {
+        "icon": "school"
+      }
+    ],
+    "kinder": [
+      200,
+      {
+        "icon": "kindergarten"
+      }
+    ],
+    "kinder2": [
+      200,
+      {
+        "icon": "kindergarten"
+      }
+    ],
+    "kinder3": [
+      200,
+      {
+        "icon": "kindergarten"
+      }
+    ],
+    "bad": [
+      400,
+      {
+        "error": "Такого значка нет в библиотеке"
+      }
+    ],
+    "foreign": [
+      404,
+      {
+        "error": "Не найдено"
+      }
+    ],
+    "upload": [
+      200,
+      {
+        "icon": "/api/org-assets/demo-screenshots/building-icon/b-6?v=1"
+      }
+    ],
+    "served": [
+      200,
+      "image/png",
+      "sandbox; default-src 'none'; style-src 'unsafe-inline'"
+    ]
+  },
+  "sheet-classic-light": {
+    "title": {
+      "text": "Объекты",
+      "fontSize": "22px",
+      "weight": "700",
+      "h": 40
+    },
+    "close": {
+      "h": 48,
+      "w": 48,
+      "centerDelta": 0
+    },
+    "bodyBorderTop": "0px",
+    "activeIcon": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "0px"
+    },
+    "icons": [
+      "office-default",
+      "kindergarten",
+      "school",
+      "kindergarten",
+      "default",
+      "default",
+      "upload",
+      "kindergarten"
+    ]
+  },
+  "sheet-new-light": {
+    "title": {
+      "text": "Объекты",
+      "fontSize": "22px",
+      "weight": "700",
+      "h": 40
+    },
+    "close": {
+      "h": 48,
+      "w": 48,
+      "centerDelta": 0
+    },
+    "bodyBorderTop": "0px",
+    "activeIcon": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "0px"
+    },
+    "icons": [
+      "office-default",
+      "kindergarten",
+      "school",
+      "kindergarten",
+      "default",
+      "default",
+      "upload",
+      "kindergarten"
+    ]
+  },
+  "sheet-classic-dark": {
+    "title": {
+      "text": "Объекты",
+      "fontSize": "22px",
+      "weight": "700",
+      "h": 40
+    },
+    "close": {
+      "h": 48,
+      "w": 48,
+      "centerDelta": 0
+    },
+    "bodyBorderTop": "0px",
+    "activeIcon": {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "0px"
+    },
+    "icons": [
+      "office-default",
+      "kindergarten",
+      "school",
+      "kindergarten",
+      "default",
+      "default",
+      "upload",
+      "kindergarten"
+    ]
+  },
+  "uiChoose": "canteen",
+  "dropdownIcons": [
+    "office-default",
+    "kindergarten",
+    "canteen",
+    "kindergarten",
+    "default",
+    "default",
+    "upload",
+    "kindergarten"
+  ],
+  "dropdownActiveBg": "rgba(0, 0, 0, 0)"
+}

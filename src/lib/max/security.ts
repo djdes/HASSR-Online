@@ -21,7 +21,7 @@ export function safeMaxReturnPath(value: unknown): string {
     if (decoded.startsWith("//") || /[\\\r\n\x00-\x1f]/.test(decoded)) return fallback;
     const url=new URL(value,"https://wesetup.invalid");
     if (url.origin!=="https://wesetup.invalid") return fallback;
-    if (!/^\/(journals|journal-fill|equipment-fill|room-fill|dashboard|settings|root|control-board|team|verifications|mini\/today)(\/|$)/.test(url.pathname)) return fallback;
+    if (!/^\/(home|journals|journal-fill|equipment-fill|room-fill|dashboard|settings|root|control-board|team|verifications|mini\/today)(\/|$)/.test(url.pathname)) return fallback;
     return url.pathname+url.search;
   } catch { return fallback; }
 }

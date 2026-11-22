@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNo
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronDown, ChevronUp, PanelLeftClose, PanelLeftOpen, ShieldAlert } from "lucide-react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, ShieldAlert } from "lucide-react";
 import { mainNavSections, navSectionPath, sectionForPath, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelMenuItem, NavModelSection } from "@/lib/app-nav.server";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import { NavIcon } from "@/components/layout/nav-icons";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
+import { ScrollPane } from "@/components/ui/scroll-list";
+import { INSPECTION_ACTIVE, INSPECTION_DOCK, INSPECTION_ICON, INSPECTION_IDLE } from "@/components/layout/nav-inspection-style";
 
 // Дерево меню (владелец, 2026-11-11: «меню как в документации, чуть
 // крупнее»): строки без плашек, уровни — отступом слева, тусклая маленькая
@@ -177,53 +179,66 @@ export function NavAccordion({
     );
   };
 
-  const renderSection = (section: NavModelSection, action = false) => {
+  // Строка раздела и раскрытый список — отдельно: у «Пришла проверка»
+  // закреплена только строка, список идёт за ней (как в классическом меню).
+  const renderRow = (section: NavModelSection, action = false) => {
     const inside = place.top === section.key;
     const open = Boolean(section.menu) && openKey === section.key;
     const active = inside && !section.menu;
     return (
-      <div key={section.key}>
-        <Link
-          href={sectionEntryHref(section)}
-          onClick={onSection(section)}
-          aria-current={inside ? (section.menu ? "true" : "page") : undefined}
-          aria-expanded={section.menu ? open : undefined}
-          data-nav-section={section.key}
-          data-nav-action={action ? "" : undefined}
-          data-nav-tree-row
-          data-active={active ? "" : undefined}
-          style={indent(1)}
-          className={cn(
-            TREE_ROW,
-            touch && TREE_ROW_TOUCH,
-            "font-medium",
-            action && !active
-              ? "bg-[#f1f1f4] text-[#111114] hover:bg-[#ececef]"
-              : active
-                ? TREE_ACTIVE
-                : TREE_IDLE,
-          )}
-        >
+      <Link
+        href={sectionEntryHref(section)}
+        onClick={onSection(section)}
+        aria-current={inside ? (section.menu ? "true" : "page") : undefined}
+        aria-expanded={section.menu ? open : undefined}
+        data-nav-section={section.key}
+        data-nav-action={action ? "" : undefined}
+        data-nav-tree-row
+        data-active={active ? "" : undefined}
+        style={indent(1)}
+        className={cn(
+          TREE_ROW,
+          touch && TREE_ROW_TOUCH,
+          "font-medium",
+          action ? (inside ? INSPECTION_ACTIVE : INSPECTION_IDLE) : active ? TREE_ACTIVE : TREE_IDLE,
+        )}
+      >
+        {action ? (
+          <ShieldAlert aria-hidden className={cn("size-[18px] shrink-0 stroke-[1.6]", INSPECTION_ICON)} />
+        ) : (
           <TreeIcon name={section.icon} active={active} />
-          <span className="min-w-0 flex-1">{section.label}</span>
-          {section.menu ? <TreeChevron open={open} /> : null}
-        </Link>
-        {open && section.menu ? (
-          <div data-nav-sublist={section.key} className="mt-0.5 mb-1.5 space-y-0.5">
-            {renderItems(section, 2)}
-          </div>
-        ) : null}
-      </div>
+        )}
+        <span className="min-w-0 flex-1">{section.label}</span>
+        {section.menu ? <TreeChevron open={open} /> : null}
+      </Link>
     );
   };
+
+  const renderSublist = (section: NavModelSection) =>
+    Boolean(section.menu) && openKey === section.key ? (
+      <div data-nav-sublist={section.key} className="mt-0.5 mb-1.5 space-y-0.5">
+        {renderItems(section, 2)}
+      </div>
+    ) : null;
+
+  const renderSection = (section: NavModelSection) => (
+    <div key={section.key}>
+      {renderRow(section)}
+      {renderSublist(section)}
+    </div>
+  );
 
   return (
     <>
       <div className="space-y-0.5">{main.map((section) => renderSection(section))}</div>
       {inspection && inspectionInline ? (
-        <div className={touch ? "pt-3" : "mt-auto pt-3"}>
-          <div className="border-t border-[#ececf4] pt-3">{renderSection(inspection, true)}</div>
-        </div>
+        <>
+          {/* Закреплена внизу листа (владелец, 2026-11-22), список раздела — следом. */}
+          <div data-nav-bottom className={cn(INSPECTION_DOCK, "mt-auto pt-3 pb-1")}>
+            {renderRow(inspection, true)}
+          </div>
+          {renderSublist(inspection)}
+        </>
       ) : null}
     </>
   );
@@ -254,63 +269,23 @@ function useSidebarCollapsed(): [boolean, (value: boolean) => void] {
 }
 
 /**
- * Прокрутка меню внутри карточки. Когда список длиннее карточки, сверху и
- * снизу появляются круглые кнопки со стрелкой — прокрутить на экран.
+ * Прокрутка меню внутри карточки: своя видимая полоса справа, пока меню
+ * длиннее карточки (владелец, 2026-11-22: «всегда видимый скролл»; прежние
+ * кнопки-стрелки она заменяет). Выбранный пункт сразу на виду.
  */
 function SidebarScroll({ children }: { children: ReactNode }) {
-  const t = useTranslations("navigation.shell");
   const ref = useRef<HTMLDivElement>(null);
-  const [edges, setEdges] = useState({ up: false, down: false });
-
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    const measure = () => {
-      const up = el.scrollTop > 4;
-      const down = el.scrollTop + el.clientHeight < el.scrollHeight - 4;
-      setEdges((prev) => (prev.up === up && prev.down === down ? prev : { up, down }));
-    };
-    // Выбранный пункт сразу на виду: длинное меню прокручено к нему.
-    const active = el.querySelector<HTMLElement>("[data-active]");
-    if (active && active.offsetTop + active.offsetHeight > el.clientHeight) {
+    const active = el?.querySelector<HTMLElement>("[data-active]");
+    if (el && active && active.offsetTop + active.offsetHeight > el.clientHeight) {
       el.scrollTop = active.offsetTop - el.clientHeight / 2;
     }
-    measure();
-    el.addEventListener("scroll", measure, { passive: true });
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    for (const child of el.children) observer.observe(child);
-    return () => {
-      el.removeEventListener("scroll", measure);
-      observer.disconnect();
-    };
   }, []);
-
-  const scrollBy = (direction: 1 | -1) => () => {
-    const el = ref.current;
-    if (!el) return;
-    el.scrollBy({ top: direction * Math.max(160, el.clientHeight - 120), behavior: "smooth" });
-  };
-
-  const arrow =
-    "absolute left-1/2 z-10 flex size-8 -translate-x-1/2 items-center justify-center rounded-full border border-[#dcdde3] bg-white text-[#5f6170] shadow-[0_2px_6px_rgba(17,17,20,0.08)] transition-colors hover:bg-[#f1f1f4] hover:text-[#111114] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10";
-
   return (
-    <div className="relative min-h-0 flex-1">
-      <div ref={ref} className="relative h-full overflow-y-auto overscroll-contain px-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="space-y-0.5">{children}</div>
-      </div>
-      {edges.up ? (
-        <button type="button" aria-label={t("scrollUp")} onClick={scrollBy(-1)} className={cn(arrow, "top-2")}>
-          <ChevronUp className="size-4" aria-hidden />
-        </button>
-      ) : null}
-      {edges.down ? (
-        <button type="button" aria-label={t("scrollDown")} onClick={scrollBy(1)} className={cn(arrow, "bottom-2")}>
-          <ChevronDown className="size-4" aria-hidden />
-        </button>
-      ) : null}
-    </div>
+    <ScrollPane viewportRef={ref}>
+      <div className="space-y-0.5 py-3 pr-4 pl-3">{children}</div>
+    </ScrollPane>
   );
 }
 
@@ -333,13 +308,14 @@ function NavInspection({ compact = false }: { compact?: boolean }) {
       data-nav-section={inspection.key}
       data-nav-action=""
       className={cn(
-        "flex h-11 items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium whitespace-nowrap text-[#111114] transition-colors duration-150 hover:bg-[#ececef] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10",
+        "flex h-11 items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium whitespace-nowrap transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10",
         compact ? "w-11" : "w-full px-3",
-        // Мягкая заливка вместо чёрной рамки (владелец, 2026-11-22: без рамок).
-        active ? "bg-[#ececef]" : "bg-[#f1f1f4]",
+        // Экстренное действие, а не нажатый пункт (владелец, 2026-11-22):
+        // в покое — тонкая линия тона предупреждения, в разделе — заливка.
+        active ? INSPECTION_ACTIVE : INSPECTION_IDLE,
       )}
     >
-      <ShieldAlert className="size-[18px] shrink-0 stroke-[1.6]" aria-hidden />
+      <ShieldAlert className={cn("size-[18px] shrink-0 stroke-[1.6]", INSPECTION_ICON)} aria-hidden />
       {compact ? null : <span className="truncate">{inspection.label}</span>}
     </Link>
   );

@@ -9736,6 +9736,43 @@
         "openAuto": "Automation",
         "openCommission": "Commission",
         "failed": "Could not open the site"
+      },
+      "icon": {
+        "title": "Site icon",
+        "change": "Change",
+        "dialogTitle": "Site icon",
+        "dialogHint": "It shows in the list of sites, in the sites menu and in the current site bar.",
+        "upload": "Upload your own",
+        "uploadHint": "Your own icon: a square PNG, JPG, WebP or SVG image up to 300 KB.",
+        "reset": "Reset",
+        "default": "Standard — shop",
+        "defaultOffice": "Standard — building",
+        "custom": "Your own icon",
+        "saved": "Icon saved",
+        "failed": "Could not save the icon",
+        "tooLarge": "The icon is larger than 300 KB",
+        "library": {
+          "store": "Shop",
+          "cart": "Supermarket",
+          "coffee": "Café",
+          "chef": "Restaurant",
+          "canteen": "Canteen",
+          "bakery": "Bakery",
+          "pizza": "Pizzeria",
+          "confectionery": "Confectionery",
+          "school": "School",
+          "kindergarten": "Kindergarten",
+          "college": "College",
+          "hospital": "Hospital",
+          "hotel": "Hotel",
+          "camp": "Camp",
+          "fitness": "Fitness",
+          "factory": "Production",
+          "warehouse": "Warehouse",
+          "delivery": "Delivery",
+          "fuel": "Petrol station",
+          "office": "Office"
+        }
       }
     },
     "appearance": {
@@ -26239,6 +26276,14 @@
         "sales": "Sales",
         "consulting": "Consulting"
       }
+    },
+    "maxLink": {
+      "connect": "Link MAX to your account",
+      "linked": "MAX is linked to your account",
+      "codeLead": "MAX on another phone? Open the WeSetup bot there and send it this code:",
+      "codeCopy": "Copy code",
+      "codeCopied": "Copied",
+      "codeHint": "The code is valid for 10 minutes. Then the bot will ask you to confirm the link here."
     }
   },
   "checklistsUi": {

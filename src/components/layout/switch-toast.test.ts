@@ -127,3 +127,22 @@ test("failed switch shows no toast; no previous side — toast without return", 
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(back, null);
 });
+
+test("card is centred at every width and fills a phone; phone toasts sit at the top edge (owner, 2026-11-22)", async () => {
+  const { html } = await renderCard("ru", null);
+  assert.match(html, /data-switch-toast[^>]*class="[^"]*\bmx-auto\b[^"]*\bw-full\b[^"]*\bmax-w-\[360px\][^"]*max-\[600px\]:max-w-none/);
+  assert.doesNotMatch(html, /w-\[min\(360px/);
+  const { readFileSync } = await import("node:fs");
+  const layout = readFileSync("src/app/(dashboard)/layout.tsx", "utf8");
+  assert.match(layout, /mobileOffset=\{\{ top: "calc\(env\(safe-area-inset-top, 0px\) \+ 8px\)" \}\}/);
+  assert.doesNotMatch(layout, /mobileOffset=\{\{ top: 128 \}\}/);
+});
+
+test("the toast item fills its toaster, so the card is centred on phones and desktops", async () => {
+  const { readFileSync } = await import("node:fs");
+  const css = readFileSync("src/app/globals.css", "utf8");
+  // Телефон: контейнер с полями 8px — и тост во всю его ширину (было 8px слева, 40px справа).
+  assert.match(css, /left: 8px !important;\s*right: 8px !important;\s*\}\s*\/\*[\s\S]*?\*\/\s*\[data-sonner-toaster\] \[data-sonner-toast\] \{\s*width: 100% !important;/);
+  // Компьютер: свой тост во всю колонку 400px, карточка — `mx-auto`.
+  assert.match(css, /\.dashboard-toaster \[data-sonner-toast\] \{\s*width: 100%;/);
+});

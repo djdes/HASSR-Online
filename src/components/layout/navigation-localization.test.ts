@@ -23,7 +23,8 @@ async function renderNavigation(locale: Locale, pathname: string, child: ReactNo
     children: createElement(PathnameContext.Provider, {
       value: pathname,
       children: createElement(NextIntlClientProvider, {
-        locale, messages: { common: messages.common, navigation: messages.navigation, journalControls: messages.journalControls, journals: messages.journals },
+        // Как в корневом макете: `sharedUi` есть на каждой странице (подпись кнопки MAX в шапке).
+        locale, messages: { common: messages.common, navigation: messages.navigation, journalControls: messages.journalControls, journals: messages.journals, sharedUi: messages.sharedUi },
         timeZone: "Europe/Moscow", onError: error => { throw error; },
         children: createElement(CustomNamesProvider, {
           names: custom ? { journals: { cleaning: "Свой журнал O‘tkir" }, sections: { staff: "Своя команда" } } : { journals: {}, sections: {} },

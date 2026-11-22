@@ -24,6 +24,8 @@ export type BuildingOption = {
   address: string | null;
   /** "office" — офис организации, иначе (или не задано) — объект. */
   kind?: string;
+  /** Значок объекта: ключ библиотеки или адрес своего файла (`lib/building-icons.ts`). */
+  icon?: string | null;
 };
 
 /** Вид `Building` для офиса организации (2026-10-26). */

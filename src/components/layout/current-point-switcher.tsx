@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, Check, ChevronDown, Loader2, Plus, Settings2, Store } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Settings2 } from "lucide-react";
 import { ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
 import { headerPointHidden, type HeaderPoint, type HeaderPointOption } from "@/lib/header-point";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MENU_ITEM_ACTIVE_CLASS } from "@/components/ui/menu-styles";
 import { ScrollList } from "@/components/ui/scroll-list";
+import { BuildingIcon } from "@/components/layout/building-icon";
 import { LocationSwitcherList, POINT_SEARCH_MIN, PointSearchField, useSwitchBuilding } from "@/components/layout/location-switcher";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 
@@ -107,7 +108,12 @@ export function CurrentPointSwitcher({
     const office = point.kind === "single" && point.point.office === true;
     return wrap(
       <span className={BASE} data-current-point={point.kind} title={hint}>
-        <PointLabel caption={office ? t("captionOffice") : caption} title={title} office={office} />
+        <PointLabel
+          caption={office ? t("captionOffice") : caption}
+          title={title}
+          office={office}
+          icon={point.kind === "single" ? point.point.icon : undefined}
+        />
       </span>,
     );
   }
@@ -136,6 +142,7 @@ export function CurrentPointSwitcher({
         caption={shown.office ? t("captionOffice") : t("caption")}
         title={titleOf(shown)}
         office={shown.office === true}
+        icon={shown.icon}
       />
       {busyId ? (
         <Loader2 className="size-4 shrink-0 animate-spin text-[#5566f6]" aria-hidden />
@@ -225,7 +232,6 @@ export function CurrentPointSwitcher({
         {shownOptions.map((option, index) => {
           const isActive = option.id === active.id;
           const building = buildingOf(option);
-          const Icon = option.office ? Building2 : Store;
           // Офис — первым, под ним черта: дальше объекты.
           const divider = option.office && index < shownOptions.length - 1;
           return (
@@ -238,7 +244,12 @@ export function CurrentPointSwitcher({
               data-point-option={option.id}
               data-active-option={isActive ? "" : undefined}
             >
-              <Icon className={cn("mt-0.5 size-4", isActive ? "text-[#3848c7]" : "text-[#9b9fb3]")} />
+              <BuildingIcon
+                icon={option.icon}
+                office={option.office === true}
+                className={cn("mt-0.5 size-4", isActive ? "text-[#3848c7]" : "text-[#9b9fb3]")}
+                uploadClassName="size-5"
+              />
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{titleOf(option)}</span>
                 {option.address ? (
@@ -275,11 +286,21 @@ const BAR_BASE =
   "flex h-12 w-full min-w-0 items-center gap-2.5 rounded-2xl border border-[#e3e6f3] bg-[#fafbff] px-3 text-left [&>svg:last-child]:ml-auto";
 
 /** Иконка точки, тихая подпись «Точка» («Организация» у офиса) и название — две строки. */
-function PointLabel({ caption, title, office = false }: { caption: string; title: string; office?: boolean }) {
-  const Icon = office ? Building2 : Store;
+function PointLabel({
+  caption,
+  title,
+  office = false,
+  icon,
+}: {
+  caption: string;
+  title: string;
+  office?: boolean;
+  /** Значок объекта из настроек; нет — магазин у объекта, здание у офиса. */
+  icon?: string;
+}) {
   return (
     <>
-      <Icon className="size-[18px] shrink-0 text-[#5566f6]" aria-hidden />
+      <BuildingIcon icon={icon} office={office} className="size-[18px] text-[#5566f6]" uploadClassName="size-6" />
       <span className="flex min-w-0 flex-col leading-tight">
         <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#9b9fb3]" data-point-caption>
           {caption}

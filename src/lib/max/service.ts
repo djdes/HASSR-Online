@@ -2,8 +2,10 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { listAccessibleOrganizations, assertOrgMembership } from "@/lib/organization-access";
 import { userHasPermission } from "@/lib/permissions-server";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { canConfirmMaxRequest, maxMenuPolicy } from "./policy";
 import { hashMaxToken, maxToken, MAX_LINK_TTL_MS } from "./security";
+import { generateMaxLinkCode, hashMaxLinkCode } from "./link-code";
 
 export class MaxError extends Error {
   constructor(message:string,public status=400) {super(message);}
@@ -32,11 +34,38 @@ export async function createMaxLink(userId:string,organizationId:string|null=nul
     if(!await db.maxIdentity.findUnique({where:{userId}})) throw new MaxError("Сначала привяжите личный аккаунт MAX.");
   }
   const token=maxToken(); const now=new Date();
+  // Личная привязка — ещё и шестизначный код для бота (`link-code.ts`).
+  const code=organizationId?null:await freshMaxLinkCode(now);
   const request=await db.$transaction(async tx=>{
     await tx.maxLinkRequest.updateMany({where:{userId,organizationId,usedAt:null},data:{usedAt:now}});
-    return tx.maxLinkRequest.create({data:{userId,organizationId,tokenHash:hashMaxToken(token),expiresAt:new Date(now.getTime()+MAX_LINK_TTL_MS)}});
+    return tx.maxLinkRequest.create({data:{userId,organizationId,tokenHash:hashMaxToken(token),codeHash:code?hashMaxLinkCode(code):null,expiresAt:new Date(now.getTime()+MAX_LINK_TTL_MS)}});
   });
-  return {requestId:request.id,token,expiresAt:request.expiresAt};
+  return {requestId:request.id,token,code,expiresAt:request.expiresAt};
+}
+
+/** Код, которого нет у других действующих заявок: при совпадении — новый. */
+async function freshMaxLinkCode(now:Date) {
+  for(let attempt=0;attempt<8;attempt++) {
+    const code=generateMaxLinkCode();
+    const taken=await db.maxLinkRequest.findFirst({where:{codeHash:hashMaxLinkCode(code),usedAt:null,expiresAt:{gt:now}},select:{id:true}});
+    if(!taken) return code;
+  }
+  return null;
+}
+
+/** Попытки ввести код боту: не больше 5 за 15 минут на человека в MAX. */
+const codeAttempts=createRateLimiter({tokensPerInterval:5,intervalMs:15*60_000});
+
+/**
+ * Код из сообщения боту — как переход по ссылке: только называет аккаунт MAX
+ * для заявки; привязку подтверждает владелец кабинета на сайте.
+ */
+export async function claimMaxLinkByCode(code:string,claim:{maxUserId:string;chatId:string;displayName:string}) {
+  if(!codeAttempts.consume(claim.maxUserId)) throw new MaxError("Слишком много попыток ввести код. Подождите 15 минут или откройте ссылку с сайта.",429);
+  const request=await db.maxLinkRequest.findFirst({where:{codeHash:hashMaxLinkCode(code),organizationId:null,usedAt:null,expiresAt:{gt:new Date()}}});
+  if(!request) throw new MaxError("Код не подошёл или устарел. Получите новый на сайте: значок MAX → «Связать мой MAX».");
+  await maxAccount(request.userId);
+  return nominateMaxLink(request,claim);
 }
 
 // A forwarded deep link can only nominate an identity; the signed-in site
@@ -51,6 +80,11 @@ export async function claimMaxLink(token:string,claim:{maxUserId:string;chatId:s
     const identity=await db.maxIdentity.findUnique({where:{userId:request.userId}});
     if(identity?.maxUserId!==claim.maxUserId) throw new MaxError("Команду должен отправить руководитель, создавший код.",403);
   }
+  return nominateMaxLink(request,claim);
+}
+
+/** Первая названная учётка MAX остаётся за заявкой (CAS): чужая позже — отказ. */
+async function nominateMaxLink(request:{id:string;claimedMaxUserId:string|null;claimedChatId:string|null},claim:{maxUserId:string;chatId:string;displayName:string}) {
   const result=await db.maxLinkRequest.updateMany({where:{id:request.id,usedAt:null,expiresAt:{gt:new Date()},claimedMaxUserId:null},data:{claimedMaxUserId:claim.maxUserId,claimedChatId:claim.chatId,claimedDisplayName:claim.displayName.slice(0,180)}});
   if(!result.count && (request.claimedMaxUserId!==claim.maxUserId || request.claimedChatId!==claim.chatId)) throw new MaxError("Ссылка уже открыта другим аккаунтом. Создайте новую на сайте.",409);
   return request.id;

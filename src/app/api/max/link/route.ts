@@ -37,7 +37,7 @@ export async function POST(request:Request) {
     const cfg=maxConfig();
     if(!cfg.configured) throw new MaxError("Подключение MAX ещё настраивается. Попробуйте позже.",503);
     const result=await createMaxLink(session.user.id,parsed.data.scope==="organization"?getActiveOrgId(session):null);
-    return NextResponse.json({requestId:result.requestId,expiresAt:result.expiresAt,...(parsed.data.scope==="organization"?{command:"/connect "+result.token}:{url:`https://max.ru/${cfg.username}?start=link_${result.token}`})},{headers:{"Cache-Control":"no-store"}});
+    return NextResponse.json({requestId:result.requestId,expiresAt:result.expiresAt,...(parsed.data.scope==="organization"?{command:"/connect "+result.token}:{url:`https://max.ru/${cfg.username}?start=link_${result.token}`,code:result.code})},{headers:{"Cache-Control":"no-store"}});
   }catch(error){return maxFailure(error);}
 }
 export async function DELETE(request:Request) {

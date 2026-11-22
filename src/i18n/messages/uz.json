@@ -9736,6 +9736,43 @@
         "openAuto": "Avtomatika",
         "openCommission": "Komissiya",
         "failed": "Nuqtani ochib bo‘lmadi"
+      },
+      "icon": {
+        "title": "Nuqta belgisi",
+        "change": "Almashtirish",
+        "dialogTitle": "Nuqta belgisi",
+        "dialogHint": "U nuqtalar ro‘yxatida, nuqtalar menyusida va joriy nuqta qatorida ko‘rinadi.",
+        "upload": "O‘zimnikini yuklash",
+        "uploadHint": "O‘z belgingiz — 300 KB gacha bo‘lgan kvadrat PNG, JPG, WebP yoki SVG rasm.",
+        "reset": "Avvalgidek",
+        "default": "Oddiy — do‘kon",
+        "defaultOffice": "Oddiy — bino",
+        "custom": "O‘z belgisi",
+        "saved": "Belgi saqlandi",
+        "failed": "Belgini saqlab bo‘lmadi",
+        "tooLarge": "Belgi 300 KB dan katta",
+        "library": {
+          "store": "Do‘kon",
+          "cart": "Supermarket",
+          "coffee": "Kafe",
+          "chef": "Restoran",
+          "canteen": "Oshxona",
+          "bakery": "Novvoyxona",
+          "pizza": "Pitsseriya",
+          "confectionery": "Qandolatxona",
+          "school": "Maktab",
+          "kindergarten": "Bolalar bog‘chasi",
+          "college": "Kollej, OTM",
+          "hospital": "Shifoxona",
+          "hotel": "Mehmonxona",
+          "camp": "Lager",
+          "fitness": "Fitnes",
+          "factory": "Ishlab chiqarish",
+          "warehouse": "Ombor",
+          "delivery": "Yetkazib berish",
+          "fuel": "AYoQSh",
+          "office": "Ofis"
+        }
       }
     },
     "appearance": {
@@ -26239,6 +26276,14 @@
         "sales": "Savdo",
         "consulting": "Konsalting"
       }
+    },
+    "maxLink": {
+      "connect": "MAX’ni akkauntga bog‘lash",
+      "linked": "MAX akkauntga bog‘langan",
+      "codeLead": "MAX boshqa telefondami? U yerda WeSetup botini oching va unga ushbu kodni yuboring:",
+      "codeCopy": "Kodni nusxalash",
+      "codeCopied": "Nusxalandi",
+      "codeHint": "Kod 10 daqiqa amal qiladi. Keyin bot bog‘lashni shu yerda tasdiqlashni so‘raydi."
     }
   },
   "checklistsUi": {
