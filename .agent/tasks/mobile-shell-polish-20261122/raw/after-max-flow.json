@@ -1,0 +1,16 @@
+{
+  "headerBefore": {
+    "state": "unlinked",
+    "label": "Привязать MAX к аккаунту",
+    "href": "/max/connect?next=%2Fhome"
+  },
+  "connectUrl": "/max/connect?next=%2Fhome",
+  "code": "6 digits shown",
+  "wrongCode": 503,
+  "rightCode": 503,
+  "confirmShown": 1,
+  "headerAfter": {
+    "state": "linked",
+    "label": "MAX привязан к аккаунту"
+  }
+}

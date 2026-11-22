@@ -110,7 +110,7 @@ export async function listOrganizationBuildings(
   return db.building.findMany({
     where: { organizationId },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, address: true, kind: true },
+    select: { id: true, name: true, address: true, kind: true, icon: true },
   });
 }
 

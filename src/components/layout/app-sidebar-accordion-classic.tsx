@@ -4,7 +4,7 @@ import { useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronDown, Component } from "lucide-react";
+import { ChevronDown, Component, ShieldAlert } from "lucide-react";
 import { mainNavSections, type NavSectionKey } from "@/lib/app-nav";
 import type { NavModelSection } from "@/lib/app-nav.server";
 import { navTone } from "@/lib/nav-tones";
@@ -16,6 +16,8 @@ import { sectionEntryHref } from "@/lib/nav-layout";
 import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
+import { ScrollPane } from "@/components/ui/scroll-list";
+import { INSPECTION_ACTIVE, INSPECTION_DOCK, INSPECTION_ICON, INSPECTION_IDLE } from "@/components/layout/nav-inspection-style";
 
 // Строка раздела — как в стандартном меню: иконка в коробке 32px.
 const ROW =
@@ -80,131 +82,142 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
     }
   };
 
-  const renderSection = (section: NavModelSection, action = false) => {
+  // Строка раздела и его раскрытый список — отдельно: у «Пришла проверка»
+  // закреплена только строка, а список идёт за ней (`sticky` держит строку
+  // внизу меню, пока до неё не долистали, и с открытым списком тоже).
+  const renderRow = (section: NavModelSection, action = false) => {
     const active = place.top === section.key;
     const open = Boolean(section.menu) && openKey === section.key;
     return (
-      <div key={section.key}>
-        <Link
-          href={sectionEntryHref(section)}
-          onClick={onSection(section)}
-          aria-current={active ? (section.menu ? "true" : "page") : undefined}
-          aria-expanded={section.menu ? open : undefined}
-          data-nav-section={section.key}
-          data-nav-action={action ? "" : undefined}
-          data-tone={navTone(section.icon)}
-          data-nav-row
-          data-nav-bar
-          data-active={active ? "" : undefined}
-          className={cn(
-            ROW,
-            touch && ROW_TOUCH,
-            "group",
-            action && !active
-              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-edge)] hover:bg-[var(--tone-row)]"
-              : active
-                ? ROW_ACTIVE
-                : ROW_IDLE,
-          )}
-        >
+      <Link
+        href={sectionEntryHref(section)}
+        onClick={onSection(section)}
+        aria-current={active ? (section.menu ? "true" : "page") : undefined}
+        aria-expanded={section.menu ? open : undefined}
+        data-nav-section={section.key}
+        data-nav-action={action ? "" : undefined}
+        data-tone={action ? undefined : navTone(section.icon)}
+        data-nav-row
+        data-nav-bar
+        data-active={active ? "" : undefined}
+        className={cn(
+          ROW,
+          touch && ROW_TOUCH,
+          "group",
+          action ? (active ? INSPECTION_ACTIVE : INSPECTION_IDLE) : active ? ROW_ACTIVE : ROW_IDLE,
+        )}
+      >
+        {action ? (
+          // Экстренное действие: щит тоном предупреждения, без своей плашки.
+          <span aria-hidden className="inline-flex size-8 shrink-0 items-center justify-center">
+            <ShieldAlert className={cn("size-[18px]", INSPECTION_ICON)} />
+          </span>
+        ) : (
           <NavIconChip name={section.icon} className="size-8 rounded-[10px]" iconClassName="size-[18px]" />
-          <span className="min-w-0 flex-1">{section.label}</span>
-          {section.menu ? (
-            <ChevronDown
-              aria-hidden
-              className={cn(
-                "size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none",
-                open ? "rotate-180 text-[var(--tone,#5566f6)]" : "text-[#9b9fb3]",
-              )}
-            />
-          ) : null}
-        </Link>
-        {open && section.menu ? (
-          <div
-            data-nav-sublist={section.key}
-            // Без бокса и рамки (владелец, 2026-11-22): второй уровень отличается отступом.
-            className="mt-0.5 mb-1.5 pl-2.5"
-          >
-            {section.menu.map((group, index) => (
-              <div key={group.label ?? `group-${index}`}>
-                {group.label ? (
-                  <div className="px-2.5 pt-2.5 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6f7282]">
-                    {group.label}
-                  </div>
-                ) : null}
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const itemActive = active && place.secondId === item.id;
-                    const quiet = item.section === "more";
-                    return (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        aria-current={itemActive ? (item.section ? "true" : "page") : undefined}
-                        data-menu-item={item.id}
-                        data-menu-section={item.section}
-                        data-menu-quiet={quiet ? "" : undefined}
-                        data-tone={quiet ? undefined : navTone(item.icon)}
-                        data-nav-row
-                        data-active={itemActive ? "" : undefined}
-                        className={cn(
-                          SUB_ROW,
-                          touch && SUB_ROW_TOUCH,
-                          "group",
-                          quiet
-                            ? cn("mt-0.5", itemActive ? ROW_QUIET_ACTIVE : ROW_QUIET)
-                            : itemActive
-                              ? ROW_ACTIVE
-                              : ROW_IDLE,
-                        )}
-                      >
-                        {quiet ? (
-                          <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center text-[#6f7282]">
-                            <Component className="size-4" />
-                          </span>
-                        ) : (
-                          <NavIconChip name={item.icon} className="size-7 rounded-[9px]" iconClassName="size-4" />
-                        )}
-                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                        {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
+        )}
+        <span className="min-w-0 flex-1">{section.label}</span>
+        {section.menu ? (
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "size-4 shrink-0 transition-transform duration-150 motion-reduce:transition-none",
+              action ? (open ? "rotate-180" : "") : open ? "rotate-180 text-[var(--tone,#5566f6)]" : "text-[#9b9fb3]",
+              action && "text-current opacity-60",
+            )}
+          />
         ) : null}
-      </div>
+      </Link>
     );
   };
 
-  const inspectionOpen = Boolean(inspection?.menu) && openKey === inspection?.key;
+  const renderSublist = (section: NavModelSection) => {
+    const active = place.top === section.key;
+    const open = Boolean(section.menu) && openKey === section.key;
+    return open && section.menu ? (
+      <div
+        data-nav-sublist={section.key}
+        // Без бокса и рамки (владелец, 2026-11-22): второй уровень отличается отступом.
+        className="mt-0.5 mb-1.5 pl-2.5"
+      >
+        {section.menu.map((group, index) => (
+          <div key={group.label ?? `group-${index}`}>
+            {group.label ? (
+              <div className="px-2.5 pt-2.5 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6f7282]">
+                {group.label}
+              </div>
+            ) : null}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const itemActive = active && place.secondId === item.id;
+                const quiet = item.section === "more";
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    aria-current={itemActive ? (item.section ? "true" : "page") : undefined}
+                    data-menu-item={item.id}
+                    data-menu-section={item.section}
+                    data-menu-quiet={quiet ? "" : undefined}
+                    data-tone={quiet ? undefined : navTone(item.icon)}
+                    data-nav-row
+                    data-active={itemActive ? "" : undefined}
+                    className={cn(
+                      SUB_ROW,
+                      touch && SUB_ROW_TOUCH,
+                      "group",
+                      quiet
+                        ? cn("mt-0.5", itemActive ? ROW_QUIET_ACTIVE : ROW_QUIET)
+                        : itemActive
+                          ? ROW_ACTIVE
+                          : ROW_IDLE,
+                    )}
+                  >
+                    {quiet ? (
+                      <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center text-[#6f7282]">
+                        <Component className="size-4" />
+                      </span>
+                    ) : (
+                      <NavIconChip name={item.icon} className="size-7 rounded-[9px]" iconClassName="size-4" />
+                    )}
+                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : null;
+  };
+
+  const renderSection = (section: NavModelSection) => (
+    <div key={section.key}>
+      {renderRow(section)}
+      {renderSublist(section)}
+    </div>
+  );
 
   return (
     <>
       <div className={touch ? "space-y-1" : "space-y-1 pb-4"}>{main.map((section) => renderSection(section))}</div>
       {inspection ? (
-        touch ? (
-          <div className="pt-3">
-            <div className="pt-3">{renderSection(inspection, true)}</div>
-          </div>
-        ) : (
-          // Компьютер: полоса во всю ширину меню, 73px — как подвал справа
-          // (`DashboardFooter`); кнопка — по центру полосы. Свёрнутая остаётся
-          // на виду, когда длинное меню прокручено. Линии сверху нет
-          // (владелец, 2026-11-22): прозрачная рамка держит высоту.
+        <>
+          {/* «Пришла проверка» закреплена внизу меню и на телефоне, и на
+              компьютере (владелец, 2026-11-22), в том числе с открытым
+              списком раздела — он идёт следом. Компьютер: полоса 73px, как
+              подвал справа (`DashboardFooter`): 1 + 13 + 46 (кнопка) + 13. */}
           <div
             data-nav-bottom
             className={cn(
-              // 1 + 13 + 46 (кнопка) + 13 = 73px — высота подвала.
-              "-mx-3 mt-auto border-t border-transparent bg-white px-3 py-[13px]",
-              !inspectionOpen && "sticky bottom-0 z-10",
+              INSPECTION_DOCK,
+              touch ? "mt-auto pt-3 pb-1" : "-mx-3 mt-auto border-t border-transparent px-3 py-[13px]",
             )}
           >
-            {renderSection(inspection, true)}
+            {renderRow(inspection, true)}
           </div>
-        )
+          {renderSublist(inspection)}
+        </>
       ) : null}
     </>
   );
@@ -250,8 +263,13 @@ export function ClassicSidebarAccordion({
           large
         />
       </div>
-      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pt-4">
-        <ClassicNavAccordion />
+      {/* Своя видимая полоса прокрутки (владелец, 2026-11-22). */}
+      <nav className="flex min-h-0 flex-1 flex-col">
+        <ScrollPane>
+          <div className="flex min-h-full flex-col px-3 pt-4">
+            <ClassicNavAccordion />
+          </div>
+        </ScrollPane>
       </nav>
     </aside>
   );

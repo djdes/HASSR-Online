@@ -370,12 +370,14 @@ export default async function DashboardLayout({
     : null;
 
   const announcement = await currentAnnouncement();
-  const [nps, deletionState, customNames] = await Promise.all([
+  const [nps, deletionState, customNames, maxIdentity] = await Promise.all([
     npsVisibilityFor(session).catch(() => NPS_HIDDEN),
     db.organization.findUnique({ where: { id: activeOrgId }, select: { deletionRequestedAt: true } }).catch(() => null),
     // Свои названия разделов и журналов — один раз на запрос, дальше их
     // берут меню, крошки и страницы через CustomNamesProvider.
     getOrgCustomNames(activeOrgId),
+    // Привязан ли MAX — галочка или цепь на значке MAX в шапке (2026-11-22).
+    db.maxIdentity.findUnique({ where: { userId: session.user.id }, select: { id: true } }).catch(() => null),
   ]);
   // Меню кабинета (дерево разделов, 2026-10-28): что человек откроет — то и
   // показываем. Один расчёт на сайдбар, вкладки, крошки, мобильное меню и ⌘K.
@@ -619,6 +621,7 @@ export default async function DashboardLayout({
             partnerHint={partnerHint}
             whiteLabel={Boolean(consultant)}
             canEditBranding={hasCapability(session.user, "admin.full")}
+            maxLinked={Boolean(maxIdentity)}
           />
           </DomainMessagesBoundary>
           {/* Шаблон меню «Новый» (компьютер), прежний дизайн: третий уровень
@@ -662,7 +665,7 @@ export default async function DashboardLayout({
           <main
             id={MAIN_CONTENT_ID}
             tabIndex={-1}
-            className="flex-1 py-4 outline-none md:py-6 lg:has-[[data-home-page]]:flex lg:has-[[data-home-page]]:flex-col"
+            className="flex-1 py-4 outline-none max-md:has-[[data-home-page]]:py-2.5 md:py-6 lg:has-[[data-home-page]]:flex lg:has-[[data-home-page]]:flex-col"
           >
             <div className="mx-auto w-full max-w-[1800px] px-4 md:px-8 lg:has-[[data-home-page]]:flex lg:has-[[data-home-page]]:flex-1 lg:has-[[data-home-page]]:flex-col">
               {/* Провайдер оборачивает и навигацию, и контент: страницы
@@ -814,8 +817,15 @@ export default async function DashboardLayout({
           </ContentTransitionProvider>
         </div>
         {/* Под шапкой и по центру контента (2026-11-11): тост о смене точки
-            не закрывает сам переключатель (`dashboard-toaster` в globals.css). */}
-        <Toaster className="toaster group dashboard-toaster" offset={{ top: 84 }} mobileOffset={{ top: 128 }} />
+            не закрывает сам переключатель (`dashboard-toaster` в globals.css).
+            Телефон (до 600px, 2026-11-22): у верхнего края, поверх строки
+            шапки — не над страницей и не над открытым листом меню, у
+            которого сверху свободная полоса (лист не выше 88% экрана). */}
+        <Toaster
+          className="toaster group dashboard-toaster"
+          offset={{ top: 84 }}
+          mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
+        />
       </SiteThemeProvider>
       </CustomNamesProvider>
     </AuthSessionProvider>

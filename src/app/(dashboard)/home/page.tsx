@@ -19,7 +19,7 @@ import {
 import type { NavTone } from "@/lib/nav-tones";
 import { TAGLINE_VIEW_WIDTH, taglineLayout } from "@/lib/wordmark-tagline";
 import { BrandLogo, WORDMARK_INK, WORDMARK_RATIO } from "@/components/brand/logo";
-import { HomeContactsSpoiler } from "@/components/home/home-contacts-spoiler";
+import { HomeContacts } from "@/components/home/home-contacts";
 import { HomeFavorites } from "@/components/home/home-favorites";
 import { ContactUsPanel } from "@/components/contact/contact-us-dialog";
 import { NavIconChip, ToneChip } from "@/components/layout/nav-icons";
@@ -44,9 +44,11 @@ const CONTACT_TONES: Record<HomeContact["id"], NavTone> = {
  * Знак — градиентом, как на визитке, а подпись под ним — ровно по его
  * ширине (владелец, 2026-10-29: «симметрично, как в визитке»).
  *
- * Телефон (владелец, 2026-11-21: «чтобы помещалось на 1 страницу с контактами
- * снизу»): знак ниже, «Начальная настройка» — иконка и текст в строку, три
- * слота «Избранного» в один ряд, «Мы на связи» свёрнуто в строку-спойлер.
+ * Телефон (владелец, 2026-11-21 и 2026-11-22: «главная после авторизации без
+ * скрола, всё умещается», «Мы на связи» развёрнуто и не сворачивается): знак
+ * ниже, «Начальная настройка» — иконка и текст в строку, три слота
+ * «Избранного» в один ряд, контакты открыты — сразу вкладки, без строки
+ * заголовка; промежутки 12px, подвала на главной телефона нет (globals.css).
  * С 768px — прежняя раскладка.
  *
  * Компьютер (владелец, 2026-11-19: «чтобы прокрутки не было и всё помещалось»):
@@ -86,10 +88,10 @@ export default async function HomePage() {
   const taglineFit = taglineLayout(tagline);
 
   return (
-    <div className="space-y-5 lg:flex lg:flex-1 lg:flex-col lg:gap-5 lg:space-y-0" data-home-page>
+    <div className="space-y-3 md:space-y-5 lg:flex lg:flex-1 lg:flex-col lg:gap-5 lg:space-y-0" data-home-page>
       <section
         data-home-hero
-        className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-white px-5 py-5 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:px-6 md:py-20 lg:flex lg:max-h-[460px] lg:min-h-[150px] lg:flex-1 lg:items-center lg:justify-center lg:py-5"
+        className="relative overflow-hidden rounded-3xl border border-[#ececf4] bg-white px-5 py-2.5 text-center shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:px-6 md:py-20 lg:flex lg:max-h-[460px] lg:min-h-[150px] lg:flex-1 lg:items-center lg:justify-center lg:py-5"
       >
         {/* Три мягких пятна в цветах знака: индиго, бирюза, лаванда. */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -112,7 +114,7 @@ export default async function HomePage() {
             // стоят ровно по центру. Под буквами у файла пустая полоса —
             // подпись подтянута к ним, как на визитке.
             <div
-              className="mx-auto flex flex-col [--logo-h:48px] md:[--logo-h:104px] lg:[--logo-h:clamp(64px,11vh,104px)]"
+              className="mx-auto flex flex-col [--logo-h:40px] md:[--logo-h:104px] lg:[--logo-h:clamp(64px,11vh,104px)]"
               style={{
                 width: `calc(var(--logo-h) * ${WORDMARK_RATIO})`,
                 translate: `${((WORDMARK_INK.right - WORDMARK_INK.left) / 2) * 100}% 0`,
@@ -154,7 +156,7 @@ export default async function HomePage() {
       </section>
 
       {/* Карточки и контакты — одной высоты: нижний край ровный. */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch">
+      <div className="grid gap-3 md:gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch">
         {/* Карточки появляются каскадом при открытии (`data-nav-rise`). */}
         {/* `no-mobile-shrink`: общее правило телефона делает из трёх колонок две (globals.css). */}
         <div className="no-mobile-shrink grid grid-cols-3 gap-2.5 md:grid-cols-4 md:gap-3" data-nav-rise>
@@ -164,9 +166,9 @@ export default async function HomePage() {
             data-guide="home-setup"
             data-nav-row
             style={{ "--nav-i": 0 } as CSSProperties}
-            className="group col-span-3 flex items-center gap-3 rounded-3xl bg-[#5566f6] px-4 py-3.5 newd:bg-[#111114] text-white hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1 md:min-h-[148px] md:flex-col md:items-stretch md:justify-between md:gap-0 md:p-5"
+            className="group col-span-3 flex items-center gap-3 rounded-3xl bg-[#5566f6] px-4 py-2.5 newd:bg-[#111114] text-white hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1 md:min-h-[148px] md:flex-col md:items-stretch md:justify-between md:gap-0 md:p-5"
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-white/15 md:size-10">
               <Rocket className="size-5" aria-hidden />
             </span>
             <span className="min-w-0">
@@ -194,7 +196,7 @@ export default async function HomePage() {
           />
         </div>
 
-        <HomeContactsSpoiler title={t("contactsTitle")}>
+        <HomeContacts title={t("contactsTitle")}>
           {branding ? (
             <>
             <ul className="space-y-1">
@@ -259,7 +261,7 @@ export default async function HomePage() {
               consultingHref="/inspection/experts"
             />
           )}
-        </HomeContactsSpoiler>
+        </HomeContacts>
       </div>
     </div>
   );

@@ -3,11 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCallback,useEffect,useState } from "react";
+import { useTranslations } from "next-intl";
+import { formatMaxLinkCode } from "@/lib/max/link-code-format";
 import { ArrowLeft,ArrowUpRight,Building2,Check,CheckCircle2,Copy,ExternalLink,Link2,Loader2,RefreshCw,ShieldCheck,Unlink,Users } from "lucide-react";
 import { MaxIcon } from "./max-icon";
 
 type State={configured:boolean;botUrl:string|null;identity:{displayName:string;createdAt:string}|null;canManageOrganization:boolean;integration:{enabled:boolean;chatTitle:string|null};pending:{requestId:string;scope:string;name:string|null;status:"waiting"|"confirm"|"expired"|"used";expiresAt:string}|null};
-type LinkRequest={requestId:string;url?:string;command?:string;expiresAt:string};
+type LinkRequest={requestId:string;url?:string;command?:string;code?:string|null;expiresAt:string};
 const primary="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/30 disabled:cursor-wait disabled:opacity-60";
 const secondary="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 py-2.5 text-[14px] font-medium text-[#3c4053] transition-colors hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/20 disabled:opacity-60";
 
@@ -68,6 +70,7 @@ export function MaxConnectClient({name,organizationName,next,organizationOnly=fa
           </>:<>
             <p className="text-[16px] font-semibold text-[#0b1024]">{request.command?"Отправьте команду в группу MAX":"Откройте бота и нажмите «Начать»"}</p>
             {request.command?<><p className="text-[14px] leading-relaxed text-[#6f7282]">Добавьте бота в группу и назначьте администратором. Отправьте команду из вашего привязанного MAX; у вас тоже должны быть права администратора группы.</p><button onClick={()=>void action(async()=>{await navigator.clipboard.writeText(request.command!);setNotice("Команда скопирована. Отправьте её в группу MAX.");})} className={secondary+" w-full"}><Copy className="size-4"/>Скопировать команду</button></>:<div className="flex flex-wrap items-center gap-5">{qr?<div className="hidden rounded-2xl border border-[#ececf4] p-2 md:block"><Image unoptimized src={qr} alt="QR-код для привязки личного MAX" width={160} height={160}/></div>:null}<div className="space-y-3"><a href={request.url} target="_blank" rel="noopener noreferrer" className={primary}>Открыть MAX<ArrowUpRight className="size-4"/></a><p className="max-w-64 text-[13px] leading-relaxed text-[#6f7282]">После запуска бота вернитесь сюда и подтвердите аккаунт.</p></div></div>}
+            {!request.command&&request.code?<MaxLinkCode code={request.code}/>:null}
             <p role="status" className="flex items-center gap-2 text-[13px] text-[#6f7282]"><Loader2 className="size-4 animate-spin motion-reduce:animate-none"/>Ожидаем MAX · ещё {Math.max(0,Math.ceil((new Date(request.expiresAt).getTime()-now)/60000))} мин.</p>
           </>}
           <button onClick={()=>setRequest(null)} className="text-[14px] font-medium text-[#6f7282] underline underline-offset-4">Закрыть этот шаг</button>
@@ -85,5 +88,23 @@ export function MaxConnectClient({name,organizationName,next,organizationOnly=fa
     </div>
     {state?.canManageOrganization?<section className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7"><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#0b1024]">MAX для организации</h2><p className="mt-2 text-[14px] text-[#6f7282]">{organizationName}. Сотрудников подключайте из бота: «Подключить сотрудника» → личная ссылка, которую нужно переслать сотруднику.</p></div><label className="flex min-h-11 cursor-pointer items-center gap-3 text-[14px] font-medium text-[#3c4053]"><input type="checkbox" checked={state.integration.enabled} disabled={busy} onChange={e=>void organization({enabled:e.target.checked})} className="size-5 accent-[#5566f6]"/>Доступ через MAX</label></div><div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[#ececf4] pt-5"><div><p className="text-[15px] font-semibold text-[#0b1024]">{state.integration.chatTitle||"Групповой чат организации"}</p><p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[#6f7282]">{state.integration.chatTitle?"Группа подтверждена. Личные ссылки входа и журналы сотрудников остаются в переписке с ботом.":"Свяжите рабочую группу с организацией. Код подтверждает руководитель и администратор группы."}</p></div>{state.integration.chatTitle?<button className={secondary} disabled={busy} onClick={()=>void organization({disconnectChat:true})}>Отключить группу</button>:<button className={secondary} disabled={busy||!state.identity||!state.configured||!state.integration.enabled} onClick={()=>void create("organization")}><Users className="size-4"/>Подключить группу</button>}</div>{!state.identity?<p className="mt-3 text-[13px] text-[#6f7282]">Сначала подключите свой личный MAX выше.</p>:null}</section>:organizationOnly&&state?<p role="alert" className="text-[14px] text-[#a13a32]">Настройки организации доступны руководителю.</p>:null}
     <Link href={next} className="inline-flex min-h-11 items-center gap-2 text-[14px] font-medium text-[#3848c7]"><ArrowLeft className="size-4"/>Вернуться в WeSetup</Link>
+  </div>;
+}
+
+/**
+ * Код для бота вместо ссылки (2026-11-22): MAX на другом телефоне — открыть
+ * бота и отправить шесть цифр сообщением. Подтверждение — здесь же, как после
+ * ссылки.
+ */
+function MaxLinkCode({code}:{code:string}) {
+  const t=useTranslations("sharedUi.maxLink");
+  const [copied,setCopied]=useState(false);
+  return <div className="rounded-2xl bg-[#f5f6ff] p-4" data-max-link-code>
+    <p className="text-[13px] leading-relaxed text-[#6f7282]">{t("codeLead")}</p>
+    <div className="mt-2 flex flex-wrap items-center gap-3">
+      <span className="text-[28px] font-semibold tabular-nums tracking-[0.12em] text-[#0b1024]" aria-label={code.split("").join(" ")}>{formatMaxLinkCode(code)}</span>
+      <button type="button" className={secondary} onClick={()=>void navigator.clipboard.writeText(code).then(()=>setCopied(true)).catch(()=>undefined)}>{copied?<Check className="size-4"/>:<Copy className="size-4"/>}{copied?t("codeCopied"):t("codeCopy")}</button>
+    </div>
+    <p className="mt-2 text-[12.5px] leading-relaxed text-[#6f7282]">{t("codeHint")}</p>
   </div>;
 }

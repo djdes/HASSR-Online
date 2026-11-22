@@ -30,6 +30,8 @@ export type HeaderPointOption = {
   address: string | null;
   /** Офис организации (не объект): подпись «Организация», свой значок. */
   office?: boolean;
+  /** Значок объекта, выбранный в настройках (`lib/building-icons.ts`); нет — по виду. */
+  icon?: string;
 };
 
 export type HeaderPoint =
@@ -69,10 +71,11 @@ export function headerPointOption(building: BuildingOption, companyName: string)
   const name = building.name?.replace(/\s+/g, " ").trim() ?? "";
   const address = building.address?.replace(/\s+/g, " ").trim() || null;
   const office = isOfficeBuilding(building) ? { office: true as const } : {};
+  const extra = building.icon ? { ...office, icon: building.icon } : office;
   const duplicate = sameAsCompany(name, companyName);
-  if (name && !duplicate) return { id: building.id, title: { source: "name", text: name }, address, ...office };
-  if (address) return { id: building.id, title: { source: "address", text: address }, address: null, ...office };
-  return { id: building.id, title: { source: duplicate ? "main" : "untitled", text: null }, address: null, ...office };
+  if (name && !duplicate) return { id: building.id, title: { source: "name", text: name }, address, ...extra };
+  if (address) return { id: building.id, title: { source: "address", text: address }, address: null, ...extra };
+  return { id: building.id, title: { source: duplicate ? "main" : "untitled", text: null }, address: null, ...extra };
 }
 
 export function resolveHeaderPoint(input: {

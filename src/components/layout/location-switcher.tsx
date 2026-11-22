@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Building2, Check, Loader2, Search, Store } from "lucide-react";
+import { Check, Loader2, Search } from "lucide-react";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 import { toast } from "sonner";
 import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
@@ -13,6 +13,7 @@ import { useContentTransition } from "@/components/layout/content-transition";
 import { forgetReturnPoint } from "@/components/layout/point-section-sync";
 import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 import { ScrollList } from "@/components/ui/scroll-list";
+import { BuildingIcon } from "@/components/layout/building-icon";
 
 /**
  * Точки (2026-09-05): переключение активной точки. С 2026-10-16 — из центра
@@ -154,7 +155,6 @@ export function LocationSwitcherList({
       {shown.map((building, index) => {
         const isActive = building.id === activeId;
         const office = isOfficeBuilding(building);
-        const Icon = office ? Building2 : Store;
         return (
           <Fragment key={building.id}>
             <button
@@ -167,14 +167,17 @@ export function LocationSwitcherList({
                 isActive ? "bg-[#f1f3ff] text-[#3848c7]" : "text-[#0b1024] hover:bg-[#fafbff] active:bg-[#f1f3ff]",
               )}
             >
-              {/* Плашка иконки одинаковая у всех строк — ряд ровный. */}
+              {/* Плашка иконки одного размера у всех строк — ряд ровный. У
+                  выбранной своей заливки нет: строка уже подсвечена, двойной
+                  фон рябил (владелец, 2026-11-22). */}
               <span
+                data-point-icon
                 className={cn(
-                  "inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[#ececf4] bg-white",
-                  isActive ? "text-[#5566f6]" : "text-[#6f7282]",
+                  "inline-flex size-9 shrink-0 items-center justify-center rounded-xl",
+                  isActive ? "bg-transparent text-[#5566f6]" : "border border-[#ececf4] bg-white text-[#6f7282]",
                 )}
               >
-                <Icon className="size-[18px]" aria-hidden />
+                <BuildingIcon icon={building.icon} office={office} className="size-[18px]" uploadClassName="size-7" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{building.name}</span>

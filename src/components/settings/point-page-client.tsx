@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
+import { BuildingIconPicker } from "@/components/settings/building-icon-picker";
 
 const OUTLINE_BUTTON =
   "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60";
@@ -30,6 +31,8 @@ export type PointHead = {
   kpp: string | null;
   phone: string | null;
   journalName: string | null;
+  /** Значок объекта (`lib/building-icons.ts`). */
+  icon: string | null;
 };
 
 /** Блок 1 — «Название и адрес»: сведения для документов точки, правка окном. */
@@ -121,6 +124,9 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
         )
       }
     >
+      <div className="mb-4">
+        <BuildingIconPicker buildingId={point.id} icon={point.icon} readOnly={readOnly} />
+      </div>
       <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
         {rows.map((row) => (
           <div key={row.key} className="min-w-0">

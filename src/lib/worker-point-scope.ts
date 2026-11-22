@@ -136,7 +136,7 @@ export async function loadManagerPointScope(organizationId: string, userId: stri
     db.building.findMany({
       where: { organizationId },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      select: { id: true, name: true, address: true, kind: true },
+      select: { id: true, name: true, address: true, kind: true, icon: true },
     }),
     db.user.findUnique({ where: { id: userId }, select: { organizationId: true, buildingIds: true } }),
   ]);

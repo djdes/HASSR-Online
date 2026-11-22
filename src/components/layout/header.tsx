@@ -137,6 +137,8 @@ type HeaderProps = {
    * ссылка «Логотип и цвета».
    */
   canEditBranding?: boolean;
+  /** MAX привязан к аккаунту: на значке MAX галочка, иначе — цепь (2026-11-22). */
+  maxLinked?: boolean;
 };
 
 /**
@@ -165,6 +167,7 @@ export function Header({
   partnerHint = null,
   whiteLabel = false,
   canEditBranding = false,
+  maxLinked = false,
 }: HeaderProps) {
   const t = useTranslations("navigation");
   const newDesign = useNewDesign();
@@ -311,7 +314,7 @@ export function Header({
             <span className="hidden flex-1 text-left text-[14.5px] text-[#9a9ca8] 2xl:inline">{tSearch("field")}</span>
           </button>
           ) : null}
-          <MaxConnectButton />
+          <MaxConnectButton linked={maxLinked} />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
           {/* Кнопки шапки — одного нейтрального вида с «Выходом»
@@ -628,7 +631,6 @@ export function Header({
         <MobileNavSheet
           open={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
-          onLogout={handleLogout}
           brand={{
             logoUrl: organizationLogoUrl ?? null,
             name: organizationName || "WeSetup",

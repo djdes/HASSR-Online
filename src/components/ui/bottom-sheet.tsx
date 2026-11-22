@@ -9,6 +9,7 @@ import {
   MODAL_BODY_CLASS,
   MODAL_CARD_HEIGHT_CLASS,
 } from "@/components/ui/modal-tokens";
+import { ScrollPane } from "@/components/ui/scroll-list";
 
 /**
  * Лист снизу — мобильный формат меню, как в приложениях.
@@ -38,6 +39,7 @@ export function BottomSheet({
   header,
   children,
   footer,
+  scrollbar = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -51,6 +53,11 @@ export function BottomSheet({
   header?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  /**
+   * Своя видимая полоса прокрутки справа (лист меню, владелец, 2026-11-22):
+   * системная на iPhone не видна, пока лист не листают.
+   */
+  scrollbar?: boolean;
 }) {
   const t = useTranslations("common");
   return (
@@ -66,19 +73,22 @@ export function BottomSheet({
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-[60] bg-[#0b1024]/45 backdrop-blur-sm" />
+        {/* `overflow-clip`, а не `hidden`: у vaul под листом `::after` в 200%
+            высоты, и с `hidden` фокус или прокрутка к пункту сдвигали весь лист
+            вверх — шапка с ручкой уезжала, снизу оставалась пустая полоса. */}
         <Drawer.Content
           aria-describedby={undefined}
-          className={`fixed inset-x-0 bottom-0 z-[60] flex flex-col overflow-hidden rounded-t-3xl border border-[#ececf4] bg-white outline-none shadow-[0_-20px_60px_-30px_rgba(11,16,36,0.5)] ${MODAL_CARD_HEIGHT_CLASS}`}
+          className={`fixed inset-x-0 bottom-0 z-[60] flex flex-col overflow-clip rounded-t-3xl border border-[#ececf4] bg-white outline-none shadow-[0_-20px_60px_-30px_rgba(11,16,36,0.5)] ${MODAL_CARD_HEIGHT_CLASS}`}
         >
           <div className="shrink-0 px-4 pb-3 pt-3">
             {/* Ручка: признак листа снизу и место, за которое тянут,
                 чтобы закрыть свайпом. */}
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#dcdfed]" />
-            <div className="flex items-start justify-between gap-3">
+            <div className={`flex justify-between gap-3 ${header ? "items-start" : "items-center"}`}>
               {header ? (
                 <>
                   {/* Пустое место размером с крестик — шапка встаёт ровно по центру. */}
-                  <span aria-hidden className="size-9 shrink-0" />
+                  <span aria-hidden className="size-10 shrink-0" />
                   <div className="min-w-0 flex-1" data-sheet-header>
                     <Drawer.Title className="sr-only">{title}</Drawer.Title>
                     {header}
@@ -86,7 +96,9 @@ export function BottomSheet({
                 </>
               ) : (
                 <div className="min-w-0">
-                  <Drawer.Title className="truncate text-[16px] font-semibold leading-tight text-[#0b1024]">
+                  {/* Заголовок крупный и жирный, высотой с крестик (владелец,
+                      2026-11-22: «крупным словом „Объекты“, в размер с крестиком»). */}
+                  <Drawer.Title className="truncate text-[22px] font-bold leading-10 tracking-[-0.01em] text-[#0b1024]" data-sheet-title>
                     {title}
                   </Drawer.Title>
                   {subtitle ? (
@@ -98,16 +110,26 @@ export function BottomSheet({
               )}
               <Drawer.Close
                 aria-label={t("close")}
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#6f7282] transition-colors hover:bg-[#eef1ff] hover:text-[#0b1024]"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6ff] text-[#6f7282] transition-colors hover:bg-[#eef1ff] hover:text-[#0b1024]"
               >
-                <X className="size-4" />
+                <X className="size-[18px]" />
               </Drawer.Close>
             </div>
           </div>
 
-          <div className={`${MODAL_BODY_CLASS} border-t border-[#f0f1f7] px-3 py-2`}>
-            {children}
-          </div>
+          {/* Без черты под шапкой (владелец, 2026-11-22: «убери полоску над
+              поиском»; кабинет без разделительных линий в меню). */}
+          {scrollbar ? (
+            <ScrollPane>
+              <div className="flex min-h-full flex-col pr-4 pb-2 pl-3" data-sheet-body>
+                {children}
+              </div>
+            </ScrollPane>
+          ) : (
+            <div className={`${MODAL_BODY_CLASS} px-3 pb-2`} data-sheet-body>
+              {children}
+            </div>
+          )}
 
           {footer ? (
             <div className="shrink-0 border-t border-[#f0f1f7] bg-white px-3 py-2 pb-[var(--safe-b)]">

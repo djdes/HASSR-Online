@@ -9,7 +9,11 @@ import type { RefreshAfter } from "@/components/layout/content-transition";
  * Тост о смене — один вид и одна логика на весь сайт и мини-приложение
  * (владелец, 2026-11-11 и 2026-11-12): организация, объект, автосмена
  * точки по разделу, демо, новая организация. Сверху (место — у `<Toaster>`:
- * в кабинете под шапкой по центру контента, в приложении под его шапкой),
+ * в кабинете на компьютере под шапкой по центру контента, на телефоне — у
+ * самого верхнего края поверх строки шапки, а не поверх страницы или листа
+ * меню; в приложении под его шапкой). Карточка всегда по центру: на
+ * телефоне во всю ширину, шире 600px — 360px посередине (владелец,
+ * 2026-11-22: «всплывашка как-то слева и поверх меню»),
  * живёт 3 секунды; справа сверху крестик с кольцом-отсчётом — под курсором
  * отсчёт стоит, как и таймер; под сообщением — компактная кнопка «Вернуться …»:
  * нажал не туда — одно нажатие назад. Цвета — токены `--app-*`: светлая,
@@ -41,7 +45,7 @@ export function SwitchToastCard({
   return (
     <div
       data-switch-toast
-      className="relative flex w-[min(360px,calc(100vw-32px))] flex-col gap-2 rounded-2xl border border-[var(--app-border,#ececf4)] bg-[var(--app-surface,#fff)] py-3 pr-12 pl-4 text-[14px] text-[var(--app-text,#0b1024)] shadow-[0_12px_32px_-12px_rgba(11,16,36,0.35)]"
+      className="relative mx-auto flex w-full max-w-[360px] flex-col gap-2 rounded-2xl max-[600px]:max-w-none border border-[var(--app-border,#ececf4)] bg-[var(--app-surface,#fff)] py-3 pr-12 pl-4 text-[14px] text-[var(--app-text,#0b1024)] shadow-[0_12px_32px_-12px_rgba(11,16,36,0.35)]"
     >
       <div className="flex items-start gap-2 leading-snug font-medium">
         <CircleCheck className="mt-px size-[18px] shrink-0 text-[#16a34a]" aria-hidden />

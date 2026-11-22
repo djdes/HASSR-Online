@@ -118,7 +118,7 @@ export default async function RoomFillPage({
   const [{ locale, authenticated }, customNames] = await Promise.all([selectedLocale(room.building.organization.locale), getOrgCustomNames(organizationId)]);
   const messages = await loadMessages(locale);
   const roomCopy = composeRoomQrMessages(messages);
-  const wrap = (children: ReactNode) => <SiteLocaleProvider locale={locale} messages={pickMessages(messages, ["roomFill", "equipmentFill", "language"])} timeZone={timezone}><QrFillPresentationProvider locale={locale} messages={roomCopy} authenticated={authenticated}>{children}</QrFillPresentationProvider></SiteLocaleProvider>;
+  const wrap = (children: ReactNode) => <SiteLocaleProvider locale={locale} messages={pickMessages(messages, ["roomFill", "equipmentFill", "language", "sharedUi"])} timeZone={timezone}><QrFillPresentationProvider locale={locale} messages={roomCopy} authenticated={authenticated}>{children}</QrFillPresentationProvider></SiteLocaleProvider>;
   const position = (person: Parameters<typeof getUserDisplayTitle>[0]) => {
     if (person?.jobPosition?.name?.trim() || person?.positionTitle?.trim()) return getUserDisplayTitle(person);
     const role = normalizeUserRole(person?.role);

@@ -36,7 +36,8 @@ import { lastReminderFor, remindScopeKey, remindWaitMinutes, withReminder } from
 import { documentInWorkerScope, documentWorkerScopeWhere, loadManagerPointScope, loadScopeDisabledCodes, loadWorkerPointScope, personInWorkerScope } from "@/lib/worker-point-scope";
 import { maxAnswer, maxApi, maxSend, type MaxView } from "./client";
 import { maxConfig } from "./config";
-import { claimMaxLink, MaxError, maxAccount, maxContext, maxOrganizations } from "./service";
+import { claimMaxLink, claimMaxLinkByCode, MaxError, maxAccount, maxContext, maxOrganizations } from "./service";
+import { parseMaxLinkCode } from "./link-code";
 import { type MaxEvent, maxUpdateKey, parseMaxUpdate } from "./protocol";
 import { newWizardId, parseMaxBotState, parseWizardPayload, wizardPayload, type MaxFillState } from "./bot-state";
 import { answerFill, fillSubmission, renderFill, type FillContext, type FillInput } from "./bot-fill";
@@ -567,6 +568,12 @@ async function handleEvent(event: MaxEvent) {
   if (event.kind === "start" && event.payload.startsWith("link_")) {
     await claimMaxLink(event.payload.slice(5), { maxUserId: event.userId, chatId: event.chatId, displayName: event.name });
     return respond(event, { text: "Остался один шаг: вернитесь на сайт WeSetup и подтвердите, что это ваш аккаунт MAX. Затем нажмите «Готово».", buttons: [[{ type: "callback", text: "Готово — открыть меню", payload: "menu" }]] });
+  }
+  // Код со страницы подключения вместо ссылки (2026-11-22): шесть цифр сообщением.
+  const linkCode = !identity && event.kind === "message" ? parseMaxLinkCode(event.payload) : null;
+  if (linkCode) {
+    await claimMaxLinkByCode(linkCode, { maxUserId: event.userId, chatId: event.chatId, displayName: event.name });
+    return respond(event, { text: "Код принят. Остался один шаг: вернитесь на сайт WeSetup и подтвердите, что это ваш аккаунт MAX. Затем нажмите «Готово».", buttons: [[{ type: "callback", text: "Готово — открыть меню", payload: "menu" }]] });
   }
   if (!identity) return respond(event, unlinkedView(`${maxConfig().siteBase}/max/connect`));
   if (identity.privateChatId !== event.chatId) await db.maxIdentity.update({ where: { id: identity.id }, data: { privateChatId: event.chatId } });

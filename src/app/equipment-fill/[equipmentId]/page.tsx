@@ -135,7 +135,7 @@ export default async function EquipmentFillPage({
   const [session, jar, customNames] = await Promise.all([getServerSession(authOptions), cookies(), getOrgCustomNames(organizationId)]);
   const locale = resolveLocale({ authenticated: Boolean(session), userLocale: session?.user.locale, cookieLocale: jar.get(SITE_LOCALE_COOKIE)?.value, organizationLocale: equipment.area.organization.locale });
   const messages = await loadMessages(locale);
-  const wrap = (children: ReactNode) => <SiteLocaleProvider locale={locale} messages={pickMessages(messages, ["equipmentFill", "language"])} timeZone={equipment.area.organization.timezone || "Europe/Moscow"}><QrFillPresentationProvider locale={locale} messages={messages.equipmentFill} authenticated={Boolean(session)}>{children}</QrFillPresentationProvider></SiteLocaleProvider>;
+  const wrap = (children: ReactNode) => <SiteLocaleProvider locale={locale} messages={pickMessages(messages, ["equipmentFill", "language", "sharedUi"])} timeZone={equipment.area.organization.timezone || "Europe/Moscow"}><QrFillPresentationProvider locale={locale} messages={messages.equipmentFill} authenticated={Boolean(session)}>{children}</QrFillPresentationProvider></SiteLocaleProvider>;
   const position = (person: Parameters<typeof getUserDisplayTitle>[0]) => {
     if (person?.jobPosition?.name?.trim() || person?.positionTitle?.trim()) return getUserDisplayTitle(person);
     const role = normalizeUserRole(person?.role);

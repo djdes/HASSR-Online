@@ -100,6 +100,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
         kpp: true,
         phone: true,
         journalName: true,
+        icon: true,
         rooms: {
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
           select: {
@@ -350,6 +351,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
             kpp: point.kpp,
             phone: point.phone,
             journalName: point.journalName,
+            icon: point.icon,
           }}
           readOnly={readOnly}
         />

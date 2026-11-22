@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AlertTriangle, Package, TrendingDown } from "lucide-react";
@@ -8,7 +9,7 @@ import { SectionSettingsPage } from "@/components/settings/section-settings-page
 import { AlertPill } from "@/components/dashboard/alert-pill";
 import { StaleCapaNag } from "@/components/dashboard/stale-capa-nag";
 import { canManageMaxOrganization } from "@/lib/max/service";
-import { MaxIcon } from "@/components/max/max-icon";
+import { MaxLinkIcon } from "@/components/max/max-link-icon";
 import { loadBuildingContext } from "@/lib/active-building";
 import { pointRecordsWhere } from "@/lib/point-records";
 
@@ -52,10 +53,10 @@ export default async function MorePage() {
   return (
     <SectionSettingsPage session={session} section="more">
       {canConfigureMax ? (
-        <a href="/settings/integrations/max" className="group flex min-h-20 items-center gap-4 rounded-2xl border border-[#ececf4] bg-white px-5 py-4 transition-colors hover:border-[#d6d9ee] hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]"><MaxIcon className="size-6" /></span>
+        <Link href="/settings/integrations/max" className="group flex min-h-20 items-center gap-4 rounded-2xl border border-[#ececf4] bg-white px-5 py-4 transition-colors hover:border-[#d6d9ee] hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eef1ff] text-[#5566f6]"><MaxLinkIcon className="size-6" ringClassName="ring-[#eef1ff]" /></span>
           <span className="min-w-0"><span className="block text-[15px] font-semibold text-[#0b1024]">MAX</span><span className="mt-1 block text-[13px] leading-relaxed text-[#6f7282]">Личный кабинет в мессенджере и групповой чат организации</span></span>
-        </a>
+        </Link>
       ) : null}
       <StaleCapaNag count={staleCapaCount} />
       {hasAlerts ? (
