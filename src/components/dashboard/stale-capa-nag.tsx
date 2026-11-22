@@ -50,9 +50,9 @@ export function StaleCapaNag({ count }: Props) {
   if (!open || count === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 px-0 sm:items-center sm:px-4">
       <BodyScrollLock />
-      <div className="w-full max-w-md rounded-3xl border border-[#ffd2cd] bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,16,36,0.45)]">
+      <div className="w-full max-w-md rounded-3xl border border-[#ffd2cd] bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,16,36,0.45)] max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <div className="flex items-start gap-3">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff4f2] text-[#a13a32]">
             <AlertTriangle className="size-6" />

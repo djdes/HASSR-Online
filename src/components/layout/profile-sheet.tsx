@@ -3,7 +3,7 @@ import { PersonalLanguageSelect } from "@/components/i18n/personal-language-sele
 import { useTranslations } from "next-intl";
 
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 import {
   BottomSheet,
@@ -52,7 +52,6 @@ export function ProfileSheet({
   userName,
   userEmail,
   cabinetPlan,
-  ownCabinet,
   organizations,
   masterCabinets,
   activeOrganizationId,
@@ -72,9 +71,8 @@ export function ProfileSheet({
   onClose: () => void;
   userName: string;
   userEmail: string;
-  /** «Мой кабинет»: тариф, организации и сотрудники, сумма в месяц. */
+  /** Тариф организации: тариф, «Сменить», точки, сотрудники и сумма в месяц. */
   cabinetPlan: CabinetPlanCard;
-  ownCabinet: boolean;
   organizations: AccessibleOrganization[];
   /** Мастер-кабинеты справочников — строками в «Кабинете», открывают `/master`. */
   masterCabinets: AccessibleOrganization[];
@@ -99,6 +97,9 @@ export function ProfileSheet({
 }) {
   const t = useTranslations("navigation");
   const tView = useTranslations("common.viewPrefs");
+  const tOrgs = useTranslations("layoutUi.organizationSwitcher");
+  // «Открыть демо-организацию» — внизу, под «Фирменным стилем» (владелец, 2026-11-22).
+  const demoEntry = canCreateOrganization && !organizations.some((organization) => organization.isDemo);
   const inApp = useInsideMobileApp();
   const openMaster = useOpenMasterCabinet();
   return (
@@ -106,26 +107,31 @@ export function ProfileSheet({
       open={open}
       onClose={onClose}
       title={userName}
-      subtitle={userEmail}
+      // Имени нет — заголовком стоит почта; второй раз её не повторяем.
+      subtitle={userEmail && userEmail !== userName ? userEmail : undefined}
       footer={
-        <button
-          type="button"
-          onClick={() => {
-            onClose();
-            onLogout();
-          }}
-          data-nav-row
-          className={cn(CHIP_ROW, "text-[#a13a32] hover:bg-[#fff4f2] active:bg-[#ffe9e5]")}
-        >
-          <NavIconChip name="LogOut" className={CHIP} iconClassName={CHIP_ICON} />
-          {t("header.logout")}
-        </button>
+        // Язык — справа от «Выйти», всегда на виду (владелец, 2026-11-22).
+        <div className="flex items-center gap-2" data-profile-footer>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onLogout();
+            }}
+            data-nav-row
+            className={cn(CHIP_ROW, "min-w-0 flex-1 text-[#a13a32] hover:bg-[#fff4f2] active:bg-[#ffe9e5]")}
+          >
+            <NavIconChip name="LogOut" className={CHIP} iconClassName={CHIP_ICON} />
+            {t("header.logout")}
+          </button>
+          <PersonalLanguageSelect />
+        </div>
       }
     >
       {/* «Мой кабинет» сразу под именем и почтой: тариф, организации,
           сотрудники и сумма в месяц (владелец, 2026-10-01: «Моя организация»
           под «Организациями» путала). Нажатие — в свой кабинет. */}
-      <CabinetPlanCardView card={cabinetPlan} ownCabinet={ownCabinet} variant="sheet" onNavigate={onClose} />
+      <CabinetPlanCardView card={cabinetPlan} variant="sheet" onNavigate={onClose} />
 
       <div onClick={onClose}>
         <OrganizationSwitcher
@@ -136,6 +142,7 @@ export function ProfileSheet({
           showSettings={fullAccess}
           onNavigate={onClose}
           label={t("profile.organizationSwitcher")}
+          demoEntry={false}
         />
       </div>
 
@@ -242,7 +249,6 @@ export function ProfileSheet({
           {tView("more")}
         </button>
       </div>
-      <div className="px-2 py-2"><PersonalLanguageSelect /></div>
       {canEditBranding ? (
         <Link
           href={BRANDING_SETTINGS_HREF}
@@ -254,6 +260,24 @@ export function ProfileSheet({
           <NavIconChip name="Palette" className="size-6 rounded-[7px]" iconClassName="size-3.5" />
           {t("profile.branding")}
         </Link>
+      ) : null}
+      {demoEntry ? (
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            onOpenCreate("demo");
+          }}
+          title={tOrgs("demoTitle")}
+          data-testid="profile-open-demo"
+          data-nav-row
+          className="mx-1 mt-1 flex items-center gap-2 rounded-xl px-2 py-2 text-left text-[13px] font-medium text-[var(--app-indigo-deep)] transition-colors hover:bg-[var(--app-tint-indigo)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+        >
+          <span aria-hidden className="inline-flex size-6 items-center justify-center">
+            <Sparkles className="size-3.5" />
+          </span>
+          {tOrgs("createDemo")}
+        </button>
       ) : null}
     </BottomSheet>
   );

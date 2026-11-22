@@ -282,12 +282,12 @@ function ArticleEditor({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1024]/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#0b1024]/40 p-0 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <BodyScrollLock />
       <div
-        className="flex max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-w-[900px]"
+        className="flex max-h-[90vh] supports-[height:100dvh]:max-h-[90dvh] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-w-[900px] max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[env(safe-area-inset-bottom)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b border-[#e2e5ef] px-6 py-4">

@@ -123,13 +123,13 @@ export function StaffQrInviteDialog({ open, onClose, positions }: Props) {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
     >
       <BodyScrollLock />
       {/* max-h + прокрутка: с готовым QR карточка выше, чем 360×640, и
           без этого нижние кнопки «Распечатать» / «Ещё один» уезжали за
           экран, а страница под модалкой не скроллится. */}
-      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,16,36,0.55)]">
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_30px_80px_-20px_rgba(11,16,36,0.55)] max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#3848c7]">

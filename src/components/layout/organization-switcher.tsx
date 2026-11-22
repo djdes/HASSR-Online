@@ -46,6 +46,7 @@ export function OrganizationSwitcher({
   showSettings = false,
   onNavigate,
   label,
+  demoEntry = true,
 }: {
   organizations: AccessibleOrganization[];
   activeId: string;
@@ -58,6 +59,12 @@ export function OrganizationSwitcher({
   onNavigate?: () => void;
   /** Заголовок группы: в меню профиля «Организации», в nav-пилюле — «Сменить организацию». */
   label?: string;
+  /**
+   * Строка «Открыть демо-организацию» под списком. В листе профиля на
+   * телефоне её рисует сам лист — ниже «Фирменного стиля» (владелец,
+   * 2026-11-22), здесь тогда `false`.
+   */
+  demoEntry?: boolean;
 }) {
   const t = useTranslations("layoutUi.organizationSwitcher");
   const tSwitch = useTranslations("navigation.shell.switchToast");
@@ -208,7 +215,7 @@ export function OrganizationSwitcher({
 
       {/* Второй вход в демо — для тех, кто в анкете нажал просто «Готово».
           Демо общая: что данные там временные, подтверждается в модалке. */}
-      {canOpenCreate && !hasDemo ? (
+      {demoEntry && canOpenCreate && !hasDemo ? (
         <button
           type="button"
           onClick={() => onOpenCreate?.("demo")}

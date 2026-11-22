@@ -31,6 +31,10 @@ const SUB_ROW =
 const ROW_TOUCH = "min-h-[52px] text-[16px]";
 const SUB_ROW_TOUCH = "min-h-12 text-[15.5px]";
 const ROW_ACTIVE = "bg-[var(--tone-row)] text-[var(--tone-ink)]";
+// Раздел, внутри которого открыта страница (владелец, 2026-11-22: «выделения
+// у раздела и пункта одинаковые — сделай умнее»): без заливки, только тон
+// текста и полоска слева; заливка — у самой страницы.
+const ROW_PARENT = "text-[var(--tone-ink)] hover:bg-[#f5f6ff]";
 // «Ещё» — тихий пункт в конце списка: серый, без своего цвета.
 const ROW_QUIET = "text-[#6f7282] hover:bg-[#f4f5fb] hover:text-[#3c4053]";
 const ROW_QUIET_ACTIVE = "bg-[#f1f2f8] text-[#0b1024]";
@@ -104,7 +108,9 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
           ROW,
           touch && ROW_TOUCH,
           "group",
-          action ? (active ? INSPECTION_ACTIVE : INSPECTION_IDLE) : active ? ROW_ACTIVE : ROW_IDLE,
+          action
+            ? active ? INSPECTION_ACTIVE : INSPECTION_IDLE
+            : active ? (section.menu ? ROW_PARENT : ROW_ACTIVE) : ROW_IDLE,
         )}
       >
         {action ? (

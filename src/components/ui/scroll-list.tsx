@@ -75,15 +75,27 @@ export function ScrollPane({
   className,
   viewportClassName,
   viewportRef,
+  noDrag = false,
   children,
 }: {
   className?: string;
   viewportClassName?: string;
   viewportRef?: Ref<HTMLDivElement>;
+  /**
+   * В листе снизу (vaul): свайп по списку только прокручивает его и не тянет
+   * лист (владелец, 2026-11-22: «скролишь — иногда едет низ»). Закрыть лист —
+   * за ручку и шапку, крестиком или по фону.
+   */
+  noDrag?: boolean;
   children: ReactNode;
 }) {
   return (
-    <ScrollArea.Root type="auto" className={cn("relative flex min-h-0 flex-1 flex-col overflow-hidden", className)} data-scroll-pane>
+    <ScrollArea.Root
+      type="auto"
+      className={cn("relative flex min-h-0 flex-1 flex-col overflow-hidden", className)}
+      data-scroll-pane
+      data-vaul-no-drag={noDrag ? "" : undefined}
+    >
       <ScrollArea.Viewport
         ref={viewportRef}
         className={cn(

@@ -523,6 +523,9 @@ function CompleteProfileModal({
   // Мастер первого входа (2026-11-18): после анкеты — «Объекты»,
   // «Сотрудники», «Оборудование», каждый можно пропустить.
   const [step, setStep] = useState<SetupStep>("profile");
+  // Анкета сохранена — шаги можно переключать в любую сторону, и к анкете
+  // тоже можно вернуться (владелец, 2026-11-22).
+  const [profileSaved, setProfileSaved] = useState(false);
 
   const nameOk = organizationName.trim().length >= 2;
   const phoneOk = phoneLooksValid(phone);
@@ -606,6 +609,7 @@ function CompleteProfileModal({
     try {
       const saved = await saveProfile();
       if (!saved) return;
+      setProfileSaved(true);
       toast.success(savedMessage);
       // Дальше — шаг «Объекты» (точки из «Объектов: N» уже заведены сервером).
       setStep("points");
@@ -663,8 +667,10 @@ function CompleteProfileModal({
     // `data-touch-compact`: анкета сверстана под один экран телефона
     // (поля с подписью в рамке уже ≥ 56px, шрифт 16px), общие правила
     // «крупнее на телефоне» её растягивали и сжимали счётчик «Точек» в ноль.
+    // Телефон (владелец, 2026-11-22): лист снизу во всю ширину, как все окна
+    // сайта; с 640px — карточка по центру.
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b1024]/45 p-3 backdrop-blur-sm sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-[#0b1024]/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="complete-profile-title"
@@ -672,7 +678,13 @@ function CompleteProfileModal({
     >
       {/* dvh, а не vh: на iPhone Safari vh считается без учёта панелей
           браузера, и низ модалки уезжал под нижнюю панель. */}
-      <div data-guide="profile-modal" className="flex max-h-[94dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-3xl bg-white shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)]">
+      <div
+        data-guide="profile-modal"
+        data-mobile-sheet
+        className="relative flex max-h-[94dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)] max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 sm:rounded-3xl sm:pb-0"
+      >
+        {/* Ручка — признак листа снизу (как у `ui/dialog` на телефоне). */}
+        <div aria-hidden className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[#dcdfed] sm:hidden" />
         <div className="flex shrink-0 items-start gap-3 px-4 pb-1 pt-3.5 sm:px-5 sm:pt-5">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
             <UserRoundPen className="size-[18px]" />
@@ -704,7 +716,7 @@ function CompleteProfileModal({
           </div>
           <button
             type="button"
-            onClick={step === "profile" ? onClose : finishSetup}
+            onClick={step === "profile" && !profileSaved ? onClose : finishSetup}
             aria-label={tn("close")}
             className="shrink-0 rounded-lg p-1 text-[#9b9fb3] transition-colors hover:text-[#0b1024]"
           >
@@ -712,7 +724,11 @@ function CompleteProfileModal({
           </button>
         </div>
 
-        <SetupStepper step={step} />
+        <SetupStepper
+          step={step}
+          onSelect={setStep}
+          canSelect={(key) => key === "profile" || profileSaved}
+        />
 
         {step === "points" ? (
           <SetupPointsStep defaultAddress={address.trim()} onDone={advance} />
@@ -757,12 +773,11 @@ function CompleteProfileModal({
 
               Промо вынесено из <Field>: внутри <label> ссылка и кнопка
               «скопировать» перехватывались бы фокусом инпута. */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+          <div className="grid gap-2 sm:grid-cols-2 sm:items-start">
             <Field
               label={tn("phone")}
               guide="profile-phone"
               required
-              className="sm:w-[188px] sm:shrink-0"
               invalid={touched.phone && !phoneOk}
             >
               <input
@@ -779,7 +794,7 @@ function CompleteProfileModal({
             <TasksFlowPromoHint
               campaign="register_nudge"
               compact
-              className="min-w-0 flex-1"
+              className="min-w-0"
             />
           </div>
 
@@ -787,13 +802,14 @@ function CompleteProfileModal({
               он висит в команде безымянной строкой. Галочка и должность в
               одной строке: по умолчанию «да», «Директор» — верно для
               большинства, а снять галочку дешевле, чем искать экран. */}
-          <div className="flex items-stretch gap-2">
+          {/* Пары полей — поровну (владелец, 2026-11-22: «симметричнее»). */}
+          <div className="grid grid-cols-2 items-stretch gap-2">
             <label
               title={tn("asEmployeeTitle")}
-              className={`flex cursor-pointer items-center gap-2 rounded-2xl border px-3 transition-colors ${
+              className={`flex min-w-0 cursor-pointer items-center gap-2 rounded-2xl border px-3 transition-colors ${
                 asEmployee
-                  ? "shrink-0 border-[#5566f6]/40 bg-[#f5f6ff]"
-                  : "min-w-0 flex-1 border-[#dcdfed] bg-white py-3"
+                  ? "border-[#5566f6]/40 bg-[#f5f6ff]"
+                  : "col-span-2 border-[#dcdfed] bg-white py-3"
               }`}
             >
               <input
@@ -802,7 +818,7 @@ function CompleteProfileModal({
                 onChange={(e) => setAsEmployee(e.target.checked)}
                 className="size-4 shrink-0 cursor-pointer accent-[#5566f6]"
               />
-              <span className="whitespace-nowrap text-[14px] font-medium text-[#0b1024]">
+              <span className="truncate text-[14px] font-medium text-[#0b1024]">
                 {tn("asEmployee")}
               </span>
               {!asEmployee ? (
@@ -813,7 +829,7 @@ function CompleteProfileModal({
             </label>
 
             {asEmployee ? (
-              <Field label={tn("position")} className="min-w-0 flex-1">
+              <Field label={tn("position")} className="min-w-0">
                 <input
                   value={positionName}
                   onChange={(e) => {
@@ -878,7 +894,7 @@ function CompleteProfileModal({
             </Field>
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Field label={tn("locations")} plain guide="profile-locations">
               {/* -my-1: кнопки счётчика 32px, а строка значения в соседних
                   полях 24px — вытягиваем поле до общей высоты, зона нажатия

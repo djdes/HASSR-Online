@@ -3181,7 +3181,8 @@ export type MessageContract = {
       "scrollDown": "Прокрутить меню вниз",
       "scrollLeft": "Прокрутить меню влево",
       "scrollRight": "Прокрутить меню вправо",
-      "openSection": "Открыть раздел"
+      "openSection": "Открыть раздел",
+      "brandingSettings": "Фирменный стиль"
     },
     "header": {
       "staff": "Сотрудники",
@@ -11100,7 +11101,9 @@ export type MessageContract = {
         "previewCabinetCaption": "Кабинет",
         "previewCabinetMenuActive": "Журналы",
         "previewCabinetMenu": "Сотрудники",
-        "previewCabinetButton": "Добавить запись"
+        "previewCabinetButton": "Добавить запись",
+        "qrFrameHintOn": "Включено — рамка в основном цвете компании.",
+        "qrCenterHintOn": "Включено — в центре значок или логотип компании."
       },
       "contactsPage": {
         "description": "Телефон и почта для документов и отчётов, часовой пояс и язык — и куда приходят уведомления.",
@@ -26235,7 +26238,8 @@ export type MessageContract = {
       "fullIntro": " — задачи сотрудникам со ссылкой на журналы. Промокод ",
       "fullBenefit": " — {benefit}. ",
       "copyTitle": "Скопировать промокод",
-      "go": "Перейти"
+      "go": "Перейти",
+      "autoRegister": "Авторегистрация по номеру телефона"
     },
     "contactUs": {
       "cta": "Свяжитесь с нами",
@@ -27114,7 +27118,7 @@ export type MessageContract = {
       "locationsNote": "Создадим {count, plural, one {# объект} few {# объекты} many {# объектов} other {# объекты}}: журналы по каждой отдельно, сотрудники общие. Названия и адреса — в настройках.",
       "preparing": "Готовим…",
       "showDemo": "Показать демо",
-      "demoNote": "Отдельная организация, 7 дней",
+      "demoNote": "Демо-организация, 7 дней",
       "done": "Готово",
       "pointPlaceholder": "Объект {index, number}",
       "pointNameLabel": "Название объекта {index, number}",
@@ -27784,7 +27788,9 @@ export type MessageContract = {
       "myCabinet": "Мой кабинет",
       "orgCabinet": "Кабинет организации",
       "current": "сейчас",
-      "perMonth": "{price}/мес"
+      "perMonth": "{price}/мес",
+      "label": "Тариф организации:",
+      "change": "Сменить"
     },
     "commandPalette": {
       "closeDayLabel": "Закрыть день",

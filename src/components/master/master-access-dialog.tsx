@@ -54,7 +54,7 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
   return createPortal(
     <div
       // z-55: выше шапки кабинета (30), но ниже ConfirmDialog (60) — «Убрать доступ» открывается поверх.
-      className="fixed inset-0 z-[55] flex items-center justify-center bg-[#0b1024]/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[55] flex items-end justify-center bg-[#0b1024]/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
     >
       <BodyScrollLock />
@@ -63,7 +63,7 @@ export function MasterAccessDialog({ cabinetId, onClose }: { cabinetId: string; 
         aria-modal="true"
         aria-labelledby="master-access-title"
         onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[90vh] w-full max-w-[560px] flex-col overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-30px_rgba(11,16,36,0.5)]"
+        className="flex max-h-[90vh] w-full max-w-[560px] flex-col overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-30px_rgba(11,16,36,0.5)] max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[env(safe-area-inset-bottom)]"
         data-testid="master-access-dialog"
       >
         <div className="flex shrink-0 items-start gap-3 px-5 pb-3 pt-5">

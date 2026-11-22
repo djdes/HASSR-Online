@@ -1,0 +1,12 @@
+{
+  "task": "shell-polish-round2-20261122",
+  "verifier": "Separate in-thread pass on commit d42a6d8d0",
+  "verdict": "PASS",
+  "reran": [
+    "tests: 9 related files, 56 tests, 0 failures",
+    "full suite at commit (pre-commit, escalated): pass=7144 fail=0",
+    "browser: raw/r2-measure.json, raw/r2b-measure.json on the same tree"
+  ],
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS", "AC8": "PASS" },
+  "notes": "AC2 touch swipe verified by attribute and vaul source; synthetic touch scrolling does not work in headless Chromium."
+}

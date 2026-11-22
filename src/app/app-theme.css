@@ -950,11 +950,14 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
  * (он важнее акцента партнёра), а страницы сотрудников по QR — на свой
  * `<main data-qr-brand>`. Внутри тёмной темы акцент тоже действует —
  * правила ниже стоят позже и специфичнее по атрибуту. */
-:is(.app-shell, [data-qr-brand])[data-partner-accent] .bg-\[\#5566f6\] {
+/* Неактивную кнопку не перекрашиваем (владелец, 2026-11-22: «Сохранить,
+   когда нечего сохранять, выглядит активной»): у неё остаётся свой серый
+   `disabled:` цвет, и видно, что нажать нечего. */
+:is(.app-shell, [data-qr-brand])[data-partner-accent] .bg-\[\#5566f6\]:where(:not(:disabled)) {
   background-color: var(--brand-accent);
 }
-:is(.app-shell, [data-qr-brand])[data-partner-accent] .hover\:bg-\[\#4a5bf0\]:hover,
-:is(.app-shell, [data-qr-brand])[data-partner-accent] .hover\:bg-\[\#5566f6\]:hover {
+:is(.app-shell, [data-qr-brand])[data-partner-accent] .hover\:bg-\[\#4a5bf0\]:hover:where(:not(:disabled)),
+:is(.app-shell, [data-qr-brand])[data-partner-accent] .hover\:bg-\[\#5566f6\]:hover:where(:not(:disabled)) {
   background-color: var(--brand-accent-hover);
 }
 :is(.app-shell, [data-qr-brand])[data-partner-accent] .text-\[\#5566f6\],

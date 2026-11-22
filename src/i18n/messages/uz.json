@@ -3180,7 +3180,8 @@
       "scrollDown": "Menyuni pastga aylantirish",
       "scrollLeft": "Menyuni chapga aylantirish",
       "scrollRight": "Menyuni o‘ngga aylantirish",
-      "openSection": "Bo‘limni ochish"
+      "openSection": "Bo‘limni ochish",
+      "brandingSettings": "Brend uslubi"
     },
     "header": {
       "staff": "Xodimlar",
@@ -11099,7 +11100,9 @@
         "previewCabinetCaption": "Kabinet",
         "previewCabinetMenuActive": "Jurnallar",
         "previewCabinetMenu": "Xodimlar",
-        "previewCabinetButton": "Yozuv qo‘shish"
+        "previewCabinetButton": "Yozuv qo‘shish",
+        "qrFrameHintOn": "Yoqilgan — ramka kompaniyaning asosiy rangida.",
+        "qrCenterHintOn": "Yoqilgan — markazda kompaniya belgisi yoki logotipi."
       },
       "contactsPage": {
         "description": "Hujjatlar va hisobotlar uchun telefon va email, vaqt mintaqasi va til — hamda bildirishnomalar qayerga keladi.",
@@ -26234,7 +26237,8 @@
       "fullIntro": " — xodimlarga jurnallarga havolali vazifalar. Promokod ",
       "fullBenefit": " — {benefit}. ",
       "copyTitle": "Promokodni nusxalash",
-      "go": "O‘tish"
+      "go": "O‘tish",
+      "autoRegister": "Telefon raqami bo‘yicha avtoro‘yxatdan o‘tish"
     },
     "contactUs": {
       "cta": "Biz bilan bog‘laning",
@@ -27113,7 +27117,7 @@
       "locationsNote": "{count, plural, one {# ta nuqta} other {# ta nuqta}} yaratamiz: har biri uchun alohida jurnallar, xodimlar umumiy. Nomlar va manzillar — sozlamalarda.",
       "preparing": "Tayyorlanmoqda…",
       "showDemo": "Demoni ko‘rsatish",
-      "demoNote": "Alohida tashkilot, 7 kun",
+      "demoNote": "Demo tashkilot, 7 kun",
       "done": "Tayyor",
       "pointPlaceholder": "Nuqta {index, number}",
       "pointNameLabel": "{index, number}-nuqta nomi",
@@ -27783,7 +27787,9 @@
       "myCabinet": "Mening kabinetim",
       "orgCabinet": "Tashkilot kabineti",
       "current": "hozirgi",
-      "perMonth": "{price}/oy"
+      "perMonth": "{price}/oy",
+      "label": "Tashkilot tarifi:",
+      "change": "Almashtirish"
     },
     "commandPalette": {
       "closeDayLabel": "Kunni yopish",

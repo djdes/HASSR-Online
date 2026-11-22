@@ -79,28 +79,14 @@ export function TasksFlowPromoHint({
           <Zap className="size-3" />
         </span>
         <div className="min-w-0 flex-1">
+          {/* В анкете регистрации — без промокода, скидки и внешней ссылки
+              (владелец, 2026-11-22: «укажи просто авторегистрация, а то
+              отпугивает»): что это и что аккаунт заведётся сам. */}
           <p className="font-semibold text-[#0b1024]">
             {t("compactTitle")}
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <button
-              type="button"
-              onClick={copyPromo}
-              title={t("copyTitle")}
-              className="rounded-full bg-white px-1.5 py-0.5 font-semibold tracking-[0.04em] text-[#3848c7] ring-1 ring-[#dcdfed] transition-colors hover:bg-[#eef1ff] hover:ring-[#5566f6]/40"
-            >
-              {TASKSFLOW_PROMO_CODE}
-            </button>
-            <span className="text-[#6f7282]">{t("benefit")}</span>
-            <a
-              href={tasksflowPromoUrl(campaign)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-[#5566f6] transition-colors hover:text-[#3848c7]"
-            >
-              {t("go")}
-              <ExternalLink className="size-3" />
-            </a>
+          <p className="mt-0.5 text-[#6f7282]" data-tasksflow-autoregister>
+            {t("autoRegister")}
           </p>
         </div>
       </div>

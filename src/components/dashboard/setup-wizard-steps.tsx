@@ -47,7 +47,20 @@ async function loadPoints(): Promise<ApiBuilding[]> {
 }
 
 /** «Шаг 2 из 4» и полоска из четырёх отрезков с подписями. */
-export function SetupStepper({ step }: { step: SetupStep }) {
+/**
+ * Шаги мастера (владелец, 2026-11-22: «шаги можно переключать туда-сюда»):
+ * с `onSelect` подпись шага — кнопка; `canSelect` решает, куда уже можно
+ * (до сохранения анкеты — только «Анкета»).
+ */
+export function SetupStepper({
+  step,
+  onSelect,
+  canSelect = () => true,
+}: {
+  step: SetupStep;
+  onSelect?: (step: SetupStep) => void;
+  canSelect?: (step: SetupStep) => boolean;
+}) {
   const tn = useTranslations("dashboardUi.completeProfileNudge.setup");
   const current = setupStepIndex(step);
   return (
@@ -56,22 +69,44 @@ export function SetupStepper({ step }: { step: SetupStep }) {
         {tn("step", { current: String(current + 1), total: String(SETUP_STEPS.length) })}
       </div>
       <ol className="mt-1.5 grid grid-cols-4 gap-1.5">
-        {SETUP_STEPS.map((key, index) => (
-          <li key={key} className="min-w-0">
-            <span
-              className={`block h-1.5 rounded-full ${index <= current ? "bg-[#5566f6]" : "bg-[#e7e9f3]"}`}
-              aria-hidden
-            />
-            <span
-              className={`mt-1 block truncate text-[11px] ${
-                index === current ? "font-semibold text-[#0b1024]" : "text-[#9b9fb3]"
-              }`}
-              aria-current={index === current ? "step" : undefined}
-            >
-              {tn(`steps.${key}`)}
-            </span>
-          </li>
-        ))}
+        {SETUP_STEPS.map((key, index) => {
+          const body = (
+            <>
+              <span
+                className={`block h-1.5 rounded-full ${index <= current ? "bg-[#5566f6]" : "bg-[#e7e9f3]"}`}
+                aria-hidden
+              />
+              <span
+                className={`mt-1 block truncate text-[11px] ${
+                  index === current ? "font-semibold text-[#0b1024]" : "text-[#9b9fb3]"
+                }`}
+              >
+                {tn(`steps.${key}`)}
+              </span>
+            </>
+          );
+          const enabled = Boolean(onSelect) && canSelect(key);
+          return (
+            <li key={key} className="min-w-0">
+              {onSelect ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect(key)}
+                  disabled={!enabled || index === current}
+                  aria-current={index === current ? "step" : undefined}
+                  data-setup-step-button={key}
+                  className="block w-full rounded-md pb-0.5 text-left transition-opacity focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 enabled:hover:opacity-80 disabled:cursor-default"
+                >
+                  {body}
+                </button>
+              ) : (
+                <span className="block" aria-current={index === current ? "step" : undefined}>
+                  {body}
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </div>
   );

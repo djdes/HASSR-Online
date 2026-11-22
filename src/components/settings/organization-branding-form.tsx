@@ -262,8 +262,9 @@ export function OrganizationBrandingForm({
     <div className="space-y-5">
       {dirty ? <UnsavedBar saving={saving} onSave={save} onDiscard={discard} /> : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:items-start">
-        <div className="min-w-0 space-y-5">
+      {/* Примеры — прямо в блоках, рядом с тем, что их меняет (владелец,
+          2026-11-22: «показывай примеры в блоках, а не отдельным снизу»). */}
+      <div className="min-w-0 space-y-5">
           {/* ① Логотип */}
           <StepCard n={1} id="logo" title={t("form.logoTitle")} lead={t("brandingPage.logoLead")}>
             {/* Файл сохраняется сразу, без кнопки «Сохранить»: логотип видно в меню слева, как только он загружен. */}
@@ -304,6 +305,21 @@ export function OrganizationBrandingForm({
 
           {/* ② Цвета */}
           <StepCard n={2} id="color" title={t("brandingPage.colorTitle")} lead={t("brandingPage.colorLead")}>
+            <WithPreview
+              preview={
+                <>
+                  <MonoSwitch mono={mono} onToggle={() => setMono((prev) => !prev)} hint={t("brandingPage.monoHint")} label={t("brandingPage.monoToggle")} />
+                  <Figure caption={t("brandingPage.previewPosterCaption")}>
+                    <PosterPreview brand={brand} orgName={orgName || t("brandingPage.sampleOrgName")} />
+                  </Figure>
+                  {draft.brandCabinet && cabinetAccent ? (
+                    <Figure caption={t("brandingPage.previewCabinetCaption")}>
+                      <CabinetPreview accent={cabinetAccent} />
+                    </Figure>
+                  ) : null}
+                </>
+              }
+            >
             {logoUrl ? (
               <div
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3"
@@ -386,10 +402,18 @@ export function OrganizationBrandingForm({
                 {t("brandingPage.cabinetNeedsColor")}
               </p>
             ) : null}
+            </WithPreview>
           </StepCard>
 
           {/* ③ Сайт */}
           <StepCard n={3} id="site" title={t("brandingPage.siteTitle")} lead={t("brandingPage.siteLead")}>
+            <WithPreview
+              preview={
+                <Figure caption={t("brandingPage.previewLabelCaption")}>
+                  <LabelPreview brand={brand} />
+                </Figure>
+              }
+            >
             <FieldRow label={t("brandingPage.siteLabel")} hint={t("brandingPage.siteHint")} error={siteError} htmlFor="brand-site">
               <input
                 id="brand-site"
@@ -411,10 +435,24 @@ export function OrganizationBrandingForm({
                 </p>
               ) : null}
             </FieldRow>
+            </WithPreview>
           </StepCard>
 
           {/* ④ QR-коды */}
           <StepCard n={4} id="qr" title={t("brandingPage.qrTitle")} lead={t("brandingPage.qrLead")}>
+            <WithPreview
+              preview={
+                <>
+                  <Figure caption={t("brandingPage.previewQrCaption")}>
+                    <QrStickerPreview brand={brand} orgName={orgName || t("brandingPage.sampleOrgName")} />
+                  </Figure>
+                  {/* Сразу за наклейкой — что сотрудник увидит, когда её отсканирует. */}
+                  <Figure caption={t("brandingPage.previewQrPageCaption")}>
+                    <QrPagePreview brand={qrPage} orgName={orgName || t("brandingPage.sampleOrgName")} />
+                  </Figure>
+                </>
+              }
+            >
             <FieldRow label={t("brandingPage.qrIconLabel")} hint={t("brandingPage.qrIconHint")}>
               {/* Значок сохраняется сразу, как логотип. */}
               <OrgLogoUpload kind="icon" url={qrIconUrl} onChange={setQrIconUrl} />
@@ -424,6 +462,7 @@ export function OrganizationBrandingForm({
               onChange={(value) => setDraft((prev) => ({ ...prev, qrBrandFrame: value }))}
               label={t("brandingPage.qrFrameLabel")}
               hint={t("brandingPage.qrFrameHint")}
+              hintOn={t("brandingPage.qrFrameHintOn")}
               testId="qr-brand-frame"
             />
             <Toggle
@@ -431,63 +470,56 @@ export function OrganizationBrandingForm({
               onChange={(value) => setDraft((prev) => ({ ...prev, qrCenterLogo: value }))}
               label={t("brandingPage.qrCenterLabel")}
               hint={t("brandingPage.qrCenterHint")}
+              hintOn={t("brandingPage.qrCenterHintOn")}
               testId="qr-center-logo"
             />
             <p className="flex items-start gap-1.5 rounded-2xl bg-[#f5f6ff] px-3 py-2.5 text-[12.5px] leading-snug text-[#3848c7]">
               <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               {t("brandingPage.qrFallback")}
             </p>
+            </WithPreview>
           </StepCard>
 
           <SaveButton dirty={dirty} saving={saving} onSave={save} />
-        </div>
-
-        {/* ⑤ Предпросмотр */}
-        <StepCard
-          n={5}
-          id="preview"
-          title={t("brandingPage.previewTitle")}
-          lead={t("brandingPage.previewLead")}
-          className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
-        >
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3.5 py-2.5">
-            <span className="text-[12.5px] leading-snug text-[#6f7282]">{t("brandingPage.monoHint")}</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={mono}
-              onClick={() => setMono((prev) => !prev)}
-              data-mono-toggle
-              className={`inline-flex h-8 shrink-0 items-center rounded-xl border px-3 text-[12.5px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 ${
-                mono
-                  ? "border-[#0b1024] bg-[#0b1024] text-white hover:bg-[#262b45]"
-                  : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-              }`}
-            >
-              {t("brandingPage.monoToggle")}
-            </button>
-          </div>
-
-          <Figure caption={t("brandingPage.previewPosterCaption")}>
-            <PosterPreview brand={brand} orgName={orgName || t("brandingPage.sampleOrgName")} />
-          </Figure>
-          <Figure caption={t("brandingPage.previewQrCaption")}>
-            <QrStickerPreview brand={brand} orgName={orgName || t("brandingPage.sampleOrgName")} />
-          </Figure>
-          {/* Сразу за наклейкой — что сотрудник увидит, когда её отсканирует. */}
-          <Figure caption={t("brandingPage.previewQrPageCaption")}>
-            <QrPagePreview brand={qrPage} orgName={orgName || t("brandingPage.sampleOrgName")} />
-          </Figure>
-          <Figure caption={t("brandingPage.previewLabelCaption")}>
-            <LabelPreview brand={brand} />
-          </Figure>
-          {draft.brandCabinet && cabinetAccent ? (
-            <Figure caption={t("brandingPage.previewCabinetCaption")}>
-              <CabinetPreview accent={cabinetAccent} />
-            </Figure>
-          ) : null}
-        </StepCard>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Поля блока и его пример: на широком экране рядом (пример справа), на
+ * телефоне — пример под полями.
+ */
+function WithPreview({ preview, children }: { preview: ReactNode; children: ReactNode }) {
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,340px)] xl:items-start">
+      <div className="min-w-0 space-y-4">{children}</div>
+      <div className="min-w-0 space-y-3" data-block-preview>
+        {preview}
+      </div>
+    </div>
+  );
+}
+
+/** «Ч/б»: как плакат, наклейка и этикетка напечатаются на чёрно-белом принтере. */
+function MonoSwitch({ mono, onToggle, hint, label }: { mono: boolean; onToggle: () => void; hint: string; label: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-3.5 py-2.5">
+      <span className="text-[12.5px] leading-snug text-[#6f7282]">{hint}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={mono}
+        onClick={onToggle}
+        data-mono-toggle
+        className={`inline-flex h-8 shrink-0 items-center rounded-xl border px-3 text-[12.5px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 ${
+          mono
+            ? "border-[#0b1024] bg-[#0b1024] text-white hover:bg-[#262b45]"
+            : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+        }`}
+      >
+        {label}
+      </button>
     </div>
   );
 }
@@ -506,19 +538,24 @@ function Toggle({
   onChange,
   label,
   hint,
+  hintOn,
   testId,
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
   label: string;
+  /** Подпись под названием; `hintOn` — когда переключатель включён (иначе та же). */
   hint: string;
+  hintOn?: string;
   testId: string;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
       <div className="min-w-0">
         <div className="text-[13.5px] font-medium text-[#0b1024]">{label}</div>
-        <div className="mt-0.5 text-[12px] leading-snug text-[#6f7282]">{hint}</div>
+        <div className="mt-0.5 text-[12px] leading-snug text-[#6f7282]" data-toggle-hint>
+          {checked && hintOn ? hintOn : hint}
+        </div>
       </div>
       <button
         type="button"

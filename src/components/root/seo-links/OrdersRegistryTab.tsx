@@ -671,14 +671,14 @@ function ManualOrderModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1024]/45 p-4 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#0b1024]/45 p-0 backdrop-blur-[1px] sm:items-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <form
         onSubmit={(e) => void handleSubmit(e)}
-        className="max-h-[90vh] w-full max-w-[640px] overflow-y-auto rounded-3xl border border-[#dcdfed] bg-white p-6 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-[640px] overflow-y-auto rounded-3xl border border-[#dcdfed] bg-white p-6 shadow-2xl max-sm:max-w-none max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
       >
         <div className="flex items-start justify-between gap-3">
           <div>

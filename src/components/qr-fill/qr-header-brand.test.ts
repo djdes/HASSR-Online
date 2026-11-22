@@ -60,7 +60,8 @@ test("правила акцента — и для кабинета, и для QR
   // Кнопки, ссылки, рамки, подложки и тумблеры — общими правилами; только кабинетные
   // (значок платформы, карточка «Начальная настройка») остаются у `.app-shell`.
   assert.doesNotMatch(css, /^\.app-shell\[data-partner-accent\] \.(bg|text|border|hover|focus|data)/m);
-  assert.match(css, /^:is\(\.app-shell, \[data-qr-brand\]\)\[data-partner-accent\] \.bg-\\\[\\#5566f6\\\] \{/m);
+  // `:where(:not(:disabled))` — неактивную кнопку не перекрашиваем, специфичность та же (2026-11-22).
+  assert.match(css, /^:is\(\.app-shell, \[data-qr-brand\]\)\[data-partner-accent\] \.bg-\\\[\\#5566f6\\\]:where\(:not\(:disabled\)\) \{/m);
 });
 
 test("кабинет в цветах компании — только по переключателю, цвет компании важнее партнёра", () => {
