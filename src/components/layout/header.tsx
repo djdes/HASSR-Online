@@ -13,7 +13,6 @@ import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { NewProfileMenu } from "@/components/layout/new-profile-menu";
 import { openCommandPalette } from "@/components/layout/command-palette";
 import { cn } from "@/lib/utils";
-import { navTone } from "@/lib/nav-tones";
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { PLATFORM_PANEL_ENTRY } from "@/lib/platform-access";
 import { getWebHomeHref, hasFullWorkspaceAccess } from "@/lib/role-access";
@@ -315,17 +314,15 @@ export function Header({
           <MaxConnectButton />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
-          {/* Кнопки шапки — мягкая подложка цвета своей иконки
-              (`lib/nav-tones.ts`), как пункты меню; подъём при наведении —
-              `[data-tone-button]` в app-theme.css. */}
+          {/* Кнопки шапки — одного нейтрального вида с «Выходом»
+              (владелец, 2026-11-21): своих цветов, свечения и подъёма при
+              наведении у них нет. */}
           {partnerCabinet ? (
             <Link
               href="/partner"
               aria-label={t("header.partnerCabinet")}
               title={t("header.partnerTitle", { brand: partnerCabinet.brandName })}
-              data-tone={navTone("Handshake")}
-              data-tone-button
-              className="hidden h-10 shrink-0 items-center justify-center rounded-lg px-2.5 md:inline-flex"
+              className="hidden h-10 shrink-0 items-center justify-center rounded-lg px-2.5 bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 hover:bg-[#eef1ff] hover:text-[#3848c7] md:inline-flex"
             >
               <Handshake className="size-5 shrink-0" />
             </Link>
@@ -337,11 +334,9 @@ export function Header({
               prefetch={false}
               aria-label={t("header.platformPanel")}
               title={t("header.platformPanel")}
-              data-tone={navTone("ShieldCheck")}
-              data-tone-button
               className={cn(
-                "hidden h-10 shrink-0 items-center justify-center rounded-lg px-2.5 md:inline-flex",
-                pathname.startsWith("/root") && "ring-2 ring-[var(--tone-glow)]"
+                "hidden h-10 shrink-0 items-center justify-center rounded-lg px-2.5 bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 hover:bg-[#eef1ff] hover:text-[#3848c7] md:inline-flex",
+                pathname.startsWith("/root") && "ring-2 ring-[#5566f6]/35"
               )}
             >
               <ShieldCheck className="size-5 shrink-0" />
@@ -371,7 +366,7 @@ export function Header({
               aria-label={t("header.profile")}
             >
               <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white newd:bg-[#111114] newd:bg-none">
+                <AvatarFallback className="bg-[#5566f6] text-[13px] font-bold text-white newd:bg-[#111114]">
                   {getInitials(userName)}
                 </AvatarFallback>
               </Avatar>
@@ -417,7 +412,7 @@ export function Header({
                     согласован с остальными контролами шапки — size-10
                     (на телефоне size-11, как все кнопки шапки). */}
                 <Avatar size="lg" className="max-sm:data-[size=lg]:size-11">
-                  <AvatarFallback data-avatar-gradient className="bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#9a6cf0)] text-[13px] font-bold text-white newd:bg-[#111114] newd:bg-none">
+                  <AvatarFallback className="bg-[#5566f6] text-[13px] font-bold text-white newd:bg-[#111114]">
                     {getInitials(userName)}
                   </AvatarFallback>
                 </Avatar>

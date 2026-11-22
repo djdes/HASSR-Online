@@ -1,0 +1,82 @@
+{
+ "classic-light/home": {
+  "whole": 1.64,
+  "content": 1.91
+ },
+ "classic-light/settings_master_cabinet": {
+  "whole": 0.52,
+  "content": 0.05
+ },
+ "classic-light/journals": {
+  "whole": 0.62,
+  "content": 0.11
+ },
+ "classic-light/settings": {
+  "whole": 1.14,
+  "content": 0.95
+ },
+ "classic-light/staff": {
+  "whole": 0.88,
+  "content": 0.2
+ },
+ "classic-dark/home": {
+  "whole": 6.25,
+  "content": 1.65
+ },
+ "classic-dark/settings_master_cabinet": {
+  "whole": 6.21,
+  "content": 1.33
+ },
+ "classic-dark/journals": {
+  "whole": 5.96,
+  "content": 0.89
+ },
+ "classic-dark/settings": {
+  "whole": 6.01,
+  "content": 1.01
+ },
+ "classic-dark/staff": {
+  "whole": 6.01,
+  "content": 0.95
+ },
+ "new-light/home": {
+  "whole": 0.37,
+  "content": 0.61
+ },
+ "new-light/settings_master_cabinet": {
+  "whole": 0.07,
+  "content": 0.0
+ },
+ "new-light/journals": {
+  "whole": 0.01,
+  "content": 0.0
+ },
+ "new-light/settings": {
+  "whole": 0.07,
+  "content": 0.0
+ },
+ "new-light/staff": {
+  "whole": 0.0,
+  "content": 0.0
+ },
+ "new-dark/home": {
+  "whole": 5.12,
+  "content": 6.47
+ },
+ "new-dark/settings_master_cabinet": {
+  "whole": 3.09,
+  "content": 1.46
+ },
+ "new-dark/journals": {
+  "whole": 2.96,
+  "content": 0.98
+ },
+ "new-dark/settings": {
+  "whole": 3.09,
+  "content": 1.09
+ },
+ "new-dark/staff": {
+  "whole": 3.1,
+  "content": 1.0
+ }
+}

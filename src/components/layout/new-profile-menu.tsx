@@ -77,7 +77,7 @@ export function NewProfileMenu({
           className="group flex h-10 shrink-0 items-center gap-1.5 rounded-full pr-1.5 transition-colors hover:bg-[#f1f1f4] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10"
         >
           <Avatar size="lg">
-            <AvatarFallback data-avatar-gradient className="bg-[#111114] text-[13px] font-bold text-white">
+            <AvatarFallback className="bg-[#111114] text-[13px] font-bold text-white">
               {initials}
             </AvatarFallback>
           </Avatar>

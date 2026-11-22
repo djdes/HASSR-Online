@@ -1,0 +1,266 @@
+{
+ "classic-light /home": {
+  "boxes": 6,
+  "same": 6,
+  "countBefore": 6,
+  "countAfter": 6,
+  "mainHeight": [
+   703,
+   703
+  ],
+  "moved": []
+ },
+ "classic-light /settings/master-cabinet": {
+  "boxes": 5,
+  "same": 5,
+  "countBefore": 5,
+  "countAfter": 5,
+  "mainHeight": [
+   703,
+   703
+  ],
+  "moved": []
+ },
+ "classic-light /journals": {
+  "boxes": 80,
+  "same": 80,
+  "countBefore": 80,
+  "countAfter": 80,
+  "mainHeight": [
+   4383,
+   4383
+  ],
+  "moved": []
+ },
+ "classic-light /settings/users": {
+  "boxes": 52,
+  "same": 52,
+  "countBefore": 52,
+  "countAfter": 52,
+  "mainHeight": [
+   1154,
+   1154
+  ],
+  "moved": []
+ },
+ "classic-light /dashboard": {
+  "boxes": 61,
+  "same": 61,
+  "countBefore": 61,
+  "countAfter": 61,
+  "mainHeight": [
+   2535,
+   2535
+  ],
+  "moved": []
+ },
+ "classic-light /settings/subscription": {
+  "boxes": 33,
+  "same": 33,
+  "countBefore": 33,
+  "countAfter": 33,
+  "mainHeight": [
+   5341,
+   5341
+  ],
+  "moved": []
+ },
+ "classic-dark /home": {
+  "boxes": 6,
+  "same": 6,
+  "countBefore": 6,
+  "countAfter": 6,
+  "mainHeight": [
+   703,
+   703
+  ],
+  "moved": []
+ },
+ "classic-dark /settings/master-cabinet": {
+  "boxes": 5,
+  "same": 5,
+  "countBefore": 5,
+  "countAfter": 5,
+  "mainHeight": [
+   703,
+   703
+  ],
+  "moved": []
+ },
+ "classic-dark /journals": {
+  "boxes": 80,
+  "same": 80,
+  "countBefore": 80,
+  "countAfter": 80,
+  "mainHeight": [
+   4383,
+   4383
+  ],
+  "moved": []
+ },
+ "classic-dark /settings/users": {
+  "boxes": 52,
+  "same": 52,
+  "countBefore": 52,
+  "countAfter": 52,
+  "mainHeight": [
+   1154,
+   1154
+  ],
+  "moved": []
+ },
+ "classic-dark /dashboard": {
+  "boxes": 61,
+  "same": 61,
+  "countBefore": 61,
+  "countAfter": 61,
+  "mainHeight": [
+   2535,
+   2535
+  ],
+  "moved": []
+ },
+ "classic-dark /settings/subscription": {
+  "boxes": 33,
+  "same": 33,
+  "countBefore": 33,
+  "countAfter": 33,
+  "mainHeight": [
+   5341,
+   5341
+  ],
+  "moved": []
+ },
+ "new-light /home": {
+  "boxes": 6,
+  "same": 6,
+  "countBefore": 6,
+  "countAfter": 6,
+  "mainHeight": [
+   718,
+   718
+  ],
+  "moved": []
+ },
+ "new-light /settings/master-cabinet": {
+  "boxes": 3,
+  "same": 3,
+  "countBefore": 3,
+  "countAfter": 3,
+  "mainHeight": [
+   718,
+   718
+  ],
+  "moved": []
+ },
+ "new-light /journals": {
+  "boxes": 80,
+  "same": 80,
+  "countBefore": 80,
+  "countAfter": 80,
+  "mainHeight": [
+   4221,
+   4221
+  ],
+  "moved": []
+ },
+ "new-light /settings/users": {
+  "boxes": 51,
+  "same": 51,
+  "countBefore": 51,
+  "countAfter": 51,
+  "mainHeight": [
+   1116,
+   1116
+  ],
+  "moved": []
+ },
+ "new-light /dashboard": {
+  "boxes": 60,
+  "same": 60,
+  "countBefore": 60,
+  "countAfter": 60,
+  "mainHeight": [
+   2433,
+   2433
+  ],
+  "moved": []
+ },
+ "new-light /settings/subscription": {
+  "boxes": 32,
+  "same": 32,
+  "countBefore": 32,
+  "countAfter": 32,
+  "mainHeight": [
+   5319,
+   5319
+  ],
+  "moved": []
+ },
+ "new-dark /home": {
+  "boxes": 6,
+  "same": 6,
+  "countBefore": 6,
+  "countAfter": 6,
+  "mainHeight": [
+   718,
+   718
+  ],
+  "moved": []
+ },
+ "new-dark /settings/master-cabinet": {
+  "boxes": 3,
+  "same": 3,
+  "countBefore": 3,
+  "countAfter": 3,
+  "mainHeight": [
+   718,
+   718
+  ],
+  "moved": []
+ },
+ "new-dark /journals": {
+  "boxes": 80,
+  "same": 80,
+  "countBefore": 80,
+  "countAfter": 80,
+  "mainHeight": [
+   4221,
+   4221
+  ],
+  "moved": []
+ },
+ "new-dark /settings/users": {
+  "boxes": 51,
+  "same": 51,
+  "countBefore": 51,
+  "countAfter": 51,
+  "mainHeight": [
+   1116,
+   1116
+  ],
+  "moved": []
+ },
+ "new-dark /dashboard": {
+  "boxes": 60,
+  "same": 60,
+  "countBefore": 60,
+  "countAfter": 60,
+  "mainHeight": [
+   2433,
+   2433
+  ],
+  "moved": []
+ },
+ "new-dark /settings/subscription": {
+  "boxes": 32,
+  "same": 32,
+  "countBefore": 32,
+  "countAfter": 32,
+  "mainHeight": [
+   5319,
+   5319
+  ],
+  "moved": []
+ }
+}
