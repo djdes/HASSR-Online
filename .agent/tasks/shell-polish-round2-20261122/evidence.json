@@ -1,0 +1,16 @@
+{
+  "task": "shell-polish-round2-20261122",
+  "status": "READY_FOR_RELEASE",
+  "commit": "d42a6d8d0",
+  "base": "f93fcf4e6 (origin/master)",
+  "criteria": {
+    "AC1": { "status": "PASS", "proof": "raw/r2-measure.json menu-light/menu-dark: parent bg transparent + accent text, leaf filled" },
+    "AC2": { "status": "PASS", "proof": "paneNoDrag true; wheel scroll 0→86; vaul skips drag inside [data-vaul-no-drag]", "limit": "native touch swipe not reproducible in headless Chromium (document-level control also 0)" },
+    "AC3": { "status": "PASS", "proof": "action upload/settings in the left slot, no overlap with logo; desktop tile corner badge" },
+    "AC4": { "status": "PASS", "proof": "3 block previews, no step 5, toggle captions by state, disabled save rgb(200,203,224) in brand mode" },
+    "AC5": { "status": "PASS", "proof": "emailCount 1, plan card label + «Сменить», demo below branding, footer language ru/en/uz" },
+    "AC6": { "status": "PASS", "proof": "wizard sheet bottom 664/left 0/width 390, radius 22/0, 4 step buttons, autoRegister, demo note" },
+    "AC7": { "status": "PASS", "proof": "9 modals converted; create-organization measured bottom 664 left 0 width 390" },
+    "AC8": { "status": "PASS", "proof": "typecheck OK; eslint 0 errors; pre-commit full suite pass=7144 fail=0" }
+  }
+}
