@@ -1,6 +1,7 @@
 {
   "task": "site-motion-2026-11-22",
-  "status": "READY_FOR_VERIFICATION",
+  "status": "READY_FOR_RELEASE",
+  "commit": "3be53c18a",
   "base": "10f087f8f (origin/master)",
   "criteria": {
     "AC1": { "status": "PASS", "proof": "motion.test.ts (import order, runtime mounted, :root/:where selectors); raw/measure.json AC1.login, AC1.landing-keeps-own-motion and every surface below" },
@@ -14,6 +15,6 @@
     "AC9": { "status": "PASS", "proof": "raw/measure.json AC9.mini.* and AC9.qr.press; motion.test.ts (mini-theme.css, qr-motion-css.ts, .qr-success-pop)" },
     "AC10": { "status": "PASS", "proof": "motion.test.ts AC10 (spring peaks ≤ 1.05, no will-change / gradient / :hover / lively spring); raw/rest-compare.json: 17 screens unchanged at rest" },
     "AC11": { "status": "PASS", "proof": "raw/measure.json AC11.still (flag set, held scale none, 0 shapes, 0 page animations); motion.test.ts AC11" },
-    "AC12": { "status": "PASS", "proof": "raw/typecheck.txt exit 0; raw/test-gate.txt pass 94 fail 0; raw/eslint.txt exit 0; raw/unit-tests.txt 30/30; raw/measure.json 46/46; raw/prod-minify.json nothing dropped" }
+    "AC12": { "status": "PASS", "proof": "raw/typecheck.txt exit 0; raw/test-gate.txt pass 95 fail 0; raw/eslint.txt exit 0; raw/unit-tests.txt 31/31; raw/measure.json and raw/verify-measure.json 46/46; raw/prod-minify.json nothing dropped; next build --webpack exit 0" }
   }
 }

@@ -1,8 +1,8 @@
 {
  "file": "src/app/motion.css",
  "bytes": {
-  "source": 18142,
-  "minified": 10842
+  "source": 18500,
+  "minified": 11048
  },
  "before": {
   "rules": 49,

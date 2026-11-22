@@ -14,6 +14,7 @@ Builder evidence for `spec.md`. Raw artifacts are in `raw/`.
 | Mini App on the same springs | `src/app/mini/mini-theme.css` |
 | QR form of a journal (standalone HTML) on the same springs | `src/lib/qr-motion-css.ts`, `src/lib/journal-fill-html.ts` |
 | QR success mark without the overshooting curve | `src/app/globals.css` (`.qr-success-pop`) |
+| Spring tokens: `cubic-bezier` fallback, the real springs under `@supports` | `src/app/globals.css`, `src/lib/qr-motion-css.ts` |
 | Generated border layer refreshed (it embeds the file count of `src/`) | `src/app/borderless.css` |
 
 A finding along the way: public pages carry `.app-shell` on `<body>`, so the cabinet's theme-switch
@@ -25,14 +26,15 @@ loader → check, the knob, the contacts button). They are alive now (`AC1.landi
 | Check | Result | Artifact |
 |---|---|---|
 | `npm run typecheck` | exit 0 | `raw/typecheck.txt` |
-| `npm run test:gate` (targeted, 10 files) | pass 94, fail 0 | `raw/test-gate.txt` |
-| New tests (`src/app/motion.test.ts`, `src/components/motion/motion-model.test.ts`) | 30 / 30 | `raw/unit-tests.txt` |
-| Design guards and every test that reads the touched files (26 files + `src/app/*.test.ts`) | 288 / 288 | run in the session |
+| `npm run test:gate` (targeted, 10 files) | pass 95, fail 0 | `raw/test-gate.txt` |
+| New tests (`src/app/motion.test.ts`, `src/components/motion/motion-model.test.ts`) | 31 / 31 | `raw/unit-tests.txt` |
+| Design guards and every test that reads the touched files (26 files + `src/app/*.test.ts`) | 289 / 289 | run in the session |
 | ESLint on the 12 changed `.ts` / `.tsx` files | 0 errors, 0 warnings | `raw/eslint.txt` |
-| Browser measurements (Playwright, local app + local PostgreSQL) | 46 / 46 | `raw/measure.json`, script `raw/measure.cjs` |
+| Browser measurements (Playwright, local app + local PostgreSQL) | 46 / 46, twice: builder run and the verification run on the final commit | `raw/measure.json`, `raw/verify-measure.json`, script `raw/measure.cjs` |
 | At rest before vs after, 17 screens, pixel diff | 13 identical, 3 with 1–3 px of noise, the landing differs only on the animated gold seal | `raw/rest-compare.json` |
 | Production minifier (cssnano-simple) on `motion.css` | 49 rules / 92 declarations / 5 keyframes in and out | `raw/prod-minify.json`, script `raw/prod-minify.cjs` |
-| Crawl: 24 cabinet pages × desktop and phone, clicking tabs and segments | no page errors, no console errors, no leftover shapes or masks | run in the session |
+| Crawl: 24 cabinet pages × desktop and phone, clicking tabs and segments | no page errors, no console errors, no leftover shapes or masks | `raw/verify-crawl.txt` |
+| `next build --webpack` into a separate directory | exit 0; the layer's rules are in the built CSS and its chunk loads after the `app-theme` chunk (same chunk order as on the live site) | run in the session |
 
 ## Acceptance criteria
 
@@ -76,8 +78,12 @@ loader → check, the knob, the contacts button). They are alive now (`AC1.landi
 
 ## Limits
 
-- Measurements run against `next dev` (Turbopack). The production CSS path was checked separately
-  through the production minifier; nothing is dropped.
+- Measurements run against `next dev` (Turbopack). The production path was checked separately:
+  the production minifier drops nothing, and a full `next build --webpack` keeps the layer's rules
+  in the right order.
+- Browsers without `linear()` easing (Safari before 17.2: an iPhone 8 or X on iOS 16) were not
+  available. For them the spring tokens now carry a `cubic-bezier` value and the real springs sit
+  under `@supports` (`globals.css`, the QR form); both survive the production CSS build.
 - Touch input is emulated (iPhone 13 profile, mouse events): the squeeze under a real finger and the
   swipe of a sheet were not reproduced on a device.
 - The Radix `Tabs` panel swap was measured on a synthetic tab group with `aria-controls` (the two
