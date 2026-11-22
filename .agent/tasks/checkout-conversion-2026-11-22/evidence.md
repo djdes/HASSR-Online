@@ -1,0 +1,17 @@
+# Evidence: checkout-conversion-2026-11-22
+
+База: `24d38f54e` (origin/master). Стенд: `next dev` на :3000, PostgreSQL 16 `haccp_smoke` (`prisma db push` + `prisma/seed.ts` + `raw/stand-setup.ts`: тестовые реквизиты WeSetup, кафе без ИНН с владельцем `manager@stand.test`), Chromium 390×844 @2x.
+
+| AC | Итог | Чем подтверждено |
+|----|------|------------------|
+| AC1 чек «К оплате» | PASS | `raw/e2e.log`: чек виден, без рамки (`border 0px`), «К оплате 47 880 ₽ · ≈ 3 990 ₽ в месяц»; `order-invoice.test.ts` — `expectedGrossRub: amountAfterPromo` (формула суммы не менялась) |
+| AC2 промокод | PASS | e2e: свёрнутый блок 36 px; раскрытый с ошибкой 69,5 px (поле + кнопка в одну строку, ошибка одной строкой); тест: плашка с крестиком, крестик — `/api/promo/check` с пустым кодом (скидка навсегда остаётся) |
+| AC3 способ оплаты списком | PASS | e2e: список у гостя; «Счёт…» заменяет форму карты; `#invoice` открывает счёт (руководитель); тест: список только при `invoiceAvailable`, баллы только при карте |
+| AC4 счёт вошедшему, ИНН на месте | PASS | e2e: у организации без ИНН — поле ИНН, счёт № N выставлен; база: `Organization.inn = 7707083893`, `legalFullName` (DaData на стенде нет), `AuditLog organization.settings.update {source: order-invoice}`; PDF 200 `application/pdf`; тест: ИНН пишется до `createInvoiceOrder`, чужой ИНН — `inn-set` |
+| AC5 скачать и на почту | PASS* | e2e: «Скачать PDF» → 200 PDF; письмо со счётом на почту заказа — в логе dev «Счёт № N на оплату WeSetup → manager@stand.test»; «Отправить на другую почту» дошла до почтового транспорта (лог: письмо на `buh@stand.test`), ответ 502 — на стенде нет SMTP (*в проде с SMTP — 200 и «Отправили на …»); тест: подпись гостя / руководитель своей организации / только `pending` / лимит |
+| AC6 событие оформления | PASS | база: `CrmInteraction checkout:visit:guest.e2e@example.ru:2026-11-22` («ввёл(а) почту») и `checkout:visit:manager@stand.test:…` (страница, после ответа); e2e: запрос `/api/checkout/track` с токеном проверки; тест: без сессии — проверка от ботов и лимит; источник CRM `checkout` из заказов картой |
+| AC7 незавершённая оплата | PASS | `raw/stand-crm.log` 9/9: ночью 0; гость без оплаты → 1 задача + событие ленты, руководитель со счётом → пропуск `invoice`; повтор не дублирует; Telegram — вызов `notifyPlatformAdmin` (на стенде нет чата: «нет Telegram-чата админа»); юнит-тесты выбора и текстов (`checkout.test.ts`) |
+| AC8 оплатил | PASS | stand-crm: задача `checkout` → `cancelled / Клиент оплатил`, `payment:<id>` в ленте, контакт `won`, задача `onboarding` одна, повтор — без второй; тест: вызов в `completePaidOrder` в своём try/catch |
+| AC9 CRM-экран | PASS | тест: подписи видов «Незавершённая оплата», «Оплатил — запуск», фильтр `/root/crm/tasks`; каналы `checkout`, `payment` |
+| AC10 тексты и вид | PASS | `orderCheckout` в ru/en/uz с одинаковыми ключами, `message-contract.d.ts` пересобран; без свечения и новых рамок-коробок (`borderless.css` пересобран — изменился только счётчик файлов); 390 px без горизонтальной прокрутки (карта и счёт). Тёмной темы у `/order` нет (страница всегда светлая — как до изменений), цвета блоков имеют тёмные значения в `app-theme.css` |
+| AC11 проверки | PASS | `npm run typecheck` — exit 0 (`raw/typecheck.txt`); `npm run test:gate` — эскалация до полного прогона (91 связанный файл): pass 7163, fail 0 (`raw/test-gate.log`); eslint по изменённым файлам — 0 (`raw/eslint.txt`); скриншоты `raw/shots/*.png` (в git не попадают по `.gitignore`, приложены к отчёту) |

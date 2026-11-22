@@ -33351,5 +33351,98 @@
         "when": "Yuklab olingandan keyingi kun"
       }
     }
+  },
+  "orderCheckout": {
+    "title": "Obunani rasmiylashtirish",
+    "subtitle": "SanPiN va XASSP jurnallari ({journals}) bitta kabinetda.",
+    "summaryLabel": "Buyurtmangiz",
+    "period": {
+      "upgrade": "{days} kunga qo‘shimcha to‘lov — {end} gacha, tugash sanasi o‘zgarmaydi",
+      "renew": "Uzaytirish: {start} dan {end} gacha",
+      "switch": "Yangi muddat — {end} gacha",
+      "switchCredit": "Yangi muddat — {end} gacha, joriy tarif qoldig‘i hisobga olindi",
+      "append": "Joriy muddat tugagandan keyin {days} kun: {start} dan {end} gacha",
+      "fromPayment": "To‘lovdan {days} kun — {end} gacha",
+      "fromPaymentNoDate": "To‘lovdan {days} kun"
+    },
+    "lines": {
+      "plan": "{days} kunlik tarif",
+      "upgrade": "{days} kunga qo‘shimcha to‘lov",
+      "switchCredit": "Qoldiq hisobga olingan tarif",
+      "credit": "Foydalanilmagan kunlar hisobga olindi (tarif {price})",
+      "upgradeHint": "Davr uchun narxlar farqi {price} × qolgan kunlar",
+      "points": "Ballar bilan"
+    },
+    "total": "To‘lov uchun",
+    "perMonth": "≈ oyiga {amount}",
+    "promo": {
+      "open": "Promokod bormi?",
+      "placeholder": "Promokod",
+      "apply": "Qo‘llash",
+      "checking": "Tekshirilmoqda…",
+      "applied": "Promokod {code}",
+      "remove": "Promokodni olib tashlash",
+      "personalPending": "Shaxsiy kod — to‘lovda pochta bo‘yicha tekshiramiz",
+      "priceChanged": "Narx o‘zgardi — summani yangiladik, kodni qayta qo‘llang",
+      "failed": "Promokod mos kelmadi",
+      "offline": "Aloqa yo‘q — qayta urinib ko‘ring"
+    },
+    "method": {
+      "label": "To‘lov usuli",
+      "card": "Karta yoki SBP orqali",
+      "cardHint": "Tarif to‘lovdan so‘ng darhol yoqiladi",
+      "invoice": "Yuridik shaxs yoki YaTT uchun hisob",
+      "invoiceHint": "PDF darhol va pochtaga, rekvizitlar bo‘yicha to‘lov"
+    },
+    "email": {
+      "label": "Elektron pochta",
+      "hint": "Chek va kabinetga kirishni yuboramiz",
+      "invoiceLabel": "Pochta — hisob shu yerga keladi"
+    },
+    "pay": "To‘lovga o‘tish · {amount}",
+    "paying": "To‘lov ochilmoqda…",
+    "processing": "To‘lov o‘tkazilmoqda…",
+    "payPoints": "Ballar bilan to‘lash",
+    "payFree": "To‘lovsiz rasmiylashtirish",
+    "waiting": "To‘lov tasdig‘ini kutyapmiz — sahifa o‘zi yangilanadi",
+    "orderFailed": "Buyurtmani yaratib bo‘lmadi",
+    "offline": "Tarmoq mavjud emas. Qayta urinib ko‘ring",
+    "trust": {
+      "secure": "Robokassa orqali to‘lov",
+      "receipt": "Chek pochtaga",
+      "refund": "14 kun ichida qaytarish"
+    },
+    "refundTerms": "Qaytarish shartlari",
+    "question": "To‘lov bo‘yicha savol bormi?",
+    "questionAction": "Bizga yozing",
+    "questionSubject": "To‘lov bo‘yicha savol",
+    "invoice": {
+      "inn": "Tashkilot yoki YaTT INN",
+      "innPlaceholder": "10 yoki 12 raqam",
+      "name": "Hujjatlardagi nomi",
+      "namePlaceholder": "«Romashka» MChJ",
+      "buyer": "Xaridor",
+      "buyerInn": "INN {inn}",
+      "otherRequisites": "Boshqa rekvizitlar",
+      "innMissing": "Tashkilotda INN ko‘rsatilmagan — kiriting, rekvizitlarga saqlaymiz",
+      "issue": "{amount} ga hisob chiqarish",
+      "issuing": "Hisob chiqarilmoqda…",
+      "consent": "«Hisob chiqarish» tugmasini bosib, siz <oferta>oferta shartnomasi</oferta> va <privacy>maxfiylik siyosati</privacy> shartlarini qabul qilasiz hamda <consent>shaxsiy ma’lumotlarni qayta ishlashga rozilik</consent> berasiz.",
+      "issued": "№ {number} hisob {amount} ga chiqarildi",
+      "issuedBuyer": "Xaridor — {buyer}.",
+      "alreadyIssued": "Bu hisob avval chiqarilgan va hali amal qiladi.",
+      "due": "{date} gacha to‘lang.",
+      "sentTo": "PDF {email} ga yuborildi.",
+      "afterPayGuest": "Pul kelganda shu pochtaga kirish havolasini yuboramiz — tarif o‘zi ulanadi.",
+      "afterPayOrg": "Pul kelganda tarif o‘zi ulanadi — xat yuboramiz.",
+      "download": "PDF yuklab olish",
+      "sendOther": "Boshqa pochtaga yuborish",
+      "sendPlaceholder": "buh@company.uz",
+      "send": "Yuborish",
+      "sending": "Yuborilmoqda…",
+      "sent": "{email} ga yuborildi",
+      "sendFailed": "Yuborib bo‘lmadi",
+      "failed": "Hisob chiqarib bo‘lmadi. Qayta urinib ko‘ring yoki bizga qo‘ng‘iroq qiling"
+    }
   }
 }

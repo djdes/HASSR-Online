@@ -19,7 +19,7 @@ export const metadata = { title: "Задачи CRM" };
 type Who = "mine" | "all" | "unassigned";
 
 /** Виды для фильтра: ручные и сценарные, в порядке важности. */
-const KIND_FILTERS = ["approve_discount", "offer", "last_chance", "call", "payment_overdue", "lost_reason", "winback", "manual"] as const;
+const KIND_FILTERS = ["approve_discount", "offer", "last_chance", "call", "checkout", "onboarding", "payment_overdue", "lost_reason", "winback", "manual"] as const;
 
 /** Задачи, где уместна кнопка «КП со скидкой». */
 const OFFER_KINDS = new Set(["call", "offer", "last_chance", "lost_reason", "winback", "payment_overdue"]);

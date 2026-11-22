@@ -667,6 +667,7 @@ export async function completePaidOrder(order: {
   }
 
   // Клиент заплатил — задачи «позвонить по оплате» в CRM больше не нужны.
+  let accountScope: string[] = organizationId ? [organizationId] : [];
   try {
     if (organizationId) {
       const { closeLifecycleTasksOnPayment } = await import("@/lib/crm/tasks.server");
@@ -674,10 +675,20 @@ export async function completePaidOrder(order: {
       const scope = org?.accountId
         ? (await db.organization.findMany({ where: { accountId: org.accountId }, select: { id: true } })).map((row) => row.id)
         : [organizationId];
+      accountScope = scope;
       await closeLifecycleTasksOnPayment(scope);
     }
   } catch (error) {
     console.error(`crm tasks close failed for order ${order.id}`, error);
+  }
+
+  // Незавершённая оплата закрыта, в ленте CRM — оплата, для новой подписки —
+  // задача «созвон по запуску» (спека checkout-conversion-2026-11-22).
+  try {
+    const { onCheckoutPaid } = await import("@/lib/crm/checkout.server");
+    await onCheckoutPaid({ order, organizationId, organizationIds: accountScope, isNewClient });
+  } catch (error) {
+    console.error(`crm checkout follow-up failed for order ${order.id}`, error);
   }
 
   return { organizationId, isNewClient };

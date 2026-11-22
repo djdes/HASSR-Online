@@ -23,7 +23,7 @@ import { isTechnicalEmail } from "@/lib/technical-email";
 
 const APP_URL = () => process.env.NEXTAUTH_URL || "https://wesetup.ru";
 
-export const CRM_TASK_KINDS = ["call", "approve_discount", "offer", "payment_overdue", "last_chance", "lost_reason", "winback", "manual"] as const;
+export const CRM_TASK_KINDS = ["call", "approve_discount", "offer", "payment_overdue", "last_chance", "lost_reason", "winback", "checkout", "onboarding", "manual"] as const;
 export type CrmTaskKind = (typeof CRM_TASK_KINDS)[number];
 
 export const CRM_TASK_KIND_LABELS: Record<string, string> = {
@@ -34,6 +34,8 @@ export const CRM_TASK_KIND_LABELS: Record<string, string> = {
   last_chance: "Последний шанс",
   lost_reason: "Узнать причину отказа",
   winback: "Вернуть на платный",
+  checkout: "Незавершённая оплата",
+  onboarding: "Оплатил — запуск",
   manual: "Задача",
 };
 
@@ -214,7 +216,8 @@ export async function closeCrmTask(id: string, actor: TaskActor, args: CloseTask
   let followUpId: string | null = null;
   if (args.nextDueAt && args.outcome !== "declined") {
     const made = await createCrmTask({
-      kind: task.kind === "manual" ? "manual" : "call",
+      // Перезвон по незавершённой оплате остаётся ею: закроется сам, когда клиент заплатит.
+      kind: task.kind === "manual" || task.kind === "checkout" || task.kind === "onboarding" ? task.kind : "call",
       title: `Перезвонить: ${task.title.replace(/^(?:Срочно:\s*)?(?:позвонить\s+|перезвонить:\s*)+/i, "")}`.slice(0, 200),
       note: [result ? `Прошлый разговор: ${result}.` : null, task.note].filter(Boolean).join("\n"),
       organizationId: task.organizationId,
