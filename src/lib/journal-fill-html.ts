@@ -13,6 +13,7 @@ import { TIME_OFFSET_CHIPS } from "@/lib/journal-fill-hints";
 import { suggestionKey, type NameSuggestionMeta } from "@/lib/name-suggestions";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { QR_PIN_OK_HTML, QR_PIN_UI_CSS, QR_REMEMBER_LABEL, qrCheckHtml } from "@/lib/qr-pin-ui";
+import { QR_MOTION_CSS } from "@/lib/qr-motion-css";
 
 /**
  * QR-форма журнала как обычный серверный HTML: без React-загрузчика,
@@ -213,7 +214,8 @@ h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .os-foot{font-size:14.5px}
 .os-empty h2{margin-bottom:8px}
 .os-empty .muted{margin-bottom:14px}
-${QR_PIN_UI_CSS}`;
+${QR_PIN_UI_CSS}
+${QR_MOTION_CSS}`;
 
 /** Подпись под полем с отметкой «Обслуживание»/«Ремонт» — одна для сервера и инлайн-скрипта. */
 export function statusMarkNote(status: ColdEquipmentStatus): string {

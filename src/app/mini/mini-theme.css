@@ -56,10 +56,9 @@
   --mini-font-display: var(--mini-font-body);
   --mini-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Движение. Эталон — `.mini-press`: он ощущается правильно, остальные
-     длительности выведены от него. */
+  /* Движение. Цвета — `--mini-ease`; сжатие под пальцем и кольцо поля — на
+     пружинах сайта (`--spring` из globals.css, слой `src/app/motion.css`). */
   --mini-ease: cubic-bezier(0.2, 0, 0, 1);
-  --mini-dur-press: 0.12s;
   --mini-dur-fast: 0.18s;
   --mini-dur-screen: 0.22s;
 
@@ -430,7 +429,8 @@ html[data-keyboard-open] .mini-nav-rail {
   text-align: left;
   text-decoration: none;
   transition: border-color var(--mini-dur-fast) var(--mini-ease),
-    background-color var(--mini-dur-fast) var(--mini-ease);
+    background-color var(--mini-dur-fast) var(--mini-ease),
+    scale 0.5s var(--spring);
 }
 .mini-item:active {
   border-color: var(--mini-accent);
@@ -464,11 +464,20 @@ html[data-keyboard-open] .mini-nav-rail {
   color: var(--mini-accent-ink);
 }
 
+/* Нажатие — язык движения сайта (`src/app/motion.css`): сжатие и возврат на
+   пружине `--spring`. Свойство `scale`, а не `transform`: общее правило нажатия
+   задаёт тот же `scale`, и два сжатия не перемножаются. */
 .mini-press {
-  transition: transform var(--mini-dur-press) var(--mini-ease);
+  transition:
+    scale 0.5s var(--spring),
+    background-color var(--mini-dur-fast) var(--mini-ease),
+    border-color var(--mini-dur-fast) var(--mini-ease),
+    color var(--mini-dur-fast) var(--mini-ease),
+    box-shadow var(--mini-dur-fast) var(--mini-ease),
+    opacity var(--mini-dur-fast) var(--mini-ease);
 }
 .mini-press:active {
-  transform: scale(0.98);
+  scale: 0.97;
 }
 
 /* Появление экрана.
@@ -565,7 +574,10 @@ html[data-keyboard-open] .mini-nav-rail {
   cursor: pointer;
   transition: background-color var(--mini-dur-fast) var(--mini-ease),
     border-color var(--mini-dur-fast) var(--mini-ease),
-    transform var(--mini-dur-press) var(--mini-ease);
+    color var(--mini-dur-fast) var(--mini-ease),
+    box-shadow var(--mini-dur-fast) var(--mini-ease),
+    opacity var(--mini-dur-fast) var(--mini-ease),
+    scale 0.5s var(--spring);
 }
 .mini-btn-primary {
   min-height: 56px;
@@ -704,7 +716,11 @@ html[data-keyboard-open] .mini-nav-rail {
   font-size: 17px;
   -webkit-appearance: none;
   appearance: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  /* Уход из поля — кольцо складывается быстро и без пружины. */
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.24s ease-out;
 }
 .mini-input::placeholder {
   color: var(--mini-placeholder);
@@ -713,6 +729,11 @@ html[data-keyboard-open] .mini-nav-rail {
   outline: none;
   border-color: var(--mini-accent);
   box-shadow: 0 0 0 4px var(--mini-accent-ring);
+  /* Вход в поле — кольцо распускается на пружине (язык движения сайта). */
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.42s var(--spring);
 }
 
 /* Плашки QR-страниц: `.note` (индиго), `.warn`, `.err`, «готово». */
@@ -901,8 +922,12 @@ html[data-keyboard-open] .mini-nav-rail {
   font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
+  /* Заливка выбранной вкладки перетекает от прежней (`MotionRuntime`, жидкий
+     индикатор); сама вкладка сжимается под пальцем и возвращается на пружине. */
   transition: background-color var(--mini-dur-fast) var(--mini-ease),
-    color var(--mini-dur-fast) var(--mini-ease);
+    color var(--mini-dur-fast) var(--mini-ease),
+    box-shadow var(--mini-dur-fast) var(--mini-ease),
+    scale 0.5s var(--spring);
 }
 .mini-nav-tab[aria-current="page"] {
   background: var(--mini-accent);

@@ -43,6 +43,10 @@ export const MENU_SEPARATOR_CLASS =
 /** Цвет галочки / индикатора выбранного пункта. */
 export const MENU_INDICATOR_CLASS = "text-[#3848c7]";
 
-/** Анимация раскрытия — общая для всех примитивов, 150 мс. */
+/**
+ * Раскрытие — общее для всех примитивов (язык движения, спека site-motion-2026-11-22):
+ * панель выходит из своей кнопки на пружине (`--spring`, перелёт ~1,5 %) через
+ * короткое размытие, а закрывается быстрее, чем открылась.
+ */
 export const MENU_MOTION_CLASS =
-  "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-150";
+  "data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-96 data-[state=open]:blur-in-3 data-[state=open]:duration-300 data-[state=open]:ease-(--spring) data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-97 data-[state=closed]:duration-100 data-[state=closed]:ease-in";

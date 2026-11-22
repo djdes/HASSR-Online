@@ -72,7 +72,8 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        {/* Стрелка поворачивается, пока список открыт (`data-state` — у кнопки). */}
+        <ChevronDownIcon className="size-4 opacity-50 transition-transform [[data-state=open]>&]:rotate-180" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )

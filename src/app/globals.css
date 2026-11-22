@@ -2611,7 +2611,8 @@ html[data-view-still] .public-theme .motion-faq::details-content {
 
 /* Зелёная анимированная галка экранов «Сохранено» на QR-формах
    (src/components/qr-fill/success-check.tsx). */
-.qr-success-pop { animation: qr-success-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+/* Spring with a barely visible overshoot (~1.5 %), not the bouncy curve it had (spec site-motion-2026-11-22). */
+.qr-success-pop { animation: qr-success-pop 0.5s var(--spring) both; }
 .qr-success-circle { stroke-dasharray: 64; stroke-dashoffset: 64; animation: qr-success-draw 0.45s ease-out 0.1s forwards; }
 .qr-success-mark { stroke-dasharray: 18; stroke-dashoffset: 18; animation: qr-success-draw 0.3s ease-out 0.5s forwards; }
 @keyframes qr-success-pop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }

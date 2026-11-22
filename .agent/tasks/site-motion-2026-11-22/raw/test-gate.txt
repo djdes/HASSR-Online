@@ -1,0 +1,19 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Отобрано 10 связанных тестовых файлов для 22 изменённых файлов:
+  • src/app/borderless.test.ts
+  • src/app/mini/mini-theme.test.ts
+  • src/app/motion.test.ts
+  • src/components/motion/motion-model.test.ts
+  • src/components/public/contacts-dock.test.ts
+  • src/lib/brakerage-qr-html.test.ts
+  • src/lib/health-qr-html.test.ts
+  • src/lib/journal-fill-html.test.ts
+  • src/lib/max/bot-fill.test.ts
+  • src/lib/qr-object-journal-status.test.ts
+
+=== Targeted test stats (10 files, 1.2s): pass=94, fail=0 ===
+✓ Все затронутые тесты прошли.
+test:gate exit: 0

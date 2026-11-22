@@ -42,7 +42,7 @@ function DialogOverlay({
       className={cn(
         // Подложка эталона lk.haccp-online.ru: лёгкое затемнение + размытие
         // страницы под окном (S6 аудита), а не глухие 50% чёрного.
-        "fixed inset-0 z-50 bg-[#0b1024]/30 backdrop-blur-[6px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-[#0b1024]/30 backdrop-blur-[6px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200",
         className
       )}
       {...props}
@@ -125,8 +125,12 @@ function DialogContent({
         // как меню профиля и подтверждения. Один жест на весь сайт:
         // окно приходит снизу, закрывается крестиком в правом верхнем
         // углу или тапом по фону.
+        // Движение (спека site-motion-2026-11-22): на компьютере окно
+        // появляется на пружине `--spring`, на телефоне лист поднимается на
+        // `--spring-soft` — без перелёта, иначе под листом мелькнул бы зазор.
+        // Закрывается быстрее, чем открылось.
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] supports-[height:100dvh]:max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overscroll-contain max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-3xl rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 max-sm:duration-300 max-sm:data-[state=open]:slide-in-from-bottom-full max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:slide-out-to-bottom-full max-sm:data-[state=closed]:zoom-out-100 sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 grid w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] supports-[height:100dvh]:max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overscroll-contain max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-3xl rounded-lg border bg-background p-6 shadow-lg outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-97 data-[state=closed]:duration-150 data-[state=closed]:ease-in data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-96 data-[state=open]:duration-300 data-[state=open]:ease-(--spring) max-sm:data-[state=open]:duration-500 max-sm:data-[state=open]:ease-(--spring-soft) max-sm:data-[state=open]:slide-in-from-bottom-full max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:duration-200 max-sm:data-[state=closed]:slide-out-to-bottom-full max-sm:data-[state=closed]:zoom-out-100 sm:max-w-lg",
           className
         )}
         {...props}

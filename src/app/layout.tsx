@@ -13,6 +13,9 @@ import { LiveGuideHost } from "@/components/live-guide/live-guide-host";
 import { NativeStatusBar } from "@/app/mini/_components/native-status-bar";
 import "./globals.css";
 import "./app-theme.css";
+// Motion of the product: press, fields, toggles, liquid selection (spec site-motion-2026-11-22).
+// After app-theme.css: its theme-switch rule leaves only colour transitions on every element.
+import "./motion.css";
 import "./public-theme.css";
 import "./view-prefs.css";
 // Last: light theme repaints the old indigo classes to black and greys.
@@ -27,6 +30,7 @@ import { isPublicCacheablePage } from "@/lib/robots-txt";
 import { readViewPrefs } from "@/lib/view-prefs.server";
 import { viewPrefsBootstrapCode, viewPrefsHtmlAttributes } from "@/lib/view-prefs";
 import { ViewPrefsProvider } from "@/components/view-prefs/view-prefs-provider";
+import { MotionRuntime } from "@/components/motion/motion-runtime";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -146,6 +150,8 @@ export default async function RootLayout({
         <SiteLocaleProvider locale={locale} messages={messages}>
         <ViewPrefsProvider initial={viewPrefs}>
         <ScrollToTop />
+        {/* Liquid selection, the toggle knob, the check mark, the page fade. */}
+        <MotionRuntime />
         {/* Приложение WeSetup: значки строки состояния под цвет шапки на
             страницах вне оболочки (QR, удаление аккаунта, политика). */}
         <NativeStatusBar />
