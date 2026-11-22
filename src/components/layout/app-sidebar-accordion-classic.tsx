@@ -17,12 +17,12 @@ import { OrganizationBrand } from "@/components/layout/organization-brand";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
-// Строка раздела — как в стандартном меню: плашка 32px, свой тон.
+// Строка раздела — как в стандартном меню: иконка в коробке 32px.
 const ROW =
   "relative flex min-h-11 items-center gap-2.5 rounded-2xl py-1.5 pr-2.5 pl-1.5 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
-// Пункт раскрытого списка — ниже и с плашкой поменьше: второй уровень.
+// Пункт раскрытого списка — ниже и с иконкой поменьше: второй уровень.
 const SUB_ROW =
-  "relative flex min-h-10 items-center gap-2.5 rounded-xl py-1 pr-2.5 pl-1.5 text-[14px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
+  "relative flex min-h-10 items-center gap-2 rounded-xl py-1 pr-2 pl-1.5 text-[14px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 // Вес шрифта у выбранного не меняется: жирная «Мастер-кабинет» рядом с «PRO»
 // переносилась на вторую строку.
 // Телефон: строка под палец — выше и крупнее.
@@ -101,7 +101,7 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
             touch && ROW_TOUCH,
             "group",
             action && !active
-              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
+              ? "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-edge)] hover:bg-[var(--tone-row)]"
               : active
                 ? ROW_ACTIVE
                 : ROW_IDLE,
@@ -122,7 +122,8 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
         {open && section.menu ? (
           <div
             data-nav-sublist={section.key}
-            className="mt-1 mb-2 rounded-2xl border border-[#ececf4] bg-white p-1.5"
+            // Без бокса и рамки (владелец, 2026-11-22): второй уровень отличается отступом.
+            className="mt-0.5 mb-1.5 pl-2.5"
           >
             {section.menu.map((group, index) => (
               <div key={group.label ?? `group-${index}`}>
@@ -151,14 +152,14 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
                           touch && SUB_ROW_TOUCH,
                           "group",
                           quiet
-                            ? cn("mt-1 border-t border-[#ececf4] rounded-t-none pt-1.5", itemActive ? ROW_QUIET_ACTIVE : ROW_QUIET)
+                            ? cn("mt-0.5", itemActive ? ROW_QUIET_ACTIVE : ROW_QUIET)
                             : itemActive
                               ? ROW_ACTIVE
                               : ROW_IDLE,
                         )}
                       >
                         {quiet ? (
-                          <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center rounded-[9px] bg-[#f1f2f8] text-[#6f7282]">
+                          <span aria-hidden className="inline-flex size-7 shrink-0 items-center justify-center text-[#6f7282]">
                             <Component className="size-4" />
                           </span>
                         ) : (
@@ -186,17 +187,18 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
       {inspection ? (
         touch ? (
           <div className="pt-3">
-            <div className="border-t border-[#ececf4] pt-3">{renderSection(inspection, true)}</div>
+            <div className="pt-3">{renderSection(inspection, true)}</div>
           </div>
         ) : (
-          // Компьютер: полоса во всю ширину меню, 72px + линия — как подвал
-          // справа (`DashboardFooter`); кнопка — по центру полосы. Свёрнутая
-          // остаётся на виду, когда длинное меню прокручено.
+          // Компьютер: полоса во всю ширину меню, 73px — как подвал справа
+          // (`DashboardFooter`); кнопка — по центру полосы. Свёрнутая остаётся
+          // на виду, когда длинное меню прокручено. Линии сверху нет
+          // (владелец, 2026-11-22): прозрачная рамка держит высоту.
           <div
             data-nav-bottom
             className={cn(
-              // 1 (линия) + 13 + 46 (кнопка с рамкой) + 13 = 73px — высота подвала.
-              "-mx-3 mt-auto border-t border-[#ececf4] bg-white px-3 py-[13px]",
+              // 1 + 13 + 46 (кнопка) + 13 = 73px — высота подвала.
+              "-mx-3 mt-auto border-t border-transparent bg-white px-3 py-[13px]",
               !inspectionOpen && "sticky bottom-0 z-10",
             )}
           >
@@ -236,9 +238,9 @@ export function ClassicSidebarAccordion({
       data-app-sidebar
       data-sidebar-layout="new"
       aria-label={t("sidebarAria")}
-      className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col border-r border-[#ececf4] bg-white lg:flex print:hidden"
+      className="sticky top-0 z-20 hidden h-screen w-[256px] shrink-0 flex-col border-r border-transparent bg-white lg:flex print:hidden"
     >
-      <div className="shrink-0 border-b border-[#ececf4] px-5 pt-5 pb-4" data-sidebar-logo>
+      <div className="shrink-0 px-5 pt-5 pb-3" data-sidebar-logo>
         <OrganizationBrand
           logoUrl={logoUrl}
           name={organizationName}

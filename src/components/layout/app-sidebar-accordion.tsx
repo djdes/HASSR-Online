@@ -198,7 +198,7 @@ export function NavAccordion({
             touch && TREE_ROW_TOUCH,
             "font-medium",
             action && !active
-              ? "border border-[#111114] bg-white text-[#111114] hover:bg-[#f1f1f4]"
+              ? "bg-[#f1f1f4] text-[#111114] hover:bg-[#ececef]"
               : active
                 ? TREE_ACTIVE
                 : TREE_IDLE,
@@ -333,9 +333,10 @@ function NavInspection({ compact = false }: { compact?: boolean }) {
       data-nav-section={inspection.key}
       data-nav-action=""
       className={cn(
-        "flex h-11 items-center justify-center gap-2 rounded-[10px] border border-[#111114] text-[15px] font-medium whitespace-nowrap text-[#111114] transition-colors duration-150 hover:bg-[#f1f1f4] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10",
+        "flex h-11 items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium whitespace-nowrap text-[#111114] transition-colors duration-150 hover:bg-[#ececef] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#111114]/10",
         compact ? "w-11" : "w-full px-3",
-        active ? "bg-[#ececef]" : "bg-white",
+        // Мягкая заливка вместо чёрной рамки (владелец, 2026-11-22: без рамок).
+        active ? "bg-[#ececef]" : "bg-[#f1f1f4]",
       )}
     >
       <ShieldAlert className="size-[18px] shrink-0 stroke-[1.6]" aria-hidden />
@@ -435,7 +436,7 @@ export function AppSidebarAccordion({
           >
             <PanelLeftClose className="size-[18px] stroke-[1.6]" aria-hidden />
           </button>
-          <div className="shrink-0 border-b border-[#eeeef2] px-5 pt-5 pb-4" data-sidebar-logo>
+          <div className="shrink-0 px-5 pt-5 pb-3" data-sidebar-logo>
             <OrganizationBrand
               logoUrl={logoUrl}
               name={organizationName}
@@ -450,7 +451,7 @@ export function AppSidebarAccordion({
               <NavAccordion inspectionInline={false} />
             </SidebarScroll>
           </nav>
-          <div className="shrink-0 border-t border-[#eeeef2] p-3">
+          <div className="shrink-0 p-3">
             <NavInspection />
           </div>
         </div>

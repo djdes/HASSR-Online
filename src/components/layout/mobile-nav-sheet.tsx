@@ -79,7 +79,7 @@ export function MobileNavSheet({
         data-mobile-nav
       >
         {newDesign ? <NavAccordion touch /> : <ClassicNavAccordion touch />}
-        <div className="mt-2 border-t border-[#ececf4] pt-2">
+        <div className="mt-2 pt-2">
           <button
             type="button"
             onClick={onLogout}

@@ -3124,7 +3124,7 @@ export type MessageContract = {
       },
       "back": "Назад",
       "badges": {
-        "pro": "PRO"
+        "pro": "Премиум"
       },
       "pointMode": {
         "title": "Этот раздел — для всей организации",

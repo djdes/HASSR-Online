@@ -189,13 +189,12 @@ export function NavIcon({ name, className }: { name: string; className?: string 
 }
 
 /**
- * Цветная плашка иконки (вариант C, 2026-10-29): градиент тона и белая
- * иконка. Тон — по имени иконки (`lib/nav-tones.ts`), так что пункт одного
- * цвета во всех меню. Размер и скругление задаёт место (`className`);
- * цвета, свечение и движение — `[data-nav-chip]` в `app-theme.css`.
- * Строка вокруг с `data-nav-row` оживляет плашку при наведении, с
- * `data-active` — выделяет. `text-current` на иконке: правило пунктов меню
- * красит серым каждую иконку без своего цвета.
+ * Иконка пункта меню. С 2026-11-21 (владелец) — одного цвета во всех меню и
+ * в обеих темах, без плашки, градиента и движения: цвет — `--tone` из
+ * `[data-tone]` в `app-theme.css`, выбранный пункт (`data-active` у строки
+ * с `data-nav-row`) — `--tone-ink`. Размер коробки задаёт место
+ * (`className`). `text-current` на иконке: правило пунктов меню красит
+ * серым каждую иконку без своего цвета.
  */
 export function NavIconChip({
   name,
@@ -209,7 +208,7 @@ export function NavIconChip({
   return createElement(ToneChip, { tone: navTone(name), icon: navIcon(name), className, iconClassName });
 }
 
-/** Плашка с явным тоном — для иконок вне меню (каналы связи на главной). */
+/** Иконка с явным тоном — вне меню (каналы связи на главной); тон на цвет не влияет. */
 export function ToneChip({
   tone,
   icon,

@@ -1,0 +1,586 @@
+{
+ "classic-light": {
+  "/home": {
+   "url": "/home",
+   "boxes": {},
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 8,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(243, 244, 249)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 703,
+    "mainWidth": 1184,
+    "boxes": 6,
+    "rectsSha256": "617d33ebba118a69203d587d909883b0a64ca495a31126304669bade0cdbba3a"
+   },
+   "fieldsWithBorder": 0,
+   "fieldsTotal": 0
+  },
+  "/settings/master-cabinet": {
+   "url": "/settings/master-cabinet",
+   "boxes": {
+    "field": 2
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 5,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(243, 244, 249)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 703,
+    "mainWidth": 1184,
+    "boxes": 5,
+    "rectsSha256": "005b6bca4af08c5f4f397cea1726b63c9574a7b0476789200fbfe9b9c93265ef"
+   },
+   "fieldsWithBorder": 2,
+   "fieldsTotal": 2
+  },
+  "/journals": {
+   "url": "/journals",
+   "boxes": {
+    "field": 45,
+    "accent-or-status": 9
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 47,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(243, 244, 249)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 4383,
+    "mainWidth": 1184,
+    "boxes": 80,
+    "rectsSha256": "4a16cc7c27452ebdc6660c423d106dae5ea5ef1f5ae32244388810ec182e4320"
+   },
+   "fieldsWithBorder": 45,
+   "fieldsTotal": 1
+  },
+  "/settings/users": {
+   "url": "/settings/users",
+   "boxes": {
+    "field": 1,
+    "table": 37
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 17,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(243, 244, 249)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 1154,
+    "mainWidth": 1184,
+    "boxes": 52,
+    "rectsSha256": "04d8ef56e62dace224ae2bcdd1a8bd5e030a2921b19952432083490cb764e19c"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/dashboard": {
+   "url": "/dashboard",
+   "boxes": {
+    "field": 1
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 63,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(243, 244, 249)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 2535,
+    "mainWidth": 1184,
+    "boxes": 61,
+    "rectsSha256": "dbf8ed0d483ffd181ff3fd3aa61d3439dbcc5d199e94a4a54a785d6ab89b16e0"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/settings/subscription": {
+   "url": "/settings/subscription",
+   "boxes": {
+    "field": 8
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 27,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(243, 244, 249)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 5341,
+    "mainWidth": 1184,
+    "boxes": 33,
+    "rectsSha256": "ea6a263d925a7502226f0dcc0afa8485f2bd3d2b95a1f90f1295bbbc71a48002"
+   },
+   "fieldsWithBorder": 8,
+   "fieldsTotal": 5
+  }
+ },
+ "classic-dark": {
+  "/home": {
+   "url": "/home",
+   "boxes": {},
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 8,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 703,
+    "mainWidth": 1184,
+    "boxes": 6,
+    "rectsSha256": "617d33ebba118a69203d587d909883b0a64ca495a31126304669bade0cdbba3a"
+   },
+   "fieldsWithBorder": 0,
+   "fieldsTotal": 0
+  },
+  "/settings/master-cabinet": {
+   "url": "/settings/master-cabinet",
+   "boxes": {
+    "field": 2
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 5,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 703,
+    "mainWidth": 1184,
+    "boxes": 5,
+    "rectsSha256": "005b6bca4af08c5f4f397cea1726b63c9574a7b0476789200fbfe9b9c93265ef"
+   },
+   "fieldsWithBorder": 2,
+   "fieldsTotal": 2
+  },
+  "/journals": {
+   "url": "/journals",
+   "boxes": {
+    "field": 45,
+    "accent-or-status": 9
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 47,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 4383,
+    "mainWidth": 1184,
+    "boxes": 80,
+    "rectsSha256": "4a16cc7c27452ebdc6660c423d106dae5ea5ef1f5ae32244388810ec182e4320"
+   },
+   "fieldsWithBorder": 45,
+   "fieldsTotal": 1
+  },
+  "/settings/users": {
+   "url": "/settings/users",
+   "boxes": {
+    "field": 1,
+    "table": 37
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 17,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 1154,
+    "mainWidth": 1184,
+    "boxes": 52,
+    "rectsSha256": "04d8ef56e62dace224ae2bcdd1a8bd5e030a2921b19952432083490cb764e19c"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/dashboard": {
+   "url": "/dashboard",
+   "boxes": {
+    "field": 1
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 63,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 2535,
+    "mainWidth": 1184,
+    "boxes": 61,
+    "rectsSha256": "dbf8ed0d483ffd181ff3fd3aa61d3439dbcc5d199e94a4a54a785d6ab89b16e0"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/settings/subscription": {
+   "url": "/settings/subscription",
+   "boxes": {
+    "field": 8
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 27,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 5341,
+    "mainWidth": 1184,
+    "boxes": 33,
+    "rectsSha256": "ea6a263d925a7502226f0dcc0afa8485f2bd3d2b95a1f90f1295bbbc71a48002"
+   },
+   "fieldsWithBorder": 8,
+   "fieldsTotal": 5
+  }
+ },
+ "new-light": {
+  "/home": {
+   "url": "/home",
+   "boxes": {},
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 10,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(244, 244, 246)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 718,
+    "mainWidth": 1140,
+    "boxes": 6,
+    "rectsSha256": "8602e4dc18f1cedf50cdb4d5971c42aafee78c90ab7a817ddd553a11d7a625c3"
+   },
+   "fieldsWithBorder": 0,
+   "fieldsTotal": 0
+  },
+  "/settings/master-cabinet": {
+   "url": "/settings/master-cabinet",
+   "boxes": {
+    "field": 2
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 5,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(244, 244, 246)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 718,
+    "mainWidth": 1140,
+    "boxes": 3,
+    "rectsSha256": "62d107aefc7784c08b988ec02acd93331230413f20f7100b09ca486e3ccae08e"
+   },
+   "fieldsWithBorder": 2,
+   "fieldsTotal": 2
+  },
+  "/journals": {
+   "url": "/journals",
+   "boxes": {
+    "field": 45,
+    "accent-or-status": 9
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 48,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(244, 244, 246)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 4221,
+    "mainWidth": 1140,
+    "boxes": 80,
+    "rectsSha256": "d64c4166a1f467cf101877c813e7176b0c9a3646336261654758070f778a9eb7"
+   },
+   "fieldsWithBorder": 45,
+   "fieldsTotal": 1
+  },
+  "/settings/users": {
+   "url": "/settings/users",
+   "boxes": {
+    "field": 1,
+    "table": 37
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 19,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(244, 244, 246)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 1116,
+    "mainWidth": 1140,
+    "boxes": 51,
+    "rectsSha256": "600e14c6766f0ea30e836bdb4cf79a11e87fefcf6d006c2486d6eeb2fb305c77"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/dashboard": {
+   "url": "/dashboard",
+   "boxes": {
+    "field": 1
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 65,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(244, 244, 246)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 2433,
+    "mainWidth": 1140,
+    "boxes": 60,
+    "rectsSha256": "732a0314942a72acb783243ed1fb27807721312b66917eef7dfa09111cbe0e98"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/settings/subscription": {
+   "url": "/settings/subscription",
+   "boxes": {
+    "field": 8
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 28,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(244, 244, 246)",
+   "cardVsCanvas": 1.098,
+   "geometry": {
+    "mainHeight": 5319,
+    "mainWidth": 1140,
+    "boxes": 32,
+    "rectsSha256": "310e43e550b11aa7b02e960361f49af7c18b5a0be36c0adcc08b1a686827b38c"
+   },
+   "fieldsWithBorder": 8,
+   "fieldsTotal": 5
+  }
+ },
+ "new-dark": {
+  "/home": {
+   "url": "/home",
+   "boxes": {},
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 10,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 718,
+    "mainWidth": 1140,
+    "boxes": 6,
+    "rectsSha256": "8602e4dc18f1cedf50cdb4d5971c42aafee78c90ab7a817ddd553a11d7a625c3"
+   },
+   "fieldsWithBorder": 0,
+   "fieldsTotal": 0
+  },
+  "/settings/master-cabinet": {
+   "url": "/settings/master-cabinet",
+   "boxes": {
+    "field": 2
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 5,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 718,
+    "mainWidth": 1140,
+    "boxes": 3,
+    "rectsSha256": "62d107aefc7784c08b988ec02acd93331230413f20f7100b09ca486e3ccae08e"
+   },
+   "fieldsWithBorder": 2,
+   "fieldsTotal": 2
+  },
+  "/journals": {
+   "url": "/journals",
+   "boxes": {
+    "field": 45,
+    "accent-or-status": 9
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 48,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 4221,
+    "mainWidth": 1140,
+    "boxes": 80,
+    "rectsSha256": "d64c4166a1f467cf101877c813e7176b0c9a3646336261654758070f778a9eb7"
+   },
+   "fieldsWithBorder": 45,
+   "fieldsTotal": 1
+  },
+  "/settings/users": {
+   "url": "/settings/users",
+   "boxes": {
+    "field": 1,
+    "table": 37
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 19,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 1116,
+    "mainWidth": 1140,
+    "boxes": 51,
+    "rectsSha256": "600e14c6766f0ea30e836bdb4cf79a11e87fefcf6d006c2486d6eeb2fb305c77"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/dashboard": {
+   "url": "/dashboard",
+   "boxes": {
+    "field": 1
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 65,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 2433,
+    "mainWidth": 1140,
+    "boxes": 60,
+    "rectsSha256": "732a0314942a72acb783243ed1fb27807721312b66917eef7dfa09111cbe0e98"
+   },
+   "fieldsWithBorder": 1,
+   "fieldsTotal": 1
+  },
+  "/settings/subscription": {
+   "url": "/settings/subscription",
+   "boxes": {
+    "field": 8
+   },
+   "neutralBoxes": 0,
+   "neutralList": [],
+   "clearedBoxes": 28,
+   "invisibleBoxes": 0,
+   "invisibleList": [],
+   "sidebarLines": 0,
+   "sidebarLineList": [],
+   "headerBottomLine": false,
+   "canvas": "rgb(47, 44, 71)",
+   "cardVsCanvas": 1.186,
+   "geometry": {
+    "mainHeight": 5319,
+    "mainWidth": 1140,
+    "boxes": 32,
+    "rectsSha256": "310e43e550b11aa7b02e960361f49af7c18b5a0be36c0adcc08b1a686827b38c"
+   },
+   "fieldsWithBorder": 8,
+   "fieldsTotal": 5
+  }
+ }
+}

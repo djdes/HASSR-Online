@@ -1,0 +1,32 @@
+{
+  "status": "READY_FOR_RELEASE",
+  "checkedAt": "2026-11-21T23:18:00Z",
+  "base": "178077f5537d7bdb44599eddfed2e5a9f479e101",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS"
+  },
+  "sourceHashes": {
+    "AGENTS.md": "70c1e234686195a0724781c082213af0751940f38eddb4ff793213533bfbbe83",
+    "scripts/gen-neutral-palette.mjs": "4de528eea2bdf632b046c9b2891e3a890674820bac7bb818ce9556593eed52ca",
+    "src/app/(dashboard)/home/page.tsx": "a12d34082021a4de290ef701653a66d68d236aa7658b7b33caab0e3c1b1178c2",
+    "src/app/app-theme.css": "c499719495a46a71a512b54e7a512315e222a73965288e32fcd1ffdb6599c320",
+    "src/app/neutral-palette.css": "f7ae93604601391066a768c5c8041913523c3909ded8f7bfcf62de72512c2e4c",
+    "src/app/one-accent.test.ts": "5c1e288ed88b0e342604fbfb13c57957c2e2417f7e41a301e5bcfa1307a6a53b",
+    "src/components/home/home-favorites.tsx": "ef9f9363455453764ee0d013abc3296e26b4ee6c7cf8bc2d7d34941c54db39be",
+    "src/components/layout/app-sidebar-accordion-classic.tsx": "43fdc0f6e3c04aff3f5a89e007f1df3c136ff57e9e8a0a98e26e545ade0fc48a",
+    "src/components/layout/app-sidebar.tsx": "10bfb89735af1f52a60883c0b9fdde3150a7fd36c1cd4428beef14d95ded1046",
+    "src/components/layout/header.tsx": "c1ca12d41d07f570c237d8d5ac3e74c01c557de2ac699a620a5417473c7ec443",
+    "src/components/layout/nav-icons.ts": "5ee0116f50418d002207bcac04079ce69f49120be8bc69697dd4418c1a4d6cbe",
+    "src/components/layout/new-profile-menu.tsx": "6ce3dd45be0851304208188b707e685538c0f14ccb9051aa5088b9fd7f1cc313",
+    "src/components/layout/notifications-bell.tsx": "2cbc266d3708fdec4cb7d3576cf037b1ae5b264592a907521db7efb394d40e1e",
+    "src/components/layout/section-menu-list.tsx": "d245712b067fca272d0aa61e1170c09b715ee73d616d354ecce53f9b120877d1",
+    "src/lib/nav-tones.test.ts": "08cea2d7ab0fc2512b626cfcf3ab6a6e8afb3c18dfa3d88ee3dcda6684d1bec5",
+    "src/lib/nav-tones.ts": "f4f270a7a0e4c54d67e2d8c87a301e726afefa6beb6620d16800a4e1ea41ecf1"
+  }
+}

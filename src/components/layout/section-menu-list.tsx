@@ -206,10 +206,17 @@ export function SectionStack({
   );
 }
 
-/** Метка у пункта меню («PRO»): градиентная, в тон цветным плашкам. */
+/**
+ * Метка у пункта меню («Премиум», тариф, на котором доступен раздел). Без
+ * рамки и подложки — просто мелкая подпись: с ними «Мастер-кабинет» в меню
+ * слева не помещался в одну строку.
+ */
 export function NavBadge({ children }: { children: string }) {
   return (
-    <span className="shrink-0 rounded-full bg-[#6d4bf0] bg-[linear-gradient(135deg,#6d4bf0,#a925c0)] px-2 py-0.5 text-[11px] font-bold tracking-[0.04em] text-white shadow-[0_4px_10px_-4px_rgba(124,92,245,0.6)]">
+    <span
+      data-nav-badge
+      className="shrink-0 text-[10.5px] font-semibold text-[var(--app-text-muted,#6f7282)]"
+    >
       {children}
     </span>
   );
@@ -365,7 +372,7 @@ export function NavSectionsList({
           action
             ? isActive
               ? cn("border border-transparent", ROW_ACTIVE)
-              : "border border-[#dcdfed] bg-white text-[#0b1024] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
+              : "border border-[#dcdfed] bg-white text-[#0b1024] hover:border-[var(--tone-edge)] hover:bg-[var(--tone-row)]"
             : isActive
               ? ROW_ACTIVE
               : "text-[#3c4053] hover:bg-[#fafbff]",

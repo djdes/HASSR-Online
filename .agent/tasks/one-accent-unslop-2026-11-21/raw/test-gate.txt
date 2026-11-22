@@ -1,0 +1,10 @@
+→ [test:changed] Отобрано 5 связанных тестовых файлов для 21 изменённых файлов:
+  • src/app/neutral-palette.test.ts
+  • src/app/one-accent.test.ts
+  • src/components/layout/mobile-nav-sheet.test.ts
+  • src/lib/app-nav.test.ts
+  • src/lib/nav-tones.test.ts
+
+=== Targeted test stats (5 files, 1.2s): pass=62, fail=0 ===
+✓ Все затронутые тесты прошли.
+exit=0

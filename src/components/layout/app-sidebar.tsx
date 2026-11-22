@@ -29,13 +29,13 @@ import { useSectionStatuses } from "@/components/layout/use-section-statuses";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 
-// Пункт меню: слева цветная плашка 32px (вариант C, 2026-10-29) — отступ
-// слева меньше, чтобы плашка стояла ближе к краю, как в макете.
+// Пункт меню: слева иконка в коробке 32px — отступ слева меньше, чтобы
+// иконка стояла ближе к краю.
 const SIDEBAR_ITEM =
   "relative flex min-h-11 items-center gap-2.5 rounded-2xl py-1.5 pr-2.5 pl-1.5 text-[14.5px] font-medium leading-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
-// Плашка пункта и выбранный пункт: фон и текст своего тона (`data-tone`
-// строки), полоска слева и кольцо вокруг плашки — `data-active` в app-theme.css.
+// Выбранный пункт: фон и текст акцента (`[data-tone]` в app-theme.css),
+// полоска слева — `data-active` там же.
 const SIDEBAR_CHIP = "size-8 rounded-[10px]";
 const SIDEBAR_CHIP_ICON = "size-[18px]";
 const SIDEBAR_ITEM_ACTIVE = "bg-[var(--tone-row)] font-semibold text-[var(--tone-ink)]";
@@ -48,8 +48,8 @@ const SIDEBAR_ITEM_IDLE = "text-[#3c4053] hover:bg-[#f5f6ff] hover:text-[#0b1024
  * ищут глазами первой; это отдельное действие (контурная кнопка), а не
  * выбранный пункт. У разделов со своим меню — стрелка ›.
  *
- * У каждого пункта своя цветная плашка (владелец, 2026-10-29, вариант C):
- * цвет — по иконке (`lib/nav-tones.ts`). Знака «сетап» под меню больше нет —
+ * Иконки пунктов одного цвета (владелец, 2026-11-21; до этого у каждого
+ * пункта была своя цветная плашка). Знака «сетап» под меню больше нет —
  * место отдано меню.
  *
  * У раздела своё меню (`section.menu`): при входе в раздел левое меню
@@ -366,7 +366,7 @@ function SidebarItem({
         action
           ? active
             ? cn("border border-transparent", SIDEBAR_ITEM_ACTIVE)
-            : "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-glow)] hover:bg-[var(--tone-row)]"
+            : "border border-[#dcdfed] bg-white text-[#0b1024] shadow-[0_1px_2px_rgba(11,16,36,0.04)] hover:border-[var(--tone-edge)] hover:bg-[var(--tone-row)]"
           : active
             ? SIDEBAR_ITEM_ACTIVE
             : SIDEBAR_ITEM_IDLE,

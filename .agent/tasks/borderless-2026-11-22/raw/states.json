@@ -1,0 +1,78 @@
+{
+  "light": {
+    "badge": [
+      {
+        "text": "Премиум",
+        "border": "0px",
+        "label": "Мастер-кабинет",
+        "labelFits": true,
+        "spare": 0,
+        "rowHeight": 40
+      }
+    ],
+    "profileMenu": {
+      "boxesWithBorder": 3,
+      "which": [
+        "label (поле): Язык интерфейсаРусскийEn",
+        "span (выбрано): ",
+        "span (выбрано): A"
+      ]
+    },
+    "hoverBorder": {
+      "atRest": 0,
+      "hovered": 0.4
+    },
+    "fields": {
+      "total": 7,
+      "withBorder": 7
+    },
+    "phoneSheet": {
+      "lines": 0,
+      "badges": [
+        {
+          "text": "Премиум",
+          "label": "Мастер-кабинет",
+          "labelFits": true
+        }
+      ]
+    }
+  },
+  "dark": {
+    "badge": [
+      {
+        "text": "Премиум",
+        "border": "0px",
+        "label": "Мастер-кабинет",
+        "labelFits": true,
+        "spare": 0,
+        "rowHeight": 40
+      }
+    ],
+    "profileMenu": {
+      "boxesWithBorder": 3,
+      "which": [
+        "label (поле): Язык интерфейсаРусскийEn",
+        "span (выбрано): ",
+        "span (выбрано): A"
+      ]
+    },
+    "hoverBorder": {
+      "atRest": 0,
+      "hovered": 0.2
+    },
+    "fields": {
+      "total": 7,
+      "withBorder": 7
+    },
+    "phoneSheet": {
+      "lines": 0,
+      "badges": [
+        {
+          "text": "Премиум",
+          "label": "Мастер-кабинет",
+          "labelFits": true
+        }
+      ]
+    }
+  }
+}

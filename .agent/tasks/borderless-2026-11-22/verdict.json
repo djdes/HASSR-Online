@@ -1,0 +1,36 @@
+{
+  "status": "READY_FOR_RELEASE",
+  "checkedAt": "2026-11-22T04:47:38Z",
+  "base": "178077f5537d7bdb44599eddfed2e5a9f479e101",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PENDING_RELEASE"
+  },
+  "sourceHashes": {
+    "AGENTS.md": "a26f7fbe0f6793a2d8f44eb6a2d857f342f57094459eae861f4888ebd38fb74e",
+    "package.json": "f4d19021b3e17d7d7ac0c563775576122ccd945595eb4160f051870217816cda",
+    "scripts/borderless-neutral.mjs": "d3eff6019e2a682511ae57e54c0b6676f19ac79c97fcfbda85211ac51b0acd59",
+    "scripts/gen-borderless.mjs": "aeba2586cc67058b2edcacb0357f36a3be3d47d3b81306d7dc68e22677e9e0b4",
+    "src/app/app-theme.css": "79f7aca56926555f4a38154356343ac59689cb4053e047bf351f46e21a3afcc6",
+    "src/app/borderless.css": "6b280632233e7759c4fa4df448c8e5eff0d1567b2698194bb98984c1f5c6c2fd",
+    "src/app/borderless.test.ts": "062afc0200bbbaa7fd6399831f87b78e52ef76120a29ab3b336fc37cc411940f",
+    "src/app/layout.tsx": "cf2824d0e603aa88891b1812e52ffefc68e97ce6e724f209ac83ba06833fd6f6",
+    "src/app/one-accent.test.ts": "2e9eb92360287fa1ea96ddab63e6082bab532ee5d4e4c05822b2e2ff5523a15b",
+    "src/components/home/home-favorites.tsx": "8fb361ab85e1fa4619091ed20d467fad5a031b8c34e151e7f1c45e849d71eb1c",
+    "src/components/layout/app-sidebar-accordion-classic.tsx": "baa648a496665458490a3ddbbc79ef3ed1f967a006fd215c6c5d82c494b8dfb8",
+    "src/components/layout/app-sidebar-accordion.tsx": "bcc25acf681c7af2d0895bda845664a086dd69c7e072a481ab2ea83de50e265d",
+    "src/components/layout/mobile-nav-sheet.tsx": "9c1184d54dfab37633c1240cb1905b73f2a9dbd8374759c0909db4b6b1151bfd",
+    "src/components/layout/section-menu-list.tsx": "b3160ae6be263d3843c8896605c7f1135aadd3ba581f5b81135d48585e0b6818",
+    "src/i18n/message-contract.d.ts": "f46e9721ee6f2366d6dce6c2260675128bc79b09082685be7dc98e1f25f692cf",
+    "src/i18n/messages/en.json": "2a0940c047a6bf4513600dbd262e8a71775ca6fd1bffeeab5b3a28de2c042fc2",
+    "src/i18n/messages/ru.json": "7312eae53140519051dbf8aa359c06e2c14e1d7b58ee1b7a77ab5d0a3ece4a83",
+    "src/i18n/messages/uz.json": "eecdf5e4929c4e5b708e7b0866ee6d36576649ac17498108097b916789a4a61f"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "light": {
+    "idleIcon": "rgb(15, 118, 110)",
+    "activeText": "rgb(15, 118, 110)",
+    "activeRow": "color(srgb 0.905882 0.946275 0.943137)",
+    "primary": "rgb(15, 118, 110)"
+  },
+  "dark": {
+    "idleIcon": "rgb(112, 129, 248)",
+    "activeText": "rgb(201, 206, 255)",
+    "activeRow": "rgba(163, 173, 255, 0.13)",
+    "primary": "rgb(15, 118, 110)"
+  }
+}

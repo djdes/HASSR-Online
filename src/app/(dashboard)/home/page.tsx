@@ -163,14 +163,10 @@ export default async function HomePage() {
             data-home-setup
             data-guide="home-setup"
             data-nav-row
-            data-motion
             style={{ "--nav-i": 0 } as CSSProperties}
-            className="group col-span-3 flex items-center gap-3 rounded-3xl bg-[#5566f6] bg-[linear-gradient(135deg,#5566f6,#7a5cff)] px-4 py-3.5 newd:bg-[#111114] newd:bg-none text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] hover:-translate-y-0.5 hover:bg-[#4a5bf0] hover:shadow-[0_18px_40px_-14px_rgba(85,102,246,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1 md:min-h-[148px] md:flex-col md:items-stretch md:justify-between md:gap-0 md:p-5"
+            className="group col-span-3 flex items-center gap-3 rounded-3xl bg-[#5566f6] px-4 py-3.5 newd:bg-[#111114] text-white hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:col-span-1 md:min-h-[148px] md:flex-col md:items-stretch md:justify-between md:gap-0 md:p-5"
           >
-            <span
-              data-motion
-              className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white/15 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:-rotate-12"
-            >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white/15">
               <Rocket className="size-5" aria-hidden />
             </span>
             <span className="min-w-0">
