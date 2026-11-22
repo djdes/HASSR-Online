@@ -146,6 +146,21 @@ test("AC9: форма журнала по QR-коду — те же пружин
   assert.doesNotMatch(QR_MOTION_CSS, /will-change|gradient\(|:hover/);
 });
 
+test("браузер без linear() получает обычное замедление, а не теряет переходы", async () => {
+  // Fallback first, the real springs under @supports — both on the site and in the QR form.
+  const fallback = GLOBALS.indexOf("--spring: cubic-bezier(0.22, 1, 0.36, 1);");
+  const supports = GLOBALS.indexOf("@supports (transition-timing-function: linear(0, 1)) {");
+  assert.ok(fallback > 0 && supports > fallback, "сначала запасная кривая, затем пружины под @supports");
+  const real = GLOBALS.slice(supports, GLOBALS.indexOf("\n}\n", supports));
+  for (const token of ["--spring: linear(", "--spring-soft: linear(", "--spring-lively: linear("]) assert.ok(real.includes(token), token);
+  const { QR_MOTION_CSS } = await import("@/lib/qr-motion-css");
+  assert.match(QR_MOTION_CSS, /:root\{--spring:cubic-bezier\([^)]*\);--spring-soft:cubic-bezier\([^)]*\)\}\n@supports \(transition-timing-function:linear\(0,1\)\)\{:root\{--spring:linear\(/);
+  for (const curve of [...GLOBALS.matchAll(/--spring(?:-soft|-lively)?: cubic-bezier\(([^)]*)\)/g)]) {
+    const [, y1, , y2] = curve[1].split(",").map((value) => Number(value.trim()));
+    assert.ok(y1 <= 1 && y2 <= 1, `запасная кривая без перелёта: ${curve[0]}`);
+  }
+});
+
 test("AC10: сдержанность — перелёт пружин не больше 5 %, без свечений, градиентов и will-change", () => {
   assert.ok(springPeak("--spring") <= 1.02, "--spring: перелёт ~1,5 %");
   assert.ok(springPeak("--spring-soft") <= 1.005, "--spring-soft: без перелёта");

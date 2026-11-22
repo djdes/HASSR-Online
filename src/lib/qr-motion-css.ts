@@ -4,7 +4,8 @@
  * site-motion-2026-11-22): a button squeezes under the finger and springs back, the ring of a
  * field blooms, the label of a field moves up without a jerk. The page is standalone HTML with
  * none of the site's styles, so the springs are declared here; their values equal `--spring` /
- * `--spring-soft` of `globals.css` (a test checks it).
+ * `--spring-soft` of `globals.css` (a test checks it). A browser without `linear()` (Safari
+ * before 17.2) gets a plain ease-out, as on the site.
  */
 
 /** Spring with a barely visible overshoot (~1.5 %). */
@@ -16,7 +17,8 @@ export const SPRING_SOFT_EASING =
   "linear(0, 0.0682, 0.2133, 0.3771, 0.5297, 0.6586, 0.7607, 0.8377, 0.8937, 0.933, 0.9596, 0.977, 0.988, 0.9946, 0.9984, 1.0004, 1.0013, 1.0015, 1.0015, 1.0013, 1)";
 
 export const QR_MOTION_CSS = `
-:root{--spring:${SPRING_EASING};--spring-soft:${SPRING_SOFT_EASING}}
+:root{--spring:cubic-bezier(.22,1,.36,1);--spring-soft:cubic-bezier(.25,1,.5,1)}
+@supports (transition-timing-function:linear(0,1)){:root{--spring:${SPRING_EASING};--spring-soft:${SPRING_SOFT_EASING}}}
 a,button,label,select,.in,.chip,.segb{-webkit-tap-highlight-color:transparent}
 .btn,.item,.stp,.chip,.segb,.lnk,.who a,.who.emp,.sheet .sh-x,.check,.tabs a,.qp-link{transition:scale .5s var(--spring),background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .3s ease,opacity .18s ease}
 .btn:active:not(:disabled),.chip:active,.segb:active,.who a:active,.tabs a:active{scale:.97}

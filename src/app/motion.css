@@ -21,16 +21,18 @@
  */
 
 /* ---- 0. Where the author asked for a transform or opacity transition, the cabinet gets it
-   back (chevrons, arrows, knobs): `.app-shell *` had reduced them to colour only. ---- */
+   back (chevrons, arrows, knobs): `.app-shell *` had reduced them to colour only. The author's
+   own `duration-*` / `ease-*` stay in force (`--tw-duration`, `--tw-ease`); without them the
+   move rides the soft spring. ---- */
 :root :where([class~="transition-transform"]) {
   transition-property: transform, translate, scale, rotate, color, background-color, border-color, box-shadow;
-  transition-duration: 0.45s, 0.45s, 0.45s, 0.45s, 0.18s, 0.18s, 0.18s, 0.18s;
-  transition-timing-function: var(--spring-soft), var(--spring-soft), var(--spring-soft), var(--spring-soft), ease-out, ease-out, ease-out, ease-out;
+  transition-duration: var(--tw-duration, 0.45s), var(--tw-duration, 0.45s), var(--tw-duration, 0.45s), var(--tw-duration, 0.45s), 0.18s, 0.18s, 0.18s, 0.18s;
+  transition-timing-function: var(--tw-ease, var(--spring-soft)), var(--tw-ease, var(--spring-soft)), var(--tw-ease, var(--spring-soft)), var(--tw-ease, var(--spring-soft)), ease-out, ease-out, ease-out, ease-out;
 }
 :root :where([class~="transition-opacity"]) {
   transition-property: opacity, color, background-color, border-color, box-shadow;
-  transition-duration: 0.2s, 0.18s, 0.18s, 0.18s, 0.18s;
-  transition-timing-function: ease-out;
+  transition-duration: var(--tw-duration, 0.2s), 0.18s, 0.18s, 0.18s, 0.18s;
+  transition-timing-function: var(--tw-ease, ease-out), ease-out, ease-out, ease-out, ease-out;
 }
 
 /* ---- 1. Press: every button-like control squeezes and springs back ---- */

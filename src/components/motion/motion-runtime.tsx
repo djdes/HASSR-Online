@@ -56,11 +56,10 @@ function motionOff(): boolean {
 }
 
 let springEasing: string | null = null;
-/** The `--spring` token as a WAAPI easing; older engines without `linear()` get `ease-out`. */
+/** The `--spring` token as a WAAPI easing (a browser without `linear()` has an ease-out in it). */
 function spring(): string {
   if (springEasing === null) {
-    const token = getComputedStyle(document.documentElement).getPropertyValue("--spring").trim();
-    springEasing = token.startsWith("linear(") ? token : "ease-out";
+    springEasing = getComputedStyle(document.documentElement).getPropertyValue("--spring").trim() || "ease-out";
   }
   return springEasing;
 }
