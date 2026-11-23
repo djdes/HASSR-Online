@@ -10,6 +10,16 @@
     "eslint_changed_files": "no new errors (2 errors + 5 warnings pre-existing on master)",
     "browser": "raw/ui-check.json, raw/ui-popup.json, raw/ui-db-climate.txt"
   },
+  "post_merge": {
+    "master": "42b4fac1d",
+    "merge_commit": "476620012",
+    "conflicts": ["src/components/settings/organization-info-form.tsx", "src/content/kb/articles.ts", "src/app/borderless.css", "src/app/neutral-palette.css"],
+    "typecheck": "EXIT=0",
+    "targeted_tests": "143/143",
+    "i18n_check": "103/103",
+    "pre_commit_full_suite": "pass=7294 fail=0",
+    "browser": "raw/merge-ui-check.json"
+  },
   "acceptance": {
     "AC1": "PASS",
     "AC2": "PASS",

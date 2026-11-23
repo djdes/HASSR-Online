@@ -35,6 +35,20 @@
 - **AC18** — PASS. Браузер: «Объекты · Сотрудники · Помещения · Оборудование · Журналы · Программа производственного контроля · QR-плакаты · Справочник продукции/услуг · Онлайн-принтер · Общий планшет»; тесты `app-nav`, `nav-layout`.
 - **AC19** — PASS. ru/en/uz вместе, `message-contract.d.ts` пересобран, `borderless.css` и `neutral-palette.css` пересобраны; typecheck и полный гейт зелёные.
 
+## После слияния с master #313 (`42b4fac1d`, коммит слияния `476620012`)
+
+Конфликты: `organization-info-form.tsx` (список «Основная сфера» — компонент `Select` из master, в нём четыре сферы и подсказка «Сфера не выбрана»), `kb/articles.ts` («Умный подбор для всех журналов» из master + нейтральная формулировка), `borderless.css` / `neutral-palette.css` / `message-contract.d.ts` — пересобраны скриптами.
+
+| Проверка | Результат | Файл |
+|---|---|---|
+| `npm run typecheck` | EXIT=0 | raw/merge-typecheck.txt |
+| Тесты задачи + новые тесты master (`plain-language`, `select-frame`, `header-profile-footer`, `equipment-type-fields`) — 16 файлов | 143/143 | raw/merge-targeted-tests.txt |
+| `npm run i18n:check` | 103/103 | raw/merge-i18n-check.txt |
+| pre-commit коммита слияния (эскалация до полного прогона) | pass=7294, fail=0 | raw/merge-pre-commit-full.txt |
+| Браузер: «Реквизиты», «Объекты», главная, `/root/feedback` | всё на месте, ошибок страницы нет | raw/merge-ui-check.json |
+
+Браузер после слияния: «Основная сфера» — `Select` master (нативного списка нет), в списке 4 сферы, у организации со сферой «other» — «Сфера не выбрана», выбор «Общепит ХАССП» показывается в поле; меню «Объектов» в нужном порядке; чип сферы объекта; климат «Офиса» остался включён; «Обязательные журналы» — `SECTION` без стрелки; `/root/feedback` — колонки x=52 и x=732.
+
 ## Отличия от спеки (детали реализации, критерии не меняют)
 
 - Вложения ответа — столбец `FeedbackReport.replyAttachments` (в спеке — `responseAttachments`): короче имя — `prisma format` не выравнивает модель заново, дифф схемы 12 строк.
