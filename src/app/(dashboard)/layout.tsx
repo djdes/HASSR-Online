@@ -7,6 +7,7 @@ import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/l
 import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
 import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
 import { resolveHeaderPoint } from "@/lib/header-point";
+import { sortPinnedFirst } from "@/lib/pinned-buildings";
 import { ORGANIZATION_VIEW_ID, isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { syncOrganizationPointDocumentsSoon } from "@/lib/point-document-rows-sync";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
@@ -194,6 +195,9 @@ export default async function DashboardLayout({
         // тоже входит в панель: «Переводы» — её вкладка.
         platformSections: true,
         canEditTranslations: true,
+        // Скрепка у объектов (2026-11-23) и звёздочки «Избранного» в меню.
+        pinnedBuildingIds: true,
+        homeFavorites: true,
       },
     }),
     // H1 — white-label: читаем brandColor для override основного
@@ -276,16 +280,19 @@ export default async function DashboardLayout({
   // контекст точек пуст — тогда смотрим все точки организации.
   const companyName =
     orgDisplayName(impersonatedOrg?.name ?? session.user.organizationName ?? "", "") || "WeSetup";
+  // Закреплённые скрепкой объекты — первыми (личное, 2026-11-23).
+  const pinnedBuildingIds = profile?.pinnedBuildingIds ?? [];
+  const pinnedFirstBuildings = sortPinnedFirst(buildingContext.buildings, pinnedBuildingIds);
   const headerPoint = resolveHeaderPoint({
     companyName,
     organizationBuildings: buildingContext.enabled
-      ? buildingContext.buildings
-      : await listOrganizationBuildings(activeOrgId).catch(() => []),
-    context: buildingContext,
+      ? pinnedFirstBuildings
+      : sortPinnedFirst(await listOrganizationBuildings(activeOrgId).catch(() => []), pinnedBuildingIds),
+    context: { ...buildingContext, buildings: pinnedFirstBuildings },
     canManage: hasFullWorkspaceAccess(session.user),
   });
   // Объекты переключателя — без офиса: офис не объект (владелец, 2026-11-23).
-  const switcherBuildings = buildingContext.buildings.filter((building) => !isOfficeBuilding(building));
+  const switcherBuildings = pinnedFirstBuildings.filter((building) => !isOfficeBuilding(building));
 
   // Область данных (2026-11-12): другая организация — оболочка собирается
   // заново, другая точка — заново только страница (`lib/cabinet-scope.ts`).
@@ -612,6 +619,7 @@ export default async function DashboardLayout({
               buildings: buildingContext.canSwitch ? switcherBuildings : [],
               activeBuildingId: headerPoint.kind === "switch" ? headerPoint.activeId : buildingContext.activeBuildingId,
               manageHref: hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null,
+              pinnedIds: pinnedBuildingIds,
             }}
             canCreateOrganization={Boolean(ownedAccount)}
             organizationSphere={brandedOrg?.type ?? "restaurant"}

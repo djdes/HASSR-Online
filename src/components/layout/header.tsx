@@ -106,6 +106,8 @@ type HeaderProps = {
     buildings: BuildingOption[];
     activeBuildingId: string | null;
     manageHref: string | null;
+    /** Закреплённые скрепкой объекты (личное, 2026-11-23). */
+    pinnedIds?: string[];
   };
   /** Заводить новые точки может только владелец аккаунта. */
   canCreateOrganization: boolean;
@@ -291,6 +293,7 @@ export function Header({
             buildings={currentPoint.buildings}
             activeBuildingId={currentPoint.activeBuildingId}
             manageHref={currentPoint.manageHref}
+            pinnedIds={currentPoint.pinnedIds}
           />
         </div>
 
@@ -696,6 +699,7 @@ export function Header({
         buildings={currentPoint.buildings}
         activeBuildingId={currentPoint.activeBuildingId}
         manageHref={currentPoint.manageHref}
+        pinnedIds={currentPoint.pinnedIds}
       />
     </>
   );

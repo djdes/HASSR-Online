@@ -2910,7 +2910,10 @@
         "nothingFound": "Nothing found",
         "choose": "Choose a site",
         "create": "Create a site",
-        "empty": "No sites yet"
+        "empty": "No sites yet",
+        "pin": "Pin “{name}” to the top",
+        "unpin": "Unpin “{name}”",
+        "pinFailed": "Couldn't pin the site"
       },
       "switchToast": {
         "close": "Close",

@@ -22,6 +22,8 @@ import { MENU_ITEM_ACTIVE_CLASS } from "@/components/ui/menu-styles";
 import { ScrollList } from "@/components/ui/scroll-list";
 import { BuildingIcon } from "@/components/layout/building-icon";
 import { LocationSwitcherList, POINT_SEARCH_MIN, PointSearchField, useSwitchBuilding } from "@/components/layout/location-switcher";
+import { PinButton, usePinnedBuildings } from "@/components/layout/pinned-buildings";
+import { sortPinnedFirst } from "@/lib/pinned-buildings";
 import { journalMatchesQuery, normalizeJournalSearch } from "@/lib/journal-search";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
@@ -45,6 +47,7 @@ export function CurrentPointSwitcher({
   point,
   buildings,
   manageHref,
+  pinnedIds,
   bar = false,
 }: {
   /**
@@ -58,6 +61,8 @@ export function CurrentPointSwitcher({
   /** Активный объект; выбранный пункт берётся из `point.activeId`. */
   activeBuildingId?: string | null;
   manageHref: string | null;
+  /** Закреплённые скрепкой объекты — первыми (личное, 2026-11-23). */
+  pinnedIds?: string[];
 }) {
   const t = useTranslations("navigation.shell.point");
   const router = useRouter();
@@ -67,6 +72,7 @@ export function CurrentPointSwitcher({
   const [query, setQuery] = useState("");
   const canManage = Boolean(manageHref);
   const { switchTo, busyId } = useSwitchBuilding({ canManagePoints: canManage });
+  const pins = usePinnedBuildings(pinnedIds ?? []);
   const hidden = headerPointHidden(pathname, point.kind);
   const choosing = headerPointChoosing(pathname, point);
 
@@ -108,8 +114,13 @@ export function CurrentPointSwitcher({
     );
   }
 
-  const options: HeaderPointOption[] =
-    point.kind === "switch" ? point.options : point.kind === "single" ? [point.point] : [];
+  // Закреплённые — первыми, сразу после нажатия на скрепку.
+  const options: HeaderPointOption[] = sortPinnedFirst(
+    point.kind === "switch" ? point.options : point.kind === "single" ? [point.point] : [],
+    pins.pinned,
+  );
+  // Скрепка нужна, когда объектов два и больше.
+  const canPin = options.length >= 2;
   // Пункт «выбран», только когда объект и правда выбран (не «Выберите объект»).
   const activeId = choosing
     ? null
@@ -196,6 +207,8 @@ export function CurrentPointSwitcher({
                 buildings={listBuildings}
                 activeBuildingId={activeId}
                 canManagePoints={canManage}
+                pinnedIds={canPin ? pins.pinned : undefined}
+                onTogglePin={canPin ? (id) => void pins.toggle(id) : undefined}
                 onChoose={point.kind === "switch" ? undefined : (id) => {
                   const option = options.find((item) => item.id === id);
                   if (option) choose(option);
@@ -281,7 +294,7 @@ export function CurrentPointSwitcher({
                 <DropdownMenuItem
                   key={option.id}
                   onSelect={() => choose(option)}
-                  className={cn("items-start gap-2.5 px-2.5 py-2", isActive && MENU_ITEM_ACTIVE_CLASS)}
+                  className={cn("group items-start gap-2.5 px-2.5 py-2", isActive && MENU_ITEM_ACTIVE_CLASS)}
                   data-point-option={option.id}
                   data-active-option={isActive ? "" : undefined}
                 >
@@ -296,6 +309,14 @@ export function CurrentPointSwitcher({
                       <span className="block truncate text-[12px] font-normal text-[#9b9fb3]">{option.address}</span>
                     ) : null}
                   </span>
+                  {canPin ? (
+                    <PinButton
+                      pinned={pins.isPinned(option.id)}
+                      onToggle={() => void pins.toggle(option.id)}
+                      name={titleOf(option)}
+                      className="-my-1"
+                    />
+                  ) : null}
                   {isActive ? <Check className="mt-0.5 size-4 text-[#3848c7]" /> : null}
                 </DropdownMenuItem>
               );

@@ -13,6 +13,7 @@ import { useContentTransition } from "@/components/layout/content-transition";
 import { forgetReturnPoint } from "@/components/layout/point-section-sync";
 import { ScrollList } from "@/components/ui/scroll-list";
 import { BuildingIcon } from "@/components/layout/building-icon";
+import { PinButton } from "@/components/layout/pinned-buildings";
 
 /**
  * Точки (2026-09-05): переключение активной точки. С 2026-10-16 — из центра
@@ -96,6 +97,8 @@ export function LocationSwitcherList({
   activeBuildingId,
   canManagePoints,
   onChoose,
+  pinnedIds,
+  onTogglePin,
 }: {
   buildings: BuildingOption[];
   /** Выбранный объект; null — «Выберите объект», выбранного нет. */
@@ -104,6 +107,9 @@ export function LocationSwitcherList({
   canManagePoints?: boolean;
   /** Свой выбор (один объект без деления журналов) вместо смены объекта. */
   onChoose?: (buildingId: string) => void;
+  /** Закреплённые скрепкой объекты; нет — скрепки в строках нет. */
+  pinnedIds?: readonly string[];
+  onTogglePin?: (buildingId: string) => void;
 }) {
   const { switchTo, busyId } = useSwitchBuilding({ canManagePoints });
   const tPoint = useTranslations("navigation.shell.point");
@@ -129,6 +135,7 @@ export function LocationSwitcherList({
         const isActive = building.id === activeId;
         return (
           <Fragment key={building.id}>
+            <div className="group relative flex items-center">
             <button
               type="button"
               data-location-option={building.id}
@@ -162,7 +169,18 @@ export function LocationSwitcherList({
               ) : isActive ? (
                 <Check className="size-4 shrink-0 text-[#5566f6]" />
               ) : null}
+              {/* Место под скрепку справа — сама кнопка лежит поверх строки. */}
+              {onTogglePin ? <span aria-hidden className="w-8 shrink-0" /> : null}
             </button>
+            {onTogglePin ? (
+              <PinButton
+                pinned={pinnedIds?.includes(building.id) === true}
+                onToggle={() => onTogglePin(building.id)}
+                name={building.name}
+                className="absolute right-2 size-9"
+              />
+            ) : null}
+            </div>
           </Fragment>
         );
       })}

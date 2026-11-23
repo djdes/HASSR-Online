@@ -2910,7 +2910,10 @@
         "nothingFound": "Hech narsa topilmadi",
         "choose": "Nuqtani tanlang",
         "create": "Nuqta yaratish",
-        "empty": "Hozircha nuqtalar yo‘q"
+        "empty": "Hozircha nuqtalar yo‘q",
+        "pin": "«{name}»ni birinchi qilib qadash",
+        "unpin": "«{name}»ni ajratish",
+        "pinFailed": "Nuqtani qadab bo‘lmadi"
       },
       "switchToast": {
         "close": "Yopish",
