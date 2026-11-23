@@ -65,6 +65,7 @@ const STATUS_TONE: Record<string, string> = {
   draft: "bg-[#f5f6ff] text-[#6f7282]",
   scheduled: "bg-[#eef1ff] text-[#3848c7]",
   sending: "bg-[#fff8eb] text-[#a16d32]",
+  paused: "bg-[#fff4e0] text-[#8a5a12]",
   done: "bg-[#ecfdf5] text-[#116b2a]",
   cancelled: "bg-[#f5f6ff] text-[#6f7282]",
   queued: "bg-[#eef1ff] text-[#3848c7]",

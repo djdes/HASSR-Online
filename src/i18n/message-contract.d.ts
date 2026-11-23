@@ -22976,7 +22976,13 @@ export type MessageContract = {
       "ariaLabel": "Разделы рассылки",
       "quick": "Отправить",
       "builder": "Конструктор",
-      "aiDigest": "ИИ-сводка"
+      "aiDigest": "ИИ-сводка",
+      "monitor": "Сейчас идут",
+      "journal": "Журнал",
+      "limits": "Лимиты",
+      "queueOn": "Очередь включена",
+      "queueOff": "Очередь выключена",
+      "newMailing": "Новая рассылка"
     },
     "feedback": {
       "saveDraftFailed": "Не удалось сохранить черновик",

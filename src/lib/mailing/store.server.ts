@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 import { MAILING_CHANNELS, overallRecipientStatus, type ChannelStatus, type MailingChannel } from "./labels";
+import { emailDomain } from "./rate-limit";
 import type { MailingQueueStore, QueueCampaign, QueueRecipient, RecipientPatch } from "./queue";
 
 /**
@@ -63,6 +64,7 @@ const recipientSelect = {
   nextAttemptAt: true,
   links: true,
   payload: true,
+  waitReason: true,
 } satisfies Prisma.MailingRecipientSelect;
 
 type RecipientRow = Prisma.MailingRecipientGetPayload<{ select: typeof recipientSelect }>;
@@ -234,7 +236,7 @@ export function createPrismaQueueStore(): MailingQueueStore {
     async getCampaign(id): Promise<QueueCampaign | null> {
       return db.mailingCampaign.findUnique({
         where: { id },
-        select: { id: true, title: true, kind: true, payload: true, status: true },
+        select: { id: true, title: true, kind: true, payload: true, status: true, windowStart: true, windowEnd: true },
       });
     },
 
@@ -309,5 +311,39 @@ export function createPrismaQueueStore(): MailingQueueStore {
     },
 
     refreshCounters: refreshCampaignCounters,
+
+    async deferRecipient(recipientId, until, reason) {
+      await db.mailingRecipient.updateMany({
+        where: { id: recipientId, status: "queued" },
+        data: { waitReason: reason, ...(until ? { nextAttemptAt: until } : {}) },
+      });
+    },
+
+    async lastEmailSentAt(emails, since) {
+      if (emails.length === 0) return new Map();
+      const rows = await db.mailingRecipient.groupBy({
+        by: ["email"],
+        where: { email: { in: emails }, isTest: false, emailSentAt: { gte: since } },
+        _max: { emailSentAt: true },
+      });
+      const out = new Map<string, Date>();
+      for (const row of rows) {
+        if (row.email && row._max.emailSentAt) out.set(row.email.toLowerCase(), row._max.emailSentAt);
+      }
+      return out;
+    },
+
+    async emailDomainCountsSince(since) {
+      const rows = await db.mailingRecipient.findMany({
+        where: { isTest: false, emailSentAt: { gte: since }, email: { not: null } },
+        select: { email: true },
+      });
+      const out = new Map<string, number>();
+      for (const row of rows) {
+        const domain = emailDomain(row.email ?? "");
+        if (domain) out.set(domain, (out.get(domain) ?? 0) + 1);
+      }
+      return out;
+    },
   };
 }

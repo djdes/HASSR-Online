@@ -30,13 +30,14 @@ export function anyChannel(channels: MailingChannels): boolean {
   return MAILING_CHANNELS.some((c) => channels[c]);
 }
 
-export const CAMPAIGN_STATUSES = ["draft", "scheduled", "sending", "done", "cancelled"] as const;
+export const CAMPAIGN_STATUSES = ["draft", "scheduled", "sending", "paused", "done", "cancelled"] as const;
 export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number];
 
 export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
   draft: "Черновик",
   scheduled: "Запланирована",
   sending: "Отправляется",
+  paused: "На паузе",
   done: "Завершена",
   cancelled: "Отменена",
 };
@@ -97,3 +98,24 @@ export const BILLING_KIND_LABELS: Record<string, string> = {
   legacy: "Как раньше (тестовый режим)",
   exempt: "Без тарифа",
 };
+
+/**
+ * Почему получатель ждёт в очереди (`MailingRecipient.waitReason`). Как в
+ * рассылках YesBeat: «Состояние очереди» группирует ожидающих по причине,
+ * журнал фильтрует по ней.
+ */
+export const WAIT_REASONS = ["quiet_hours", "frequency_limit", "domain_limit", "global_limit", "retry"] as const;
+export type WaitReason = (typeof WAIT_REASONS)[number];
+
+export const WAIT_REASON_LABELS: Record<WaitReason, string> = {
+  quiet_hours: "Вне часов отправки",
+  frequency_limit: "Перерыв между рассылками одному адресу",
+  domain_limit: "Лимит на почтовый домен в этом часе",
+  global_limit: "Общий лимит писем (минута, час или сутки)",
+  retry: "Повтор после временного сбоя",
+};
+
+export function waitReasonLabel(reason: string | null | undefined): string {
+  if (!reason) return "Ждёт своей очереди";
+  return (WAIT_REASON_LABELS as Record<string, string>)[reason] ?? reason;
+}

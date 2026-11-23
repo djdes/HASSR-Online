@@ -20,6 +20,7 @@ import { useComposeFeedback } from "./compose-feedback";
 
 import { MailingKindFields } from "@/components/mailing/kind-fields";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DEFAULT_SEND_WINDOW, SendWindowField, type SendWindow } from "./send-window";
 import type { PlanStats } from "@/lib/mailing/audience.server";
 import type { TestSendResult } from "@/lib/mailing/campaigns.server";
 import {
@@ -89,6 +90,7 @@ export function ComposeTab({
   const [testResult, setTestResult] = useState<TestSendResult | null>(null);
   const [confirm, setConfirm] = useState<"now" | "schedule" | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
+  const [sendWindow, setSendWindow] = useState<SendWindow>(DEFAULT_SEND_WINDOW);
 
   const selectionKey = `${[...userIds].sort().join(",")}|${[...contactIds].sort().join(",")}`;
   const selectedTotal = userIds.size + contactIds.size;
@@ -178,7 +180,7 @@ export function ComposeTab({
     try {
       const r = await api<{ stats: PlanStats }>(`/api/root/mailing/campaigns/${id}/launch`, {
         method: "POST",
-        json: { mode, scheduledAt: mode === "schedule" ? scheduledAt : null },
+        json: { mode, scheduledAt: mode === "schedule" ? scheduledAt : null, ...sendWindow },
       });
       feedback.success(
         mode === "now"
@@ -469,7 +471,10 @@ export function ComposeTab({
             : []),
         ]}
         confirmLabel={confirm === "schedule" ? t("send.schedule") : t("confirm.send")}
-      />
+        confirmDisabled={sendWindow.windowEnd <= sendWindow.windowStart}
+      >
+        <SendWindowField value={sendWindow} onChange={setSendWindow} />
+      </ConfirmDialog>
     </div>
   );
 }

@@ -22975,7 +22975,13 @@
       "ariaLabel": "Mailing sections",
       "quick": "Send",
       "builder": "Builder",
-      "aiDigest": "AI digest"
+      "aiDigest": "AI digest",
+      "monitor": "In progress",
+      "journal": "Log",
+      "limits": "Limits",
+      "queueOn": "Queue on",
+      "queueOff": "Queue off",
+      "newMailing": "New mailing"
     },
     "feedback": {
       "saveDraftFailed": "Could not save the draft",
