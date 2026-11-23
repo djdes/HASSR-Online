@@ -1,0 +1,37 @@
+[BABEL] Note: The code generator has deoptimised the styling of /home/user/HASSR-Online/src/i18n/message-contract.d.ts as it exceeds the max of 500KB.
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/equipment/page.tsx
+  403:20  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/equipment/page.tsx:403:20
+  401 |             const minutesAgo = reading
+  402 |               ? Math.round(
+> 403 |                   (Date.now() - reading.time.getTime()) / 60000
+      |                    ^^^^^^^^^^ Cannot call impure function
+  404 |                 )
+  405 |               : null;
+  406 |             const online =  react-hooks/purity
+
+/home/user/HASSR-Online/src/components/journals/journal-selection-bar.tsx
+  67:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/user/HASSR-Online/src/components/journals/journal-selection-bar.tsx:67:5
+  65 |   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  66 |   useEffect(() => {
+> 67 |     setPortalTarget(document.body);
+     |     ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  68 |   }, []);
+  69 |
+  70 |   if ((count <= 0 && !keepWhenEmpty) || !portalTarget) return null;  react-hooks/set-state-in-effect
+
+✖ 2 problems (0 errors, 2 warnings)
+
+exit=0

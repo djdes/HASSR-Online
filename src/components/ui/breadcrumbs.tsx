@@ -346,9 +346,10 @@ function CrumbNode({ crumb, isLast }: { crumb: Crumb; isLast: boolean }) {
   const narrow = useMediaQuery(PHONE_QUERY);
   // Переход по крошке идёт через router.push, а не через <Link> — у
   // клика нет фиксированной вёрстки-ссылки (сегмент, пункт меню и строка
-  // журнала ведут в разные места). useTransition даёт тот же отклик на
-  // нажатие, что LinkPendingSpinner у настоящих <Link>: крутилка встаёт
-  // рядом с названием этой крошки, пока переход не завершится.
+  // журнала ведут в разные места). useTransition даёт отклик на нажатие:
+  // пока переход не завершится, название крошки гаснет, а на его месте
+  // крутится загрузка — ширина та же, соседние крошки не сдвигаются
+  // (`[data-pending-swap]` в app-theme.css, владелец 2026-11-23).
   const [isPending, startTransition] = useTransition();
   const navigate = useCallback(
     (href: string) => {
@@ -365,12 +366,14 @@ function CrumbNode({ crumb, isLast }: { crumb: Crumb; isLast: boolean }) {
     ? "max-w-[11rem] truncate sm:max-w-[20rem]"
     : "max-w-[8rem] truncate sm:max-w-[14rem]";
   const label = (
-    <>
-      <span className={labelClass}>{crumb.label}</span>
+    <span className="relative inline-flex min-w-0 items-center">
+      <span data-pending-swap data-pending={isPending ? "" : undefined} className={labelClass}>
+        {crumb.label}
+      </span>
       {isPending ? (
-        <Loader2 className="size-3.5 shrink-0 animate-spin text-[#5566f6]" />
+        <Loader2 data-pending-spinner aria-hidden className="absolute inset-0 m-auto size-3.5 text-[#5566f6]" />
       ) : null}
-    </>
+    </span>
   );
 
   if (!crumb.menu || crumb.menu.length === 0) {

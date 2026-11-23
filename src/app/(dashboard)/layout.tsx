@@ -34,6 +34,7 @@ import { BugReportLauncher } from "@/components/support/bug-report-launcher";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { SkipToContent } from "@/components/layout/skip-to-content";
 import { BackToTop } from "@/components/today/back-to-top";
+import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { HotkeysHelp } from "@/components/today/hotkeys-help";
 import { MAIN_CONTENT_ID } from "@/lib/view-prefs";
 import { UrgentJournalHotkey } from "@/components/layout/urgent-journal-hotkey";
@@ -387,6 +388,12 @@ export default async function DashboardLayout({
     facts: navFacts,
     customNames,
   });
+  // «Домой» кабинета — у логотипа в меню и у нижнего меню телефона: главная
+  // тем, кому она открыта, остальным — раздел журналов (или первый раздел).
+  const shellHomeHref = canSeeHomePage(session.user)
+    ? HOME_HREF
+    : ((navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
+      getWebHomeHref(session.user));
   const deletionDue = deletionState?.deletionRequestedAt ? deletionDueAt(deletionState.deletionRequestedAt).toISOString() : null;
   const impersonatedName = impersonatedOrg?.name ?? null;
   // Тема первого кадра — та, что сейчас на этом устройстве (кука), иначе
@@ -521,7 +528,7 @@ export default async function DashboardLayout({
               заполнять» регистрируются в нём вместо собственных круглых
               кнопок. На телефоне их было три, и они закрывали правый
               нижний угол страницы. */}
-          <FabDockProvider>
+          <FabDockProvider withTabBar>
           <AppNavProvider model={navModel}>
           {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
               страница, футер. Сайдбар — только когда разделов два и больше. */}
@@ -531,12 +538,7 @@ export default async function DashboardLayout({
               logoUrl={headerLogoUrl}
               organizationName={companyName}
               identity={orgIdentity}
-              homeHref={
-                canSeeHomePage(session.user)
-                  ? HOME_HREF
-                  : ((navModel.sections.find((s) => s.key === "journals") ?? navModel.sections[0])?.rootHref ??
-                    getWebHomeHref(session.user))
-              }
+              homeHref={shellHomeHref}
               canEditBranding={hasCapability(session.user, "admin.full")}
             />
           ) : null}
@@ -726,6 +728,9 @@ export default async function DashboardLayout({
               владельца: «наш футер на каждой странице»). `mt-auto`
               прижимает его к низу на коротких экранах. */}
           <DashboardFooter partnerBrandName={consultant?.brandName ?? null} />
+          {/* Место под плавающее нижнее меню телефона: низ страницы и подвал
+              не прячутся под ним (`--app-tabbar-space`, на компьютере 0). */}
+          <div aria-hidden className="h-[var(--app-tabbar-space)] shrink-0 print:hidden" />
           </div>
           </div>
           {/* AI помощник — доступен ВСЕМ авторизованным (решение
@@ -802,6 +807,10 @@ export default async function DashboardLayout({
               mode={whatsNewState}
             />
           ) : null}
+          {/* Телефон и планшет: плавающее нижнее меню «Домой · Журналы ·
+              Контакты · Настройки» (владелец, 2026-11-23); вместо круглой
+              кнопки контактов — вкладка «Контакты». */}
+          <MobileTabBar homeHref={shellHomeHref} />
           {/* «Наверх» на телефоне и «?» — список горячих клавиш (08.11.2026). */}
           <BackToTop />
           <HotkeysHelp />

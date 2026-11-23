@@ -3181,6 +3181,20 @@
       "scrollLeft": "Scroll menu left",
       "scrollRight": "Scroll menu right",
       "openSection": "Open section",
+      "submenu": "Submenu: {name}",
+      "tabBar": {
+        "aria": "Bottom menu",
+        "home": "Home",
+        "journals": "Journals",
+        "contacts": "Contacts",
+        "contactsUnread": "Contacts · new messages: {count, number}",
+        "settings": "Settings"
+      },
+      "pageActions": {
+        "dockAria": "Page actions",
+        "qr": "QR",
+        "qrTitle": "QR stickers and posters"
+      },
       "brandingSettings": "Brand style"
     },
     "header": {
@@ -28890,6 +28904,7 @@
       "title": "Points and rooms",
       "description": "Business points (buildings with an address) and the rooms inside them. Cleaning journal tasks are assigned by room — one task per room per day. If there are several points, journals can be kept separately for each one: this is switched on with the toggle below.",
       "qrPostersHint": "An A4 poster with a QR code for each room: an employee scans it and records temperature and humidity without signing in",
+      "qrPostersShort": "QR posters",
       "qrPosters": "Room QR posters",
       "guideTitle": "How to set up points and rooms",
       "guide1Title": "A point is an address",

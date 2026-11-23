@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { BrandLogo } from "@/components/brand/logo";
 import { PartnerHint } from "@/components/partner/partner-hint";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Handshake, Loader2, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
@@ -60,7 +60,7 @@ import { splitCabinetMenu } from "@/lib/cabinet-menu";
 import { useOpenMasterCabinet } from "@/components/master/use-open-master-cabinet";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { CurrentPointSwitcher } from "@/components/layout/current-point-switcher";
-import { MobileNavSheet } from "@/components/layout/mobile-nav-sheet";
+import { MOBILE_SHEET_EVENT, MobileNavSheet, type MobileSheetKind } from "@/components/layout/mobile-nav-sheet";
 import { OrganizationMark } from "@/components/layout/organization-brand";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
@@ -223,6 +223,18 @@ export function Header({
   // Меню есть, когда разделов хотя бы два. Иначе (повар, уборщица) —
   // ни сайдбара, ни бургера: только логотип и шапка.
   const hasMenu = nav.showSidebar;
+
+  // «Настройки» нижнего меню телефона открывают лист меню; у кого меню нет —
+  // лист профиля (`openMobileSheet`).
+  useEffect(() => {
+    const open = (event: Event) => {
+      const kind = (event as CustomEvent<MobileSheetKind>).detail;
+      if (kind === "menu" && hasMenu) setMobileNavOpen(true);
+      else setProfileSheetOpen(true);
+    };
+    window.addEventListener(MOBILE_SHEET_EVENT, open);
+    return () => window.removeEventListener(MOBILE_SHEET_EVENT, open);
+  }, [hasMenu]);
 
   return (
     <>

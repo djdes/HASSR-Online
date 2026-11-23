@@ -23,6 +23,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
+import { PageActions } from "@/components/layout/page-actions";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { viewedPointId } from "@/lib/building-scope";
@@ -262,22 +263,24 @@ export default async function EquipmentSettingsPage({
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* QR и «Добавить» — одной строкой на телефоне; уехали вверх при
+            прокрутке — закрепляются снизу (`PageActions`, владелец 2026-11-23). */}
+        {canManage ? (
+        <PageActions dock>
           {/* QR — оборудование из списка (скан 98: раньше печаталось всё оборудование организации). */}
-          {canManage && visibleCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
-          {canManage && (
-            <EquipmentDialog
-              // Новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия).
-              key={defaultBuildingId ?? "none"}
-              areas={dialogAreas}
-              buildings={buildingOptions}
-              places={places}
-              defaultBuildingId={defaultBuildingId}
-              existingNames={equipmentNames}
-              fillerOptions={fillerOptions}
-            />
-          )}
-        </div>
+          {visibleCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
+          <EquipmentDialog
+            // Новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия).
+            key={defaultBuildingId ?? "none"}
+            areas={dialogAreas}
+            buildings={buildingOptions}
+            places={places}
+            defaultBuildingId={defaultBuildingId}
+            existingNames={equipmentNames}
+            fillerOptions={fillerOptions}
+          />
+        </PageActions>
+        ) : null}
       </div>
 
       {/* Чипы мест и список — одна область: нажатие на чип показывает

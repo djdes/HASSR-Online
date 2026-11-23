@@ -35,7 +35,12 @@ export function BackToTop() {
         window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
       }}
       className="fixed right-4 z-40 inline-flex size-11 items-center justify-center rounded-full border border-[#dcdfed] bg-white/95 text-[#3848c7] shadow-[0_10px_28px_-12px_rgba(11,16,36,0.45)] backdrop-blur transition-colors hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/25 md:hidden print:hidden"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 92px)" }}
+      // Над нижним меню телефона и полосой действий страницы, если они есть
+      // (`--app-tabbar-space`, `--app-dock-space` в app-theme.css).
+      style={{
+        bottom:
+          "max(calc(var(--app-tabbar-space, 0px) + var(--app-dock-space, 0px) + 8px), calc(env(safe-area-inset-bottom, 0px) + 92px))",
+      }}
     >
       <ArrowUp className="size-5" aria-hidden />
     </button>

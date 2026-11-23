@@ -326,12 +326,15 @@ export function BuildingsClient({
         roomsPerVerifier={roomsPerVerifier}
       />
 
-      {/* Новая точка — мастером (название и адрес, помещения, оборудование). */}
+      {/* Новая точка — мастером (название и адрес, помещения, оборудование).
+          На телефоне и планшете второй «Добавить объект» не нужен (владелец,
+          2026-11-23: «дублируется сверху и снизу»): кнопка шапки, уехав при
+          прокрутке, закрепляется снизу экрана (`PageActions dock`). */}
       {readOnly || pointManager ? null : (
         <Link
           href="/settings/buildings/new"
           data-add-point
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          className="max-lg:hidden inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           <Plus className="size-4" />
           {tPoint("add")}

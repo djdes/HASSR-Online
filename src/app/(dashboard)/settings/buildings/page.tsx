@@ -6,7 +6,9 @@ import { BuildingsClient } from "./buildings-client";
 import { PageGuide } from "@/components/ui/page-guide";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Plus, QrCode } from "lucide-react";
+import { Plus } from "lucide-react";
+import { PageActions } from "@/components/layout/page-actions";
+import { QrActions } from "@/components/layout/qr-actions";
 import { listPersonBuildings } from "@/lib/active-building";
 import { isOfficeBuilding } from "@/lib/building-scope";
 import { isPointScoped, staffScopeWhere } from "@/lib/point-scope";
@@ -87,7 +89,7 @@ export default async function BuildingsPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
           {t("title")}
         </h1>
@@ -95,16 +97,14 @@ export default async function BuildingsPage() {
           {t("description")}
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      {/* QR и «Добавить» — одной строкой на телефоне; уехали вверх при
+          прокрутке — закрепляются снизу (`PageActions`, владелец 2026-11-23). */}
+      <PageActions dock>
       {buildings.some((building) => building.rooms.length > 0) ? (
-        <Link
-          href="/settings/qr-posters?kind=rooms"
-          className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-          title={t("qrPostersHint")}
-        >
-          <QrCode className="size-4 text-[#5566f6]" />
-          {t("qrPosters")}
-        </Link>
+        <QrActions
+          items={[{ key: "rooms", href: "/settings/qr-posters?kind=rooms", label: t("qrPosters"), hint: t("qrPostersHint") }]}
+          phoneLabel={t("qrPostersShort")}
+        />
       ) : null}
       {/* Мастер новой точки — главное действие страницы (меню: «+ Добавить точку»). */}
       {readOnly || pointManager ? null : (
@@ -112,13 +112,13 @@ export default async function BuildingsPage() {
           href="/settings/buildings/new"
           data-add-point-header
           title={tPoint("addHint")}
-          className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
-          <Plus className="size-4" />
-          {tPoint("add")}
+          <Plus className="size-4 shrink-0" />
+          <span className="truncate">{tPoint("add")}</span>
         </Link>
       )}
-      </div>
+      </PageActions>
       </div>
       <PageGuide
         title={t("guideTitle")}

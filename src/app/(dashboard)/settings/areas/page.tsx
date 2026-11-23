@@ -11,6 +11,7 @@ import { PageGuide } from "@/components/ui/page-guide";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
+import { PageActions } from "@/components/layout/page-actions";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { viewedPointId } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
@@ -122,7 +123,9 @@ export default async function AreasSettingsPage({
           </div>
         </div>
         {canManage ? (
-          <div className="flex flex-wrap items-center gap-2">
+          // QR и «Добавить цех» — одной строкой на телефоне; уехали вверх при
+          // прокрутке — закрепляются снизу (`PageActions`, владелец 2026-11-23).
+          <PageActions dock>
             {/* Те же QR, что на «Оборудовании» (скан 98): оборудование цехов из списка, таблички — по цехам. */}
             {equipmentCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
             {/* key — новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия). */}
@@ -132,7 +135,7 @@ export default async function AreasSettingsPage({
               defaultBuildingId={defaultBuildingId}
               allowNoPoint={!pointScoped}
             />
-          </div>
+          </PageActions>
         ) : null}
       </div>
 

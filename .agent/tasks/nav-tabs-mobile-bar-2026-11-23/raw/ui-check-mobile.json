@@ -1,0 +1,194 @@
+{
+ "phone_buildings": {
+  "row": {
+   "visible": [
+    {
+     "text": "QR-плакаты помещенийQR-плакаты",
+     "top": 387,
+     "width": 176
+    },
+    {
+     "text": "Добавить объект",
+     "top": 387,
+     "width": 174
+    }
+   ],
+   "rowWidth": 358,
+   "vw": 390
+  },
+  "bottomAdd": "none",
+  "qrSheet": null,
+  "docked": {
+   "open": true,
+   "items": [
+    "QR-плакаты помещенийQR-плакаты",
+    "Добавить объект"
+   ]
+  },
+  "dockRect": {
+   "top": 528,
+   "left": 12,
+   "width": 366,
+   "height": 56,
+   "bottom": 584
+  },
+  "barRect": {
+   "top": 592,
+   "left": 12,
+   "width": 366,
+   "height": 62,
+   "bottom": 654
+  },
+  "dockAfterBackToTop": false,
+  "errors": []
+ },
+ "phone_areas": {
+  "row": {
+   "visible": [
+    {
+     "text": "QR",
+     "top": 257,
+     "width": 172
+    },
+    {
+     "text": "Добавить цех",
+     "top": 257,
+     "width": 178
+    }
+   ],
+   "rowWidth": 358,
+   "vw": 390
+  },
+  "bottomAdd": "absent",
+  "qrSheet": [
+   "QR-наклейкиQR-наклейки на оборудование объекта из шапки — запись температуры с телефона",
+   "Плакаты A4Плакат A4 с QR-кодом на каждый холодильник объекта из шапки: сотрудник сканирует и вносит температуру без входа",
+   "ТабличкиТабличка на холодильник и морозильник объекта из шапки: ХОЛОД или МОРОЗ, температурный режим, номер, цех и QR — 4 на лист A4"
+  ],
+  "docked": {
+   "open": true,
+   "items": [
+    "QR",
+    "Добавить цех"
+   ]
+  },
+  "dockRect": {
+   "top": 528,
+   "left": 12,
+   "width": 366,
+   "height": 56,
+   "bottom": 584
+  },
+  "barRect": {
+   "top": 592,
+   "left": 12,
+   "width": 366,
+   "height": 62,
+   "bottom": 654
+  },
+  "dockAfterBackToTop": false,
+  "errors": []
+ },
+ "phone_equipment": {
+  "row": {
+   "visible": [
+    {
+     "text": "QR",
+     "top": 351,
+     "width": 172
+    },
+    {
+     "text": "Добавить оборудование",
+     "top": 351,
+     "width": 178
+    }
+   ],
+   "rowWidth": 358,
+   "vw": 390
+  },
+  "bottomAdd": "absent",
+  "qrSheet": [
+   "QR-наклейкиQR-наклейки на оборудование объекта из шапки — запись температуры с телефона",
+   "Плакаты A4Плакат A4 с QR-кодом на каждый холодильник объекта из шапки: сотрудник сканирует и вносит температуру без входа",
+   "ТабличкиТабличка на холодильник и морозильник объекта из шапки: ХОЛОД или МОРОЗ, температурный режим, номер, цех и QR — 4 на лист A4"
+  ],
+  "docked": {
+   "open": true,
+   "items": [
+    "QR",
+    "Добавить оборудование"
+   ]
+  },
+  "dockRect": {
+   "top": 528,
+   "left": 12,
+   "width": 366,
+   "height": 56,
+   "bottom": 584
+  },
+  "barRect": {
+   "top": 592,
+   "left": 12,
+   "width": 366,
+   "height": 62,
+   "bottom": 654
+  },
+  "dockAfterBackToTop": false,
+  "errors": []
+ },
+ "phone_tabbar": {
+  "active": {
+   "/home": "home* journals contacts settings",
+   "/journals": "home journals* contacts settings",
+   "/dashboard": "home journals* contacts settings",
+   "/settings/buildings": "home journals contacts settings*"
+  },
+  "fab": "none",
+  "pillBefore": "matrix(1, 0, 0, 1, 0, 0)",
+  "pillAfter": "matrix(1, 0, 0, 1, 89.5, 0)",
+  "contactsSheet": [
+   "Контакты и помощьСпросить, написать в поддержку или посмотреть инструкциюКонтакт"
+  ],
+  "menuSheet": true,
+  "typingHidden": {
+   "typing": true,
+   "opacity": "0"
+  },
+  "errors": []
+ },
+ "phone_dark": {
+  "theme": "dark",
+  "errors": []
+ },
+ "phone_top_menu_sheet": {
+  "sheet": [
+   "Журналы объектов",
+   "Сегодня",
+   "Все журналы",
+   "Проверка записей",
+   "Настройка журналов",
+   "Стандартный набор",
+   "Набор по ХАССП",
+   "Дополнительные"
+  ],
+  "dropdown": false,
+  "errors": []
+ },
+ "tablet": {
+  "docked": [
+   "QR-наклейки",
+   "Плакаты A4",
+   "Таблички",
+   "Добавить цех"
+  ],
+  "bar": "block",
+  "errors": []
+ },
+ "desktop_no_dock": {
+  "dock": false,
+  "bar": "none",
+  "fab": "block",
+  "bottomAdd": "inline-flex",
+  "errors": []
+ }
+}

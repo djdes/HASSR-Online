@@ -130,6 +130,19 @@ export function buildNewNav(sections: readonly NavModelSection[], pathname: stri
         ? { ...base, active, panel: [{ label: null, links: tabs.map((link) => ({ ...link, tabs: [] })) }] }
         : { ...base, active };
     });
+    // Своя страница раздела, которой нет среди его пунктов («Объекты» →
+    // список объектов, владелец 2026-11-23), — первая вкладка строки: на неё
+    // человек попадает, войдя в раздел, и она выбрана, пока он на страницах
+    // раздела без своего пункта (мастер нового объекта, страница объекта).
+    if (!entries.some((entry) => entry.href === host.rootHref)) {
+      entries.unshift({
+        id: host.key,
+        href: host.rootHref,
+        label: host.label,
+        icon: host.icon,
+        active: chain.length === 2 && !item,
+      });
+    }
   } else if (item && levelTabs(item).length > 0) {
     // Второй уровень — обычный пункт с вкладками: строка — его вкладки.
     entries = tabLinks(item, true);
