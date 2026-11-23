@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { Drawer } from "vaul";
@@ -10,6 +10,8 @@ import {
   MODAL_CARD_HEIGHT_CLASS,
 } from "@/components/ui/modal-tokens";
 import { ScrollPane } from "@/components/ui/scroll-list";
+import { SheetGrabber } from "@/components/ui/sheet-grabber";
+import { useTouchBodyScrollLock } from "@/lib/use-body-scroll-lock";
 
 /**
  * Лист снизу — мобильный формат меню, как в приложениях.
@@ -67,12 +69,35 @@ export function BottomSheet({
   scrollbar?: boolean;
 }) {
   const t = useTranslations("common");
+  // Страница под листом на телефоне прибита. Свои защиты vaul для iOS здесь
+  // не включаются — они ждут открытия через `Drawer.Trigger`, а лист открыт
+  // из кода, — и палец в списке меню двигал сайт за листом (владелец,
+  // 2026-11-23). Подробности — в `lib/use-body-scroll-lock.ts`.
+  useTouchBodyScrollLock(open);
+  // Ручка: пока лист тянут — стрелка вниз, дальше порога закрытия — в акценте.
+  // Атрибутом, без состояния: vaul зовёт `onDrag` на каждое движение пальца.
+  const grabber = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const release = () => grabber.current?.removeAttribute("data-pulled");
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    return () => {
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+    };
+  }, [open]);
   return (
     <Drawer.Root
       open={open}
       onOpenChange={(next) => {
         if (!next) onClose();
       }}
+      onDrag={(_event, dragged) => {
+        // 0.25 — порог закрытия vaul (`closeThreshold`).
+        grabber.current?.setAttribute("data-pulled", dragged >= 0.25 ? "armed" : "");
+      }}
+      onRelease={() => grabber.current?.removeAttribute("data-pulled")}
       // Тянуть можно только вниз: лист и так во всю ширину.
       direction="bottom"
       // Заголовок и описание рисуем сами — Radix иначе ругается в консоль.
@@ -89,8 +114,10 @@ export function BottomSheet({
         >
           <div className="shrink-0 px-4 pb-3 pt-3">
             {/* Ручка: признак листа снизу и место, за которое тянут,
-                чтобы закрыть свайпом. */}
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#dcdfed]" />
+                чтобы закрыть свайпом. Под пальцем полоска складывается в
+                стрелку вниз (владелец, 2026-11-23). Лист бывает и на планшете —
+                ручка видна на любой ширине. */}
+            <SheetGrabber ref={grabber} data-sheet-grabber-always="" className="-mt-3 mb-1" />
             <div className={`flex justify-between gap-3 ${header ? "items-start" : "items-center"}`}>
               {header ? (
                 <>

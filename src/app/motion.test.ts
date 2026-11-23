@@ -198,7 +198,8 @@ const PRESENCE = read("src/components/motion/motion-presence.ts");
 test("круг 2: модуль появления и ухода запускается из рантайма и останавливается вместе с ним", () => {
   assert.match(RUNTIME, /const stopPresence = startPresence\(\);/);
   assert.match(RUNTIME, /stopPresence\(\);/);
-  assert.match(PRESENCE, /function onTree\(records: MutationRecord\[\]\): void \{\s*if \(motionOff\(\)\) return;/);
+  // «Без анимации»: ручка и жест листа — это работа листа, они остаются; всё остальное молчит.
+  assert.match(PRESENCE, /function onTree\(records: MutationRecord\[\]\): void \{[\s\S]{0,400}prepareSheetsIn\(node\);\s*\}\s*if \(motionOff\(\)\) return;/);
   assert.match(PRESENCE, /observer\.observe\(document\.body, \{ childList: true, subtree: true \}\)/);
 });
 
@@ -231,10 +232,11 @@ test("круг 2, AC4: копия уходящего окна не ловит н
 });
 
 test("круг 2, AC5: лист тянут за верх, закрывает его собственная кнопка", () => {
-  assert.match(PRESENCE, /if \(window\.innerWidth >= PHONE_WIDTH \|\| event\.touches\.length !== 1 \|\| motionOff\(\)\) return;/);
+  assert.match(PRESENCE, /if \(window\.innerWidth >= PHONE_WIDTH \|\| event\.touches\.length !== 1\) return;/);
   assert.match(PRESENCE, /if \(!close\) return; \/\/ a sheet that cannot be closed stays put/);
   assert.match(PRESENCE, /current\.close\.click\(\);/);
-  assert.match(RULES, /@media \(width < 40rem\) \{[\s\S]*:has\(button > svg\.lucide-x, button\[aria-label\*="акрыть"\], button\[aria-label\*="lose"\]\),[\s\S]*background-size: 40px 4px;/);
+  // Нарисованную фоном полоску круга 2 сменила общая живая ручка (круг 3).
+  assert.doesNotMatch(RULES, /background-size: 40px 4px/);
 });
 
 test("круг 2, AC6: сегменты — общие стили и шесть переведённых групп", () => {
@@ -277,5 +279,86 @@ test("круг 2, AC9: сдержанность нового модуля", () =
     const [, y1, , y2] = curve[1].split(",").map((value) => Number(value.trim()));
     assert.ok(y1 >= 0 && y1 <= 1 && y2 >= 0 && y2 <= 1, `кривая без подпрыгивания: ${curve[0]}`);
   }
-  assert.match(RULES, /@media print \{\s*:root :where\(\[data-motion-saved\], \[data-motion-ghost\]\) \{\s*display: none;/);
+  assert.match(RULES, /@media print \{\s*:root :where\(\[data-motion-saved\], \[data-motion-ghost\], \[data-sheet-grabber\]\) \{\s*display: none;/);
+});
+
+/* ── Круг 3 (spec `.agent/tasks/site-motion-round3-2026-11-23`): замечания владельца с iPhone ── */
+
+test("круг 3, AC2: жест листа ведёт непассивный touchmove самого листа и отменяет действие браузера", () => {
+  assert.match(PRESENCE, /card\.addEventListener\("touchmove", onCardMove, \{ passive: false \}\);/);
+  assert.match(PRESENCE, /if \(event\.cancelable\) event\.preventDefault\(\);/);
+  // На документе touchmove больше не слушаем: пассивный слушатель жест у страницы не отнимет.
+  assert.doesNotMatch(PRESENCE, /document\.addEventListener\("touchmove"/);
+  // Горизонтальный жест и жест вверх лист не захватывает.
+  assert.match(PRESENCE, /if \(verdict === "release"\) \{\s*drag = null;\s*return;\s*\}/);
+  // Закрывает только отпускание, не отмена касания системой.
+  assert.match(PRESENCE, /event\.type === "touchend" && current\.state === "pull" && sheetDragCloses\(current\.offset, current\.velocity\)/);
+});
+
+test("круг 3, AC3: одна живая ручка — полоска из двух половин, под пальцем стрелка вниз", () => {
+  const block = RULES.slice(RULES.indexOf(":root :where([data-sheet-grabber]) {"));
+  assert.match(block, /touch-action: none;/);
+  assert.match(RULES, /:where\(\[data-sheet-grabber\]\):where\(:active, \[data-pulled\]\)::before \{\s*rotate: 22deg !important;/);
+  assert.match(RULES, /:where\(\[data-sheet-grabber\]\):where\(:active, \[data-pulled\]\)::after \{\s*rotate: -22deg !important;/);
+  assert.match(RULES, /\[data-sheet-grabber\]\[data-pulled="armed"\]\)::before,[\s\S]{0,120}background-color: var\(--app-indigo, #5566f6\);/);
+  assert.match(RULES, /@keyframes motion-grabber-nod-a \{\s*45% \{\s*rotate: 16deg;/);
+  // С 640px окно — карточка по центру, ручки нет (кроме листа `BottomSheet`, он бывает и на планшете).
+  assert.match(RULES, /@media \(width >= 40rem\) \{\s*:root :where\(\[data-sheet-grabber\]:not\(\[data-sheet-grabber-always\]\)\) \{\s*display: none;/);
+  // «Без анимации»: стрелка под пальцем остаётся, кивка и переходов нет.
+  assert.match(RULES, /:root\[data-view-still\] :where\(\[data-sheet-grabber\]\)::before,\s*:root\[data-view-still\] :where\(\[data-sheet-grabber\]\)::after \{\s*animation: none;\s*transition: none;/);
+
+  const grabber = read("src/components/ui/sheet-grabber.tsx");
+  assert.match(grabber, /data-sheet-grabber=\{float \? "float" : ""\}/);
+  for (const path of ["src/components/ui/dialog.tsx", "src/components/ui/bottom-sheet.tsx", "src/components/dashboard/complete-profile-nudge.tsx", "src/components/ai/sanpin-chat-widget.tsx"]) {
+    const source = read(path);
+    assert.match(source, /<SheetGrabber\b/, `${path}: общая ручка`);
+    assert.doesNotMatch(source, /h-1 w-10 [^"]*rounded-full bg-\[#dcdfed\]/, `${path}: старой полоски нет`);
+  }
+  // Самодельному листу без своей ручки её даёт рантайм — и только листу, который можно закрыть.
+  assert.match(PRESENCE, /if \(!closeButtonOf\(card\)\) return null;/);
+  assert.match(PRESENCE, /grabber\.setAttribute\("data-sheet-grabber", "float"\);/);
+  // Лист `BottomSheet`: стрелка, пока лист тянут; порог закрытия — как у vaul.
+  assert.match(read("src/components/ui/bottom-sheet.tsx"), /setAttribute\("data-pulled", dragged >= 0\.25 \? "armed" : ""\)/);
+});
+
+test("круг 3, AC4: шаг мастера отвечает на тап — сохраняет анкету и переходит либо объясняет", () => {
+  const nudge = read("src/components/dashboard/complete-profile-nudge.tsx");
+  assert.match(nudge, /<SetupStepper step=\{step\} onSelect=\{\(next\) => void selectStep\(next\)\} \/>/);
+  assert.doesNotMatch(nudge, /canSelect=\{/);
+  assert.match(nudge, /if \(!canSubmit\) \{\s*setTouched\([^\n]*\);\s*toast\.error\(tn\("setup\.fillProfileFirst"\)\);\s*return;/);
+  assert.match(nudge, /const saved = await saveProfile\(\);\s*if \(!saved\) return;\s*setProfileSaved\(true\);\s*toast\.success\(savedMessage\);\s*setStep\(next\);/);
+  for (const locale of ["ru", "en", "uz"]) {
+    const messages = JSON.parse(read(`src/i18n/messages/${locale}.json`));
+    assert.ok(messages.dashboardUi.completeProfileNudge.setup.fillProfileFirst.length > 10, `${locale}: текст есть`);
+  }
+});
+
+test("круг 3, AC5: подсказки помощника — переводом, не ключом", () => {
+  const widget = read("src/components/ai/sanpin-chat-widget.tsx");
+  assert.match(widget, /onClick=\{\(\) => send\(t\(s\)\)\}[\s\S]{0,260}\{t\(s\)\}\s*<\/button>/);
+  assert.doesNotMatch(widget, />\s*\{s\}\s*<\/button>/);
+});
+
+test("круг 3, AC6: поле отвечает на фокус, подпись берёт акцент, ошибка вздрагивает", async () => {
+  assert.match(RULES, /@keyframes motion-field-in \{\s*40% \{\s*scale: 1\.012;/);
+  assert.match(RULES, /:has\(:where\(input:not\([^)]*\), textarea, select\):focus\) \{\s*animation: motion-field-in 0\.44s var\(--spring-soft\);/);
+  assert.match(RULES, /:focus::placeholder \{\s*opacity: 0\.6;\s*translate: 6px 0;/);
+  assert.match(RULES, /@media \(hover: none\) and \(pointer: coarse\) \{[\s\S]{0,900}scale: 0\.985;/);
+  assert.match(RULES, /color: var\(--app-indigo, #5566f6\) !important;/);
+  assert.match(RULES, /:root :where\(\[data-field-invalid\]\) \{\s*animation: motion-field-no 0\.38s ease-out;/);
+  // В таблицах и сетках журналов поля не «дышат».
+  assert.match(RULES, /\):where\(:not\(table \*, \[role="grid"\] \*, \[class\*="focus-within"\] \*\)\):focus,/);
+  // Выключено в «Без анимации» и при системном «Уменьшение движения».
+  assert.match(RULES, /:root\[data-view-still\] :where\(input, textarea, select, \[class\*="focus-within:"\], \[data-field-invalid\]\) \{\s*animation: none;/);
+  assert.match(RULES, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*:root :where\(input, textarea, select, \[class\*="focus-within:"\], \[data-field-invalid\]\) \{\s*animation: none;/);
+
+  const { QR_MOTION_CSS } = await import("@/lib/qr-motion-css");
+  const { QR_FILL_CSS } = await import("@/lib/journal-fill-html");
+  assert.match(QR_MOTION_CSS, /\.in:focus,\.qp-pin:focus\{animation:qr-field-in \.44s var\(--spring-soft\);/);
+  assert.match(QR_MOTION_CSS, /\.sh-g\{[^}]*touch-action:none/);
+  assert.match(QR_MOTION_CSS, /\.sh-g:active::before,\.sh-g\.on::before\{rotate:22deg\}/);
+  assert.ok(QR_FILL_CSS.includes(".sh-g"));
+  const page = read("src/lib/journal-fill-html.ts");
+  assert.match(page, /<div class="sh"><div class="sh-g" aria-hidden="true"><\/div>/);
+  assert.match(page, /sh\.addEventListener\("touchmove",function\(e\)\{[^\n]*if\(e\.cancelable\) e\.preventDefault\(\);[^\n]*\},\{passive:false\}\);/);
 });

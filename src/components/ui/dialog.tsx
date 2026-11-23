@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { SheetGrabber } from "@/components/ui/sheet-grabber"
+import { TouchBodyScrollLock } from "@/lib/use-body-scroll-lock"
 import { Button } from "@/components/ui/button"
 
 function Dialog({
@@ -80,6 +82,8 @@ function DialogContent({
   // Смещение и в ref: touchend может прийти раньше, чем React перерисует state.
   const dragOffsetRef = React.useRef(0)
   const [dragOffset, setDragOffset] = React.useState(0)
+  // Палец в верхней зоне — ручка складывается в стрелку (`SheetGrabber`).
+  const [pulling, setPulling] = React.useState(false)
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     onTouchStart?.(event)
@@ -87,7 +91,10 @@ function DialogContent({
     const touch = event.touches[0]
     const rect = event.currentTarget.getBoundingClientRect()
     if (!touch || touch.clientY - rect.top > SHEET_DRAG_ZONE_PX) return
+    // Окно прокручено вниз — палец листает содержимое, а не тянет лист.
+    if (event.currentTarget.scrollTop > 0) return
     dragStartY.current = touch.clientY
+    setPulling(true)
   }
   const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     onTouchMove?.(event)
@@ -104,6 +111,7 @@ function DialogContent({
     dragStartY.current = null
     dragOffsetRef.current = 0
     setDragOffset(0)
+    setPulling(false)
     if (shouldClose) closeRef.current?.click()
   }
 
@@ -139,9 +147,12 @@ function DialogContent({
             карточка скроллится целиком, и абсолютный крестик уезжал
             вверх вместе с текстом. Sticky держит его на виду и не
             занимает места в потоке. */}
-        {/* Ручка шторки на телефоне — подсказка «потяни вниз». Абсолютная,
-            чтобы не сдвигать шапки окон с `p-0`. */}
-        <div aria-hidden className="pointer-events-none absolute left-1/2 top-1.5 z-40 h-1 w-10 -translate-x-1/2 rounded-full bg-[#dcdfed] sm:hidden" />
+        {/* Ручка шторки на телефоне — подсказка «потяни вниз»: полоска, под
+            пальцем — стрелка вниз (владелец, 2026-11-23). Абсолютная, чтобы
+            не сдвигать шапки окон с `p-0`. */}
+        <SheetGrabber float pulled={pulling ? (dragOffset > SHEET_DISMISS_PX ? "armed" : true) : false} />
+        {/* Страница под окном на телефоне прибита (см. `use-body-scroll-lock`). */}
+        <TouchBodyScrollLock />
         <DialogPrimitive.Close ref={closeRef} tabIndex={-1} aria-hidden className="hidden" />
         {showCloseButton && (
           <div className="sticky top-0 z-30 h-0">

@@ -27129,6 +27129,7 @@ export type MessageContract = {
       "save": "Сохранить",
       "setup": {
         "step": "Шаг {current} из {total}",
+        "fillProfileFirst": "Сначала заполните анкету — обязательные поля отмечены",
         "steps": {
           "profile": "Анкета",
           "points": "Объекты",

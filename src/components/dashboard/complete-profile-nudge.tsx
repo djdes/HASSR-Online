@@ -30,6 +30,7 @@ import {
 import { innDigits, isValidInn } from "@/lib/inn";
 import { suggestPassword } from "@/lib/password-suggest";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { SheetGrabber } from "@/components/ui/sheet-grabber";
 import { nextSetupStep, type SetupStep } from "@/lib/setup-wizard";
 import {
   SetupEquipmentStep,
@@ -602,6 +603,36 @@ function CompleteProfileModal({
     ? tn("savedWithPassword")
     : tn("saved");
 
+  /**
+   * Тап по шагу в полоске шагов (владелец, 2026-11-23: «переключение шагов не
+   * работает» — до сохранения анкеты кнопки были выключены и молчали).
+   * Анкета сохранена — просто переходим. Не сохранена — тап по следующему
+   * шагу значит «сохранить и перейти туда»; если анкета заполнена неверно,
+   * остаёмся на ней, подсвечиваем обязательные поля и говорим почему.
+   */
+  async function selectStep(next: SetupStep) {
+    if (next === step || busy) return;
+    if (profileSaved || next === "profile") {
+      setStep(next);
+      return;
+    }
+    if (!canSubmit) {
+      setTouched((t) => ({ ...t, org: true, phone: true, password: true }));
+      toast.error(tn("setup.fillProfileFirst"));
+      return;
+    }
+    setSaving(true);
+    try {
+      const saved = await saveProfile();
+      if (!saved) return;
+      setProfileSaved(true);
+      toast.success(savedMessage);
+      setStep(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
@@ -683,9 +714,10 @@ function CompleteProfileModal({
         data-mobile-sheet
         className="relative flex max-h-[94dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)] max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 sm:rounded-3xl sm:pb-0"
       >
-        {/* Ручка — признак листа снизу (как у `ui/dialog` на телефоне). */}
-        <div aria-hidden className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[#dcdfed] sm:hidden" />
-        <div className="flex shrink-0 items-start gap-3 px-4 pb-1 pt-3.5 sm:px-5 sm:pt-5">
+        {/* Ручка — признак листа снизу: полоска, под пальцем — стрелка вниз
+            (общая `SheetGrabber`; жест ведёт `motion-presence.ts`). */}
+        <SheetGrabber />
+        <div className="flex shrink-0 items-start gap-3 px-4 pb-1 pt-0.5 sm:px-5 sm:pt-5">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
             <UserRoundPen className="size-[18px]" />
           </span>
@@ -724,11 +756,7 @@ function CompleteProfileModal({
           </button>
         </div>
 
-        <SetupStepper
-          step={step}
-          onSelect={setStep}
-          canSelect={(key) => key === "profile" || profileSaved}
-        />
+        <SetupStepper step={step} onSelect={(next) => void selectStep(next)} />
 
         {step === "points" ? (
           <SetupPointsStep defaultAddress={address.trim()} onDone={advance} />
@@ -1116,6 +1144,8 @@ function Field({
   return (
     <Tag className={`block ${className}`} data-guide={guide}>
       <span
+        // Поле с ошибкой один раз вздрагивает (`motion.css`, раздел 2b).
+        data-field-invalid={error || invalid ? "" : undefined}
         className={`flex flex-col gap-0.5 rounded-2xl border bg-white px-3.5 py-2 transition-[border-color,box-shadow] focus-within:ring-4 ${
           error || invalid
             ? "border-[#ff8d7d] focus-within:border-[#d2453d] focus-within:ring-[#d2453d]/15"

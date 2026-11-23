@@ -290,3 +290,45 @@ test("круг 2, AC5: лист закрывается, если протяну�
   assert.equal(sheetDragCloses(40), false);
   assert.equal(sheetDragCloses(0), false);
 });
+
+/* ── Круг 3: жест листа ── */
+
+test("круг 3: лист закрывает протяжка дальше порога или быстрое смахивание, тап — нет", async () => {
+  const { sheetDragCloses, SHEET_DISMISS_PX, SHEET_FLICK_VELOCITY, SHEET_FLICK_MIN_PX } = await import("./motion-model");
+  assert.equal(sheetDragCloses(SHEET_DISMISS_PX + 1), true);
+  assert.equal(sheetDragCloses(SHEET_DISMISS_PX), false);
+  // Тап по ручке: смещения нет — лист остаётся, с какой бы «скоростью» ни пришло событие.
+  assert.equal(sheetDragCloses(0), false);
+  assert.equal(sheetDragCloses(0, 5), false);
+  // Смахивание: быстро и не меньше чем на SHEET_FLICK_MIN_PX.
+  assert.equal(sheetDragCloses(SHEET_FLICK_MIN_PX, SHEET_FLICK_VELOCITY), true);
+  assert.equal(sheetDragCloses(SHEET_FLICK_MIN_PX - 1, 3), false);
+  assert.equal(sheetDragCloses(60, SHEET_FLICK_VELOCITY - 0.01), false);
+});
+
+test("круг 3: первое движение решает, чей жест — лист тянут только вниз", async () => {
+  const { sheetGesture } = await import("./motion-model");
+  assert.equal(sheetGesture(0, 0), "undecided");
+  assert.equal(sheetGesture(1, 1), "undecided");
+  assert.equal(sheetGesture(0, 6), "pull");
+  assert.equal(sheetGesture(5, 6), "pull");
+  // Вбок (ряд чипов листается) и вверх — не наше.
+  assert.equal(sheetGesture(9, 3), "release");
+  assert.equal(sheetGesture(-9, 3), "release");
+  assert.equal(sheetGesture(0, -8), "release");
+});
+
+test("круг 3: ручка — стрелка, пока лист тянут, и в акценте за порогом закрытия", async () => {
+  const { grabberState, SHEET_DISMISS_PX } = await import("./motion-model");
+  assert.equal(grabberState(0), "");
+  assert.equal(grabberState(SHEET_DISMISS_PX), "");
+  assert.equal(grabberState(SHEET_DISMISS_PX + 1), "armed");
+});
+
+test("круг 3: скорость протяжки сглаживается, первое измерение берётся как есть", async () => {
+  const { smoothVelocity } = await import("./motion-model");
+  assert.equal(smoothVelocity(0, 0.9, true), 0.9);
+  assert.ok(Math.abs(smoothVelocity(1, 0.5, false) - 0.7) < 1e-9);
+  // Один выброс не превращает медленную протяжку в смахивание.
+  assert.ok(smoothVelocity(0.1, 0.9, false) < 0.6);
+});

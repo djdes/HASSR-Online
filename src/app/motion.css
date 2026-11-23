@@ -211,22 +211,135 @@
 /* A field that frames itself (label, icon and input in one box with `focus-within:*`): the
    same bloom on the box. */
 :root :where([class*="focus-within:ring-"], [class*="focus-within:border-"], [class*="focus-within:shadow-"]) {
-  transition-property: color, background-color, border-color, box-shadow;
-  transition-duration: 0.18s, 0.18s, 0.18s, 0.24s;
-  transition-timing-function: ease, ease, ease, ease-out;
+  transition-property: color, background-color, border-color, box-shadow, scale;
+  transition-duration: 0.18s, 0.18s, 0.18s, 0.24s, 0.5s;
+  transition-timing-function: ease, ease, ease, ease-out, var(--spring);
 }
 :root :where([class*="focus-within:ring-"], [class*="focus-within:border-"], [class*="focus-within:shadow-"]):focus-within {
-  transition-duration: 0.18s, 0.18s, 0.18s, 0.42s;
-  transition-timing-function: ease, ease, ease, var(--spring);
+  transition-duration: 0.18s, 0.18s, 0.18s, 0.42s, 0.5s;
+  transition-timing-function: ease, ease, ease, var(--spring), var(--spring);
 }
 /* The hint steps back when the field is taken; typing replaces it anyway. */
 :root :where(input, textarea)::placeholder {
   transition:
     opacity 0.2s ease,
-    color 0.18s ease;
+    color 0.18s ease,
+    translate 0.36s var(--spring-soft);
 }
 :root :where(input, textarea):focus::placeholder {
   opacity: 0.6;
+  translate: 6px 0;
+}
+
+/* ---- 2b. The field answers (owner, 2026-11-23: «недостаточно анимаций у текстовых полей»).
+   Taking a field is an event, and the whole field says so, not only its ring:
+   • the field — or the box that frames it — takes one short breath;
+   • its caption and the leading icon take the accent while it is being edited;
+   • on a touch screen it gives under the finger;
+   • a field that has just been found wrong shakes its head once.
+   Not in tables and journal grids: there the cell is the field and a grid must not twitch. ---- */
+@keyframes motion-field-in {
+  40% {
+    scale: 1.012;
+  }
+}
+@keyframes motion-field-no {
+  18% {
+    translate: -5px 0;
+  }
+  42% {
+    translate: 4px 0;
+  }
+  66% {
+    translate: -2px 0;
+  }
+  86% {
+    translate: 1px 0;
+  }
+}
+:root
+  :where(
+    input:not(
+        [type="checkbox"],
+        [type="radio"],
+        [type="range"],
+        [type="color"],
+        [type="file"],
+        [type="hidden"],
+        [type="submit"],
+        [type="button"],
+        [type="reset"],
+        [type="image"]
+      ),
+    textarea,
+    select
+  ):where(:not(table *, [role="grid"] *, [class*="focus-within"] *)):focus,
+:root :where([class*="focus-within:ring-"], [class*="focus-within:border-"], [class*="focus-within:shadow-"]):has(:where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):focus) {
+  animation: motion-field-in 0.44s var(--spring-soft);
+}
+@media (hover: none) and (pointer: coarse) {
+  :root
+    :where(
+    input:not(
+        [type="checkbox"],
+        [type="radio"],
+        [type="range"],
+        [type="color"],
+        [type="file"],
+        [type="hidden"],
+        [type="submit"],
+        [type="button"],
+        [type="reset"],
+        [type="image"]
+      ),
+    textarea,
+    select
+  ):where(:not(table *, [role="grid"] *, [class*="focus-within"] *)):active,
+  :root :where([class*="focus-within:ring-"], [class*="focus-within:border-"], [class*="focus-within:shadow-"]):has(:where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):active) {
+    scale: 0.985;
+  }
+}
+/* The caption. Three ways a field is captioned on the site: a label right above the field (or
+   above the wrapper of the field), a label that wraps the caption and the field, and a box with
+   the caption or an icon as its first child. `!important`: the caption has a colour class of
+   its own, and the dark theme and the «Новая» palette repaint that class with rules stronger
+   than anything this layer may say. A caption that reports an error keeps its colour. */
+:root :where(label, [data-slot="label"]),
+:root :where([class*="focus-within:ring-"], [class*="focus-within:border-"], [class*="focus-within:shadow-"]) > :where(span, label, p, svg):first-child {
+  transition: color 0.18s ease;
+}
+:root
+  :where(label, [data-slot="label"]):where(:not([data-error="true"])):where(
+    :has(+ :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):focus:not([aria-invalid="true"])),
+    :has(+ * > :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):focus:not([aria-invalid="true"])),
+    :has(+ * > * > :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):focus:not([aria-invalid="true"]))
+  ),
+:root :where(label):has(> :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):focus:not([aria-invalid="true"])) > :where(span, p):first-child:where(:not(:has(input, textarea, select, button))),
+:root
+  :where([class*="focus-within:ring-"], [class*="focus-within:border-"], [class*="focus-within:shadow-"]):where(:not([data-field-invalid])):has(:where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), textarea, select):focus:not([aria-invalid="true"]))
+  > :where(span, label, p, svg):first-child:where(:not(:has(input, textarea, select, button))) {
+  color: var(--app-indigo, #5566f6) !important;
+}
+/* After the breath in the cascade: a field that is both taken and wrong says «wrong». */
+:root
+  :where(
+    input:not(
+        [type="checkbox"],
+        [type="radio"],
+        [type="range"],
+        [type="color"],
+        [type="file"],
+        [type="hidden"],
+        [type="submit"],
+        [type="button"],
+        [type="reset"],
+        [type="image"]
+      ),
+    textarea,
+    select
+  ):where(:not(table *, [role="grid"] *, [class*="focus-within"] *))[aria-invalid="true"],
+:root :where([data-field-invalid]) {
+  animation: motion-field-no 0.38s ease-out;
 }
 /* A bordered text field with no focus style of its own gets the standard ring. In the base
    layer: any utility (`focus:ring-*`, `focus:border-*`, `outline-*`) still wins. Not in tables
@@ -497,28 +610,137 @@
   pointer-events: none !important;
 }
 
-/* ---- 11. A hand-built sheet on a phone can be pulled down by its top; the handle says so.
-   Only where the sheet has a close button of its own — a sheet that cannot be closed has none. ---- */
-@media (width < 40rem) {
-  :root
-    :where([role="dialog"], [role="alertdialog"]):where(
-      :not([data-slot], [data-state], [data-vaul-drawer], [class~="inset-0"])
-    ):where([class*="rounded-t-"]):has(button > svg.lucide-x, button[aria-label*="акрыть"], button[aria-label*="lose"]),
-  :root
-    :where([role="dialog"], [role="alertdialog"]):where([class~="inset-0"]):where(:not([data-slot], [data-state], [data-vaul-drawer]))
-    > :where([class*="rounded-t-"]:not([class~="absolute"], [class~="fixed"])):has(
-      button > svg.lucide-x,
-      button[aria-label*="акрыть"],
-      button[aria-label*="lose"]
-    ) {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='4'%3E%3Crect width='40' height='4' rx='2' fill='%238a8ea4' fill-opacity='0.5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center 6px;
-    background-size: 40px 4px;
+/* ---- 11. The sheet handle — one on every bottom sheet (`SheetGrabber` in `Dialog`,
+   `BottomSheet` and the registration wizard; added by the runtime to hand-built sheets). A bar of
+   two halves: while a finger is on the handle or the sheet is being pulled the halves fold into
+   a down arrow, on release they straighten again. `data-pulled` is set by whoever drives the
+   gesture; `armed` means the sheet is past the point where letting go closes it.
+   `touch-action: none`: a touch that starts here is never taken by the page (scroll, rubber
+   band, pull-to-refresh) — the sheet gets it. ---- */
+:root :where([data-sheet-grabber]) {
+  --grabber-w: 40px;
+  --grabber-h: 5px;
+  position: relative;
+  z-index: 1;
+  display: block;
+  flex: none;
+  width: 100%;
+  height: 24px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Over the top edge of the sheet, without moving its header. Narrow: the corners of the sheet
+   belong to the close button. */
+:root :where([data-sheet-grabber="float"]) {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 50%;
+  z-index: 40;
+  width: 112px;
+  margin: 0;
+  translate: -50% 0;
+}
+:root :where([data-sheet-grabber])::before,
+:root :where([data-sheet-grabber])::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  /* Half of the bar plus half of its thickness: the round caps of the two halves meet in the
+     middle, and that middle is the joint they turn around. */
+  width: calc(var(--grabber-w) / 2 + var(--grabber-h) / 2);
+  height: var(--grabber-h);
+  border-radius: 999px;
+  background-color: #c3c6d6;
+  background-color: color-mix(in srgb, var(--app-text, #0b1024) 24%, var(--app-surface, #ffffff));
+  transition:
+    rotate 0.5s var(--spring),
+    translate 0.5s var(--spring),
+    background-color 0.18s ease;
+}
+:root :where([data-sheet-grabber])::before {
+  right: calc(50% - var(--grabber-h) / 2);
+  transform-origin: calc(100% - var(--grabber-h) / 2) 50%;
+  animation: motion-grabber-nod-a 0.9s var(--spring-soft) 0.55s 1 both;
+}
+:root :where([data-sheet-grabber])::after {
+  left: calc(50% - var(--grabber-h) / 2);
+  transform-origin: calc(var(--grabber-h) / 2) 50%;
+  animation: motion-grabber-nod-b 0.9s var(--spring-soft) 0.55s 1 both;
+}
+/* The arrow. Folding is quicker than straightening. `!important` on the two properties the nod
+   animates: a running animation outranks a plain declaration, and switching the animation off
+   here instead would start the nod again on every release. */
+:root :where([data-sheet-grabber]):where(:active, [data-pulled])::before,
+:root :where([data-sheet-grabber]):where(:active, [data-pulled])::after {
+  background-color: #8d91a8;
+  background-color: color-mix(in srgb, var(--app-text, #0b1024) 46%, var(--app-surface, #ffffff));
+  translate: 0 3px !important;
+  transition-duration: 0.28s, 0.28s, 0.12s;
+}
+:root :where([data-sheet-grabber]):where(:active, [data-pulled])::before {
+  rotate: 22deg !important;
+}
+:root :where([data-sheet-grabber]):where(:active, [data-pulled])::after {
+  rotate: -22deg !important;
+}
+:root :where([data-sheet-grabber][data-pulled="armed"])::before,
+:root :where([data-sheet-grabber][data-pulled="armed"])::after {
+  background-color: var(--app-indigo, #5566f6);
+}
+/* On a coloured header the handle is light. One opacity for the pair: the halves overlap in the
+   middle, and two translucent halves would show a darker joint. */
+:root :where([data-sheet-grabber][data-tone="light"]) {
+  opacity: 0.6;
+  transition: opacity 0.18s ease;
+}
+:root :where([data-sheet-grabber][data-tone="light"]):where(:active, [data-pulled]) {
+  opacity: 1;
+}
+:root :where([data-sheet-grabber][data-tone="light"])::before,
+:root :where([data-sheet-grabber][data-tone="light"])::after {
+  background-color: #ffffff;
+}
+/* Once, after the sheet has landed: the handle nods — «this can be pulled down». */
+@keyframes motion-grabber-nod-a {
+  45% {
+    rotate: 16deg;
+    translate: 0 2px;
+  }
+}
+@keyframes motion-grabber-nod-b {
+  45% {
+    rotate: -16deg;
+    translate: 0 2px;
+  }
+}
+/* The handle is a phone thing: from 640px a window is a card in the middle. */
+@media (width >= 40rem) {
+  :root :where([data-sheet-grabber]:not([data-sheet-grabber-always])) {
+    display: none;
   }
 }
 
 /* ---- Off: «Без анимации», the system «Reduce motion», print ---- */
+/* A field: no breath, no squeeze, no shake; the ring and the accent of the caption stay. */
+:root[data-view-still] :where(input, textarea, select, [class*="focus-within:"], [data-field-invalid]) {
+  animation: none;
+}
+:root[data-view-still] :where(input, textarea, select, [class*="focus-within:"]):active,
+:root[data-view-still] :where([class*="focus-within:"]):has(:active) {
+  scale: none;
+}
+:root[data-view-still] :where(input, textarea):focus::placeholder {
+  translate: none;
+}
+/* The handle still turns into the arrow under the finger — at once, and it does not nod. */
+:root[data-view-still] :where([data-sheet-grabber])::before,
+:root[data-view-still] :where([data-sheet-grabber])::after {
+  animation: none;
+  transition: none;
+}
 /* The saved mark still says «saved» — it appears and goes without motion. */
 :root[data-view-still] :where([data-motion-saved]) {
   animation: none !important;
@@ -596,6 +818,21 @@
     content: none;
     transition: none;
   }
+  :root :where(input, textarea, select, [class*="focus-within:"], [data-field-invalid]) {
+    animation: none;
+  }
+  :root :where(input, textarea, select, [class*="focus-within:"]):active,
+  :root :where([class*="focus-within:"]):has(:active) {
+    scale: none;
+  }
+  :root :where(input, textarea):focus::placeholder {
+    translate: none;
+  }
+  :root :where([data-sheet-grabber])::before,
+  :root :where([data-sheet-grabber])::after {
+    animation: none;
+    transition: none;
+  }
   :root :where([data-motion-saved]),
   :root :where(tr[data-row-new]),
   :root :where(tr[data-row-new]) > :where(td, th),
@@ -604,7 +841,7 @@
   }
 }
 @media print {
-  :root :where([data-motion-saved], [data-motion-ghost]) {
+  :root :where([data-motion-saved], [data-motion-ghost], [data-sheet-grabber]) {
     display: none;
   }
   :root :where([data-liquid-host])::before,

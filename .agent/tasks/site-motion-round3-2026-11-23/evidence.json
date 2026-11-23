@@ -1,0 +1,20 @@
+{
+  "task": "site-motion-round3-2026-11-23",
+  "status": "READY_FOR_RELEASE",
+  "base": "c2eff3fd6 (origin/master)",
+  "limit": "No real iPhone here: Safari's own gestures (page scroll under a layer, rubber band, pull-to-refresh) cannot be observed in Chromium. The checks measure what they depend on — the body is pinned, the handle has touch-action: none, the sheet's touchmove is cancelled. The owner's phone is the final check.",
+  "criteria": {
+    "AC1": { "status": "PASS", "proof": "raw/measure.json AC1.menu.page-pinned (body fixed, top -300px), AC1.menu.swipes-past-both-ends, AC1.menu.scroll-restored, AC1.menu.link-closes-and-unpins, AC1.menu.page-change-under-lock, AC1.dialog.page-pinned, AC1.dialog.scroll-restored, AC1.desktop.dialog-not-pinned; src/lib/use-body-scroll-lock.test.ts" },
+    "AC2": { "status": "PASS", "proof": "raw/measure.json AC2.pull.moves-are-cancelled (cancelable and defaultPrevented), AC2.pull.short-springs-back, AC2.pull.long-closes, AC2.pull.flick-closes, AC2.pull.only-down-only-top, AC2.qr.sheet-pull" },
+    "AC3": { "status": "PASS", "proof": "raw/measure.json AC3.wizard.one-handle, AC3.wizard.tap-is-arrow-then-bar (halves at ±22deg, back to 0deg, sheet stays), AC3.wizard.armed-past-threshold, AC3.dialog.handle, AC3.bottom-sheet.handle, AC3.hand-built.handle-added, AC3.assistant.light-handle, AC3.desktop.no-handle, AC3.still.handle-without-motion" },
+    "AC4": { "status": "PASS", "proof": "raw/measure.json AC4.steps.enabled, AC4.steps.invalid-profile-explains (toast, field marked, no save request), AC4.steps.valid-profile-saves-and-goes (one save, then steps go both ways)" },
+    "AC5": { "status": "PASS", "proof": "raw/measure.json AC5.assistant.starters-are-text" },
+    "AC6": { "status": "PASS", "proof": "raw/measure.json AC6.framed.breath-and-caption, AC6.plain.breath-caption-placeholder, AC6.plain.wrong-shakes-table-stays, AC6.touch.field-gives-under-finger, AC6.caption-accent.new, AC6.caption-accent.classic-dark, AC6.still.off, AC6.qr.field-breath" },
+    "AC7": { "status": "PASS", "proof": "raw/verify-round1.json 46/46, raw/verify-round2.json 19/19, raw/crawl.txt (24 pages x3, no errors), raw/measure.json errors.console empty, raw/typecheck.txt exit 0, raw/test-gate.txt 410 pass 0 fail, raw/eslint.txt exit 0, raw/unit-tests.txt 67/67, raw/prod-minify.json nothing dropped" }
+  },
+  "measurements": { "round3": "42/42 (raw/measure.json, raw/measure-round3.cjs)", "round1": "46/46", "round2": "19/19" },
+  "changedChecks": [
+    "raw/measure-round2.cjs: one probe looks for the handle element instead of the background bar round 3 removed on purpose",
+    "src/app/motion.test.ts and src/components/layout/shell-polish-round2.test.ts: assertions that encoded the behaviour the owner changed on 2026-11-23 were rewritten to the new behaviour"
+  ]
+}

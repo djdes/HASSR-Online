@@ -279,8 +279,40 @@ export function isJournalSave(method: string | undefined, url: string): boolean 
 export const SHEET_DISMISS_PX = 90;
 export const SHEET_GRAB_ZONE_PX = 72;
 
-export function sheetDragCloses(offset: number): boolean {
-  return offset > SHEET_DISMISS_PX;
+/** A flick: this fast (px per ms) and at least this far, the sheet closes without being dragged all the way. */
+export const SHEET_FLICK_VELOCITY = 0.6;
+export const SHEET_FLICK_MIN_PX = 30;
+
+/** Released here, does the sheet close? Far enough — or a quick flick down. */
+export function sheetDragCloses(offset: number, velocity = 0): boolean {
+  if (offset > SHEET_DISMISS_PX) return true;
+  return velocity >= SHEET_FLICK_VELOCITY && offset >= SHEET_FLICK_MIN_PX;
+}
+
+/**
+ * What the first real movement of a touch in the grab zone means. Down — the sheet is being
+ * pulled and the page must not take the gesture. Sideways or up — it is not ours (a row of chips
+ * scrolls sideways, a swipe up does nothing to a sheet), let the browser have it.
+ */
+export const SHEET_SLOP_PX = 2;
+
+export function sheetGesture(dx: number, dy: number): "pull" | "release" | "undecided" {
+  if (Math.abs(dx) < SHEET_SLOP_PX && Math.abs(dy) < SHEET_SLOP_PX) return "undecided";
+  if (dy > 0 && dy >= Math.abs(dx)) return "pull";
+  return "release";
+}
+
+/**
+ * Speed of the pull, smoothed so that one jittery sample does not decide a flick. The first
+ * sample is taken as it is: a quick flick may be only two or three events long.
+ */
+export function smoothVelocity(previous: number, sample: number, first: boolean): number {
+  return first ? sample : previous * 0.4 + sample * 0.6;
+}
+
+/** The handle while the sheet is pulled: an arrow, and past the closing point an arrow in the accent. */
+export function grabberState(offset: number): "" | "armed" {
+  return offset > SHEET_DISMISS_PX ? "armed" : "";
 }
 
 /** A placeholder subtree: carries the shimmer and no real text (a screen-reader label at most). */
