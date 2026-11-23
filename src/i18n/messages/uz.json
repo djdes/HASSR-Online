@@ -22919,7 +22919,8 @@
       "stoplist": "Cheklov ro‘yxati",
       "ariaLabel": "Xabar tarqatish bo‘limlari",
       "quick": "Yuborish",
-      "builder": "Konstruktor"
+      "builder": "Konstruktor",
+      "aiDigest": "AI hisobot"
     },
     "feedback": {
       "saveDraftFailed": "Qoralamani saqlab bo‘lmadi",
