@@ -49,7 +49,7 @@ test("«Все журналы»: слева «Моя компания → Объ
   assert.equal(place.entriesAreTabs, false);
   assert.deepEqual(
     place.entries.map((entry) => entry.id),
-    ["staff", "journals", "productionControl", "areas", "equipment", "qr", "printer", "kiosk", "products"],
+    ["points", "staff", "journals", "productionControl", "areas", "equipment", "qr", "printer", "kiosk", "products"],
   );
   const journals = place.entries.find((entry) => entry.id === "journals");
   assert.equal(journals?.active, true);
@@ -76,13 +76,48 @@ test("обычный пункт вложенного раздела: подсв�
   assert.deepEqual(labels(place), ["s:company", "s:points", "i:equipment"]);
 });
 
-test("корень вложенного раздела: строка есть, ни один пункт не выбран", () => {
+test("корень вложенного раздела: «Объекты» — первая вкладка строки и выбрана (владелец, 2026-11-23)", () => {
   const place = buildNewNav(ownerNav, "/settings/buildings");
   assert.equal(place.secondId, "points");
-  assert.ok(place.entries.length > 0);
-  assert.equal(place.entries.some((entry) => entry.active), false);
+  const first = place.entries[0];
+  assert.equal(first?.id, "points");
+  assert.equal(first?.href, "/settings/buildings");
+  assert.equal(first?.label, "s:points");
+  assert.equal(first?.icon, ownerNav.find((section) => section.key === "points")?.icon);
+  assert.equal(first?.panel, undefined);
+  assert.deepEqual(place.entries.filter((entry) => entry.active).map((entry) => entry.id), ["points"]);
   assert.deepEqual(labels(place), ["s:company", "s:points"]);
   assert.equal(place.deep, false);
+});
+
+test("страницы раздела без своего пункта держат выбранными «Объекты»; пункт раздела — свою вкладку", () => {
+  for (const path of ["/settings/buildings/new", "/settings/buildings/abc123"]) {
+    const place = buildNewNav(ownerNav, path);
+    assert.deepEqual(place.entries.filter((entry) => entry.active).map((entry) => entry.id), ["points"], path);
+    assert.equal(place.deep, true, path);
+  }
+  for (const [path, id] of [["/settings/areas", "areas"], ["/journals", "journals"], ["/settings/users", "staff"]]) {
+    const place = buildNewNav(ownerNav, path);
+    assert.equal(place.entries[0]?.id, "points", path);
+    assert.deepEqual(place.entries.filter((entry) => entry.active).map((entry) => entry.id), [id], path);
+  }
+});
+
+test("раздел без своих пунктов («Остальное») — строки над страницей нет, одной вкладки тоже", () => {
+  for (const path of ["/more", "/batches", "/losses", "/reports", "/settings/notifications"]) {
+    const place = buildNewNav(ownerNav, path);
+    assert.deepEqual(place.entries, [], path);
+  }
+});
+
+test("корень раздела уже среди пунктов — лишней вкладки нет («Офис», «Чек-листы»)", () => {
+  for (const path of ["/settings/organization/office", "/checklists/results"]) {
+    const place = buildNewNav(ownerNav, path);
+    const host = ownerNav.find((section) => section.key === place.secondId);
+    const items = host?.menu?.flatMap((group) => group.items.map((item) => item.id)) ?? [];
+    assert.ok(items.length > 0, path);
+    assert.deepEqual(place.entries.map((entry) => entry.id), items, path);
+  }
 });
 
 test("пункт второго уровня с вкладками: строка — его вкладки", () => {
@@ -162,9 +197,15 @@ test("«Моя компания» открывает первую строчку
 test("строка и панель несут иконку пункта; у вкладок иконки нет", () => {
   const place = buildNewNav(ownerNav, "/journals");
   const itemsOf = (key: string) => ownerNav.find((section) => section.key === key)?.menu?.flatMap((group) => group.items) ?? [];
-  // Строка — пункты «Объектов»: иконка та же, что у пункта в модели меню.
+  // Строка — пункты «Объектов»: иконка та же, что у пункта в модели меню; первая
+  // вкладка — сам раздел, с иконкой раздела.
   for (const entry of place.entries) {
-    assert.equal(entry.icon, itemsOf("points").find((item) => item.id === entry.id)?.icon, `строка: ${entry.id}`);
+    const icon =
+      entry.id === "points"
+        ? ownerNav.find((section) => section.key === "points")?.icon
+        : itemsOf("points").find((item) => item.id === entry.id)?.icon;
+    assert.ok(icon, `строка: ${entry.id}`);
+    assert.equal(entry.icon, icon, `строка: ${entry.id}`);
     for (const link of entry.panel?.flatMap((group) => group.links) ?? []) {
       for (const tab of link.tabs) assert.equal(tab.icon, undefined, `вкладка: ${tab.id}`);
     }

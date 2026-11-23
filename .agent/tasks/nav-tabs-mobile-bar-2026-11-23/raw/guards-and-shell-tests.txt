@@ -1,0 +1,10 @@
+# Сводка полного вывода (TAP сокращён до итогов; запуск 2026-11-23)
+# tests 194
+# suites 2
+# pass 194
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4661.166689
+exit=0

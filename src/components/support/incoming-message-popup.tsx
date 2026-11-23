@@ -32,7 +32,7 @@ export function IncomingMessagePopup({
       role="status"
       aria-live="polite"
       className={cn(
-        "fixed bottom-[76px] right-4 z-50 w-[min(340px,calc(100vw-2rem))] sm:right-5",
+        "fixed bottom-[max(76px,calc(var(--app-tabbar-space,0px)+8px))] right-4 z-50 w-[min(340px,calc(100vw-2rem))] sm:right-5",
         "motion-safe:animate-[incoming-popup-in_220ms_cubic-bezier(0.16,1,0.3,1)_both]",
         className
       )}

@@ -3181,6 +3181,20 @@
       "scrollLeft": "Menyuni chapga aylantirish",
       "scrollRight": "Menyuni o‘ngga aylantirish",
       "openSection": "Bo‘limni ochish",
+      "submenu": "Ichki bandlar: {name}",
+      "tabBar": {
+        "aria": "Pastki menyu",
+        "home": "Bosh sahifa",
+        "journals": "Jurnallar",
+        "contacts": "Kontaktlar",
+        "contactsUnread": "Kontaktlar · yangi xabarlar: {count, number}",
+        "settings": "Sozlamalar"
+      },
+      "pageActions": {
+        "dockAria": "Sahifa amallari",
+        "qr": "QR",
+        "qrTitle": "QR stikerlar va plakatlar"
+      },
       "brandingSettings": "Brend uslubi"
     },
     "header": {
@@ -28890,6 +28904,7 @@
       "title": "Nuqtalar va xonalar",
       "description": "Biznes nuqtalari (manzilli binolar) va ularning ichidagi xonalar. Tozalash jurnallaridagi vazifalar xonalar bo‘yicha beriladi — kuniga xona uchun bitta vazifa. Nuqtalar bir nechta bo‘lsa, jurnallarni har biri uchun alohida yuritish mumkin: pastdagi tumbler bilan yoqiladi.",
       "qrPostersHint": "Har bir xona uchun QR-kodli A4 plakat: xodim skanerlaydi va tizimga kirmasdan harorat va namlikni kiritadi",
+      "qrPostersShort": "QR-plakatlar",
       "qrPosters": "Xonalar QR-plakatlari",
       "guideTitle": "Nuqtalar va xonalarni qanday sozlash",
       "guide1Title": "Nuqta — bu manzil",

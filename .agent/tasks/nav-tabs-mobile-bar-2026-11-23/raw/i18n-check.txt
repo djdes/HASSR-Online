@@ -1,0 +1,12 @@
+# Сводка полного вывода (TAP сокращён до итогов; запуск 2026-11-23)
+> haccp-online@0.1.0 i18n:check
+> node scripts/i18n-types.mjs --check && node --import tsx --test src/i18n/*.test.ts
+# tests 101
+# suites 1
+# pass 101
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18669.049447
+exit=0

@@ -1,0 +1,6 @@
+  400:20  warning  Error: Cannot call impure function during render
+✖ 1 problem (0 errors, 1 warning)
+-- src/app/(dashboard)/settings/equipment/page.tsx
+  67:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+✖ 1 problem (0 errors, 1 warning)
+-- src/components/journals/journal-selection-bar.tsx

@@ -1138,6 +1138,16 @@ html, body {
   text-size-adjust: 100%;
 }
 
+/* Страницу прокручивает <html> (`overflow-x: clip` выше), поэтому блокировка
+   <body> на время меню, листа или окна полосу прокрутки не убирает. А
+   react-remove-scroll-bar (Radix, vaul) всё равно добавлял <body> правое поле
+   на ширину полосы — на компьютере с обычной полосой (Windows, 17px) кабинет
+   уезжал влево, пока меню открыто (владелец, 2026-11-23). */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+  --removed-body-scroll-bar-size: 0px;
+}
+
 @media (max-width: 767px) {
   /* ── Modals/Dialogs: cap max-w в любых вариациях ─────────────── */
   /* Любой Radix Dialog или popover не должен выезжать за viewport.

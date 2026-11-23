@@ -1,0 +1,73 @@
+{
+ "/journals/ccp_monitoring/new": {
+  "url": "/journals/ccp_monitoring/new",
+  "bar": {
+   "top": 592,
+   "bottom": 654,
+   "cssBottom": "10px"
+  },
+  "stickies": [
+   {
+    "top": 451,
+    "bottom": 584,
+    "cssBottom": "80px"
+   }
+  ]
+ },
+ "/journals/incoming_control/new": {
+  "url": "/journals/incoming_control/new",
+  "bar": {
+   "top": 592,
+   "bottom": 654,
+   "cssBottom": "10px"
+  },
+  "stickies": []
+ },
+ "/settings/names": {
+  "url": "/settings/names",
+  "bar": {
+   "top": 592,
+   "bottom": 654,
+   "cssBottom": "10px"
+  },
+  "stickies": [
+   {
+    "top": 510,
+    "bottom": 584,
+    "cssBottom": "80px"
+   }
+  ]
+ },
+ "/settings/permissions": {
+  "url": "/settings/permissions",
+  "bar": {
+   "top": 592,
+   "bottom": 654,
+   "cssBottom": "10px"
+  },
+  "stickies": [
+   {
+    "top": 510,
+    "bottom": 584,
+    "cssBottom": "80px"
+   }
+  ]
+ },
+ "more": {
+  "row": false,
+  "tabs": 0
+ },
+ "mini": {
+  "miniRoot": true,
+  "dock": {
+   "top": 518,
+   "bottom": 574
+  },
+  "open": true,
+  "nav": {
+   "top": 582,
+   "bottom": 652
+  },
+  "tabbar": false
+ }
+}
