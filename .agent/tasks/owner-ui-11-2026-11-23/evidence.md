@@ -1,6 +1,6 @@
 # Evidence: 11 правок владельца (23.11.2026)
 
-Ветка `claude/gallant-lamport-ye778b` от master `6f95d7c6a`. Проверка — на текущем коде:
+Ветка `claude/gallant-lamport-ye778b` от master `6f95d7c6a`, коммит `3a99f66b1`, PR djdes/HASSR-Online#313. Проверка — на текущем коде:
 
 - локальный стенд: PostgreSQL 16 (`haccp_online`), `prisma db push`, `prisma/seed.ts` + `prisma/seed-haccp-demo.ts`
   (управляющий `admin@haccp.local`), для AC4 добавлены объекты «Офис» (office) и «Кафе на Ленина» (point),
