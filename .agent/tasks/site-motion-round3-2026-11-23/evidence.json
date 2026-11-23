@@ -1,6 +1,7 @@
 {
   "task": "site-motion-round3-2026-11-23",
   "status": "READY_FOR_RELEASE",
+  "commit": "508b557a3",
   "base": "c2eff3fd6 (origin/master)",
   "limit": "No real iPhone here: Safari's own gestures (page scroll under a layer, rubber band, pull-to-refresh) cannot be observed in Chromium. The checks measure what they depend on — the body is pinned, the handle has touch-action: none, the sheet's touchmove is cancelled. The owner's phone is the final check.",
   "criteria": {
