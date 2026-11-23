@@ -62,24 +62,17 @@ function PageActionsDock({ anchor, children }: { anchor: RefObject<HTMLDivElemen
   useEffect(() => {
     const target = anchor.current;
     if (!target || typeof IntersectionObserver === "undefined") return;
-    // Только телефон и планшет: на компьютере кнопки остаются в шапке страницы.
-    const narrow = window.matchMedia("(max-width: 1023.98px)");
-    let visible = true;
-    let above = false;
-    // Нет ни одной кнопки (просмотр, нечего печатать) — полосы нет.
-    const update = () => setPast(narrow.matches && !visible && above && target.childElementCount > 0);
+    // От ширины экрана не зависит: на компьютере полосу прячет CSS (`lg:hidden`).
+    // Иначе поворот планшета (820 → 1180px) снимал бы её вместе с открытым из
+    // неё окном «Добавить» и набранным текстом.
     const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
       // Ушёл вверх, а не ещё не доехал снизу (короткая страница, якорь ниже экрана).
-      above = entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0) + 1;
-      update();
+      const above = entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0) + 1;
+      // Нет ни одной кнопки (просмотр, нечего печатать) — полосы нет.
+      setPast(!entry.isIntersecting && above && target.childElementCount > 0);
     });
     observer.observe(target);
-    narrow.addEventListener("change", update);
-    return () => {
-      observer.disconnect();
-      narrow.removeEventListener("change", update);
-    };
+    return () => observer.disconnect();
   }, [anchor]);
 
   useEffect(() => {

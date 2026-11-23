@@ -11,8 +11,8 @@
 | Проверка | Результат | Файл |
 | --- | --- | --- |
 | `npm run typecheck` | PASS (exit 0) | `raw/typecheck.txt` |
-| `npm run test:changed` | PASS — 70 файлов, 313 проверок, 0 падений | `raw/test-changed.txt` |
-| Стражи дизайна и оболочки (`src/app/*.test.ts`: один акцент, без рамок, нейтральная палитра, движение; `components/layout/*.test.ts`, `app-nav`, `nav-layout`, `mobile-tab-bar`, `view-prefs`, `room-kinds`, `motion-model`) | PASS — 193 из 193 | `raw/guards-and-shell-tests.txt` |
+| `npm run test:changed` | PASS — 70 файлов, 314 проверок, 0 падений | `raw/test-changed.txt` |
+| Стражи дизайна и оболочки (`src/app/*.test.ts`: один акцент, без рамок, нейтральная палитра, движение; `components/layout/*.test.ts`, `app-nav`, `nav-layout`, `mobile-tab-bar`, `view-prefs`, `room-kinds`, `motion-model`) | PASS — 194 из 194 | `raw/guards-and-shell-tests.txt` |
 | `npm run i18n:check` | PASS — 101 из 101 | `raw/i18n-check.txt` |
 | eslint по изменённым файлам | 0 ошибок; 2 предупреждения — те же, что на master (`equipment/page.tsx` «impure function», `journal-selection-bar.tsx` setState в эффекте) | `raw/eslint.txt`, `raw/eslint-baseline.txt` |
 | `npm run borderless`, `npm run palette:neutral` | пересобраны (новые файлы и классы) | `src/app/borderless.css`, `src/app/neutral-palette.css` |
@@ -62,6 +62,29 @@
   `message-contract.d.ts` пересобран; модель меню покрыта `src/lib/mobile-tab-bar.test.ts`.
 - **AC9 — PASS.** См. таблицу проверок выше; скриншоты компьютера (светлая и тёмная) и телефона (светлая и
   тёмная), планшета — `raw/screens/`.
+
+## Независимое ревью кода и исправления
+
+Свежий ревьюер (только чтение, `b33ab62c1..9d1bed48a`) нашёл пять проблем; все подтверждены и исправлены:
+
+1. Нижнее меню закрывало липкие панели страниц у нижнего края («Сохранить запись» формы журнала,
+   «Сохранить» редакторов настроек, кнопки карточек журнала, ознакомление). Теперь на <1024px липкие
+   панели в `main` останавливаются над меню (`--app-tabbar-space`), как в мини-приложении; пока печатают,
+   место под меню не держится. Проверка: подвал `/journals/ccp_monitoring/new`, панели `/settings/names` и
+   `/settings/permissions` — низ на 584px, меню с 592px (`raw/ui-check-review-fixes.json`).
+2. На страницах «Остального» (`/more`, `/batches`, `/reports`…) появлялась строка из одной вкладки: у раздела
+   нет своих пунктов. Правило `buildNewNav` срабатывает только при непустой строке; тест в
+   `nav-layout.test.ts`; `/more` — строки нет.
+3. Подложка нижнего меню могла остаться на нажатой вкладке, если переход не случился (нажали текущую,
+   Ctrl/Cmd-клик). Нажатие текущей вкладки и клики с модификаторами её не трогают; через 10 с без перехода
+   она возвращается.
+4. Поворот планшета через 1024px снимал полосу действий вместе с открытым из неё окном «Добавить». Полоса
+   больше не зависит от ширины экрана: на компьютере её прячет CSS.
+5. В мини-приложении полоса действий пряталась под его нижним меню. Теперь она над ним (`--mini-nav-h`):
+   низ полосы на 574px, меню мини-приложения с 582px.
+
+После исправлений: `typecheck` — exit 0; `test:changed` — 314 проверок, 0 падений; стражи и оболочка —
+194 из 194; eslint по исправленным файлам — чисто.
 
 ## Вердикт
 

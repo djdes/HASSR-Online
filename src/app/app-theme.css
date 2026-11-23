@@ -2076,9 +2076,23 @@ html[data-view-still] [data-pending-spinner] {
   :root:has([data-mobile-tabbar]) {
     --app-tabbar-space: calc(var(--app-tabbar-h) + var(--app-tabbar-gap) + 8px);
   }
+  /* Печатают (меню уехало, форма журнала ставит `data-keyboard-open`) — места
+     под меню не нужно: кнопки формы встают у клавиатуры. */
+  :root:is([data-keyboard-open], :has([data-mobile-tabbar][data-typing])) {
+    --app-tabbar-space: 0px;
+  }
   :root:has([data-page-dock][data-open]) {
     --app-dock-space: 64px;
   }
+  /* Липкие панели страниц у нижнего края («Сохранить запись» формы журнала,
+     «Сохранить» редакторов настроек, кнопки карточек журнала) останавливаются
+     над нижним меню, а не под ним — как в мини-приложении (`mini-theme.css`). */
+  :root:has([data-mobile-tabbar]) .app-shell:not(.mini-root) main .sticky[class*="bottom-"]:not([class*="top-"]) {
+    bottom: var(--app-tabbar-space);
+  }
+}
+html[data-keyboard-open] [data-mobile-tabbar] {
+  visibility: hidden;
 }
 
 /* Полоса действий страницы: выезжает снизу, когда кнопки шапки ушли вверх. */
@@ -2099,6 +2113,11 @@ html[data-view-still] [data-pending-spinner] {
 }
 html[data-view-still] [data-page-dock] {
   transition: none;
+}
+/* Мини-приложение показывает те же страницы со своим нижним меню: полоса
+   действий встаёт над ним (`--mini-nav-h`, `--mini-safe-b` — mini-theme.css). */
+body:has(.mini-root) [data-page-dock] {
+  bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 8px);
 }
 
 /* Нижнее меню телефона (`mobile-tab-bar.tsx`): плавает над краем экрана,

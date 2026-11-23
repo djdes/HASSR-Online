@@ -87,8 +87,15 @@ export function MobileTabBar({ homeHref }: { homeHref: string }) {
   const journalsHref = journalsTabHref(sections);
   const tabs = useMemo(() => mobileTabs({ homeHref, journalsHref }), [homeHref, journalsHref]);
   const current = activeMobileTab(tabs, pathname);
-  // Нажали ссылку — подложка едет сразу, не дожидаясь новой страницы.
+  // Нажали ссылку — подложка едет сразу, не дожидаясь новой страницы. Переход
+  // не случился (передумали и нажали текущую, сбой сети) — через 10 с подложка
+  // возвращается к текущей странице.
   const [pressed, setPressed] = useState<{ id: MobileTabId; from: string } | null>(null);
+  useEffect(() => {
+    if (!pressed) return;
+    const timer = window.setTimeout(() => setPressed(null), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [pressed]);
   const active = pressed && pressed.from === pathname ? pressed.id : current;
   const index = Math.max(0, tabs.findIndex((tab) => tab.id === active));
 
@@ -166,8 +173,10 @@ export function MobileTabBar({ homeHref }: { homeHref: string }) {
                 aria-current={selected ? "page" : undefined}
                 data-tabbar-tab={tab.id}
                 data-active={selected ? "" : undefined}
-                onClick={() => {
-                  if (tab.id !== current) setPressed({ id: tab.id, from: pathname });
+                onClick={(event) => {
+                  // Новая вкладка или окно (Ctrl, Cmd, Shift, средняя кнопка) — здесь ничего не меняется.
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                  setPressed(tab.id === current ? null : { id: tab.id, from: pathname });
                 }}
                 className={className}
               >

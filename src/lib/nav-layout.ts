@@ -134,7 +134,8 @@ export function buildNewNav(sections: readonly NavModelSection[], pathname: stri
     // список объектов, владелец 2026-11-23), — первая вкладка строки: на неё
     // человек попадает, войдя в раздел, и она выбрана, пока он на страницах
     // раздела без своего пункта (мастер нового объекта, страница объекта).
-    if (!entries.some((entry) => entry.href === host.rootHref)) {
+    // Раздела без своих пунктов («Остальное») это не касается: строки нет.
+    if (entries.length > 0 && !entries.some((entry) => entry.href === host.rootHref)) {
       entries.unshift({
         id: host.key,
         href: host.rootHref,

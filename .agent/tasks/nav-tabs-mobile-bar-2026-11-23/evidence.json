@@ -5,34 +5,92 @@
   "checkedAt": "2026-11-23",
   "verdict": "PASS",
   "checks": {
-    "typecheck": { "status": "PASS", "evidence": "raw/typecheck.txt" },
-    "tests": { "status": "PASS", "evidence": "raw/test-changed.txt", "note": "targeted: 70 files, pass=313, fail=0" },
-    "designGuardsAndShell": { "status": "PASS", "evidence": "raw/guards-and-shell-tests.txt", "note": "193/193" },
-    "i18n": { "status": "PASS", "evidence": "raw/i18n-check.txt", "note": "101/101" },
-    "eslint": { "status": "PASS", "evidence": ["raw/eslint.txt", "raw/eslint-baseline.txt"], "note": "0 errors; 2 warnings pre-existing on master" },
-    "browserDesktop": { "status": "PASS", "evidence": "raw/ui-check-desktop.json" },
-    "browserMobile": { "status": "PASS", "evidence": ["raw/ui-check-mobile.json", "raw/ui-check-typing.json"] }
+    "typecheck": {
+      "status": "PASS",
+      "evidence": "raw/typecheck.txt"
+    },
+    "tests": {
+      "status": "PASS",
+      "evidence": "raw/test-changed.txt",
+      "note": "targeted: 70 files, pass=314, fail=0"
+    },
+    "designGuardsAndShell": {
+      "status": "PASS",
+      "evidence": "raw/guards-and-shell-tests.txt",
+      "note": "194/194"
+    },
+    "i18n": {
+      "status": "PASS",
+      "evidence": "raw/i18n-check.txt",
+      "note": "101/101"
+    },
+    "eslint": {
+      "status": "PASS",
+      "evidence": [
+        "raw/eslint.txt",
+        "raw/eslint-baseline.txt"
+      ],
+      "note": "0 errors; 2 warnings pre-existing on master"
+    },
+    "browserDesktop": {
+      "status": "PASS",
+      "evidence": "raw/ui-check-desktop.json"
+    },
+    "browserMobile": {
+      "status": "PASS",
+      "evidence": [
+        "raw/ui-check-mobile.json",
+        "raw/ui-check-typing.json"
+      ]
+    },
+    "browserReviewFixes": {
+      "status": "PASS",
+      "evidence": "raw/ui-check-review-fixes.json"
+    }
   },
   "acceptance": {
     "AC1": {
       "status": "PASS",
-      "evidence": ["src/lib/nav-layout.ts", "src/lib/nav-layout.test.ts", "raw/ui-check-desktop.json#AC1_AC2_1600", "raw/ui-check-desktop.json#AC1_other"]
+      "evidence": [
+        "src/lib/nav-layout.ts",
+        "src/lib/nav-layout.test.ts",
+        "raw/ui-check-desktop.json#AC1_AC2_1600",
+        "raw/ui-check-desktop.json#AC1_other"
+      ]
     },
     "AC2": {
       "status": "PASS",
-      "evidence": ["src/components/layout/section-top-menu.tsx", "raw/ui-check-desktop.json#AC1_AC2_1280", "raw/ui-check-desktop.json#AC2_ssr"]
+      "evidence": [
+        "src/components/layout/section-top-menu.tsx",
+        "raw/ui-check-desktop.json#AC1_AC2_1280",
+        "raw/ui-check-desktop.json#AC2_ssr"
+      ]
     },
     "AC3": {
       "status": "PASS",
-      "evidence": ["src/app/globals.css", "src/components/layout/section-top-menu.tsx", "raw/ui-check-desktop.json#AC3"]
+      "evidence": [
+        "src/app/globals.css",
+        "src/components/layout/section-top-menu.tsx",
+        "raw/ui-check-desktop.json#AC3"
+      ]
     },
     "AC4": {
       "status": "PASS",
-      "evidence": ["src/components/layout/section-top-menu.tsx", "src/components/ui/breadcrumbs.tsx", "src/app/app-theme.css", "raw/ui-check-desktop.json#AC4"]
+      "evidence": [
+        "src/components/layout/section-top-menu.tsx",
+        "src/components/ui/breadcrumbs.tsx",
+        "src/app/app-theme.css",
+        "raw/ui-check-desktop.json#AC4"
+      ]
     },
     "AC5": {
       "status": "PASS",
-      "evidence": ["src/components/layout/section-top-menu.tsx", "src/app/app-theme.css", "raw/ui-check-desktop.json#AC5_dark", "raw/ui-check-mobile.json#phone_top_menu_sheet"]
+      "evidence": [
+        "src/components/layout/section-top-menu.tsx",
+        "src/app/app-theme.css",
+        "raw/ui-check-desktop.json#AC5_dark",
+        "raw/ui-check-mobile.json#phone_top_menu_sheet"
+      ]
     },
     "AC6": {
       "status": "PASS",
@@ -47,7 +105,12 @@
     },
     "AC7": {
       "status": "PASS",
-      "evidence": ["src/components/layout/page-actions.tsx", "raw/ui-check-mobile.json#phone_areas", "raw/ui-check-mobile.json#tablet", "raw/ui-check-mobile.json#desktop_no_dock"]
+      "evidence": [
+        "src/components/layout/page-actions.tsx",
+        "raw/ui-check-mobile.json#phone_areas",
+        "raw/ui-check-mobile.json#tablet",
+        "raw/ui-check-mobile.json#desktop_no_dock"
+      ]
     },
     "AC8": {
       "status": "PASS",
@@ -64,7 +127,26 @@
     },
     "AC9": {
       "status": "PASS",
-      "evidence": ["raw/typecheck.txt", "raw/test-changed.txt", "raw/guards-and-shell-tests.txt", "raw/i18n-check.txt", "raw/eslint.txt"]
+      "evidence": [
+        "raw/typecheck.txt",
+        "raw/test-changed.txt",
+        "raw/guards-and-shell-tests.txt",
+        "raw/i18n-check.txt",
+        "raw/eslint.txt"
+      ]
     }
+  },
+  "review": {
+    "reviewer": "fresh read-only subagent",
+    "range": "b33ab62c1..9d1bed48a",
+    "findings": 5,
+    "fixed": 5,
+    "items": [
+      "sticky page bars under the tab bar",
+      "one-tab row on sections without a menu",
+      "tab bar highlight stuck on a pressed tab",
+      "dock unmounted with an open dialog on rotation",
+      "dock under the Mini App nav"
+    ]
   }
 }

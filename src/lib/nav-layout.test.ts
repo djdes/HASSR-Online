@@ -103,6 +103,13 @@ test("страницы раздела без своего пункта держ�
   }
 });
 
+test("раздел без своих пунктов («Остальное») — строки над страницей нет, одной вкладки тоже", () => {
+  for (const path of ["/more", "/batches", "/losses", "/reports", "/settings/notifications"]) {
+    const place = buildNewNav(ownerNav, path);
+    assert.deepEqual(place.entries, [], path);
+  }
+});
+
 test("корень раздела уже среди пунктов — лишней вкладки нет («Офис», «Чек-листы»)", () => {
   for (const path of ["/settings/organization/office", "/checklists/results"]) {
     const place = buildNewNav(ownerNav, path);

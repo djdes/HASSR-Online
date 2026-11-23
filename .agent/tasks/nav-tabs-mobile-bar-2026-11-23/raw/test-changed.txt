@@ -2,7 +2,7 @@
 > haccp-online@0.1.0 test:changed
 > node scripts/test-changed.mjs
 
-→ [test:changed] Отобрано 70 связанных тестовых файлов для 30 изменённых файлов:
+→ [test:changed] Отобрано 70 связанных тестовых файлов для 42 изменённых файлов:
   • src/app/borderless.test.ts
   • src/app/neutral-palette.test.ts
   • src/app/root/mailing/mailing-presentation.test.ts
@@ -74,6 +74,6 @@
   • src/lib/translations/translations.test.ts
   • src/lib/whats-new-seen.test.ts
 
-=== Targeted test stats (70 files, 25.4s): pass=313, fail=0 ===
+=== Targeted test stats (70 files, 27.6s): pass=314, fail=0 ===
 ✓ Все затронутые тесты прошли.
 exit=0
