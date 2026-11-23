@@ -19,3 +19,11 @@ Reviewer: independent subagent, read-only, judged the working tree. Fixes — sm
    (same misalignment) → keep the system picker inside `[data-field-frame]`; editor legend showed door items with no doors →
    only present kinds; door-kind chips `role="radiogroup"` with `aria-pressed` → `role="group"`; `focusTemp` not reset on
    reopen → reset; unlayered `display/position` could override `hidden`/`sr-only` on a native select → exclude them.
+
+## После слияния (23.11.2026)
+
+7. **AC14 — первый прогон проверки прода: 3/7.** `/` и `/login` — `000`, CSS-проверки — вслед за ними. Причина не в сайте:
+   туннель прокси песочницы закрывался до ответа (`ws_closed_mid_exchange`, `curl: (35) Connection reset by peer` через
+   ~10 с), запрос до wesetup.ru не доходил; подряд 12 из 19 запросов — 200 за 0,9–1,7 с. Исправление в
+   `e2e/post-deploy-check.sh`: запрос без HTTP-ответа (код 000) повторяется до 5 раз, любой HTTP-ответ — окончательный.
+   Повторный прогон: 7/7 (`raw/after-prod-checks.txt`).
