@@ -132,25 +132,31 @@ export function hrefAfterPointSwitch(input: {
   return null;
 }
 
+/** Страницы, где объект сам не включается: главная и мастер нового объекта. */
+const NEUTRAL_PATHS: ReadonlySet<string> = new Set([HOME_HREF, "/settings/buildings/new"]);
+
 /**
- * Возврат точки после автосмены на офис. Человек с точки зашёл в раздел всей
- * компании — выбор сам стал офисом, — и ушёл оттуда на страницу, где точка
- * имеет смысл: возвращаем точку, с которой он пришёл. Сначала (2026-11-11)
- * только по «назад», с 12.11.2026 — и по меню: иначе выбор тихо оставался
- * офисом, и QR-плакаты, отчёты и журналы шли на всю организацию («переодически
- * слетает выбранная точка»). Офис остаётся, только если его выбрали в шапке
- * сами — ручной выбор забывает точку возврата (`forgetReturnPoint`).
+ * Какой объект включить самому, без оповещений (владелец, 2026-11-23: «попали
+ * в журналы и туда, где есть объект, — сверху сам включается единственный
+ * объект или тот, что был выбран до перехода»). Работает, только пока в шапке
+ * «Выберите объект» (уровень организации), и только на страницах, где объект
+ * имеет смысл: разделы всей компании остаются на «Выберите объект», страница
+ * объекта ставит свой объект сама (`pointSyncAction`), главная и мастер нового
+ * объекта нейтральны. Сначала — объект, с которого человека увела автосмена
+ * (`returnPointId`), иначе — единственный объект; объектов несколько и ничего
+ * не запомнено — null: человек выбирает сам.
  */
-export function pointReturnTarget(input: {
+export function autoPointTarget(input: {
   pathname: string | null | undefined;
-  /** Объект в шапке сейчас; null — офис / вся организация. */
+  /** Объект в шапке сейчас; null — «Выберите объект» (офис / вся организация). */
   viewedPointId: string | null;
-  /** Точка, с которой человека увела автосмена; null — возвращать нечего. */
+  /** Объект, выбранный до перехода в раздел компании; null — не запомнен. */
   returnPointId: string | null;
   pointIds: readonly string[];
 }): string | null {
-  if (!input.returnPointId || input.viewedPointId !== null) return null;
-  if (!input.pointIds.includes(input.returnPointId)) return null;
-  if (isCompanyWidePath(input.pathname) || pointPageId(input.pathname)) return null;
-  return input.returnPointId;
+  if (input.viewedPointId !== null) return null;
+  const path = normalizePath(input.pathname);
+  if (NEUTRAL_PATHS.has(path) || isCompanyWidePath(path) || pointPageId(path)) return null;
+  if (input.returnPointId && input.pointIds.includes(input.returnPointId)) return input.returnPointId;
+  return input.pointIds.length === 1 ? input.pointIds[0] : null;
 }

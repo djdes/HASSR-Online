@@ -2904,12 +2904,13 @@
         "add": "Add site",
         "addHint": "Opens the wizard: name and address, rooms, equipment",
         "open": "Open site",
-        "captionOffice": "Company",
         "organization": "Whole company",
-        "companySection": "Company-wide section — now showing {name}",
         "returnTo": "Back to {name}",
         "search": "Find a site",
-        "nothingFound": "Nothing found"
+        "nothingFound": "Nothing found",
+        "choose": "Choose a site",
+        "create": "Create a site",
+        "empty": "No sites yet"
       },
       "switchToast": {
         "close": "Close",

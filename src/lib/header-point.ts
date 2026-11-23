@@ -1,7 +1,7 @@
 import { sectionForPath } from "@/lib/app-nav";
-import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingContext, type BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, type BuildingContext, type BuildingOption } from "@/lib/building-scope";
 import { HOME_HREF } from "@/lib/home-page";
-import { COMPANY_WIDE_SECTIONS, normalizePath } from "@/lib/point-section-sync";
+import { COMPANY_WIDE_SECTIONS, isCompanyWidePath, normalizePath } from "@/lib/point-section-sync";
 
 /**
  * Что стоит в центре шапки кабинета (эскиз руководителя 2026-10-18: слева —
@@ -20,30 +20,32 @@ import { COMPANY_WIDE_SECTIONS, normalizePath } from "@/lib/point-section-sync";
  */
 export type HeaderPointTitle =
   | { source: "name" | "address"; text: string }
-  /** `organization` — пункт «Вся организация» (без офиса, 2026-10-28). */
-  | { source: "main" | "untitled" | "organization"; text: null };
+  | { source: "main" | "untitled"; text: null };
 
 export type HeaderPointOption = {
   id: string;
   title: HeaderPointTitle;
   /** Адрес второй строкой — когда заголовок не сам адрес. */
   address: string | null;
-  /** Офис организации (не объект): подпись «Организация», свой значок. */
-  office?: boolean;
   /** Значок объекта, выбранный в настройках (`lib/building-icons.ts`); нет — по виду. */
   icon?: string;
 };
 
 export type HeaderPoint =
-  /** Точек нет и завести их человек не может — центр пуст. */
+  /** Объектов нет и завести их человек не может — центр пуст. */
   | { kind: "none" }
-  /** Точек нет, человек может их завести — «+ Добавить точку». */
+  /** Объектов нет, человек может их завести — «Выберите объект», в списке «Создать объект». */
   | { kind: "add" }
-  /** Одна точка (или журналы по точкам и человеку доступна одна). */
+  /** Один объект (или журналы по объектам и человеку доступен один). */
   | { kind: "single"; point: HeaderPointOption }
-  /** Журналы по точкам и точек две и больше — переключатель. */
-  | { kind: "switch"; activeId: string; options: HeaderPointOption[] }
-  /** Точек несколько, журналы общие — переключать нечего; точки — в подсказке. */
+  /**
+   * Журналы по объектам — переключатель. Офис — не объект (владелец,
+   * 2026-11-23): в списке только объекты, без офиса и «Вся организация»;
+   * `activeId: null` — выбран уровень организации, на кнопке «Выберите объект».
+   * `organizationLevel` — человек может быть на уровне организации (руководство).
+   */
+  | { kind: "switch"; activeId: string | null; options: HeaderPointOption[]; organizationLevel: boolean }
+  /** Объектов несколько, журналы общие — переключать нечего; объекты — в подсказке. */
   | { kind: "all"; count: number; options: HeaderPointOption[] };
 
 // Организационно-правовая форма не делает название другим: «ООО «Берёзка»» и
@@ -70,8 +72,7 @@ export function sameAsCompany(pointName: string | null | undefined, companyName:
 export function headerPointOption(building: BuildingOption, companyName: string): HeaderPointOption {
   const name = building.name?.replace(/\s+/g, " ").trim() ?? "";
   const address = building.address?.replace(/\s+/g, " ").trim() || null;
-  const office = isOfficeBuilding(building) ? { office: true as const } : {};
-  const extra = building.icon ? { ...office, icon: building.icon } : office;
+  const extra = building.icon ? { icon: building.icon } : {};
   const duplicate = sameAsCompany(name, companyName);
   if (name && !duplicate) return { id: building.id, title: { source: "name", text: name }, address, ...extra };
   if (address) return { id: building.id, title: { source: "address", text: address }, address: null, ...extra };
@@ -96,57 +97,81 @@ export function resolveHeaderPoint(input: {
   canManage: boolean;
 }): HeaderPoint {
   const { companyName, organizationBuildings, context, canManage } = input;
+  // Офис — не объект (владелец, 2026-11-23): ни в списке, ни в подписи.
+  const objects = (list: BuildingOption[]) => list.filter((building) => !isOfficeBuilding(building));
   if (context.enabled && context.canSwitch && context.buildings.length >= 2) {
-    const options = context.buildings.map((building) => headerPointOption(building, companyName));
-    // «Вся организация» — первым пунктом, если офиса нет (офис сам и есть
-    // уровень всей организации).
-    const virtualOrganization = context.canViewOrganization === true && !options.some((option) => option.office);
-    if (virtualOrganization) {
-      options.unshift({ id: ORGANIZATION_VIEW_ID, title: { source: "organization", text: null }, address: null, office: true });
-    }
+    const options = objects(context.buildings).map((building) => headerPointOption(building, companyName));
+    const organizationLevel = context.canViewOrganization === true;
+    // Уровень организации (офис или «вся организация») — «Выберите объект».
     const activeId =
-      virtualOrganization && context.organizationView
-        ? ORGANIZATION_VIEW_ID
+      context.organizationView || isOfficeBuilding(context.buildings.find((building) => building.id === context.activeBuildingId))
+        ? null
         : options.some((option) => option.id === context.activeBuildingId)
           ? (context.activeBuildingId as string)
-          : options[0].id;
-    return { kind: "switch", activeId, options };
+          : (options[0]?.id ?? null);
+    return { kind: "switch", activeId, options, organizationLevel };
   }
   if (context.enabled && context.activeBuildingId) {
     const active = context.buildings.find((building) => building.id === context.activeBuildingId);
-    if (active) return { kind: "single", point: headerPointOption(active, companyName) };
+    if (active && !isOfficeBuilding(active)) return { kind: "single", point: headerPointOption(active, companyName) };
   }
-  if (organizationBuildings.length === 0) return canManage ? { kind: "add" } : { kind: "none" };
-  if (organizationBuildings.length === 1) {
-    return { kind: "single", point: headerPointOption(organizationBuildings[0], companyName) };
+  const list = objects(organizationBuildings);
+  if (list.length === 0) return canManage ? { kind: "add" } : { kind: "none" };
+  if (list.length === 1) {
+    return { kind: "single", point: headerPointOption(list[0], companyName) };
   }
   return {
     kind: "all",
-    count: organizationBuildings.length,
-    options: organizationBuildings.map((building) => headerPointOption(building, companyName)),
+    count: list.length,
+    options: list.map((building) => headerPointOption(building, companyName)),
   };
 }
 
 /** Страницы без своего раздела: главная и список всех точек — про всю компанию. */
 const COMPANY_WIDE_PATHS: ReadonlySet<string> = new Set([HOME_HREF, "/settings/buildings"]);
 
-/**
- * Прятать ли точку в центре шапки на этом пути.
- *
- * Переключатель (`kind: "switch"`) — на виду везде (владелец, 2026-11-10:
- * после входа руководитель должен видеть его сверху): в разделах всей
- * компании он показывает офис, а выбор точки ведёт в её раздел
- * (`point-section-sync.ts`). С 2026-11-11 — и на вкладках с фильтром по
- * местам (сотрудники, цеха, оборудование): фильтр согласован с шапкой
- * (`PLACE_FILTER_PATHS`). Подписи без переключения («одна точка», «Точки · Все: N») в
- * разделах всей компании по-прежнему не нужны (сканы 98–99, 2026-10-28).
- */
-export function headerPointHidden(pathname: string | null | undefined, kind?: HeaderPoint["kind"]): boolean {
-  const path = normalizePath(pathname);
-  if (kind === "switch") return false;
-  if (COMPANY_WIDE_PATHS.has(path)) return true;
+/** Раздел всей компании или список объектов (главная сюда не входит). */
+function companySectionPath(path: string): boolean {
+  if (path === "/settings/buildings") return true;
   const owner = sectionForPath(path);
   return owner !== null && COMPANY_WIDE_SECTIONS.has(owner.section);
+}
+
+/**
+ * Прятать ли центр шапки на этом пути.
+ *
+ * Переключатель (`kind: "switch"`) — на виду везде (владелец, 2026-11-10:
+ * после входа руководитель должен видеть его сверху); с 2026-11-11 — и на
+ * вкладках с фильтром по местам (`PLACE_FILTER_PATHS`). Один объект и «нет
+ * объектов» (2026-11-23) — тоже везде, кроме главной: в разделах всей
+ * компании там «Выберите объект». Подпись «Объекты · Все: N» в разделах всей
+ * компании и на главной по-прежнему не нужна (сканы 98–99, 2026-10-28).
+ */
+export function headerPointHidden(pathname: string | null | undefined, kind: HeaderPoint["kind"]): boolean {
+  const path = normalizePath(pathname);
+  if (kind === "switch") return false;
+  if (kind === "none") return true;
+  if (path === HOME_HREF) return true;
+  if (kind !== "all") return false;
+  return COMPANY_WIDE_PATHS.has(path) || companySectionPath(path);
+}
+
+/**
+ * «Выберите объект» вместо названия (владелец, 2026-11-23: «по умолчанию
+ * „Выберите объект“; переходим в офис или пункт меню, где нет объекта, —
+ * сверху „Выберите объект“»):
+ *   • объектов нет — выбирать нечего, в списке «Создать объект»;
+ *   • выбран уровень организации (офис, «вся организация»);
+ *   • раздел всей компании — сразу, не дожидаясь автосмены (`PointSectionSync`),
+ *     если человек вообще бывает на уровне организации;
+ *   • один объект — в разделах всей компании и в списке объектов.
+ */
+export function headerPointChoosing(pathname: string | null | undefined, point: HeaderPoint): boolean {
+  const path = normalizePath(pathname);
+  if (point.kind === "add") return true;
+  if (point.kind === "switch") return point.activeId === null || (point.organizationLevel && isCompanyWidePath(path));
+  if (point.kind === "single") return companySectionPath(path);
+  return false;
 }
 
 /**

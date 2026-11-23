@@ -2905,12 +2905,13 @@ export type MessageContract = {
         "add": "Добавить объект",
         "addHint": "Откроется мастер: название и адрес, помещения, оборудование",
         "open": "Открыть объект",
-        "captionOffice": "Организация",
         "organization": "Вся организация",
-        "companySection": "Общий раздел — выбрано «{name}»",
         "returnTo": "Вернуться на «{name}»",
         "search": "Найти объект",
-        "nothingFound": "Ничего не нашлось"
+        "nothingFound": "Ничего не нашлось",
+        "choose": "Выберите объект",
+        "create": "Создать объект",
+        "empty": "Объектов пока нет"
       },
       "switchToast": {
         "close": "Закрыть",

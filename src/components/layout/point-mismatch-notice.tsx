@@ -7,7 +7,6 @@ import { ArrowLeft, Loader2, MapPin, Store } from "lucide-react";
 import { toast } from "sonner";
 import type { PointMismatch } from "@/lib/document-point-access";
 import { useContentTransition } from "@/components/layout/content-transition";
-import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /** Что открыто — от этого зависят заголовок и текст. */
 export type PointMismatchKind = "document" | "entry" | "batch" | "capa" | "supply";
@@ -30,7 +29,6 @@ export function PointMismatchNotice({
   listHref: string;
 }) {
   const t = useTranslations("navigation.shell.pointMismatch");
-  const tPoint = useTranslations("navigation.shell.point");
   const router = useRouter();
   // Тот же переход, что у переключателя в шапке: скелет, пока страница точки собирается.
   const { refreshAfter, isPending: busy } = useContentTransition();
@@ -59,21 +57,10 @@ export function PointMismatchNotice({
     }
   }
 
-  const pointSide = (id: string, name: string): SwitchSide => ({
-    tag: id,
-    go: () => postPoint(id),
-    message: tPoint("switched", { name }),
-    returnLabel: tPoint("returnTo", { name: shortSwitchName(name) }),
-  });
-
-  /** Единый тост смены: «Объект: …» и «Вернуться на «выбранную»». */
+  /** Объект документа — в шапку, без оповещений (2026-11-23). */
   function switchPoint() {
     if (busy || pointName === null) return;
-    switchWithReturn(
-      refreshAfter,
-      pointSide(mismatch.pointId, pointName),
-      mismatch.selectedName ? pointSide(mismatch.selectedId, mismatch.selectedName) : null,
-    );
+    refreshAfter(mismatch.pointId, () => postPoint(mismatch.pointId));
   }
 
   return (

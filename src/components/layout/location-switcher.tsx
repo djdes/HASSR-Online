@@ -11,7 +11,6 @@ import { hrefAfterPointSwitch } from "@/lib/point-section-sync";
 import { cn } from "@/lib/utils";
 import { useContentTransition } from "@/components/layout/content-transition";
 import { forgetReturnPoint } from "@/components/layout/point-section-sync";
-import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 import { ScrollList } from "@/components/ui/scroll-list";
 import { BuildingIcon } from "@/components/layout/building-icon";
 
@@ -28,9 +27,10 @@ import { BuildingIcon } from "@/components/layout/building-icon";
  * что и владелец.
  *
  * Смена — общий переход кабинета (`content-transition.tsx`, 2026-10-29):
- * пока новая страница не пришла, контент — скелет, у пункта — крутилка,
- * тост «Объект: …» с «Вернуться на «…»» — после того, как данные
- * точки уже на экране (единый тост смены, `switch-toast.tsx`).
+ * пока новая страница не пришла, контент — скелет, у пункта — крутилка.
+ * Без оповещений (владелец, 2026-11-23: «при самостоятельных переходах
+ * объектов не показывать оповещение о смене и возможности обратно
+ * перейти») — ни тоста «Объект: …», ни «Вернуться на …».
  */
 
 export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
@@ -55,88 +55,61 @@ export function useSwitchBuilding(options: { canManagePoints?: boolean } = {}) {
     }
   }
 
-  /**
-   * `previous` — что было выбрано до нажатия: тост предложит вернуться к нему
-   * (владелец, 2026-11-11: короткий тост с отсчётом и «вернуться» — и при
-   * ручной смене, как при автосмене).
-   */
-  function switchTo(building: BuildingOption, activeBuildingId: string | null, previous?: BuildingOption | null) {
+  /** Выбрать объект: запрос смены и переход, без тоста. */
+  function switchTo(building: BuildingOption, activeBuildingId: string | null) {
     if (isPending) return;
-    // Выбор ведёт в раздел, который у выбранного есть (2026-11-10): точка,
-    // выбранная на главной или в разделе всей компании, открывает свою
-    // страницу; офис, выбранный на странице точки, — список точек.
+    // Выбор ведёт в раздел, который у выбранного есть (2026-11-10): объект,
+    // выбранный на главной или в разделе всей компании, открывает свою страницу.
     const href = hrefAfterPointSwitch({
       pathname,
       target: { id: building.id, office: isOfficeBuilding(building) },
       canManagePoints: options.canManagePoints === true,
       hasPlaceParam: new URLSearchParams(window.location.search).has("place"),
     });
-    // Человек выбрал сам — «вернуть точку по „назад“» больше не нужно.
+    // Человек выбрал сам — запомненный объект «до перехода» больше не нужен.
     forgetReturnPoint();
     if (building.id === activeBuildingId) {
-      // Точка уже выбрана: менять нечего, но её раздел открываем — нажатие
+      // Объект уже выбран: менять нечего, но его раздел открываем — нажатие
       // на главной не должно оставаться без ответа.
       if (href) router.push(href);
       return;
     }
-    // Откуда ушли — чтобы «вернуться» привело и на ту же страницу.
-    const fromHref = `${pathname}${window.location.search}`;
-    const target: SwitchSide = {
-      tag: building.id,
-      go: async () => {
-        forgetReturnPoint();
-        const ok = await postBuilding(building.id);
-        // Переход — после записи выбора: новая страница соберётся уже для него.
-        if (ok && href) router.push(href);
-        return ok;
-      },
-      message: t("switched", { name: building.name }),
-      returnLabel: t("returnTo", { name: shortSwitchName(building.name) }),
-    };
-    const back: SwitchSide | null =
-      previous && previous.id !== building.id
-        ? {
-            tag: previous.id,
-            go: async () => {
-              forgetReturnPoint();
-              const ok = await postBuilding(previous.id);
-              // Выбор увёл на другую страницу — вернуть и её.
-              if (ok && href) router.push(fromHref);
-              return ok;
-            },
-            message: t("switched", { name: previous.name }),
-            returnLabel: t("returnTo", { name: shortSwitchName(previous.name) }),
-          }
-        : null;
-    // Тост с «Вернуться на «…»» — после того, как данные точки уже на экране;
-    // возврат — та же смена обратно (`switch-toast.tsx`).
-    switchWithReturn(refreshAfter, target, back);
+    refreshAfter(building.id, async () => {
+      const ok = await postBuilding(building.id);
+      // Переход — после записи выбора: новая страница соберётся уже для него.
+      if (ok && href) router.push(href);
+      return ok;
+    });
   }
 
   return { switchTo, busyId: pendingTag };
 }
 
 /**
- * Тот же список плоскими кнопками — для листа «Точки» на телефоне. Подписи
- * «Точки» нет: она уже в заголовке листа. Высота ограничена, справа полоса
- * прокрутки (`ScrollList`), чтобы «Управление точками» под списком было на
- * виду и при двадцати точках.
+ * Тот же список плоскими кнопками — для листа «Объекты» на телефоне. Подписи
+ * «Объекты» нет: она уже в заголовке листа. Офиса в списке нет — он не объект
+ * (2026-11-23). Высота ограничена, справа полоса прокрутки (`ScrollList`),
+ * чтобы «Создать объект» под списком было на виду и при двадцати объектах.
  */
 export function LocationSwitcherList({
   buildings,
   activeBuildingId,
   canManagePoints,
+  onChoose,
 }: {
   buildings: BuildingOption[];
+  /** Выбранный объект; null — «Выберите объект», выбранного нет. */
   activeBuildingId: string | null;
   /** Есть доступ к страницам точек — выбор точки может открыть её страницу. */
   canManagePoints?: boolean;
+  /** Свой выбор (один объект без деления журналов) вместо смены объекта. */
+  onChoose?: (buildingId: string) => void;
 }) {
   const { switchTo, busyId } = useSwitchBuilding({ canManagePoints });
   const tPoint = useTranslations("navigation.shell.point");
   const [query, setQuery] = useState("");
-  if (buildings.length < 2) return null;
-  const activeId = activeBuildingId ?? buildings[0]?.id ?? null;
+  if (buildings.length === 0) return null;
+  const activeId = activeBuildingId;
   // Быстрый поиск (владелец, 2026-11-11): по названию и адресу, «ё» = «е».
   const normalized = normalizeJournalSearch(query);
   const shown = normalized
@@ -152,16 +125,15 @@ export function LocationSwitcherList({
       maxHeightClassName="max-h-[min(52vh,440px)] supports-[height:100dvh]:max-h-[min(52dvh,440px)]"
       className="mb-1 border-b border-[#ececf4] pb-2"
     >
-      {shown.map((building, index) => {
+      {shown.map((building) => {
         const isActive = building.id === activeId;
-        const office = isOfficeBuilding(building);
         return (
           <Fragment key={building.id}>
             <button
               type="button"
               data-location-option={building.id}
               data-active-option={isActive ? "" : undefined}
-              onClick={() => void switchTo(building, activeId, buildings.find((item) => item.id === activeId) ?? null)}
+              onClick={() => (onChoose ? onChoose(building.id) : void switchTo(building, activeId))}
               className={cn(
                 "flex min-h-[52px] w-full items-center gap-3 rounded-2xl px-3 py-2 text-left text-[15.5px] font-medium transition-colors",
                 isActive ? "bg-[#f1f3ff] text-[#3848c7]" : "text-[#0b1024] hover:bg-[#fafbff] active:bg-[#f1f3ff]",
@@ -177,7 +149,7 @@ export function LocationSwitcherList({
                   isActive ? "bg-transparent text-[#5566f6]" : "border border-[#ececf4] bg-white text-[#6f7282]",
                 )}
               >
-                <BuildingIcon icon={building.icon} office={office} className="size-[18px]" uploadClassName="size-7" />
+                <BuildingIcon icon={building.icon} className="size-[18px]" uploadClassName="size-7" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{building.name}</span>
@@ -191,8 +163,6 @@ export function LocationSwitcherList({
                 <Check className="size-4 shrink-0 text-[#5566f6]" />
               ) : null}
             </button>
-            {/* Офис — первым, под ним черта: дальше объекты. */}
-            {office && index < shown.length - 1 ? <div className="mx-3 my-1 border-t border-[#ececf4]" /> : null}
           </Fragment>
         );
       })}

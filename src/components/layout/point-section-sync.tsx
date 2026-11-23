@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { pointReturnTarget, pointSyncAction } from "@/lib/point-section-sync";
+import { autoPointTarget, pointSyncAction } from "@/lib/point-section-sync";
 import { useContentTransition } from "@/components/layout/content-transition";
-import { shortSwitchName, showSwitchToast, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /**
- * Точка, с которой человека увела автосмена на офис. В localStorage, а не в
- * sessionStorage (12.11.2026): автосмена пишет cookie на весь браузер, и новая
- * вкладка тоже должна вернуть точку, а не остаться на офисе.
+ * Объект, с которого человека увела автосмена на уровень организации («Выберите
+ * объект»). В localStorage, а не в sessionStorage (12.11.2026): автосмена пишет
+ * cookie на весь браузер, и новая вкладка тоже должна вернуть объект.
  */
 const RETURN_KEY = "wesetup.point-return";
 
@@ -54,17 +53,18 @@ async function postActiveBuilding(buildingId: string, failed: string): Promise<b
 }
 
 /**
- * Держит точку в шапке и открытый раздел согласованными (владелец,
- * 2026-11-10; правила — `lib/point-section-sync.ts`):
- *   • раздел всей компании при выбранном объекте — выбор сам
- *     становится офисом («Вся организация»); в тосте — «Вернуться на
- *     „точку“»: нажал не туда — одно нажатие назад;
- *   • страница точки — в шапке эта точка;
- *   • уход из раздела компании (по меню или «назад», с 12.11.2026)
- *     возвращает и точку, с которой пришли (2026-11-11).
- * Ничего не рисует. Переход — общий (`content-transition`): пока страница
- * собирается для нового выбора, контент — скелет. На один адрес — одна
- * попытка: ошибка запроса не зацикливает.
+ * Держит объект в шапке и открытый раздел согласованными (владелец,
+ * 2026-11-10 и 2026-11-23; правила — `lib/point-section-sync.ts`):
+ *   • раздел всей компании (офис, «Моя компания», подписки…) — в шапке
+ *     «Выберите объект»; объект, с которого ушли, запоминается;
+ *   • страница объекта — в шапке этот объект;
+ *   • страница, где есть объект (журналы, «Сегодня», сотрудники…), при
+ *     «Выберите объект» — запомненный объект, иначе единственный
+ *     (`autoPointTarget`).
+ * Всё — без оповещений (2026-11-23): ни тоста, ни «Вернуться на …». Ничего не
+ * рисует. Переход — общий (`content-transition`): пока страница собирается для
+ * нового выбора, контент — скелет. На один адрес — одна попытка: ошибка
+ * запроса не зацикливает.
  */
 export function PointSectionSync({
   viewedPointId,
@@ -72,16 +72,15 @@ export function PointSectionSync({
   organizationTarget,
   points,
 }: {
-  /** Объект, выбранная в шапке; null — офис или «Вся организация». */
+  /** Объект, выбранный в шапке; null — «Выберите объект» (офис или вся организация). */
   viewedPointId: string | null;
   canViewOrganization: boolean;
   /** Офис или «Вся организация» — куда переключать в разделах компании. */
   organizationTarget: { id: string; name: string } | null;
-  /** Объекты переключателя. */
+  /** Объекты переключателя (без офиса). */
   points: Array<{ id: string; name: string }>;
 }) {
   const t = useTranslations("navigation.shell.point");
-  const router = useRouter();
   const pathname = usePathname();
   // Фильтр мест на вкладках сотрудников, цехов и оборудования ведёт и шапку.
   const placeParam = useSearchParams()?.get("place") ?? null;
@@ -99,8 +98,8 @@ export function PointSectionSync({
     placeParam,
   });
   const pointsKey = pointIds.join(",");
-  const nameOf = (id: string | null) =>
-    id === organizationTarget?.id ? organizationTarget.name : (points.find((point) => point.id === id)?.name ?? "");
+  const actionKind = action?.kind ?? null;
+  const actionTarget = action?.targetId ?? null;
 
   useEffect(() => {
     if (isPending) return;
@@ -112,92 +111,40 @@ export function PointSectionSync({
     }
     const ids = pointsKey ? pointsKey.split(",") : [];
 
-    if (action) {
-      const key = `${pathname}?${placeParam ?? ""}→${action.targetId}`;
+    if (actionKind && actionTarget) {
+      const key = `${pathname}?${placeParam ?? ""}→${actionTarget}`;
       if (attempted.current === key) return;
       attempted.current = key;
       const fromPointId = viewedPointId;
-      const targetName = nameOf(action.targetId);
-      if (action.kind === "organization") {
-        // Раздел всей компании: выбор — офис / «Вся организация»; в тосте —
-        // «Вернуться на «точку»» (`switch-toast.tsx`). Возврат — точка и
-        // страница, откуда пришли; его тост предлагает снова в раздел.
-        const companyHref = `${pathname}${window.location.search}`;
-        const fromName = nameOf(fromPointId);
-        const company: SwitchSide = {
-          tag: action.targetId,
-          go: async () => {
-            const ok = await postActiveBuilding(action.targetId, t("failed"));
-            if (!ok) return false;
-            // Запоминаем, откуда увели: «назад» и кнопка в тосте вернут точку.
-            writeReturnPoint(fromPointId);
-            // Снова в раздел после возврата — по адресу, не по истории.
-            if (`${window.location.pathname}${window.location.search}` !== companyHref) router.push(companyHref);
-            return true;
-          },
-          message: t("companySection", { name: targetName }),
-          returnLabel: t("returnTo", { name: shortSwitchName(targetName) }),
-        };
-        const point: SwitchSide | null =
-          fromPointId && fromName
-            ? {
-                tag: fromPointId,
-                go: async () => {
-                  forgetReturnPoint();
-                  const ok = await postActiveBuilding(fromPointId, t("failed"));
-                  if (!ok) return false;
-                  // Туда, откуда пришли; по прямой ссылке — страница точки.
-                  if (window.history.length > 1) router.back();
-                  else router.push(`/settings/buildings/${fromPointId}`);
-                  return true;
-                },
-                message: t("switched", { name: fromName }),
-                returnLabel: t("returnTo", { name: shortSwitchName(fromName) }),
-              }
-            : null;
-        switchWithReturn(refreshAfter, company, point);
-        return;
-      }
-      refreshAfter(
-        action.targetId,
-        () => postActiveBuilding(action.targetId, t("failed")),
-        () => {
-          forgetReturnPoint();
-          // Страница точки сама держит точку в шапке — возвращать некуда.
-          // Фильтр мест — вернуть прежний выбор фильтра (и с ним шапку).
-          const fromId = fromPointId ?? organizationTarget?.id ?? null;
-          const fromName = nameOf(fromId);
-          showSwitchToast(
-            t("switched", { name: targetName }),
-            action.kind === "place" && fromId && fromName
-              ? {
-                  label: t("returnTo", { name: shortSwitchName(fromName) }),
-                  // Прежний выбор фильтра — он и шапку вернёт (её тост — снова с возвратом).
-                  onClick: () => router.push(`${pathname}?place=${encodeURIComponent(fromPointId ?? "all")}`, { scroll: false }),
-                }
-              : null,
-          );
-        },
-      );
+      refreshAfter(actionTarget, async () => {
+        const ok = await postActiveBuilding(actionTarget, t("failed"));
+        if (!ok) return false;
+        // Раздел компании — запоминаем объект, с которого ушли: на странице с
+        // объектом он включится сам. Объект выбран — запоминать нечего.
+        if (actionKind === "organization") writeReturnPoint(fromPointId);
+        else forgetReturnPoint();
+        return true;
+      });
       return;
     }
 
     if (!pathChanged) return;
     const returnPointId = readReturnPoint();
-    if (!returnPointId) return;
-    const restore = pointReturnTarget({ pathname, viewedPointId, returnPointId, pointIds: ids });
-    if (restore) {
-      forgetReturnPoint();
-      const name = nameOf(restore);
-      // Ушли из раздела компании (по меню или «назад») — снова точка, с которой
-      // пришли; тост без кнопки возврата: в раздел компании ведёт меню.
-      refreshAfter(restore, () => postActiveBuilding(restore, t("failed")), () => showSwitchToast(t("switched", { name })));
+    const target = autoPointTarget({ pathname, viewedPointId, returnPointId, pointIds: ids });
+    if (target) {
+      const key = `${pathname}→auto:${target}`;
+      if (attempted.current === key) return;
+      attempted.current = key;
+      refreshAfter(target, async () => {
+        const ok = await postActiveBuilding(target, t("failed"));
+        if (ok) forgetReturnPoint();
+        return ok;
+      });
       return;
     }
-    // Точка вручную выбрана в шапке или стала недоступной — возвращать нечего.
-    if (viewedPointId !== null || !ids.includes(returnPointId)) forgetReturnPoint();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- names come from `points`, keyed by pointsKey
-  }, [action?.kind, action?.targetId, pathname, placeParam, viewedPointId, pointsKey, isPending, refreshAfter, router, t]);
+    // Объект выбран вручную или стал недоступным — возвращать нечего.
+    if (returnPointId && (viewedPointId !== null || !ids.includes(returnPointId))) forgetReturnPoint();
+  }, [actionKind, actionTarget, pathname, placeParam, viewedPointId, pointsKey, isPending, refreshAfter, t]);
 
   return null;
 }

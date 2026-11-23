@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { hrefAfterPointSwitch, isCompanyWidePath, pointPageId, pointReturnTarget, pointSyncAction, type PointSyncState } from "@/lib/point-section-sync";
+import { autoPointTarget, hrefAfterPointSwitch, isCompanyWidePath, pointPageId, pointSyncAction, type PointSyncState } from "@/lib/point-section-sync";
 
 const base: PointSyncState = {
   pathname: "/dashboard",
@@ -89,22 +89,32 @@ test("после автосмены правило успокаивается: �
   assert.equal(pointSyncAction({ ...base, pathname: "/settings/buildings/p2", viewedPointId: "p2" }), null);
 });
 
-test("ушли из раздела компании — точка, с которой пришли, возвращается", () => {
+test("ушли из раздела компании — сам, без оповещений, включается объект, выбранный до перехода", () => {
   const back = { pathname: "/dashboard", viewedPointId: null, returnPointId: "p1", pointIds: ["p1", "p2"] };
-  assert.equal(pointReturnTarget(back), "p1");
-  // И по меню, а не только «назад» (12.11.2026: после «Подписок» QR-плакаты печатались на всю
-  // организацию — точка тихо оставалась офисом). Офис остаётся, только если его выбрали в шапке сами.
-  assert.equal(pointReturnTarget({ ...back, pathname: "/settings/qr-posters" }), "p1");
-  // Вернулись на другую страницу компании или главную без запомненной точки — нечего возвращать.
-  assert.equal(pointReturnTarget({ ...back, pathname: "/settings/subscription" }), null);
-  assert.equal(pointReturnTarget({ ...back, returnPointId: null }), null);
-  // Точка уже выбрана или стала недоступной.
-  assert.equal(pointReturnTarget({ ...back, viewedPointId: "p2" }), null);
-  assert.equal(pointReturnTarget({ ...back, returnPointId: "gone" }), null);
-  // Страница точки сама выбирает свою точку.
-  assert.equal(pointReturnTarget({ ...back, pathname: "/settings/buildings/p2" }), null);
-  // Главная нейтральна — возвращаем точку и на ней.
-  assert.equal(pointReturnTarget({ ...back, pathname: "/home" }), "p1");
+  assert.equal(autoPointTarget(back), "p1");
+  // И по меню, а не только «назад»: журналы, QR, сотрудники — там, где есть объект.
+  assert.equal(autoPointTarget({ ...back, pathname: "/settings/qr-posters" }), "p1");
+  assert.equal(autoPointTarget({ ...back, pathname: "/journals/hygiene" }), "p1");
+  // Раздел компании — «Выберите объект», ничего не включаем.
+  assert.equal(autoPointTarget({ ...back, pathname: "/settings/subscription" }), null);
+  assert.equal(autoPointTarget({ ...back, pathname: "/journals/points" }), null);
+  // Объект уже выбран или стал недоступным (объектов несколько) — ничего.
+  assert.equal(autoPointTarget({ ...back, viewedPointId: "p2" }), null);
+  assert.equal(autoPointTarget({ ...back, returnPointId: "gone" }), null);
+  assert.equal(autoPointTarget({ ...back, returnPointId: null }), null);
+  // Страница объекта сама выбирает свой объект; главная и мастер нового объекта нейтральны.
+  assert.equal(autoPointTarget({ ...back, pathname: "/settings/buildings/p2" }), null);
+  assert.equal(autoPointTarget({ ...back, pathname: "/home" }), null);
+  assert.equal(autoPointTarget({ ...back, pathname: "/settings/buildings/new" }), null);
+});
+
+test("ничего не запомнено, а объект один — включается он; объектов несколько — «Выберите объект»", () => {
+  const single = { pathname: "/journals/hygiene", viewedPointId: null, returnPointId: null, pointIds: ["p1"] };
+  assert.equal(autoPointTarget(single), "p1");
+  assert.equal(autoPointTarget({ ...single, returnPointId: "gone" }), "p1");
+  assert.equal(autoPointTarget({ ...single, pathname: "/settings/organization/office" }), null);
+  assert.equal(autoPointTarget({ ...single, pointIds: ["p1", "p2"] }), null);
+  assert.equal(autoPointTarget({ ...single, pointIds: [] }), null);
 });
 
 test("фильтр «Где работает» и шапка согласованы: точка в фильтре — она же в шапке", () => {

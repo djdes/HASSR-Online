@@ -284,31 +284,28 @@ export default async function DashboardLayout({
     context: buildingContext,
     canManage: hasFullWorkspaceAccess(session.user),
   });
-  // «Вся организация» (без офиса) — первым пунктом и в листе меню на телефоне.
-  const tPoint = await getTranslations("navigation.shell.point");
-  const switcherBuildings =
-    headerPoint.kind === "switch" && headerPoint.options[0]?.id === ORGANIZATION_VIEW_ID
-      ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...buildingContext.buildings]
-      : buildingContext.buildings;
+  // Объекты переключателя — без офиса: офис не объект (владелец, 2026-11-23).
+  const switcherBuildings = buildingContext.buildings.filter((building) => !isOfficeBuilding(building));
 
   // Область данных (2026-11-12): другая организация — оболочка собирается
   // заново, другая точка — заново только страница (`lib/cabinet-scope.ts`).
   const scope = cabinetScopeKeys({ userId: session.user.id, organizationId: activeOrgId, points: buildingContext });
 
-  // Точка в шапке и раздел согласованы (`PointSectionSync`, 2026-11-10):
-  // куда переключать в разделах всей компании и какие точки можно выбрать.
+  // Объект в шапке и раздел согласованы (`PointSectionSync`, 2026-11-10):
+  // куда переключать в разделах всей компании («Выберите объект»: офис, а без
+  // офиса — «вся организация») и какие объекты можно выбрать.
+  const officeBuilding = buildingContext.buildings.find((building) => isOfficeBuilding(building)) ?? null;
   const pointSync =
     headerPoint.kind === "switch"
       ? {
           viewedPointId: viewedPointId(buildingContext),
           canViewOrganization: buildingContext.canViewOrganization,
-          organizationTarget: (() => {
-            const office = switcherBuildings.find((building) => isOfficeBuilding(building));
-            return office && buildingContext.canViewOrganization ? { id: office.id, name: office.name } : null;
-          })(),
-          points: switcherBuildings
-            .filter((building) => !isOfficeBuilding(building))
-            .map((building) => ({ id: building.id, name: building.name })),
+          organizationTarget: buildingContext.canViewOrganization
+            ? officeBuilding
+              ? { id: officeBuilding.id, name: officeBuilding.name }
+              : { id: ORGANIZATION_VIEW_ID, name: "" }
+            : null,
+          points: switcherBuildings.map((building) => ({ id: building.id, name: building.name })),
         }
       : null;
 
