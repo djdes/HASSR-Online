@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { JOURNAL_DIALOG_ERROR_CLASS } from "@/components/journals/journal-responsive";
 import { useTranslations } from "next-intl";
+import { POINT_REQUIRED_CODE } from "@/lib/office-journals";
 
 /**
  * Одно поведение на все окна создания и настроек документа.
@@ -41,6 +42,18 @@ export class DuplicatePeriodError extends Error {
 }
 
 /**
+ * Документ создают при «Выберите объект» (офис или вся организация), а объекта
+ * нет: сервер ответил `{ code: "point_required" }` (владелец, 2026-11-23: офис
+ * — не объект). Окно пишет «Выберите объект…», а не «Не удалось создать».
+ */
+export class PointRequiredError extends Error {
+  constructor() {
+    super("Выберите объект: документ журнала создаётся для объекта");
+    this.name = "PointRequiredError";
+  }
+}
+
+/**
  * Разбор ответа `POST /api/journal-documents` в одном месте.
  * Возвращает id созданного документа, либо бросает
  * `DuplicatePeriodError` / обычную ошибку с безопасным текстом по умолчанию.
@@ -58,6 +71,9 @@ export async function readCreatedDocument(
         id: String(existing.id),
         title: String(existing.title || ""),
       });
+    }
+    if ((result as { code?: unknown } | null)?.code === POINT_REQUIRED_CODE) {
+      throw new PointRequiredError();
     }
     // Unknown API prose is not a trusted localized message. The dialog renders
     // its current-language fallback; duplicate document metadata stays original.
@@ -97,10 +113,12 @@ export function useDocumentDialogSubmit(params: {
       ? t("createError") : params.fallbackError;
   const [submitting, setSubmitting] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [pointRequired, setPointRequired] = useState(false);
   const [duplicate, setDuplicate] = useState<ExistingDocumentRef | null>(null);
 
   const reset = useCallback(() => {
     setFailed(false);
+    setPointRequired(false);
     setDuplicate(null);
   }, []);
 
@@ -108,6 +126,7 @@ export function useDocumentDialogSubmit(params: {
     async (action: (force: boolean) => Promise<void>, force = false) => {
       setSubmitting(true);
       setFailed(false);
+      setPointRequired(false);
       setDuplicate(null);
       try {
         await action(force);
@@ -117,6 +136,7 @@ export function useDocumentDialogSubmit(params: {
           setDuplicate(err.existing);
           return;
         }
+        if (err instanceof PointRequiredError) setPointRequired(true);
         setFailed(true);
       } finally {
         setSubmitting(false);
@@ -125,7 +145,13 @@ export function useDocumentDialogSubmit(params: {
     [onOpenChange]
   );
 
-  return { submitting, error: failed ? fallbackError : "", duplicate, reset, run };
+  return {
+    submitting,
+    error: failed ? (pointRequired ? t("pointRequired") : fallbackError) : "",
+    duplicate,
+    reset,
+    run,
+  };
 }
 
 /**

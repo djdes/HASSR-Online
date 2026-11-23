@@ -10,6 +10,7 @@ import type { TourAnchor } from "@/lib/tour-anchors";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 
 import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
@@ -28,6 +29,7 @@ import {
   DateField,
   FloatingInputField,
   FloatingLabelField,
+  FloatingSelectField,
 } from "@/components/journals/journal-dialog-field";
 import {
   JOURNAL_DIALOG_ACTIONS_CLASS,
@@ -357,6 +359,11 @@ export function CreateDocumentDialog({
   const [responsibleTitle, setResponsibleTitle] = useState(() =>
     defaultResponsibleUser ? getUserPositionLabel(defaultResponsibleUser) : ""
   );
+  // Офис — не объект (2026-11-23): при «Выберите объект» в шапке документ
+  // создаётся для объекта из этого поля.
+  const pointChoice = createDefaults.point ?? null;
+  const [pointId, setPointId] = useState("");
+  const [pointError, setPointError] = useState("");
   const [trackedAreaName, setTrackedAreaName] = useState("");
   /**
    * Номер бактерицидной установки — СЛЕДУЮЩИЙ СВОБОДНЫЙ (U7 аудита).
@@ -435,6 +442,12 @@ export function CreateDocumentDialog({
       return;
     }
     setTitleError("");
+    if (pointChoice && !pointId) {
+      setPointError(dialogT("pointRequired"));
+      setError("");
+      return;
+    }
+    setPointError("");
     await createDocument(false);
   }
 
@@ -461,6 +474,7 @@ export function CreateDocumentDialog({
         body: JSON.stringify({
           templateCode,
           force,
+          ...(pointChoice && pointId ? { buildingId: pointId } : {}),
           title: isUvRuntimeJournal
             ? buildUvRuntimeDocumentTitle({
                 lampNumber: trackedLampNumber.trim() || "1",
@@ -809,6 +823,41 @@ export function CreateDocumentDialog({
               </div>
             </div>
           )}
+
+          {pointChoice ? (
+            <FloatingSelectField
+              id="doc-point"
+              label={dialogT("pointLabel")}
+              value={pointId}
+              onChange={(value) => {
+                setPointId(value);
+                setPointError("");
+              }}
+              disabled={pointChoice.options.length === 0}
+              error={pointError || undefined}
+              hint={
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  {pointChoice.options.length === 0 ? <span>{dialogT("pointEmpty")}</span> : null}
+                  {pointChoice.createHref ? (
+                    <Link
+                      href={pointChoice.createHref}
+                      className="font-medium text-[#3848c7] underline-offset-2 hover:underline"
+                      data-create-point-link
+                    >
+                      {dialogT("pointCreate")}
+                    </Link>
+                  ) : null}
+                </span>
+              }
+            >
+              <option value="">{dialogT("pointPlaceholder")}</option>
+              {pointChoice.options.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </FloatingSelectField>
+          ) : null}
 
           {isCompactSourceModal ? (
             <>

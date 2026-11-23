@@ -27,12 +27,12 @@ function context(over: Partial<Parameters<typeof paperDocumentBuilding>[0]>) {
   } as Parameters<typeof paperDocumentBuilding>[0];
 }
 
-test("новый документ — точке из шапки; «Вся организация» без офиса — выбрать точку", () => {
+test("новый документ — объекту из шапки; офис и «вся организация» — выбрать объект", () => {
   assert.deepEqual(paperDocumentBuilding(context({})), { buildingId: "a" });
-  // Офис — уровень организации: документ офиса, как у электронных журналов.
+  // Офис — не объект (владелец, 2026-11-23): документ журнала создаётся для объекта.
   assert.deepEqual(
     paperDocumentBuilding(context({ organizationView: true, activeBuildingId: "office", activeBuilding: office })),
-    { buildingId: "office" },
+    { error: PAPER_POINT_REQUIRED },
   );
   assert.deepEqual(
     paperDocumentBuilding(context({ organizationView: true, buildings: [pointA, pointB] })),

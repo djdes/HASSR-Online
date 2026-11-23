@@ -5645,7 +5645,12 @@
       "openExisting": "Mavjud hujjatni ochish",
       "forceCreate": "Baribir yaratish",
       "duplicateFallback": "Bu davr uchun hujjat allaqachon mavjud. Uni oching yoki boshqa davrni tanlang.",
-      "namedDuplicateFallback": "Bu davr uchun “{title}” hujjati allaqachon mavjud. Uni oching yoki boshqa davrni tanlang."
+      "namedDuplicateFallback": "Bu davr uchun “{title}” hujjati allaqachon mavjud. Uni oching yoki boshqa davrni tanlang.",
+      "pointLabel": "Nuqta",
+      "pointPlaceholder": "Nuqtani tanlang",
+      "pointRequired": "Nuqtani tanlang: jurnal hujjati nuqta uchun yaratiladi",
+      "pointCreate": "Nuqta yaratish",
+      "pointEmpty": "Hozircha nuqtalar yo‘q — avval nuqta yarating"
     },
     "recordCards": {
       "empty": "Yozuvlar yo‘q.",
@@ -5715,6 +5720,12 @@
         "noCertificates": "Kalitli amaldagi sertifikatlar yo‘q. UKEP tokenini ulang.",
         "signFailed": "Plagin hujjatni imzolamadi: {reason}"
       }
+    },
+    "pointNotice": {
+      "title": "Jurnal hujjati nuqta uchun yaratiladi",
+      "body": "Ofis — nuqta emas. Nuqtani tanlang — yangi jurnal hujjatlari unga tegishli bo‘ladi.",
+      "create": "Nuqta yaratish",
+      "empty": "Hozircha nuqtalar yo‘q — birinchisini yarating."
     }
   },
   "publicChrome": {

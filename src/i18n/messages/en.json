@@ -5645,7 +5645,12 @@
       "openExisting": "Open existing document",
       "forceCreate": "Create anyway",
       "duplicateFallback": "A document already exists for this period. Open it or choose another period.",
-      "namedDuplicateFallback": "Document “{title}” already exists for this period. Open it or choose another period."
+      "namedDuplicateFallback": "Document “{title}” already exists for this period. Open it or choose another period.",
+      "pointLabel": "Site",
+      "pointPlaceholder": "Choose a site",
+      "pointRequired": "Choose a site: a journal document is created for a site",
+      "pointCreate": "Create a site",
+      "pointEmpty": "No sites yet — create a site first"
     },
     "recordCards": {
       "empty": "No records.",
@@ -5715,6 +5720,12 @@
         "noCertificates": "No valid certificates with a private key. Connect a token with a QES.",
         "signFailed": "The plug-in did not sign the document: {reason}"
       }
+    },
+    "pointNotice": {
+      "title": "A journal document is created for a site",
+      "body": "The office is not a site. Choose a site — new journal documents will belong to it.",
+      "create": "Create a site",
+      "empty": "No sites yet — create the first one."
     }
   },
   "publicChrome": {
