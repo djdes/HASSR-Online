@@ -1,0 +1,50 @@
+{
+  "base": "http://localhost:3001",
+  "path": "/settings/users",
+  "cpuThrottle": 1,
+  "runs": 5,
+  "domNodes": 15448,
+  "timesheetInDom": true,
+  "openMs": {
+    "median": 192,
+    "all": [
+      192,
+      216,
+      168,
+      176
+    ]
+  },
+  "closeMs": {
+    "median": 96,
+    "all": [
+      96,
+      96,
+      112,
+      80
+    ]
+  },
+  "openWallMs": {
+    "median": 163,
+    "all": [
+      163,
+      196,
+      139,
+      152
+    ]
+  },
+  "closeWallMs": {
+    "median": 89,
+    "all": [
+      91,
+      89,
+      76,
+      85
+    ]
+  },
+  "traceBreakdownMs": {
+    "scripting": 307,
+    "style": 238,
+    "layout": 3,
+    "paint": 56
+  }
+}

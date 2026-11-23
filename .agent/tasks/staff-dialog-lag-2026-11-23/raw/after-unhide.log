@@ -1,0 +1,2 @@
+{"base":"http://localhost:3001","cpuThrottle":1,"stateAtTop":"hidden","longTasksMs":[],"longest":0}
+{"base":"http://localhost:3001","cpuThrottle":4,"stateAtTop":"hidden","longTasksMs":[53,121,50,117,65,51,98,83,89,86],"longest":121}

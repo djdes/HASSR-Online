@@ -1,0 +1,9 @@
+GET /settings/users (owner of the 117-staff org), 4 warm requests each; measured while other browser runs were active on the same machine, so TTFB is indicative only
+port 3000 html ttfb=0.166551s size=4960104B
+port 3000 html ttfb=0.465710s size=4959731B
+port 3000 html ttfb=0.569888s size=4959774B
+port 3000 html ttfb=0.375102s size=4959688B
+port 3001 html ttfb=0.153209s size=1276558B
+port 3001 html ttfb=0.110888s size=1276931B
+port 3001 html ttfb=0.101836s size=1276558B
+port 3001 html ttfb=0.122642s size=1276515B
