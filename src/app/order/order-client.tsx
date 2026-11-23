@@ -1458,7 +1458,7 @@ function CompleteForm({
           value={phone}
           onChange={setPhone}
           placeholder={RU_PHONE_PLACEHOLDER}
-          hint="Нужен, чтобы связать аккаунт с задачами в TasksFlow."
+          hint="Нужен, чтобы связать аккаунт с задачами в программном модуле."
           required
           type="tel"
           autoComplete="tel"

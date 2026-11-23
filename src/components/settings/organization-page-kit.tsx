@@ -75,7 +75,8 @@ export function FieldRow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-1.5 md:grid-cols-[200px_1fr] md:items-start md:gap-5">
+    // Поле не шире 560px: на широком экране строка не тянется на весь экран.
+    <div className="grid gap-1.5 md:grid-cols-[200px_minmax(0,560px)] md:items-start md:gap-5">
       <div className="md:pt-2.5">
         <label htmlFor={htmlFor} className="text-[13px] font-medium text-[#0b1024]">
           {label}

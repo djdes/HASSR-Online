@@ -193,7 +193,7 @@ export async function syncHierarchyToTasksflow(
         managerName,
         tfUserId: null,
         pushed: 0,
-        error: "Не привязан к TasksFlow",
+        error: "Не привязан к программному модулю",
       });
       continue;
     }
@@ -272,7 +272,7 @@ export async function syncHierarchyToTasksflow(
         managerName: user.name,
         tfUserId: null,
         pushed: 0,
-        error: "Не привязан к TasksFlow (position-scope)",
+        error: "Не привязан к программному модулю (видимость по должности)",
       });
       continue;
     }

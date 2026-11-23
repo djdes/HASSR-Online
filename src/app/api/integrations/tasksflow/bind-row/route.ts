@@ -184,7 +184,7 @@ export async function POST(request: Request) {
         results.push({
           label: slot.workerUserId,
           rowKey: slot.workerUserId,
-          error: "title обязательный для свободной задачи",
+          error: "Для свободной задачи нужно название",
         });
         continue;
       }
@@ -207,7 +207,7 @@ export async function POST(request: Request) {
       workerWeSetupId = worker.id;
       label = worker.name;
       title = payload.title;
-      description = `Свободная задача из TasksFlow\nЖурнал: ${
+      description = `Свободная задача из программного модуля\nЖурнал: ${
         doc.template.name ?? payload.journalCode
       }\nДокумент: ${doc.title}`;
       weekDays = payload.weekDays?.length
@@ -286,7 +286,7 @@ export async function POST(request: Request) {
         rowKey: storedRowKey,
         error:
           err instanceof TasksFlowError
-            ? `TasksFlow ${err.status}: ${err.message}`
+            ? `Ошибка программного модуля (${err.status}): ${err.message}`
             : err instanceof Error
             ? err.message
             : "Не удалось создать",

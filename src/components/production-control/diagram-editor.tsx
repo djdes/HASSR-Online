@@ -6,9 +6,14 @@ import { useTranslations } from "next-intl";
 import {
   ArrowRight,
   Check,
+  DoorOpen,
+  FlipHorizontal2,
   Maximize,
+  Minus,
   MousePointer2,
+  Plus,
   RectangleHorizontal,
+  RotateCw,
   Route,
   Square,
   Trash2,
@@ -19,16 +24,31 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { DIAGRAM_LIMITS, FLOW_KINDS, FLOW_STYLES, edgeAnchors, fitView, newDiagramId, nodeAt, snap } from "@/lib/ppk/diagram";
-import type { DiagramData, DiagramEdge, DiagramNode, FlowKind } from "@/lib/ppk/records";
-import { DiagramSvg, FlowLegend } from "@/components/production-control/diagram-svg";
+import {
+  DIAGRAM_LIMITS,
+  DOOR_KINDS,
+  DOOR_WIDTH,
+  FLOW_KINDS,
+  FLOW_STYLES,
+  doorAt,
+  doorIsHorizontal,
+  edgeAnchors,
+  fitView,
+  newDiagramId,
+  nodeAt,
+  snap,
+  snapDoorToWall,
+} from "@/lib/ppk/diagram";
+import type { DiagramData, DiagramDoor, DiagramEdge, DiagramNode, DoorKind, FlowKind } from "@/lib/ppk/records";
+import { DiagramSvg, DoorIcon, FlowLegend } from "@/components/production-control/diagram-svg";
 import { PPK_FIELD_CLASS, PPK_LABEL_CLASS, PPK_SELECT_CLASS } from "@/components/production-control/ppk-ui";
 
-type Tool = "select" | "step" | "connect" | "room" | "flow";
-type Selection = { type: "node" | "edge"; id: string } | null;
+type Tool = "select" | "step" | "connect" | "room" | "flow" | "door";
+type Selection = { type: "node" | "edge" | "door"; id: string } | null;
 type Pt = { x: number; y: number };
 type Drag =
   | { mode: "move"; id: string; start: Pt; orig: Pt; pushed: boolean }
+  | { mode: "move-door"; id: string; start: Pt; orig: Pt; pushed: boolean }
   | { mode: "resize"; id: string; start: Pt; orig: { w: number; h: number }; pushed: boolean }
   | { mode: "draw"; start: Pt }
   | { mode: "pan"; startClient: Pt; origin: Pt };
@@ -44,6 +64,20 @@ const STEP_W = 240;
 const STEP_H = 56;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+/**
+ * Куда встаёт дверь у точки: на ближайшую стену помещения, иначе — свободно по
+ * сетке 10 с прежним поворотом.
+ */
+function placeDoor(nodes: DiagramNode[], point: Pt, door: Pick<DiagramDoor, "w" | "angle">): Pick<DiagramDoor, "x" | "y" | "angle"> {
+  const onWall = snapDoorToWall(nodes, point, door.w, door.angle);
+  if (onWall) return onWall;
+  return {
+    x: clamp(snap(point.x, 10), 0, MAX_COORD),
+    y: clamp(snap(point.y, 10), 0, MAX_COORD),
+    angle: door.angle,
+  };
+}
 
 /** Связи блок-схемы привязаны к границам узлов: пересчитываем точки после правки. */
 function withAnchors(data: DiagramData): DiagramData {
@@ -120,6 +154,7 @@ export function DiagramEditor({
 
   const [tool, setTool] = useState<Tool>("select");
   const [flowKind, setFlowKind] = useState<FlowKind>("raw");
+  const [doorKind, setDoorKind] = useState<DoorKind>("door");
   const [selection, setSelection] = useState<Selection>(null);
   // Видимая область: левый верхний угол в координатах схемы и масштаб (пикселей на единицу).
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
@@ -204,11 +239,37 @@ export function DiagramEditor({
 
   const selectedNode = selection?.type === "node" ? value.nodes.find((n) => n.id === selection.id) : undefined;
   const selectedEdge = selection?.type === "edge" ? value.edges.find((e) => e.id === selection.id) : undefined;
+  const selectedDoor = selection?.type === "door" ? (value.doors ?? []).find((d) => d.id === selection.id) : undefined;
 
   const patchNode = (id: string, patch: Partial<DiagramNode>, record = true) =>
     commit({ ...valueRef.current, nodes: valueRef.current.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)) }, record);
   const patchEdge = (id: string, patch: Partial<DiagramEdge>, record = true) =>
     commit({ ...valueRef.current, edges: valueRef.current.edges.map((e) => (e.id === id ? { ...e, ...patch } : e)) }, record);
+  const patchDoor = (id: string, patch: Partial<DiagramDoor>, record = true) =>
+    commit(
+      { ...valueRef.current, doors: (valueRef.current.doors ?? []).map((d) => (d.id === id ? { ...d, ...patch } : d)) },
+      record,
+    );
+  /** Стоит ли дверь на стене помещения вдоль неё (а не поперёк и не в стороне). */
+  const doorOnWall = (door: DiagramDoor, width = door.w) => {
+    const onWall = snapDoorToWall(valueRef.current.nodes, door, width, door.angle);
+    return onWall && doorIsHorizontal(onWall.angle) === doorIsHorizontal(door.angle) ? onWall : null;
+  };
+  /** Новая ширина двери: середина остаётся на стене, проём не выходит за угол. */
+  const resizeDoor = (door: DiagramDoor, w: number) => {
+    const width = clamp(w, DOOR_WIDTH.min, DOOR_WIDTH.max);
+    if (width === door.w) return;
+    const onWall = doorOnWall(door, width);
+    patchDoor(door.id, onWall ? { w: width, x: onWall.x, y: onWall.y } : { w: width });
+  };
+  /**
+   * «Повернуть»: на стене — открывание в другую сторону (внутрь / наружу),
+   * без стены — на 90°.
+   */
+  const rotateDoor = (door: DiagramDoor) => {
+    const onWall = door.x === doorOnWall(door)?.x && door.y === doorOnWall(door)?.y;
+    patchDoor(door.id, { angle: ((door.angle + (onWall ? 180 : 90)) % 360) as DiagramDoor["angle"] });
+  };
 
   const removeSelected = useCallback(() => {
     if (!selection) return;
@@ -219,6 +280,8 @@ export function DiagramEditor({
         nodes: data.nodes.filter((n) => n.id !== selection.id),
         edges: data.edges.filter((e) => e.from !== selection.id && e.to !== selection.id),
       });
+    } else if (selection.type === "door") {
+      commit({ ...data, doors: (data.doors ?? []).filter((d) => d.id !== selection.id) });
     } else {
       commit({ ...data, edges: data.edges.filter((e) => e.id !== selection.id) });
     }
@@ -292,6 +355,7 @@ export function DiagramEditor({
     else if (kind === "flowchart" && key === "s") chooseTool("step");
     else if (kind === "flowchart" && key === "c") chooseTool("connect");
     else if (kind === "floor-plan" && key === "r") chooseTool("room");
+    else if (kind === "floor-plan" && key === "d") chooseTool("door");
   };
   useEffect(() => {
     keyRef.current = handleKey;
@@ -321,7 +385,39 @@ export function DiagramEditor({
     const nodeId = target.closest("[data-node]")?.getAttribute("data-node") ?? null;
     const edgeId = target.closest("[data-edge]")?.getAttribute("data-edge") ?? null;
     const resizeId = target.closest("[data-resize]")?.getAttribute("data-resize") ?? null;
+    const doorId = target.closest("[data-door]")?.getAttribute("data-door") ?? null;
     const data = valueRef.current;
+
+    // Дверь двигается и в «Выборе», и в «Двери»: поставил — сразу поправил.
+    if ((tool === "select" || tool === "door") && doorId) {
+      const door = (data.doors ?? []).find((d) => d.id === doorId);
+      if (!door) return;
+      setSelection({ type: "door", id: doorId });
+      setEditingId(null);
+      dragRef.current = { mode: "move-door", id: doorId, start: pt, orig: { x: door.x, y: door.y }, pushed: false };
+      svgRef.current?.setPointerCapture(event.pointerId);
+      return;
+    }
+
+    if (tool === "door") {
+      const doors = data.doors ?? [];
+      if (doors.length >= DIAGRAM_LIMITS.doors) {
+        toast.error(t("limitDoors", { count: String(DIAGRAM_LIMITS.doors) }));
+        return;
+      }
+      const base = { w: DOOR_WIDTH.initial, angle: 0 as const };
+      const door: DiagramDoor = {
+        id: newDiagramId("d"),
+        kind: doorKind,
+        ...base,
+        ...placeDoor(data.nodes, pt, base),
+        flip: false,
+        label: "",
+      };
+      commit({ ...data, doors: [...doors, door] });
+      setSelection({ type: "door", id: door.id });
+      return;
+    }
 
     if (tool === "select") {
       if (resizeId) {
@@ -421,6 +517,17 @@ export function DiagramEditor({
     }
     const dx = pt.x - drag.start.x;
     const dy = pt.y - drag.start.y;
+    if (drag.mode === "move-door") {
+      if (Math.abs(dx) < 3 && Math.abs(dy) < 3 && !drag.pushed) return;
+      if (!drag.pushed) {
+        pushHistory();
+        drag.pushed = true;
+      }
+      const door = (valueRef.current.doors ?? []).find((d) => d.id === drag.id);
+      if (!door) return;
+      patchDoor(drag.id, placeDoor(valueRef.current.nodes, { x: drag.orig.x + dx, y: drag.orig.y + dy }, door), false);
+      return;
+    }
     if (drag.mode === "draw") {
       const x = clamp(snap(pt.x), 0, MAX_COORD);
       const y = clamp(snap(pt.y), 0, MAX_COORD);
@@ -492,7 +599,10 @@ export function DiagramEditor({
       return;
     }
     // Указатель захвачен svg, поэтому target — сам svg: узел определяем по координатам.
-    const nodeId = nodeAt(valueRef.current, toPoint(event))?.id;
+    const point = toPoint(event);
+    // Двойной клик по двери не открывает подпись помещения под ней.
+    if (doorAt(valueRef.current, point)) return;
+    const nodeId = nodeAt(valueRef.current, point)?.id;
     if (tool === "select" && nodeId) {
       setSelection({ type: "node", id: nodeId });
       pushHistory();
@@ -503,8 +613,19 @@ export function DiagramEditor({
   const editingNode = editingId ? value.nodes.find((n) => n.id === editingId) : undefined;
 
   const flowLabels = Object.fromEntries(FLOW_KINDS.map((k) => [k, t(`flows.${k}`)])) as Record<FlowKind, string>;
+  const doorLabels = Object.fromEntries(DOOR_KINDS.map((k) => [k, t(`doorKinds.${k}`)])) as Record<DoorKind, string>;
   const hint =
-    tool === "step" ? t("hintStep") : tool === "connect" ? t("hintConnect") : tool === "room" ? t("hintRoom") : tool === "flow" ? t("hintFlow") : t("hintSelect");
+    tool === "step"
+      ? t("hintStep")
+      : tool === "connect"
+        ? t("hintConnect")
+        : tool === "room"
+          ? t("hintRoom")
+          : tool === "flow"
+            ? t("hintFlow")
+            : tool === "door"
+              ? t("hintDoor")
+              : t("hintSelect");
 
   const cursorClass =
     tool === "select" ? "cursor-grab" : tool === "connect" ? "cursor-pointer" : "cursor-crosshair";
@@ -544,6 +665,10 @@ export function DiagramEditor({
                 <Chip active={tool === "flow"} onClick={() => chooseTool("flow")}>
                   <Route className="size-4" />
                   {t("flow")}
+                </Chip>
+                <Chip active={tool === "door"} onClick={() => chooseTool("door")} title="D">
+                  <DoorOpen className="size-4" />
+                  {t("door")}
                 </Chip>
               </>
             )}
@@ -594,6 +719,16 @@ export function DiagramEditor({
               ) : null}
             </div>
           ) : null}
+          {tool === "door" ? (
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("doorKind")}>
+              {DOOR_KINDS.map((k) => (
+                <Chip key={k} active={doorKind === k} onClick={() => setDoorKind(k)}>
+                  <DoorIcon kind={k} className="-my-1" />
+                  {doorLabels[k]}
+                </Chip>
+              ))}
+            </div>
+          ) : null}
           <p className="text-[13px] text-[#6f7282]">{hint}</p>
         </div>
       )}
@@ -635,6 +770,7 @@ export function DiagramEditor({
             }}
             selectedNodeId={selection?.type === "node" ? selection.id : null}
             selectedEdgeId={selection?.type === "edge" ? selection.id : null}
+            selectedDoorId={selection?.type === "door" ? selection.id : null}
             className={cn("block select-none", cursorClass)}
           >
             {/* Слой событий и черновиков поверх схемы. */}
@@ -746,6 +882,67 @@ export function DiagramEditor({
                   </div>
                 )}
               </div>
+            ) : selectedDoor ? (
+              <div className="space-y-4" data-testid="door-panel">
+                <div>
+                  <span className={PPK_LABEL_CLASS}>{t("doorKind")}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {DOOR_KINDS.map((k) => (
+                      <Chip key={k} active={selectedDoor.kind === k} onClick={() => patchDoor(selectedDoor.id, { kind: k })}>
+                        <DoorIcon kind={k} className="-my-1" />
+                        {doorLabels[k]}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className={PPK_LABEL_CLASS}>{t("doorWidth")}</span>
+                  <div className="flex items-center gap-2">
+                    <Chip
+                      onClick={() => resizeDoor(selectedDoor, selectedDoor.w - DOOR_WIDTH.step)}
+                      disabled={selectedDoor.w <= DOOR_WIDTH.min}
+                      title={t("doorNarrower")}
+                    >
+                      <Minus className="size-4" />
+                      <span className="sr-only">{t("doorNarrower")}</span>
+                    </Chip>
+                    <span className="min-w-10 text-center text-[14px] font-semibold tabular-nums text-[#0b1024]" aria-live="polite">
+                      {selectedDoor.w}
+                    </span>
+                    <Chip
+                      onClick={() => resizeDoor(selectedDoor, selectedDoor.w + DOOR_WIDTH.step)}
+                      disabled={selectedDoor.w >= DOOR_WIDTH.max}
+                      title={t("doorWider")}
+                    >
+                      <Plus className="size-4" />
+                      <span className="sr-only">{t("doorWider")}</span>
+                    </Chip>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Chip onClick={() => rotateDoor(selectedDoor)}>
+                    <RotateCw className="size-4" />
+                    {t("doorRotate")}
+                  </Chip>
+                  {selectedDoor.kind === "door" ? (
+                    <Chip onClick={() => patchDoor(selectedDoor.id, { flip: !selectedDoor.flip })}>
+                      <FlipHorizontal2 className="size-4" />
+                      {t("doorFlip")}
+                    </Chip>
+                  ) : null}
+                </div>
+                <label className="block">
+                  <span className={PPK_LABEL_CLASS}>{t("label")}</span>
+                  <input
+                    value={selectedDoor.label}
+                    maxLength={120}
+                    placeholder={t("doorLabelPlaceholder")}
+                    onFocus={pushHistory}
+                    onChange={(event) => patchDoor(selectedDoor.id, { label: event.target.value }, false)}
+                    className={PPK_FIELD_CLASS}
+                  />
+                </label>
+              </div>
             ) : selectedEdge ? (
               <div className="space-y-4">
                 {kind === "floor-plan" ? (
@@ -779,7 +976,14 @@ export function DiagramEditor({
         ) : null}
       </div>
 
-      {kind === "floor-plan" ? <FlowLegend title={t("legend")} labels={flowLabels} /> : null}
+      {kind === "floor-plan" ? (
+        <FlowLegend
+          title={t("legend")}
+          labels={flowLabels}
+          doorKinds={DOOR_KINDS.filter((k) => (value.doors ?? []).some((d) => d.kind === k))}
+          doorLabels={doorLabels}
+        />
+      ) : null}
     </div>
   );
 }

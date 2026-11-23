@@ -6,7 +6,14 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
-export type FillerOption = { id: string; name: string; position: string | null; management: boolean };
+export type FillerOption = {
+  id: string;
+  name: string;
+  position: string | null;
+  management: boolean;
+  /** Объекты (точки, офис), где человек работает; пусто — везде. */
+  buildingIds?: string[];
+};
 
 function initialsOf(name: string): string {
   return name
@@ -27,11 +34,14 @@ export function FillerPicker({
   onChange,
   options,
   objectNoun,
+  scopeNote,
 }: {
   value: string[];
   onChange: (ids: string[]) => void;
   options: FillerOption[];
   objectNoun?: string;
+  /** Чьи сотрудники в списке — «Сотрудники объекта «Офис»». */
+  scopeNote?: string;
 }) {
   const t = useTranslations("cleaningUi.fillerPicker");
   const locale = useLocale();
@@ -60,6 +70,11 @@ export function FillerPicker({
           ? t("anyEmployee", { objectNoun: nounLabel })
           : t("onlySelected", { count: value.length })}
       </p>
+      {scopeNote ? (
+        <p className="text-[12.5px] font-medium leading-[1.5] text-[#3c4053]" data-testid="filler-scope-note">
+          {scopeNote}
+        </p>
+      ) : null}
       {staff.length > 6 ? (
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />

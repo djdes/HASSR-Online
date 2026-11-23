@@ -1,0 +1,188 @@
+/*
+ * Выпадающие списки ровнее (владелец, 2026-11-23).
+ *
+ * 1. Телефон: список Radix Select (`data-slot="select-content"`) — лист снизу во
+ *    всю ширину с затемнением, крупными пунктами и отступом под жест «домой»,
+ *    как системные списки телефона. Позиция Radix (fixed + translate на
+ *    обёртке) перебивается здесь: обёртку ставим к низу экрана.
+ * 2. Компьютер: нативный <select> поля формы в браузерах с
+ *    `appearance: base-select` (Chrome/Edge/Яндекс ≥ 135) открывает такой же
+ *    список, как Radix, — по ширине поля, со скруглением, тенью, подсветкой и
+ *    галочкой, а не системный с синей полосой. Таблицы, ячейки журналов,
+ *    поле внутри рамки с подписью (`data-field-frame`: список встал бы по
+ *    строке внутри рамки, а не по ней), скрытые поля, `multiple`/`size` и
+ *    телефоны — системный список, как раньше.
+ */
+
+@keyframes wesetup-select-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media screen and (max-width: 639px) {
+  [data-radix-popper-content-wrapper]:has(> [data-slot="select-content"]) {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    transform: none !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  [data-slot="select-content"][data-slot] {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: min(70dvh, 34rem) !important;
+    translate: none !important;
+    border-width: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow:
+      0 0 0 100vmax rgb(11 16 36 / 0.38),
+      0 -12px 40px -16px rgb(11 16 36 / 0.3) !important;
+    filter: none !important;
+    animation: wesetup-select-sheet-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  }
+
+  /* «Ручка» листа сверху — видно, что это лист, который закрывается. */
+  [data-slot="select-content"][data-slot]::before {
+    content: "";
+    display: block;
+    flex-shrink: 0;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 2px;
+    border-radius: 999px;
+    background: var(--app-border-strong, #dcdfed);
+  }
+
+  [data-slot="select-content"] [data-slot="select-item"] {
+    min-height: 48px;
+    padding-block: 10px;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+}
+
+@media screen and (max-width: 639px) and (prefers-reduced-motion: reduce) {
+  [data-slot="select-content"][data-slot] {
+    animation: none !important;
+  }
+}
+
+@supports (appearance: base-select) {
+  @media (hover: hover) and (pointer: fine) {
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *)) {
+      appearance: base-select;
+      /* Значение — одной строкой по центру высоты, стрелка — справа поверх отступа. */
+      position: relative;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      overflow: hidden;
+      padding-inline-end: 36px;
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))::picker(select) {
+      appearance: base-select;
+      box-sizing: border-box;
+      min-inline-size: anchor-size(self-inline);
+      max-inline-size: calc(100vw - 1rem);
+      max-block-size: min(24rem, 60vh);
+      margin-block: 6px;
+      padding: 6px;
+      overflow-y: auto;
+      border: 1px solid var(--app-border, #ececf4);
+      border-radius: 16px;
+      background: var(--app-surface-elevated, #ffffff);
+      color: var(--app-text, #0b1024);
+      box-shadow: 0 24px 60px -24px rgb(11 16 36 / 0.35);
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))
+      option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-block-size: 36px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.3;
+      white-space: normal;
+      color: inherit;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))
+      option:is(:hover, :focus-visible) {
+      background: var(--app-tint-indigo, #f5f6ff);
+      outline: none;
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))
+      option:checked {
+      background: var(--app-tint-indigo-2, #eef1ff);
+      color: var(--app-indigo-deep, #3848c7);
+      font-weight: 500;
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))
+      option:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))
+      option::checkmark {
+      order: 1;
+      margin-inline-start: auto;
+      color: var(--app-indigo-deep, #3848c7);
+    }
+
+    /* Стрелка поля — как у Radix: шеврон, поворачивается, пока список открыт. */
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))::picker-icon {
+      content: "";
+      position: absolute;
+      inset-inline-end: 12px;
+      top: 50%;
+      translate: 0 -50%;
+      inline-size: 16px;
+      block-size: 16px;
+      background-color: currentColor;
+      opacity: 0.5;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+        center / 16px 16px no-repeat;
+      transition: rotate 150ms ease;
+    }
+
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *)):open::picker-icon {
+      rotate: 180deg;
+    }
+
+    /* Своя стрелка рядом (`appearance-none` + svg) — отступ под неё уже есть у поля. */
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select.appearance-none:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *)) {
+      padding-inline-end: revert-layer;
+    }
+
+    /* У поля со своей иконкой-стрелкой (`appearance-none` + svg рядом) — без второй. */
+    :is(.app-shell, [role="dialog"], [role="alertdialog"])
+      select.appearance-none:where([class~="w-full"], .form-input):where([class*="border"], .form-input):not([multiple], [size], [hidden], [data-native-picker], .hidden, .sr-only):not(:where(table *, [role="grid"] *, [data-field-frame] *))::picker-icon {
+      display: none;
+    }
+  }
+}

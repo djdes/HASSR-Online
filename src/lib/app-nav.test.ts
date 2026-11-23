@@ -567,7 +567,7 @@ test("у каждого раздела, кроме «Остального» и �
   assert.deepEqual(menuShape("staff"), [
     ["directories", ["users", "positions"]],
     ["groups", ["commission", "haccpGroup", "controlGroup", "inspectors"]],
-    ["more", ["team", "schedule", "health", "responsibles", "hierarchy", "visibility", "workload", "phone"]],
+    ["more", ["team", "schedule", "health", "responsibles", "hierarchy", "visibility", "phone"]],
   ]);
   // «Настройка» — в общем списке, под ним наборы журналов (владелец, 2026-10-28).
   assert.deepEqual(menuShape("journals"), [

@@ -98,7 +98,7 @@ export async function POST(request: Request) {
   }
   if (!phone) {
     return NextResponse.json(
-      { error: "Укажите телефон в формате +7XXXXXXXXXX — без него не получится связать аккаунт с TasksFlow" },
+      { error: "Укажите телефон в формате +7XXXXXXXXXX — без него не получится связать аккаунт с программным модулем" },
       { status: 400 }
     );
   }

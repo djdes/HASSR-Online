@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ORG_OWNERSHIP, normalizeOwnership } from "@/lib/org-profile";
 import {
   OBJECT_CATEGORIES,
@@ -32,6 +33,10 @@ import {
 } from "@/lib/object-categories";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { mapOrganizationProfileApiError } from "@/lib/organization-profile-error-adapter";
+
+/** Список в строке формы — тот же вид, что у полей `.form-input` рядом. */
+const ORG_SELECT_TRIGGER_CLASS =
+  "h-11 w-full rounded-2xl border-[#dcdfed] bg-[#fafbff] px-3.5 text-[14px] text-[#0b1024] shadow-none data-[size=default]:h-11 focus-visible:border-[#5566f6] focus-visible:ring-4 focus-visible:ring-[#5566f6]/15";
 
 /**
  * Поля «Реквизитов». Сведения для документов (правки поверх ЕГРЮЛ и
@@ -291,38 +296,38 @@ export function OrganizationInfoForm({
         <FormRow label={t("form.sphere")} hint={t("form.sphereHint")}>
           {/* Только четыре сферы (владелец, 2026-11-23); выбор той же
               категории сохраняет точную сферу организации («Школа»). */}
-          <select
+          <Select
             value={categoryForSphere(form.type) ?? ""}
-            onChange={(e) => {
-              const category = normalizeObjectCategory(e.target.value);
+            onValueChange={(value) => {
+              const category = normalizeObjectCategory(value);
               if (category) set("type", resolveSphereForCategory(initial.type, category));
             }}
-            className="form-input"
           >
-            {categoryForSphere(form.type) ? null : (
-              <option value="" disabled>
-                {tc("objectCategoryNone")}
-              </option>
-            )}
-            {OBJECT_CATEGORIES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {tc(`objectCategories.${opt.value}`)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label={t("form.sphere")} className={ORG_SELECT_TRIGGER_CLASS}>
+              <SelectValue placeholder={tc("objectCategoryNone")} />
+            </SelectTrigger>
+            <SelectContent>
+              {OBJECT_CATEGORIES.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {tc(`objectCategories.${opt.value}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FormRow>
         <FormRow label={t("form.ownership")} hint={t("form.ownershipHint")}>
-          <select
-            value={normalizeOwnership(form.ownershipKind)}
-            onChange={(e) => set("ownershipKind", e.target.value)}
-            className="form-input"
-          >
-            {ORG_OWNERSHIP.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {t(`form.ownershipKinds.${opt.value}`)}
-              </option>
-            ))}
-          </select>
+          <Select value={normalizeOwnership(form.ownershipKind)} onValueChange={(value) => set("ownershipKind", value)}>
+            <SelectTrigger aria-label={t("form.ownership")} className={ORG_SELECT_TRIGGER_CLASS}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ORG_OWNERSHIP.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {t(`form.ownershipKinds.${opt.value}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FormRow>
         {/* Точек — только чтение: значение приходит из анкеты
             регистрации. Менять его здесь нечему: отдельных организаций
@@ -752,7 +757,8 @@ function FormRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-2 md:grid-cols-[200px_1fr] md:items-start md:gap-5">
+    // Поле не шире 560px: на широком экране строка не тянется на весь экран.
+    <div className="grid gap-2 md:grid-cols-[200px_minmax(0,560px)] md:items-start md:gap-5">
       <div className="md:pt-2.5">
         <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#0b1024]">
           {icon ? <span className="text-[#9b9fb3]">{icon}</span> : null}

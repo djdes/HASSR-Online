@@ -94,7 +94,9 @@ export class TasksFlowError extends Error {
   ) {
     super(
       message ||
-        `TasksFlow ${status} on ${url}${
+        // Текст доходит до клиента (`err.message` в ответах кабинета): без адреса
+        // и с понятным названием сервиса задач (владелец, 2026-11-23).
+        `Программный модуль ответил ошибкой ${status}${
           typeof body === "object" && body && "message" in body
             ? `: ${(body as { message: unknown }).message}`
             : ""
@@ -167,7 +169,7 @@ class TasksFlowClient {
             res.ok ? 502 : res.status,
             url,
             null,
-            `TasksFlow returned invalid JSON (${res.status})`
+            `Программный модуль прислал повреждённый ответ (код ${res.status})`
           );
         }
       } else {
@@ -177,7 +179,7 @@ class TasksFlowClient {
             502,
             url,
             parsed,
-            `TasksFlow returned non-JSON response (${res.status})`
+            `Программный модуль прислал неожиданный ответ (код ${res.status})`
           );
         }
       }
