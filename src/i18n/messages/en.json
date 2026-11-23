@@ -3198,7 +3198,18 @@
         "qr": "QR",
         "qrTitle": "QR stickers and posters"
       },
-      "brandingSettings": "Brand style"
+      "brandingSettings": "Brand style",
+      "favorites": {
+        "added": "Added to favourites on the home page",
+        "removed": "Removed from favourites",
+        "full": "Favourites are full: {max} of {max}. Remove one page on the home page.",
+        "failed": "Couldn't save favourites",
+        "add": "Add “{name}” to favourites",
+        "remove": "Remove “{name}” from favourites",
+        "addShort": "Add to favourites",
+        "removeShort": "Remove from favourites",
+        "openNewTab": "Open in a new tab"
+      }
     },
     "header": {
       "staff": "Staff",
@@ -31822,7 +31833,7 @@
     "favorites": {
       "title": "Favorites",
       "add": "Add to favorites",
-      "addHint": "Pin the page you open most often",
+      "addHint": "Pin a page here or with the star next to a menu item",
       "remove": "Remove from favorites",
       "pickDescription": "The page will appear on the home screen — open it in one click.",
       "search": "Find a page",

@@ -84,6 +84,7 @@ import { PointSectionSync } from "@/components/layout/point-section-sync";
 import { SectionTopMenu } from "@/components/layout/section-top-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
+import { FavoritesProvider } from "@/components/favorites/favorites-context";
 import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banner";
@@ -534,6 +535,8 @@ export default async function DashboardLayout({
               нижний угол страницы. */}
           <FabDockProvider withTabBar>
           <AppNavProvider model={navModel}>
+          {/* «Избранное» главной — звёздочки и правая кнопка в меню (2026-11-23). */}
+          <FavoritesProvider enabled={canSeeHomePage(session.user)} initial={profile?.homeFavorites ?? []}>
           {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
               страница, футер. Сайдбар — только когда разделов два и больше. */}
           <div className="flex min-h-screen flex-1 print:block">
@@ -824,6 +827,7 @@ export default async function DashboardLayout({
           <CommandPalette />
           {/* P2.A.1 — Ctrl+Shift+N → срочный журнал → /journals/[code]/new */}
           <UrgentJournalHotkey />
+          </FavoritesProvider>
           </AppNavProvider>
           </FabDockProvider>
           </ScopeBoundary>

@@ -18,6 +18,7 @@ import { NavBadge } from "@/components/layout/section-menu-list";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 import { ScrollPane } from "@/components/ui/scroll-list";
 import { INSPECTION_ACTIVE, INSPECTION_DOCK, INSPECTION_ICON, INSPECTION_IDLE } from "@/components/layout/nav-inspection-style";
+import { FavoriteStar, NavContextMenu } from "@/components/favorites/favorite-star";
 
 // Строка раздела — как в стандартном меню: иконка в коробке 32px.
 const ROW =
@@ -92,9 +93,10 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
   const renderRow = (section: NavModelSection, action = false) => {
     const active = place.top === section.key;
     const open = Boolean(section.menu) && openKey === section.key;
-    return (
+    const href = sectionEntryHref(section);
+    const link = (
       <Link
-        href={sectionEntryHref(section)}
+        href={href}
         onClick={onSection(section)}
         aria-current={active ? (section.menu ? "true" : "page") : undefined}
         aria-expanded={section.menu ? open : undefined}
@@ -134,6 +136,17 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
         ) : null}
       </Link>
     );
+    // «Пришла проверка» — экстренная кнопка, в избранное её не кладут.
+    if (action) return link;
+    // Звёздочка при наведении и правая кнопка «В избранное» (2026-11-23).
+    return (
+      <div className="group/fav relative">
+        <NavContextMenu href={href} label={section.label}>
+          {link}
+        </NavContextMenu>
+        {touch ? null : <FavoriteStar href={href} label={section.label} />}
+      </div>
+    );
   };
 
   const renderSublist = (section: NavModelSection) => {
@@ -157,8 +170,9 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
                 const itemActive = active && place.secondId === item.id;
                 const quiet = item.section === "more";
                 return (
+                  <div key={item.id} className="group/fav relative">
+                  <NavContextMenu href={item.href} label={item.label}>
                   <Link
-                    key={item.id}
                     href={item.href}
                     aria-current={itemActive ? (item.section ? "true" : "page") : undefined}
                     data-menu-item={item.id}
@@ -188,6 +202,9 @@ export function ClassicNavAccordion({ touch = false }: { touch?: boolean }) {
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
                   </Link>
+                  </NavContextMenu>
+                  {touch ? null : <FavoriteStar href={item.href} label={item.label} />}
+                  </div>
                 );
               })}
             </div>

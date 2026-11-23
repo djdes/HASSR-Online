@@ -13,6 +13,7 @@ import { NavIcon, NavIconChip } from "@/components/layout/nav-icons";
 import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { FavoriteStar } from "@/components/favorites/favorite-star";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -232,7 +233,7 @@ function Tab({ entry, children, tabRef }: { entry: NewNavEntry; children: ReactN
       data-top-menu-current={entry.active ? "" : undefined}
       data-active={entry.active ? "" : undefined}
       data-tone={entry.icon ? navTone(entry.icon) : undefined}
-      className={TAB}
+      className={cn(TAB, "group/fav")}
     >
       {children}
     </div>
@@ -252,9 +253,14 @@ function TopEntry({ entry }: { entry: NewNavEntry }) {
       >
         <TabLabel entry={entry} />
       </Link>
+      {/* Звёздочка «в избранное» — в углу вкладки при наведении (2026-11-23). */}
+      <FavoriteStar href={entry.href} label={entry.label} className={TAB_STAR} />
     </Tab>
   );
 }
+
+/** Звёздочка вкладки: маленькая, в правом верхнем углу, поверх края вкладки. */
+const TAB_STAR = "top-0 right-0 size-5 translate-y-0 rounded-md shadow-[0_2px_8px_-4px_rgba(11,16,36,0.35)] [&>svg]:size-3.5";
 
 // Строка панели: иконка-плашка в цвет пункта и название. Выбранная — фон и
 // текст тона, как у выбранного пункта меню слева.
@@ -350,16 +356,19 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
         >
           {ownRow ? (
             <>
-              <DropdownMenuItem asChild className={cn(PANEL_ROW, "font-semibold")}>
-                <Link href={entry.href} data-nav-row data-tone={entry.icon ? navTone(entry.icon) : undefined} data-top-menu-own>
-                  {entry.icon ? (
-                    <NavIconChip name={entry.icon} className={PANEL_CHIP} iconClassName={PANEL_CHIP_ICON} />
-                  ) : null}
-                  <span className="min-w-0 flex-1">{entry.label}</span>
-                  {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
-                  <ArrowRight aria-hidden className="size-4 text-[#9b9fb3]" />
-                </Link>
-              </DropdownMenuItem>
+              <div className="group/fav relative">
+                <DropdownMenuItem asChild className={cn(PANEL_ROW, "font-semibold")}>
+                  <Link href={entry.href} data-nav-row data-tone={entry.icon ? navTone(entry.icon) : undefined} data-top-menu-own>
+                    {entry.icon ? (
+                      <NavIconChip name={entry.icon} className={PANEL_CHIP} iconClassName={PANEL_CHIP_ICON} />
+                    ) : null}
+                    <span className="min-w-0 flex-1">{entry.label}</span>
+                    {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
+                    <ArrowRight aria-hidden className="size-4 text-[#9b9fb3]" />
+                  </Link>
+                </DropdownMenuItem>
+                <FavoriteStar href={entry.href} label={entry.label} />
+              </div>
               <DropdownMenuSeparator className="mx-0 my-1.5" />
             </>
           ) : null}
@@ -413,6 +422,7 @@ function PanelLink({ link }: { link: NewNavPanelLink }) {
   const tone = link.icon ? navTone(link.icon) : undefined;
   return (
     <div data-tone={tone} className="break-inside-avoid">
+      <div className="group/fav relative">
       <DropdownMenuItem
         asChild
         className={cn(
@@ -434,15 +444,20 @@ function PanelLink({ link }: { link: NewNavPanelLink }) {
           {link.badge ? <NavBadge>{link.badge}</NavBadge> : null}
         </Link>
       </DropdownMenuItem>
+      <FavoriteStar href={link.href} label={link.label} />
+      </div>
       {hasTabs ? (
         // Линия — под серединой плашки пункта (поле строки 8px + половина плашки 14px).
         <div className="mt-0.5 mb-1 ml-[21px] border-l border-[var(--app-border-strong)] pl-2" data-top-menu-tabs={link.id}>
           {link.tabs.map((tab) => (
-            <DropdownMenuItem key={tab.id} asChild className={cn(PANEL_TAB, tab.active && PANEL_TAB_ACTIVE)}>
-              <Link href={tab.href} aria-current={tab.active ? "page" : undefined}>
-                {tab.label}
-              </Link>
-            </DropdownMenuItem>
+            <div key={tab.id} className="group/fav relative">
+              <DropdownMenuItem asChild className={cn(PANEL_TAB, tab.active && PANEL_TAB_ACTIVE)}>
+                <Link href={tab.href} aria-current={tab.active ? "page" : undefined}>
+                  {tab.label}
+                </Link>
+              </DropdownMenuItem>
+              <FavoriteStar href={tab.href} label={tab.label} className="right-1 size-6" />
+            </div>
           ))}
         </div>
       ) : null}

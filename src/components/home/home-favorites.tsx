@@ -2,14 +2,14 @@
 
 import { useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Star, X } from "lucide-react";
 import type { FavoriteCandidate } from "@/lib/home-page";
-import { HOME_FAVORITES_MAX } from "@/lib/home-page";
+import { HOME_FAVORITES_MAX, homeFavoriteSlots } from "@/lib/home-page";
 import { navTone } from "@/lib/nav-tones";
 import { NavIconChip } from "@/components/layout/nav-icons";
 import { SearchPickDialog, type SearchPickGroup } from "@/components/ui/search-pick-dialog";
+import { useFavorites } from "@/components/favorites/favorites-context";
 
 type Strings = {
   title: string;
@@ -24,10 +24,12 @@ type Strings = {
 };
 
 /**
- * Три слота «Избранного» на главной (эскиз: пунктирные «Избранное»): пустой
+ * Слоты «Избранного» на главной (эскиз: пунктирные «Избранное»): пустой
  * слот — «Добавить в избранное» с выбором страницы из своего меню, заполненный
- * — ссылка на страницу и «×», чтобы открепить. Список хранится на сервере
- * (`PUT /api/me/home-favorites`), поэтому одинаков на всех устройствах.
+ * — ссылка на страницу и «×», чтобы открепить. До семи страниц (2026-11-23:
+ * звёздочка у любого пункта меню): не меньше трёх карточек, одна пустая —
+ * пока есть место. Список — общий с меню (`FavoritesProvider`), хранится в
+ * аккаунте (`PUT /api/me/home-favorites`), одинаков на всех устройствах.
  *
  * Телефон (владелец, 2026-11-21: «избранное в строчку поуже»): три плитки в
  * один ряд — значок и короткая подпись; с 768px — прежние карточки.
@@ -37,39 +39,22 @@ export function HomeFavorites({
   candidates,
   strings,
 }: {
+  /** Избранное с сервера — пока провайдера меню нет (на главной он всегда есть). */
   pinned: string[];
   candidates: FavoriteCandidate[];
   strings: Strings;
 }) {
-  const router = useRouter();
-  const [hrefs, setHrefs] = useState(pinned);
+  const favorites = useFavorites();
   const [picking, setPicking] = useState(false);
-  const [busy, setBusy] = useState(false);
   const byHref = new Map(candidates.map((candidate) => [candidate.href, candidate]));
+  // Страница, которая пропала из меню человека, из слота просто уходит.
+  const hrefs = (favorites.enabled ? favorites.hrefs : pinned).filter((href) => byHref.has(href));
+  const busy = favorites.busy;
 
   async function save(next: string[]) {
-    const previous = hrefs;
-    setHrefs(next);
-    setBusy(true);
-    try {
-      const response = await fetch("/api/me/home-favorites", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hrefs: next }),
-      });
-      if (!response.ok) throw new Error(String(response.status));
-      const data = (await response.json()) as { hrefs: string[] };
-      setHrefs(data.hrefs);
-      toast.success(strings.saved);
-      router.refresh();
-      return true;
-    } catch {
-      setHrefs(previous);
-      toast.error(strings.failed);
-      return false;
-    } finally {
-      setBusy(false);
-    }
+    const ok = await favorites.save(next);
+    if (ok) toast.success(strings.saved);
+    return ok;
   }
 
   // В окне выбора — страницы, которых ещё нет в избранном, по разделам меню.
@@ -84,7 +69,7 @@ export function HomeFavorites({
     group.items.push({ id: candidate.href, label: candidate.label, icon: candidate.icon });
   }
 
-  const slots = Array.from({ length: HOME_FAVORITES_MAX }, (_, index) => hrefs[index] ?? null);
+  const slots = Array.from({ length: homeFavoriteSlots(hrefs.length) }, (_, index) => hrefs[index] ?? null);
 
   return (
     <>

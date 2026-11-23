@@ -7,6 +7,7 @@ import {
   canSeeHomePage,
   favoriteCandidates,
   homeContacts,
+  homeFavoriteSlots,
   normalizeFavorites,
 } from "./home-page";
 
@@ -47,19 +48,67 @@ const sections: NavModelSection[] = [
   },
 ];
 
-test("избранное: пункты меню и корни разделов без меню, без пунктов-разделов", () => {
+test("избранное: любой пункт меню — пункты, вложенные разделы, корни разделов; адрес один раз", () => {
+  const candidates = favoriteCandidates(sections);
   assert.deepEqual(
-    favoriteCandidates(sections).map((candidate) => candidate.href),
-    ["/settings/organization", "/more", "/settings/areas"],
+    candidates.map((candidate) => candidate.href),
+    ["/settings/buildings", "/settings/organization", "/more", "/settings/areas"],
   );
+  // Вложенный раздел подписан своим названием, а не названием родителя.
+  assert.equal(candidates[0].label, "Объекты");
+  assert.equal(candidates[0].sectionLabel, "Моя компания");
 });
 
-test("избранное: только разрешённые адреса, без повторов, не больше трёх", () => {
-  const allowed = new Set(["/a", "/b", "/c", "/d"]);
+test("избранное: вкладки пункта — тоже, подписаны вкладкой", () => {
+  const withTabs: NavModelSection[] = [
+    {
+      key: "company",
+      icon: "Building2",
+      label: "Моя компания",
+      rootHref: "/settings/organization",
+      tabs: [],
+      menu: [
+        {
+          label: null,
+          items: [
+            {
+              id: "organization",
+              icon: "Building2",
+              href: "/settings/organization",
+              label: "Реквизиты",
+              tabs: [
+                { id: "organization", href: "/settings/organization", label: "Реквизиты" },
+                { id: "documents", href: "/settings/organization/documents", label: "Сведения для документов" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  const candidates = favoriteCandidates(withTabs);
+  assert.deepEqual(candidates.map((candidate) => candidate.href), ["/settings/organization", "/settings/organization/documents"]);
+  assert.equal(candidates[1].label, "Сведения для документов");
+  assert.equal(candidates[1].sectionLabel, "Реквизиты");
+  assert.equal(candidates[1].icon, "Building2");
+});
+
+test("избранное: только разрешённые адреса, без повторов, не больше семи", () => {
+  assert.equal(HOME_FAVORITES_MAX, 7);
+  const allowed = new Set(["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"]);
   assert.deepEqual(normalizeFavorites(["/a", "/x", "/a", 5, "/b"], allowed), ["/a", "/b"]);
-  assert.equal(normalizeFavorites(["/a", "/b", "/c", "/d"], allowed).length, HOME_FAVORITES_MAX);
+  assert.equal(normalizeFavorites(["/a", "/b", "/c", "/d", "/e", "/f", "/g", "/h"], allowed).length, HOME_FAVORITES_MAX);
   assert.deepEqual(normalizeFavorites("garbage", allowed), []);
   assert.deepEqual(normalizeFavorites(["https://evil.example/"], allowed), []);
+});
+
+test("слоты «Избранного» на главной: не меньше трёх, один пустой «Добавить», не больше семи", () => {
+  assert.equal(homeFavoriteSlots(0), 3);
+  assert.equal(homeFavoriteSlots(2), 3);
+  assert.equal(homeFavoriteSlots(3), 4);
+  assert.equal(homeFavoriteSlots(6), 7);
+  assert.equal(homeFavoriteSlots(7), 7);
+  assert.equal(homeFavoriteSlots(9), 7);
 });
 
 test("контакты: Telegram из окружения, без него — страницы кабинета", () => {

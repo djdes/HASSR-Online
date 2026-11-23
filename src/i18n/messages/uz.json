@@ -3198,7 +3198,18 @@
         "qr": "QR",
         "qrTitle": "QR stikerlar va plakatlar"
       },
-      "brandingSettings": "Brend uslubi"
+      "brandingSettings": "Brend uslubi",
+      "favorites": {
+        "added": "Bosh sahifadagi sevimlilarga qo‘shildi",
+        "removed": "Sevimlilardan olib tashlandi",
+        "full": "Sevimlilar to‘ldi: {max} dan {max}. Bosh sahifada bitta sahifani olib tashlang.",
+        "failed": "Sevimlilarni saqlab bo‘lmadi",
+        "add": "«{name}»ni sevimlilarga qo‘shish",
+        "remove": "«{name}»ni sevimlilardan olib tashlash",
+        "addShort": "Sevimlilarga qo‘shish",
+        "removeShort": "Sevimlilardan olib tashlash",
+        "openNewTab": "Yangi oynada ochish"
+      }
     },
     "header": {
       "staff": "Xodimlar",
@@ -31822,7 +31833,7 @@
     "favorites": {
       "title": "Sevimlilar",
       "add": "Sevimlilarga qo‘shish",
-      "addHint": "Eng ko‘p ochadigan sahifangizni mahkamlang",
+      "addHint": "Sahifani shu yerda yoki menyu bandi yonidagi yulduzcha bilan qadang",
       "remove": "Sevimlilardan olib tashlash",
       "pickDescription": "Sahifa bosh sahifada paydo bo‘ladi — uni bir bosishda oching.",
       "search": "Sahifani topish",
