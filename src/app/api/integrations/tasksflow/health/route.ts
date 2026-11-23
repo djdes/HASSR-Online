@@ -51,14 +51,14 @@ export async function GET() {
     return NextResponse.json({
       status: "red" as HealthState,
       reason: "no_integration",
-      message: "Интеграция с TasksFlow не настроена.",
+      message: "Программный модуль не подключён.",
     });
   }
   if (!integration.enabled) {
     return NextResponse.json({
       status: "red" as HealthState,
       reason: "disabled",
-      message: "Интеграция выключена.",
+      message: "Программный модуль выключен.",
     });
   }
 
@@ -89,7 +89,7 @@ export async function GET() {
         reason: "http_error",
         httpStatus: response.status,
         latencyMs,
-        message: `TasksFlow вернул HTTP ${response.status}`,
+        message: `Программный модуль ответил ошибкой (код ${response.status})`,
         remote: body,
       });
     }
@@ -102,8 +102,8 @@ export async function GET() {
         httpStatus: response.status,
         latencyMs,
         message: body?.dbError
-          ? `TasksFlow: ${body.dbError}`
-          : "TasksFlow сообщил о неработающей БД.",
+          ? `Программный модуль: ${body.dbError}`
+          : "Программный модуль сообщил о сбое своей базы данных.",
         remote: body,
       });
     }
@@ -111,7 +111,7 @@ export async function GET() {
     const dbLatency = typeof body?.dbLatencyMs === "number" ? body.dbLatencyMs : 0;
     const yellowReason: string | null =
       dbLatency >= GREEN_LATENCY_MS
-        ? `TasksFlow БД отвечает медленно (${dbLatency} мс)`
+        ? `База данных программного модуля отвечает медленно (${dbLatency} мс)`
         : null;
     const status: HealthState = yellowReason ? "yellow" : "green";
 
@@ -121,7 +121,7 @@ export async function GET() {
       httpStatus: response.status,
       latencyMs,
       message:
-        yellowReason ?? `TasksFlow здоров (${latencyMs} мс).`,
+        yellowReason ?? `Программный модуль работает нормально (${latencyMs} мс).`,
       remote: body,
     });
   } catch (err) {
@@ -132,7 +132,7 @@ export async function GET() {
       reason: aborted ? "timeout" : "network_error",
       latencyMs,
       message: aborted
-        ? `TasksFlow не ответил за ${FETCH_TIMEOUT_MS} мс.`
+        ? `Программный модуль не ответил за ${FETCH_TIMEOUT_MS} мс.`
         : `Сетевая ошибка: ${err instanceof Error ? err.message : "неизвестно"}`,
     });
   } finally {

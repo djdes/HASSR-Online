@@ -40,7 +40,7 @@ export function renderWeeklyDigestTelegram(d: WeeklyDigestData): string {
   lines.push(`<b>📊 Сводка за неделю · ${esc(d.orgName)}</b>`);
   lines.push("");
   lines.push(`${complianceEmoji(d.compliancePct)} Заполнено: <b>${d.compliancePct}%</b> (${d.filledSlots} из ${d.totalSlots})`);
-  if (d.tfDone > 0 || d.tfStuck > 0) lines.push(`🛠 TasksFlow: ✅ ${d.tfDone} выполнено · ⏳ ${d.tfStuck} активных`);
+  if (d.tfDone > 0 || d.tfStuck > 0) lines.push(`🛠 Задачи в программном модуле: ✅ ${d.tfDone} выполнено · ⏳ ${d.tfStuck} активных`);
   if (d.incidents.total > 0) lines.push(`🌡 Отклонения температуры: ${d.incidents.total}${d.incidents.open > 0 ? ` (не закрыто ${d.incidents.open})` : ""}`);
   if (d.topEmployeeName) lines.push(`🏆 Топ исполнитель: <b>${esc(d.topEmployeeName)}</b> (${d.topEmployeeCount} записей)`);
   if (d.bottomTemplates.length > 0) {
@@ -59,7 +59,7 @@ export function renderWeeklyDigestTelegram(d: WeeklyDigestData): string {
     if (d.expiring.length > 6) lines.push(`  … и ещё ${d.expiring.length - 6}`);
   }
   lines.push("");
-  lines.push("<i>Подробности — на дашборде. Письмо с этой сводкой отключается в «Настройки → Уведомления».</i>");
+  lines.push("<i>Подробности — на экране «Сегодня». Письмо с этой сводкой отключается в «Настройки → Уведомления».</i>");
   return lines.join("\n");
 }
 
@@ -70,7 +70,7 @@ export function renderWeeklyDigestEmail(d: WeeklyDigestData, baseUrl: string): {
   const stat = (label: string, value: string) =>
     `<tr><td style="padding:6px 0;color:#71717a;font-size:14px">${label}</td><td style="padding:6px 0;text-align:right;font-weight:600;font-size:14px">${value}</td></tr>`;
   rows.push(stat("Заполнено журналов", `${complianceEmoji(d.compliancePct)} ${d.compliancePct}% (${d.filledSlots} из ${d.totalSlots})`));
-  if (d.tfDone > 0 || d.tfStuck > 0) rows.push(stat("Задачи TasksFlow", `${d.tfDone} выполнено · ${d.tfStuck} активных`));
+  if (d.tfDone > 0 || d.tfStuck > 0) rows.push(stat("Задачи в программном модуле", `${d.tfDone} выполнено · ${d.tfStuck} активных`));
   rows.push(stat("Отклонения температуры", d.incidents.total > 0 ? `${d.incidents.total}${d.incidents.open > 0 ? ` (не закрыто ${d.incidents.open})` : ""}` : "не было"));
   if (d.topEmployeeName) rows.push(stat("Больше всех записей", `${escapeHtml(d.topEmployeeName)} — ${d.topEmployeeCount}`));
 
@@ -96,7 +96,7 @@ export function renderWeeklyDigestEmail(d: WeeklyDigestData, baseUrl: string): {
     parts.push(section("Истекает в ближайшие 14 дней", `<p style="margin:0;color:#71717a;font-size:14px">Ничего не истекает.</p>`));
   }
   parts.push(
-    `<p style="margin:24px 0 0"><a href="${baseUrl}/dashboard" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600">Открыть дашборд</a></p>`
+    `<p style="margin:24px 0 0"><a href="${baseUrl}/dashboard" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600">Открыть «Сегодня»</a></p>`
   );
   parts.push(
     `<p style="margin:20px 0 0;color:#a1a1aa;font-size:12px">Письмо приходит по понедельникам в 08:00. Отключить: <a href="${baseUrl}/settings/notifications" style="color:#5566f6">Настройки → Уведомления</a>.</p>`

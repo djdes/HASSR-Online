@@ -212,7 +212,7 @@ async function handle(request: Request) {
     if (stage === "escalated_l1" && managerToPing) {
       // Soft-ping: «у Иван висит просроченная задача».
       const message =
-        `🟡 <b>Просроченная задача в TasksFlow</b>\n\n` +
+        `🟡 <b>Просроченная задача в программном модуле</b>\n\n` +
         `«${esc(titleText)}»\n` +
         `Исполнитель: ${esc(employeeText)}\n` +
         `Не выполнено уже ${ageHours} ч (норма ≤ ${l1Hours} ч).`;
@@ -228,7 +228,7 @@ async function handle(request: Request) {
         `Проверьте ${
           link.integration.label
             ? `«${esc(link.integration.label)}»`
-            : "TasksFlow"
+            : "программный модуль"
         } и переназначьте либо отмените.`;
       // Задача точки — её руководителям и офису (фаза 3 «Офис и точки»).
       await notifyOrganization(link.integration.organizationId, message, ["owner"], undefined, undefined, {

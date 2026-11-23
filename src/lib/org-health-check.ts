@@ -98,7 +98,7 @@ export async function runOrgHealthCheck(
       id: "positions",
       title: "Должности не созданы",
       status: "fail",
-      hint: "Запустите быструю настройку — пресет создаст канонические должности",
+      hint: "Запустите быструю настройку — она создаст типовые должности",
       href: "/settings/onboarding",
     });
   }
@@ -184,16 +184,16 @@ export async function runOrgHealthCheck(
   if (tfIntegration) {
     checks.push({
       id: "tf-integration",
-      title: "TasksFlow интеграция подключена",
+      title: "Программный модуль подключён",
       status: "ok",
       hint: "Готово",
     });
   } else {
     checks.push({
       id: "tf-integration",
-      title: "TasksFlow не подключён",
+      title: "Программный модуль не подключён",
       status: "warn",
-      hint: "Без TF сотрудники не получают задачи в смартфон. Подключите интеграцию",
+      hint: "Без программного модуля сотрудники не получают задачи на телефон. Подключите его",
       href: "/settings/integrations/tasksflow",
     });
   }
@@ -229,7 +229,7 @@ export async function runOrgHealthCheck(
       id: "telegram-links",
       title: "Никто не подключил Telegram-бот",
       status: "warn",
-      hint: "Без бота сотрудники не получают пуши о задачах",
+      hint: "Без бота сотрудники не получают уведомления о задачах",
       href: "/settings/users",
     });
   }

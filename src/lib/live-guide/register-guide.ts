@@ -82,7 +82,7 @@ export const REGISTER_GUIDE: GuideStep[] = [
     path: /^\/home\/?$/,
     target: "profile-phone",
     title: "Телефон",
-    text: "Номер для связи — по нему же можно будет связать аккаунт с TasksFlow.",
+    text: "Номер для связи — по нему же можно будет связать аккаунт с программным модулем.",
     advance: { kind: "digits", n: 11 },
     hint: "Введите номер",
   },

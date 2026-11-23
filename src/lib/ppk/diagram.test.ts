@@ -1,7 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { flowchartStepLabels, DIAGRAM_LIMITS, FLOW_STYLES, diagramBounds, fitView, nodeAt, diagramStats, edgeAnchors, flowchartTemplate, snap, type DiagramData } from "./diagram";
+import {
+  flowchartStepLabels,
+  DIAGRAM_LIMITS,
+  DOOR_WIDTH,
+  FLOW_KINDS,
+  FLOW_STYLES,
+  diagramBounds,
+  doorAt,
+  doorBounds,
+  doorSwingVector,
+  fitView,
+  nodeAt,
+  diagramStats,
+  edgeAnchors,
+  flowchartTemplate,
+  snap,
+  snapDoorToWall,
+  type DiagramData,
+} from "./diagram";
 import { PPK_RECORD_BLOCKS, PPK_RECORD_LIMITS, PPK_RECORD_SCHEMAS } from "./records";
 
 const node = (id: string, x: number, y: number, kind: "step" | "room" = "step") => ({
@@ -55,7 +73,7 @@ test("diagramStats: этапы, помещения, потоки", () => {
     ],
   };
   assert.deepEqual(diagramStats(data), { steps: 1, rooms: 2, flows: 1 });
-  assert.equal(Object.keys(FLOW_STYLES).length, 5);
+  assert.equal(Object.keys(FLOW_STYLES).length, 7);
 });
 
 test("блоки схем: лимиты по 50", () => {
@@ -137,4 +155,94 @@ test("flowchartStepLabels: этапы схем сверху вниз, без п�
     { nodes: [node("приёмка", 0), node("Выдача", 10)] },
   ];
   assert.deepEqual(flowchartStepLabels(charts), ["Приёмка", "Нарезка", "Выдача"]);
+});
+
+test("потоки: вода и канализация — свои цвета и штрих, не как у других", () => {
+  assert.deepEqual(FLOW_KINDS, ["raw", "ready", "waste", "staff", "dishes", "water", "sewage"]);
+  const styles = FLOW_KINDS.map((k) => `${FLOW_STYLES[k].color}|${FLOW_STYLES[k].dash}`);
+  assert.equal(new Set(styles).size, styles.length);
+  const colors = FLOW_KINDS.map((k) => FLOW_STYLES[k].color);
+  assert.equal(new Set(colors).size, colors.length);
+  const room = node("a", 0, 0, "room");
+  const plan = (flow: string) => ({
+    title: "П",
+    nodes: [room],
+    edges: [{ id: "e", from: null, to: null, points: [{ x: 1, y: 1 }, { x: 50, y: 1 }], flow, label: "" }],
+  });
+  assert.equal(PPK_RECORD_SCHEMAS["floor-plan"].safeParse(plan("water")).success, true);
+  assert.equal(PPK_RECORD_SCHEMAS["floor-plan"].safeParse(plan("sewage")).success, true);
+  assert.equal(PPK_RECORD_SCHEMAS["floor-plan"].safeParse(plan("steam")).success, false);
+});
+
+const room = (id: string, x: number, y: number, w = 200, h = 120) => ({ ...node(id, x, y, "room"), w, h });
+const door = (over: object = {}) => ({ id: "d1", kind: "door" as const, x: 100, y: 0, w: 40, angle: 0 as const, flip: false, label: "", ...over });
+
+test("snapDoorToWall: дверь встаёт на ближайшую стену по её направлению", () => {
+  const rooms = [room("a", 0, 0)];
+  // У верхней стены: на стене, шаг 10, поворот 0.
+  assert.deepEqual(snapDoorToWall(rooms, { x: 63, y: 12 }, 40), { x: 60, y: 0, angle: 0 });
+  // У правой стены: вертикально.
+  assert.deepEqual(snapDoorToWall(rooms, { x: 190, y: 57 }, 40), { x: 200, y: 60, angle: 90 });
+  // Сторона открывания сохраняется на стене той же оси.
+  assert.deepEqual(snapDoorToWall(rooms, { x: 100, y: 118 }, 40, 180), { x: 100, y: 120, angle: 180 });
+  assert.deepEqual(snapDoorToWall(rooms, { x: 4, y: 60 }, 40, 270), { x: 0, y: 60, angle: 270 });
+  // Ось сменилась — поворот по стене.
+  assert.deepEqual(snapDoorToWall(rooms, { x: 4, y: 60 }, 40, 180), { x: 0, y: 60, angle: 90 });
+  // Не выходит за угол.
+  assert.deepEqual(snapDoorToWall(rooms, { x: 5, y: 2 }, 40), { x: 20, y: 0, angle: 0 });
+  // Далеко от стен — null; этапы блок-схемы — не стены.
+  assert.equal(snapDoorToWall(rooms, { x: 100, y: 60 }, 40), null);
+  assert.equal(snapDoorToWall([node("s", 0, 0)], { x: 10, y: 0 }, 40), null);
+  // Из двух стен — ближайшая.
+  const two = [room("a", 0, 0), room("b", 0, 200)];
+  assert.deepEqual(snapDoorToWall(two, { x: 100, y: 190 }, 40), { x: 100, y: 200, angle: 0 });
+  // Короткая стена — посередине.
+  assert.deepEqual(snapDoorToWall([room("c", 0, 0, 40, 40)], { x: 3, y: 1 }, 60), { x: 20, y: 0, angle: 0 });
+});
+
+test("doorBounds: проём вдоль стены, полотно — в сторону открывания", () => {
+  assert.deepEqual(doorSwingVector(0), { x: 0, y: -1 });
+  assert.deepEqual(doorSwingVector(90), { x: 1, y: 0 });
+  assert.deepEqual(doorSwingVector(180), { x: 0, y: 1 });
+  assert.deepEqual(doorSwingVector(270), { x: -1, y: 0 });
+  // Вдоль стены — запас 6 с каждой стороны, как у зоны нажатия значка.
+  assert.deepEqual(doorBounds(door()), { x: 74, y: -46, w: 52, h: 52 });
+  assert.deepEqual(doorBounds(door({ angle: 180 })), { x: 74, y: -6, w: 52, h: 52 });
+  assert.deepEqual(doorBounds(door({ angle: 90, x: 200, y: 60 })), { x: 194, y: 34, w: 52, h: 52 });
+  assert.deepEqual(doorBounds(door({ angle: 270, x: 0, y: 60 })), { x: -46, y: 34, w: 52, h: 52 });
+  assert.deepEqual(doorBounds(door({ kind: "opening" })), { x: 74, y: -6, w: 52, h: 12 });
+  const plan: DiagramData = { title: "", nodes: [room("a", 0, 100)], edges: [], doors: [door({ y: 100 })] };
+  assert.equal(doorAt(plan, { x: 100, y: 80 })?.id, "d1");
+  assert.equal(doorAt(plan, { x: 100, y: 150 }), null);
+  assert.equal(doorAt(plan, { x: 123, y: 98 })?.id, "d1", "у края проёма — тоже дверь");
+  // Рамка схемы учитывает дверь (полотно выше помещения).
+  assert.equal(diagramBounds(plan, 0).y, 54);
+  // Дверь у верхней стены помещения у края холста: полотно в минусе — рамка его не обрезает.
+  const edge: DiagramData = { title: "", nodes: [room("a", 0, 20)], edges: [], doors: [door({ y: 20 })] };
+  assert.equal(diagramBounds(edge, 40).y, -26 - 40);
+  assert.equal(diagramBounds({ title: "", nodes: [room("a", 0, 20)], edges: [] }, 40).y, 0, "без двери — как раньше");
+});
+
+test("схема плана: двери и проёмы — необязательные, с пределами", () => {
+  const nodes = [room("a", 0, 0)];
+  const parse = (doors?: unknown[]) =>
+    PPK_RECORD_SCHEMAS["floor-plan"].safeParse({ title: "П", nodes, edges: [], ...(doors ? { doors } : {}) });
+  // Старый план без дверей — как был.
+  const old = parse();
+  assert.equal(old.success, true);
+  assert.equal("doors" in (old.data as object), false);
+  const ok = parse([door(), door({ id: "d2", kind: "opening", angle: 90, flip: true })]);
+  assert.equal(ok.success, true);
+  assert.equal((ok.data as DiagramData).doors?.length, 2);
+  assert.equal(parse([door({ kind: "window" })]).success, false);
+  assert.equal(parse([door({ angle: 45 })]).success, false);
+  assert.equal(parse([door({ w: DOOR_WIDTH.min - 1 })]).success, false);
+  assert.equal(parse([door({ w: DOOR_WIDTH.max + 1 })]).success, false);
+  assert.equal(parse([door({ x: -1 })]).success, false);
+  assert.equal(parse([door(), door()]).success, false);
+  assert.equal(parse(Array.from({ length: DIAGRAM_LIMITS.doors + 1 }, (_, i) => door({ id: `d${i}` }))).success, false);
+  // У блок-схемы дверей нет.
+  const chart = flowchartTemplate("hot");
+  assert.equal(PPK_RECORD_SCHEMAS.flowchart.safeParse({ ...chart, doors: [door()] }).success, false);
+  assert.equal(PPK_RECORD_SCHEMAS.flowchart.safeParse({ ...chart, doors: [] }).success, true);
 });

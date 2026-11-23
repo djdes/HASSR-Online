@@ -1,0 +1,32 @@
+files: 84
+[BABEL] Note: The code generator has deoptimised the styling of /home/user/HASSR-Online/src/i18n/message-contract.d.ts as it exceeds the max of 500KB.
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/equipment/page.tsx
+  411:20  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/equipment/page.tsx:411:20
+  409 |             const minutesAgo = reading
+  410 |               ? Math.round(
+> 411 |                   (Date.now() - reading.time.getTime()) / 60000
+      |                    ^^^^^^^^^^ Cannot call impure function
+  412 |                 )
+  413 |               : null;
+  414 |             const online =  react-hooks/purity
+
+/home/user/HASSR-Online/src/app/api/integrations/tasksflow/bulk-assign-today/route.ts
+   45:10  warning  'filterSubordinates' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  110:10  warning  'currentMonthBounds' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  119:10  warning  'monthLabel' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/components/dashboard/whats-new-modal.tsx
+  270:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+/home/user/HASSR-Online/src/components/settings/task-visibility-client.tsx
+  81:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+✖ 6 problems (0 errors, 6 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+
+exit 0

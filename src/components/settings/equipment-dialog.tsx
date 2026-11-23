@@ -9,7 +9,18 @@ import { Plus, Pencil, Building2, ArrowRight } from "lucide-react";
 import { getEquipmentTypeLabel } from "@/lib/equipment-type-label";
 import { FillerPicker, type FillerOption } from "@/components/settings/filler-picker";
 import { LAMP_PRESETS, UV_LAMP_TYPE, formatHours, isUvLampEquipment, lampRemainingHours, lampWarnLevel } from "@/lib/uv-lamp";
+import {
+  equipmentFieldProfile,
+  fillersForObject,
+  initialTemperatureToggles,
+  keepFillersOfObject,
+  sensorFieldVisible,
+  visibleTemperatureFields,
+  type TemperatureToggles,
+} from "@/lib/equipment-type-fields";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,7 +43,9 @@ import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 import { SectionJump } from "@/components/shared/section-jump";
 import { FloatingLabelField } from "@/components/journals/journal-dialog-field";
 import {
+  JOURNAL_DIALOG_FIELD_CLASS,
   JOURNAL_DIALOG_FIELD_CONTROL_CLASS,
+  JOURNAL_DIALOG_FIELD_LABEL_CLASS,
   JOURNAL_DIALOG_FIELD_TRIGGER_CLASS,
 } from "@/components/journals/journal-responsive";
 
@@ -88,6 +101,8 @@ interface EquipmentDialogProps {
   defaultBuildingId?: string | null;
   /** Точка цеха редактируемого оборудования. */
   equipmentBuildingId?: string | null;
+  /** Все объекты организации — для правила «где работает» в «Кто заполняет по QR». */
+  orgBuildingIds?: string[];
   equipment?: EquipmentData;
   /// Названия уже заведённых единиц — чтобы предупредить о дубле. Два
   /// холодильника с одним именем невозможно различить ни в журнале, ни
@@ -118,6 +133,7 @@ export function EquipmentDialog({
   places,
   defaultBuildingId = null,
   equipmentBuildingId = null,
+  orgBuildingIds,
   equipment,
   existingNames = [],
   fillerOptions = [],
@@ -168,7 +184,29 @@ export function EquipmentDialog({
   const [lampLifetime, setLampLifetime] = useState(equipment?.lampLifetimeHours?.toString() ?? "");
   const [lampInstalledAt, setLampInstalledAt] = useState(equipment?.lampInstalledAt ?? "");
   const [lampUsed, setLampUsed] = useState(equipment?.lampUsedHours != null ? String(Math.round(equipment.lampUsedHours)) : "0");
+  // Галочки «Мин. / Макс. температура» у типов, где норма не обязательна.
+  const [tempToggles, setTempToggles] = useState<TemperatureToggles>(() =>
+    initialTemperatureToggles(equipment?.tempMin?.toString() ?? "", equipment?.tempMax?.toString() ?? ""),
+  );
+  // Поле нормы, которое человек только что включил галочкой, — в фокус.
+  const [focusTemp, setFocusTemp] = useState<"min" | "max" | null>(null);
   const isLamp = type === UV_LAMP_TYPE;
+  const profile = equipmentFieldProfile(type);
+  const visibleTemps = visibleTemperatureFields(profile, tempToggles);
+  // «Уже записан» — сохранённый номер или набранный: поле не пропадает, пока его правят.
+  const showSensor = sensorFieldVisible(profile, tempToggles, tuyaDeviceId || equipment?.tuyaDeviceId || "");
+  const tempPlaceholder = (side: "min" | "max") =>
+    profile.example
+      ? t("tempExample", { value: profile.example[side] })
+      : side === "min"
+        ? t("tempMinPlaceholder")
+        : t("tempMaxPlaceholder");
+
+  function changeType(next: string) {
+    setType(next);
+    // Введённая норма не прячется: у типа с галочками они встают сами.
+    setTempToggles((prev) => ({ min: prev.min || tempMin.trim() !== "", max: prev.max || tempMax.trim() !== "" }));
+  }
 
   function resetForm() {
     setName(equipment?.name ?? "");
@@ -184,6 +222,8 @@ export function EquipmentDialog({
     setLampLifetime(equipment?.lampLifetimeHours?.toString() ?? "");
     setLampInstalledAt(equipment?.lampInstalledAt ?? "");
     setLampUsed(equipment?.lampUsedHours != null ? String(Math.round(equipment.lampUsedHours)) : "0");
+    setTempToggles(initialTemperatureToggles(equipment?.tempMin?.toString() ?? "", equipment?.tempMax?.toString() ?? ""));
+    setFocusTemp(null);
     setError(null);
   }
 
@@ -202,8 +242,41 @@ export function EquipmentDialog({
   const availablePlaces = byPoints ? [...pointPlaces, ...loosePlaces] : flatPlaces;
   const selectedPlace = availablePlaces.find((place) => place.key === placeKey) ?? null;
 
+  // «Кто заполняет по QR» — люди выбранного объекта: QR-страница всё равно
+  // пускает только сотрудников точки оборудования.
+  // Без `orgBuildingIds` (точки выключены или одна) — без фильтра, как на QR.
+  const fillerOrgBuildingIds = orgBuildingIds ?? [];
+  // Общее помещение (без точки) — у оборудования нет точки, QR пускает всех.
+  const looseRoomChosen = loosePlaces.some((place) => place.key === placeKey);
+  const fillerBuildingId = byPoints && buildingId !== NO_BUILDING && !looseRoomChosen ? buildingId : null;
+  const visibleFillers = fillersForObject(fillerOptions, {
+    orgBuildingIds: fillerOrgBuildingIds,
+    buildingId: fillerBuildingId,
+    selectedIds: fillerUserIds,
+  });
+  const fillerBuildingName = fillerBuildingId
+    ? buildings.find((building) => building.id === fillerBuildingId)?.name ?? null
+    : null;
+
+  /** Помещение точки — из отметок уходят люди, которые на ней не работают. */
+  function changePlace(next: string) {
+    setPlaceKey(next);
+    const loose = loosePlaces.some((place) => place.key === next);
+    if (byPoints && buildingId !== NO_BUILDING && !loose) {
+      setFillerUserIds((prev) =>
+        keepFillersOfObject(prev, fillerOptions, { orgBuildingIds: fillerOrgBuildingIds, buildingId }),
+      );
+    }
+  }
+
   function changeBuilding(next: string) {
     setBuildingId(next);
+    setFillerUserIds((prev) =>
+      keepFillersOfObject(prev, fillerOptions, {
+        orgBuildingIds: fillerOrgBuildingIds,
+        buildingId: byPoints && next !== NO_BUILDING ? next : null,
+      }),
+    );
     // Помещение другой точки не подходит — выбор помещения начинается заново.
     const stillThere =
       (next !== NO_BUILDING ? places?.byBuilding[next] ?? [] : []).some((place) => place.key === placeKey) ||
@@ -221,10 +294,10 @@ export function EquipmentDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // У УФ-лампы температуры нет: поля скрыты и не проверяются, а при
-    // сохранении старые нормы стираются (пустое значение — null на сервере).
-    const parsedMin = isLamp ? null : parseTempInput(tempMin);
-    const parsedMax = isLamp ? null : parseTempInput(tempMax);
+    // Скрытая норма (УФ-лампа, снятая галочка) не проверяется, а при
+    // сохранении старая стирается (пустое значение — null на сервере).
+    const parsedMin = visibleTemps.min ? parseTempInput(tempMin) : null;
+    const parsedMax = visibleTemps.max ? parseTempInput(tempMax) : null;
     if (parsedMin === "invalid" || parsedMax === "invalid") {
       setError(t("tempNotNumber"));
       return;
@@ -268,7 +341,7 @@ export function EquipmentDialog({
           serialNumber: serialNumber || undefined,
           tempMin: parsedMin ?? undefined,
           tempMax: parsedMax ?? undefined,
-          tuyaDeviceId: isLamp ? undefined : tuyaDeviceId || undefined,
+          tuyaDeviceId: showSensor ? tuyaDeviceId || undefined : undefined,
           fillerUserIds,
           ...(isLamp
             ? {
@@ -388,7 +461,7 @@ export function EquipmentDialog({
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
           <FloatingLabelField label={t("typeLabel")} htmlFor="eq-type" required>
-            <Select value={type} onValueChange={setType} required>
+            <Select value={type} onValueChange={changeType} required>
               <SelectTrigger id="eq-type" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                 <SelectValue placeholder={t("typePlaceholder")} />
               </SelectTrigger>
@@ -439,7 +512,7 @@ export function EquipmentDialog({
           </div>
           <div>
             <FloatingLabelField label={t("roomLabel")} htmlFor="eq-area" required>
-            <Select value={placeKey} onValueChange={setPlaceKey} required>
+            <Select value={placeKey} onValueChange={changePlace} required>
               <SelectTrigger id="eq-area" className={JOURNAL_DIALOG_FIELD_TRIGGER_CLASS}>
                 <SelectValue placeholder={t("roomPlaceholder")} />
               </SelectTrigger>
@@ -497,7 +570,7 @@ export function EquipmentDialog({
               />
             </FloatingLabelField>
           ) : null}
-          {isLamp ? null : (
+          {profile.temperature === "always" ? (
           <div className="grid grid-cols-2 gap-2.5">
             <FloatingLabelField label={t("tempMinLabel")} htmlFor="eq-temp-min">
               <Input
@@ -506,7 +579,7 @@ export function EquipmentDialog({
                 inputMode="decimal"
                 value={tempMin}
                 onChange={(e) => setTempMin(e.target.value)}
-                placeholder={t("tempMinPlaceholder")}
+                placeholder={tempPlaceholder("min")}
                 className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
               />
             </FloatingLabelField>
@@ -517,12 +590,53 @@ export function EquipmentDialog({
                 inputMode="decimal"
                 value={tempMax}
                 onChange={(e) => setTempMax(e.target.value)}
-                placeholder={t("tempMaxPlaceholder")}
+                placeholder={tempPlaceholder("max")}
                 className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
               />
             </FloatingLabelField>
           </div>
-          )}
+          ) : profile.temperature === "optional" ? (
+          <div className="space-y-1.5" data-testid="optional-temperature">
+            <div className="grid grid-cols-2 items-start gap-2.5">
+              {(["min", "max"] as const).map((side) => {
+                const on = tempToggles[side];
+                const inputId = side === "min" ? "eq-temp-min" : "eq-temp-max";
+                return (
+                  <div key={side} className={cn(JOURNAL_DIALOG_FIELD_CLASS, !on && "pb-1.5")}>
+                    <label className="flex min-h-7 cursor-pointer items-center gap-2 text-[14px] text-[#0b1024]">
+                      <Checkbox
+                        checked={on}
+                        onCheckedChange={(checked) => {
+                          setTempToggles((prev) => ({ ...prev, [side]: checked === true }));
+                          setFocusTemp(checked === true ? side : null);
+                        }}
+                        aria-controls={on ? inputId : undefined}
+                        data-testid={`temp-toggle-${side}`}
+                      />
+                      <span className={on ? JOURNAL_DIALOG_FIELD_LABEL_CLASS : undefined}>
+                        {side === "min" ? t("tempMinLabel") : t("tempMaxLabel")}
+                      </span>
+                    </label>
+                    {on ? (
+                      <Input
+                        id={inputId}
+                        type="text"
+                        inputMode="decimal"
+                        autoFocus={focusTemp === side}
+                        value={side === "min" ? tempMin : tempMax}
+                        onChange={(e) => (side === "min" ? setTempMin(e.target.value) : setTempMax(e.target.value))}
+                        placeholder={tempPlaceholder(side)}
+                        aria-label={side === "min" ? t("tempMinLabel") : t("tempMaxLabel")}
+                        className={JOURNAL_DIALOG_FIELD_CONTROL_CLASS}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[12px] leading-[1.5] text-[#6f7282]">{t("tempOptionalHint")}</p>
+          </div>
+          ) : null}
           {isLamp ? (
             <div className="space-y-3 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="lamp-section">
               <div className="text-[14px] font-semibold text-[#0b1024]">{t("lampSection")}</div>
@@ -602,9 +716,15 @@ export function EquipmentDialog({
             </div>
           ) : null}
           {fillerOptions.length > 0 ? (
-            <FillerPicker value={fillerUserIds} onChange={setFillerUserIds} options={fillerOptions} objectNoun={isLamp ? t("fillerNounLamp") : t("fillerNounEquipment")} />
+            <FillerPicker
+              value={fillerUserIds}
+              onChange={setFillerUserIds}
+              options={visibleFillers}
+              objectNoun={isLamp ? t("fillerNounLamp") : t("fillerNounEquipment")}
+              scopeNote={fillerBuildingName ? t("fillersOfObject", { name: fillerBuildingName }) : undefined}
+            />
           ) : null}
-          {isLamp ? null : (
+          {showSensor ? (
           <div>
             <FloatingLabelField label={t("tuyaLabel")} htmlFor="eq-tuya">
               <Input
@@ -619,7 +739,7 @@ export function EquipmentDialog({
               {t("tuyaHint")}
             </p>
           </div>
-          )}
+          ) : null}
           <div className="flex justify-end gap-2 pt-1.5">
             <Button
               type="button"

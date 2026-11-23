@@ -140,8 +140,8 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "root.organization.delete": { label: "Организация удалена", variant: "destructive" },
 
   // --- Настройки и интеграции -------------------------------------------
-  "settings.tasksflow.connect": { label: "TasksFlow подключён", variant: "default" },
-  "settings.tasksflow.disconnect": { label: "TasksFlow отключён", variant: "destructive" },
+  "settings.tasksflow.connect": { label: "Программный модуль подключён", variant: "default" },
+  "settings.tasksflow.disconnect": { label: "Программный модуль отключён", variant: "destructive" },
   "settings.responsibles.update": { label: "Ответственные обновлены", variant: "secondary" },
   "settings.experimental.v2.enable": { label: "Новый дизайн включён", variant: "default" },
   "settings.experimental.v2.disable": { label: "Новый дизайн выключен", variant: "secondary" },
@@ -247,7 +247,7 @@ export const AUDIT_ACTION_LABELS: Record<string, AuditActionLabel> = {
   "api_key.revoked": { label: "Отозван ключ ИИ и API", variant: "destructive" },
   "ai.vision_extract": { label: "Распознавание с фото", variant: "outline" },
   "closing-document.refresh-buyer": { label: "Реквизиты покупателя обновлены", variant: "secondary" },
-  "tasksflow.cleanup_pending": { label: "Очистка задач TasksFlow", variant: "secondary" },
+  "tasksflow.cleanup_pending": { label: "Очистка задач в программном модуле", variant: "secondary" },
   "tasksflow.bulk_assign.force_wipe": { label: "Массовое переназначение задач", variant: "destructive" },
 };
 
@@ -278,7 +278,7 @@ const ENTITY_LABELS_LOWER: Record<string, string> = {
   work_shift: "Смена",
   capa_ticket: "Нарушение",
   capa: "Нарушение",
-  tasksflowintegration: "Интеграция TasksFlow",
+  tasksflowintegration: "Программный модуль",
   manager_scope: "Видимость руководителя",
   position: "Должность",
   job_position: "Должность",
@@ -313,7 +313,7 @@ export const AUDIT_ENTITY_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "area", label: "Цех" },
   { value: "product", label: "Продукт" },
   { value: "position", label: "Должность" },
-  { value: "TasksFlowIntegration", label: "Интеграция TasksFlow" },
+  { value: "TasksFlowIntegration", label: "Программный модуль" },
 ];
 
 /** Русский тип сущности. Неизвестный — как есть. */
@@ -500,7 +500,7 @@ const DETAIL_VALUE_LABELS: Record<string, Record<string, string>> = {
     qr_join_token: "QR-приглашение",
     "dashboard.close_day": "кнопка «Закрыть день»",
     "dashboard.catch_up": "«Догнать пропуски»",
-    "tasksflow-supervisor": "из TasksFlow",
+    "tasksflow-supervisor": "из программного модуля",
   },
   applyTo: {
     all: "ко всем документам",

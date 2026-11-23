@@ -182,7 +182,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "Общий планшет": TabletSmartphone,
   "Заполнение с телефона": Smartphone,
   "Фото в журналах": Camera,
-  "Дашборд": Gauge,
+  "Экран «Сегодня»": Gauge,
   "Работа без интернета": WifiOff,
   "Уведомления": BellRing,
   "Голосовой ввод": MicVocal,

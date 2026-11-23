@@ -176,10 +176,10 @@ function noEligibleRowReason(args: {
     args.linkedUserIds.has(row.responsibleUserId ?? "")
   );
   if (linkedRows.length === 0) {
-    return "Ответственные не привязаны к TasksFlow (нет телефона)";
+    return "Ответственные не привязаны к программному модулю (нет телефона)";
   }
 
-  return "Нет подходящей строки для назначения в TasksFlow";
+  return "Нет подходящей строки для назначения в программном модуле";
 }
 
 export function selectRowsForBulkAssign(args: {

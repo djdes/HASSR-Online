@@ -122,7 +122,26 @@ export type DiagramNode = {
   /** Помещение кабинета (`Area`) у узла плана. */
   areaId: string | null;
 };
-export type FlowKind = "raw" | "ready" | "waste" | "staff" | "dishes";
+export type FlowKind = "raw" | "ready" | "waste" | "staff" | "dishes" | "water" | "sewage";
+/** Дверь (полотно с дугой открывания) или дверной проём (разрыв стены) на плане помещений. */
+export type DoorKind = "door" | "opening";
+export type DiagramDoor = {
+  id: string;
+  kind: DoorKind;
+  /** Середина проёма в координатах схемы. */
+  x: number;
+  y: number;
+  /** Ширина проёма вдоль стены. */
+  w: number;
+  /**
+   * Поворот, градусы: 0 — стена горизонтальная, полотно открывается вверх; 90 — стена
+   * вертикальная, открывается вправо; 180 — вниз; 270 — влево.
+   */
+  angle: 0 | 90 | 180 | 270;
+  /** Петли с другого края проёма (зеркально). */
+  flip: boolean;
+  label: string;
+};
 export type DiagramEdge = {
   id: string;
   from: string | null;
@@ -131,7 +150,13 @@ export type DiagramEdge = {
   flow: FlowKind | null;
   label: string;
 };
-export type DiagramData = { title: string; nodes: DiagramNode[]; edges: DiagramEdge[] };
+export type DiagramData = {
+  title: string;
+  nodes: DiagramNode[];
+  edges: DiagramEdge[];
+  /** Двери и проёмы плана помещений; у блок-схемы и у старых планов — нет. */
+  doors?: DiagramDoor[];
+};
 export type ControlPointData = {
   hazardId: string | null;
   kind: ControlKind;
@@ -286,7 +311,18 @@ const diagramEdgeSchema = z.object({
   from: id().nullable(),
   to: id().nullable(),
   points: z.array(z.object({ x: coord, y: coord })).max(50),
-  flow: z.enum(["raw", "ready", "waste", "staff", "dishes"]).nullable(),
+  flow: z.enum(["raw", "ready", "waste", "staff", "dishes", "water", "sewage"]).nullable(),
+  label: short(120),
+});
+
+const diagramDoorSchema = z.object({
+  id: id(),
+  kind: z.enum(["door", "opening"]),
+  x: coord,
+  y: coord,
+  w: z.number().min(20).max(200),
+  angle: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]),
+  flip: z.boolean(),
   label: short(120),
 });
 
@@ -294,6 +330,7 @@ const diagramBase = z.object({
   title: short(120),
   nodes: z.array(diagramNodeSchema).max(150),
   edges: z.array(diagramEdgeSchema).max(300),
+  doors: z.array(diagramDoorSchema).max(150).optional(),
 });
 
 /** Блок-схема: только этапы, связи ссылаются на этапы этой же схемы. */
@@ -305,6 +342,9 @@ const flowchartSchema = diagramBase.superRefine((value, ctx) => {
   value.nodes.forEach((n, i) => {
     if (n.kind !== "step") ctx.addIssue({ code: "custom", path: ["nodes", i, "kind"], message: "Только этапы" });
   });
+  if (value.doors && value.doors.length > 0) {
+    ctx.addIssue({ code: "custom", path: ["doors"], message: "Двери — только на плане помещений" });
+  }
   value.edges.forEach((e, i) => {
     if (!e.from || !ids.has(e.from)) ctx.addIssue({ code: "custom", path: ["edges", i, "from"], message: "Нет этапа" });
     if (!e.to || !ids.has(e.to)) ctx.addIssue({ code: "custom", path: ["edges", i, "to"], message: "Нет этапа" });
@@ -316,6 +356,10 @@ const floorPlanSchema = diagramBase.superRefine((value, ctx) => {
   const ids = new Set(value.nodes.map((n) => n.id));
   if (ids.size !== value.nodes.length) {
     ctx.addIssue({ code: "custom", path: ["nodes"], message: "Повторяется id помещения" });
+  }
+  const doorIds = new Set((value.doors ?? []).map((d) => d.id));
+  if (doorIds.size !== (value.doors ?? []).length) {
+    ctx.addIssue({ code: "custom", path: ["doors"], message: "Повторяется id двери" });
   }
   value.nodes.forEach((n, i) => {
     if (n.kind !== "room") ctx.addIssue({ code: "custom", path: ["nodes", i, "kind"], message: "Только помещения" });

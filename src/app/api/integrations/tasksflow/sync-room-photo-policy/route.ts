@@ -110,7 +110,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[sync-room-photo-policy] decrypt failed", err);
     return NextResponse.json(
-      { error: "Не удалось расшифровать ключ TasksFlow" },
+      { error: "Не удалось прочитать ключ программного модуля" },
       { status: 500 },
     );
   }

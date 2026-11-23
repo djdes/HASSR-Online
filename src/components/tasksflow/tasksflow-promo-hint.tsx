@@ -10,7 +10,9 @@ import {
 import { useInAppShell } from "@/lib/use-in-app-shell";
 
 /**
- * Промо-подсказка «подключите TasksFlow» под полем телефона.
+ * Промо-подсказка «подключите программный модуль» (сервис задач
+ * tasksflow.ru; в интерфейсе — «Программный модуль», владелец 2026-11-23)
+ * под полем телефона.
  *
  * Показывается там, где пользователь вводит номер: именно номер —
  * ключ автосвязки аккаунтов, поэтому объяснение выгоды уместно ровно
@@ -106,7 +108,7 @@ export function TasksFlowPromoHint({
         </span>
         <div className="min-w-0 flex-1">
           <p>
-            <span className="font-semibold text-[#0b1024]">TasksFlow.ru</span>
+            <span className="font-semibold text-[#0b1024]">{t("serviceName")}</span>
             {t("fullIntro")}
             <button
               type="button"

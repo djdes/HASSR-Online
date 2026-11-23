@@ -86,7 +86,7 @@ function buildGenericUi(label: string): TasksflowJournalUi {
     documentPlaceholder: "Выберите документ журнала",
     workerLabel: "Сотрудник",
     workerPlaceholder: "Кому назначить задачу",
-    workerHint: "Сотрудник получит задачу в TasksFlow.",
+    workerHint: "Сотрудник получит задачу в программном модуле.",
     submitLabel: `Создать задачу для «${label}»`,
     reviewTitle: "Проверка перед созданием",
     reviewRowHint:

@@ -71,7 +71,6 @@ export default async function JournalResponsiblesPage() {
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
-        journalDifficultyJson: true,
         journalTaskModesJson: true,
       },
     }),
@@ -187,9 +186,6 @@ export default async function JournalResponsiblesPage() {
           isRoot: u.isRoot,
         }))}
         journals={journals}
-        difficultyOverride={
-          (org?.journalDifficultyJson ?? {}) as Record<string, number>
-        }
       />
     </div>
   );

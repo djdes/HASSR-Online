@@ -85,10 +85,10 @@ export const PERMISSION_GROUPS: ReadonlyArray<{
 }> = [
   {
     id: "dashboard-journals",
-    title: "Дашборд и журналы",
+    title: "Экран «Сегодня» и журналы",
     description: "Доступ к главной, списку журналов и заполнению записей.",
     items: [
-      { code: "dashboard.view", label: "Открывать дашборд" },
+      { code: "dashboard.view", label: "Открывать экран «Сегодня»" },
       { code: "journals.view", label: "Смотреть журналы" },
       { code: "journals.fill", label: "Заполнять журналы" },
       {
@@ -178,8 +178,8 @@ export const PERMISSION_GROUPS: ReadonlyArray<{
       { code: "settings.organization", label: "Настройки организации" },
       { code: "settings.auto_journals", label: "Автосоздание журналов" },
       { code: "settings.permissions", label: "Управление правами доступа" },
-      { code: "integrations.manage", label: "Интеграции (TasksFlow, API)" },
-      { code: "audit.view", label: "Журнал действий (audit log)" },
+      { code: "integrations.manage", label: "Интеграции (программный модуль, API)" },
+      { code: "audit.view", label: "Журнал действий" },
       { code: "payments.manage", label: "Оплата и тариф" },
     ],
   },

@@ -1,0 +1,31 @@
+
+> haccp-online@0.1.0 prebuild
+> prisma generate
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./node_modules/@prisma/client in 2.25s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+...
+✓ Compiled successfully in 2.8min
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/171) ...
+  Generating static pages using 3 workers (42/171) 
+  Generating static pages using 3 workers (85/171) 
+  Generating static pages using 3 workers (128/171) 
+✓ Generating static pages using 3 workers (171/171) in 1597.0ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+...
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+exit 0

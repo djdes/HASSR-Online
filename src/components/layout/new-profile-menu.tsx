@@ -21,8 +21,9 @@ import { cn } from "@/lib/utils";
 /**
  * Меню пользователя в «Новой» теме (владелец, 2026-11-11, как у oxylabs):
  * аватар со стрелкой; в меню — кто вошёл, тариф и организации, тема рядом
- * иконок (устройство · светлая · тёмная · новая), удобство чтения, язык и
- * «Выйти». Только компьютер — на телефоне остаётся лист профиля.
+ * иконок (устройство · светлая · тёмная · новая), удобство чтения; внизу —
+ * язык слева и «Выйти» справа. Только компьютер — на телефоне остаётся лист
+ * профиля.
  */
 export function NewProfileMenu({
   open,
@@ -141,15 +142,15 @@ export function NewProfileMenu({
               })}
             </div>
           </div>
-          <div className="px-2 py-1.5">
-            <PersonalLanguageSelect />
-          </div>
         </div>
         <DropdownMenuSeparator className="my-0" />
-        <div className="p-1">
+        {/* Низ меню (владелец, 2026-11-23): слева — язык, справа — «Выйти». */}
+        <div className="flex items-center justify-between gap-2 p-1.5" data-testid="profile-menu-footer">
+          <PersonalLanguageSelect compact />
           <DropdownMenuItem
             onSelect={onLogout}
-            className="gap-2.5 rounded-lg px-3 py-2 text-[14.5px] text-[#d2453d] focus:bg-[#fff4f2] focus:text-[#d2453d]"
+            className="w-auto shrink-0 gap-2.5 rounded-lg px-3 py-2 text-[14.5px] text-[#d2453d] focus:bg-[#fff4f2] focus:text-[#d2453d]"
+            data-testid="profile-logout"
           >
             <LogOut className="size-4 stroke-[1.75]" aria-hidden />
             {t("header.logout")}
