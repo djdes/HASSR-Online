@@ -29,6 +29,7 @@ import {
   type DeliverResult,
   type QueueCampaign,
 } from "./queue";
+import { normalizeWindow } from "./rate-limit";
 import { readMailingSettings } from "./settings.server";
 import {
   channelIs,
@@ -215,6 +216,11 @@ export type CampaignListRow = {
   startedAt: string | null;
   finishedAt: string | null;
   cancelledAt: string | null;
+  pausedAt: string | null;
+  pausedBy: string | null;
+  /** Окно отправки по Москве, часы [start, end). */
+  windowStart: number;
+  windowEnd: number;
   createdAt: string;
   createdByName: string | null;
   lastError: string | null;
@@ -237,6 +243,10 @@ export function toListRow(row: MailingCampaign): CampaignListRow {
     startedAt: row.startedAt?.toISOString() ?? null,
     finishedAt: row.finishedAt?.toISOString() ?? null,
     cancelledAt: row.cancelledAt?.toISOString() ?? null,
+    pausedAt: row.pausedAt?.toISOString() ?? null,
+    pausedBy: row.pausedBy ?? null,
+    windowStart: row.windowStart,
+    windowEnd: row.windowEnd,
     createdAt: row.createdAt.toISOString(),
     createdByName: row.createdByName,
     lastError: row.lastError,
@@ -276,7 +286,19 @@ const SCHEDULE_MAX_DAYS = 60;
 
 export async function launchCampaign(
   id: string,
-  options: { mode: "now" | "schedule"; scheduledAtMsk?: string | null },
+  options: {
+    mode: "now" | "schedule";
+    scheduledAtMsk?: string | null;
+    /**
+     * Сколько получателей человек видел перед запуском. Как в YesBeat: база
+     * изменилась между подсчётом и запуском — запуск отклоняется, экран
+     * пересчитывает и просит подтвердить ещё раз. Нет — без проверки.
+     */
+    expectedRecipients?: number | null;
+    /** Окно отправки по Москве; нет — как сохранено у рассылки (по умолчанию 9–21). */
+    windowStart?: unknown;
+    windowEnd?: unknown;
+  },
   actor: MailingActor
 ): Promise<{ campaign: CampaignListRow; stats: PlanStats }> {
   const campaign = await db.mailingCampaign.findUnique({ where: { id } });
@@ -308,9 +330,23 @@ export async function launchCampaign(
     }
   }
 
+  let window = { windowStart: campaign.windowStart, windowEnd: campaign.windowEnd };
+  if (options.windowStart !== undefined || options.windowEnd !== undefined) {
+    const parsed = normalizeWindow(options.windowStart, options.windowEnd);
+    if (!parsed) throw new MailingError("Часы отправки — с 0 до 24 по Москве, начало раньше конца");
+    window = parsed;
+  }
+
   const plan = await planRecipients(audience, channels);
   if (plan.drafts.length === 0) {
     throw withMailingDiagnostic(new MailingError("Некому отправлять: выбранные получатели не подходят ни под один отмеченный канал"), { version: 1, code: "request.noEligibleRecipients", params: {  } });
+  }
+  const expected = options.expectedRecipients;
+  if (typeof expected === "number" && Number.isFinite(expected) && expected !== plan.stats.recipients) {
+    throw new MailingError(
+      `Аудитория изменилась: было ${expected}, сейчас ${plan.stats.recipients}. Проверьте число получателей и подтвердите запуск ещё раз.`,
+      409
+    );
   }
   const status: CampaignStatus = options.mode === "schedule" ? "scheduled" : "sending";
   await db.$transaction(
@@ -325,6 +361,8 @@ export async function launchCampaign(
           // Без prepare шаблону готовить нечего — очередь начинает сразу.
           preparedAt: template.prepare ? null : now,
           lastError: null,
+          windowStart: window.windowStart,
+          windowEnd: window.windowEnd,
           audience: { ...audience, stats: plan.stats } as unknown as Prisma.InputJsonValue,
         },
       });
@@ -348,6 +386,7 @@ export async function launchCampaign(
     contacts: plan.stats.contacts,
     emailQueued: plan.stats.channels.email.queued,
     scheduledAt: scheduledAt?.toISOString() ?? null,
+    window: `${window.windowStart}–${window.windowEnd}`,
   };
   console.info(
     `[mailing] campaign=${id} status draft → ${status} recipients=${plan.stats.recipients} by ${who(actor)}`,
@@ -363,10 +402,10 @@ export async function cancelCampaign(id: string, actor: MailingActor): Promise<C
   const campaign = await db.mailingCampaign.findUnique({ where: { id } });
   if (!campaign) throw new MailingError("Рассылка не найдена", 404);
   const r = await db.mailingCampaign.updateMany({
-    where: { id, status: { in: ["scheduled", "sending"] } },
+    where: { id, status: { in: ["scheduled", "sending", "paused"] } },
     data: { status: "cancelled", cancelledAt: new Date() },
   });
-  if (r.count !== 1) throw new MailingError("Отменить можно только запланированную или идущую рассылку", 409);
+  if (r.count !== 1) throw new MailingError("Отменить можно только запланированную, идущую или приостановленную рассылку", 409);
   for (const c of MAILING_CHANNELS) {
     await db.mailingRecipient.updateMany({
       where: { AND: [{ campaignId: id, isTest: false }, channelIs(c, "queued")] },
@@ -413,8 +452,8 @@ export async function cancelCampaign(id: string, actor: MailingActor): Promise<C
 export async function retryFailed(id: string, actor: MailingActor): Promise<{ campaign: CampaignListRow; requeued: number }> {
   const campaign = await db.mailingCampaign.findUnique({ where: { id } });
   if (!campaign) throw new MailingError("Рассылка не найдена", 404);
-  if (campaign.status !== "sending" && campaign.status !== "done") {
-    throw new MailingError("Повторить можно для идущей или завершённой рассылки", 409);
+  if (campaign.status !== "sending" && campaign.status !== "done" && campaign.status !== "paused") {
+    throw new MailingError("Повторить можно для идущей, приостановленной или завершённой рассылки", 409);
   }
   const failed = await db.mailingRecipient.findMany({
     where: { campaignId: id, isTest: false, OR: MAILING_CHANNELS.map((c) => channelIs(c, "failed")) },
@@ -430,7 +469,7 @@ export async function retryFailed(id: string, actor: MailingActor): Promise<{ ca
   }
   await db.mailingRecipient.updateMany({
     where: { id: { in: ids } },
-    data: { status: "queued", attempts: 0, nextAttemptAt: null },
+    data: { status: "queued", attempts: 0, nextAttemptAt: null, waitReason: null },
   });
   await db.mailingCampaign.updateMany({
     where: { id, status: "done" },
@@ -441,6 +480,72 @@ export async function retryFailed(id: string, actor: MailingActor): Promise<{ ca
   console.info(`[mailing] campaign=${id} retry failed: ${ids.length} recipients → queued by ${who(actor)}`);
   await audit(actor, "mailing.campaign.retry", id, { title: fresh.title, requeued: ids.length });
   return { campaign: toListRow(fresh), requeued: ids.length };
+}
+
+// ------------------------------------------------------------------ pause / resume / copy
+
+/**
+ * Пауза (как в YesBeat): запланированная или идущая рассылка перестаёт
+ * отправлять; то, что очередь отправляет прямо сейчас, может завершиться.
+ */
+export async function pauseCampaign(id: string, actor: MailingActor): Promise<CampaignListRow> {
+  const campaign = await db.mailingCampaign.findUnique({ where: { id } });
+  if (!campaign) throw new MailingError("Рассылка не найдена", 404);
+  const r = await db.mailingCampaign.updateMany({
+    where: { id, status: { in: ["scheduled", "sending"] } },
+    data: { status: "paused", pausedAt: new Date(), pausedBy: who(actor) },
+  });
+  if (r.count !== 1) throw new MailingError("Поставить на паузу можно только запланированную или идущую рассылку", 409);
+  const fresh = await db.mailingCampaign.findUniqueOrThrow({ where: { id } });
+  console.info(`[mailing] campaign=${id} status ${campaign.status} → paused by ${who(actor)}`);
+  await audit(actor, "mailing.campaign.pause", id, { title: fresh.title, from: campaign.status, queued: fresh.queuedCount });
+  return toListRow(fresh);
+}
+
+/** Продолжить: время старта ещё не наступило — снова «запланирована», иначе — «отправляется». */
+export async function resumeCampaign(id: string, actor: MailingActor): Promise<CampaignListRow> {
+  const campaign = await db.mailingCampaign.findUnique({ where: { id } });
+  if (!campaign) throw new MailingError("Рассылка не найдена", 404);
+  const now = new Date();
+  const toScheduled = !campaign.startedAt && campaign.scheduledAt !== null && campaign.scheduledAt.getTime() > now.getTime();
+  const r = await db.mailingCampaign.updateMany({
+    where: { id, status: "paused" },
+    data: {
+      status: toScheduled ? "scheduled" : "sending",
+      startedAt: toScheduled ? null : (campaign.startedAt ?? now),
+      pausedAt: null,
+      pausedBy: null,
+    },
+  });
+  if (r.count !== 1) throw new MailingError("Продолжить можно только рассылку на паузе", 409);
+  const fresh = await db.mailingCampaign.findUniqueOrThrow({ where: { id } });
+  console.info(`[mailing] campaign=${id} status paused → ${fresh.status} by ${who(actor)}`);
+  await audit(actor, "mailing.campaign.resume", id, { title: fresh.title, to: fresh.status, queued: fresh.queuedCount });
+  return toListRow(fresh);
+}
+
+/** Копия любой рассылки — новый черновик с тем же письмом, каналами, аудиторией и часами. */
+export async function duplicateCampaign(id: string, actor: MailingActor): Promise<CampaignListRow> {
+  const campaign = await db.mailingCampaign.findUnique({ where: { id } });
+  if (!campaign) throw new MailingError("Рассылка не найдена", 404);
+  const audience = normalizeAudience(campaign.audience);
+  const row = await db.mailingCampaign.create({
+    data: {
+      title: `${campaign.title.slice(0, 110)} — копия`,
+      kind: campaign.kind,
+      channels: campaign.channels as Prisma.InputJsonValue,
+      payload: campaign.payload as Prisma.InputJsonValue,
+      // Итог прошлого запуска (stats) копии не нужен — она посчитает свой.
+      audience: audience as unknown as Prisma.InputJsonValue,
+      windowStart: campaign.windowStart,
+      windowEnd: campaign.windowEnd,
+      createdById: actor.session.user.id,
+      createdByName: actor.session.user.name ?? actor.session.user.email ?? null,
+    },
+  });
+  console.info(`[mailing] campaign=${id} duplicated → draft=${row.id} by ${who(actor)}`);
+  await audit(actor, "mailing.campaign.duplicate", row.id, { title: row.title, source: id });
+  return toListRow(row);
 }
 
 // ------------------------------------------------------------------ card

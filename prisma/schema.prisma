@@ -5404,8 +5404,16 @@ model MailingCampaign {
   payload        Json               @default("{}")
   /// Снимок аудитории: выбранные пользователи и контакты, фильтры, счётчики.
   audience       Json               @default("{}")
-  /// draft | scheduled | sending | done | cancelled
+  /// draft | scheduled | sending | paused | done | cancelled
   status         String             @default("draft")
+  /// Окно отправки по Москве, часы [start, end): вне окна очередь ждёт
+  /// следующего утра (причина «quiet_hours»). 0–24 — круглосуточно.
+  windowStart    Int                @default(9)
+  windowEnd      Int                @default(21)
+  /// Когда поставили на паузу (вручную или очередь — после сбоя).
+  pausedAt       DateTime?
+  /// Кто поставил на паузу: email ROOT или «queue».
+  pausedBy       String?
   /// Запуск по расписанию (момент; ввод — по Москве).
   scheduledAt    DateTime?
   startedAt      DateTime?
@@ -5465,6 +5473,9 @@ model MailingRecipient {
   links          Json              @default("[]")
   attempts       Int               @default(0)
   nextAttemptAt  DateTime?
+  /// Почему ждёт (для «Состояния очереди» и журнала): quiet_hours,
+  /// frequency_limit, domain_limit, global_limit, retry; null — не ждёт.
+  waitReason     String?
   sentAt         DateTime?
   emailSentAt    DateTime?
   clickedAt      DateTime?

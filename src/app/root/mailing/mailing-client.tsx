@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, History, Mail, PenSquare, Send, SlidersHorizontal, Users } from "lucide-react";
+import { Ban, Gauge, History, Mail, PenSquare, Plus, Radio, ScrollText, Send, SlidersHorizontal, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMailingFeedback } from "./mailing-feedback";
 import { formatMailingSaveClock } from "./mailing-presentation";
@@ -18,12 +18,15 @@ import {
 import type { CampaignListRow, DraftDto } from "@/lib/mailing/campaigns.server";
 import { NO_CHANNELS, type MailingChannels } from "@/lib/mailing/labels";
 import type { MailingPreset } from "@/lib/mailing/presets";
-import type { MailingSettings } from "@/lib/mailing/rate-limit";
+import type { JournalFilters } from "@/lib/mailing/operations.server";
 import { cn } from "@/lib/utils";
 
 import { ComposeTab } from "./compose-tab";
 import { ContactsTab } from "./contacts-tab";
 import { HistoryTab } from "./history-tab";
+import { JournalTab } from "./journal-tab";
+import { LimitsTab, type SettingsSnapshot } from "./limits-tab";
+import { MonitorTab } from "./monitor-tab";
 import { QuickTab } from "./quick-tab";
 import { StopListTab } from "./stoplist-tab";
 import { ADVANCED_TABS, type MailingPageData, type MailingTab } from "./types";
@@ -79,8 +82,16 @@ export function MailingClient({ data }: { data: MailingPageData }) {
   );
   const [campaigns, setCampaigns] = useState<CampaignListRow[]>(data.campaigns);
   const [refreshing, setRefreshing] = useState(false);
-  const [settings, setSettings] = useState<MailingSettings>(data.settings);
-  const [sentToday, setSentToday] = useState(data.sentToday);
+  const [snapshot, setSnapshot] = useState<SettingsSnapshot>(() => ({
+    settings: data.settings,
+    sentToday: data.sentToday,
+    sentLastMinute: 0,
+    sentThisHour: data.sentThisHour,
+    heartbeat: data.heartbeat,
+  }));
+  const { settings, sentToday } = snapshot;
+  const [journalCampaign, setJournalCampaign] = useState(data.journalCampaign);
+  const onJournalFilters = useCallback((f: JournalFilters) => setJournalCampaign(f.campaign), []);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const labelsRef = useRef(new Map<string, string>(data.draft?.labels ?? []));
@@ -105,8 +116,11 @@ export function MailingClient({ data }: { data: MailingPageData }) {
     url.searchParams.set("tab", tab);
     if (compose.draftId) url.searchParams.set("draft", compose.draftId);
     else url.searchParams.delete("draft");
+    // Журнал по рассылке — в адресе: ссылкой можно поделиться, F5 откроет то же.
+    if (tab === "journal" && journalCampaign) url.searchParams.set("campaign", journalCampaign);
+    else url.searchParams.delete("campaign");
     window.history.replaceState(null, "", url.toString());
-  }, [tab, compose.draftId]);
+  }, [tab, compose.draftId, journalCampaign]);
 
   const toggle = (setter: typeof setUserIds) => (ids: string[], on: boolean) =>
     setter((prev) => {
@@ -204,6 +218,29 @@ export function MailingClient({ data }: { data: MailingPageData }) {
     setAdvanced(!advanced);
   }
 
+  /** «Новая рассылка»: чистый конструктор в расширенном режиме, иначе — готовое письмо. */
+  function newMailing() {
+    if (advanced) {
+      setCompose(composeFrom(data, null));
+      setUserIds(new Set());
+      setContactIds(new Set());
+      setSavedAt(null);
+      setTab("compose");
+    } else {
+      setTab("quick");
+    }
+  }
+
+  function onCampaignChanged(row: CampaignListRow) {
+    setCampaigns((prev) => prev.map((c) => (c.id === row.id ? row : c)));
+  }
+
+  /** Копия — сразу в конструктор: её обычно правят перед запуском. */
+  function onDuplicated(row: CampaignListRow) {
+    setCampaigns((prev) => [row, ...prev.filter((c) => c.id !== row.id)]);
+    void openDraft(row.id);
+  }
+
   function onLaunched(id: string) {
     // Сразу в карточку. Форму не сбрасываем: смена состояния запустила бы
     // синхронизацию адреса (replaceState) и перебила бы переход роутера.
@@ -212,7 +249,10 @@ export function MailingClient({ data }: { data: MailingPageData }) {
 
   const allTabs: Array<{ key: MailingTab; label: string; icon: typeof Mail; count?: number }> = [
     { key: "quick", label: t("tabs.quick"), icon: Send },
+    { key: "monitor", label: t("tabs.monitor"), icon: Radio },
     { key: "history", label: t("tabs.history"), icon: History },
+    { key: "journal", label: t("tabs.journal"), icon: ScrollText },
+    { key: "limits", label: t("tabs.limits"), icon: Gauge },
     { key: "compose", label: t("tabs.builder"), icon: PenSquare },
     { key: "users", label: t("tabs.users"), icon: Users, count: userIds.size },
     { key: "contacts", label: t("tabs.contacts"), icon: Mail, count: contactIds.size },
@@ -222,6 +262,31 @@ export function MailingClient({ data }: { data: MailingPageData }) {
 
   return (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3" data-testid="mailing-appbar">
+        <button
+          type="button"
+          onClick={() => setTab("limits")}
+          data-testid="mailing-queue-chip"
+          className={cn(
+            "inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-[13px] font-medium transition-colors duration-150",
+            settings.enabled
+              ? "bg-[#ecfdf5] text-[#116b2a] hover:bg-[#dcfce7]"
+              : "bg-[#fff4f2] text-[#a13a32] hover:bg-[#ffe9e5]"
+          )}
+        >
+          <span className={cn("size-2 rounded-full", settings.enabled ? "bg-[#22a04b]" : "bg-[#e0584a]")} />
+          {t(settings.enabled ? "tabs.queueOn" : "tabs.queueOff")}
+        </button>
+        <button
+          type="button"
+          onClick={newMailing}
+          data-testid="mailing-new"
+          className="inline-flex h-10 items-center gap-2 rounded-2xl bg-[#5566f6] px-4 text-[14px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0]"
+        >
+          <Plus className="size-4" />
+          {t("tabs.newMailing")}
+        </button>
+      </div>
       <nav
         aria-label={t("tabs.ariaLabel")}
         className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
@@ -332,13 +397,18 @@ export function MailingClient({ data }: { data: MailingPageData }) {
             setCampaigns((prev) => prev.filter((c) => c.id !== id));
             if (compose.draftId === id) setCompose(composeFrom(data, null));
           }}
-          settings={settings}
-          sentToday={sentToday}
-          onSettings={(s, today) => {
-            setSettings(s);
-            setSentToday(today);
-          }}
+          onChanged={onCampaignChanged}
+          onDuplicated={onDuplicated}
         />
+      </div>
+      <div hidden={tab !== "monitor"}>
+        <MonitorTab active={tab === "monitor"} onDuplicated={onDuplicated} onOpenLimits={() => setTab("limits")} />
+      </div>
+      <div hidden={tab !== "journal"}>
+        <JournalTab active={tab === "journal"} initialCampaign={data.journalCampaign} onFiltersChange={onJournalFilters} />
+      </div>
+      <div hidden={tab !== "limits"}>
+        <LimitsTab snapshot={snapshot} onSaved={setSnapshot} />
       </div>
       <div hidden={tab !== "stoplist"}>{tab === "stoplist" ? <StopListTab /> : null}</div>
     </div>

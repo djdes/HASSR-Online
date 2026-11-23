@@ -6,8 +6,11 @@ import {
   DEFAULT_MAILING_SETTINGS,
   emailBudget,
   mskDayStart,
+  emailDomain,
   normalizeMailingSettings,
+  normalizeWindow,
   validateMailingSettingsInput,
+  windowDue,
 } from "@/lib/mailing/rate-limit";
 import { newRecipientId, signRecipientToken, verifyRecipientToken } from "@/lib/mailing/tokens";
 
@@ -73,9 +76,23 @@ describe("клики: редирект только по сохранённым 
 
 describe("ограничение скорости и суточный лимит", () => {
   it("по умолчанию — без ограничения (максимум), битое — по умолчанию", () => {
-    assert.deepEqual(DEFAULT_MAILING_SETTINGS, { perMinute: 600, perDay: 100_000 });
+    assert.deepEqual(DEFAULT_MAILING_SETTINGS, {
+      enabled: true,
+      perMinute: 600,
+      perHour: 36_000,
+      perDay: 100_000,
+      perDomainHour: 36_000,
+      gapHours: 0,
+    });
     assert.deepEqual(normalizeMailingSettings(null), DEFAULT_MAILING_SETTINGS);
-    assert.deepEqual(normalizeMailingSettings({ perMinute: "5", perDay: -3 }), { perMinute: 5, perDay: 1 });
+    // Старая запись без новых полей — новые по умолчанию, очередь включена.
+    assert.deepEqual(normalizeMailingSettings({ perMinute: "5", perDay: -3 }), {
+      ...DEFAULT_MAILING_SETTINGS,
+      perMinute: 5,
+      perDay: 1,
+    });
+    assert.equal(normalizeMailingSettings({ enabled: false }).enabled, false);
+    assert.equal(normalizeMailingSettings({ gapHours: 9999 }).gapHours, 720);
   });
 
   it("проверка формы ROOT", () => {
@@ -83,6 +100,34 @@ describe("ограничение скорости и суточный лимит
     assert.equal(validateMailingSettingsInput({ perMinute: 0, perDay: 200 }).ok, false);
     assert.equal(validateMailingSettingsInput({ perMinute: 30, perDay: 20 }).ok, false);
     assert.equal(validateMailingSettingsInput({ perMinute: 1.5, perDay: 20 }).ok, false);
+    // Частичное сохранение: чего нет во вводе — как было.
+    const base = { ...DEFAULT_MAILING_SETTINGS, perMinute: 10, perDay: 200 };
+    const off = validateMailingSettingsInput({ enabled: false }, base);
+    assert.ok(off.ok && off.value.enabled === false && off.value.perMinute === 10);
+    assert.equal(validateMailingSettingsInput({ gapHours: 721 }, base).ok, false);
+    assert.equal(validateMailingSettingsInput({ perHour: 5 }, base).ok, false, "в час меньше, чем в минуту");
+    assert.equal(validateMailingSettingsInput({ enabled: "yes" }, base).ok, false);
+  });
+
+  it("часовой лимит в бюджете", () => {
+    const s = { perMinute: 20, perHour: 30, perDay: 300 };
+    assert.deepEqual(emailBudget(s, 0, 0, 25), { budget: 5, limitedBy: null });
+    assert.deepEqual(emailBudget(s, 0, 10, 30), { budget: 0, limitedBy: "hour" });
+  });
+
+  it("окно отправки по Москве", () => {
+    // 22:30 МСК → 09:00 следующего дня.
+    assert.equal(windowDue(new Date("2026-09-29T19:30:00Z"), 9, 21).toISOString(), "2026-09-30T06:00:00.000Z");
+    // 07:10 МСК → 09:00 того же дня.
+    assert.equal(windowDue(new Date("2026-09-29T04:10:00Z"), 9, 21).toISOString(), "2026-09-29T06:00:00.000Z");
+    // В окне и круглосуточно — сейчас.
+    const noon = new Date("2026-09-29T09:00:00Z");
+    assert.equal(windowDue(noon, 9, 21), noon);
+    assert.equal(windowDue(new Date("2026-09-29T00:00:00Z"), 0, 24).toISOString(), "2026-09-29T00:00:00.000Z");
+    assert.deepEqual(normalizeWindow(9, 21), { windowStart: 9, windowEnd: 21 });
+    assert.equal(normalizeWindow(21, 9), null);
+    assert.equal(normalizeWindow(0, 25), null);
+    assert.equal(emailDomain("A@Mail.RU"), "mail.ru");
   });
 
   it("бюджет — меньшее из минутного и суточного остатка", () => {

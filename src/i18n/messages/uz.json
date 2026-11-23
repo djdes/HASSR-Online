@@ -22905,7 +22905,13 @@
       "stoplist": "Cheklov ro‘yxati",
       "ariaLabel": "Xabar tarqatish bo‘limlari",
       "quick": "Yuborish",
-      "builder": "Konstruktor"
+      "builder": "Konstruktor",
+      "monitor": "Hozir ketmoqda",
+      "journal": "Jurnal",
+      "limits": "Limitlar",
+      "queueOn": "Navbat yoqilgan",
+      "queueOff": "Navbat o'chirilgan",
+      "newMailing": "Yangi xabar tarqatish"
     },
     "feedback": {
       "saveDraftFailed": "Qoralamani saqlab bo‘lmadi",

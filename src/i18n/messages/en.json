@@ -22905,7 +22905,13 @@
       "stoplist": "Suppression list",
       "ariaLabel": "Mailing sections",
       "quick": "Send",
-      "builder": "Builder"
+      "builder": "Builder",
+      "monitor": "In progress",
+      "journal": "Log",
+      "limits": "Limits",
+      "queueOn": "Queue on",
+      "queueOff": "Queue off",
+      "newMailing": "New mailing"
     },
     "feedback": {
       "saveDraftFailed": "Could not save the draft",

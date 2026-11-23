@@ -22906,7 +22906,13 @@ export type MessageContract = {
       "stoplist": "Стоп-лист",
       "ariaLabel": "Разделы рассылки",
       "quick": "Отправить",
-      "builder": "Конструктор"
+      "builder": "Конструктор",
+      "monitor": "Сейчас идут",
+      "journal": "Журнал",
+      "limits": "Лимиты",
+      "queueOn": "Очередь включена",
+      "queueOff": "Очередь выключена",
+      "newMailing": "Новая рассылка"
     },
     "feedback": {
       "saveDraftFailed": "Не удалось сохранить черновик",
