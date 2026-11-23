@@ -108,6 +108,15 @@ test("ушли из раздела компании — сам, без опов�
   assert.equal(autoPointTarget({ ...back, pathname: "/settings/buildings/new" }), null);
 });
 
+test("явный фильтр мест сильнее автовыбора: «Показать всех сотрудников объектов» остаётся на всех", () => {
+  const all = { pathname: "/settings/users", viewedPointId: null, returnPointId: "p1", pointIds: ["p1", "p2"], placeParam: "all" };
+  assert.equal(autoPointTarget(all), null);
+  assert.equal(autoPointTarget({ ...all, pathname: "/settings/equipment" }), null);
+  // Без фильтра — обычный автовыбор; на других страницах `place` ничего не значит.
+  assert.equal(autoPointTarget({ ...all, placeParam: null }), "p1");
+  assert.equal(autoPointTarget({ ...all, pathname: "/journals/hygiene" }), "p1");
+});
+
 test("ничего не запомнено, а объект один — включается он; объектов несколько — «Выберите объект»", () => {
   const single = { pathname: "/journals/hygiene", viewedPointId: null, returnPointId: null, pointIds: ["p1"] };
   assert.equal(autoPointTarget(single), "p1");

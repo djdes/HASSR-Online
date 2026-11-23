@@ -8765,7 +8765,11 @@
       "staffingVacancies": "Yetishmaydi: {count, plural, one {# kishi} other {# kishi}}",
       "staffingOver": "Shtatdan ortiq: {count, plural, one {# kishi} other {# kishi}}",
       "phoneLabel": "Telefon",
-      "emailLabel": "Pochta"
+      "emailLabel": "Pochta",
+      "placeOffice": "Ofis",
+      "placeNone": "Nuqtasiz",
+      "placeNoneTitle": "Nuqtaga biriktirilmagan — barcha nuqtalar jurnallariga tushadi. Qayerda ishlashini tanlash uchun bosing.",
+      "placeEdit": "Qayerda ishlaydi: {place}. O‘zgartirish uchun bosing."
     },
     "dialogs": {
       "positionNameRequired": "Nomini kiriting",
@@ -11250,12 +11254,12 @@
       }
     },
     "office": {
-      "description": "Butun kompaniyaga tegishli hamma narsa: ofis xodimlari va ofis jurnallari. Nuqtaga oid aniq ishlar — nuqta sahifasida.",
+      "description": "Butun kompaniyaga tegishli hamma narsa: rahbariyat, nuqtalar va ularning uskunalari. Jurnallar nuqtalarda yuritiladi.",
       "guide": {
         "title": "Ofis va nuqtalar qanday tuzilgan",
         "office": {
           "title": "Ofis — kompaniya rahbariyati",
-          "body": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi. Ularning o‘z jurnallari va vazifalari ofisga tegishli va nuqta jurnallariga qo‘shilmaydi."
+          "body": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi. Ofis — nuqta emas: jurnallar va vazifalar nuqtalarda yuritiladi."
         },
         "points": {
           "title": "Nuqta — uning xodimlari va jurnallari",
@@ -11274,28 +11278,29 @@
       "create": {
         "title": "Ofisni ajrating",
         "body": "Ofis — kompaniya rahbarlari joyi: ular barcha nuqtalarni ko‘radi, lekin nuqtalar jurnali va vazifalariga qo‘shilmaydi. Nuqta xodimlariga ta’sir qilmaydi.",
-        "split": "Ofis va obyektlar jurnallari alohida yuritiladi.",
-        "switcher": "Sarlavhada «Ofis / obyekt» almashtirgichi paydo bo‘ladi.",
+        "split": "Jurnallar nuqtalarda yuritiladi, ofis — rahbariyat joyi.",
+        "switcher": "Sarlavhada — nuqta tanlash; kompaniya bo‘limlarida u yerda «Nuqtani tanlang».",
         "existing": "Allaqachon to‘ldirilgan hujjatlar umumiy bo‘lib qoladi va hamma joyda ko‘rinadi.",
         "button": "Ofisni ajratish",
         "done": "Ofis ajratildi",
         "failed": "Ofisni ajratib bo‘lmadi"
       },
       "staff": {
-        "title": "Ofis xodimlari",
-        "hint": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi; ularning jurnallari va vazifalari ofisga tegishli.",
+        "title": "Rahbariyat",
+        "hint": "Direktor, boshqaruvchi va butun kompaniya jurnallari hamda sozlamalarini yurituvchilar. Nuqta xodimlari — nuqta sahifalarida.",
         "count": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
         "add": "Ofisga qo‘shish",
-        "emptyTitle": "Ofisda hozircha hech kim yo‘q",
-        "emptyBody": "Kompaniya rahbarlarini qo‘shing — ular barcha nuqtalarni ko‘radi.",
+        "emptyTitle": "Rahbariyat hali ko‘rsatilmagan",
+        "emptyBody": "Direktor yoki boshqaruvchini ofisga qo‘shing — ular barcha nuqtalarni ko‘radi.",
         "noPosition": "Lavozim ko‘rsatilmagan",
-        "all": "«Xodimlar»da ochish"
+        "all": "Nuqtalarning barcha xodimlarini ko‘rsatish"
       },
       "journals": {
-        "title": "Ofis jurnallari",
-        "hint": "Ofis o‘z jurnallarini yuritsa (ombor, ofis xodimlari gigiyenasi) — ular nuqtalardan alohida.",
-        "open": "Ofis jurnallarini ochish",
-        "failed": "Ofisni ochib bo‘lmadi"
+        "title": "Jurnallar nuqtalarda yuritiladi",
+        "hint": "Ofis — nuqta emas: jurnal hujjatlari nuqta uchun yaratiladi. Kerakli nuqta jurnallarini oching.",
+        "failed": "Ofisni ochib bo‘lmadi",
+        "create": "Nuqta yaratish",
+        "empty": "Hozircha nuqtalar yo‘q — birinchisini yarating, uning jurnallari shu yerda paydo bo‘ladi."
       },
       "points": {
         "title": "Kompaniyaning obyektlari",
@@ -11304,7 +11309,15 @@
         "unplaced": "{count, plural, other {# ta xodimga}} hali joy belgilanmagan: ular barcha nuqtalar jurnaliga tushadi.",
         "unplacedLink": "Taqsimlash",
         "noAddress": "Manzil ko‘rsatilmagan",
-        "staff": "{count, plural, =0 {xodim yo‘q} other {# xodim}}"
+        "staff": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
+        "all": "Barcha nuqtalarni ko‘rsatish"
+      },
+      "equipment": {
+        "title": "Nuqtalar uskunalari",
+        "hint": "Muzlatgichlar, yuvish joylari va boshqa uskunalar — nuqtalar bo‘yicha. To‘liq ro‘yxatda har bir birlik qaysi nuqtaga bog‘langani ko‘rinadi va uni ko‘chirish mumkin.",
+        "all": "Nuqtalarning barcha uskunalarini ko‘rsatish",
+        "count": "{count, plural, =0 {uskuna yo‘q} other {# birlik}}",
+        "loose": "Nuqtasiz: {count}"
       }
     },
     "network": {

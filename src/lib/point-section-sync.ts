@@ -153,10 +153,14 @@ export function autoPointTarget(input: {
   /** Объект, выбранный до перехода в раздел компании; null — не запомнен. */
   returnPointId: string | null;
   pointIds: readonly string[];
+  /** `?place=` вкладки с фильтром мест: явный выбор сильнее автовыбора. */
+  placeParam?: string | null;
 }): string | null {
   if (input.viewedPointId !== null) return null;
   const path = normalizePath(input.pathname);
   if (NEUTRAL_PATHS.has(path) || isCompanyWidePath(path) || pointPageId(path)) return null;
+  // «Показать всех сотрудников / всё оборудование объектов» (`?place=all`).
+  if (input.placeParam && PLACE_FILTER_PATHS.has(path)) return null;
   if (input.returnPointId && input.pointIds.includes(input.returnPointId)) return input.returnPointId;
   return input.pointIds.length === 1 ? input.pointIds[0] : null;
 }

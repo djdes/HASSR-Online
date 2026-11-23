@@ -8765,7 +8765,11 @@
       "staffingVacancies": "Short by {count, plural, one {# person} other {# people}}",
       "staffingOver": "Over plan by {count, plural, one {# person} other {# people}}",
       "phoneLabel": "Phone",
-      "emailLabel": "Email"
+      "emailLabel": "Email",
+      "placeOffice": "Office",
+      "placeNone": "No site",
+      "placeNoneTitle": "Not assigned to a site — appears in the journals of all sites. Click to choose where they work.",
+      "placeEdit": "Works at: {place}. Click to change."
     },
     "dialogs": {
       "positionNameRequired": "Enter a name",
@@ -11250,12 +11254,12 @@
       }
     },
     "office": {
-      "description": "Everything that concerns the whole company: office staff and office journals. Site specifics live on the site page.",
+      "description": "Everything company-wide: management, sites and their equipment. Journals are kept at the sites.",
       "guide": {
         "title": "How the office and sites work",
         "office": {
           "title": "Office — company management",
-          "body": "Directors and department managers can see all locations. Their own logs and tasks belong to the office and are not added to location logs."
+          "body": "The director and department heads see all sites. The office is not a site: journals and tasks are kept at the sites."
         },
         "points": {
           "title": "Site — its staff and journals",
@@ -11274,28 +11278,29 @@
       "create": {
         "title": "Set up the office",
         "body": "The office is where company management works: they see every site but are not added to site journals and tasks. Site staff are not affected.",
-        "split": "Office and site journals will be kept separately.",
-        "switcher": "A switcher «Office / site» will appear in the header.",
+        "split": "Journals are kept at the sites; the office is where management sits.",
+        "switcher": "The header shows the site picker; in company sections it reads “Choose a site”.",
         "existing": "Documents already filled in stay shared and visible everywhere.",
         "button": "Set up office",
         "done": "Office set up",
         "failed": "Could not set up the office"
       },
       "staff": {
-        "title": "Office staff",
-        "hint": "Directors and department managers see all locations; their logs and tasks belong to the office.",
+        "title": "Management",
+        "hint": "The director, the manager and everyone who runs journals and settings for the whole company. Site staff are on the site pages.",
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add to office",
-        "emptyTitle": "No one in the office yet",
-        "emptyBody": "Add company managers — they will see every site.",
+        "emptyTitle": "No management yet",
+        "emptyBody": "Add the director or the manager to the office — they will see all sites.",
         "noPosition": "No position",
-        "all": "Open in «Staff»"
+        "all": "Show all site staff"
       },
       "journals": {
-        "title": "Office journals",
-        "hint": "If the office keeps its own journals (warehouse, office staff hygiene), they are kept apart from sites.",
-        "open": "Open office journals",
-        "failed": "Could not open the office"
+        "title": "Journals are kept at the sites",
+        "hint": "The office is not a site: journal documents are created for a site. Open the journals of the site you need.",
+        "failed": "Could not open the office",
+        "create": "Create a site",
+        "empty": "No sites yet — create the first one and its journals will appear here."
       },
       "points": {
         "title": "Company sites",
@@ -11304,7 +11309,15 @@
         "unplaced": "{count, plural, one {# employee is} other {# employees are}} not assigned to a place yet: they are added to the journals of every site.",
         "unplacedLink": "Assign",
         "noAddress": "No address",
-        "staff": "{count, plural, =0 {no staff} one {# employee} other {# employees}}"
+        "staff": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
+        "all": "Show all sites"
+      },
+      "equipment": {
+        "title": "Site equipment",
+        "hint": "Fridges, sinks and other equipment by site. The full list shows which site each unit belongs to, and you can move it.",
+        "all": "Show all site equipment",
+        "count": "{count, plural, =0 {no equipment} one {# unit} other {# units}}",
+        "loose": "Without a site: {count}"
       }
     },
     "network": {

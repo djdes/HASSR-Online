@@ -102,6 +102,10 @@ import { staffApiErrorKey } from "@/components/staff/staff-api-error";
 import { occupiesSeat, positionStaffing } from "@/lib/staffing";
 import { formatPhone } from "@/lib/phone";
 import { PlaceFilterResults } from "@/components/layout/place-filter-scope";
+import { isOfficeBuilding } from "@/lib/building-scope";
+
+/** Пилюля места работы в строке сотрудника. */
+type StaffPlace = { label: string; title: string; none: boolean };
 
 type TabKey = "work-off" | "vacations" | "sick-leaves" | "dismissals";
 
@@ -786,6 +790,18 @@ export function StaffPageClient(props: StaffPageProps) {
   }).length;
   // Точки: сотрудники без точки получают задачи со всех точек — об этом
   // стоит сказать сразу, а не ждать вопросов «почему мне пришло втрое».
+  // Место работы у каждого сотрудника (владелец, 2026-11-23: «с указанием,
+  // какой к какому объекту привязан»): офис, объект(ы) или «Без объекта».
+  const placeOf = (employee: StaffEmployee): StaffPlace | null => {
+    const buildings = props.buildings ?? [];
+    if (!props.perLocationJournals || buildings.length < 2) return null;
+    const known = (employee.buildingIds ?? [])
+      .map((id) => buildings.find((building) => building.id === id))
+      .filter((building): building is NonNullable<typeof building> => Boolean(building));
+    if (known.length === 0) return { label: t("placeNone"), title: t("placeNoneTitle"), none: true };
+    const label = known.map((building) => (isOfficeBuilding(building) ? t("placeOffice") : building.name)).join(", ");
+    return { label, title: t("placeEdit", { place: label }), none: false };
+  };
   const staffWithoutBuilding = props.perLocationJournals
     ? props.employees.filter(
         (e) => e.isActive && !e.isRoot && (e.buildingIds ?? []).length === 0
@@ -1037,6 +1053,7 @@ export function StaffPageClient(props: StaffPageProps) {
                   setDlg({ kind: "tg-unlink", employee, pending: false })
                 }
                 onEditEmployee={openEditEmployee}
+                placeOf={placeOf}
                 onAddPosition={() =>
                   setDlg({
                     kind: "add-flow",
@@ -1504,6 +1521,8 @@ function CategoryColumn(props: {
   onRebindTelegram: (employee: StaffEmployee) => void;
   onUnlinkTelegram: (employee: StaffEmployee) => void;
   onEditEmployee: (employee: StaffEmployee) => void;
+  /** Место работы сотрудника; null — объекты не делятся, пилюли нет. */
+  placeOf?: (employee: StaffEmployee) => StaffPlace | null;
   onAddPosition: () => void;
   onAddEmployee: (position: StaffPosition) => void;
   /** Нет — карандаш должности не показываем (должности правит офис). */
@@ -1677,6 +1696,32 @@ function CategoryColumn(props: {
                                 {e.pointAssignment ? (
                                   <SubstituteBadge className="ml-1.5 align-middle" {...substituteBadge(e.pointAssignment)} />
                                 ) : null}
+                                {(() => {
+                                  const place = props.placeOf?.(e) ?? null;
+                                  if (!place) return null;
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        props.onEditEmployee(e);
+                                      }}
+                                      title={place.title}
+                                      data-staff-place={e.id}
+                                      data-staff-place-none={place.none ? "" : undefined}
+                                      className={cn(
+                                        "ml-1.5 inline-flex max-w-[220px] items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[11.5px] font-medium transition-colors",
+                                        place.none
+                                          ? "bg-[#fff8eb] text-[#a16d32] hover:bg-[#fff1d6]"
+                                          : "bg-[var(--app-veil)] text-[#3c4053] hover:bg-[var(--app-veil-hover)]",
+                                      )}
+                                    >
+                                      <MapPin className="size-3 shrink-0" aria-hidden />
+                                      <span className="truncate">{place.label}</span>
+                                    </button>
+                                  );
+                                })()}
                               </span>
                               {/* Контакты — сразу в строке: позвонить или написать
                                   можно, не открывая карточку. */}

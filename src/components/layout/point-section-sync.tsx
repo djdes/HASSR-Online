@@ -130,7 +130,7 @@ export function PointSectionSync({
 
     if (!pathChanged) return;
     const returnPointId = readReturnPoint();
-    const target = autoPointTarget({ pathname, viewedPointId, returnPointId, pointIds: ids });
+    const target = autoPointTarget({ pathname, viewedPointId, returnPointId, pointIds: ids, placeParam });
     if (target) {
       const key = `${pathname}→auto:${target}`;
       if (attempted.current === key) return;
