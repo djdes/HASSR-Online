@@ -3185,7 +3185,6 @@
       "scrollLeft": "Scroll menu left",
       "scrollRight": "Scroll menu right",
       "openSection": "Open section",
-      "submenu": "Submenu: {name}",
       "tabBar": {
         "aria": "Bottom menu",
         "home": "Home",

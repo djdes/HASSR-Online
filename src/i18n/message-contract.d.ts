@@ -3186,7 +3186,6 @@ export type MessageContract = {
       "scrollLeft": "Прокрутить меню влево",
       "scrollRight": "Прокрутить меню вправо",
       "openSection": "Открыть раздел",
-      "submenu": "Вложенные пункты: {name}",
       "tabBar": {
         "aria": "Нижнее меню",
         "home": "Домой",
