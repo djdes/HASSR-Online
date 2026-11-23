@@ -18,6 +18,12 @@ export const TASKSFLOW_PROMO_CODE = "WESETUP50";
 export const TASKSFLOW_PROMO_BENEFIT = "−50 % на первый месяц";
 
 const TASKSFLOW_PROMO_ORIGIN = "https://tasksflow.ru";
+
+/**
+ * Сайт сервиса задач. В интерфейсе он называется «Программный модуль»
+ * (владелец, 2026-11-23), а ссылка ведёт сюда — что это за сервис.
+ */
+export const TASKSFLOW_SITE_URL = TASKSFLOW_PROMO_ORIGIN;
 const TASKSFLOW_PROMO_PATH = "/";
 
 /**

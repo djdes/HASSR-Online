@@ -382,7 +382,6 @@ const STAFF_MENU: NavMenuGroup[] = [
       { id: "responsibles", icon: "UserCheck", href: "/settings/journal-responsibles", access: ADMIN },
       { id: "hierarchy", icon: "Network", href: "/settings/staff-hierarchy", access: PERMISSIONS_FACT },
       { id: "visibility", icon: "Eye", href: "/settings/position-staff-visibility", access: FULL_ACCESS },
-      { id: "workload", icon: "Scale", href: "/settings/workload-balance", access: ADMIN },
       { id: "phone", icon: "Phone", href: "/settings/phone", access: STAFF_PATH },
     ],
   },
@@ -585,7 +584,9 @@ export const NAV_SECTIONS: NavSection[] = [
     renameHref: "/settings/users",
     // `/settings/sections/staff` — бывшая «Настройка»: её карточки стали
     // пунктами меню, сама страница уводит к сотрудникам.
-    hiddenMatch: ["/staff", "/settings/sections/staff"],
+    // `/settings/workload-balance`, `/settings/journal-difficulty` — убранная
+    // «Нагрузка сотрудников» (2026-11-23): адреса ведут к ответственным.
+    hiddenMatch: ["/staff", "/settings/sections/staff", "/settings/workload-balance", "/settings/journal-difficulty"],
     tabs: [
       { id: "users", label: "users", href: "/settings/users", access: FULL_ACCESS },
       {

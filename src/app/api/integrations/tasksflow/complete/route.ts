@@ -81,7 +81,7 @@ export async function POST(request: Request) {
   const adapter = getAdapter(link.journalCode);
   if (!adapter) {
     return NextResponse.json(
-      { error: `Журнал «${link.journalCode}» не имеет адаптера` },
+      { error: `Журнал «${link.journalCode}» пока нельзя заполнить из задачи` },
       { status: 400 }
     );
   }

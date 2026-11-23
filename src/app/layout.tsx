@@ -18,6 +18,8 @@ import "./app-theme.css";
 import "./motion.css";
 import "./public-theme.css";
 import "./view-prefs.css";
+// Dropdowns: bottom sheet on phones, styled native pickers on desktop (owner, 2026-11-23).
+import "./select-polish.css";
 // Last: light theme repaints the old indigo classes to black and greys.
 import "./neutral-palette.css";
 // After the palettes: neutral box borders give way to fills (scripts/gen-borderless.mjs).

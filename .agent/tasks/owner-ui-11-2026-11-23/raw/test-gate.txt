@@ -1,0 +1,9 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Эскалация до полного прогона: Затронут ядровый файл (src/lib/permissions.ts)
+
+=== Test stats: pass=7266, fail=0 ===
+✓ Все тесты прошли.
+exit 0

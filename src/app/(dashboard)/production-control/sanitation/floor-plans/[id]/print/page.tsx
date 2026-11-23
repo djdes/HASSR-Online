@@ -3,8 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { loadDiagramRecord } from "@/lib/ppk/diagram.server";
-import { FLOW_KINDS, diagramBounds } from "@/lib/ppk/diagram";
-import type { FlowKind } from "@/lib/ppk/records";
+import { DOOR_KINDS, FLOW_KINDS, diagramBounds } from "@/lib/ppk/diagram";
+import type { DoorKind, FlowKind } from "@/lib/ppk/records";
 import { PpkPrintSheet, loadPpkPrintOrg } from "@/components/production-control/ppk-print-sheet";
 import { DiagramSvg, FlowLegend } from "@/components/production-control/diagram-svg";
 import { ppkPageScope } from "@/lib/ppk/access.server";
@@ -38,6 +38,8 @@ export default async function Page({
   const title = data.title || t("unnamed");
   const labels = Object.fromEntries(FLOW_KINDS.map((k) => [k, t(`flows.${k}`)])) as Record<FlowKind, string>;
   const present = FLOW_KINDS.filter((k) => data.edges.some((e) => e.flow === k));
+  const doorLabels = Object.fromEntries(DOOR_KINDS.map((k) => [k, t(`doorKinds.${k}`)])) as Record<DoorKind, string>;
+  const doorsPresent = DOOR_KINDS.filter((k) => (data.doors ?? []).some((d) => d.kind === k));
   const byFlow = query.by === "flow";
 
   return (
@@ -54,15 +56,15 @@ export default async function Page({
                   {title}: {labels[k]}
                 </h2>
                 <DiagramSvg data={data} kind="floor-plan" idPrefix={`print-${k}`} viewBox={viewBox} onlyFlow={k} className="h-auto w-full" />
-                <FlowLegend className="mt-4" title={t("legend")} labels={labels} kinds={[k]} />
+                <FlowLegend className="mt-4" title={t("legend")} labels={labels} kinds={[k]} doorKinds={doorsPresent} doorLabels={doorLabels} />
               </section>
             ))
           )
         ) : (
           <>
             <DiagramSvg data={data} kind="floor-plan" idPrefix="print" viewBox={viewBox} className="h-auto w-full" />
-            {present.length > 0 ? (
-              <FlowLegend className="mt-4" title={t("legend")} labels={labels} kinds={present} />
+            {present.length > 0 || doorsPresent.length > 0 ? (
+              <FlowLegend className="mt-4" title={t("legend")} labels={labels} kinds={present} doorKinds={doorsPresent} doorLabels={doorLabels} />
             ) : null}
           </>
         )}

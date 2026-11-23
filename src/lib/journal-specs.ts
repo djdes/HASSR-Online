@@ -4,7 +4,6 @@
  * Связано с:
  *   • docs/JOURNAL-SPECS.md — текстовое описание для людей.
  *   • src/lib/journal-task-modes.ts — distribution + verification.
- *   • src/lib/journal-workload.ts — расчёт нагрузки.
  *   • src/lib/journal-responsible-schemas.ts — слоты ответственных.
  *
  * Этот файл — единственный источник правды для UI/Tasks-flow о том,

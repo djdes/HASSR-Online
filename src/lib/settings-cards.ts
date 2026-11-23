@@ -65,7 +65,6 @@ export const SETTINGS_CARDS: SettingsCard[] = [
   { id: "settings_journal_task_mode", href: "/settings/journal-task-mode", icon: "Settings2", section: "journals", group: "tasks", access: FULL_ACCESS },
   { id: "settings_journal_flow", href: "/settings/journal-flow", icon: "Shuffle", section: "journals", group: "tasks", access: ADMIN },
   { id: "settings_task_visibility", href: "/settings/task-visibility", icon: "Eye", section: "journals", group: "tasks", access: ADMIN },
-  { id: "settings_journal_difficulty", href: "/settings/journal-difficulty", icon: "Gauge", section: "journals", group: "tasks", access: ADMIN },
   { id: "settings_journal_bonuses", href: "/settings/journal-bonuses", icon: "Coins", section: "journals", group: "tasks", access: FULL_ACCESS },
 
   // ---- Остальное: работа ----------------------------------------------

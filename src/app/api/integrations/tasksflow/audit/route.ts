@@ -66,7 +66,7 @@ export async function GET(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown";
     return NextResponse.json(
-      { error: `TasksFlow audit fetch failed: ${msg}` },
+      { error: `Не удалось получить события программного модуля: ${msg}` },
       { status: 502 },
     );
   }

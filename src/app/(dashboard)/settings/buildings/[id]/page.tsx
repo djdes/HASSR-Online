@@ -21,9 +21,9 @@ import { DeleteButton } from "@/components/settings/delete-button";
 import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { PointDeleteBlock, PointHeadBlock, PointRoomsBlock } from "@/components/settings/point-page-client";
 import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
-import { isOfficeBuilding, worksAtBuilding } from "@/lib/building-scope";
+import { isOfficeBuilding } from "@/lib/building-scope";
 import { isPointScoped, staffInScope, staffScopeWhere } from "@/lib/point-scope";
-import { objectInScope, objectScopeIds, objectSelectable } from "@/lib/point-objects";
+import { objectInScope, objectScopeIds, objectSelectable, staffInObjectScope } from "@/lib/point-objects";
 import { expireOrgPointAssignments, loadActiveAssignments, organizationTodayKey } from "@/lib/point-assignments.server";
 import { TakeSubstituteButton, type SubstituteCandidate } from "@/components/staff/point-assignment";
 import { SubstituteBadge } from "@/components/staff/substitute-badge";
@@ -275,15 +275,21 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
     existingNames: orgEquipmentNames
       .filter((item) => objectInScope(dialogScopeIds, orgBuildingIds, item.area.buildingId))
       .map((item) => item.name),
-    // «Кто заполняет» по QR — люди этой точки (наклейка всё равно пускает только их).
+    // «Кто заполняет» по QR — люди своих объектов с их объектами: окно само
+    // показывает сотрудников выбранного объекта (сначала — этой точки), наклейка
+    // всё равно пускает только людей точки оборудования.
     fillerOptions: staff
-      .filter((user) => !pointsOn || worksAtBuilding(orgBuildingIds, user.buildingIds, point.id))
+      .filter((user) => !pointsOn || staffInObjectScope(dialogScopeIds, orgBuildingIds, user.buildingIds))
       .map((user) => ({
         id: user.id,
         name: user.name,
         position: getUserDisplayTitle(user) || null,
         management: isManagementRole(user.role) || user.canManageSettings,
+        buildingIds: user.buildingIds,
       })),
+    // Фильтр по объекту — как у QR-страницы (`loadQrPointScope`): только когда
+    // организация работает по точкам и их хотя бы две.
+    orgBuildingIds: pointsOn ? orgBuildingIds : [],
   };
   const editProps = (item: (typeof equipment)[number]) => ({
     ...dialog,

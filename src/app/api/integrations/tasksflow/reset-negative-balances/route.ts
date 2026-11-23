@@ -39,7 +39,7 @@ export async function POST() {
   });
   if (!integration) {
     return NextResponse.json(
-      { error: "TasksFlow integration не настроена" },
+      { error: "Программный модуль не подключён" },
       { status: 400 },
     );
   }
@@ -60,7 +60,7 @@ export async function POST() {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown";
     return NextResponse.json(
-      { error: `TasksFlow reset failed: ${msg}` },
+      { error: `Не удалось обнулить балансы в программном модуле: ${msg}` },
       { status: 502 },
     );
   }

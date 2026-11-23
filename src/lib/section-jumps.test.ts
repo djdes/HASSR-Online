@@ -44,7 +44,6 @@ test("пустые списки выбора ведут в раздел: общ�
     ["app/(dashboard)/settings/journals/journals-settings-client.tsx", "positions"],
     ["app/(dashboard)/settings/integrations/tasksflow/tasksflow-settings-client.tsx", "staff"],
     ["app/(dashboard)/settings/areas/page.tsx", "buildings"],
-    ["app/(dashboard)/settings/workload-balance/page.tsx", "staff"],
     ["app/(dashboard)/competencies/page.tsx", "staff"],
   ];
   for (const [path, kind] of places) {

@@ -135,7 +135,7 @@ export async function runComplianceAudit(
     status: scopesCount === 0 ? "warn" : "ok",
     detail:
       scopesCount === 0
-        ? "Не настроено, кого видит каждый руководитель. Заведующий производством не видит подчинённых в TasksFlow."
+        ? "Не настроено, кого видит каждый руководитель. Заведующий производством не видит подчинённых в программном модуле."
         : `Настроено правил видимости: ${scopesCount}.`,
     fixUrl: "/settings/staff-hierarchy",
     weight: 5,
@@ -339,17 +339,17 @@ export async function runComplianceAudit(
   checks.push({
     id: "tasksflow.integration",
     category: "tasksflow",
-    title: "TasksFlow подключён, сотрудники привязаны",
+    title: "Программный модуль подключён, сотрудники привязаны",
     status: !integration
       ? "fail"
       : tfLinkedUsersPct < 0.5
         ? "warn"
         : "ok",
     detail: !integration
-      ? "Интеграция с TasksFlow не подключена. Задачи не дойдут до сотрудников."
+      ? "Программный модуль не подключён. Задачи не дойдут до сотрудников."
       : tfLinkedUsersPct < 1
-        ? `Привязано ${Math.round(tfLinkedUsersPct * 100)}% сотрудников. У остальных нет телефона или аккаунта в TasksFlow.`
-        : "Все сотрудники привязаны к TasksFlow.",
+        ? `Привязано ${Math.round(tfLinkedUsersPct * 100)}% сотрудников. У остальных нет телефона или аккаунта в программном модуле.`
+        : "Все сотрудники привязаны к программному модулю.",
     fixUrl: "/settings/integrations/tasksflow",
     weight: 10,
     score: !integration ? 0 : tfLinkedUsersPct,

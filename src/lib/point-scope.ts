@@ -57,7 +57,6 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
   "/settings/haccp-group",
   // «Ответственные за журналы» открыты (2026-10-31): руководитель точки
   // назначает ответственных своей точки, общие — офис.
-  "/settings/workload-balance",
   "/settings/products",
   // Новая точка — решение компании.
   "/settings/buildings/new",
@@ -71,7 +70,6 @@ export const COMPANY_ONLY_PAGE_PREFIXES = [
   "/settings/journal-task-mode",
   "/settings/journal-flow",
   "/settings/task-visibility",
-  "/settings/journal-difficulty",
   "/settings/journal-bonuses",
   // Подключения и прочее на всю компанию.
   "/settings/integrations",
@@ -110,7 +108,6 @@ export const COMPANY_ONLY_API_PREFIXES = [
   "/api/settings/journal-task-mode",
   "/api/settings/journal-flow",
   "/api/settings/task-visibility",
-  "/api/settings/journal-difficulty",
   // Ответственные: сохранение журнала (`/<code>`) само проверяет точку —
   // руководителю точки можно только по своей; общие действия — офису.
   "/api/settings/journal-responsibles/apply-presets",

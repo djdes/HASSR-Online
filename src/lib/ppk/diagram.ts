@@ -2,18 +2,30 @@
  * Чистые помощники редактора схем ППК: сетка, точки связей на границах
  * прямоугольников, шаблоны блок-схем, цвета потоков и подсчёт для карточек.
  */
-import type { DiagramData, DiagramEdge, DiagramNode, FlowKind } from "./records";
+import type { DiagramData, DiagramDoor, DiagramEdge, DiagramNode, DoorKind, FlowKind } from "./records";
 
-export const FLOW_KINDS: FlowKind[] = ["raw", "ready", "waste", "staff", "dishes"];
+export const FLOW_KINDS: FlowKind[] = ["raw", "ready", "waste", "staff", "dishes", "water", "sewage"];
 
-/** Стиль потока на плане: цвет и штрих (`dash` — значение `stroke-dasharray`). */
+/**
+ * Стиль потока на плане: цвет и штрих (`dash` — значение `stroke-dasharray`).
+ * Вода и канализация — свои цвета и свой штрих, чтобы различаться и на
+ * чёрно-белой печати.
+ */
 export const FLOW_STYLES: Record<FlowKind, { color: string; dash: string | null }> = {
   raw: { color: "#b26a2b", dash: null },
   ready: { color: "#1f9d55", dash: null },
   waste: { color: "#d1453b", dash: "10 6" },
   staff: { color: "#3d6ff2", dash: "2 6" },
   dishes: { color: "#7b7f93", dash: "10 6" },
+  water: { color: "#0b93c4", dash: "14 5 3 5" },
+  sewage: { color: "#8a46b8", dash: "14 4 3 4 3 4" },
 };
+
+export const DOOR_KINDS: DoorKind[] = ["door", "opening"];
+/** Ширина двери: по умолчанию, предел и шаг кнопок «уже / шире». */
+export const DOOR_WIDTH = { initial: 40, min: 20, max: 200, step: 10 } as const;
+/** Насколько близко к стене (в единицах схемы) дверь прилипает к ней. */
+export const DOOR_SNAP_DISTANCE = 24;
 
 /** Привязка значения к сетке. */
 export function snap(value: number, grid = 20): number {
@@ -129,17 +141,26 @@ export function diagramBounds(data: DiagramData, pad = 40): { x: number; y: numb
       maxY = Math.max(maxY, p.y);
     }
   }
+  for (const d of data.doors ?? []) {
+    const b = doorBounds(d);
+    minX = Math.min(minX, b.x);
+    minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w);
+    maxY = Math.max(maxY, b.y + b.h);
+  }
   if (!Number.isFinite(minX)) return { x: 0, y: 0, w: 800, h: 500 };
+  // Поля не уходят левее/выше нуля, но полотно двери у верхней или левой стены
+  // может быть в минусе — тогда рамка его захватывает, а не обрезает.
   return {
-    x: Math.max(0, minX - pad),
-    y: Math.max(0, minY - pad),
+    x: minX < 0 ? minX - pad : Math.max(0, minX - pad),
+    y: minY < 0 ? minY - pad : Math.max(0, minY - pad),
     w: Math.max(200, maxX - minX + pad * 2),
     h: Math.max(120, maxY - minY + pad * 2),
   };
 }
 
 /** Лимиты сервера (`records.ts`): редактор не даёт их превысить, иначе сохранение вернёт 400. */
-export const DIAGRAM_LIMITS = { nodes: 150, edges: 300, points: 50, minSize: 40, maxSize: 2000, maxCoord: 4000 } as const;
+export const DIAGRAM_LIMITS = { nodes: 150, edges: 300, points: 50, doors: 150, minSize: 40, maxSize: 2000, maxCoord: 4000 } as const;
 
 /** Узел под точкой схемы (верхний из перекрывающихся) или `null`. */
 export function nodeAt(data: DiagramData, point: { x: number; y: number }): DiagramNode | null {
@@ -156,7 +177,7 @@ export function nodeAt(data: DiagramData, point: { x: number; y: number }): Diag
  * Масштаб — от 0.5 до 1.5; пустая схема — 1 из начала координат.
  */
 export function fitView(data: DiagramData, cw: number, ch: number): { x: number; y: number; scale: number } {
-  if (data.nodes.length === 0 && data.edges.length === 0) return { x: 0, y: 0, scale: 1 };
+  if (data.nodes.length === 0 && data.edges.length === 0 && (data.doors ?? []).length === 0) return { x: 0, y: 0, scale: 1 };
   const box = diagramBounds(data, 40);
   const raw = Math.min(cw / box.w, ch / box.h);
   const scale = Math.min(1.5, Math.max(0.5, raw));
@@ -193,4 +214,98 @@ export function flowchartStepLabels(charts: Pick<DiagramData, "nodes">[]): strin
     }
   }
   return out;
+}
+
+/** Направление открывания полотна (единичный вектор) для поворота двери. */
+export function doorSwingVector(angle: DiagramDoor["angle"]): { x: number; y: number } {
+  switch (angle) {
+    case 90:
+      return { x: 1, y: 0 };
+    case 180:
+      return { x: 0, y: 1 };
+    case 270:
+      return { x: -1, y: 0 };
+    default:
+      return { x: 0, y: -1 };
+  }
+}
+
+/** Стена горизонтальная (0°, 180°) или вертикальная (90°, 270°). */
+export function doorIsHorizontal(angle: DiagramDoor["angle"]): boolean {
+  return angle === 0 || angle === 180;
+}
+
+/**
+ * Рамка значка двери в координатах схемы: проём вдоль стены и, у двери, полотно
+ * с дугой открывания на всю ширину в сторону открывания. Для подбора масштаба,
+ * печати и зоны нажатия.
+ */
+export function doorBounds(door: Pick<DiagramDoor, "x" | "y" | "w" | "angle" | "kind">): { x: number; y: number; w: number; h: number } {
+  // Запас 6 — как у зоны нажатия значка (`DoorNode` в diagram-svg.tsx).
+  const half = door.w / 2 + 6;
+  const depth = door.kind === "door" ? door.w : 0;
+  const pad = 6;
+  const swing = doorSwingVector(door.angle);
+  if (doorIsHorizontal(door.angle)) {
+    const top = swing.y < 0 ? door.y - depth - pad : door.y - pad;
+    const bottom = swing.y < 0 ? door.y + pad : door.y + depth + pad;
+    return { x: door.x - half, y: top, w: half * 2, h: bottom - top };
+  }
+  const left = swing.x < 0 ? door.x - depth - pad : door.x - pad;
+  const right = swing.x < 0 ? door.x + pad : door.x + depth + pad;
+  return { x: left, y: door.y - half, w: right - left, h: half * 2 };
+}
+
+/**
+ * Куда встаёт дверь у точки `point`: на ближайшую стену помещения не дальше
+ * `DOOR_SNAP_DISTANCE` — середина на стене (с шагом 10, не за углом), поворот по
+ * направлению стены. Сторона открывания сохраняется, если ось стены та же, что
+ * у прежнего поворота `prevAngle`. Стены рядом нет — `null`.
+ */
+export function snapDoorToWall(
+  nodes: DiagramNode[],
+  point: { x: number; y: number },
+  width: number,
+  prevAngle: DiagramDoor["angle"] = 0,
+): { x: number; y: number; angle: DiagramDoor["angle"] } | null {
+  let best: { x: number; y: number; horizontal: boolean; dist: number } | null = null;
+  const half = width / 2;
+  for (const n of nodes) {
+    if (n.kind !== "room") continue;
+    const walls = [
+      { horizontal: true, fixed: n.y, from: n.x, to: n.x + n.w },
+      { horizontal: true, fixed: n.y + n.h, from: n.x, to: n.x + n.w },
+      { horizontal: false, fixed: n.x, from: n.y, to: n.y + n.h },
+      { horizontal: false, fixed: n.x + n.w, from: n.y, to: n.y + n.h },
+    ];
+    for (const wall of walls) {
+      const along = wall.horizontal ? point.x : point.y;
+      const across = wall.horizontal ? point.y : point.x;
+      // Проём не выходит за угол стены; короткая стена — дверь посередине.
+      const min = wall.from + half;
+      const max = wall.to - half;
+      const raw = min <= max ? Math.min(max, Math.max(min, snap(along, 10))) : (wall.from + wall.to) / 2;
+      const outside = along < wall.from ? wall.from - along : along > wall.to ? along - wall.to : 0;
+      const dist = Math.hypot(across - wall.fixed, outside);
+      if (dist <= DOOR_SNAP_DISTANCE && (!best || dist < best.dist)) {
+        best = wall.horizontal
+          ? { x: raw, y: wall.fixed, horizontal: true, dist }
+          : { x: wall.fixed, y: raw, horizontal: false, dist };
+      }
+    }
+  }
+  if (!best) return null;
+  const sameAxis = doorIsHorizontal(prevAngle) === best.horizontal;
+  const angle: DiagramDoor["angle"] = sameAxis ? prevAngle : best.horizontal ? 0 : 90;
+  return { x: best.x, y: best.y, angle };
+}
+
+/** Дверь под точкой схемы (верхняя из перекрывающихся) или `null`. */
+export function doorAt(data: DiagramData, point: { x: number; y: number }): DiagramDoor | null {
+  const doors = data.doors ?? [];
+  for (let i = doors.length - 1; i >= 0; i--) {
+    const b = doorBounds(doors[i]);
+    if (point.x >= b.x && point.x <= b.x + b.w && point.y >= b.y && point.y <= b.y + b.h) return doors[i];
+  }
+  return null;
 }

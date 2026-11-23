@@ -387,7 +387,7 @@ export function TasksFlowSettingsClient({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="TasksFlow"
+        title={t("pageTitle")}
         description={
           <>
             {t.rich("pageDescription", {
@@ -497,7 +497,7 @@ export function TasksFlowSettingsClient({
                   <tr className="border-b border-[#ececf4] bg-[#fafbff] text-left text-[12px] uppercase tracking-wider text-[#6f7282]">
                     <th className="px-4 py-3 font-medium">{t("colEmployee")}</th>
                     <th className="px-4 py-3 font-medium">{t("colPhone")}</th>
-                    <th className="px-4 py-3 font-medium">TasksFlow</th>
+                    <th className="px-4 py-3 font-medium">{t("colModule")}</th>
                     <th className="px-4 py-3 font-medium">{t("colStatus")}</th>
                   </tr>
                 </thead>
