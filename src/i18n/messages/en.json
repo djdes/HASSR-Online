@@ -22919,7 +22919,8 @@
       "stoplist": "Suppression list",
       "ariaLabel": "Mailing sections",
       "quick": "Send",
-      "builder": "Builder"
+      "builder": "Builder",
+      "aiDigest": "AI digest"
     },
     "feedback": {
       "saveDraftFailed": "Could not save the draft",

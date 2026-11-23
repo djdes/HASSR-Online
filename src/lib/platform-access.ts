@@ -168,6 +168,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/root/promo-codes", gate: "sales" },
   { pattern: "/api/root/proposals", gate: "sales" },
   { pattern: "/api/root/mailing", gate: "sales" },
+  // ИИ-сводка администратору: выручка всей платформы, уходит пользователям root — только владельцу.
+  { pattern: "/api/root/mailing/ai-digest", gate: "superadmin" },
   { pattern: "/api/root/services", gate: "sales" },
   { pattern: "/api/root/service-requests", gate: "sales" },
   { pattern: "/api/root/promotions", gate: "sales" },

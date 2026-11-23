@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, History, Mail, PenSquare, Send, SlidersHorizontal, Users } from "lucide-react";
+import { Ban, Bot, History, Mail, PenSquare, Send, SlidersHorizontal, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMailingFeedback } from "./mailing-feedback";
 import { formatMailingSaveClock } from "./mailing-presentation";
@@ -21,6 +21,7 @@ import type { MailingPreset } from "@/lib/mailing/presets";
 import type { MailingSettings } from "@/lib/mailing/rate-limit";
 import { cn } from "@/lib/utils";
 
+import { AiDigestTab } from "./ai-digest-tab";
 import { ComposeTab } from "./compose-tab";
 import { ContactsTab } from "./contacts-tab";
 import { HistoryTab } from "./history-tab";
@@ -213,12 +214,13 @@ export function MailingClient({ data }: { data: MailingPageData }) {
   const allTabs: Array<{ key: MailingTab; label: string; icon: typeof Mail; count?: number }> = [
     { key: "quick", label: t("tabs.quick"), icon: Send },
     { key: "history", label: t("tabs.history"), icon: History },
+    { key: "aiDigest", label: t("tabs.aiDigest"), icon: Bot },
     { key: "compose", label: t("tabs.builder"), icon: PenSquare },
     { key: "users", label: t("tabs.users"), icon: Users, count: userIds.size },
     { key: "contacts", label: t("tabs.contacts"), icon: Mail, count: contactIds.size },
     { key: "stoplist", label: t("tabs.stoplist"), icon: Ban },
   ];
-  const tabs = allTabs.filter((t) => advanced || !ADVANCED_TABS.has(t.key));
+  const tabs = allTabs.filter((t) => (advanced || !ADVANCED_TABS.has(t.key)) && (t.key !== "aiDigest" || data.canAiDigest));
 
   return (
     <div className="space-y-5">
@@ -340,6 +342,7 @@ export function MailingClient({ data }: { data: MailingPageData }) {
           }}
         />
       </div>
+      <div hidden={tab !== "aiDigest"}>{tab === "aiDigest" ? <AiDigestTab /> : null}</div>
       <div hidden={tab !== "stoplist"}>{tab === "stoplist" ? <StopListTab /> : null}</div>
     </div>
   );

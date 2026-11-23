@@ -22920,7 +22920,8 @@ export type MessageContract = {
       "stoplist": "Стоп-лист",
       "ariaLabel": "Разделы рассылки",
       "quick": "Отправить",
-      "builder": "Конструктор"
+      "builder": "Конструктор",
+      "aiDigest": "ИИ-сводка"
     },
     "feedback": {
       "saveDraftFailed": "Не удалось сохранить черновик",

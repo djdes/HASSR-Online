@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 
 import { checkCronSecret } from "@/lib/cron-auth";
+import { tickAiDigest } from "@/lib/mailing/ai-digest/run.server";
 import { processMailingQueue } from "@/lib/mailing/worker.server";
 
 export const runtime = "nodejs";
@@ -12,12 +13,25 @@ export const dynamic = "force-dynamic";
  * и в сутки (ROOT → «Рассылка»), повторы временных сбоев, завершение.
  * Повторный запуск безопасен: канал получателя уходит один раз.
  *
+ * Здесь же — расписание ИИ-сводки администратору (вкладка «ИИ-сводка»,
+ * `src/lib/mailing/ai-digest/run.server.ts`): после ответа проверяем, не
+ * наступил ли её слот. Ответ ИИ ждём до ~2,5 мин — поэтому в `after`, чтобы
+ * не задерживать очередь; повтор слота исключён записью в историю.
+ *
  * Crontab (раз в минуту):
  *   * * * * * curl -s -H "Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3002/api/cron/mailing
  */
 async function handle(request: Request) {
   const cronAuth = checkCronSecret(request);
   if (cronAuth) return cronAuth;
+  after(async () => {
+    try {
+      const result = await tickAiDigest();
+      if (result.started) console.info(`[ai-digest] scheduled run ${result.run.id} → ${result.run.status}`);
+    } catch (error) {
+      console.error("[ai-digest] schedule tick failed", error);
+    }
+  });
   try {
     const result = await processMailingQueue("cron");
     return NextResponse.json({ ok: true, ...result });

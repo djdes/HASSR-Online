@@ -3,9 +3,9 @@ import type { CampaignListRow, DraftDto } from "@/lib/mailing/campaigns.server";
 import type { MailingSettings } from "@/lib/mailing/rate-limit";
 import type { MarketingSendMode } from "@/lib/mailing/transport.server";
 
-export type MailingTab = "quick" | "history" | "compose" | "users" | "contacts" | "stoplist";
+export type MailingTab = "quick" | "history" | "aiDigest" | "compose" | "users" | "contacts" | "stoplist";
 
-export const MAILING_TABS: MailingTab[] = ["quick", "history", "compose", "users", "contacts", "stoplist"];
+export const MAILING_TABS: MailingTab[] = ["quick", "history", "aiDigest", "compose", "users", "contacts", "stoplist"];
 
 /** Вкладки расширенного режима — конструктор и ручной выбор (для Claude и редких случаев). */
 export const ADVANCED_TABS: ReadonlySet<MailingTab> = new Set(["compose", "users", "contacts", "stoplist"]);
@@ -29,4 +29,6 @@ export type MailingPageData = {
   bases: MailingBase[];
   draft: DraftDto | null;
   initialTab: MailingTab;
+  /** Вкладка «ИИ-сводка» — только владельцу платформы (`isRoot`). */
+  canAiDigest: boolean;
 };
