@@ -25,6 +25,7 @@ import { HYGIENE_V2_COLUMNS } from "@/lib/hygiene-v2";
 
 import { ease, interpolate, progress, windowed } from "./clock";
 import {
+  CHAPTERS,
   CHAPTER_SECONDS,
   DEMO,
   FRIDGE_NORM,
@@ -39,6 +40,19 @@ import {
   type ChapterId,
 } from "./chapters";
 import type { QrMatrix } from "./qr-sticker";
+
+/**
+ * Фото первой главы — самый крупный элемент первого экрана (LCP главной на
+ * телефоне, замер 23.11.2026). React 19 сам ставит для него
+ * `<link rel="preload" as="image">`, но с обычным приоритетом — браузер
+ * качает его в общей очереди с десятками скриптов. Высокий приоритет — только
+ * этой картинке: остальные главы грузятся по ходу ролика и первому экрану не
+ * мешают.
+ */
+const FIRST_PHOTO = CHAPTERS[0]?.photo;
+function photoPriority(photo: string | undefined): "high" | undefined {
+  return photo && photo === FIRST_PHOTO ? "high" : undefined;
+}
 
 const HEALTH_MESSAGE_KEYS = {
   temperature: { confirmation: "health.confirmation.temperature", complaint: "health.complaint.temperature" },
@@ -594,6 +608,7 @@ function Viewfinder({ t, object, qr, bodyTemp, photo }: { t: number; object: Sca
           <img
             src={assetUrl(photo)}
             alt=""
+            fetchPriority={photoPriority(photo)}
             style={{
               position: "absolute",
               inset: 0,
@@ -1398,6 +1413,7 @@ function Backdrop({ chapter, t, pan, push }: { chapter: Chapter; t: number; pan:
       <img
         src={assetUrl(chapter.photo)}
         alt=""
+        fetchPriority={photoPriority(chapter.photo)}
         style={{
           position: "absolute",
           left: 0,
