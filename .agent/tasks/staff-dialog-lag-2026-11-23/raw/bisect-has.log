@@ -1,0 +1,8 @@
+{"group":"none","removed":0,"maxElements":23785,"totalStyleMs":1007,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":"dark-theme :has(.app-shell[data-app-theme=dark])","removed":140,"maxElements":23785,"totalStyleMs":959,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":"new-design :not(:has([data-app-theme=dark],…))","removed":0,"maxElements":23786,"totalStyleMs":1138,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":"touch :has(.app-shell:not(…))","removed":65,"maxElements":23787,"totalStyleMs":988,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":"body:has(.app-shell)","removed":1,"maxElements":23787,"totalStyleMs":962,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":":has(>[aria-label=…])","removed":0,"maxElements":23785,"totalStyleMs":1152,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":"focus/active :has(:focus…/:active)","removed":8,"maxElements":23785,"totalStyleMs":1145,"wholeSubtree":3,"bodyRecalcReasons":{"Related style rule":3}}
+{"group":"all :has","removed":576,"maxElements":23781,"totalStyleMs":333,"wholeSubtree":0,"bodyRecalcReasons":{}}

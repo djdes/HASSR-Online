@@ -7,6 +7,7 @@ import {
   monthDates,
   monthLabel,
   monthOf,
+  scheduleDateWindow,
   shiftMonth,
 } from "@/lib/staff-schedule-month";
 
@@ -73,5 +74,26 @@ describe("clampOffset", () => {
   it("не пропускает мусор", () => {
     assert.equal(clampOffset(Number.NaN), 0);
     assert.equal(clampOffset(1.7), 1);
+  });
+});
+
+describe("scheduleDateWindow", () => {
+  it("покрывает всё, что можно открыть перемоткой, с месяцем запаса", () => {
+    const { from, to } = scheduleDateWindow(new Date("2026-11-23T10:00:00Z"));
+    // Перемотка — с ноября 2025 по ноябрь 2027; запас — октябрь 2025 и декабрь 2027.
+    assert.equal(from.toISOString(), "2025-10-01T00:00:00.000Z");
+    assert.equal(to.toISOString(), "2028-01-01T00:00:00.000Z");
+    for (const offset of [-12, 0, 12]) {
+      const days = monthDates(shiftMonth(monthOf(new Date("2026-11-23T10:00:00Z")), offset));
+      const first = new Date(`${days[0]}T00:00:00Z`);
+      const last = new Date(`${days[days.length - 1]}T00:00:00Z`);
+      assert.ok(first >= from && last < to, `месяц со сдвигом ${offset} внутри окна`);
+    }
+  });
+
+  it("считает в UTC через границу года", () => {
+    const { from, to } = scheduleDateWindow(new Date("2027-01-01T00:30:00Z"));
+    assert.equal(from.toISOString(), "2025-12-01T00:00:00.000Z");
+    assert.equal(to.toISOString(), "2028-03-01T00:00:00.000Z");
   });
 });

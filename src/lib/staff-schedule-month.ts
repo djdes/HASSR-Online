@@ -69,3 +69,23 @@ export function clampOffset(offset: number): number {
   if (!Number.isFinite(offset)) return 0;
   return Math.min(Math.max(Math.trunc(offset), MONTH_OFFSET_MIN), MONTH_OFFSET_MAX);
 }
+
+/**
+ * Даты, которые сетка вообще может показать (`clampOffset`), — с запасом в
+ * месяц с каждой стороны на случай, если часы сервера и браузера разошлись
+ * через границу месяца. `from` включительно, `to` — нет; дни графика
+ * хранятся как «00:00 UTC».
+ *
+ * Зачем: страница грузила исключения графика (`StaffWorkOffDay`) за всю
+ * историю организации, хотя дальше ±12 месяцев их не видно, — и с каждым
+ * годом страница становилась тяжелее.
+ */
+export function scheduleDateWindow(now: Date): { from: Date; to: Date } {
+  const base = monthOf(now);
+  const first = shiftMonth(base, MONTH_OFFSET_MIN - 1);
+  const afterLast = shiftMonth(base, MONTH_OFFSET_MAX + 2);
+  return {
+    from: new Date(Date.UTC(first.year, first.month, 1)),
+    to: new Date(Date.UTC(afterLast.year, afterLast.month, 1)),
+  };
+}

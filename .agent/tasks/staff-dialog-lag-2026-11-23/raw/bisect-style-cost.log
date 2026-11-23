@@ -1,0 +1,18 @@
+{"group":"none","removed":0,"elements":23749,"classChangeMs":5,"insertIntoBodyMs":257.6,"bodyAttributeMs":0}
+{"group":"all :has()","removed":576,"elements":23765,"classChangeMs":0.1,"insertIntoBodyMs":0.2,"bodyAttributeMs":0}
+{"group":":has() anchored on body","removed":224,"elements":23766,"classChangeMs":0.1,"insertIntoBodyMs":218.8,"bodyAttributeMs":0}
+{"group":":has() anchored on html/:root","removed":319,"elements":23765,"classChangeMs":4.2,"insertIntoBodyMs":232.4,"bodyAttributeMs":0}
+{"group":":has() with [class*=]/[style*=] inside","removed":26,"elements":23766,"classChangeMs":0.2,"insertIntoBodyMs":261.7,"bodyAttributeMs":0}
+{"group":":has(:focus/:active/input…)","removed":8,"elements":23766,"classChangeMs":3.8,"insertIntoBodyMs":256.5,"bodyAttributeMs":0}
+{"group":"dark theme body:is(…:has(.app-shell[data-app-theme=dark]))","removed":203,"elements":23766,"classChangeMs":0.1,"insertIntoBodyMs":212.7,"bodyAttributeMs":0}
+page.goto: Timeout 120000ms exceeded.
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/users", waiting until "networkidle"[22m
+
+    at run (/home/user/HASSR-Online/.agent/tasks/staff-dialog-lag-2026-11-23/raw/bisect-style-cost.cjs:31:14)
+    at async /home/user/HASSR-Online/.agent/tasks/staff-dialog-lag-2026-11-23/raw/bisect-style-cost.cjs:95:20 {
+  log: [
+    '  - navigating to "http://localhost:3000/settings/users", waiting until "networkidle"'
+  ],
+  name: 'TimeoutError'
+}

@@ -21,6 +21,7 @@ import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { expireOrgPointAssignments, loadActiveAssignments, organizationTodayKey } from "@/lib/point-assignments.server";
+import { scheduleDateWindow } from "@/lib/staff-schedule-month";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function StaffPage({
   const telegramBotUrl = process.env.TELEGRAM_BOT_USERNAME
     ? `https://t.me/${process.env.TELEGRAM_BOT_USERNAME.replace(/^@/, "")}`
     : null;
+  const scheduleWindow = scheduleDateWindow(new Date());
 
   const [
     organization,
@@ -94,8 +96,12 @@ export default async function StaffPage({
           canManageSettings: true,
         },
       }),
+      // Только то, что сетка может показать (±12 месяцев), а не всю историю.
       db.staffWorkOffDay.findMany({
-        where: { user: { organizationId: orgId, ...inScope } },
+        where: {
+          user: { organizationId: orgId, ...inScope },
+          date: { gte: scheduleWindow.from, lt: scheduleWindow.to },
+        },
         select: { userId: true, date: true, kind: true },
       }),
       db.staffVacation.findMany({

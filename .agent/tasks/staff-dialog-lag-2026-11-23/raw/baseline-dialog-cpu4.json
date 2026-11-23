@@ -1,0 +1,39 @@
+{
+  "base": "http://localhost:3000",
+  "path": "/settings/users",
+  "cpuThrottle": 4,
+  "runs": 3,
+  "domNodes": 23788,
+  "openMs": {
+    "median": 4632,
+    "all": [
+      4632,
+      4448,
+      4992
+    ]
+  },
+  "closeMs": {
+    "median": 4216,
+    "all": [
+      4200,
+      4216,
+      5088
+    ]
+  },
+  "openWallMs": {
+    "median": 4752,
+    "all": [
+      4752,
+      4578,
+      5299
+    ]
+  },
+  "closeWallMs": {
+    "median": 4258,
+    "all": [
+      4233,
+      4258,
+      5125
+    ]
+  }
+}

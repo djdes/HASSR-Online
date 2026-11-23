@@ -1,0 +1,64 @@
+{
+  "taskId": "staff-dialog-lag-2026-11-23",
+  "branch": "claude/adoring-ramanujan-0zw2w0",
+  "base": "fe4cce90",
+  "verdict": "PASS",
+  "stand": "local production build (next build --webpack + next start), Postgres 16, 117 staff (raw/seed-staff-perf.ts), Chromium 1920x1080, Event Timing API, medians",
+  "acceptanceCriteria": {
+    "AC1": {
+      "status": "PASS",
+      "criterion": "Edit/Cancel at top of page <= 250 ms at CPU x1 and <= 1000 ms at CPU x4",
+      "before": { "cpu1": { "open": 880, "close": 824 }, "cpu4": { "open": 4632, "close": 4216 } },
+      "after": { "cpu1": { "open": 192, "close": 96 }, "cpu4": { "open": 568, "close": 392 } },
+      "evidence": ["raw/baseline-dialog-cpu1.json", "raw/baseline-dialog-cpu4.json", "raw/after-dialog-cpu1.json", "raw/after-dialog-cpu4.json", "raw/measure-staff-dialog.cjs"]
+    },
+    "AC2": {
+      "status": "PASS",
+      "criterion": "React work per dialog click <= 60 ms; largest style recalc on open/close <= 3000 elements",
+      "after": { "functionCallMs": { "open": 7, "close": 2 }, "maxStyleRecalcElements": 1215 },
+      "before": { "functionCallMs": { "open": 260, "close": 205 }, "maxStyleRecalcElements": 23789 },
+      "evidence": ["raw/after-trace-cpu1.txt", "raw/analyze-trace.cjs"]
+    },
+    "AC3": {
+      "status": "PASS",
+      "criterion": "Timesheet behaves as before (browser-checked); HTML at least 2x smaller",
+      "behaviour": { "after": "17/17", "baseline": "15/15 behaviour steps (2 steps check the new mechanism only)" },
+      "pixelCompare": { "grid": 0, "gridPrint": 0, "editDialog": 0, "cellAttributesIdentical": true, "printMarksIdentical": true },
+      "printBeforeRender": { "beforeprintRows": 117, "printButtonRows": 117 },
+      "htmlBytes": { "before": 4959828, "after": 1276517 },
+      "domNodesWithTimesheet": { "before": 23789, "after": 15448 },
+      "evidence": ["raw/verify-staff-behavior.cjs", "raw/verify-after.json", "raw/verify-baseline.json", "raw/verify-print-unmounted.log", "raw/pixel-compare.txt", "raw/html-size.txt", "raw/screenshot-grid.cjs"]
+    },
+    "AC4": {
+      "status": "PASS",
+      "criterion": "StaffWorkOffDay loaded only for the navigable window; pure window function tested",
+      "evidence": ["src/app/(dashboard)/settings/users/page.tsx", "src/lib/staff-schedule-month.ts", "src/lib/staff-schedule-month.test.ts"]
+    },
+    "AC5": {
+      "status": "PASS",
+      "criterion": "New primitives tested where pure; typecheck and test:changed green",
+      "checks": ["npm run typecheck: 0 errors", "npm run test:changed: 4 files, 26 pass, 0 fail", "src/app/*.test.ts design rules: 46/46", "eslint changed files: 0 problems"],
+      "evidence": ["src/lib/detached-state.test.ts", "src/components/shared/offscreen-section.test.ts"]
+    },
+    "AC6": {
+      "status": "PASS",
+      "criterion": "Report on other sections with the same pattern and the measured systemic CSS cause with a plan",
+      "findings": {
+        "journals": "All ~40 journal document clients keep dialog/menu state next to the grid and use no memo",
+        "hygieneJournal117": { "domNodes": 8912, "menuCloseMs": { "cpu1": 216, "cpu4": 952 }, "maxStyleRecalcElements": 8797 },
+        "systemicCss": "body/html-anchored :has() rules make any insertion into <body> recalc the whole document: 258 ms per inserted div on this DOM, 0.2 ms without :has()"
+      },
+      "evidence": ["evidence.md#остальной-сайт--ac6", "raw/bisect-style-cost.log", "raw/bisect-has.log", "raw/audit-hygiene-cpu1.json", "raw/audit-hygiene-cpu4.json", "raw/measure-journal-menu.cjs"]
+    }
+  },
+  "clicks": {
+    "cpu1": {
+      "before": { "staffCheckbox": 696, "searchKey": 568, "timesheetCell": 1104, "weekdayChip": 648 },
+      "after": { "staffCheckbox": 64, "searchKey": 48, "timesheetCell": 256, "weekdayChip": 240 }
+    },
+    "cpu4": {
+      "before": { "staffCheckbox": 4000, "searchKey": 3648, "timesheetCell": 6232, "weekdayChip": 3312 },
+      "after": { "staffCheckbox": 184, "searchKey": 184, "timesheetCell": 1376, "weekdayChip": 1232 }
+    }
+  }
+}
