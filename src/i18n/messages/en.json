@@ -6943,7 +6943,8 @@
       "correctionPlaceholder": "What you did: moved the product, called a technician…",
       "todayMeasurementsTitle": "Readings for {date}",
       "selectionHint": "The equipment will be removed along with its temperature readings",
-      "temperatureValue": "Temperature: {value, number} °C"
+      "temperatureValue": "Temperature: {value, number} °C",
+      "qrMissingHint": "This equipment is no longer in the directory. Press “Save” — the row will be added back and get a QR code."
     },
     "dialogs": {
       "equipmentAddTitle": "Add equipment",
@@ -28867,8 +28868,6 @@
       "guide1Body": "A room created in “Points and rooms” appears here as a workshop of its point. A workshop without a point is visible on every point — open the pencil and choose a point.",
       "guide2Title": "Rooms = TasksFlow tasks",
       "guide2Body": "If the “Per room” mode is chosen for cleaning in /settings/journal-task-mode, a separate task is created in TasksFlow for each workshop.",
-      "guide3Title": "Equipment grouping",
-      "guide3Body": "Each fridge, sink or dishwasher is linked to a workshop — reports show what stands where.",
       "guide4Title": "Temperature maps",
       "guide4Body": "The dashboard shows “temperature in the hot workshop” and “in the cold workshop” separately — equipment must be assigned to workshops for this.",
       "workshopCount": "{count, plural, one {# workshop} other {# workshops}}",

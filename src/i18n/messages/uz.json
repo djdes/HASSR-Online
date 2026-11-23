@@ -6943,7 +6943,8 @@
       "todayMeasurementsTitle": "{date} kungi o‘lchovlar",
       "clearStatus": "Belgini olib tashlash",
       "selectionHint": "Uskuna harorat o‘lchovlari bilan birga o‘chiriladi",
-      "temperatureValue": "Harorat: {value, number} °C"
+      "temperatureValue": "Harorat: {value, number} °C",
+      "qrMissingHint": "Bu uskuna endi ma’lumotnomada yo‘q. «Saqlash»ni bosing — qator yana ma’lumotnomaga qo‘shiladi va QR-kod oladi."
     },
     "dialogs": {
       "equipmentAddTitle": "Uskuna qo‘shish",
@@ -28867,8 +28868,6 @@
       "guide1Body": "“Nuqtalar va xonalar”da yaratilgan xona bu yerda o‘z nuqtasining sexi sifatida ko‘rinadi. Nuqtasiz sex har bir nuqtada ko‘rinadi — qalamni bosing va nuqtani tanlang.",
       "guide2Title": "Xonalar = TasksFlow vazifalari",
       "guide2Body": "Agar /settings/journal-task-mode sahifasida tozalash uchun “Har bir xona uchun” rejimi tanlangan bo‘lsa, TasksFlow’da har bir sex uchun alohida vazifa yaratiladi.",
-      "guide3Title": "Uskunalarni guruhlash",
-      "guide3Body": "Har bir muzlatkich/yuvish joyi/idish yuvish mashinasi sexga bog‘lanadi — hisobotlarda nima qayerda turgani ko‘rinadi.",
       "guide4Title": "Harorat xaritalari",
       "guide4Body": "Dashbord “issiq sexdagi harorat” va “sovuq sexdagi harorat”ni alohida ko‘rsatadi — buning uchun uskunalar sexlar bo‘yicha taqsimlangan bo‘lishi kerak.",
       "workshopCount": "{count, plural, one {# ta sex} other {# ta sex}}",

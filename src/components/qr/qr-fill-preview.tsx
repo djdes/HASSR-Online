@@ -6,6 +6,7 @@ import { ExternalLink, FileText, MapPin, Printer, QrCode, RefreshCw, Sticker } f
 
 import { BRAND_QR_CAPTION_ASPECT } from "@/lib/brand-qr-shared";
 import { formatQrValidUntil, posterDetailLine, type QrFillKind, type QrPoster } from "@/lib/qr-fill-types";
+import { QR_MISSING_CODE } from "@/lib/qr-fill-missing";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -21,18 +22,26 @@ type Props = {
   accent?: boolean;
   /** Куда ведёт «Все коды» (у журнала — экран его QR-кодов). */
   allHref?: string;
+  /**
+   * Подсказка, когда предмета QR больше нет (ответ `code: "missing"`), —
+   * вместо ошибки с бесполезным «Повторить» (2026-11-23): например, «нажмите
+   * «Сохранить», строка снова попадёт в справочник».
+   */
+  missingHint?: string;
 };
 
 /** Результат последней загрузки; `key` — id объекта, для которого он получен. */
 type Result =
   | { key: string; status: "ready"; poster: QrPoster }
-  | { key: string; status: "error"; message: string };
+  | { key: string; status: "error"; message: string }
+  | { key: string; status: "missing" };
 
 type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "ready"; poster: QrPoster }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string }
+  | { status: "missing" };
 
 /**
  * QR-код объекта прямо в диалоге строки журнала (холодильник /
@@ -41,7 +50,7 @@ type State =
  * «Наклейка» (сетка на листе). Ссылки открываются в новой вкладке, чтобы
  * диалог с несохранёнными полями не потерялся.
  */
-export function QrFillPreview({ kind, id, emptyHint, className, heading, accent = false, allHref }: Props) {
+export function QrFillPreview({ kind, id, emptyHint, className, heading, accent = false, allHref, missingHint }: Props) {
   const t = useTranslations("sharedUi");
   const [result, setResult] = useState<Result | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -53,6 +62,10 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
     fetch(`/api/qr-fill/${kind}/${encodeURIComponent(id)}`)
       .then(async (response) => {
         const payload = await response.json().catch(() => null);
+        if (response.status === 404 && payload?.code === QR_MISSING_CODE && missingHint) {
+          if (!cancelled) setResult({ key, status: "missing" });
+          return;
+        }
         if (!response.ok || !payload?.poster) {
           throw new Error(payload?.error || t("qrFillPreview.loadFailed"));
         }
@@ -69,7 +82,7 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
     return () => {
       cancelled = true;
     };
-  }, [id, kind, attempt, t]);
+  }, [id, kind, attempt, t, missingHint]);
 
   // Состояние выводится из результата: пока ключ не совпал — грузим.
   const state: State = !id
@@ -100,6 +113,13 @@ export function QrFillPreview({ kind, id, emptyHint, className, heading, accent 
       {!id ? (
         <p className="mt-2 rounded-xl border border-dashed border-[#dcdfed] bg-white px-3 py-3 text-[13px] leading-[1.5] text-[#6f7282]">
           {emptyHint}
+        </p>
+      ) : state.status === "missing" ? (
+        <p
+          data-qr-preview-missing
+          className="mt-2 rounded-xl bg-[#fff8eb] px-3 py-3 text-[13px] leading-[1.5] text-[#6b4a1f]"
+        >
+          {missingHint}
         </p>
       ) : state.status === "error" ? (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#ffd7d3] bg-[#fff4f2] px-3 py-2.5 text-[13px] text-[#a13a32]">

@@ -151,10 +151,7 @@ export default async function AreasSettingsPage({
             title: t("guide2Title"),
             body: t("guide2Body"),
           },
-          {
-            title: t("guide3Title"),
-            body: t("guide3Body"),
-          },
+          // «Группировка оборудования» убрана — зачёркнута владельцем (2026-11-23).
           {
             title: t("guide4Title"),
             body: t("guide4Body"),

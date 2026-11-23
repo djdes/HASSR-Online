@@ -533,7 +533,11 @@ function EquipmentDialog({
     setIsSubmitting(true);
     try {
       const saved = await onSave(item);
-      const gotLinkedNow = !linkedEquipmentId && Boolean(saved.sourceEquipmentId);
+      // Связь появилась или сменилась: холодильника не было в справочнике
+      // (удалили), сохранение завело его заново — окно не закрываем, а
+      // показываем новый QR (2026-11-23, «Объект не найден» в окне).
+      const gotLinkedNow =
+        Boolean(saved.sourceEquipmentId) && saved.sourceEquipmentId !== linkedEquipmentId;
       setLinkedEquipmentId(saved.sourceEquipmentId ?? null);
       if (gotLinkedNow && initialItem) {
         // Строка только что попала в справочник — покажем QR, не закрывая окно.
@@ -729,6 +733,7 @@ function EquipmentDialog({
               kind="equipment"
               id={linkedEquipmentId}
               emptyHint={t("ui.qrExistingHint")}
+              missingHint={t("ui.qrMissingHint")}
             />
           ) : (
             <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-3 text-[12.5px] leading-[1.5] text-[#6f7282]">
