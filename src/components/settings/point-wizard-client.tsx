@@ -27,6 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
+import { ObjectCategoryPicker, useObjectCategoryLabel } from "@/components/settings/object-category-picker";
+import type { ObjectCategory } from "@/lib/object-categories";
 
 const STEPS = ["head", "rooms", "equipment", "summary"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -58,7 +60,14 @@ export function PointWizard({
   sortOrder,
   donors,
   equipmentNames,
+  defaultCategory = null,
 }: {
+  /**
+   * Сфера организации (её категория) — заранее выбрана в первом шаге; null —
+   * человек выбирает сам (владелец, 2026-11-23: «сфера — при создании
+   * объекта»).
+   */
+  defaultCategory?: ObjectCategory | null;
   /** Названия точек организации — повтор API не примет. */
   takenNames: string[];
   /** Порядок новой точки — после существующих. */
@@ -79,6 +88,10 @@ export function PointWizard({
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
+  const [category, setCategory] = useState<ObjectCategory | null>(defaultCategory);
+  const [categoryError, setCategoryError] = useState(false);
+  const categoryLabel = useObjectCategoryLabel();
+  const tc = useTranslations("common");
   const [roomMode, setRoomMode] = useState<"typical" | "copy">("typical");
   const [checked, setChecked] = useState<Record<TypicalRoomKey, boolean>>(
     () => Object.fromEntries(TYPICAL_ROOMS.map((room) => [room.key, room.checked])) as Record<TypicalRoomKey, boolean>,
@@ -131,6 +144,10 @@ export function PointWizard({
         return;
       }
       setNameError(null);
+      if (!category) {
+        setCategoryError(true);
+        return;
+      }
     }
     setStep((value) => Math.min(STEPS.length - 1, value + 1));
   }
@@ -165,9 +182,9 @@ export function PointWizard({
       const response = await fetch("/api/settings/buildings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: pointName, address: address.trim() || null, sortOrder }),
+        body: JSON.stringify({ name: pointName, address: address.trim() || null, sortOrder, ...(category ? { sphere: category } : {}) }),
       });
-      const data = (await response.json().catch(() => ({}))) as { building?: { id: string }; error?: string };
+      const data = (await response.json().catch(() => ({}))) as { building?: { id: string }; error?: string; journalsLimited?: boolean };
       if (!response.ok || !data.building) {
         // Точки тарифа заняты — toast с кнопкой «Выбрать тариф».
         if (tariffLimit(data)) {
@@ -181,6 +198,8 @@ export function PointWizard({
         throw new Error(data.error ?? t("failed"));
       }
       pointId = data.building.id;
+      // Журналы сферы не поместились в тариф — объект создан, набор прежний.
+      if (data.journalsLimited) toast.message(t("head.categoryJournalsLimited"));
       tick();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
@@ -339,6 +358,26 @@ export function PointWizard({
                   }
                 }}
               />
+            </div>
+            <div className="space-y-1.5" data-wizard-category>
+              <Label htmlFor="wizard-category">
+                {tc("objectCategoryLabel")} <span className="text-[#a13a32]">*</span>
+              </Label>
+              <p className="text-[12.5px] leading-[1.5] text-[#6f7282]">{t("head.categoryHint")}</p>
+              <ObjectCategoryPicker
+                id="wizard-category"
+                value={category}
+                invalid={categoryError}
+                onChange={(next) => {
+                  setCategory(next);
+                  setCategoryError(false);
+                }}
+              />
+              {categoryError ? (
+                <p className="text-[13px] text-[#a13a32]" role="alert">
+                  {tc("objectCategoryRequired")}
+                </p>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -587,6 +626,12 @@ export function PointWizard({
                 <dd className="mt-0.5 text-[15px] font-medium text-[#0b1024]">
                   {name.trim()}
                   {address.trim() ? <span className="font-normal text-[#6f7282]"> · {address.trim()}</span> : null}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[12.5px] text-[#6f7282]">{tc("objectCategoryLabel")}</dt>
+                <dd className="mt-0.5 text-[15px] font-medium text-[#0b1024]" data-wizard-summary-category>
+                  {categoryLabel(category)}
                 </dd>
               </div>
               <div>

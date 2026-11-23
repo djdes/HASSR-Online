@@ -29,6 +29,12 @@ import { getPartnerThreadOwnership } from "@/lib/support-threads";
 import { threadKindOf } from "@/lib/support-threads-shared";
 import { FeedbackReply } from "./feedback-reply";
 import { SupportChats, type RootChatThread } from "./support-chats";
+import { ClientLinks, FeedbackHashFocus } from "./client-links";
+import { resolveSupportClientHrefs } from "@/lib/support-staff-alerts.server";
+import { supportAlertWho } from "@/lib/support-staff-alerts";
+import { canEnterClientCabinets } from "@/lib/platform-access";
+import { platformViewerForSession } from "@/lib/platform-access.server";
+import { platformOrgId } from "@/lib/partners/partner-hint";
 import { TestNotifyButton } from "./test-notify-button";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { FeedbackCopyProvider } from "./feedback-copy-provider";
@@ -87,7 +93,10 @@ export default async function RootFeedbackPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireRoot();
+  const session = await requireRoot();
+  const viewer = await platformViewerForSession(session);
+  // «Войти в кабинет» — тем, кому панель разрешает вход к клиенту.
+  const canEnter = canEnterClientCabinets(viewer);
   const t = await getTranslations("rootFeedbackReports");
   const pageLocale = await getSiteLocale();
   const { type: rawType, org: rawOrg, answered: rawAnswered } = await searchParams;
@@ -168,8 +177,10 @@ export default async function RootFeedbackPage({
         unreadForStaff: true,
         unreadForClient: true,
         lastMessageAt: true,
+        // Последние 50 реплик ветки (раньше — первые 50: в длинной ветке
+        // новые сообщения не было видно).
         messages: {
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: "desc" },
           take: 50,
           select: {
             id: true,
@@ -178,6 +189,7 @@ export default async function RootFeedbackPage({
             operatorName: true,
             authorName: true,
             attachments: true,
+            replyToId: true,
             createdAt: true,
           },
         },
@@ -193,6 +205,27 @@ export default async function RootFeedbackPage({
   const ownership = await getPartnerThreadOwnership(
     chatThreadRows.map((t) => t.organizationId).filter((id): id is string => Boolean(id))
   );
+  // Карточки клиентов одним заходом: обращения и ветки чатов.
+  const clientHrefs = await resolveSupportClientHrefs([
+    ...reports.map((r) => ({ key: `report:${r.id}`, organizationId: r.organizationId, email: r.userEmail, phone: r.phone })),
+    ...chatThreadRows.map((thread) => ({
+      key: `chat:${thread.id}`,
+      organizationId: thread.organizationId,
+      email: thread.userEmail,
+      phone: thread.phone,
+    })),
+  ]).catch(() => new Map<string, string | null>());
+  const platform = platformOrgId();
+  const cabinetOf = (organizationId: string | null) =>
+    canEnter && organizationId && organizationId !== platform ? organizationId : null;
+  const clientLinkLabels = {
+    clientCard: t("page.clientCard"),
+    enterCabinet: t("page.enterCabinet"),
+    enterCabinetFailed: t("page.enterCabinetFailed"),
+    call: t("page.call"),
+    writeEmail: t("page.writeEmail"),
+  };
+
   const chatThreads: RootChatThread[] = chatThreadRows.map((t) => ({
     id: t.id,
     kind: threadKindOf(t.key),
@@ -205,13 +238,16 @@ export default async function RootFeedbackPage({
     unreadForClient: t.unreadForClient,
     lastMessageAt: t.lastMessageAt.toISOString(),
     partner: (t.organizationId && ownership.get(t.organizationId)) || null,
-    messages: t.messages.map((m) => ({
+    clientHref: clientHrefs.get(`chat:${t.id}`) ?? null,
+    cabinetOrganizationId: cabinetOf(t.organizationId),
+    messages: [...t.messages].reverse().map((m) => ({
       id: m.id,
       author: m.author,
       body: m.body,
       operatorName: m.operatorName,
       authorName: m.authorName,
       attachments: parseStoredAttachments(m.attachments),
+      replyToId: m.replyToId,
       createdAt: m.createdAt.toISOString(),
     })),
   }));
@@ -219,7 +255,9 @@ export default async function RootFeedbackPage({
   return (
     <DomainMessagesBoundary namespaces={["rootFeedbackReports"]}>
     <FeedbackCopyProvider>
-    <div className="space-y-8">
+    {/* «Открыть» из всплывашки и колокольчика: якорь обращения или ветки. */}
+    <FeedbackHashFocus />
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-black">
@@ -236,16 +274,27 @@ export default async function RootFeedbackPage({
         />
       </div>
 
-      <SupportChats threads={chatThreads} organizations={allOrganizations} />
+      {/* Владелец, 2026-11-23: чаты — короткий блок, обращения видно сразу.
+          На широком экране — рядом: чаты слева (своя прокрутка), обращения
+          справа; на узком — чаты в короткой прокрутке, обращения под ними. */}
+      <div className="grid gap-6 xl:grid-cols-2 xl:items-start" data-feedback-layout>
+      <div className="min-w-0 xl:sticky xl:top-4" data-feedback-column="chats">
+        <SupportChats threads={chatThreads} organizations={allOrganizations} />
+      </div>
 
-      <div className="rounded-2xl border border-[#ececf4] bg-white p-5">
+      <div className="min-w-0 space-y-4" data-feedback-column="reports">
+      <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
+        {t("page.requestsTitle")}
+        <span className="ml-2 text-[13px] font-normal text-[#6f7282]">{reports.length}</span>
+      </h2>
+      <div className="rounded-2xl bg-white p-4">
         <div className="flex items-center gap-2 text-[13px] font-medium text-[#6f7282]">
           <Filter className="size-4" />
           {t("page.filters")}
         </div>
         <form
           method="GET"
-          className="mt-4 flex flex-wrap items-end gap-3"
+          className="mt-3 flex flex-wrap items-end gap-3"
         >
           <div className="flex flex-col gap-1.5">
             <label
@@ -258,7 +307,7 @@ export default async function RootFeedbackPage({
               id="type"
               name="type"
               defaultValue={typeFilter ?? ""}
-              className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[180px]"
+              className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[160px]"
             >
               <option value="">{t("page.allTypes")}</option>
               <option value="bug">{t("page.bugCount", { count: String(totalBugs) })}</option>
@@ -278,14 +327,14 @@ export default async function RootFeedbackPage({
               id="answered"
               name="answered"
               defaultValue={unansweredOnly ? "no" : ""}
-              className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[180px]"
+              className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[160px]"
             >
               <option value="">{t("page.allReports")}</option>
               <option value="no">{t("page.unansweredCount", { count: String(totalUnanswered) })}</option>
             </select>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <label
               htmlFor="org"
               className="text-[12px] font-medium uppercase tracking-wider text-[#9b9fb3]"
@@ -296,7 +345,7 @@ export default async function RootFeedbackPage({
               id="org"
               name="org"
               defaultValue={orgFilter ?? ""}
-              className="h-10 w-full rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:w-auto sm:min-w-[280px]"
+              className="h-10 w-full min-w-0 rounded-xl border border-[#dcdfed] bg-white px-3 text-[14px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 sm:min-w-[200px]"
             >
               <option value="">{t("page.allOrganizations")}</option>
               {orgOptions.map((o) => (
@@ -309,7 +358,7 @@ export default async function RootFeedbackPage({
 
           <button
             type="submit"
-            className="h-10 rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white shadow-[0_8px_20px_-12px_rgba(85,102,246,0.6)] transition-colors hover:bg-[#4a5bf0]"
+            className="h-10 rounded-xl bg-[#5566f6] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#4a5bf0]"
           >
             {t("page.apply")}
           </button>
@@ -317,7 +366,7 @@ export default async function RootFeedbackPage({
           {filtered ? (
             <Link
               href="/root/feedback"
-              className="h-10 rounded-xl border border-[#dcdfed] px-4 text-[13px] font-medium leading-[38px] text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+              className="h-10 rounded-xl bg-[var(--app-veil)] px-4 text-[13px] font-medium leading-10 text-[#0b1024] transition-colors hover:bg-[var(--app-veil-hover)]"
             >
               {t("page.reset")}
             </Link>
@@ -326,7 +375,7 @@ export default async function RootFeedbackPage({
       </div>
 
       {reports.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-white px-8 py-16 text-center">
+        <div className="rounded-2xl bg-white px-8 py-16 text-center">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
             <MessageSquareText className="size-7" />
           </div>
@@ -346,10 +395,13 @@ export default async function RootFeedbackPage({
             const Icon = theme.icon;
             const source = Object.hasOwn(SOURCE_LABELS, r.source) ? SOURCE_LABELS[r.source] : SOURCE_LABELS.site;
             const SourceIcon = source.icon;
+            const attachments = parseStoredAttachments(r.attachments);
+            const replyAttachments = parseStoredAttachments(r.replyAttachments);
             return (
               <li
                 key={r.id}
-                className="rounded-2xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
+                id={`report-${r.id}`}
+                className="scroll-mt-24 rounded-2xl bg-white p-5 transition-shadow duration-300 target:ring-2 target:ring-[#5566f6] data-[flash]:ring-2 data-[flash]:ring-[#5566f6]"
               >
                 <div className="flex items-start gap-4">
                   <span
@@ -401,7 +453,7 @@ export default async function RootFeedbackPage({
                       {r.message}
                     </p>
 
-                    {parseStoredAttachments(r.attachments).map((a, ai) => (
+                    {attachments.map((a, ai) => (
                       <a
                         key={ai}
                         href={a.url}
@@ -414,7 +466,7 @@ export default async function RootFeedbackPage({
                     ))}
 
                     {r.responseMessage ? (
-                      <div className="mt-4 rounded-xl border border-[#c7ccea] bg-[#f5f6ff] p-3">
+                      <div className="mt-4 rounded-xl bg-[#f5f6ff] p-3">
                         <div className="text-[12px] font-medium text-[#5566f6]">
                           {t("page.responseHeading")}{r.respondedByName ? ` · ${r.respondedByName}` : ""}
                           {r.respondedAt ? ` · ${formatFeedbackReportDate(r.respondedAt, pageLocale)}` : ""}
@@ -422,6 +474,17 @@ export default async function RootFeedbackPage({
                         <p className="mt-1 whitespace-pre-wrap break-words text-[14px] leading-[1.55] text-[#0b1024]">
                           {r.responseMessage}
                         </p>
+                        {replyAttachments.map((a, ai) => (
+                          <a
+                            key={ai}
+                            href={a.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 block text-[13px] text-[#3848c7] underline-offset-2 hover:underline"
+                          >
+                            📎 {a.filename}
+                          </a>
+                        ))}
                       </div>
                     ) : null}
 
@@ -448,6 +511,7 @@ export default async function RootFeedbackPage({
                           href={r.pageUrl}
                           target="_blank"
                           rel="noreferrer"
+                          title={t("page.openPage")}
                           className="inline-flex min-w-0 items-center gap-1.5 break-all hover:text-[#5566f6]"
                         >
                           <Link2 className="size-3.5 shrink-0" />
@@ -462,12 +526,34 @@ export default async function RootFeedbackPage({
                         ? t("page.adminNotifications", { telegram: r.adminTgNotifiedAt ? "✓" : "✗", email: r.adminEmailedAt ? "✓" : "✗" })
                         : t("page.adminNotificationsNoData")}
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
                       <FeedbackReply
                         reportId={r.id}
                         hasRecipient={Boolean(r.userId && r.organizationId)}
                         hasTelegram={Boolean(r.telegramChatId)}
                         hasEmail={Boolean(r.userEmail)}
+                        context={{
+                          ticket: ticketCode(r.id),
+                          typeLabel: t(feedbackTypeKey(r.type)),
+                          dateLabel: formatFeedbackReportDate(r.createdAt, pageLocale),
+                          message: r.message,
+                          attachments,
+                          pageUrl: r.pageUrl,
+                          who: supportAlertWho({
+                            name: r.userName,
+                            email: r.userEmail,
+                            phone: r.phone,
+                            organizationName: r.organizationName,
+                          }),
+                        }}
+                      />
+                      {/* К клиенту из обращения: карточка, кабинет, звонок, почта. */}
+                      <ClientLinks
+                        clientHref={clientHrefs.get(`report:${r.id}`) ?? null}
+                        cabinetOrganizationId={cabinetOf(r.organizationId)}
+                        phone={r.phone}
+                        email={r.userEmail}
+                        labels={clientLinkLabels}
                       />
                     </div>
                   </div>
@@ -477,6 +563,8 @@ export default async function RootFeedbackPage({
           })}
         </ul>
       )}
+      </div>
+      </div>
     </div>
     </FeedbackCopyProvider>
     </DomainMessagesBoundary>

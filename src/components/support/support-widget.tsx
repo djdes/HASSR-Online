@@ -18,11 +18,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { findQuotedMessage, quotePreview } from "@/lib/support-reply-quote";
 import { ConsultantCard } from "@/components/dashboard/consultant-card";
 import {
   AttachButton,
   AttachmentChips,
   MessageAttachments,
+  ReplyQuote,
+  useGlobalImagePaste,
   useAttachmentUploads,
 } from "@/components/support/attachment-composer";
 import {
@@ -86,6 +89,8 @@ type ChatMessage = {
   operatorName: string | null;
   authorName?: string | null;
   attachments?: SupportAttachmentMeta[];
+  /** Ответ оператора на сообщение ветки — цитата над ответом (2026-11-23). */
+  replyToId?: string | null;
   createdAt: string;
 };
 
@@ -161,6 +166,21 @@ export function SupportWidget({
     setScreen("chat");
     setSent(false);
   }, []);
+
+  // Ctrl+V скриншота в любом месте кабинета (вне полей ввода) — открываем чат
+  // поддержки с картинкой во вложениях (владелец, 2026-11-23). Партнёру в
+  // кабинете клиента чат не нужен — картинка уходит в форму обращения.
+  useGlobalImagePaste((files) => {
+    if (hideChat) {
+      setOpen(true);
+      setScreen("feedback");
+      setSent(false);
+      feedbackFiles.addFiles(files);
+      return;
+    }
+    openChat();
+    chatFiles.addFiles(files);
+  });
 
   // Всплывашка и колокольчик открывают переписку через шину.
   useEffect(() => {
@@ -666,6 +686,15 @@ export function SupportWidget({
                       <div className="mb-0.5 text-[11px] font-medium text-white/75">
                         {item.authorName}
                       </div>
+                    ) : null}
+                    {item.replyToId ? (
+                      <ReplyQuote
+                        text={(() => {
+                          const quoted = findQuotedMessage(messages, item.replyToId);
+                          return quoted ? quotePreview({ body: quoted.body, attachments: quoted.attachments ?? [] }) : null;
+                        })()}
+                        light={item.author === "client"}
+                      />
                     ) : null}
                     {item.body ? (
                       <div className="whitespace-pre-wrap break-words">

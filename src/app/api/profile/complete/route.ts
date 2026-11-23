@@ -162,14 +162,15 @@ export async function POST(request: Request) {
       where: { id: organizationId },
       data: {
         name: data.organizationName,
-        type: data.sphere,
+        // Сфера — у объектов (2026-11-23): без неё в запросе сферу организации не трогаем.
+        ...(data.sphere ? { type: data.sphere } : {}),
         ownershipKind: data.ownershipKind,
         locationsCount: data.locationsCount,
         inn: data.inn?.trim() || null,
         // Адрес приходит из ЕГРЮЛ вместе с ИНН; пустой не затирает то,
         // что могло быть введено в настройках раньше.
         ...(data.address?.trim() ? { address: data.address.trim() } : {}),
-        ...(untouchedJournals
+        ...(untouchedJournals && data.sphere
           ? { disabledJournalCodes: defaultDisabledCodesFor(normalizeSphere(data.sphere)) }
           : {}),
       },
@@ -234,7 +235,7 @@ export async function POST(request: Request) {
   notifyPlatformAdmin(
     composeProfileCompletedAlert({
       organizationName: data.organizationName,
-      sphereLabel: sphereLabel(data.sphere),
+      sphereLabel: data.sphere ? sphereLabel(data.sphere) : null,
       locationsCount: data.locationsCount,
       name: displayName,
       phone,

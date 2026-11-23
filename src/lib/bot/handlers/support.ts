@@ -13,6 +13,7 @@ import {
 import { botSupportRateLimiter } from "@/lib/rate-limit";
 import { extractSupportThreadId } from "@/lib/support-chat";
 import { escapeTelegramHtml } from "@/lib/telegram";
+import { alertSupportStaffAboutReport } from "@/lib/support-staff-alerts.server";
 
 /**
  * Входящая поддержка в боте.
@@ -222,6 +223,16 @@ function defaultDeps(): SupportDeps {
         },
         select: { id: true, createdAt: true },
       });
+      // Всплывашка и колокольчик команде поддержки (2026-11-23).
+      void alertSupportStaffAboutReport({
+        id: report.id,
+        type: "support",
+        message: args.message,
+        userName: args.userName,
+        userEmail: args.userEmail,
+        organizationId: args.organizationId,
+        organizationName: args.organizationName,
+      }).catch((error) => console.error("[bot-support] staff alert failed", error));
       return report;
     },
     async notifyAdminTelegram(text, client) {

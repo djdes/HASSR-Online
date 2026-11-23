@@ -59,3 +59,28 @@ test("инструкции ИИ помещаются в лимит шлюза и
   assert.ok(kbAskInstructions("Сколько стоит тариф Премиум и как оплатить").includes("/baza-znaniy/tarify-i-oplata)"));
   assert.ok(kbAskInstructions("проверяющий QR журналы просмотр").includes("# QR для проверяющего"));
 });
+
+test("база знаний — для любой сферы, объекты описаны (владелец, 2026-11-23)", () => {
+  const text = (slug: string) => {
+    const article = KB_ARTICLES.find((item) => item.slug === slug);
+    assert.ok(article, slug);
+    return kbArticleText(article);
+  };
+  // Поварские примеры не выдаём за общее правило: у человека может быть клиника
+  // или фитнес. Проверяем свой текст статей; подписи снимков — экраны демо-столовой.
+  for (const article of KB_ARTICLES) {
+    const authored = JSON.stringify([article.title, article.lead, article.blocks.filter((block) => block.t !== "shot" && block.t !== "phones")]);
+    assert.doesNotMatch(authored, /повар|«К Вам пришла проверка»/i, article.slug);
+  }
+  const objects = text("torgovye-tochki");
+  for (const sphere of ["Общепит ХАССП", "Медицинские услуги", "Услуги потребителям", "Спорт и рекреация"]) {
+    assert.ok(objects.includes(sphere), `«Объекты»: ${sphere}`);
+  }
+  assert.match(objects, /Добавить объект/);
+  assert.match(objects, /Контролировать климат/);
+  assert.match(objects, /Программа производственного контроля/);
+  const registration = text("registraciya");
+  assert.doesNotMatch(registration, /Сфера и тип/);
+  assert.match(registration, /Объекты и их сфера/);
+  assert.match(text("nachalnaya-nastroyka"), /сферу/);
+});

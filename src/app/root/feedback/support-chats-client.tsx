@@ -8,9 +8,13 @@ import {
   Megaphone,
   MessageSquarePlus,
   MessagesSquare,
+  Reply,
   Search,
   Send,
+  X,
 } from "lucide-react";
+import { defaultReplyTarget, findQuotedMessage, quotePreview } from "@/lib/support-reply-quote";
+import { ClientLinks } from "./client-links";
 import { toast } from "sonner";
 import {
   AttachButton,
@@ -97,8 +101,9 @@ export function SupportChatsClient({
   const waitingPartner = threads.filter((t) => t.unreadForStaff > 0 && t.partner).length;
 
   return (
-    <section className="rounded-2xl border border-[#ececf4] bg-white p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-2xl bg-white p-4 sm:p-5" data-support-chats>
+      {/* Колонка чатов узкая (половина экрана): кнопки — строкой под описанием. */}
+      <div className="flex flex-col gap-3">
         <div>
           <div className="flex items-center gap-2 text-[15px] font-semibold text-[#0b1024]">
             <MessagesSquare className="size-4 text-[#5566f6]" />
@@ -124,7 +129,9 @@ export function SupportChatsClient({
       {threads.length === 0 ? (
         <p className="mt-4 text-[13.5px] text-[#9b9fb3]">{t("empty")}</p>
       ) : (
-        <div className="mt-4 space-y-3">
+        // Короткий блок (владелец, 2026-11-23): ветки — строками, список
+        // прокручивается внутри, обращения рядом/ниже видно сразу.
+        <div className="mt-4 max-h-[45vh] space-y-2 overflow-y-auto overscroll-contain pr-1 xl:max-h-[calc(100vh-14rem)]" data-chat-list>
           {threads.map((thread) => (
             <ThreadCard
               key={thread.id}
@@ -160,7 +167,16 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
   const router = useRouter();
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [open, setOpen] = useState(false);
   const files = useAttachmentUploads({ getUploadFailureContent: getRootUploadFailureContent });
+  const messagesRef = useRef<HTMLDivElement>(null);
+  // На что отвечаем (владелец, 2026-11-23): по умолчанию — последнее
+  // сообщение клиента, «Ответить» у любого сообщения клиента выбирает его,
+  // крестик — без цитаты. `undefined` — выбор по умолчанию.
+  const [quoteId, setQuoteId] = useState<string | null | undefined>(undefined);
+  const fallbackQuote = defaultReplyTarget(thread.messages);
+  const quoted = quoteId === undefined ? fallbackQuote : findQuotedMessage(thread.messages, quoteId);
   // Свой набор ответа → клиенту «Поддержка печатает…», не чаще раза в 2,5 с.
   const pingTyping = useMemo(
     () =>
@@ -172,11 +188,21 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
     [thread.id]
   );
 
+  // Открыли ветку или пришло новое сообщение — показываем низ переписки.
+  useEffect(() => {
+    if (!open) return;
+    const box = messagesRef.current;
+    if (box) box.scrollTop = box.scrollHeight;
+  }, [open, thread.messages.length]);
+
   const waitingHours =
     thread.unreadForStaff > 0
       ? (Date.now() - new Date(thread.lastMessageAt).getTime()) / 3_600_000
       : 0;
   const escalated = Boolean(thread.partner) && waitingHours >= PARTNER_ESCALATION_HOURS;
+  const title = thread.organizationName || (thread.kind === "guest" ? t("guest") : t("withoutOrganization"));
+  const who = [title, thread.userName, thread.userEmail, thread.phone].filter(Boolean).join(" · ");
+  const lastMessage = thread.messages.at(-1);
 
   async function send() {
     const body = draft.trim();
@@ -190,7 +216,11 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
       const response = await fetch(`/api/root/support/threads/${thread.id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: body, attachments: files.readyAttachments }),
+        body: JSON.stringify({
+          message: body,
+          attachments: files.readyAttachments,
+          ...(quoted ? { replyToId: quoted.id } : {}),
+        }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
@@ -199,6 +229,7 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
       }
       toast.success(getCurrentT()(deliveryKey(data?.delivered, "reply")));
       setDraft("");
+      setQuoteId(undefined);
       files.clear();
       router.refresh();
     } catch {
@@ -209,29 +240,31 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
   }
 
   return (
-    <details className="rounded-xl border border-[#ececf4] bg-[#fafbff] px-4 py-3">
+    <details
+      id={`chat-${thread.id}`}
+      onToggle={(event) => setOpen((event.currentTarget as HTMLDetailsElement).open)}
+      className="group scroll-mt-24 rounded-xl bg-[var(--app-veil)] px-3.5 py-2.5 transition-shadow duration-300 data-[flash]:ring-2 data-[flash]:ring-[#5566f6]"
+      data-chat-thread={thread.id}
+    >
+      {/* Свёрнутая ветка — одна строка: кто, отметки, время; текст последнего
+          сообщения — второй тихой строкой. */}
       <summary className="cursor-pointer list-none">
-        <span className="flex flex-wrap items-center gap-2 text-[13.5px]">
-          <span className="font-medium text-[#0b1024]">
-            {thread.organizationName || (thread.kind === "guest" ? t("guest") : t("withoutOrganization"))}
-          </span>
+        <span className="flex min-w-0 items-center gap-2 text-[13.5px]">
+          <span className="min-w-0 truncate font-medium text-[#0b1024]">{title}</span>
           {typing ? (
-            <span className="inline-flex items-center rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
               {t("typing")}
             </span>
           ) : null}
-          <span className="text-[#6f7282]">
-            {[thread.userName, thread.userEmail, thread.phone].filter(Boolean).join(" · ")}
-          </span>
           {thread.unreadForStaff > 0 && !thread.partner ? (
-            <span className="rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-medium text-[#a13a32]">
+            <span className="shrink-0 rounded-full bg-[#fff4f2] px-2 py-0.5 text-[11px] font-medium text-[#a13a32]">
               {t("unanswered", { count: String(thread.unreadForStaff) })}
             </span>
           ) : null}
           {thread.unreadForStaff > 0 && thread.partner ? (
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                "shrink-0 truncate rounded-full px-2 py-0.5 text-[11px] font-medium",
                 escalated ? "bg-[#fff4f2] text-[#a13a32]" : "bg-[#fff7ed] text-[#9a4a06]"
               )}
               title={escalated ? t("escalationHint") : t("partnerResponds")}
@@ -239,64 +272,148 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
               {t(escalated ? "escalated" : "waitingPartner", { brand: thread.partner.brandName, age: chatAge(thread.lastMessageAt, t) })}
             </span>
           ) : thread.partner ? (
-            <span className="rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
+            <span className="shrink-0 truncate rounded-full bg-[#eef1ff] px-2 py-0.5 text-[11px] font-medium text-[#3848c7]">
               {t("partner", { brand: thread.partner.brandName })}
             </span>
           ) : null}
           {thread.unreadForClient > 0 ? (
-            <span className="rounded-full bg-[#f4f5fb] px-2 py-0.5 text-[11px] font-medium text-[#3c4053]">
+            <span className="shrink-0 rounded-full bg-[#f4f5fb] px-2 py-0.5 text-[11px] font-medium text-[#3c4053] max-sm:hidden">
               {t("unreadByClient", { count: String(thread.unreadForClient) })}
             </span>
           ) : null}
           {thread.kind === "legacy" ? (
             <span
-              className="rounded-full bg-[#f4f5fb] px-2 py-0.5 text-[11px] font-medium text-[#6f7282]"
+              className="shrink-0 rounded-full bg-[#f4f5fb] px-2 py-0.5 text-[11px] font-medium text-[#6f7282]"
               title={t("archiveHint")}
             >
               {t("archive")}
             </span>
           ) : null}
-          <span className="ml-auto text-[12px] text-[#9b9fb3]">
+          <span className="ml-auto shrink-0 text-[12px] text-[#9b9fb3]">
             {formatChatTimestamp(thread.lastMessageAt, locale)}
           </span>
         </span>
+        {lastMessage ? (
+          <span className="mt-0.5 block truncate text-[12.5px] text-[#6f7282] group-open:hidden">
+            {lastMessage.author === "client" ? "" : "↩ "}
+            {quotePreview(lastMessage)}
+          </span>
+        ) : null}
       </summary>
 
-      <div className="mt-3 space-y-1.5">
-        {thread.messages.map((item) => (
-          <div
-            key={item.id}
-            className={cn(
-              "max-w-[80%] rounded-xl px-3 py-2 text-[13px] leading-[1.5]",
-              item.author === "client"
-                ? "bg-white text-[#0b1024] ring-1 ring-[#ececf4]"
-                : "ml-auto bg-[#eef1ff] text-[#0b1024]"
-            )}
-          >
-            <div className="mb-0.5 text-[11px] text-[#6f7282]">
-              {item.author === "client"
-                ? item.authorName || t("client")
-                : item.operatorName || t("support")}
-              {" · "}
-              {formatChatTimestamp(item.createdAt, locale)}
-            </div>
-            <div className="whitespace-pre-wrap break-words">{item.body}</div>
-            {item.attachments.map((a, ai) => (
-              <a
-                key={ai}
-                href={a.url}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 block text-[12.5px] text-[#3848c7] underline-offset-2 hover:underline"
-              >
-                📎 {a.filename}
-              </a>
-            ))}
-          </div>
-        ))}
+      {/* Кому отвечаем и куда перейти: карточка клиента, кабинет, звонок, почта. */}
+      <div className="mt-2.5 space-y-2 rounded-lg bg-white/70 px-3 py-2" data-chat-client>
+        <div className="text-[12.5px] text-[#3c4053]">
+          <span className="font-medium text-[#6f7282]">{t("to")}: </span>
+          {who}
+        </div>
+        <ClientLinks
+          clientHref={thread.clientHref ?? null}
+          cabinetOrganizationId={thread.cabinetOrganizationId ?? null}
+          phone={thread.phone}
+          email={thread.userEmail}
+          labels={{
+            clientCard: t("clientCard"),
+            enterCabinet: t("enterCabinet"),
+            enterCabinetFailed: t("sendFailed"),
+            call: t("call"),
+            writeEmail: t("writeEmail"),
+          }}
+        />
       </div>
 
-      <div className="mt-3 border-t border-[#ececf4] pt-3">
+      <div ref={messagesRef} className="mt-2.5 max-h-[40vh] space-y-1.5 overflow-y-auto overscroll-contain pr-1" data-chat-messages>
+        {thread.messages.map((item) => {
+          const replied = findQuotedMessage(thread.messages, item.replyToId);
+          return (
+            <div
+              key={item.id}
+              className={cn(
+                "group/message max-w-[85%] rounded-xl px-3 py-2 text-[13px] leading-[1.5]",
+                item.author === "client"
+                  ? "bg-white text-[#0b1024]"
+                  : "ml-auto bg-[#eef1ff] text-[#0b1024]",
+                quoted?.id === item.id ? "ring-2 ring-[#5566f6]/40" : ""
+              )}
+              data-chat-message={item.id}
+            >
+              <div className="mb-0.5 flex items-center gap-2 text-[11px] text-[#6f7282]">
+                <span className="min-w-0 truncate">
+                  {item.author === "client"
+                    ? item.authorName || t("client")
+                    : item.operatorName || t("support")}
+                  {" · "}
+                  {formatChatTimestamp(item.createdAt, locale)}
+                </span>
+                {item.author === "client" ? (
+                  <button
+                    type="button"
+                    onClick={() => setQuoteId(item.id)}
+                    className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-[#3848c7] transition-colors hover:bg-[#eef1ff]"
+                    data-quote-message={item.id}
+                  >
+                    <Reply className="size-3" />
+                    {t("replyToMessage")}
+                  </button>
+                ) : null}
+              </div>
+              {item.replyToId ? (
+                <div className="mb-1 border-l-2 border-[#5566f6]/50 pl-2 text-[12px] text-[#6f7282]" data-chat-quote>
+                  {replied ? quotePreview(replied) : t("quoteMissing")}
+                </div>
+              ) : null}
+              <div className="whitespace-pre-wrap break-words">{item.body}</div>
+              {item.attachments.map((a, ai) => (
+                <a
+                  key={ai}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block text-[12.5px] text-[#3848c7] underline-offset-2 hover:underline"
+                >
+                  📎 {a.filename}
+                </a>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        className={cn("mt-2.5 rounded-xl pt-2.5 transition-shadow", dragging ? "ring-2 ring-[#5566f6]/40" : "")}
+        onDragOver={(event) => {
+          if (event.dataTransfer.types.includes("Files")) {
+            event.preventDefault();
+            setDragging(true);
+          }
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          if (event.dataTransfer.files.length === 0) return;
+          event.preventDefault();
+          setDragging(false);
+          files.addFiles(event.dataTransfer.files);
+        }}
+        data-chat-composer
+      >
+        {quoted ? (
+          <div className="mb-2 flex items-start gap-2 rounded-lg bg-white/70 px-2.5 py-1.5 text-[12px]" data-reply-target={quoted.id}>
+            <Reply className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
+            <span className="min-w-0 flex-1">
+              <span className="font-medium text-[#6f7282]">{t("replyingTo")}: </span>
+              <span className="text-[#0b1024]">«{quotePreview(quoted, 120)}»</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuoteId(null)}
+              aria-label={t("clearQuote")}
+              title={t("clearQuote")}
+              className="shrink-0 rounded-md p-0.5 text-[#9b9fb3] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ) : null}
         <AttachmentChips uploads={files.uploads} onRemove={files.remove} formatSizeBytes={formatRootAttachmentBytes} />
         <div className="flex items-end gap-2">
           <AttachButton onFiles={files.addFiles} disabled={busy} />
@@ -333,6 +450,7 @@ function ThreadCard({ thread, typing = false, getCurrentT }: { thread: RootChatT
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           </button>
         </div>
+        <p className="mt-1.5 text-[11.5px] text-[#9b9fb3]">{dragging ? t("dropHint") : t("attachHint")}</p>
       </div>
     </details>
   );
@@ -404,15 +522,22 @@ function ComposeToOrgDialog({
   const [orgId, setOrgId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  // Скриншот к первому сообщению — кнопкой, Ctrl+V или перетаскиванием (2026-11-23).
+  const files = useAttachmentUploads({ getUploadFailureContent: getRootUploadFailureContent });
+  const hasContent = text.trim().length >= 2 || files.readyAttachments.length > 0;
 
   async function submit() {
-    if (!orgId || text.trim().length < 2) return;
+    if (!orgId || !hasContent) return;
+    if (files.uploading) {
+      toast.error(getCurrentT()("waitForUploads"));
+      return;
+    }
     setBusy(true);
     try {
       const response = await fetch("/api/root/support/threads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: orgId, message: text.trim() }),
+        body: JSON.stringify({ organizationId: orgId, message: text.trim(), attachments: files.readyAttachments }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
@@ -422,6 +547,7 @@ function ComposeToOrgDialog({
       toast.success(getCurrentT()(deliveryKey(data?.delivered, "compose")));
       setText("");
       setOrgId(null);
+      files.clear();
       onClose();
       router.refresh();
     } catch {
@@ -440,15 +566,31 @@ function ComposeToOrgDialog({
             {t("composeDescription")}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+        <div
+          className="space-y-3"
+          onDragOver={(event) => {
+            if (event.dataTransfer.types.includes("Files")) event.preventDefault();
+          }}
+          onDrop={(event) => {
+            if (event.dataTransfer.files.length === 0) return;
+            event.preventDefault();
+            files.addFiles(event.dataTransfer.files);
+          }}
+        >
           <OrgPicker organizations={organizations} value={orgId} onChange={setOrgId} />
           <textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
+            onPaste={files.handlePaste}
             rows={4}
             placeholder={t("composePlaceholder")}
             className={TEXTAREA}
           />
+          <AttachmentChips uploads={files.uploads} onRemove={files.remove} formatSizeBytes={formatRootAttachmentBytes} />
+          <div className="flex items-center gap-2">
+            <AttachButton onFiles={files.addFiles} disabled={busy} />
+            <p className="text-[12px] text-[#6f7282]">{t("attachHint")}</p>
+          </div>
         </div>
         <DialogFooter>
           <button type="button" onClick={onClose} className={BTN_OUTLINE}>
@@ -457,7 +599,7 @@ function ComposeToOrgDialog({
           <button
             type="button"
             onClick={() => void submit()}
-            disabled={busy || !orgId || text.trim().length < 2}
+            disabled={busy || files.uploading || !orgId || !hasContent}
             className={BTN_PRIMARY}
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}

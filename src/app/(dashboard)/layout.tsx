@@ -46,7 +46,8 @@ import { NPS_HIDDEN } from "@/lib/nps";
 import { npsVisibilityFor } from "@/lib/nps-data";
 import { deletionDueAt } from "@/lib/org-deletion";
 import { currentAnnouncement } from "@/lib/platform-status";
-import { effectivePlatformSections } from "@/lib/platform-access";
+import { effectivePlatformSections, isSupportStaff } from "@/lib/platform-access";
+import { SupportStaffAlerts } from "@/components/support/support-staff-alerts";
 import { WHATS_NEW_NOTES, notesWithoutPartnerProgram, whatsNewVersion } from "@/lib/whats-new-notes";
 import { THEME_COOKIE, pickInitialTheme } from "@/lib/theme-cookie";
 import { WHATS_NEW_COOKIE, whatsNewMode } from "@/lib/whats-new-seen";
@@ -747,6 +748,11 @@ export default async function DashboardLayout({
           <DomainMessagesBoundary namespaces={["bugReport", "feedbackDialog"]}>
             <BugReportLauncher />
           </DomainMessagesBoundary>
+          {/* Команде поддержки — всплывашка о новых обращениях и сообщениях
+              чатов, где бы человек ни был (владелец, 2026-11-23). */}
+          {isSupportStaff(session.user.isRoot === true, profile ? effectivePlatformSections(profile) : []) ? (
+            <SupportStaffAlerts />
+          ) : null}
           {/* Поддержка — доступна management+ из любого экрана. */}
           {hasFullWorkspaceAccess(session.user) ? (
             <SupportWidget

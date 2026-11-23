@@ -198,6 +198,11 @@ export function RoomEditorDialog({
   const [verifierUserIds, setVerifierUserIds] = useState<string[]>(
     initial?.verifierUserIds ?? [],
   );
+  // «Кто проверяет» — необязательный блок с переключателем в заголовке
+  // (владелец, 2026-11-23): выключен — проверяет контролёр журнала.
+  const [verifiersOn, setVerifiersOn] = useState<boolean>(
+    (initial?.verifierUserIds ?? []).length > 0,
+  );
   // Климат: null = не контролируется. В форме держим строки, чтобы
   // пустой ввод не превращался в 0.
   const [climateEnabled, setClimateEnabled] = useState<boolean>(
@@ -207,9 +212,10 @@ export function RoomEditorDialog({
     toClimateForm(initial?.climateNorms ?? null),
   );
   const [cleaningOpen, setCleaningOpen] = useState<boolean>(focus !== "climate");
-  const [climateOpen, setClimateOpen] = useState<boolean>(
-    focus === "climate" || Boolean(initial?.climateNorms),
-  );
+  // Нормы климата получены от вызывающего: только тогда блок «Климат» виден и
+  // поле уходит на сервер. Журнал уборки норм не грузит — раньше его окно
+  // показывало «не контролируется» и при сохранении стирало нормы (2026-11-23).
+  const climateLoaded = initial?.climateNorms !== undefined;
   const [kind, setKind] = useState(initial?.kind ?? "other");
   const [detergent, setDetergent] = useState(initial?.detergent ?? "");
   const [currentScope, setCurrentScope] = useState<ScopeStep[]>(
@@ -258,11 +264,11 @@ export function RoomEditorDialog({
     setRequirePhoto(initial?.requirePhoto ?? false);
     setCleanerUserIds(initial?.cleanerUserIds ?? []);
     setVerifierUserIds(initial?.verifierUserIds ?? []);
+    setVerifiersOn((initial?.verifierUserIds ?? []).length > 0);
     setFillerUserIds(initial?.fillerUserIds ?? []);
     setClimateEnabled(Boolean(initial?.climateNorms));
     setClimate(toClimateForm(initial?.climateNorms ?? null));
     setCleaningOpen(focus !== "climate");
-    setClimateOpen(focus === "climate" || Boolean(initial?.climateNorms));
   });
 
   async function save() {
@@ -271,7 +277,8 @@ export function RoomEditorDialog({
       toast.error(t("nameEmpty"));
       return;
     }
-    const climateNorms = climateEnabled ? fromClimateForm(climate) : null;
+    const climateNorms = climateLoaded && climateEnabled ? fromClimateForm(climate) : null;
+    const savedVerifierIds = verifiersOn ? verifierUserIds : [];
     if (climateNorms && !climateNorms.temperature.enabled && !climateNorms.humidity.enabled) {
       toast.error(t("climateNeedOne"));
       return;
@@ -316,9 +323,9 @@ export function RoomEditorDialog({
           generalMonthDays,
           requirePhoto,
           cleanerUserIds,
-          verifierUserIds,
+          verifierUserIds: savedVerifierIds,
           ...(initial.fillerUserIds !== undefined ? { fillerUserIds } : {}),
-          climateNorms,
+          ...(climateLoaded ? { climateNorms } : {}),
         }),
       });
       if (!res.ok) {
@@ -351,8 +358,9 @@ export function RoomEditorDialog({
         generalMonthDays,
         requirePhoto,
         cleanerUserIds,
-        verifierUserIds,
-        climateNorms,
+        verifierUserIds: savedVerifierIds,
+        // Окно без норм климата их не меняло — отдаём то, что было.
+        climateNorms: climateLoaded ? climateNorms : (initial.climateNorms ?? null),
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("saveFailed"));
@@ -419,30 +427,45 @@ export function RoomEditorDialog({
                 />
               </div>
 
-              <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] p-4 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <Label className="text-[13px] font-semibold text-[#0b1024]">
+              {/* «Кто проверяет» — необязательный блок: переключатель в
+                  заголовке (владелец, 2026-11-23). Выключен — одна строка,
+                  проверяет контролёр журнала. */}
+              <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff]" data-room-block="verifiers">
+                <div className="flex items-start justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <Label htmlFor="room-verifiers-switch" className="text-[13px] font-semibold text-[#0b1024]">
                       {t("verifiersTitle")}
                     </Label>
                     <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                      {t("verifiersHint")}
+                      {verifiersOn ? t("verifiersHint") : t("verifiersEmpty")}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-medium text-[#3848c7] tabular-nums">
-                    {t("peopleCount", { count: verifierUserIds.length })}
-                  </span>
+                  <Switch
+                    id="room-verifiers-switch"
+                    checked={verifiersOn}
+                    onCheckedChange={setVerifiersOn}
+                    disabled={saving}
+                    aria-label={t("verifiersToggle")}
+                    className="mt-0.5 shrink-0 data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d6d9ee]"
+                  />
                 </div>
-                <MultiUserPicker
-                  role="verifier"
-                  value={verifierUserIds}
-                  onChange={setVerifierUserIds}
-                  users={users}
-                  roomsPerUser={roomsPerVerifier}
-                  emptyHint={t("verifiersEmpty")}
-                  primaryBadge={t("primaryBadge")}
-                  disabled={saving}
-                />
+                {verifiersOn ? (
+                  <div className="space-y-3 border-t border-[#ececf4] px-4 pb-4 pt-3">
+                    <span className="inline-flex rounded-full bg-[#eef1ff] px-2.5 py-1 text-[11px] font-medium text-[#3848c7] tabular-nums">
+                      {t("peopleCount", { count: verifierUserIds.length })}
+                    </span>
+                    <MultiUserPicker
+                      role="verifier"
+                      value={verifierUserIds}
+                      onChange={setVerifierUserIds}
+                      users={users}
+                      roomsPerUser={roomsPerVerifier}
+                      emptyHint={t("verifiersEmpty")}
+                      primaryBadge={t("primaryBadge")}
+                      disabled={saving}
+                    />
+                  </div>
+                ) : null}
               </div>
 
               {initial?.fillerUserIds !== undefined ? (
@@ -462,44 +485,40 @@ export function RoomEditorDialog({
               ) : null}
 
               {/* Секция «Климат» — нормы температуры/влажности для журнала
-                  климата. Единый справочник помещений, 2026-09-04. */}
-              <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff]">
-                <button
-                  type="button"
-                  onClick={() => setClimateOpen((v) => !v)}
-                  aria-expanded={climateOpen}
-                  className="flex w-full items-center justify-between gap-2 rounded-3xl px-4 py-3 text-left transition-colors hover:bg-[#f5f6ff]"
-                >
-                  <div>
-                    <div className="text-[13px] font-semibold text-[#0b1024]">
-                      {t("climateTitle")}
+                  климата. Единый справочник помещений, 2026-09-04. С
+                  2026-11-23 — переключатель в заголовке: выключен — одна
+                  строка без норм и QR, включён — нормы и QR для телефона.
+                  Без загруженных норм (журнал уборки) блока нет. */}
+              {climateLoaded ? (
+                <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff]" data-room-block="climate">
+                  <div className="flex items-start justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <Label htmlFor="room-climate-switch" className="text-[13px] font-semibold text-[#0b1024]">
+                        {t("climateTitle")}
+                      </Label>
+                      <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
+                        {climateEnabled
+                          ? describeClimate(climate)
+                          : t("climateNotControlled")}
+                      </p>
                     </div>
-                    <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                      {climateEnabled
-                        ? describeClimate(climate)
-                        : t("climateNotControlled")}
-                    </p>
+                    <Switch
+                      id="room-climate-switch"
+                      checked={climateEnabled}
+                      disabled={saving}
+                      aria-label={t("climateToggle")}
+                      onCheckedChange={(v) => {
+                        setClimateEnabled(v);
+                        if (v && !climate.temperatureEnabled && !climate.humidityEnabled) {
+                          setClimate((c) => ({ ...c, temperatureEnabled: true }));
+                        }
+                      }}
+                      className="mt-0.5 shrink-0 data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d6d9ee]"
+                    />
                   </div>
-                  <ChevronDown
-                    className={`size-4 shrink-0 text-[#6f7282] transition-transform ${climateOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {climateOpen ? (
-                  <div className="space-y-4 border-t border-[#ececf4] px-4 pb-4 pt-3">
-                    <label className="flex items-center gap-3 text-[13.5px] font-medium text-[#0b1024]">
-                      <Switch
-                        checked={climateEnabled}
-                        onCheckedChange={(v) => {
-                          setClimateEnabled(v);
-                          if (v && !climate.temperatureEnabled && !climate.humidityEnabled) {
-                            setClimate((c) => ({ ...c, temperatureEnabled: true }));
-                          }
-                        }}
-                        className="data-[state=checked]:bg-[#5566f6] data-[state=unchecked]:bg-[#d6d9ee]"
-                      />
-                      {t("climateToggle")}
-                    </label>
-                    {climateEnabled ? (
+                  {climateEnabled ? (
+                    <div className="space-y-4 border-t border-[#ececf4] px-4 pb-4 pt-3">
+                      <p className="text-[12px] leading-[1.5] text-[#3c4053]">{t("climateOnHint")}</p>
                       <div className="space-y-3">
                         <ClimateMetricRow
                           label={t("temperatureLabel")}
@@ -535,20 +554,17 @@ export function RoomEditorDialog({
                           {t("climateNormsNote")}
                         </p>
                       </div>
-                    ) : null}
-                    {/* QR для заполнения с телефона — только когда карточку
-                        открыли из журнала климата: в журнале уборки он ни к чему. */}
-                    {focus === "climate" ? (
+                      {/* QR для заполнения с телефона — у включённого климата. */}
                       <QrFillPreview
                         kind="room"
-                        id={climateEnabled ? initial.id : null}
+                        id={initial.id}
                         emptyHint={t("qrEmptyHint")}
                         className="bg-white"
                       />
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {/* Секция «Уборка» — сворачивается, когда карточку открыли из
                   журнала климата. */}

@@ -318,6 +318,17 @@ export function climateRoomFromDirectory(room: ClimateDirectoryRoom): ClimateRoo
 }
 
 /**
+ * Помещения для нового документа климата (владелец, 2026-11-23: «включил
+ * контроль климата — помещение должно контролироваться»): только помещения
+ * с включённым климатом (`Room.climateNorms`), если такие есть. Если климат
+ * не включён ни у одного — все помещения, как было до тумблера.
+ */
+export function climateSeedRooms<T extends ClimateDirectoryRoom>(rooms: readonly T[]): T[] {
+  const controlled = rooms.filter((room) => normalizeClimateRoomNorms(room.climateNorms) !== null);
+  return controlled.length > 0 ? controlled : [...rooms];
+}
+
+/**
  * Пре-заполняет конфиг климата помещениями справочника (Room).
  * Пусто — дефолтная одна комната.
  */

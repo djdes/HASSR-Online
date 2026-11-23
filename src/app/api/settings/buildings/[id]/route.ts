@@ -7,6 +7,8 @@ import { BUILDING_OUT_OF_SCOPE_ERROR, COMPANY_ONLY_API_ERROR, buildingInScope, i
 import { closePointManagerSessions } from "@/lib/point-scope.server";
 import { endAssignmentsAtBuilding } from "@/lib/point-assignments.server";
 import { isOfficeBuilding } from "@/lib/building-scope";
+import { OBJECT_CATEGORY_VALUES } from "@/lib/object-categories";
+import { applyObjectCategoryJournals } from "@/lib/object-category-journals.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +22,8 @@ const UpdateSchema = z.object({
   /// Наименование точки в шапке журналов (в интерфейсе — короткое name).
   journalName: z.string().trim().max(200).optional().nullable(),
   sortOrder: z.number().int().optional(),
+  /** Сфера объекта (2026-11-23); у офиса её нет. */
+  sphere: z.enum(OBJECT_CATEGORY_VALUES, { message: "Выберите сферу объекта" }).optional(),
 });
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -61,9 +65,17 @@ export async function PATCH(request: Request, ctx: Ctx) {
     throw err;
   }
 
+  // Сфера — только у объекта: офис организации объектом не считается.
+  const before = await db.building.findUnique({ where: { id }, select: { kind: true, sphere: true } });
+  const sphereChange =
+    body.sphere !== undefined && before && !isOfficeBuilding(before) && before.sphere !== body.sphere
+      ? body.sphere
+      : null;
+
   const updated = await db.building.update({
     where: { id },
     data: {
+      ...(sphereChange ? { sphere: sphereChange } : {}),
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.address !== undefined ? { address: body.address } : {}),
       ...(body.kpp !== undefined ? { kpp: body.kpp || null } : {}),
@@ -74,7 +86,21 @@ export async function PATCH(request: Request, ctx: Ctx) {
       ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {}),
     },
   });
-  return NextResponse.json({ building: updated });
+  // Новая сфера у существующего объекта — только включаем её обязательные
+  // журналы (не выключая лишних): у объекта уже могут быть документы, и
+  // выключенный журнал спрятал бы их.
+  const journals = sphereChange
+    ? await applyObjectCategoryJournals({
+        organizationId: orgId,
+        buildingId: id,
+        category: sphereChange,
+        reason: "change",
+      }).catch((error) => {
+        console.error("[buildings] sphere journals failed", error);
+        return null;
+      })
+    : null;
+  return NextResponse.json({ building: updated, journalsLimited: journals?.limited === true });
 }
 
 export async function DELETE(_request: Request, ctx: Ctx) {

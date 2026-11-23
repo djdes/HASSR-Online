@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import { alertSupportStaffAboutReport } from "@/lib/support-staff-alerts.server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireApiAuth } from "@/lib/auth-helpers";
@@ -104,6 +105,17 @@ export async function POST(request: Request) {
 #fb_${report.id}`;
 
   after(async () => {
+    // Всплывашка и колокольчик команде поддержки (2026-11-23).
+    await alertSupportStaffAboutReport({
+      id: report.id,
+      type: "support",
+      message: parsed.message,
+      userName: user?.name ?? null,
+      userEmail: user?.email ?? null,
+      phone: user?.phone ?? null,
+      organizationId: user?.organization?.id ?? null,
+      organizationName: user?.organization?.name ?? null,
+    }).catch((error) => console.error("[support] staff alert failed", error));
     const [tgOk, emailOk] = await Promise.all([
       // Своё подробное письмо — следом, всем администраторам.
       notifyPlatformAdmin(adminText, {

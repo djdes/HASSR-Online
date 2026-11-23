@@ -1,0 +1,2 @@
+["Склад Бакалея", "Офис"]
+{"humidity": {"max": 75, "min": 15, "enabled": true}, "temperature": {"max": 25, "min": 18, "enabled": true}}
