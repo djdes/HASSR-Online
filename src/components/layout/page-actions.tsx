@@ -8,10 +8,11 @@ import { cn } from "@/lib/utils";
 /**
  * Ряд действий в шапке страницы («QR» и «Добавить»).
  *
- * На телефоне (<640px) — одна строка во всю ширину, кнопки делят её поровну
- * (владелец, 2026-11-23: «QR и Добавление в одну строку»): несколько кнопок
- * QR сворачиваются в одну (`QrActions`). На компьютере — как раньше, справа от
- * заголовка, с переносом.
+ * На телефоне (<640px) — одна строка во всю ширину (владелец, 2026-11-23: «QR
+ * и Добавление в одну строку»): кнопка QR — по своему тексту (несколько кнопок
+ * QR сворачиваются в одну, `QrActions`), остальное место — главному действию,
+ * чтобы «Добавить оборудование» не обрезалось. На компьютере — как раньше,
+ * справа от заголовка, с переносом.
  *
  * `dock` — ключевые разделы (объекты, цеха, оборудование): на телефоне и
  * планшете (<1024px), когда ряд ушёл за верх экрана, те же действия
@@ -35,7 +36,7 @@ export function PageActions({
         ref={row}
         data-page-actions
         className={cn(
-          "flex min-w-0 items-center gap-2 max-sm:w-full max-sm:[&>*]:h-12 max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:justify-center max-sm:[&>*]:gap-1.5 max-sm:[&>*]:px-2.5 sm:flex-wrap sm:justify-end",
+          "flex min-w-0 items-center gap-2 max-sm:w-full max-sm:[&>*]:h-12 max-sm:[&>*]:min-w-0 max-sm:[&>*]:flex-1 max-sm:[&>*]:justify-center max-sm:[&>*]:gap-1.5 max-sm:[&>*]:px-2.5 max-sm:[&>[data-qr-action]]:flex-none max-sm:[&>[data-qr-action]]:px-3.5 sm:flex-wrap sm:justify-end",
           className,
         )}
       >
@@ -103,7 +104,7 @@ function PageActionsDock({ anchor, children }: { anchor: RefObject<HTMLDivElemen
       data-open={shown ? "" : undefined}
       className="fixed inset-x-3 z-30 lg:hidden print:hidden"
     >
-      <div className="flex items-center gap-2 rounded-[22px] bg-[var(--app-fab-bg)] p-1.5 shadow-[inset_0_0_0_1px_var(--app-fab-border),0_12px_32px_-14px_rgba(11,16,36,0.38)] backdrop-blur-xl backdrop-saturate-150 [&>*]:h-11 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:justify-center max-sm:[&>*]:gap-1.5 max-sm:[&>*]:px-2.5">
+      <div className="flex items-center gap-2 rounded-[22px] bg-[var(--app-fab-bg)] p-1.5 shadow-[inset_0_0_0_1px_var(--app-fab-border),0_12px_32px_-14px_rgba(11,16,36,0.38)] backdrop-blur-xl backdrop-saturate-150 [&>*]:h-11 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:justify-center max-sm:[&>*]:gap-1.5 max-sm:[&>*]:px-2.5 max-sm:[&>[data-qr-action]]:flex-none max-sm:[&>[data-qr-action]]:px-3.5">
         {children}
       </div>
     </div>,
