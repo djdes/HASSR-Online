@@ -5873,6 +5873,8 @@ model CrmContact {
   /// Последние 10 цифр телефона — ключ склейки.
   phoneKey        String?
   telegramChatId  String?
+  /// Собеседник в мессенджере Авито (user_id) — ключ склейки чатов Авито.
+  avitoUserId     String?
   /// Пользователь и организация платформы, если узнали по почте/телефону.
   userId          String?
   organizationId  String?
@@ -5903,6 +5905,7 @@ model CrmContact {
   @@index([email])
   @@index([phoneKey])
   @@index([telegramChatId])
+  @@index([avitoUserId])
   @@index([userId])
   @@index([organizationId])
   @@index([awaitingSince])

@@ -41,7 +41,7 @@ export const contactPatchSchema = z.object({
 
 export type ContactPatch = z.infer<typeof contactPatchSchema>;
 
-export const CONTACT_MESSAGE_KINDS = ["email", "telegram", "call", "note", "resolved"] as const;
+export const CONTACT_MESSAGE_KINDS = ["email", "telegram", "avito", "call", "note", "resolved"] as const;
 
 export const contactMessageSchema = z
   .object({

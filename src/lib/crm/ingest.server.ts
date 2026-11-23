@@ -33,6 +33,7 @@ type ContactMatch = {
   email: string | null;
   phoneKey: string | null;
   telegramChatId: string | null;
+  avitoUserId: string | null;
   userId: string | null;
   name: string | null;
   company: string | null;
@@ -45,6 +46,7 @@ const MATCH_SELECT = {
   email: true,
   phoneKey: true,
   telegramChatId: true,
+  avitoUserId: true,
   userId: true,
   name: true,
   company: true,
@@ -92,11 +94,13 @@ export async function resolveCrmContact(
   const email = normalizeEmail(identity.email);
   const key = phoneKey(identity.phone);
   const telegram = identity.telegramChatId?.trim() || null;
+  const avito = identity.avitoUserId?.trim() || null;
   const userId = identity.userId?.trim() || null;
   const or: Prisma.CrmContactWhereInput[] = [];
   if (email) or.push({ email });
   if (key) or.push({ phoneKey: key });
   if (telegram) or.push({ telegramChatId: telegram });
+  if (avito) or.push({ avitoUserId: avito });
   if (userId) or.push({ userId });
 
   if (or.length) {
@@ -105,6 +109,7 @@ export async function resolveCrmContact(
       (email && candidates.find((row) => row.email === email)) ||
       (key && candidates.find((row) => row.phoneKey === key)) ||
       (telegram && candidates.find((row) => row.telegramChatId === telegram)) ||
+      (avito && candidates.find((row) => row.avitoUserId === avito)) ||
       (userId && candidates.find((row) => row.userId === userId)) ||
       null;
     if (found) {
@@ -115,6 +120,7 @@ export async function resolveCrmContact(
         patch.phoneKey = key;
       }
       if (!found.telegramChatId && telegram) patch.telegramChatId = telegram;
+      if (!found.avitoUserId && avito) patch.avitoUserId = avito;
       if (!found.userId && userId) patch.userId = userId;
       if (!found.organizationId && identity.organizationId) patch.organizationId = identity.organizationId;
       if (!found.name && identity.name?.trim()) patch.name = identity.name.trim().slice(0, 200);
@@ -155,6 +161,7 @@ export async function resolveCrmContact(
       phone: key ? (identity.phone?.trim() ?? null) : null,
       phoneKey: key,
       telegramChatId: telegram,
+      avitoUserId: avito,
       userId: userId ?? platformUser?.id ?? null,
       organizationId,
       // Пишет в поддержку пользователь платформы — это клиент, а не лид.

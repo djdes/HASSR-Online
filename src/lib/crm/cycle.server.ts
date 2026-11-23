@@ -6,11 +6,12 @@ import { syncCrmSources, type SourceSyncResult } from "@/lib/crm/sources.server"
 import { syncDeals, type DealSyncResult } from "@/lib/lifecycle/deals.server";
 import { syncTelegramUser, type TelegramUserSyncResult } from "@/lib/crm/telegram-user.server";
 import { syncTelphinCalls, type TelphinSyncResult } from "@/lib/crm/telphin.server";
+import { syncAvitoMessenger, type AvitoSyncResult } from "@/lib/avito/sync.server";
 import { recordCronRun } from "@/lib/platform-alerts";
 
 /**
  * Один прогон CRM (крон раз в 5 минут и кнопка «Обновить сейчас»):
- * обращения из таблиц сайта → звонки Телфина → рабочий Telegram → почта IMAP → напоминания
+ * обращения из таблиц сайта → звонки Телфина → рабочий Telegram → чаты Авито → почта IMAP → напоминания
  * → незавершённые оплаты → утренняя сводка
  * → сделки воронки (регистрации, договоры, оплаты).
  * Шаги независимы: сбой почты не останавливает напоминания.
@@ -23,6 +24,7 @@ export type CrmCycleResult = {
   mailboxes: MailboxSyncResult[];
   calls: TelphinSyncResult | null;
   telegram: TelegramUserSyncResult | null;
+  avito: AvitoSyncResult | null;
   newMailAlerts: number;
   reminders: { planned: number; sent: number };
   /** Незавершённые оплаты: задача «позвонить» и сообщение админам. */
@@ -53,6 +55,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
   // Звонки — до напоминаний: пропущенный звонок тоже «ждёт ответа».
   const calls = await step("звонки", () => syncTelphinCalls(now), null);
   const telegram = await step("telegram", () => syncTelegramUser(now), null);
+  const avito = await step("авито", () => syncAvitoMessenger(), null);
   const rules = await step("правила", () => db.crmSenderRule.findMany({ select: { pattern: true, action: true } }), []);
   const mail = await step("почта", () => syncAllMailboxes(now, rules), { results: [], ingested: [] });
   const newMailAlerts = await step("письма РОП", () => notifyNewMail(mail.ingested, now), 0);
@@ -64,6 +67,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
   for (const source of sources) if (source.error) errors.push(`${source.source}: ${source.error}`);
   for (const error of calls?.errors ?? []) errors.push(`звонки: ${error}`);
   for (const error of telegram?.errors ?? []) errors.push(`telegram: ${error}`);
+  for (const error of avito?.errors ?? []) errors.push(`авито: ${error}`);
   for (const mailbox of mail.results) if (mailbox.error) errors.push(`${mailbox.label}: ${mailbox.error}`);
   await recordCronRun({ job: "crm", ok: errors.length === 0, error: errors.join("; ") || null }).catch(() => undefined);
   if (trigger !== "cron") console.log(`[crm] прогон (${trigger}): ${errors.length ? errors.join("; ") : "без ошибок"}`);
@@ -73,6 +77,7 @@ async function cycle(trigger: string): Promise<CrmCycleResult> {
     mailboxes: mail.results,
     calls,
     telegram,
+    avito,
     newMailAlerts,
     reminders,
     checkouts,

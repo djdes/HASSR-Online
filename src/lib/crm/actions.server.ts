@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { avitoChatForContact, sendAvitoMessage } from "@/lib/avito/sync.server";
+import { avitoChatUrl, avitoExternalKey } from "@/lib/avito/messenger";
 
 import { db } from "@/lib/db";
 import { resolveEmailSender } from "@/lib/email-sender-access.server";
@@ -179,6 +181,18 @@ export async function addContactMessage(id: string, input: ContactMessageInput, 
     if (!sent) return { ok: false, error: "Telegram не доставил сообщение — возможно, клиент остановил бота" };
     await ingestCrmItems([{ ...base, externalKey: key, channel: "telegram", direction: "out", body: input.body }]);
     return { ok: true, via: "telegram" };
+  }
+
+  if (input.kind === "avito") {
+    const chatId = await avitoChatForContact(id);
+    if (!chatId) return { ok: false, error: "Клиент не писал на Авито — отвечать некуда" };
+    const sent = await sendAvitoMessage(chatId, input.body).catch((error: unknown) => ({ error: error instanceof Error ? error.message : String(error) }));
+    if ("error" in sent) return { ok: false, error: `Авито не принял сообщение: ${sent.error}` };
+    await ingestCrmItems([
+      { ...base, externalKey: avitoExternalKey(chatId, sent.id), channel: "avito", direction: "out", subject: "Авито", body: input.body, href: avitoChatUrl(chatId),
+        occurredAt: sent.created ? new Date(sent.created * 1000) : now },
+    ]);
+    return { ok: true, via: "avito" };
   }
 
   const map = {

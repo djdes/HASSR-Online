@@ -19,6 +19,7 @@ import {
   Receipt,
   Send,
   Sparkles,
+  Store,
   UserPlus,
 } from "lucide-react";
 
@@ -86,6 +87,7 @@ const CHANNEL_ICONS: Record<string, LucideIcon> = {
   whatsapp: MessageCircle,
   vk: AtSign,
   max: MessageCircle,
+  avito: Store,
   phone: Phone,
   call: Phone,
   note: NotebookPen,

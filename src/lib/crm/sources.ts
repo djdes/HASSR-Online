@@ -18,6 +18,8 @@ export type CrmIdentity = {
   name?: string | null;
   company?: string | null;
   telegramChatId?: string | null;
+  /** Собеседник в мессенджере Авито. */
+  avitoUserId?: string | null;
   userId?: string | null;
   organizationId?: string | null;
 };
