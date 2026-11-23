@@ -1,0 +1,679 @@
+{
+ "base": "http://localhost:3005",
+ "at": "2026-11-23T05:46:09.064Z",
+ "passed": 42,
+ "failed": 0,
+ "results": [
+  {
+   "id": "AC1.menu.page-pinned",
+   "ok": true,
+   "detail": {
+    "before": {
+     "scrollY": 300,
+     "position": "static",
+     "top": "",
+     "locked": false,
+     "coarse": true,
+     "list": null
+    },
+    "opened": {
+     "scrollY": 0,
+     "position": "fixed",
+     "top": "-300px",
+     "locked": true,
+     "coarse": true,
+     "list": {
+      "top": 0,
+      "max": 1140
+     }
+    }
+   }
+  },
+  {
+   "id": "AC1.menu.swipes-past-both-ends",
+   "ok": true,
+   "detail": {
+    "atEnd": {
+     "scrollY": 0,
+     "position": "fixed",
+     "top": "-300px",
+     "locked": true,
+     "coarse": true,
+     "list": {
+      "top": 1140,
+      "max": 1140
+     }
+    },
+    "pastEnd": {
+     "scrollY": 0,
+     "position": "fixed",
+     "top": "-300px",
+     "locked": true,
+     "coarse": true,
+     "list": {
+      "top": 1140,
+      "max": 1140
+     }
+    },
+    "atStart": {
+     "scrollY": 0,
+     "position": "fixed",
+     "top": "-300px",
+     "locked": true,
+     "coarse": true,
+     "list": {
+      "top": 0,
+      "max": 1140
+     }
+    }
+   }
+  },
+  {
+   "id": "AC3.bottom-sheet.handle",
+   "ok": true,
+   "detail": {
+    "rest": {
+     "always": true,
+     "pulled": null,
+     "x": 195,
+     "y": 90.6875,
+     "before": "0deg",
+     "display": "block",
+     "drawerTop": 80
+    },
+    "pulled": {
+     "always": true,
+     "pulled": "",
+     "x": 195,
+     "y": 130.6875,
+     "before": "22deg",
+     "display": "block",
+     "drawerTop": 120
+    },
+    "released": {
+     "always": true,
+     "pulled": null,
+     "x": 195,
+     "y": 90.6875,
+     "before": "0deg",
+     "display": "block",
+     "drawerTop": 80
+    }
+   }
+  },
+  {
+   "id": "AC1.menu.scroll-restored",
+   "ok": true,
+   "detail": {
+    "scrollY": 300,
+    "position": "static",
+    "top": "",
+    "locked": false,
+    "coarse": true,
+    "list": null
+   }
+  },
+  {
+   "id": "errors.phone.menu",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC1.menu.link-closes-and-unpins",
+   "ok": true,
+   "detail": {
+    "plain": {
+     "path": "/journals",
+     "scrollY": 0,
+     "position": "static",
+     "top": "",
+     "locked": false,
+     "drawer": null
+    },
+    "scrolls": 200
+   }
+  },
+  {
+   "id": "AC1.menu.page-change-under-lock",
+   "ok": true,
+   "detail": {
+    "section": "/journals/points",
+    "pinned": "-400px",
+    "moved": {
+     "path": "/journals/points",
+     "scrollY": 0,
+     "position": "fixed",
+     "top": "0px",
+     "locked": true,
+     "drawer": "open"
+    },
+    "closed": {
+     "path": "/journals/points",
+     "scrollY": 0,
+     "position": "static",
+     "top": "",
+     "locked": false,
+     "drawer": null
+    }
+   }
+  },
+  {
+   "id": "errors.phone.menu-navigation",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC1.dialog.page-pinned",
+   "ok": true,
+   "detail": {
+    "position": "fixed",
+    "bodyTop": "-120px"
+   }
+  },
+  {
+   "id": "AC3.dialog.handle",
+   "ok": true,
+   "detail": {
+    "rest": {
+     "kind": "float",
+     "pulled": null,
+     "before": "0deg",
+     "touchAction": "none",
+     "display": "block"
+    },
+    "pulled": {
+     "kind": "float",
+     "pulled": "",
+     "before": "22deg",
+     "touchAction": "none",
+     "display": "block"
+    },
+    "armed": "armed",
+    "released": {
+     "kind": "float",
+     "pulled": null,
+     "before": "0deg",
+     "touchAction": "none",
+     "display": "block"
+    }
+   }
+  },
+  {
+   "id": "AC1.dialog.scroll-restored",
+   "ok": true,
+   "detail": {
+    "scrollY": 120,
+    "position": "static"
+   }
+  },
+  {
+   "id": "errors.phone.dialog",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC3.wizard.one-handle",
+   "ok": true,
+   "detail": {
+    "top": 40,
+    "left": 0,
+    "width": 390,
+    "translate": "",
+    "grabbers": 1,
+    "oldBars": 0,
+    "backgroundImage": "none",
+    "grabber": {
+     "pulled": null,
+     "touchAction": "none",
+     "display": "block",
+     "height": 24,
+     "x": 195,
+     "y": 49.84375,
+     "before": "0deg",
+     "after": "0deg",
+     "halfWidth": "22.5px",
+     "halfHeight": "5px",
+     "color": "color(srgb 0.770353 0.775059 0.793882)",
+     "animation": "motion-grabber-nod-a",
+     "transition": "0.5s, 0.5s, 0.18s"
+    }
+   }
+  },
+  {
+   "id": "AC3.wizard.tap-is-arrow-then-bar",
+   "ok": true,
+   "detail": {
+    "pressed": {
+     "pulled": "",
+     "touchAction": "none",
+     "display": "block",
+     "height": 24,
+     "x": 195,
+     "y": 49.84375,
+     "before": "22deg",
+     "after": "-22deg",
+     "halfWidth": "22.5px",
+     "halfHeight": "5px",
+     "color": "color(srgb 0.559843 0.568863 0.604941)",
+     "animation": "motion-grabber-nod-a",
+     "transition": "0.28s, 0.28s, 0.12s"
+    },
+    "released": {
+     "pulled": null,
+     "touchAction": "none",
+     "display": "block",
+     "height": 24,
+     "x": 195,
+     "y": 49.84375,
+     "before": "0deg",
+     "after": "0deg",
+     "halfWidth": "22.5px",
+     "halfHeight": "5px",
+     "color": "color(srgb 0.770353 0.775059 0.793882)",
+     "animation": "motion-grabber-nod-a",
+     "transition": "0.5s, 0.5s, 0.18s"
+    },
+    "stillOpen": true
+   }
+  },
+  {
+   "id": "AC2.pull.moves-are-cancelled",
+   "ok": true,
+   "detail": [
+    {
+     "prevented": true,
+     "cancelable": true
+    },
+    {
+     "prevented": true,
+     "cancelable": true
+    },
+    {
+     "prevented": true,
+     "cancelable": true
+    }
+   ]
+  },
+  {
+   "id": "AC2.pull.short-springs-back",
+   "ok": true,
+   "detail": {
+    "pulled": {
+     "translate": "0px 55px",
+     "top": 95,
+     "handle": ""
+    },
+    "back": {
+     "top": 40,
+     "translate": ""
+    }
+   }
+  },
+  {
+   "id": "AC3.wizard.armed-past-threshold",
+   "ok": true,
+   "detail": {
+    "armed": {
+     "pulled": "armed",
+     "touchAction": "none",
+     "display": "block",
+     "height": 24,
+     "x": 195,
+     "y": 179.84375,
+     "before": "22deg",
+     "after": "-22deg",
+     "halfWidth": "22.5px",
+     "halfHeight": "5px",
+     "color": "rgb(85, 102, 246)",
+     "animation": "motion-grabber-nod-a",
+     "transition": "0.28s, 0.28s, 0.12s"
+    },
+    "back": true
+   }
+  },
+  {
+   "id": "AC2.pull.only-down-only-top",
+   "ok": true,
+   "detail": {
+    "sideways": "",
+    "sideMoves": [
+     {
+      "prevented": false,
+      "cancelable": true
+     },
+     {
+      "prevented": false,
+      "cancelable": false
+     }
+    ],
+    "upwards": "",
+    "low": ""
+   }
+  },
+  {
+   "id": "AC4.steps.enabled",
+   "ok": true,
+   "detail": [
+    [
+     "profile",
+     true
+    ],
+    [
+     "points",
+     false
+    ],
+    [
+     "staff",
+     false
+    ],
+    [
+     "equipment",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "AC4.steps.invalid-profile-explains",
+   "ok": true,
+   "detail": {
+    "step": "profile",
+    "buttons": [
+     [
+      "profile",
+      true
+     ],
+     [
+      "points",
+      false
+     ],
+     [
+      "staff",
+      false
+     ],
+     [
+      "equipment",
+      false
+     ]
+    ],
+    "invalid": [
+     {
+      "label": "Телефон",
+      "animation": "motion-field-no"
+     }
+    ],
+    "toasts": [
+     "Сначала заполните анкету — обязательные поля отмечены"
+    ]
+   }
+  },
+  {
+   "id": "AC4.steps.valid-profile-saves-and-goes",
+   "ok": true,
+   "detail": {
+    "moved": "staff",
+    "saves": 1,
+    "returned": "profile",
+    "jumped": "equipment"
+   }
+  },
+  {
+   "id": "AC2.pull.long-closes",
+   "ok": true,
+   "detail": {
+    "during": {
+     "real": 0,
+     "ghost": 1
+    },
+    "after": {
+     "real": 0,
+     "ghost": 0
+    }
+   }
+  },
+  {
+   "id": "errors.phone.wizard",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC2.pull.flick-closes",
+   "ok": true,
+   "detail": {
+    "open": 0,
+    "releasedAt": "0px 70px"
+   }
+  },
+  {
+   "id": "AC3.hand-built.handle-added",
+   "ok": true,
+   "detail": {
+    "closable": {
+     "grabber": "float",
+     "byRuntime": true,
+     "ariaHidden": "true",
+     "position": "relative",
+     "top": 0,
+     "width": 112
+    },
+    "locked": {
+     "grabber": null,
+     "byRuntime": false,
+     "ariaHidden": null,
+     "position": "static",
+     "top": null,
+     "width": null
+    }
+   }
+  },
+  {
+   "id": "AC5.assistant.starters-are-text",
+   "ok": true,
+   "detail": [
+    "Что на этой странице?",
+    "Какая температура для холодильника готовых блюд?",
+    "Как часто менять масло во фритюре?",
+    "Что должно быть в журнале гигиены сотрудников?"
+   ]
+  },
+  {
+   "id": "AC3.assistant.light-handle",
+   "ok": true,
+   "detail": {
+    "chips": [
+     "Что на этой странице?",
+     "Какая температура для холодильника готовых блюд?",
+     "Как часто менять масло во фритюре?",
+     "Что должно быть в журнале гигиены сотрудников?"
+    ],
+    "grabbers": 1,
+    "tone": "light",
+    "color": "rgb(255, 255, 255)",
+    "opacity": "0.6",
+    "label": "ИИ-помощник"
+   }
+  },
+  {
+   "id": "AC6.touch.field-gives-under-finger",
+   "ok": true,
+   "detail": {
+    "coarse": true,
+    "active": true,
+    "held": "0.985"
+   }
+  },
+  {
+   "id": "errors.phone.misc",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC3.desktop.no-handle",
+   "ok": true,
+   "detail": {
+    "grabber": "none",
+    "coarse": false
+   }
+  },
+  {
+   "id": "AC6.framed.breath-and-caption",
+   "ok": true,
+   "detail": {
+    "framed": {
+     "animation": "motion-field-in",
+     "duration": "0.44s",
+     "caption": "rgb(85, 102, 246)",
+     "ring": true
+    },
+    "mid": "1.01195",
+    "idleCaption": "rgb(111, 114, 130)"
+   }
+  },
+  {
+   "id": "AC6.plain.breath-caption-placeholder",
+   "ok": true,
+   "detail": {
+    "idle": {
+     "label": "rgb(111, 114, 130)",
+     "placeholder": "none",
+     "opacity": "1"
+    },
+    "start": {
+     "animation": "motion-field-in",
+     "running": true
+    },
+    "focused": {
+     "label": "rgb(85, 102, 246)",
+     "placeholder": "6px",
+     "opacity": "0.6",
+     "caret": "rgb(85, 102, 246)",
+     "ring": true
+    },
+    "wrong": {
+     "animation": "motion-field-no",
+     "label": "rgb(111, 114, 130)"
+    },
+    "inTable": {
+     "animation": "none"
+    }
+   }
+  },
+  {
+   "id": "AC6.plain.wrong-shakes-table-stays",
+   "ok": true,
+   "detail": {
+    "wrong": {
+     "animation": "motion-field-no",
+     "label": "rgb(111, 114, 130)"
+    },
+    "inTable": {
+     "animation": "none"
+    }
+   }
+  },
+  {
+   "id": "AC1.desktop.dialog-not-pinned",
+   "ok": true,
+   "detail": {
+    "position": "relative",
+    "top": "",
+    "grabber": "none"
+   }
+  },
+  {
+   "id": "errors.desktop",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC6.caption-accent.new",
+   "ok": true,
+   "detail": {
+    "caption": "rgb(17, 17, 20)",
+    "theme": "light",
+    "design": "new"
+   }
+  },
+  {
+   "id": "AC6.caption-accent.classic-dark",
+   "ok": true,
+   "detail": {
+    "caption": "rgb(112, 129, 248)",
+    "theme": "dark",
+    "design": "classic"
+   }
+  },
+  {
+   "id": "AC6.still.off",
+   "ok": true,
+   "detail": {
+    "flag": true,
+    "field": {
+     "animation": "none",
+     "placeholder": "none"
+    }
+   }
+  },
+  {
+   "id": "AC3.still.handle-without-motion",
+   "ok": true,
+   "detail": {
+    "handle": {
+     "animation": "none",
+     "transition": "1e-05s"
+    },
+    "pulled": "0px 55px",
+    "back": {
+     "translate": "",
+     "animations": 0
+    }
+   }
+  },
+  {
+   "id": "AC2.qr.sheet-pull",
+   "ok": true,
+   "detail": {
+    "rest": {
+     "on": false,
+     "armed": false,
+     "before": "none",
+     "touchAction": "none"
+    },
+    "pulled": {
+     "translate": "0px 40px",
+     "handle": {
+      "on": true,
+      "armed": false,
+      "before": "22deg",
+      "touchAction": "none"
+     }
+    },
+    "moves": [
+     {
+      "prevented": true,
+      "cancelable": true
+     },
+     {
+      "prevented": true,
+      "cancelable": true
+     }
+    ],
+    "back": {
+     "hidden": false,
+     "top": 376
+    },
+    "armed": true,
+    "closed": true
+   }
+  },
+  {
+   "id": "errors.qr",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "errors.console",
+   "ok": true,
+   "detail": []
+  }
+ ]
+}

@@ -27128,6 +27128,7 @@
       "save": "Save",
       "setup": {
         "step": "Step {current} of {total}",
+        "fillProfileFirst": "Fill in the profile first — required fields are marked",
         "steps": {
           "profile": "Profile",
           "points": "Locations",

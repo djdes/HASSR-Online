@@ -1,5 +1,6 @@
 "use client";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { SheetGrabber } from "@/components/ui/sheet-grabber";
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -336,9 +337,18 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
 
       {/* Sheet */}
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/30 sm:items-end sm:p-5">
+        // `role="dialog"`: это окно, и общий слой движения ведёт его как все
+        // самодельные окна — закрытие с анимацией, на телефоне свайп вниз.
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("title")}
+          className="fixed inset-0 z-50 flex items-end justify-end bg-black/30 sm:items-end sm:p-5"
+        >
           <BodyScrollLock />
-          <div className="flex h-[80svh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_-20px_60px_-20px_rgba(11,16,36,0.4)] sm:h-[600px] sm:max-h-[80svh] sm:w-[440px] sm:rounded-3xl">
+          <div className="relative flex h-[80svh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_-20px_60px_-20px_rgba(11,16,36,0.4)] sm:h-[600px] sm:max-h-[80svh] sm:w-[440px] sm:rounded-3xl">
+            {/* Ручка листа — светлая: шапка окна цветная. */}
+            <SheetGrabber float data-tone="light" />
             {/* Header */}
             <div className="flex items-center justify-between gap-3 border-b border-[#ececf4] bg-gradient-to-br from-[#5566f6] to-[#7a5cff] px-5 py-4 text-white">
               <div className="flex items-center gap-3">
@@ -383,7 +393,7 @@ export function SanpinChatWidget({ bottomOffset }: { bottomOffset?: number }) {
                         onClick={() => send(t(s))}
                         className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-3 py-2 text-left text-[13px] text-[#0b1024] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
                       >
-                        {s}
+                        {t(s)}
                       </button>
                     ))}
                   </div>

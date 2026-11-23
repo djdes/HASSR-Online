@@ -1,10 +1,13 @@
 import {
   SHEET_GRAB_ZONE_PX,
   enterDelays,
+  grabberState,
   isJournalSave,
   isSoleAddition,
   looksLikePlaceholder,
   sheetDragCloses,
+  sheetGesture,
+  smoothVelocity,
 } from "@/components/motion/motion-model";
 
 /**
@@ -16,7 +19,8 @@ import {
  * • A row added alone to a table that is already on the screen arrives with a tint (AC2).
  * • After a save accepted by the journal API the cell touched last shows a check (AC3).
  * • A hand-built window that is removed plays out through a copy of itself (AC4).
- * • On a phone a hand-built sheet can be pulled down to close (AC5).
+ * • On a phone a hand-built sheet can be pulled down to close (AC5); round 3 made the gesture
+ *   hold against the page on an iPhone and gave every such sheet the live handle.
  *
  * Styles: `src/app/motion.css`, sections 8–11. Started by `MotionRuntime`.
  */
@@ -276,8 +280,33 @@ function playOut(node: Element, parent: Node, before: Node | null): void {
 
 /* ── AC5: pull a sheet down on a phone ────────────────────────────────────────────────────── */
 
-type Drag = { card: HTMLElement; close: HTMLElement; startY: number; offset: number };
+/**
+ * Round 3 (spec `.agent/tasks/site-motion-round3-2026-11-23`, AC2–AC3). The first version listened
+ * passively on the document, and on an iPhone the page took the gesture: Safari scrolled, bounced
+ * or started its pull-to-refresh, because a passive listener cannot say «this one is mine». Now
+ * every hand-built sheet gets, once, when it is first seen:
+ * • a `touchmove` listener of its own that is NOT passive and cancels the browser's default
+ *   while the sheet is being pulled;
+ * • the handle (`data-sheet-grabber`, drawn by `motion.css`, section 11) if the screen did not
+ *   draw one itself. A touch on the handle is ours from the start (`touch-action: none`).
+ */
+type Drag = {
+  card: HTMLElement;
+  close: HTMLElement;
+  grabber: HTMLElement | null;
+  startX: number;
+  startY: number;
+  offset: number;
+  /** What the gesture turned out to be; a touch on the handle is a pull from the start. */
+  state: "undecided" | "pull";
+  lastY: number;
+  lastTime: number;
+  /** Downward speed, px per ms, smoothed over the last moves. */
+  velocity: number;
+};
 let drag: Drag | null = null;
+const prepared = new WeakSet<Element>();
+const GRABBER = "[data-sheet-grabber]";
 
 /**
  * The window's own close button: one labelled «Закрыть», or the cross in the header (the top
@@ -292,15 +321,88 @@ function closeButtonOf(card: HTMLElement): HTMLElement | null {
   return Array.from(card.querySelectorAll<HTMLElement>("button")).find((button) => button.querySelector(":scope > svg.lucide-x") !== null && usable(button)) ?? null;
 }
 
+/** The card of a hand-built window, if on a phone it is a sheet from the bottom edge. */
+function sheetCardOf(windowElement: Element): HTMLElement | null {
+  const card = cardOf(windowElement) as HTMLElement;
+  return /(^|\s)([a-z-]+:)*rounded-t-/.test(card.getAttribute("class") ?? "") ? card : null;
+}
+
+function setPulled(grabber: HTMLElement | null, value: "" | "armed" | null): void {
+  if (!grabber) return;
+  if (value === null) grabber.removeAttribute("data-pulled");
+  else if (grabber.getAttribute("data-pulled") !== value) grabber.setAttribute("data-pulled", value);
+}
+
+/** The sheet's own, non-passive `touchmove`: the only place a pull can be kept from the page. */
+function onCardMove(this: HTMLElement, event: TouchEvent): void {
+  if (!drag || drag.card !== this || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  const dx = touch.clientX - drag.startX;
+  const dy = touch.clientY - drag.startY;
+  if (drag.state === "undecided") {
+    const verdict = sheetGesture(dx, dy);
+    if (verdict === "release") {
+      drag = null;
+      return;
+    }
+    if (verdict === "pull") drag.state = "pull";
+  }
+  // Also while undecided: the first move a browser lets go by is the one it scrolls on.
+  if (event.cancelable) event.preventDefault();
+  if (drag.state !== "pull") return;
+  const now = event.timeStamp;
+  const elapsed = now - drag.lastTime;
+  if (elapsed > 0) drag.velocity = smoothVelocity(drag.velocity, (touch.clientY - drag.lastY) / elapsed, drag.offset === 0);
+  drag.lastY = touch.clientY;
+  drag.lastTime = now;
+  drag.offset = dy > 0 ? dy : 0;
+  drag.card.style.setProperty("translate", `0 ${drag.offset}px`);
+  drag.card.style.setProperty("transition", "none");
+  setPulled(drag.grabber, grabberState(drag.offset));
+}
+
+/** Once per sheet: its own `touchmove` and, where the screen drew none, the handle. */
+function prepareSheet(windowElement: Element): HTMLElement | null {
+  const card = sheetCardOf(windowElement);
+  if (!card) return null;
+  if (prepared.has(card)) return card;
+  // A sheet that cannot be closed gets no handle and is not pulled. Its buttons may not be on
+  // the page yet — then it is looked at again on the next touch.
+  if (!closeButtonOf(card)) return null;
+  prepared.add(card);
+  card.addEventListener("touchmove", onCardMove, { passive: false });
+  if (!card.querySelector(GRABBER)) {
+    const grabber = document.createElement("div");
+    grabber.setAttribute("data-sheet-grabber", "float");
+    grabber.setAttribute("data-motion-grabber", "");
+    grabber.setAttribute("aria-hidden", "true");
+    // The handle is placed against the card.
+    if (getComputedStyle(card).position === "static") card.style.setProperty("position", "relative");
+    card.appendChild(grabber);
+  }
+  return card;
+}
+
+/** Sheets among what was just added to the page (the window itself, its backdrop, or a wrapper). */
+function prepareSheetsIn(node: Element): void {
+  if (node.hasAttribute("data-motion-ghost")) return;
+  const direct = windowIn(node);
+  if (direct) {
+    prepareSheet(direct);
+    return;
+  }
+  for (const found of node.querySelectorAll(WINDOW)) prepareSheet(found);
+}
+
 function onTouchStart(event: TouchEvent): void {
   drag = null;
-  if (window.innerWidth >= PHONE_WIDTH || event.touches.length !== 1 || motionOff()) return;
+  if (window.innerWidth >= PHONE_WIDTH || event.touches.length !== 1) return;
   const target = event.target;
   if (!(target instanceof Element)) return;
   const windowElement = target.closest(WINDOW);
   if (!windowElement) return;
-  const card = cardOf(windowElement) as HTMLElement;
-  if (!card.contains(target) || !/(^|\s)([a-z-]+:)*rounded-t-/.test(card.getAttribute("class") ?? "")) return;
+  const card = prepareSheet(windowElement);
+  if (!card || !card.contains(target)) return;
   const touch = event.touches[0];
   if (touch.clientY - card.getBoundingClientRect().top > SHEET_GRAB_ZONE_PX) return;
   // A list scrolled away from its top is being scrolled, not the sheet pulled.
@@ -309,33 +411,46 @@ function onTouchStart(event: TouchEvent): void {
   }
   const close = closeButtonOf(card);
   if (!close) return; // a sheet that cannot be closed stays put
-  drag = { card, close, startY: touch.clientY, offset: 0 };
-}
-
-function onTouchMove(event: TouchEvent): void {
-  if (!drag) return;
-  const offset = event.touches[0].clientY - drag.startY;
-  drag.offset = offset > 0 ? offset : 0;
-  drag.card.style.setProperty("translate", `0 ${drag.offset}px`);
-  drag.card.style.setProperty("transition", "none");
+  const grabber = card.querySelector<HTMLElement>(GRABBER);
+  const onGrabber = grabber !== null && grabber.contains(target);
+  drag = {
+    card,
+    close,
+    grabber,
+    startX: touch.clientX,
+    startY: touch.clientY,
+    offset: 0,
+    state: onGrabber ? "pull" : "undecided",
+    lastY: touch.clientY,
+    lastTime: event.timeStamp,
+    velocity: 0,
+  };
+  // A finger on the handle: the bar is an arrow until it is let go.
+  if (onGrabber) setPulled(grabber, "");
 }
 
 function settle(card: HTMLElement, from: number): void {
   card.style.removeProperty("translate");
   card.style.removeProperty("transition");
-  if (from > 0) animate(card, [{ translate: `0 ${from}px` }, { translate: "0 0" }], { duration: 420, easing: token("--spring", "ease-out") });
+  if (from > 0 && !motionOff()) animate(card, [{ translate: `0 ${from}px` }, { translate: "0 0" }], { duration: 420, easing: token("--spring", "ease-out") });
 }
 
-function onTouchEnd(): void {
+function onTouchEnd(event: TouchEvent): void {
   const current = drag;
   drag = null;
   if (!current) return;
-  if (!sheetDragCloses(current.offset)) return settle(current.card, current.offset);
+  const closes = event.type === "touchend" && current.state === "pull" && sheetDragCloses(current.offset, current.velocity);
+  if (!closes) {
+    setPulled(current.grabber, null);
+    return settle(current.card, current.offset);
+  }
   // Close the way the window closes itself; the copy that plays out starts from where the
-  // finger left the sheet. A window that refuses to close goes back.
+  // finger left the sheet, the handle still an arrow. A window that refuses to close goes back.
   current.close.click();
   window.setTimeout(() => {
-    if (current.card.isConnected) settle(current.card, current.offset);
+    if (!current.card.isConnected) return;
+    setPulled(current.grabber, null);
+    settle(current.card, current.offset);
   }, 350);
 }
 
@@ -348,6 +463,10 @@ function elements(nodes: Iterable<Node>): Element[] {
 }
 
 function onTree(records: MutationRecord[]): void {
+  // The handle and the pull are how a sheet works, not decoration: they stay with motion off.
+  for (const record of records) {
+    for (const node of elements(record.addedNodes)) if (node.isConnected) prepareSheetsIn(node);
+  }
   if (motionOff()) return;
   const added = new Set<Node>();
   const removed = new Set<Node>();
@@ -404,17 +523,21 @@ export function startPresence(): () => void {
   document.addEventListener("pointerdown", onTouch, passive);
   document.addEventListener("focusin", onTouch, passive);
   document.addEventListener("touchstart", onTouchStart, passive);
-  document.addEventListener("touchmove", onTouchMove, passive);
   document.addEventListener("touchend", onTouchEnd, passive);
   document.addEventListener("touchcancel", onTouchEnd, passive);
+  // Sheets already on the page (opened before this started). After hydration has had its time:
+  // the handle is a node React did not render.
+  const scan = window.setTimeout(() => {
+    for (const found of document.querySelectorAll(WINDOW)) prepareSheet(found);
+  }, 1500);
   watchSaves();
   return () => {
+    window.clearTimeout(scan);
     observer.disconnect();
     document.removeEventListener("scroll", onScroll, passive);
     document.removeEventListener("pointerdown", onTouch, passive);
     document.removeEventListener("focusin", onTouch, passive);
     document.removeEventListener("touchstart", onTouchStart, passive);
-    document.removeEventListener("touchmove", onTouchMove, passive);
     document.removeEventListener("touchend", onTouchEnd, passive);
     document.removeEventListener("touchcancel", onTouchEnd, passive);
     unwatchSaves();

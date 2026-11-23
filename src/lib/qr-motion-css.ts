@@ -2,7 +2,10 @@
  * Motion of the server-rendered QR pages (the journal form opened by a QR code,
  * `journal-fill-html.ts`) — the same language as the site (`src/app/motion.css`, spec
  * site-motion-2026-11-22): a button squeezes under the finger and springs back, the ring of a
- * field blooms, the label of a field moves up without a jerk. The page is standalone HTML with
+ * field blooms, the label of a field moves up without a jerk. Round 3 (2026-11-23): a field takes
+ * a short breath when it is taken and its label takes the accent; the «who fills in» sheet has
+ * the handle that folds into a down arrow under the finger (the pull itself is in the page's
+ * script, `journal-fill-html.ts`). The page is standalone HTML with
  * none of the site's styles, so the springs are declared here; their values equal `--spring` /
  * `--spring-soft` of `globals.css` (a test checks it). A browser without `linear()` (Safari
  * before 17.2) gets a plain ease-out, as on the site.
@@ -24,10 +27,26 @@ a,button,label,select,.in,.chip,.segb{-webkit-tap-highlight-color:transparent}
 .btn:active:not(:disabled),.chip:active,.segb:active,.who a:active,.tabs a:active{scale:.97}
 .item:active,.who.emp:active,.check:active{scale:.985}
 .stp:active,.sheet .sh-x:active{scale:.92}
-.in,.qp-pin{caret-color:var(--brand-accent,#5566f6);transition:border-color .18s ease,background-color .18s ease,box-shadow .24s ease-out}
-.in:focus,.qp-pin:focus{transition:border-color .18s ease,background-color .18s ease,box-shadow .42s var(--spring)}
+.in,.qp-pin{caret-color:var(--brand-accent,#5566f6);transition:scale .5s var(--spring),border-color .18s ease,background-color .18s ease,box-shadow .24s ease-out}
+.in:focus,.qp-pin:focus{animation:qr-field-in .44s var(--spring-soft);transition:scale .5s var(--spring),border-color .18s ease,background-color .18s ease,box-shadow .42s var(--spring)}
+@keyframes qr-field-in{40%{scale:1.012}}
+.in::placeholder{transition:opacity .2s ease,translate .36s var(--spring-soft)}
+.in:focus::placeholder{opacity:.55;translate:6px 0}
+@media (pointer:coarse){.in:active,.qp-pin:active{scale:.985}}
 .fl>label,.fl .box>label{transition:top .32s var(--spring-soft),font-size .32s var(--spring-soft),letter-spacing .32s var(--spring-soft),color .18s ease}
+.fl .in:focus~label{color:var(--brand-accent,#5566f6)}
+.sheet .sh{position:relative;transition:translate .42s var(--spring)}
+.sh-g{position:absolute;top:0;left:50%;width:112px;height:24px;margin-left:-56px;touch-action:none;cursor:grab}
+.sh-g::before,.sh-g::after{content:"";position:absolute;top:7px;width:22.5px;height:5px;border-radius:999px;background:#c3c6d6;transition:rotate .5s var(--spring),translate .5s var(--spring),background-color .18s ease}
+.sh-g::before{right:calc(50% - 2.5px);transform-origin:calc(100% - 2.5px) 50%}
+.sh-g::after{left:calc(50% - 2.5px);transform-origin:2.5px 50%}
+.sh-g:active::before,.sh-g.on::before,.sh-g:active::after,.sh-g.on::after{background:#8d91a8;translate:0 3px;transition-duration:.28s,.28s,.12s}
+.sh-g:active::before,.sh-g.on::before{rotate:22deg}
+.sh-g:active::after,.sh-g.on::after{rotate:-22deg}
+.sh-g.armed::before,.sh-g.armed::after{background:var(--brand-accent,#5566f6)}
 @media (prefers-reduced-motion:reduce){
-.btn,.item,.stp,.chip,.segb,.lnk,.who a,.who.emp,.sheet .sh-x,.check,.tabs a,.qp-link,.in,.qp-pin,.fl>label,.fl .box>label{transition:none}
-.btn:active:not(:disabled),.chip:active,.segb:active,.who a:active,.tabs a:active,.item:active,.who.emp:active,.check:active,.stp:active,.sheet .sh-x:active{scale:none}
+.btn,.item,.stp,.chip,.segb,.lnk,.who a,.who.emp,.sheet .sh-x,.check,.tabs a,.qp-link,.in,.qp-pin,.fl>label,.fl .box>label,.sheet .sh,.sh-g::before,.sh-g::after,.in::placeholder{transition:none}
+.btn:active:not(:disabled),.chip:active,.segb:active,.who a:active,.tabs a:active,.item:active,.who.emp:active,.check:active,.stp:active,.sheet .sh-x:active,.in:active,.qp-pin:active{scale:none}
+.in:focus,.qp-pin:focus{animation:none}
+.in:focus::placeholder{translate:none}
 }`;

@@ -27128,6 +27128,7 @@
       "save": "Saqlash",
       "setup": {
         "step": "{total} dan {current}-qadam",
+        "fillProfileFirst": "Avval anketani to‘ldiring — majburiy maydonlar belgilangan",
         "steps": {
           "profile": "Anketa",
           "points": "Obyektlar",

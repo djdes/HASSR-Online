@@ -131,7 +131,10 @@ test("языки: русский, английский и узбекский —
   assert.deepEqual([...OFFERED_LOCALES], ["ru", "en", "uz"]);
 });
 
-test("мастер после регистрации: шаги — кнопки, до сохранения анкеты доступна только она", async () => {
+// Владелец, 2026-11-23: «переключение шагов не работает» — выключенные до сохранения анкеты
+// кнопки молчали. Теперь шаг отвечает на тап всегда: мастер сохраняет анкету и переходит
+// либо объясняет, что заполнить (спека site-motion-round3-2026-11-23, AC4).
+test("мастер после регистрации: шаги — кнопки и отвечают на тап, до сохранения анкеты — через сохранение", async () => {
   const html = await render(
     "ru",
     createElement(SetupStepper, { step: "profile", onSelect() {}, canSelect: (key: string) => key === "profile" }),
@@ -144,7 +147,10 @@ test("мастер после регистрации: шаги — кнопки,
 
   const nudge = read("src/components/dashboard/complete-profile-nudge.tsx");
   assert.match(nudge, /setProfileSaved\(true\);/);
-  assert.match(nudge, /canSelect=\{\(key\) => key === "profile" \|\| profileSaved\}/);
+  // Мастер шаги не выключает: выключен только текущий.
+  assert.doesNotMatch(nudge, /canSelect=\{/);
+  assert.match(nudge, /<SetupStepper step=\{step\} onSelect=\{\(next\) => void selectStep\(next\)\} \/>/);
+  assert.match(nudge, /if \(profileSaved \|\| next === "profile"\) \{\s*setStep\(next\);/);
   assert.match(nudge, /onClick=\{step === "profile" && !profileSaved \? onClose : finishSetup\}/);
 });
 
