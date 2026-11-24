@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Bot, CalendarClock, CheckCircle2, Eye, Loader2, Mail, MessageCircle, RotateCcw, Save, Send, TriangleAlert } from "lucide-react";
+import { Bot, CalendarClock, CheckCircle2, Eye, Loader2, Mail, MessageCircle, Plus, RotateCcw, Save, Send, TriangleAlert, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   AI_DIGEST_CHANNELS,
   AI_DIGEST_CHANNEL_LABELS,
+  AI_DIGEST_TELEGRAM_EXTRA_MAX,
   AI_DIGEST_SECTIONS,
   AI_DIGEST_SECTION_LABELS,
   AI_DIGEST_VARIABLES,
@@ -240,6 +241,14 @@ export function AiDigestTab() {
               ))}
             </ul>
           )}
+          {state.config.telegramExtra.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[12px]">
+              <span className="text-[#6f7282]">Ещё в Telegram:</span>
+              {state.config.telegramExtra.map((x) => (
+                <ChannelChip key={x.chatId} ok label={x.label || x.chatId} icon={<Send className="size-3" />} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -297,6 +306,59 @@ export function AiDigestTab() {
               </span>
             </label>
           ))}
+        </div>
+        <div className="mt-5">
+          <div className="text-[13px] font-medium text-[#0b1024]">Ещё получатели в Telegram</div>
+          <p className="mt-1 text-[13px] text-[#6f7282]">
+            Короткий текст уйдёт и им — помимо пользователей root. Нужен числовой chat_id; человек должен один раз нажать
+            «Старт» у бота WeSetup.
+          </p>
+          {draft.telegramExtra.length > 0 && (
+            <ul className="mt-2 grid gap-2">
+              {draft.telegramExtra.map((x, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <input
+                    className={cn(INPUT, "max-w-[180px]")}
+                    inputMode="numeric"
+                    placeholder="chat_id"
+                    value={x.chatId}
+                    onChange={(e) =>
+                      patch({ telegramExtra: draft.telegramExtra.map((y, j) => (j === i ? { ...y, chatId: e.target.value.trim() } : y)) })
+                    }
+                    data-testid={`ai-digest-tg-extra-chat-${i}`}
+                  />
+                  <input
+                    className={cn(INPUT, "max-w-[240px]")}
+                    placeholder="Подпись, например @djdes"
+                    value={x.label}
+                    onChange={(e) =>
+                      patch({ telegramExtra: draft.telegramExtra.map((y, j) => (j === i ? { ...y, label: e.target.value } : y)) })
+                    }
+                    data-testid={`ai-digest-tg-extra-label-${i}`}
+                  />
+                  <button
+                    type="button"
+                    className={OUTLINE_SM}
+                    aria-label="Убрать получателя"
+                    onClick={() => patch({ telegramExtra: draft.telegramExtra.filter((_, j) => j !== i) })}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {draft.telegramExtra.length < AI_DIGEST_TELEGRAM_EXTRA_MAX && (
+            <button
+              type="button"
+              className={cn(OUTLINE_SM, "mt-2")}
+              onClick={() => patch({ telegramExtra: [...draft.telegramExtra, { chatId: "", label: "" }] })}
+              data-testid="ai-digest-tg-extra-add"
+            >
+              <Plus className="size-4" />
+              Добавить получателя
+            </button>
+          )}
         </div>
       </section>
 

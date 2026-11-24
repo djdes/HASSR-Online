@@ -32,11 +32,11 @@ async function token(): Promise<string> {
   return cached.token;
 }
 
-export async function avitoFetch<T>(path: string, init: { method?: string; json?: unknown } = {}): Promise<T> {
+export async function avitoFetch<T>(path: string, init: { method?: string; json?: unknown; headers?: Record<string, string> } = {}): Promise<T> {
   const send = async () =>
     fetch(`${API}${path}`, {
       method: init.method ?? "GET",
-      headers: { Authorization: `Bearer ${await token()}`, ...(init.json !== undefined ? { "Content-Type": "application/json" } : {}) },
+      headers: { Authorization: `Bearer ${await token()}`, ...(init.json !== undefined ? { "Content-Type": "application/json" } : {}), ...init.headers },
       body: init.json !== undefined ? JSON.stringify(init.json) : undefined,
       signal: AbortSignal.timeout(30_000),
     });
