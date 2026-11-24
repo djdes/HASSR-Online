@@ -6,63 +6,18 @@
   "base": "origin/master a6c74ec8b (merged into the branch)",
   "stand": "next start (production build) on localhost:3000, PostgreSQL 16 local, prisma/seed.ts + prisma/seed-haccp-demo.ts, Chromium Playwright",
   "commands": {
-    "typecheck": {
-      "command": "npm run typecheck",
-      "result": "PASS",
-      "errors": 0,
-      "file": "raw/typecheck.txt"
-    },
-    "eslint": {
-      "command": "npx eslint <83 changed files>",
-      "result": "PASS",
-      "errors": 0,
-      "warnings": 1,
-      "note": "warning program/page.tsx:33 is pre-existing on master",
-      "file": "raw/eslint.txt"
-    },
-    "targetedTests": {
-      "command": "node --import tsx --test src/lib/ppk/*.test.ts src/lib/route-overlay.test.ts src/app/route-slug-collisions.test.ts src/app/motion.test.ts src/lib/inspection-norms*.test.ts",
-      "pass": 233,
-      "fail": 0
-    },
+    "typecheck": { "command": "npm run typecheck", "result": "PASS", "errors": 0, "file": "raw/typecheck.txt" },
+    "eslint": { "command": "npx eslint <83 changed files>", "result": "PASS", "errors": 0, "warnings": 1, "note": "warning program/page.tsx:33 is pre-existing on master", "file": "raw/eslint.txt" },
+    "targetedTests": { "command": "node --import tsx --test src/lib/ppk/*.test.ts src/lib/route-overlay.test.ts src/app/route-slug-collisions.test.ts src/app/motion.test.ts src/lib/inspection-norms*.test.ts", "pass": 233, "fail": 0 },
     "fullSuiteViaPreCommit": [
-      {
-        "commit": "b8a61234c",
-        "mode": "full (87 related files)",
-        "pass": 7442,
-        "fail": 0
-      },
-      {
-        "commit": "063eb1277 (merge of master)",
-        "mode": "full (115 related files)",
-        "pass": 7453,
-        "fail": 0
-      }
+      { "commit": "b8a61234c", "mode": "full (87 related files)", "pass": 7442, "fail": 0 },
+      { "commit": "063eb1277 (merge of master)", "mode": "full (115 related files)", "pass": 7453, "fail": 0 }
     ],
-    "i18nCheck": {
-      "command": "npm run i18n:check",
-      "pass": 103,
-      "fail": 0
-    },
-    "build": {
-      "command": "npm run build",
-      "result": "PASS",
-      "note": "first build caught the @modal/[...catchAll] vs [...missing] route collision — fixed; one run was OOM-killed when run in parallel with tsc (not code-related), rerun sequentially passed"
-    },
-    "e2eBrowser": {
-      "script": "raw/e2e-browser.mjs",
-      "result": "46/46 PASS",
-      "file": "raw/e2e-browser-results.json"
-    },
-    "e2eApi": {
-      "script": "raw/e2e-api.mjs",
-      "result": "19/19 PASS",
-      "file": "raw/e2e-api-output.txt"
-    },
-    "e2eRights": {
-      "result": "7/7 PASS",
-      "file": "raw/e2e-rights-output.txt"
-    }
+    "i18nCheck": { "command": "npm run i18n:check", "pass": 103, "fail": 0 },
+    "build": { "command": "npm run build", "result": "PASS", "note": "first build caught the @modal/[...catchAll] vs [...missing] route collision — fixed; one run was OOM-killed when run in parallel with tsc (not code-related), rerun sequentially passed" },
+    "e2eBrowser": { "script": "raw/e2e-browser.mjs", "result": "46/46 PASS", "file": "raw/e2e-browser-results.json" },
+    "e2eApi": { "script": "raw/e2e-api.mjs", "result": "19/19 PASS", "file": "raw/e2e-api-output.txt" },
+    "e2eRights": { "result": "7/7 PASS", "file": "raw/e2e-rights-output.txt" }
   },
   "verifier": {
     "round1": "AC3 FAIL (3.7 version rule vs spec) + low defects — see problems.md",
