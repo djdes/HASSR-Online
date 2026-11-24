@@ -330,6 +330,39 @@ async function deliver(
       }
     }
   }
+
+  // Дополнительные получатели в Telegram — те, у кого нет своего root.
+  if (config.channels.telegram && config.telegramExtra.length > 0) {
+    const rootChats = new Set(users.map((u) => u.telegramChatId).filter(Boolean));
+    for (const extra of config.telegramExtra) {
+      const who = extra.label || extra.chatId;
+      if (rootChats.has(extra.chatId)) continue;
+      try {
+        if (!telegramBotConfigured()) {
+          out.push({ channel: "telegram", recipient: who, status: "skipped", detail: "Бот Telegram не настроен" });
+          continue;
+        }
+        if (dryRun) {
+          await writeDryRunFile(`ai-digest-${runId}`, `tg-${extra.chatId}`, "telegram.txt", rendered.telegram);
+          out.push({ channel: "telegram", recipient: who, status: "sent", detail: "Сухая отправка: текст записан в папку" });
+          continue;
+        }
+        const { sendTelegramMessage } = await import("@/lib/telegram");
+        const ok = await sendTelegramMessage(extra.chatId, rendered.telegram, {
+          delivery: { kind: "admin:ai_weekly_digest", dedupeKey: `ai-digest:${runId}:tg:${extra.chatId}` },
+        });
+        out.push({
+          channel: "telegram",
+          recipient: who,
+          status: ok ? "sent" : "failed",
+          detail: ok ? null : "Telegram не принял сообщение — человек должен нажать «Старт» у бота",
+        });
+      } catch (error) {
+        console.error(`[ai-digest] telegram → ${extra.chatId} failed`, error);
+        out.push({ channel: "telegram", recipient: who, status: "failed", detail: error instanceof Error ? error.message.slice(0, 200) : "Ошибка отправки" });
+      }
+    }
+  }
   return out;
 }
 
