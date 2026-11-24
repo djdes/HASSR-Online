@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   CheckCircle2,
+  Code2,
   ExternalLink,
+  Eye,
   FileText,
   Loader2,
   Send,
@@ -27,6 +29,7 @@ import type {
 import {
   formatRub,
   generateClientIdempotencyKey,
+  sanitizeArticleHtmlForPreview,
 } from "@/lib/seo/gogetlinks-ui-format";
 import {
   type GeneratedDraft,
@@ -126,6 +129,7 @@ export function ChatWebmasterPlacementDialog({
   const [targetUrl, setTargetUrl] = useState(TARGET_PRESETS[0].url);
   const [anchor, setAnchor] = useState(TARGET_PRESETS[0].defaultAnchor);
   const [draft, setDraft] = useState<GeneratedDraft | null>(null);
+  const [editorMode, setEditorMode] = useState<"html" | "preview">("html");
   const [drafting, setDrafting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [approvingSlot, setApprovingSlot] = useState(false);
@@ -791,6 +795,39 @@ export function ChatWebmasterPlacementDialog({
                 <div className="space-y-2.5 pt-1">
                   {selectedFormat === "article" ? (
                     <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[12px] font-medium text-[#6f7282]">
+                          Текст статьи со встроенной ссылкой
+                        </span>
+                        <div className="inline-flex rounded-xl border border-[#dcdfed] bg-white p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setEditorMode("preview")}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors",
+                              editorMode === "preview"
+                                ? "bg-[#eef1ff] text-[#3848c7]"
+                                : "text-[#6f7282] hover:text-[#0b1024]",
+                            )}
+                          >
+                            <Eye className="size-3.5" />
+                            Предпросмотр в HTML
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditorMode("html")}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors",
+                              editorMode === "html"
+                                ? "bg-[#eef1ff] text-[#3848c7]"
+                                : "text-[#6f7282] hover:text-[#0b1024]",
+                            )}
+                          >
+                            <Code2 className="size-3.5" />
+                            HTML-код
+                          </button>
+                        </div>
+                      </div>
                       <input
                         aria-label="Заголовок статьи"
                         value={draft.title}
@@ -801,17 +838,35 @@ export function ChatWebmasterPlacementDialog({
                         placeholder="Заголовок статьи"
                         className={cn(inputClass, "w-full font-medium")}
                       />
-                      <textarea
-                        aria-label="HTML-текст статьи"
-                        rows={8}
-                        value={draft.bodyHtml}
-                        disabled={submitting}
-                        onChange={(e) =>
-                          setDraft({ ...draft, bodyHtml: e.target.value })
-                        }
-                        placeholder='HTML-текст статьи со встроенной ссылкой <a href="...">анкор</a>'
-                        className="w-full rounded-2xl border border-[#dcdfed] bg-white p-3 font-mono text-[12.5px] leading-relaxed text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
-                      />
+                      {editorMode === "preview" ? (
+                        <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-[#dcdfed] bg-white p-4">
+                          {draft.title ? (
+                            <h4 className="mb-3 text-[16px] font-semibold text-[#0b1024]">
+                              {draft.title}
+                            </h4>
+                          ) : null}
+                          <div
+                            className="prose prose-sm max-w-none text-[13.5px] leading-relaxed text-[#0b1024] [&_a]:font-semibold [&_a]:text-[#3848c7] [&_a]:underline [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-[15.5px] [&_h2]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-[14px] [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2.5"
+                            dangerouslySetInnerHTML={{
+                              __html: sanitizeArticleHtmlForPreview(
+                                draft.bodyHtml,
+                              ),
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <textarea
+                          aria-label="HTML-текст статьи"
+                          rows={8}
+                          value={draft.bodyHtml}
+                          disabled={submitting}
+                          onChange={(e) =>
+                            setDraft({ ...draft, bodyHtml: e.target.value })
+                          }
+                          placeholder='HTML-текст статьи со встроенной ссылкой <a href="...">анкор</a>'
+                          className="w-full rounded-2xl border border-[#dcdfed] bg-white p-3 font-mono text-[12.5px] leading-relaxed text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                        />
+                      )}
                     </>
                   ) : null}
                   <input
