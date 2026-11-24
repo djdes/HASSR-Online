@@ -3,6 +3,7 @@ import { ingestCrmItems } from "@/lib/crm/ingest.server";
 import type { CrmIngestItem } from "@/lib/crm/sources";
 import { avitoConfigured, avitoFetch, avitoOwnUser } from "@/lib/avito/client.server";
 import { avitoChatIdFromKey, mapAvitoMessage, type AvitoChat, type AvitoMessage } from "@/lib/avito/messenger";
+import { checkAvitoBalance, notifyAvitoMessages } from "@/lib/avito/notify.server";
 
 /**
  * Сбор чатов Авито в CRM: шаг цикла CRM (раз в 5 минут) и вебхук на новое
@@ -51,6 +52,8 @@ async function ingestChat(chat: AvitoChat, own: { id: string; name: string }, si
     if (item) items.push(item);
   }
   const result = await ingestCrmItems(items);
+  // Уведомление — после записи: в нём ссылка на уже заведённый контакт.
+  await notifyAvitoMessages(result.items).catch((error) => console.error("[avito] уведомление не ушло", error));
   return { created: result.created, last };
 }
 
@@ -83,6 +86,11 @@ export async function syncAvitoMessenger(): Promise<AvitoSyncResult> {
     if (chats.length < CHATS_PAGE || !anyNew) break;
   }
   await writeCursor(next);
+  try {
+    await checkAvitoBalance();
+  } catch (error) {
+    result.errors.push(`баланс: ${error instanceof Error ? error.message : String(error)}`);
+  }
   return result;
 }
 

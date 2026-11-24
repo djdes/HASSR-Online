@@ -89,13 +89,13 @@ async function deliver(recipients: Recipient[], message: { subject: string; text
  * Итог отправки: дошло — записываем число получателей; не дошло ни до кого
  * (Telegram и почта упали) — снимаем ключ, следующий прогон попробует снова.
  */
-async function settle(logId: string, delivered: number): Promise<void> {
+export async function settle(logId: string, delivered: number): Promise<void> {
   if (delivered > 0) await db.crmReminderLog.update({ where: { id: logId }, data: { recipients: delivered } }).catch(() => undefined);
   else await db.crmReminderLog.delete({ where: { id: logId } }).catch(() => undefined);
 }
 
 /** id строки — ключ наш, можно отправлять; null — уже отправлено другим прогоном. */
-async function claim(dedupeKey: string, kind: string, contactId: string | null): Promise<string | null> {
+export async function claim(dedupeKey: string, kind: string, contactId: string | null): Promise<string | null> {
   try {
     const row = await db.crmReminderLog.create({ data: { dedupeKey, kind, contactId }, select: { id: true } });
     return row.id;

@@ -157,6 +157,10 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/crm/tasks/settings", gate: "crm", allScope: true },
   // Автоворонка (настройки и прогноз на неделю по всем клиентам) — тем, кто видит всех.
   { pattern: "/root/crm/automation", gate: "crm", allScope: true },
+  // Авито: объявления, баланс и кому слать уведомления — команде целиком; менять получателей — владелец.
+  { pattern: "/root/crm/avito", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/avito", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/avito", gate: "superadmin", methods: ["PUT"] },
 
   // Sales.
   { pattern: "/root/proposals", gate: "sales" },
