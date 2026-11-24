@@ -56,16 +56,18 @@ test("новый документ журнала — только на объе�
   assert.equal(documentPointProblem({ enabled: false, buildings: [], organizationView: true, activeBuilding: null }, null), null);
 });
 
-test("перенос журналов офиса: выкладка только считает, сам перенос — за флагом legacy-сидов", async () => {
+test("перенос журналов офиса: на выкладке — подсчёт, затем перенос (решение владельца 2026-11-24)", async () => {
   const { readFileSync } = await import("node:fs");
   const deploy = readFileSync(".github/workflows/deploy.yml", "utf8");
   const legacyGate = deploy.indexOf('if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]');
   const dryRun = deploy.indexOf("npx tsx prisma/seed-office-journals-to-points-2026-11.ts --dry-run");
   const realRun = deploy.indexOf("npx tsx prisma/seed-office-journals-to-points-2026-11.ts 2>&1");
-  // Обычная выкладка не переписывает записи журналов клиентов (правило deploy.yml).
-  assert.ok(dryRun > 0 && dryRun < legacyGate, "подсчёт — на каждой выкладке");
-  assert.ok(realRun > legacyGate, "перенос — только проверенным запуском");
-  assert.equal(deploy.split("seed-office-journals-to-points-2026-11.ts").length - 1, 2, "ровно два запуска");
+  // Владелец 2026-11-24: «Переносить при выкладке, дубли оставить на офисе» —
+  // разовый перенос, как починка фирменного стиля: сначала подсчёт, затем
+  // перенос, оба — на обычной выкладке, не за флагом legacy-досевов.
+  assert.ok(dryRun > 0 && dryRun < legacyGate, "подсчёт — на обычной выкладке");
+  assert.ok(realRun > dryRun && realRun < legacyGate, "перенос — сразу за подсчётом, на обычной выкладке");
+  assert.equal(deploy.split("seed-office-journals-to-points-2026-11.ts").length - 1, 2, "ровно два запуска: подсчёт и перенос");
   const seed = readFileSync("prisma/seed-office-journals-to-points-2026-11.ts", "utf8");
   assert.match(seed, /once:office-journals-to-points:v1/);
   // Лог Actions публичный: без id организаций и офисов.
