@@ -298,18 +298,26 @@ export function QueriesClient() {
   );
   const pageColumns = useMemo<Column<PRow>[]>(
     () => [
-      { key: "page", label: "Страница входа", value: (r) => r.page, render: (r) => <PageLink page={r.page} />, className: "min-w-[200px]" },
+      {
+        key: "page",
+        label: "Страница входа и топ запросов",
+        value: (r) => r.page,
+        render: (r) => (
+          <div className="max-w-[420px]">
+            <PageLink page={r.page} />
+            {r.topQueries.length > 0 && (
+              <div className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-[#6f7282]" title={r.topQueries.join(", ")}>
+                {r.topQueries.join(" · ")}
+              </div>
+            )}
+          </div>
+        ),
+        className: "min-w-[300px]",
+      },
       ...gscColumns<PRow>(),
       { key: "known", label: "По известным", value: (r) => r.knownClicks, render: (r) => int(r.knownClicks), align: "right" },
       { key: "queries", label: "Запросов", value: (r) => r.queriesCount, render: (r) => int(r.queriesCount), align: "right" },
       ...behaviorColumns<PRow>((r) => r.behavior, goalId),
-      {
-        key: "top",
-        label: "Топ-5 запросов",
-        value: (r) => r.topQueries.join(", "),
-        render: (r) => <span className="text-[12.5px] text-[#6f7282]">{r.topQueries.join(", ")}</span>,
-        className: "min-w-[300px]",
-      },
     ],
     [goalId],
   );
