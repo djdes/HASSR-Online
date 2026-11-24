@@ -13,6 +13,9 @@ export interface FormattedStatusBadge {
   badgeTone: GglBadgeTone;
 }
 
+/** Status badge for chat system notifications (#323 imports it under this name). */
+export type StatusBadgeMeta = FormattedStatusBadge;
+
 /**
  * Formats transparent Russian attribution ("Кто купил") for GoGetLinks link orders.
  */

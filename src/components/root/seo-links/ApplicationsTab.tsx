@@ -1,12 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, ExternalLink, FileText, Loader2, RefreshCw, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, Code2, ExternalLink, Eye, FileText, Loader2, MessageSquare, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { GglApplication, GglApplicationsView, GglSiteCardResult, GglWebmasterAnalysis } from "@/lib/seo/gogetlinks-applications";
-import type { GglCampaignDto } from "./types";
+import { sanitizeArticleHtmlForPreview } from "@/lib/seo/gogetlinks-ui-format";
+import {
+  getCachedApplicationsUiState,
+  getCachedApplicationsView,
+  invalidateApplicationsCache,
+  invalidateOverviewCache,
+  setCachedApplicationsUiState,
+  setCachedApplicationsView,
+} from "./tab-cache";
+import type { GglCampaignDto, GglPlannedSlotDto, GglThreadDto } from "./types";
+import {
+  findMatchingSlotForDonor,
+  findWebmasterMatchingApplications,
+  getApplicationThreadPriority,
+  mergeApplicationsWithThreadDonors,
+} from "./webmaster-placement-lookup";
 
 const endpoint = "/api/root/gogetlinks/applications";
 const ordersEndpoint = "/api/root/gogetlinks/orders";
@@ -16,10 +31,10 @@ const input = "h-10 rounded-2xl border border-[#dcdfed] bg-white px-3 text-[13px
 const metric = (n: number | null) => (n === null ? "—" : n.toLocaleString("ru-RU"));
 const verdicts = { recommended: "Рекомендует", consider: "Рассмотреть", avoid: "Не рекомендует" };
 
-const UNIFIED_BRIEF_TEXT =
+export const UNIFIED_BRIEF_TEXT =
   "Больше 80 сайтов в работе — аккуратно размещаете и заношу площадку в Белый Список. Очень важно аккуратное размещение: ссылку вставить в середине или конце предложения без nofollow/noindex/sponsored, сохранить индексацию страницы.";
 
-const TARGET_PRESETS: Array<{
+export const TARGET_PRESETS: Array<{
   url: string;
   label: string;
   defaultAnchor: string;
@@ -198,7 +213,7 @@ const TARGET_PRESETS: Array<{
   },
 ];
 
-interface GeneratedDraft {
+export interface GeneratedDraft {
   title: string;
   announcement: string;
   bodyHtml: string;
@@ -208,7 +223,7 @@ interface GeneratedDraft {
   briefText: string;
 }
 
-function resolvePlacementFormat(placementType: string): "article" | "note" | "context" {
+export function resolvePlacementFormat(placementType: string): "article" | "note" | "context" {
   const lower = placementType.toLowerCase();
   if (lower.includes("контекст")) return "context";
   if (lower.includes("замет")) return "note";
@@ -238,34 +253,69 @@ async function api<T>(body?: unknown, campaignId?: number): Promise<T> {
 export function ApplicationsTab({
   campaigns,
   defaultCampaignId,
+  threads = [],
+  slots = [],
+  accountSyncedAt = null,
+  expectedApplicationsCount = null,
   onCountChange,
   onOrderCreated,
+  onJumpToThread,
 }: {
   campaigns: GglCampaignDto[];
   defaultCampaignId: number | null;
+  threads?: GglThreadDto[];
+  slots?: GglPlannedSlotDto[];
+  accountSyncedAt?: string | null;
+  expectedApplicationsCount?: number | null;
   onCountChange?: (count: number) => void;
   onOrderCreated?: () => void;
+  onJumpToThread?: (threadId: string | null, donorDomain?: string) => void;
 }) {
   const [campaignId, setCampaignId] = useState<number | undefined>(defaultCampaignId ?? undefined);
-  const [view, setView] = useState<GglApplicationsView | null>(null);
+  const [view, setView] = useState<GglApplicationsView | null>(() =>
+    getCachedApplicationsView(defaultCampaignId ?? undefined, {
+      expectedCount: expectedApplicationsCount,
+      accountSyncedAt,
+    }),
+  );
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState("");
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState("recommendations");
-  const [visibleCount, setVisibleCount] = useState(PAGE_CHUNK);
+  const initialUiState = getCachedApplicationsUiState(defaultCampaignId ?? undefined);
+  const [query, setQuery] = useState(initialUiState?.query ?? "");
+  const [sort, setSort] = useState(initialUiState?.sort ?? "recommendations");
+  const [visibleCount, setVisibleCount] = useState(initialUiState?.visibleCount ?? PAGE_CHUNK);
   const [selected, setSelected] = useState<GglApplication | null>(null);
   const [targetUrl, setTargetUrl] = useState(TARGET_PRESETS[0].url);
   const [anchor, setAnchor] = useState(TARGET_PRESETS[0].defaultAnchor);
   const [draft, setDraft] = useState<GeneratedDraft | null>(null);
+  const [editorMode, setEditorMode] = useState<"html" | "preview">("html");
   const [drafting, setDrafting] = useState(false);
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const mounted = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    setCachedApplicationsUiState(campaignId, { query, sort, visibleCount });
+  }, [campaignId, query, sort, visibleCount]);
+
   const load = useCallback(
     async (refresh = false) => {
+      if (!refresh) {
+        const cached = getCachedApplicationsView(campaignId, {
+          expectedCount: expectedApplicationsCount,
+          accountSyncedAt,
+        });
+        if (cached) {
+          setView(cached);
+          onCountChange?.(Math.max(cached.snapshot.sourceTotal ?? 0, cached.snapshot.applications.length));
+          return;
+        }
+      } else {
+        invalidateApplicationsCache(campaignId);
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -273,9 +323,13 @@ export function ApplicationsTab({
           refresh ? { action: "refresh", campaignId } : undefined,
           campaignId,
         );
+        setCachedApplicationsView(campaignId, value, {
+          expectedCount: Math.max(value.snapshot.sourceTotal ?? 0, value.snapshot.applications.length),
+          accountSyncedAt,
+        });
         if (mounted.current) {
           setView(value);
-          setVisibleCount(PAGE_CHUNK);
+          if (refresh) setVisibleCount(PAGE_CHUNK);
           onCountChange?.(Math.max(value.snapshot.sourceTotal ?? 0, value.snapshot.applications.length));
         }
       } catch (e) {
@@ -284,7 +338,7 @@ export function ApplicationsTab({
         if (mounted.current) setLoading(false);
       }
     },
-    [campaignId, onCountChange],
+    [campaignId, expectedApplicationsCount, accountSyncedAt, onCountChange],
   );
 
   useEffect(() => {
@@ -300,10 +354,20 @@ export function ApplicationsTab({
     () => new Map(view?.analysis?.recommendations.map((r, index) => [r.siteId, { ...r, index }]) ?? []),
     [view?.analysis],
   );
-  const siteCount = new Set(view?.snapshot.applications.map(a => a.siteId)).size;
+  const mergedApplications = useMemo(
+    () =>
+      mergeApplicationsWithThreadDonors({
+        applications: view?.snapshot.applications ?? [],
+        threads,
+        slots,
+        campaignId: view?.campaignId ?? campaignId ?? defaultCampaignId ?? 0,
+      }),
+    [view?.snapshot.applications, view?.campaignId, threads, slots, campaignId, defaultCampaignId],
+  );
+  const siteCount = new Set(mergedApplications.map(a => a.siteId)).size;
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (view?.snapshot.applications ?? [])
+    return mergedApplications
       .filter(
         a =>
           !q ||
@@ -315,12 +379,15 @@ export function ApplicationsTab({
         if (sort === "price") return (a.priceRub ?? Infinity) - (b.priceRub ?? Infinity);
         if (sort === "trust") return (b.trust ?? -1) - (a.trust ?? -1);
         if (sort === "traffic") return (b.dailyTraffic ?? -1) - (a.dailyTraffic ?? -1);
+        const aThreadPriority = getApplicationThreadPriority(a, threads).priorityRank;
+        const bThreadPriority = getApplicationThreadPriority(b, threads).priorityRank;
+        if (aThreadPriority !== bThreadPriority) return aThreadPriority - bThreadPriority;
         return (
           (recommendations.get(a.siteId)?.index ?? Infinity) -
             (recommendations.get(b.siteId)?.index ?? Infinity) || (b.trust ?? -1) - (a.trust ?? -1)
         );
       });
-  }, [view?.snapshot.applications, query, cardMap, sort, recommendations]);
+  }, [mergedApplications, query, cardMap, sort, recommendations, threads]);
 
   const visibleRows = useMemo(() => rows.slice(0, visibleCount), [rows, visibleCount]);
   const hasMore = visibleCount < rows.length;
@@ -348,7 +415,37 @@ export function ApplicationsTab({
 
   async function openCard(application: GglApplication) {
     setSelected(application);
-    setDraft(null);
+    const matchingSlot = findMatchingSlotForDonor({
+      slots,
+      donorSiteId: application.siteId,
+      donorDomain: application.domain,
+    });
+    if (matchingSlot?.targetUrl) {
+      const trimmed = matchingSlot.targetUrl.trim();
+      const fullUrl =
+        trimmed.startsWith("http://") || trimmed.startsWith("https://")
+          ? trimmed
+          : `https://wesetup.ru${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+      setTargetUrl(fullUrl);
+      setAnchor(
+        matchingSlot.anchor?.trim() ||
+          TARGET_PRESETS.find(p => p.url === fullUrl)?.defaultAnchor ||
+          TARGET_PRESETS[0].defaultAnchor,
+      );
+    }
+    if (matchingSlot?.article?.title && matchingSlot?.article?.bodyHtml) {
+      setDraft({
+        title: matchingSlot.article.title,
+        announcement: matchingSlot.article.announcement ?? "",
+        bodyHtml: matchingSlot.article.bodyHtml,
+        metaTitle: matchingSlot.article.title,
+        metaDescription: matchingSlot.article.announcement ?? "",
+        metaKeywords: matchingSlot.anchor ?? "",
+        briefText: matchingSlot.briefText ?? UNIFIED_BRIEF_TEXT,
+      });
+    } else {
+      setDraft(null);
+    }
     if (!view || cardMap.get(application.siteId)?.card) return;
     setBusy(true);
     try {
@@ -358,7 +455,17 @@ export function ApplicationsTab({
         snapshotId: view.snapshotId,
         siteIds: [application.siteId],
       });
-      if (mounted.current) setView(current => (current ? mergeCards(current, result.cards) : current));
+      if (mounted.current) {
+        setView(current => {
+          if (!current) return current;
+          const next = mergeCards(current, result.cards);
+          setCachedApplicationsView(campaignId, next, {
+            expectedCount: Math.max(next.snapshot.sourceTotal ?? 0, next.snapshot.applications.length),
+            accountSyncedAt,
+          });
+          return next;
+        });
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Не удалось загрузить карточку");
     } finally {
@@ -444,6 +551,8 @@ export function ApplicationsTab({
       if (!response.ok) {
         throw new Error(data?.error ?? `Ошибка отправки заявки (${response.status})`);
       }
+      invalidateOverviewCache();
+      invalidateApplicationsCache(campaignId);
       toast.success(`Заявка на ${selected.domain} отправлена вебмастеру в GoGetLinks`);
       setSelected(null);
       setDraft(null);
@@ -467,7 +576,15 @@ export function ApplicationsTab({
         snapshotId: view.snapshotId,
       });
       if (mounted.current) {
-        setView(current => (current ? { ...current, analysis: result.analysis } : current));
+        setView(current => {
+          if (!current) return current;
+          const next = { ...current, analysis: result.analysis };
+          setCachedApplicationsView(campaignId, next, {
+            expectedCount: Math.max(next.snapshot.sourceTotal ?? 0, next.snapshot.applications.length),
+            accountSyncedAt,
+          });
+          return next;
+        });
         toast.success("Рекомендации диспетчера готовы");
       }
     } catch (e) {
@@ -543,6 +660,56 @@ export function ApplicationsTab({
       <p className="text-[13px] leading-relaxed text-[#6f7282]">
         Входящие предложения вебмастеров до покупки. Нажмите на выбранный домен, чтобы проверить примеры размещения, сгенерировать статью ИИ под площадку и отправить заявку.
       </p>
+      {threads.filter(t => t.campaign?.isWesetup !== false).length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#d8deff] bg-[#eef1ff]/65 px-4 py-2.5 text-[12.5px]">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#3848c7]">
+            <MessageSquare className="size-3.5 text-[#5566f6]" />
+            Диалоги с вебмастерами (нажмите для генерации размещения):
+          </span>
+          {threads
+            .filter(t => t.campaign?.isWesetup !== false)
+            .map(t => {
+              const label = t.donorDomain || t.webmasterLogin || "Вебмастер";
+              const matchedApps = findWebmasterMatchingApplications({
+                applications: mergedApplications,
+                thread: t,
+                slots,
+                campaignId: view?.campaignId ?? campaignId ?? defaultCampaignId ?? 0,
+              });
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    if (matchedApps[0]) {
+                      void openCard(matchedApps[0]);
+                    } else if (t.donorDomain) {
+                      setQuery(t.donorDomain);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#5566f6]/40 bg-white px-3 py-1 text-[12px] font-medium text-[#0b1024] shadow-xs transition-colors hover:border-[#5566f6] hover:bg-[#f5f6ff]"
+                  title={
+                    t.lastMessagePreview
+                      ? `Последнее сообщение: ${t.lastMessagePreview}`
+                      : `Открыть заявки и генерацию размещения для ${label}`
+                  }
+                >
+                  <span className="font-semibold text-[#3848c7]">{label}</span>
+                  {t.needsReply ? (
+                    <span className="rounded-full bg-[#fffbeb] px-1.5 py-0.5 text-[10px] font-semibold text-[#92400e]">
+                      Ждёт ответа
+                    </span>
+                  ) : null}
+                  {t.unreadCount > 0 ? (
+                    <span className="rounded-full bg-[#5566f6] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                      {t.unreadCount}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+        </div>
+      ) : null}
       {progress ? (
         <p role="status" className="rounded-2xl bg-[#eef1ff] px-4 py-3 text-[13px] text-[#3848c7]">
           {progress}
@@ -634,12 +801,34 @@ export function ApplicationsTab({
                 <tbody>
                   {visibleRows.map(a => {
                     const r = recommendations.get(a.siteId);
+                    const { thread: linkedThread } = getApplicationThreadPriority(a, threads);
                     return (
                       <tr key={a.id} className="border-t border-[#ececf4] align-top text-[#0b1024]">
                         <td className="px-4 py-3">
-                          <button type="button" disabled={busy} onClick={() => void openCard(a)} className="text-left font-medium text-[#3848c7] hover:underline">
-                            {a.domain}
-                          </button>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button type="button" disabled={busy} onClick={() => void openCard(a)} className="text-left font-medium text-[#3848c7] hover:underline">
+                              {a.domain}
+                            </button>
+                            {linkedThread ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onJumpToThread
+                                    ? onJumpToThread(linkedThread.id, a.domain)
+                                    : void openCard(a)
+                                }
+                                className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                                title={linkedThread.lastMessagePreview ?? "Есть переписка с вебмастером"}
+                              >
+                                <MessageSquare className="size-3" />
+                                {linkedThread.unreadCount > 0
+                                  ? `Ответ в чате (${linkedThread.unreadCount})`
+                                  : linkedThread.needsReply
+                                    ? "Ждёт ответа"
+                                    : "В диалоге"}
+                              </button>
+                            ) : null}
+                          </div>
                           {a.badges.map(b => (
                             <div key={b} className="mt-1 max-w-[230px] text-[11px] text-[#6f7282]">
                               {b}
@@ -831,6 +1020,39 @@ export function ApplicationsTab({
                   <div className="space-y-2.5 pt-1">
                     {selectedFormat === "article" ? (
                       <>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[12px] font-medium text-[#6f7282]">
+                            Текст статьи со встроенной ссылкой
+                          </span>
+                          <div className="inline-flex rounded-xl border border-[#dcdfed] bg-white p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditorMode("preview")}
+                              className={cn(
+                                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors",
+                                editorMode === "preview"
+                                  ? "bg-[#eef1ff] text-[#3848c7]"
+                                  : "text-[#6f7282] hover:text-[#0b1024]",
+                              )}
+                            >
+                              <Eye className="size-3.5" />
+                              Предпросмотр в HTML
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditorMode("html")}
+                              className={cn(
+                                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors",
+                                editorMode === "html"
+                                  ? "bg-[#eef1ff] text-[#3848c7]"
+                                  : "text-[#6f7282] hover:text-[#0b1024]",
+                              )}
+                            >
+                              <Code2 className="size-3.5" />
+                              HTML-код
+                            </button>
+                          </div>
+                        </div>
                         <input
                           aria-label="Заголовок статьи"
                           value={draft.title}
@@ -839,15 +1061,31 @@ export function ApplicationsTab({
                           placeholder="Заголовок статьи"
                           className={cn(input, "w-full font-medium")}
                         />
-                        <textarea
-                          aria-label="HTML-текст статьи"
-                          rows={8}
-                          value={draft.bodyHtml}
-                          disabled={submittingOrder}
-                          onChange={e => setDraft({ ...draft, bodyHtml: e.target.value })}
-                          placeholder="HTML-текст статьи со встроенной ссылкой <a href=&quot;...&quot;>анкор</a>"
-                          className="w-full rounded-2xl border border-[#dcdfed] bg-white p-3 font-mono text-[12.5px] leading-relaxed text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
-                        />
+                        {editorMode === "preview" ? (
+                          <div className="max-h-[320px] overflow-y-auto rounded-2xl border border-[#dcdfed] bg-white p-4">
+                            {draft.title ? (
+                              <h4 className="mb-3 text-[16px] font-semibold text-[#0b1024]">
+                                {draft.title}
+                              </h4>
+                            ) : null}
+                            <div
+                              className="prose prose-sm max-w-none text-[13.5px] leading-relaxed text-[#0b1024] [&_a]:font-semibold [&_a]:text-[var(--app-indigo-deep)] [&_a]:underline [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-[15.5px] [&_h2]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-[14px] [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2.5"
+                              dangerouslySetInnerHTML={{
+                                __html: sanitizeArticleHtmlForPreview(draft.bodyHtml),
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <textarea
+                            aria-label="HTML-текст статьи"
+                            rows={8}
+                            value={draft.bodyHtml}
+                            disabled={submittingOrder}
+                            onChange={e => setDraft({ ...draft, bodyHtml: e.target.value })}
+                            placeholder="HTML-текст статьи со встроенной ссылкой <a href=&quot;...&quot;>анкор</a>"
+                            className="w-full rounded-2xl border border-[#dcdfed] bg-white p-3 font-mono text-[12.5px] leading-relaxed text-[#0b1024] focus:border-[#5566f6] focus:outline-none"
+                          />
+                        )}
                       </>
                     ) : null}
                     <input

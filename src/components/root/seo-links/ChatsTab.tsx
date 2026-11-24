@@ -9,6 +9,8 @@ import {
   RefreshCw,
   RotateCcw,
   Send,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -18,8 +20,23 @@ import {
   generateClientIdempotencyKey,
 } from "@/lib/seo/gogetlinks-ui-format";
 import {
+  buildChatSystemNotifications,
+  buildChatTimeline,
+  findThreadMatchingOrders,
+} from "./chat-order-notifications";
+import { ChatWebmasterPlacementDialog } from "./ChatWebmasterPlacementDialog";
+import {
+  getCachedThreadMessages,
+  invalidateOverviewCache,
+  invalidateThreadMessagesCache,
+  setCachedThreadMessages,
+} from "./tab-cache";
+import {
   formatRuDateTime,
+  type GglCampaignDto,
   type GglMessageDto,
+  type GglOrderDto,
+  type GglPlannedSlotDto,
   type GglThreadDto,
   SEO_BTN_PRIMARY_CLASS,
   SEO_BTN_SM_CLASS,
@@ -31,8 +48,15 @@ import {
 export interface ChatsTabProps {
   threads: GglThreadDto[];
   focusedThreadId: string | null;
+  campaigns?: GglCampaignDto[];
+  defaultCampaignId?: number | null;
+  orders?: GglOrderDto[];
+  slots?: GglPlannedSlotDto[];
+  accountSyncedAt?: string | null;
+  expectedApplicationsCount?: number | null;
   onSelectThread: (threadId: string) => void;
   onRefreshOverview: () => Promise<void> | void;
+  onOrderCreated?: () => void;
 }
 
 type ThreadFilter = "all" | "unread" | "needs_reply";
@@ -52,8 +76,15 @@ function deliveryStatusMeta(status: string): { label: string; className: string 
 export function ChatsTab({
   threads,
   focusedThreadId,
+  campaigns = [],
+  defaultCampaignId = null,
+  orders = [],
+  slots = [],
+  accountSyncedAt = null,
+  expectedApplicationsCount = null,
   onSelectThread,
   onRefreshOverview,
+  onOrderCreated,
 }: ChatsTabProps) {
   const [filter, setFilter] = useState<ThreadFilter>("all");
   const [search, setSearch] = useState("");
@@ -62,6 +93,7 @@ export function ChatsTab({
   >({});
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [placementDialogOpen, setPlacementDialogOpen] = useState(false);
 
   const [replyBody, setReplyBody] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
@@ -114,7 +146,22 @@ export function ChatsTab({
   const activeThreadId = activeThread?.id ?? null;
 
   const loadThreadMessages = useCallback(
-    async (threadId: string, refreshRemote = true) => {
+    async (threadId: string, refreshRemote = true, forceNetwork = false) => {
+      const targetThread = threads.find((t) => t.id === threadId);
+      if (!forceNetwork && targetThread) {
+        const cached = getCachedThreadMessages(targetThread);
+        if (cached) {
+          setMessagesByThread((prev) => ({
+            ...prev,
+            [threadId]: cached.messages,
+          }));
+          setRefreshError(cached.refreshError);
+          return;
+        }
+      }
+      if (forceNetwork) {
+        invalidateThreadMessagesCache(threadId);
+      }
       setLoadingThreadId(threadId);
       try {
         const response = await fetch(
@@ -130,11 +177,19 @@ export function ChatsTab({
         if (!response.ok) {
           throw new Error(data?.error ?? "Не удалось загрузить переписку");
         }
+        const loadedMessages = data?.messages ?? [];
+        const loadedError = data?.refreshError ?? null;
+        if (targetThread) {
+          setCachedThreadMessages(targetThread, {
+            messages: loadedMessages,
+            refreshError: loadedError,
+          });
+        }
         setMessagesByThread((prev) => ({
           ...prev,
-          [threadId]: data?.messages ?? [],
+          [threadId]: loadedMessages,
         }));
-        setRefreshError(data?.refreshError ?? null);
+        setRefreshError(loadedError);
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Ошибка загрузки диалога",
@@ -143,7 +198,7 @@ export function ChatsTab({
         setLoadingThreadId((curr) => (curr === threadId ? null : curr));
       }
     },
-    [],
+    [threads],
   );
 
   useEffect(() => {
@@ -164,6 +219,33 @@ export function ChatsTab({
     ? messagesByThread[activeThreadId] ?? []
     : [];
   const isReadOnlyArchive = activeThread?.campaign?.isWesetup === false;
+
+  const activeMatchedOrders = useMemo(
+    () =>
+      activeThread
+        ? findThreadMatchingOrders({ thread: activeThread, orders, slots })
+        : [],
+    [activeThread, orders, slots],
+  );
+  const activeOrder =
+    activeThread?.order ??
+    activeMatchedOrders[activeMatchedOrders.length - 1] ??
+    null;
+  const activeSystemNotifications = useMemo(
+    () =>
+      activeThread
+        ? buildChatSystemNotifications({ thread: activeThread, orders, slots })
+        : [],
+    [activeThread, orders, slots],
+  );
+  const activeTimeline = useMemo(
+    () =>
+      buildChatTimeline({
+        messages: activeMessages,
+        notifications: activeSystemNotifications,
+      }),
+    [activeMessages, activeSystemNotifications],
+  );
 
   async function handleSendReply() {
     if (!activeThread || isReadOnlyArchive) return;
@@ -200,10 +282,13 @@ export function ChatsTab({
       const sentMsg = data.message;
       replyIdempotencyRef.current = null;
       setReplyBody("");
+      const updatedMessages = [...(messagesByThread[activeThread.id] ?? []), sentMsg];
       setMessagesByThread((prev) => ({
         ...prev,
-        [activeThread.id]: [...(prev[activeThread.id] ?? []), sentMsg],
+        [activeThread.id]: updatedMessages,
       }));
+      invalidateThreadMessagesCache(activeThread.id);
+      invalidateOverviewCache();
       toast.success("Ответ отправлен вебмастеру в GoGetLinks");
       await onRefreshOverview();
     } catch (err) {
@@ -216,7 +301,7 @@ export function ChatsTab({
   }
 
   async function handleQuickOrderReview(action: "accept" | "request_revision") {
-    const order = activeThread?.order;
+    const order = activeOrder;
     if (!order || isReadOnlyArchive) return;
     if (action === "request_revision" && revisionComment.trim().length < 5) {
       toast.error("Укажите причину возврата на доработку (минимум 5 символов)");
@@ -254,9 +339,13 @@ export function ChatsTab({
       );
       setRevisionOpen(false);
       setRevisionComment("");
+      invalidateOverviewCache();
+      if (activeThread) {
+        invalidateThreadMessagesCache(activeThread.id);
+      }
       await onRefreshOverview();
       if (activeThread) {
-        await loadThreadMessages(activeThread.id, true);
+        await loadThreadMessages(activeThread.id, true, true);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Ошибка проверки");
@@ -313,8 +402,17 @@ export function ChatsTab({
           ) : (
             sortedFilteredThreads.map((t) => {
               const selected = activeThread?.id === t.id;
-              const orderBadge = t.order
-                ? formatOrderStatusBadge(t.order.status)
+              const matchedThreadOrders = findThreadMatchingOrders({
+                thread: t,
+                orders,
+                slots,
+              });
+              const resolvedThreadOrder =
+                t.order ??
+                matchedThreadOrders[matchedThreadOrders.length - 1] ??
+                null;
+              const orderBadge = resolvedThreadOrder
+                ? formatOrderStatusBadge(resolvedThreadOrder.status)
                 : null;
               const archiveThread = t.campaign?.isWesetup === false;
 
@@ -404,11 +502,25 @@ export function ChatsTab({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-[16px] font-semibold text-[#0b1024]">
-                      {activeThread.donorDomain ||
-                        activeThread.webmasterLogin ||
-                        "Диалог с вебмастером"}
-                    </h3>
+                    <button
+                      type="button"
+                      disabled={isReadOnlyArchive}
+                      onClick={() => setPlacementDialogOpen(true)}
+                      className="group inline-flex items-center gap-2 text-left text-[16px] font-semibold text-[#0b1024] transition-colors hover:text-[#3848c7] disabled:pointer-events-none"
+                      title="Открыть доступные заявки от этого вебмастера и сгенерировать размещение"
+                    >
+                      <span className="underline-offset-4 group-hover:underline">
+                        {activeThread.donorDomain ||
+                          activeThread.webmasterLogin ||
+                          "Диалог с вебмастером"}
+                      </span>
+                      {!isReadOnlyArchive ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#d8deff] bg-[#eef1ff] px-2.5 py-0.5 text-[11.5px] font-medium text-[#3848c7] transition-colors group-hover:border-[#5566f6] group-hover:bg-[#5566f6] group-hover:text-white">
+                          <Sparkles className="size-3" />
+                          Заявки и размещение
+                        </span>
+                      ) : null}
+                    </button>
                     {activeThread.webmasterLogin ? (
                       <span className="text-[12.5px] text-[#6f7282]">
                         вебмастер: {activeThread.webmasterLogin}
@@ -430,7 +542,9 @@ export function ChatsTab({
                 <button
                   type="button"
                   disabled={loadingThreadId === activeThread.id}
-                  onClick={() => void loadThreadMessages(activeThread.id, true)}
+                  onClick={() =>
+                    void loadThreadMessages(activeThread.id, true, true)
+                  }
                   className={SEO_BTN_SM_CLASS}
                 >
                   <RefreshCw
@@ -442,27 +556,39 @@ export function ChatsTab({
                 </button>
               </div>
 
-              {activeThread.order ? (
+              {activeOrder ? (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-3.5 py-2.5 text-[12.5px]">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {(() => {
+                      const badge = formatOrderStatusBadge(activeOrder.status);
+                      return (
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${badgeToneClass(
+                            badge.badgeTone,
+                          )}`}
+                        >
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
                     <span className="font-semibold text-[#0b1024]">
-                      {formatRub(activeThread.order.priceRub)}
+                      {formatRub(activeOrder.priceRub)}
                     </span>
                     <span className="text-[#6f7282]">
                       Посадочная:{" "}
                       <strong className="text-[#0b1024]">
-                        {shortWesetupPath(activeThread.order.targetUrl)}
+                        {shortWesetupPath(activeOrder.targetUrl)}
                       </strong>
                     </span>
                     <span className="text-[#6f7282]">
                       Анкор:{" "}
                       <strong className="text-[#0b1024]">
-                        «{activeThread.order.anchor}»
+                        «{activeOrder.anchor}»
                       </strong>
                     </span>
-                    {activeThread.order.publishedUrl ? (
+                    {activeOrder.publishedUrl ? (
                       <a
-                        href={activeThread.order.publishedUrl}
+                        href={activeOrder.publishedUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 font-medium text-[#3848c7] underline-offset-2 hover:underline"
@@ -473,7 +599,7 @@ export function ChatsTab({
                     ) : null}
                   </div>
 
-                  {activeThread.order.status === "on_check" &&
+                  {activeOrder.status === "on_check" &&
                   !isReadOnlyArchive ? (
                     <div className="flex items-center gap-1.5">
                       <button
@@ -500,7 +626,7 @@ export function ChatsTab({
               ) : null}
 
               {revisionOpen &&
-              activeThread.order?.status === "on_check" &&
+              activeOrder?.status === "on_check" &&
               !isReadOnlyArchive ? (
                 <div className="mt-2.5 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-3">
                   <textarea
@@ -544,17 +670,84 @@ export function ChatsTab({
             {/* Messages feed */}
             <div className="flex-1 space-y-3 overflow-y-auto bg-[#fafbff]/60 p-5">
               {loadingThreadId === activeThread.id &&
-              activeMessages.length === 0 ? (
+              activeTimeline.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-14 text-[13.5px] text-[#6f7282]">
                   <Loader2 className="size-4 animate-spin text-[#5566f6]" />
                   Загрузка сообщений диалога…
                 </div>
-              ) : activeMessages.length === 0 ? (
+              ) : activeTimeline.length === 0 ? (
                 <div className="py-14 text-center text-[13.5px] text-[#6f7282]">
                   Сообщений в этом диалоге пока нет. Вы можете написать вебмастеру первым ниже.
                 </div>
               ) : (
-                activeMessages.map((msg) => {
+                activeTimeline.map((item) => {
+                  if (item.type === "system") {
+                    const sys = item.notification;
+                    return (
+                      <div key={sys.id} className="flex justify-center py-1">
+                        <div className="w-full max-w-[92%] rounded-2xl border border-[#d8deff] bg-white/95 px-4 py-3 text-[12.5px] shadow-xs">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="inline-flex items-center gap-2 font-semibold text-[#0b1024]">
+                              <ShieldCheck className="size-4 shrink-0 text-[#5566f6]" />
+                              <span>Системное уведомление · {sys.title}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badgeToneClass(
+                                  sys.statusBadge.badgeTone,
+                                )}`}
+                              >
+                                Статус: {sys.statusBadge.label}
+                              </span>
+                              <span className="text-[11.5px] text-[#6f7282]">
+                                {formatRuDateTime(sys.timestamp)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[#3c4053]">
+                            <span className="font-semibold text-[#0b1024]">
+                              {formatRub(sys.priceRub)}
+                            </span>
+                            {sys.targetUrl ? (
+                              <span>
+                                Посадочная:{" "}
+                                <strong className="text-[#0b1024]">
+                                  {shortWesetupPath(sys.targetUrl)}
+                                </strong>
+                              </span>
+                            ) : null}
+                            {sys.anchor ? (
+                              <span>
+                                Анкор: «
+                                <strong className="text-[#0b1024]">
+                                  {sys.anchor}
+                                </strong>
+                                »
+                              </span>
+                            ) : null}
+                            {sys.actorName ? (
+                              <span className="text-[#6f7282]">
+                                Отправил: {sys.actorName}
+                              </span>
+                            ) : null}
+                            {sys.publishedUrl ? (
+                              <a
+                                href={sys.publishedUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 font-medium text-[#3848c7] underline-offset-2 hover:underline"
+                              >
+                                Размещённая ссылка
+                                <ExternalLink className="size-3" />
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const msg = item.message;
                   const isOutbound = msg.direction === "outbound";
                   const delivery = deliveryStatusMeta(msg.deliveryStatus);
 
@@ -649,6 +842,21 @@ export function ChatsTab({
                 </div>
               )}
             </div>
+
+            <ChatWebmasterPlacementDialog
+              open={placementDialogOpen}
+              onOpenChange={setPlacementDialogOpen}
+              thread={activeThread}
+              campaigns={campaigns}
+              defaultCampaignId={defaultCampaignId}
+              slots={slots}
+              accountSyncedAt={accountSyncedAt}
+              expectedApplicationsCount={expectedApplicationsCount}
+              onOrderCreated={() => {
+                void onRefreshOverview();
+                onOrderCreated?.();
+              }}
+            />
           </>
         )}
       </div>

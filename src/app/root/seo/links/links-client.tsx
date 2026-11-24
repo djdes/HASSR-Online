@@ -17,6 +17,13 @@ import { DemandAndAccountTab } from "@/components/root/seo-links/DemandAndAccoun
 import { OrdersRegistryTab } from "@/components/root/seo-links/OrdersRegistryTab";
 import { PlannerTab } from "@/components/root/seo-links/PlannerTab";
 import { SeoLinksHeaderMetrics } from "@/components/root/seo-links/SeoLinksHeaderMetrics";
+import {
+  getCachedOverview,
+  invalidateApplicationsCache,
+  invalidateOverviewCache,
+  invalidateThreadMessagesCache,
+  setCachedOverview,
+} from "@/components/root/seo-links/tab-cache";
 import type {
   GglOverviewResponse,
   SeoLinksViewerCapabilities,
@@ -53,7 +60,17 @@ export function SeoLinksClient({
   const [liveApplicationsCount, setLiveApplicationsCount] = useState<number | null>(null);
 
   const loadOverview = useCallback(
-    async (otherProjectsFlag = includeOtherProjects) => {
+    async (otherProjectsFlag = includeOtherProjects, forceRefresh = false) => {
+      if (!forceRefresh) {
+        const cached = getCachedOverview(otherProjectsFlag);
+        if (cached) {
+          setOverview(cached);
+          setLoading(false);
+          return;
+        }
+      } else {
+        invalidateOverviewCache();
+      }
       try {
         const response = await fetch(
           `/api/root/gogetlinks/overview?includeOtherProjects=${
@@ -68,6 +85,7 @@ export function SeoLinksClient({
             data?.error ?? "Не удалось загрузить данные раздела ссылок",
           );
         }
+        setCachedOverview(otherProjectsFlag, data);
         setOverview(data);
         if (!didApplyInitialTabRule) {
           setDidApplyInitialTabRule(true);
@@ -150,7 +168,10 @@ export function SeoLinksClient({
           data?.campaignsCount ?? 0
         }, заявок ${data?.ordersCount ?? 0}`,
       );
-      await loadOverview(includeOtherProjects);
+      invalidateOverviewCache();
+      invalidateApplicationsCache();
+      invalidateThreadMessagesCache();
+      await loadOverview(includeOtherProjects, true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Ошибка синхронизации");
     } finally {
@@ -343,9 +364,14 @@ export function SeoLinksClient({
             <ApplicationsTab
               campaigns={overview?.campaigns ?? []}
               defaultCampaignId={overview?.account?.defaultCampaignId ?? null}
+              threads={overview?.threads ?? []}
+              slots={overview?.slots ?? []}
+              accountSyncedAt={overview?.account?.lastSyncedAt ?? null}
+              expectedApplicationsCount={webmasterApplicationsCount}
               onCountChange={setLiveApplicationsCount}
+              onJumpToThread={handleJumpToThread}
               onOrderCreated={() => {
-                void loadOverview(includeOtherProjects);
+                void loadOverview(includeOtherProjects, true);
                 setActiveTab("orders");
               }}
             />
@@ -357,8 +383,10 @@ export function SeoLinksClient({
               accountConnected={Boolean(overview?.account)}
               plans={overview?.plans ?? []}
               slots={overview?.slots ?? []}
+              threads={overview?.threads ?? []}
               viewer={effectiveViewer}
-              onRefresh={() => loadOverview(includeOtherProjects)}
+              onJumpToThread={handleJumpToThread}
+              onRefresh={() => loadOverview(includeOtherProjects, true)}
             />
           ) : null}
 
@@ -369,7 +397,7 @@ export function SeoLinksClient({
               threads={overview?.threads ?? []}
               viewer={effectiveViewer}
               onJumpToThread={handleJumpToThread}
-              onRefresh={() => loadOverview(includeOtherProjects)}
+              onRefresh={() => loadOverview(includeOtherProjects, true)}
             />
           ) : null}
 
@@ -377,8 +405,17 @@ export function SeoLinksClient({
             <ChatsTab
               threads={overview?.threads ?? []}
               focusedThreadId={focusedThreadId}
+              campaigns={overview?.campaigns ?? []}
+              defaultCampaignId={overview?.account?.defaultCampaignId ?? null}
+              orders={overview?.orders ?? []}
+              slots={overview?.slots ?? []}
+              accountSyncedAt={overview?.account?.lastSyncedAt ?? null}
+              expectedApplicationsCount={webmasterApplicationsCount}
               onSelectThread={setFocusedThreadId}
-              onRefreshOverview={() => loadOverview(includeOtherProjects)}
+              onRefreshOverview={() => loadOverview(includeOtherProjects, true)}
+              onOrderCreated={() => {
+                void loadOverview(includeOtherProjects, true);
+              }}
             />
           ) : null}
 
@@ -388,7 +425,7 @@ export function SeoLinksClient({
               campaigns={overview?.campaigns ?? []}
               snapshots={overview?.similarwebSnapshots ?? []}
               viewer={effectiveViewer}
-              onRefreshOverview={() => loadOverview(includeOtherProjects)}
+              onRefreshOverview={() => loadOverview(includeOtherProjects, true)}
             />
           ) : null}
         </>
