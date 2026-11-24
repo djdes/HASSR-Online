@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   CalendarClock,
@@ -56,8 +56,13 @@ export function SeoLinksClient({
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [focusedThreadId, setFocusedThreadId] = useState<string | null>(null);
-  const [didApplyInitialTabRule, setDidApplyInitialTabRule] = useState(false);
+  const didApplyInitialTabRuleRef = useRef(false);
   const [liveApplicationsCount, setLiveApplicationsCount] = useState<number | null>(null);
+
+  const handleOpenTab = useCallback((nextTab: SeoLinksWorkspaceTab) => {
+    didApplyInitialTabRuleRef.current = true;
+    setActiveTab(nextTab);
+  }, []);
 
   const loadOverview = useCallback(
     async (otherProjectsFlag = includeOtherProjects, forceRefresh = false) => {
@@ -65,6 +70,12 @@ export function SeoLinksClient({
         const cached = getCachedOverview(otherProjectsFlag);
         if (cached) {
           setOverview(cached);
+          if (!didApplyInitialTabRuleRef.current) {
+            didApplyInitialTabRuleRef.current = true;
+            if (cached.metrics.counts.pendingApprovalSlots > 0) {
+              setActiveTab("planner");
+            }
+          }
           setLoading(false);
           return;
         }
@@ -87,9 +98,9 @@ export function SeoLinksClient({
         }
         setCachedOverview(otherProjectsFlag, data);
         setOverview(data);
-        if (!didApplyInitialTabRule) {
-          setDidApplyInitialTabRule(true);
-          if (data.metrics.counts.pendingApprovalSlots > 0) {
+        if (!didApplyInitialTabRuleRef.current) {
+          didApplyInitialTabRuleRef.current = true;
+          if (!forceRefresh && data.metrics.counts.pendingApprovalSlots > 0) {
             setActiveTab("planner");
           }
         }
@@ -101,7 +112,7 @@ export function SeoLinksClient({
         setLoading(false);
       }
     },
-    [includeOtherProjects, didApplyInitialTabRule],
+    [includeOtherProjects],
   );
 
   useEffect(() => {
@@ -184,6 +195,7 @@ export function SeoLinksClient({
   }
 
   function handleJumpToThread(threadId: string | null, donorDomain?: string) {
+    didApplyInitialTabRuleRef.current = true;
     if (threadId) {
       setFocusedThreadId(threadId);
       setActiveTab("chats");
@@ -305,7 +317,7 @@ export function SeoLinksClient({
         onSyncNow={() => void handleSyncNow()}
         includeOtherProjects={includeOtherProjects}
         onToggleIncludeOtherProjects={handleToggleOtherProjects}
-        onOpenTab={setActiveTab}
+        onOpenTab={handleOpenTab}
       />
 
       {/* 4 Workspace Tabs */}
@@ -323,7 +335,7 @@ export function SeoLinksClient({
               type="button"
               role="tab"
               aria-selected={isActive}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleOpenTab(tab.key)}
               className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-[13.5px] font-medium transition-colors ${
                 isActive
                   ? "bg-[#5566f6] text-white shadow-[0_10px_24px_-12px_rgba(85,102,246,0.55)]"
