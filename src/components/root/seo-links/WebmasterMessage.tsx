@@ -11,7 +11,7 @@ import { clearSentWebmasterMessageDraft, saveWebmasterMessageDraft, webmasterMes
 
 type MessageStatus = "sent" | "unavailable" | "duplicate" | "unconfirmed" | "invalid" | "changed" | "error" | "draftError";
 
-export function WebmasterMessage({ slotId, siteId, domain, userId }: { slotId: string; siteId: number; domain: string; userId: string }) {
+export function WebmasterMessage({ slotId, siteId, domain, userId, onSent }: { slotId: string; siteId: number; domain: string; userId: string; onSent?: () => void }) {
   const t = useTranslations("rootGglFirstMessage");
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
@@ -110,9 +110,13 @@ export function WebmasterMessage({ slotId, siteId, domain, userId }: { slotId: s
           }
           setBody("");
           setStatus("sent");
+          onSent?.();
+          break;
+        case "duplicate":
+          setStatus(payload.status);
+          onSent?.();
           break;
         case "unavailable":
-        case "duplicate":
         case "unconfirmed":
         case "invalid":
         case "changed":
