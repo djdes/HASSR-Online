@@ -122,6 +122,43 @@ for (const value of ["empty", "started", "done"]) {
 await page.click('[data-ppk-filter="all"]');
 await page.waitForTimeout(150);
 
+// V1: кнопка раздела, скрытого фильтром, — сбрасывает фильтр, адрес без «#», окна потом открываются и закрываются.
+{
+  let hiddenKey = null;
+  for (const value of ["started", "done", "empty"]) {
+    await page.click(`[data-ppk-filter="${value}"]`);
+    await page.waitForTimeout(150);
+    const rendered = await page.locator("[data-ppk-section]").evaluateAll((els) => els.map((el) => el.getAttribute("data-ppk-section")));
+    hiddenKey = ["primary", "plan", "prp", "appendix"].find((key) => !rendered.includes(key)) ?? null;
+    if (hiddenKey) break;
+  }
+  if (hiddenKey) {
+    await page.click(`[data-ppk-section-link="${hiddenKey}"]`);
+    await page.waitForTimeout(800);
+    const allChecked = await page.locator('[data-ppk-filter="all"]').getAttribute("aria-checked");
+    const top = await page.locator(`[data-ppk-section="${hiddenKey}"]`).evaluate((el) => Math.round(el.getBoundingClientRect().top)).catch(() => null);
+    check(`V1 раздел «${hiddenKey}», скрытый фильтром: фильтр сброшен, раздел у верха, адрес без #`,
+      allChecked === "true" && top !== null && top >= 0 && top < 220 && !page.url().includes("#"), `all=${allChecked}, top=${top}, url=${page.url()}`);
+    const historyState = await page.evaluate(() => history.state !== null);
+    check("V1 запись истории — от роутера (state не null)", historyState);
+    await page.locator('[data-ppk-item="1-1"]').scrollIntoViewIfNeeded();
+    await page.click('[data-ppk-item="1-1"]');
+    await page.waitForSelector("[data-ppk-item-dialog]", { timeout: 30000 });
+    await page.keyboard.press("Escape");
+    await page.waitForSelector("[data-ppk-item-dialog]", { state: "detached", timeout: 30000 });
+    await page.waitForTimeout(500);
+    await page.click('[data-ppk-item="1-1"]');
+    const reopened = await page.waitForSelector("[data-ppk-item-dialog]", { timeout: 15000 }).then(() => true).catch(() => false);
+    check("V1 после закрытия окно пункта открывается снова", reopened, new URL(page.url()).pathname);
+    if (reopened) {
+      await page.keyboard.press("Escape");
+      await page.waitForSelector("[data-ppk-item-dialog]", { state: "detached", timeout: 30000 });
+    }
+  } else check("V1 раздел, скрытый фильтром", false, "фильтр не скрыл ни одного раздела");
+  await page.click('[data-ppk-filter="all"]');
+  await page.evaluate(() => window.scrollTo(0, 0));
+}
+
 // Номер редакции у пункта 1.9 (утверждена в прошлой проверке на этом стенде: «ППК 002»).
 const badge19 = page.locator('[data-ppk-item="1-9"] [data-ppk-revision-badge]');
 check("AC6d номер редакции у пункта 1.9", (await badge19.count()) === 1 && /ППК \d{3}|Не утверждена/.test(await badge19.innerText()), await badge19.innerText().catch(() => "нет"));
@@ -370,9 +407,30 @@ if (await phoneCard.count()) {
   const w = await mp.evaluate(() => ({ docW: document.documentElement.scrollWidth, vw: window.innerWidth }));
   check("AC2 телефон: обзор без горизонтальной прокрутки (карточки мастера нет)", w.docW <= w.vw, JSON.stringify(w));
 }
+// V3: карточка мастера на телефоне — текст не в столбик, кнопка под ним.
+await mp.goto(`${BASE}/production-control`, { waitUntil: "networkidle", timeout: 120000 });
+const phoneCard2 = mp.locator("[data-ppk-starter]");
+if (await phoneCard2.count()) {
+  const m3 = await phoneCard2.evaluate((el) => ({ h: Math.round(el.getBoundingClientRect().height), text: Math.round(el.querySelector("p").getBoundingClientRect().width) }));
+  check("V3 телефон: карточка мастера невысокая, текст во всю ширину", m3.h <= 160 && m3.text >= 220, JSON.stringify(m3));
+  await phoneCard2.screenshot({ path: `${OUT}/15-phone-starter-card.png` });
+}
 const mw = await mp.evaluate(() => ({ docW: document.documentElement.scrollWidth, vw: window.innerWidth }));
 check("телефон: новый вид обзора без горизонтальной прокрутки", mw.docW <= mw.vw, JSON.stringify(mw));
 await mp.screenshot({ path: `${OUT}/12-phone-overview.png`, fullPage: true });
+// V2: список объектов на телефоне — название объекта не сжимается в столбик.
+await mp.goto(`${BASE}/settings/buildings`, { waitUntil: "networkidle", timeout: 120000 });
+const rows = await mp.locator("[data-building-sphere]").evaluateAll((chips) =>
+  chips.map((chip) => {
+    const row = chip.parentElement;
+    const name = row?.querySelector("h2");
+    return { sphere: chip.getAttribute("data-building-sphere"), name: name ? Math.round(name.getBoundingClientRect().width) : 0, chipH: Math.round(chip.getBoundingClientRect().height) };
+  }),
+);
+const food = rows.filter((r) => r.sphere === "food");
+check("V2 телефон: у объекта общепита название не в столбик, сфера не больше двух строк",
+  food.length > 0 && food.every((r) => r.name >= 100 && r.chipH <= 48), JSON.stringify(rows.slice(0, 4)));
+await mp.screenshot({ path: `${OUT}/16-phone-buildings.png` });
 await phone.close();
 
 // ---------- Тёмная тема ----------

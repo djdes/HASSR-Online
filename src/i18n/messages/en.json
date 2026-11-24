@@ -816,6 +816,7 @@
       "cancel": "Cancel",
       "done": "Done: added {summary}",
       "nothing": "Everything is already filled in, nothing added",
+      "nothingToAdd": "These sections are already filled — nothing to add.",
       "failed": "Could not fill in",
       "sphereLabel": "Facility field",
       "kindLabel": "Type of establishment"

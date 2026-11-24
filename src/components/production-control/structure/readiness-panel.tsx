@@ -56,7 +56,7 @@ export async function PpkReadinessPanel({ data }: { data: ReadinessData }) {
             <Users className="size-3.5" aria-hidden />
             {t("ackTitle")}
           </span>
-          <span className={cn("text-[14px] font-medium", data.ack && data.ack.acknowledged >= data.ack.total ? "text-[#116b2a]" : "text-[#0b1024]")}>
+          <span className={cn("text-[14px] font-medium", data.ack && data.ack.total > 0 && data.ack.acknowledged >= data.ack.total ? "text-[#116b2a]" : "text-[#0b1024]")}>
             {data.ack ? t("ackValue", { done: String(data.ack.acknowledged), total: String(data.ack.total) }) : t("ackClosed")}
           </span>
           <Link href="/production-control/item/3-7" scroll={false} prefetch={false} className="text-[12.5px] font-medium text-[#3848c7] hover:text-[#5566f6]">

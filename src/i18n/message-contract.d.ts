@@ -817,6 +817,7 @@ export type MessageContract = {
       "cancel": "Отмена",
       "done": "Готово: добавлено {summary}",
       "nothing": "Всё уже заполнено, ничего не добавлено",
+      "nothingToAdd": "Эти разделы уже заполнены — добавлять нечего.",
       "failed": "Не удалось заполнить",
       "sphereLabel": "Сфера объекта",
       "kindLabel": "Вид заведения"

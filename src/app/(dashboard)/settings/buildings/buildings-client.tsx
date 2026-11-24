@@ -655,9 +655,12 @@ function BuildingCard({
           </div>
         ) : (
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            {/* Переносится: длинная сфера («Общественное питание и производство
+                пищевой продукции») на телефоне уходит под название, а не
+                сжимает его в столбик. */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <Building2 className="size-4 text-[#5566f6]" />
-              <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
+              <h2 className="min-w-0 break-words text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
                 {building.name}
               </h2>
               {building.kind === "office" ? (

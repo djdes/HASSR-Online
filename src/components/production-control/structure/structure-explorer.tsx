@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { PpkStatus } from "@/lib/ppk/status";
@@ -79,12 +80,16 @@ export function PpkStructureExplorer({ sections }: { sections: ExplorerSection[]
             <a
               key={section.key}
               href={`#ppk-section-${section.key}`}
+              title={section.title}
               onClick={(event) => {
-                // Без `#раздела` в адресе: иначе после закрытия окна пункта
-                // браузер снова прыгал бы к разделу.
-                const target = document.getElementById(`ppk-section-${section.key}`);
-                if (!target) return;
+                // Всегда без `#раздела` в адресе: переход по якорю добавлял в
+                // историю запись, на которую потом закрывалось окно пункта.
                 event.preventDefault();
+                const id = `ppk-section-${section.key}`;
+                // Раздел скрыт фильтром — сначала показываем все пункты.
+                if (!document.getElementById(id)) flushSync(() => setFilter("all"));
+                const target = document.getElementById(id);
+                if (!target) return;
                 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
                 target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
                 target.focus({ preventScroll: true });

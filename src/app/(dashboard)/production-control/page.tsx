@@ -13,7 +13,7 @@ import {
 } from "@/lib/production-control-docs";
 import { loadPpkStatuses } from "@/lib/ppk/facts.server";
 import { ppkProgress } from "@/lib/ppk/status";
-import { STARTER_BLOCKS } from "@/lib/ppk/starter-packs";
+import { STARTER_BLOCKS, starterBlocksFor } from "@/lib/ppk/starter-packs";
 import { loadPpkItemFacts } from "@/lib/ppk/structure-facts.server";
 import { ppkItemProgress, ppkItemStatuses, ppkNextItem } from "@/lib/ppk/structure-status";
 import { PPK_STRUCTURE, ppkItemHref } from "@/lib/ppk/structure";
@@ -74,7 +74,13 @@ export default async function ProductionControlPage() {
       _count: { _all: true },
     }),
     loadStarterSphere(scope),
-    classic ? Promise.resolve(null) : loadOverviewSignals(scope),
+    // Сбой сигналов нового вида не роняет обзор: страница — в прежнем виде.
+    classic
+      ? Promise.resolve(null)
+      : loadOverviewSignals(scope).catch((error) => {
+          console.error("[ppk] overview signals failed", error);
+          return null;
+        }),
   ]);
   const facts = await loadPpkItemFacts(scope, statuses);
   const itemStatuses = ppkItemStatuses(facts);
@@ -85,11 +91,15 @@ export default async function ProductionControlPage() {
   const { done, total } = ppkItemProgress(itemStatuses);
   const next = ppkNextItem(itemStatuses);
   const progress = s("progress", { done: String(done), total: String(total) });
+  // Мастер — пока у сферы объекта есть что добавить (у медицины, услуг и спорта — 3 раздела).
+  const starterPending = starterBlocksFor(starterSphere).some((block) => !filledBlocks.includes(block));
   const starter =
-    blocks.total > 0 && blocks.done / blocks.total < 0.4 ? <PpkStarterWizard filled={filledBlocks} defaultSphere={starterSphere} /> : null;
+    starterPending && blocks.total > 0 && blocks.done / blocks.total < 0.4 ? (
+      <PpkStarterWizard filled={filledBlocks} defaultSphere={starterSphere} />
+    ) : null;
   const headerActions = (
     <div className="flex flex-wrap items-center gap-2">
-      {forcedClassic ? null : <PpkViewToggle classic={classic} />}
+      {forcedClassic ? null : <PpkViewToggle classic={classic || signals === null} />}
       <Link
         href="/settings/services?order=ppk-development"
         className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"

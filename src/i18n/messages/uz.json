@@ -816,6 +816,7 @@
       "cancel": "Bekor qilish",
       "done": "Tayyor: qo'shildi {summary}",
       "nothing": "Hammasi allaqachon to'ldirilgan, hech narsa qo'shilmadi",
+      "nothingToAdd": "Bu boʻlimlar allaqachon toʻldirilgan — qoʻshadigan narsa yoʻq.",
       "failed": "To'ldirib bo'lmadi",
       "sphereLabel": "Obyekt sohasi",
       "kindLabel": "Muassasa turi"

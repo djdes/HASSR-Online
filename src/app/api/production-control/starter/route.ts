@@ -30,7 +30,8 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
   const body = await request.json().catch(() => null);
   const sphere = body?.sphere ?? "food";
-  const kind = body?.kind ?? (sphere === "food" ? undefined : "cafe");
+  // С указанной сферой вид необязателен (общепит — «кафе»); прежний запрос без сферы — только с видом.
+  const kind = body?.kind ?? (body?.sphere !== undefined ? "cafe" : undefined);
   if (!isStarterSphere(sphere)) {
     return NextResponse.json({ error: "Неизвестная сфера" }, { status: 400 });
   }

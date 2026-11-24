@@ -69,7 +69,8 @@ export function PpkStarterWizard({ filled, defaultSphere }: { filled: StarterBlo
       if (created.flowchart) parts.push(t("items.flowcharts", { count: created.flowchart }));
       if (created["lab-plan"]) parts.push(t("items.labPlan"));
       if (created["pest-plan"]) parts.push(t("items.pestPlan"));
-      if (created.norms) parts.push(t("items.norms", { count: created.norms }));
+      // Нормативы — одна запись со списком документов: в сообщении — число документов, как в окне.
+      if (created.norms) parts.push(t("items.norms", { count: summary.norms }));
       if (created.policy) parts.push(t("items.policy"));
       toast.success(parts.length > 0 ? t("done", { summary: parts.join(", ") }) : t("nothing"));
       setOpen(false);
@@ -86,7 +87,8 @@ export function PpkStarterWizard({ filled, defaultSphere }: { filled: StarterBlo
     <>
       <section data-ppk-starter className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-[var(--app-veil)] px-4 py-2.5">
         <Sparkles className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
-        <p className="min-w-0 flex-1 text-[13.5px] leading-snug text-[#3c4053]">
+        {/* Не уже 14rem: на телефоне кнопка уходит на следующую строку, а не сжимает текст в столбик. */}
+        <p className="min-w-[14rem] flex-1 text-[13.5px] leading-snug text-[#3c4053]">
           <span className="font-semibold text-[#0b1024]">{t("cardTitle")}</span> <span className="text-[#6f7282]">{t("cardLead")}</span>
         </p>
         <button
@@ -95,7 +97,7 @@ export function PpkStarterWizard({ filled, defaultSphere }: { filled: StarterBlo
             setSphere(defaultSphere);
             setOpen(true);
           }}
-          className="inline-flex h-9 shrink-0 items-center justify-center rounded-xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          className="inline-flex h-9 w-full shrink-0 items-center justify-center rounded-xl bg-[#5566f6] px-4 text-[13.5px] font-medium text-white transition-colors duration-150 hover:bg-[#4a5bf0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:w-auto"
         >
           {t("choose")}
         </button>
@@ -172,7 +174,7 @@ export function PpkStarterWizard({ filled, defaultSphere }: { filled: StarterBlo
                   {willAdd.join(", ")}
                 </p>
               ) : (
-                <p>{t("nothing")}</p>
+                <p>{t("nothingToAdd")}</p>
               )}
               {skippedNames.length > 0 ? (
                 <p className="text-[12.5px] text-[#6f7282]">{t("alreadyFilled", { blocks: skippedNames.join(", ") })}</p>
