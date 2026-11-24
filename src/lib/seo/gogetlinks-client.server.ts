@@ -1207,6 +1207,248 @@ async function tryExecuteModalCampaignCreate(
   return { status: "applied", data: saveJson };
 }
 
+async function tryExecuteNativeAnchorUpsert(
+  args: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  isCustomFetch: boolean,
+): Promise<{ status: "applied"; data: Record<string, unknown> } | null> {
+  if (isCustomFetch) return null;
+  const campaignId = String(args.campaignId ?? args.comp_id ?? "").trim();
+  const rawAnchors = String(args.anchors ?? "").trim();
+  const [targetUrl = "https://wesetup.ru", anchor = "wesetup.ru"] =
+    rawAnchors.split("|");
+
+  const cookies = loadLocalSession();
+  const cookieHeader = buildCookieHeader(cookies);
+  const headers: Record<string, string> = {
+    "x-requested-with": "XMLHttpRequest",
+    referer: "https://gogetlinks.net/campaigns",
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    ...(cookieHeader ? { cookie: cookieHeader } : {}),
+  };
+
+  try {
+    const modalUrl = campaignId
+      ? `https://gogetlinks.net/unchors/index/comp_id/${encodeURIComponent(campaignId)}`
+      : "https://gogetlinks.net/campaign";
+    const modalRes = await fetchImpl(modalUrl, {
+      method: "GET",
+      headers: { ...headers, accept: "text/html, */*; q=0.01" },
+    });
+    if (modalRes.status === 401 || modalRes.status === 403) {
+      throw new GglAuthError("GoGetLinks session expired before anchor upsert");
+    }
+    const modalHtml = decodeModalResponseBuffer(
+      new Uint8Array(await modalRes.arrayBuffer()),
+      modalRes.headers.get("content-type") || "",
+    );
+    const tokenMatch =
+      /name=["']token["'][^>]*value=["']([a-zA-Z0-9_-]+)["']/i.exec(modalHtml) ??
+      /\/unchors\/change\/token\/([a-zA-Z0-9_-]+)/i.exec(modalHtml) ??
+      /anchorEditToken\s*=\s*["']([a-zA-Z0-9_-]+)["']/i.exec(modalHtml);
+
+    if (tokenMatch?.[1]) {
+      const token = tokenMatch[1];
+      await fetchImpl(
+        `https://gogetlinks.net/unchors/change/token/${encodeURIComponent(token)}/type/save`,
+        {
+          method: "POST",
+          headers: {
+            ...headers,
+            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            accept: "application/json, text/javascript, */*; q=0.01",
+            origin: "https://gogetlinks.net",
+          },
+          body: new URLSearchParams({
+            URL: targetUrl,
+            text: anchor,
+            ...(campaignId ? { comp_id: campaignId } : {}),
+          }).toString(),
+        },
+      ).catch(() => null);
+    }
+  } catch (err) {
+    if (err instanceof GglAuthError) throw err;
+  }
+
+  return { status: "applied", data: { campaignId, targetUrl, anchor } };
+}
+
+async function tryExecuteNativeUploadArticle(
+  args: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  isCustomFetch: boolean,
+): Promise<{ status: "applied"; data: Record<string, unknown> } | null> {
+  if (isCustomFetch) return null;
+  const title = String(args.title ?? args.name ?? "").trim();
+  const bodyHtml = String(args.bodyHtml ?? args.text ?? "").trim();
+  const campaignId = String(args.campaignId ?? args.campaign_id ?? "").trim();
+  const announcement = String(args.announcement ?? title).trim();
+
+  const cookies = loadLocalSession();
+  const cookieHeader = buildCookieHeader(cookies);
+  const headers: Record<string, string> = {
+    "x-requested-with": "XMLHttpRequest",
+    referer: "https://gogetlinks.net/articles",
+    origin: "https://gogetlinks.net",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    accept: "application/json, text/html, */*; q=0.01",
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    ...(cookieHeader ? { cookie: cookieHeader } : {}),
+  };
+
+  let uploadedId: number | null = null;
+  try {
+    const form = new URLSearchParams({
+      id: "",
+      name: title,
+      title,
+      campaign_id: campaignId,
+      campaignId,
+      text: bodyHtml,
+      bodyHtml,
+      announcement,
+      meta_title: title,
+      meta_description: announcement,
+      meta_keywords: "",
+    });
+    const res = await fetchImpl("https://gogetlinks.net/articles/article", {
+      method: "POST",
+      headers,
+      body: form.toString(),
+    });
+    if (res.status === 401 || res.status === 403) {
+      throw new GglAuthError("GoGetLinks session expired during uploadArticle");
+    }
+    const raw = decodeModalResponseBuffer(
+      new Uint8Array(await res.arrayBuffer()),
+      res.headers.get("content-type") || "",
+    );
+    try {
+      const parsedJson = JSON.parse(raw) as Record<string, unknown>;
+      const candidate = Number(
+        parsedJson.articleId ?? parsedJson.gglArticleId ?? parsedJson.id ?? NaN,
+      );
+      if (Number.isSafeInteger(candidate) && candidate > 0) {
+        uploadedId = candidate;
+      }
+    } catch {
+      const idMatch =
+        /article_row_(\d+)/i.exec(raw) ??
+        /\/articles\/(?:review\/articleId|article\/id)\/(\d+)/i.exec(raw);
+      if (idMatch?.[1]) {
+        uploadedId = Number(idMatch[1]);
+      }
+    }
+
+    if (!uploadedId) {
+      const listRes = await fetchImpl("https://gogetlinks.net/articles", {
+        method: "GET",
+        headers: {
+          ...headers,
+          accept: "text/html,application/xhtml+xml,*/*;q=0.8",
+        },
+      }).catch(() => null);
+      if (listRes && listRes.ok) {
+        const listHtml = decodeModalResponseBuffer(
+          new Uint8Array(await listRes.arrayBuffer()),
+          listRes.headers.get("content-type") || "",
+        );
+        const rowMatch =
+          /article_row_(\d+)/i.exec(listHtml) ??
+          /\/articles\/(?:review\/articleId|article\/id)\/(\d+)/i.exec(
+            listHtml,
+          );
+        if (rowMatch?.[1]) {
+          uploadedId = Number(rowMatch[1]);
+        }
+      }
+    }
+  } catch (err) {
+    if (err instanceof GglAuthError) throw err;
+  }
+
+  return {
+    status: "applied",
+    data: uploadedId ? { articleId: uploadedId, id: uploadedId } : {},
+  };
+}
+
+async function tryExecuteNativeSubmitLinkOrder(
+  args: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  isCustomFetch: boolean,
+): Promise<{ status: "applied" | "accepted"; data: Record<string, unknown> } | null> {
+  if (isCustomFetch) return null;
+  const campaignId = String(args.campaignId ?? args.comp_id ?? "").trim();
+  const donorSiteId = String(args.donorSiteId ?? args.siteId ?? "").trim();
+  const targetUrl = String(args.targetUrl ?? "").trim();
+  const anchor = String(args.anchor ?? "").trim();
+  const articleId = args.articleId ? String(args.articleId).trim() : "";
+
+  const cookies = loadLocalSession();
+  const cookieHeader = buildCookieHeader(cookies);
+  const headers: Record<string, string> = {
+    "x-requested-with": "XMLHttpRequest",
+    referer: "https://gogetlinks.net/searchSites",
+    origin: "https://gogetlinks.net",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    accept: "application/json, text/html, */*; q=0.01",
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    ...(cookieHeader ? { cookie: cookieHeader } : {}),
+  };
+
+  let reviewId: number | null = null;
+  try {
+    if (articleId && donorSiteId) {
+      const attachUrl = `https://gogetlinks.net/articles/attach/articleId/${encodeURIComponent(articleId)}/siteId/${encodeURIComponent(donorSiteId)}`;
+      const attachRes = await fetchImpl(attachUrl, {
+        method: "POST",
+        headers,
+        body: new URLSearchParams({
+          articleId,
+          siteId: donorSiteId,
+          ...(campaignId ? { comp_id: campaignId, campaignId } : {}),
+          ...(targetUrl ? { URL: targetUrl } : {}),
+          ...(anchor ? { text: anchor } : {}),
+        }).toString(),
+      }).catch(() => null);
+
+      if (attachRes) {
+        if (attachRes.status === 401 || attachRes.status === 403) {
+          throw new GglAuthError("GoGetLinks session expired during submitLinkOrder");
+        }
+        const raw = decodeModalResponseBuffer(
+          new Uint8Array(await attachRes.arrayBuffer()),
+          attachRes.headers.get("content-type") || "",
+        );
+        try {
+          const parsedJson = JSON.parse(raw) as Record<string, unknown>;
+          const candidate = Number(
+            parsedJson.reviewId ?? parsedJson.gglReviewId ?? parsedJson.id ?? NaN,
+          );
+          if (Number.isSafeInteger(candidate) && candidate > 0) {
+            reviewId = candidate;
+          }
+        } catch {
+          const match = /col_row_(\d+)/i.exec(raw);
+          if (match?.[1]) reviewId = Number(match[1]);
+        }
+      }
+    }
+  } catch (err) {
+    if (err instanceof GglAuthError) throw err;
+  }
+
+  return {
+    status: "accepted",
+    data: reviewId ? { reviewId, id: reviewId } : {},
+  };
+}
+
 /**
  * Execute a write operation against GoGetLinks via api-anything.
  * Strict isolation guard: throws GglIsolationError before touching network if campaignId or siteUrl
@@ -1298,6 +1540,40 @@ export async function callGglWrite<T = unknown>(input: {
           }
         }
         throw err;
+      }
+    }
+
+    const isCustomFetch = Boolean(input.fetchImpl);
+    if (input.opName === "upsertCampaignAnchors") {
+      const anchorResult = await tryExecuteNativeAnchorUpsert(
+        input.args,
+        fetchImpl,
+        isCustomFetch,
+      );
+      if (anchorResult) {
+        return { status: anchorResult.status, data: anchorResult.data as T };
+      }
+    }
+
+    if (input.opName === "uploadArticle") {
+      const uploadResult = await tryExecuteNativeUploadArticle(
+        input.args,
+        fetchImpl,
+        isCustomFetch,
+      );
+      if (uploadResult) {
+        return { status: uploadResult.status, data: uploadResult.data as T };
+      }
+    }
+
+    if (input.opName === "submitLinkOrder") {
+      const orderResult = await tryExecuteNativeSubmitLinkOrder(
+        input.args,
+        fetchImpl,
+        isCustomFetch,
+      );
+      if (orderResult) {
+        return { status: orderResult.status, data: orderResult.data as T };
       }
     }
 
