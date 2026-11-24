@@ -17,6 +17,9 @@ const check = (name, ok, detail = "") => {
 
 async function login(page) {
   await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+  // Форма входа ждёт загрузки страницы (master #332): поля, заполненные до гидратации, сбрасываются.
+  await page.waitForLoadState("load");
+  await page.waitForTimeout(2500);
   await page.fill("#email", "admin@haccp.local");
   await page.fill("#password", "admin1234");
   await Promise.all([
@@ -90,27 +93,29 @@ const errors = [];
   await page.goto(`${BASE}/production-control`, { waitUntil: "domcontentloaded" });
   await page.click('[data-ppk-item="1-9"]');
   await page.waitForSelector('[data-ppk-text="text-terms"] textarea', { timeout: 60000 });
-  await page.fill('[data-ppk-text="text-terms"] textarea', "ХАССП — система анализа опасностей и критических контрольных точек.");
+  const stamp = new Date().toISOString();
+  await page.fill('[data-ppk-text="text-terms"] textarea', `ХАССП — система анализа опасностей и критических контрольных точек. ${stamp}`);
   await page.click('[data-ppk-text="text-terms"] button:has-text("Сохранить")');
   await page.waitForTimeout(1500);
   await page.goto(`${BASE}/production-control/item/1-9`, { waitUntil: "networkidle" });
   const saved = await page.locator('[data-ppk-text="text-terms"] textarea').inputValue();
-  check("1.9: текст сохраняется и виден при повторном открытии", saved.startsWith("ХАССП — система"), saved.slice(0, 40));
+  check("1.9: текст сохраняется и виден при повторном открытии", saved.startsWith("ХАССП — система") && saved.endsWith(stamp), saved.slice(-30));
   check("прямой заход: страница пункта, не окно", (await page.locator("[data-ppk-item-page]").count()) === 1 && (await page.locator("[data-ppk-item-dialog]").count()) === 0);
   await page.screenshot({ path: path.join(OUT, "04-item-page-1-9.png"), fullPage: true });
 
-  // 3.1 «Заполнить типовыми»
-  await page.goto(`${BASE}/production-control/item/3-1`, { waitUntil: "networkidle" });
-  await page.click('[data-ppk-prp="prp-infections"] button:has-text("Заполнить типовыми")');
-  await page.waitForFunction(() => document.querySelectorAll('[data-ppk-prp="prp-infections"] tbody tr').length > 5, null, { timeout: 30000 });
-  const rows = await page.locator('[data-ppk-prp="prp-infections"] tbody tr').count();
-  check("3.1: типовые строки добавлены", rows >= 10, `rows=${rows}`);
+  // 3.2 «Заполнить типовыми» (3.1 заполнен прошлым прогоном)
+  await page.goto(`${BASE}/production-control/item/3-2`, { waitUntil: "networkidle" });
+  const fillButton = page.locator('[data-ppk-prp="prp-disinfection"] button:has-text("Заполнить типовыми")');
+  if (await fillButton.count()) await fillButton.click();
+  await page.waitForFunction(() => document.querySelectorAll('[data-ppk-prp="prp-disinfection"] tbody tr').length > 5, null, { timeout: 30000 });
+  const rows = await page.locator('[data-ppk-prp="prp-disinfection"] tbody tr').count();
+  check("3.2: типовые строки добавлены", rows >= 10, `rows=${rows}`);
 
   // Статусы обзора обновились
   await page.goto(`${BASE}/production-control`, { waitUntil: "networkidle" });
   const dot19 = await page.locator('[data-ppk-item="1-9"] [role="img"]').getAttribute("aria-label");
-  const dot31 = await page.locator('[data-ppk-item="3-1"] [role="img"]').getAttribute("aria-label");
-  check("обзор: 1.9 и 3.1 заполнены", dot19 === "Заполнен" && dot31 === "Заполнен", `${dot19} / ${dot31}`);
+  const dot31 = await page.locator('[data-ppk-item="3-2"] [role="img"]').getAttribute("aria-label");
+  check("обзор: 1.9 и 3.2 заполнены", dot19 === "Заполнен" && dot31 === "Заполнен", `${dot19} / ${dot31}`);
   await page.screenshot({ path: path.join(OUT, "05-overview-after.png"), fullPage: true });
 
   // Тёмная тема: обзор и окно
