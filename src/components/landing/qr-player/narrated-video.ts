@@ -16,6 +16,14 @@ export const NARRATED_VIDEO_BASENAME = "qr-tour";
  * нет — прежний ролик `qr-tour`. Субтитры сняты по таймингам речи.
  */
 export const PRESENTATION_VIDEO_BASENAME = "presentation";
+/**
+ * Расширенная видеопрезентация (правки 24.11.2026: «вставь расширенную
+ * видеоверсию»): тот же голос Максима плюс 6 сцен с экранами сетапа —
+ * раздача, приёмка по ЭДО, сеть точек, ППК и ХАССП, «Пришла проверка»,
+ * отчёты. Отрендерена из ветки `feat/video-extended` (≈ 2 мин); есть файл —
+ * главная открывает её, нет — прежнюю презентацию.
+ */
+export const EXTENDED_PRESENTATION_VIDEO_BASENAME = "presentation-extended";
 
 /**
  * Видео по виду деятельности (правки 20.11.2026): у общепита — прежние файлы,
@@ -23,7 +31,7 @@ export const PRESENTATION_VIDEO_BASENAME = "presentation";
  * открывается.
  */
 const VIDEO_BASENAMES: Record<QrIndustry, readonly string[]> = {
-  food: [PRESENTATION_VIDEO_BASENAME, NARRATED_VIDEO_BASENAME],
+  food: [EXTENDED_PRESENTATION_VIDEO_BASENAME, PRESENTATION_VIDEO_BASENAME, NARRATED_VIDEO_BASENAME],
   medical: [`${PRESENTATION_VIDEO_BASENAME}-medical`],
   hotel: [`${PRESENTATION_VIDEO_BASENAME}-hotel`],
 };

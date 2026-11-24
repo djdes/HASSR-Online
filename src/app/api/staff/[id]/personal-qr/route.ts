@@ -82,7 +82,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       renderEmailLayout(
         "Личный вход",
         `<p>Здравствуйте, ${escapeHtml(ctx.user.name)}!</p><p>Откройте ссылку на телефоне и введите свой PIN — попадёте в кабинет:</p><p><a href="${url}">${url}</a></p><p style="color:#71717a">Никому не пересылайте: ссылка вместе с PIN даёт вход. Потеряли — попросите руководителя выпустить новую, старая перестанет работать.</p>`
-      )
+      ),
+      { sensitive: true }
     ).catch(() => false);
     sent = "email";
   }

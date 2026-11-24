@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCronSecret } from "@/lib/cron-auth";
+import { OUTGOING_EMAIL_RETENTION_DAYS } from "@/lib/outgoing-email.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
  *
  * Сохраняем особо ценные действия (impersonate, override, deletion)
  * дольше — те держим 365 дней.
+ *
+ * Журнал исходящих писем (`OutgoingEmail`) — старше 365 дней.
  *
  * Заодно убирает ключи идемпотентности (`JournalExternalIdempotency`):
  * они нужны ровно на время, пока клиент может повторить ту же отправку,
@@ -80,11 +83,21 @@ async function handle(request: Request) {
       return { count: 0 };
     });
 
+  // Журнал исходящих писем («Переписки» карточки клиента) — год.
+  const outgoingEmailCutoff = new Date(Date.now() - OUTGOING_EMAIL_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const outgoingEmailDeleted = await db.outgoingEmail
+    .deleteMany({ where: { createdAt: { lt: outgoingEmailCutoff } } })
+    .catch((error) => {
+      console.error("[purge-audit-log] outgoing email purge failed", error);
+      return { count: 0 };
+    });
+
   return NextResponse.json({
     ok: true,
     normalDeleted: normalDeleted.count,
     criticalDeleted: criticalDeleted.count,
     idempotencyDeleted: idempotencyDeleted.count,
+    outgoingEmailDeleted: outgoingEmailDeleted.count,
     cutoffNormal: cutoffNormal.toISOString(),
     cutoffCritical: cutoffCritical.toISOString(),
   });

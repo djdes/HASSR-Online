@@ -25,6 +25,7 @@ function load(preview: boolean, mocks: Record<string, unknown>) {
 
 test("actual correspondence routes enforce guard, org existence, validation, authenticated sender and audit idempotency", async () => {
   let denied = false, exists = true, repeated = false, configured = true;
+  let sentFiles: string[] = [];
   const calls: unknown[] = [];
   const item = { id: "email-a", to: input.to, subject: input.subject, status: "sent", fromEmail: "staff@example.com" };
   const mocks = {
@@ -34,7 +35,9 @@ test("actual correspondence routes enforce guard, org existence, validation, aut
     "@/lib/client-email.server": {
       clientEmailHistory: async (organizationId: string, cursor: string | null) => { calls.push(["history", organizationId, cursor]); return { items: [], nextCursor: null }; },
       clientEmailPreview: async (userId: string) => { assert.equal(userId, "signed-in-staff"); calls.push("preview"); return configured ? { html: "<html>brand</html>" } : null; },
-      sendClientEmail: async (organizationId: string, userId: string) => { calls.push(["send", organizationId, userId]); return configured ? { item, repeated } : null; },
+      sendClientEmail: async (organizationId: string, userId: string, _input: unknown, files: { filename: string; size: number }[] = []) => {
+        calls.push(["send", organizationId, userId]); sentFiles = files.map((file) => `${file.filename}:${file.size}`); return configured ? { item, repeated } : null;
+      },
     },
   };
   const route = load(false, mocks), preview = load(true, mocks);
@@ -63,4 +66,16 @@ test("actual correspondence routes enforce guard, org existence, validation, aut
   assert.equal((await route.POST(request(), context)).status, 200); assert.ok(!calls.includes("audit"));
   calls.length = 0;
   assert.equal((await preview.POST(request(), context)).status, 200); assert.deepEqual(calls, ["guard", "preview"]);
+  // Вложения из карточки клиента: multipart `content` + `files`, правила раздела «Письма».
+  repeated = false; calls.length = 0;
+  const form = new FormData();
+  form.set("content", JSON.stringify(input));
+  form.append("files", new File([new Uint8Array([1, 2, 3])], "КП.pdf", { type: "application/pdf" }));
+  assert.equal((await route.POST(new Request("https://fixture.invalid/api", { method: "POST", body: form }), context)).status, 200);
+  assert.deepEqual(sentFiles, ["КП.pdf:3"]);
+  const bad = new FormData();
+  bad.set("content", JSON.stringify(input));
+  bad.append("files", new File([new Uint8Array([1])], "run.exe"));
+  const rejected = await route.POST(new Request("https://fixture.invalid/api", { method: "POST", body: bad }), context);
+  assert.equal(rejected.status, 400, "неподдерживаемый тип файла");
 });

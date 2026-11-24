@@ -5,6 +5,8 @@ import { decryptSecret, encryptSecret } from "@/lib/integration-crypto";
 import { isEmailDeliveryConfigured, sendRawEmail, type EmailAttachment } from "@/lib/email";
 import { formatFromAddress, isAllowedSmtpHost, isPrivateIp, mailSenderStatus, type MailSenderInput, type MailSenderStatus } from "@/lib/platform-mail";
 import { isTrustedPrivateSmtpAddress, TRUSTED_SMTP_HOSTS_SETTING } from "@/lib/smtp-host-policy";
+import { emailHtmlToText } from "@/lib/email-text";
+import { recordOutgoingEmail } from "@/lib/outgoing-email.server";
 
 /**
  * Letters that a platform panel user sends to clients (contract, proposal,
@@ -203,6 +205,20 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
   ]);
 
   let fallbackReason: string | null = null;
+  // Журнал исходящих писем: личная почта пишется здесь, общая — в sendEmail.
+  const journal = (result: { ok: true; messageId?: string } | { ok: false; error: string }) =>
+    recordOutgoingEmail({
+      to: recipients,
+      subject: message.subject,
+      text: message.text || emailHtmlToText(message.html),
+      via: "personal",
+      fromEmail: row?.fromEmail ?? null,
+      senderUserId: message.senderUserId,
+      attachments: message.attachments,
+      status: result.ok ? "sent" : "failed",
+      error: result.ok ? null : result.error,
+      messageId: result.ok ? (result.messageId ?? message.messageId ?? null) : (message.messageId ?? null),
+    });
   if (row?.enabled && row.verifiedAt) {
     if (message.expectedFrom && formatFromAddress(row.fromName, row.fromEmail) !== message.expectedFrom) {
       return { ok: false, error: "Настройки отправителя изменились. Обновите страницу и проверьте письмо." };
@@ -220,10 +236,13 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
         attachments: message.attachments?.map((item) => ({ filename: item.filename, content: item.content, path: item.path, contentType: item.contentType })),
       });
       if (message.personalOnly && info.rejected?.length) throw new MailSenderError("SMTP-сервер отклонил адрес получателя");
+      await journal({ ok: true, messageId: info.messageId });
       return { ok: true, via: "personal", from, messageId: info.messageId };
     } catch (error) {
       fallbackReason = error instanceof MailSenderError ? error.message : describeSmtpError(error);
       await db.platformMailSender.update({ where: { userId: message.senderUserId }, data: { lastError: fallbackReason } }).catch(() => undefined);
+      // Без запасного пути неудача окончательная; с ним исход запишет общая почта.
+      if (message.personalOnly) await journal({ ok: false, error: fallbackReason });
     }
   } else if (row && !row.enabled) {
     fallbackReason = "личная почта отключена";
@@ -240,7 +259,7 @@ export async function sendStaffEmail(message: StaffEmail): Promise<StaffEmailRes
   }
   const replyTo = row?.replyTo || row?.fromEmail || user?.contactEmail || user?.email || null;
   const results = await Promise.all(
-    recipients.map((to) => sendRawEmail(to, message.subject, message.html, { replyTo, attachments: message.attachments, text: message.text })),
+    recipients.map((to) => sendRawEmail(to, message.subject, message.html, { replyTo, attachments: message.attachments, text: message.text, messageId: message.messageId, senderUserId: message.senderUserId })),
   );
   if (results.some((sent) => !sent)) return { ok: false, error: "Письмо не ушло через общую почту — попробуйте ещё раз" };
   return { ok: true, via: "system", from: "noreply@wesetup.ru", fallbackReason };

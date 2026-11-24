@@ -1,0 +1,16 @@
+{
+  "task": "client-mail-templates-2026-11-24",
+  "verifier": "fresh independent agent",
+  "rounds": [
+    { "head": "88f6e42e0", "verdict": "FAIL", "issues": ["D1 sensitive links (AC5)", "D2 payments scrollbar (AC4)", "D3 fallback sender shown as automatic (AC6)"] },
+    { "head": "55de5a7e7", "verdict": "PASS", "issues": [] }
+  ],
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS", "AC8": "PASS" },
+  "checks": {
+    "targeted_tests": "76/76 (12 files) + 11/11 related",
+    "full_suite_after_master_merge": "pass=7413 fail=0",
+    "typecheck": "exit 0",
+    "i18n_types_check": "exit 0"
+  },
+  "accepted_as_is": ["D4: no journal when personal mail fails and shared SMTP is not configured (AC5: no SMTP → no journal)", "one recipient-organization lookup per recipient"]
+}

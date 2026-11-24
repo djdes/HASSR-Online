@@ -38,6 +38,8 @@ import { ServiceEmailsCard } from "@/components/root/service-emails-card";
 import { ClientConversations } from "@/components/root/client-conversations";
 import { loadClientConversations } from "@/lib/client-conversations.server";
 import { clientEmailHistory } from "@/lib/client-email.server";
+import { clientEmailTemplateContext } from "@/lib/client-email-templates.server";
+import { ScrollList } from "@/components/ui/scroll-list";
 import { listEmailSenders } from "@/lib/email-sender-access.server";
 import { clientDocumentRecipients } from "@/lib/client-documents";
 import { countryFlag, countryName, localTimeLabel, lookupIpGeo, normalizeTimeZone, utcOffsetLabel, type IpGeo } from "@/lib/ip-geo";
@@ -101,12 +103,13 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
 
   if (!org) notFound();
 
-  const [viewer, contacts, activeDocs, mailSender, emailHistory] = await Promise.all([
+  const [viewer, contacts, activeDocs, mailSender, emailHistory, emailTemplates] = await Promise.all([
     platformViewerForSession(session),
     loadClientContacts(id),
     db.journalDocument.count({ where: { organizationId: id, status: "active" } }),
     listEmailSenders(session.user.id),
     clientEmailHistory(id),
+    clientEmailTemplateContext(org.name),
   ]);
   const canBill = canUsePlatformSection(viewer, "billing");
   // Свои 14 дней организации (серия B, Р11): только у организаций с аккаунтом.
@@ -383,6 +386,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
           recipients={clientDocumentRecipients(contacts)}
           senders={mailSender}
           initialHistory={emailHistory}
+          templates={emailTemplates}
         />
 
         {/* Служебные письма владельцу вручную: приветственное, пробный, отзыв. */}
@@ -475,7 +479,9 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
             {payments.length === 0 ? (
               <p className="text-[14px] text-[#9b9fb3]">{t("payments.empty")}</p>
             ) : (
-              <div className="-mx-5 overflow-x-auto px-5 md:-mx-6 md:px-6">
+              // Длинная история оплат прокручивается внутри карточки с видимой полосой.
+              <ScrollList maxHeightClassName="max-h-[min(60vh,560px)]" className="-mx-5 md:-mx-6">
+              <div className="overflow-x-auto px-5 md:px-6" data-client-payments-scroll>
                 <table className="w-full min-w-[640px] text-[14px]">
                   <thead>
                     <tr className="text-left text-[12px] uppercase tracking-[0.14em] text-[#8a8ea4]">
@@ -560,6 +566,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   </tbody>
                 </table>
               </div>
+              </ScrollList>
             )}
           </div>
         </section>
@@ -572,7 +579,8 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               {formatNumber(locale, people.length)} · {t("people.withContacts", { count: withContacts })}
             </span>
           </div>
-          <ul className="divide-y divide-[#eef0f6]">
+          <ScrollList maxHeightClassName="max-h-[min(65vh,620px)]">
+          <ul className="divide-y divide-[#eef0f6]" data-client-people-list>
             {people.map((person) => (
               <li
                 key={person.id}
@@ -640,6 +648,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
               </li>
             ))}
           </ul>
+          </ScrollList>
         </section>
 
         {/* Входы владельца: IP при регистрации и последнего входа. */}

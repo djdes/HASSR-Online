@@ -11,6 +11,11 @@ export const clientEmailContentSchema = z.object({
 });
 
 export const clientEmailSchema = clientEmailContentSchema.extend({ requestId: z.uuid() });
+
+/** Message-ID письма из карточки клиента: `<client-email-<id>@wesetup.ru>` — по нему «Переписки» склеивают копии. */
+export function clientEmailMessageId(id: string): string {
+  return `<client-email-${id}@wesetup.ru>`;
+}
 export type ClientEmailInput = z.infer<typeof clientEmailSchema>;
 
 export type ClientEmailSender = {

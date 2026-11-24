@@ -93,7 +93,9 @@ type EmailTransport = {
     replyTo?: string;
     /** Простой текст рядом с HTML (почтовые клиенты без HTML, антиспам). */
     text?: string;
-  }): Promise<void>;
+    /** Свой Message-ID (`<id@wesetup.ru>`), иначе его придумает SMTP-клиент. */
+    messageId?: string;
+  }): Promise<{ messageId?: string } | void>;
 };
 
 let cachedTransport: EmailTransport | null = null;
@@ -111,16 +113,18 @@ function getTransport(): EmailTransport {
   const smtp = createSmtpTransport();
   cachedTransport = {
     name: "smtp",
-    async deliver({ to, subject, html, attachments, replyTo, text }) {
-      await smtp.sendMail({
+    async deliver({ to, subject, html, attachments, replyTo, text, messageId }) {
+      const info = await smtp.sendMail({
         from: FROM,
         to,
         subject,
         html,
         ...(text ? { text } : {}),
         ...(replyTo ? { replyTo } : {}),
+        ...(messageId ? { messageId } : {}),
         ...(attachments && attachments.length > 0 ? { attachments } : {}),
       });
+      return { messageId: info?.messageId };
     },
   };
   return cachedTransport;
@@ -308,7 +312,7 @@ export async function sendRawEmail(
   to: string,
   subject: string,
   html: string,
-  options?: { replyTo?: string | null; attachments?: EmailAttachment[]; text?: string | null }
+  options?: { replyTo?: string | null; attachments?: EmailAttachment[]; text?: string | null; sensitive?: boolean; messageId?: string | null; senderUserId?: string | null }
 ): Promise<boolean> {
   return sendEmail(to, subject, html, options?.attachments, options);
 }
@@ -364,12 +368,62 @@ export async function captureOutgoingEmails<T>(run: () => Promise<T>): Promise<{
   return { result, emails };
 }
 
+/** Параметры отправки сверх адреса, темы и HTML. */
+type SendEmailOptions = {
+  replyTo?: string | null;
+  text?: string | null;
+  /**
+   * В письме код, пароль или ссылка входа: в журнал исходящих писем
+   * (`OutgoingEmail`, его видят сотрудники в «Переписках») попадают только
+   * адрес и тема, без текста.
+   */
+  sensitive?: boolean;
+  /** Свой Message-ID: по нему «Переписки» узнают письмо, уже записанное в CRM. */
+  messageId?: string | null;
+  /** Письмо сотрудника через общую почту (запасной путь личной): в «Переписках» — не «автоматически». */
+  senderUserId?: string | null;
+};
+
+/**
+ * Журнал исходящих писем (спека client-mail-templates-2026-11-24): каждое
+ * письмо общей почты — в `OutgoingEmail`, чтобы в «Переписках» клиента были
+ * и автоматические напоминания. Модуль с Prisma — лениво, как бренд партнёра;
+ * сбой записи письмо не ломает.
+ */
+async function logOutgoingEmail(
+  to: string,
+  subject: string,
+  text: string | undefined,
+  attachments: EmailAttachment[] | undefined,
+  options: SendEmailOptions | undefined,
+  result: { ok: true; messageId?: string } | { ok: false; error: string },
+): Promise<void> {
+  try {
+    const { recordOutgoingEmail } = await import("@/lib/outgoing-email.server");
+    await recordOutgoingEmail({
+      to,
+      subject,
+      text,
+      sensitive: options?.sensitive,
+      via: "system",
+      fromEmail: FROM,
+      senderUserId: options?.senderUserId ?? null,
+      attachments,
+      status: result.ok ? "sent" : "failed",
+      error: result.ok ? null : result.error,
+      messageId: result.ok ? result.messageId : null,
+    });
+  } catch (error) {
+    console.error("[email] журнал исходящих писем недоступен", error instanceof Error ? error.message : error);
+  }
+}
+
 async function sendEmail(
   to: string,
   subject: string,
   html: string,
   attachments?: EmailAttachment[],
-  options?: { replyTo?: string | null; text?: string | null }
+  options?: SendEmailOptions
 ): Promise<boolean> {
   const replyTo = options?.replyTo?.trim() || undefined;
   // Текстовая версия — у каждого письма (21.11.2026): своя, если дали, иначе
@@ -395,10 +449,13 @@ async function sendEmail(
     return false;
   }
   try {
-    await getTransport().deliver({ to, subject, html, attachments, replyTo, text });
+    const messageId = options?.messageId?.trim() || undefined;
+    const info = await getTransport().deliver({ to, subject, html, attachments, replyTo, text, messageId });
+    await logOutgoingEmail(to, subject, text, attachments, options, { ok: true, messageId: info?.messageId ?? messageId });
     return true;
   } catch (error) {
     console.error("Email send error:", error);
+    await logOutgoingEmail(to, subject, text, attachments, options, { ok: false, error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }
@@ -413,7 +470,7 @@ export async function sendVerificationEmail(to: string, code: string, locale: Lo
     `<div style="background:#f4f4f5;border-radius:8px;padding:20px;margin:0 0 24px;text-align:center"><p style="margin:0;font-size:32px;font-weight:700;letter-spacing:8px;color:#18181b">${t("email.verification.codeValue", { code: escapeHtml(code) })}</p></div>`,
     `<p style="margin:0;color:#71717a;font-size:13px">${t("email.verification.expiryNotice")}</p>`,
   ].join("");
-  return sendEmail(to, subject, localizedLayout(t, locale, subject, body));
+  return sendEmail(to, subject, localizedLayout(t, locale, subject, body), undefined, { sensitive: true });
 }
 
 export async function sendInviteTokenEmail(params: {
@@ -443,7 +500,7 @@ export async function sendInviteTokenEmail(params: {
     `<a href="${escapeHtml(inviteUrl)}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.invitation.setPasswordAction")}</a>`,
     `<p style="margin:24px 0 0;font-size:13px;color:#a1a1aa">${t("email.invitation.expiryNotice")}</p>`,
   ].join("");
-  return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", subject, body, brand));
+  return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", subject, body, brand), undefined, { sensitive: true });
 }
 
 export async function sendInviteEmail(params: {
@@ -466,7 +523,7 @@ export async function sendInviteEmail(params: {
     `<a href="${escapeHtml(APP_URL + "/login")}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.inviteWithPassword.signInAction")}</a>`,
     `<p style="margin:24px 0 0;font-size:13px;color:#a1a1aa">${t("email.inviteWithPassword.passwordHint")}</p>`,
   ].join("");
-  return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", t("email.inviteWithPassword.title"), body, brand));
+  return sendEmail(to, subject, localizedLayout(t, params.locale ?? "ru", t("email.inviteWithPassword.title"), body, brand), undefined, { sensitive: true });
 }
 /**
  * Преимущества платформы в письме после быстрой регистрации — коротко, по
@@ -542,7 +599,7 @@ export async function sendAccountPasswordEmail(params: {
 }) {
   const brand = await emailBrandForOrganization(params.organizationId);
   const { subject, html } = await renderAccountPasswordEmail({ ...params, brand });
-  return sendEmail(params.to, subject, html);
+  return sendEmail(params.to, subject, html, undefined, { sensitive: true });
 }
 
 /**
@@ -568,7 +625,7 @@ export async function sendPasswordChangedEmail(params: {
     `<a href="${escapeHtml(APP_URL + "/dashboard")}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.passwordChanged.dashboardAction")}</a>`,
     `<p style="margin:24px 0 0;color:#71717a;font-size:13px">${t("email.passwordChanged.changeNotice")}</p>`,
   ].join("");
-  return sendEmail(to, subject, localizedLayout(t, locale, t("email.passwordChanged.title"), body, brand));
+  return sendEmail(to, subject, localizedLayout(t, locale, t("email.passwordChanged.title"), body, brand), undefined, { sensitive: true });
 }
 
 export async function sendPasswordResetEmail(params: {
@@ -586,7 +643,7 @@ export async function sendPasswordResetEmail(params: {
     `<a href="${escapeHtml(resetUrl)}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px">${t("email.passwordReset.action")}</a>`,
     `<p style="margin:24px 0 0;font-size:13px;color:#a1a1aa">${t("email.passwordReset.expiryNotice")}</p>`,
   ].join("");
-  return sendEmail(to, subject, localizedLayout(t, locale, t("email.passwordReset.title"), body));
+  return sendEmail(to, subject, localizedLayout(t, locale, t("email.passwordReset.title"), body), undefined, { sensitive: true });
 }
 
 /**
@@ -828,7 +885,8 @@ export async function sendPaymentReceiptEmail(params: {
         },
       ]
     : undefined;
-  return sendEmail(to, subject, localizedLayout(t, locale, subject, body, brand), attachments);
+  // Новому клиенту в письме ссылка завершения регистрации — в журнал без текста.
+  return sendEmail(to, subject, localizedLayout(t, locale, subject, body, brand), attachments, { sensitive: isNewClient });
 }
 
 export type FeedbackType =
