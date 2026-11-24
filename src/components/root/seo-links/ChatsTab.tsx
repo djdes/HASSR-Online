@@ -9,6 +9,7 @@ import {
   RefreshCw,
   RotateCcw,
   Send,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -17,9 +18,18 @@ import {
   formatRub,
   generateClientIdempotencyKey,
 } from "@/lib/seo/gogetlinks-ui-format";
+import { ChatWebmasterPlacementDialog } from "./ChatWebmasterPlacementDialog";
+import {
+  getCachedThreadMessages,
+  invalidateOverviewCache,
+  invalidateThreadMessagesCache,
+  setCachedThreadMessages,
+} from "./tab-cache";
 import {
   formatRuDateTime,
+  type GglCampaignDto,
   type GglMessageDto,
+  type GglPlannedSlotDto,
   type GglThreadDto,
   SEO_BTN_PRIMARY_CLASS,
   SEO_BTN_SM_CLASS,
@@ -31,8 +41,14 @@ import {
 export interface ChatsTabProps {
   threads: GglThreadDto[];
   focusedThreadId: string | null;
+  campaigns?: GglCampaignDto[];
+  defaultCampaignId?: number | null;
+  slots?: GglPlannedSlotDto[];
+  accountSyncedAt?: string | null;
+  expectedApplicationsCount?: number | null;
   onSelectThread: (threadId: string) => void;
   onRefreshOverview: () => Promise<void> | void;
+  onOrderCreated?: () => void;
 }
 
 type ThreadFilter = "all" | "unread" | "needs_reply";
@@ -52,8 +68,14 @@ function deliveryStatusMeta(status: string): { label: string; className: string 
 export function ChatsTab({
   threads,
   focusedThreadId,
+  campaigns = [],
+  defaultCampaignId = null,
+  slots = [],
+  accountSyncedAt = null,
+  expectedApplicationsCount = null,
   onSelectThread,
   onRefreshOverview,
+  onOrderCreated,
 }: ChatsTabProps) {
   const [filter, setFilter] = useState<ThreadFilter>("all");
   const [search, setSearch] = useState("");
@@ -62,6 +84,7 @@ export function ChatsTab({
   >({});
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [placementDialogOpen, setPlacementDialogOpen] = useState(false);
 
   const [replyBody, setReplyBody] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
@@ -114,7 +137,22 @@ export function ChatsTab({
   const activeThreadId = activeThread?.id ?? null;
 
   const loadThreadMessages = useCallback(
-    async (threadId: string, refreshRemote = true) => {
+    async (threadId: string, refreshRemote = true, forceNetwork = false) => {
+      const targetThread = threads.find((t) => t.id === threadId);
+      if (!forceNetwork && targetThread) {
+        const cached = getCachedThreadMessages(targetThread);
+        if (cached) {
+          setMessagesByThread((prev) => ({
+            ...prev,
+            [threadId]: cached.messages,
+          }));
+          setRefreshError(cached.refreshError);
+          return;
+        }
+      }
+      if (forceNetwork) {
+        invalidateThreadMessagesCache(threadId);
+      }
       setLoadingThreadId(threadId);
       try {
         const response = await fetch(
@@ -130,11 +168,19 @@ export function ChatsTab({
         if (!response.ok) {
           throw new Error(data?.error ?? "Не удалось загрузить переписку");
         }
+        const loadedMessages = data?.messages ?? [];
+        const loadedError = data?.refreshError ?? null;
+        if (targetThread) {
+          setCachedThreadMessages(targetThread, {
+            messages: loadedMessages,
+            refreshError: loadedError,
+          });
+        }
         setMessagesByThread((prev) => ({
           ...prev,
-          [threadId]: data?.messages ?? [],
+          [threadId]: loadedMessages,
         }));
-        setRefreshError(data?.refreshError ?? null);
+        setRefreshError(loadedError);
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Ошибка загрузки диалога",
@@ -143,7 +189,7 @@ export function ChatsTab({
         setLoadingThreadId((curr) => (curr === threadId ? null : curr));
       }
     },
-    [],
+    [threads],
   );
 
   useEffect(() => {
@@ -200,10 +246,13 @@ export function ChatsTab({
       const sentMsg = data.message;
       replyIdempotencyRef.current = null;
       setReplyBody("");
+      const updatedMessages = [...(messagesByThread[activeThread.id] ?? []), sentMsg];
       setMessagesByThread((prev) => ({
         ...prev,
-        [activeThread.id]: [...(prev[activeThread.id] ?? []), sentMsg],
+        [activeThread.id]: updatedMessages,
       }));
+      invalidateThreadMessagesCache(activeThread.id);
+      invalidateOverviewCache();
       toast.success("Ответ отправлен вебмастеру в GoGetLinks");
       await onRefreshOverview();
     } catch (err) {
@@ -254,9 +303,13 @@ export function ChatsTab({
       );
       setRevisionOpen(false);
       setRevisionComment("");
+      invalidateOverviewCache();
+      if (activeThread) {
+        invalidateThreadMessagesCache(activeThread.id);
+      }
       await onRefreshOverview();
       if (activeThread) {
-        await loadThreadMessages(activeThread.id, true);
+        await loadThreadMessages(activeThread.id, true, true);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Ошибка проверки");
@@ -404,11 +457,25 @@ export function ChatsTab({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-[16px] font-semibold text-[#0b1024]">
-                      {activeThread.donorDomain ||
-                        activeThread.webmasterLogin ||
-                        "Диалог с вебмастером"}
-                    </h3>
+                    <button
+                      type="button"
+                      disabled={isReadOnlyArchive}
+                      onClick={() => setPlacementDialogOpen(true)}
+                      className="group inline-flex items-center gap-2 text-left text-[16px] font-semibold text-[#0b1024] transition-colors hover:text-[#3848c7] disabled:pointer-events-none"
+                      title="Открыть доступные заявки от этого вебмастера и сгенерировать размещение"
+                    >
+                      <span className="underline-offset-4 group-hover:underline">
+                        {activeThread.donorDomain ||
+                          activeThread.webmasterLogin ||
+                          "Диалог с вебмастером"}
+                      </span>
+                      {!isReadOnlyArchive ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#d8deff] bg-[#eef1ff] px-2.5 py-0.5 text-[11.5px] font-medium text-[#3848c7] transition-colors group-hover:border-[#5566f6] group-hover:bg-[#5566f6] group-hover:text-white">
+                          <Sparkles className="size-3" />
+                          Заявки и размещение
+                        </span>
+                      ) : null}
+                    </button>
                     {activeThread.webmasterLogin ? (
                       <span className="text-[12.5px] text-[#6f7282]">
                         вебмастер: {activeThread.webmasterLogin}
@@ -430,7 +497,9 @@ export function ChatsTab({
                 <button
                   type="button"
                   disabled={loadingThreadId === activeThread.id}
-                  onClick={() => void loadThreadMessages(activeThread.id, true)}
+                  onClick={() =>
+                    void loadThreadMessages(activeThread.id, true, true)
+                  }
                   className={SEO_BTN_SM_CLASS}
                 >
                   <RefreshCw
@@ -649,6 +718,21 @@ export function ChatsTab({
                 </div>
               )}
             </div>
+
+            <ChatWebmasterPlacementDialog
+              open={placementDialogOpen}
+              onOpenChange={setPlacementDialogOpen}
+              thread={activeThread}
+              campaigns={campaigns}
+              defaultCampaignId={defaultCampaignId}
+              slots={slots}
+              accountSyncedAt={accountSyncedAt}
+              expectedApplicationsCount={expectedApplicationsCount}
+              onOrderCreated={() => {
+                void onRefreshOverview();
+                onOrderCreated?.();
+              }}
+            />
           </>
         )}
       </div>

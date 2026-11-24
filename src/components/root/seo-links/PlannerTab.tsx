@@ -29,12 +29,14 @@ import {
   generateClientIdempotencyKey,
 } from "@/lib/seo/gogetlinks-ui-format";
 import { ArticleDrawer } from "./ArticleDrawer";
+import { findSlotWebmasterThread } from "./planner-thread-lookup";
 import { WebmasterMessage } from "./WebmasterMessage";
 import {
   formatRuShortDate,
   type GglCampaignDto,
   type GglPlannedSlotDto,
   type GglSchedulePlanDto,
+  type GglThreadDto,
   parseSlotAlternatives,
   parseSlotDonorMetrics,
   parseTopvisorSnapshot,
@@ -53,7 +55,9 @@ export interface PlannerTabProps {
   accountConnected?: boolean;
   plans: GglSchedulePlanDto[];
   slots: GglPlannedSlotDto[];
+  threads?: GglThreadDto[];
   viewer: SeoLinksViewerCapabilities;
+  onJumpToThread?: (threadId: string | null, donorDomain?: string) => void;
   onRefresh: () => Promise<void> | void;
 }
 
@@ -618,7 +622,9 @@ export function PlannerTab({
   accountConnected = false,
   plans,
   slots,
+  threads = [],
   viewer,
+  onJumpToThread,
   onRefresh,
 }: PlannerTabProps) {
   const t = useTranslations("rootGglDonorReview");
@@ -946,6 +952,18 @@ export function PlannerTab({
                     isWesetupSlot &&
                     readyForApproval &&
                     viewer.canApproveWithinPlan;
+                  const existingThread =
+                    planCampaign?.isWesetup &&
+                    slot.status === "pending_approval" &&
+                    slot.donorSiteId
+                      ? findSlotWebmasterThread({
+                          threads,
+                          gglCampaignId: planCampaign.gglCampaignId,
+                          campaignId: planCampaign.id,
+                          donorSiteId: slot.donorSiteId,
+                          donorDomain: slot.donorDomain,
+                        })
+                      : null;
 
                   return (
                     <tr
@@ -1078,7 +1096,45 @@ export function PlannerTab({
 
                             {planCampaign?.isWesetup && slot.status === "pending_approval" && slot.donorSiteId ? (
                               <div className="mt-2">
-                                <WebmasterMessage key={slot.donorSiteId} slotId={slot.id} siteId={slot.donorSiteId} domain={slot.donorDomain} userId={viewer.userId} />
+                                {existingThread ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      onJumpToThread?.(
+                                        existingThread.id,
+                                        slot.donorDomain ?? undefined,
+                                      )
+                                    }
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 text-[12px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100/80"
+                                    title={
+                                      existingThread.lastMessagePreview
+                                        ? `Последнее сообщение: ${existingThread.lastMessagePreview}`
+                                        : "Открыть переписку с вебмастером во вкладке «Чаты»"
+                                    }
+                                  >
+                                    <Check className="size-3.5 shrink-0 text-emerald-600" aria-hidden />
+                                    <span>Написали вебмастеру</span>
+                                    {existingThread.lastMessageAt ? (
+                                      <span className="text-[11px] text-emerald-600/80">
+                                        · {formatRuShortDate(existingThread.lastMessageAt)}
+                                      </span>
+                                    ) : null}
+                                    {existingThread.unreadCount > 0 ? (
+                                      <span className="rounded-full bg-[#5566f6] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                                        {existingThread.unreadCount}
+                                      </span>
+                                    ) : null}
+                                  </button>
+                                ) : (
+                                  <WebmasterMessage
+                                    key={slot.donorSiteId}
+                                    slotId={slot.id}
+                                    siteId={slot.donorSiteId}
+                                    domain={slot.donorDomain}
+                                    userId={viewer.userId}
+                                    onSent={() => void onRefresh()}
+                                  />
+                                )}
                               </div>
                             ) : null}
 
