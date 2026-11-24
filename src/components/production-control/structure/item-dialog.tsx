@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+/** Внутри окна пункта (а не на отдельной странице пункта) — для ссылок между пунктами. */
+const ItemDialogContext = createContext(false);
+
+export function useInItemDialog(): boolean {
+  return useContext(ItemDialogContext);
+}
 
 /** Сколько ждём анимацию закрытия окна, прежде чем вернуть адрес обзора. */
 const CLOSE_ANIMATION_MS = 160;
@@ -56,7 +63,9 @@ export function PpkItemDialog({
           <DialogDescription className="text-[13.5px] leading-[1.5] text-[#6f7282]">{description}</DialogDescription>
           {aside ? <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">{aside}</div> : null}
         </DialogHeader>
-        <div className="min-w-0">{children}</div>
+        <ItemDialogContext.Provider value={true}>
+          <div className="min-w-0">{children}</div>
+        </ItemDialogContext.Provider>
       </DialogContent>
     </Dialog>
   );

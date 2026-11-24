@@ -232,3 +232,8 @@ test("шаблон положения о группе 2.2 дополняется
   assert.ok(!teamRegulationTemplate("Кафе").includes("Состав группы ХАССП"), "без группы — без раздела");
   assert.equal(PPK_RECORD_SCHEMAS["text-team-regulation"].safeParse({ text }).success, true);
 });
+
+test("в составе группы аббревиатуры в должности не ломаются", () => {
+  const text = teamRegulationTemplate("Кафе", [{ name: "Сидоров Иван", title: "Координатор ХАССП", role: "secretary" }]);
+  assert.ok(text.includes("1) Сидоров Иван, координатор ХАССП — секретарь группы."), text.slice(-80));
+});

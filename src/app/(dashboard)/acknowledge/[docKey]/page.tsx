@@ -134,7 +134,8 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
     body = (
       <div className="space-y-4 text-[15px] leading-[1.65] text-[#0b1024]">
         <p>{version ? t("ppkLead", { version }) : t("ppkLeadFile")}</p>
-        <a href="/api/acknowledgements/ppk/file" target="_blank" rel="noopener" className={PPK_BUTTON_OUTLINE_CLASS}>
+        {/* В той же вкладке: в Mini App Telegram новая вкладка открылась бы без входа. */}
+        <a href="/api/acknowledgements/ppk/file" className={PPK_BUTTON_OUTLINE_CLASS}>
           <ExternalLink className="size-4" aria-hidden />
           {t("ppkOpen")}
         </a>

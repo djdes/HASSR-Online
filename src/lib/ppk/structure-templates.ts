@@ -40,6 +40,9 @@ const ROLE_IN_REGULATION: Record<TeamRole, string> = {
   secretary: "секретарь группы",
 };
 
+/** «Шеф-повар» → «шеф-повар», «Координатор ХАССП» → «координатор ХАССП». */
+const lowerFirst = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
+
 /**
  * 2.2 — текст нынешнего «Положения о группе ХАССП» одним полем и, если группа
  * собрана, раздел «Состав группы ХАССП» (как таблица печатного положения).
@@ -49,7 +52,7 @@ export function teamRegulationTemplate(orgName: string, members: readonly Regula
   if (members.length > 0) {
     const lines = members.map(
       (member, index) =>
-        `${index + 1}) ${member.name}${member.title ? `, ${member.title.toLowerCase()}` : ""} — ${ROLE_IN_REGULATION[member.role]}${index === members.length - 1 ? "." : ";"}`,
+        `${index + 1}) ${member.name}${member.title ? `, ${lowerFirst(member.title)}` : ""} — ${ROLE_IN_REGULATION[member.role]}${index === members.length - 1 ? "." : ";"}`,
     );
     sections.push([`${sections.length + 1}. Состав группы ХАССП`, ...lines].join("\n"));
   }
