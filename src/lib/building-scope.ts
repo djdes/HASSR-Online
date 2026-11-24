@@ -35,6 +35,21 @@ export function isOfficeBuilding(building: object | null | undefined): boolean {
   return (building as { kind?: unknown } | null | undefined)?.kind === OFFICE_BUILDING_KIND;
 }
 
+/**
+ * Объекты раньше офиса (2026-11-24, офис у всех по умолчанию): там, где
+ * «по умолчанию первое здание» (новый цех, оборудование, помещение), первым
+ * должен быть объект — офис в базе стоит первым.
+ */
+export function objectsFirst<T extends object>(buildings: readonly T[]): T[] {
+  return [...buildings.filter((building) => !isOfficeBuilding(building)), ...buildings.filter(isOfficeBuilding)];
+}
+
+/** Единственный объект организации (офис не в счёт); иначе null. */
+export function soleObjectId(buildings: ReadonlyArray<{ id: string; kind?: string | null }>): string | null {
+  const objects = buildings.filter((building) => !isOfficeBuilding(building));
+  return objects.length === 1 ? objects[0].id : null;
+}
+
 export type BuildingContext = {
   /** Точки включены и их ≥ 2 — документы делятся по точкам. */
   enabled: boolean;
@@ -161,15 +176,20 @@ export function allowedBuildingsForUser(
  * Точки, где сотрудник работает: строки кадровых журналов, обязательства,
  * задачи. В отличие от `allowedBuildingsForUser`, сотрудник офиса работает
  * только в офисе — точки он видит, но их журналы ведут люди точки.
+ * Без места (или в списке только удалённые места) — на всех объектах, не в
+ * офисе (2026-11-24): офис — место руководства, иначе у сотрудника рядом с
+ * задачей объекта появлялась такая же «в офисе».
  */
 export function workBuildingsForUser(
   buildings: BuildingOption[],
   userBuildingIds: readonly string[],
 ): BuildingOption[] {
-  if (userBuildingIds.length === 0) return buildings;
+  const objects = buildings.filter((building) => !isOfficeBuilding(building));
+  const everywhere = objects.length > 0 ? objects : buildings;
+  if (userBuildingIds.length === 0) return everywhere;
   const wanted = new Set(userBuildingIds);
   const subset = buildings.filter((building) => wanted.has(building.id));
-  return subset.length > 0 ? subset : buildings;
+  return subset.length > 0 ? subset : everywhere;
 }
 
 /**
@@ -271,9 +291,22 @@ export function resolveActiveBuilding(args: {
   // «Журналы точек»), остальные — с первой своей точки, как раньше.
   const wantsOrganization =
     canViewOrganization && (args.cookieBuildingId === ORGANIZATION_VIEW_ID || args.cookieBuildingId === null);
+  // Офис — место руководства и сотрудников офиса (2026-11-24, офис у всех по
+  // умолчанию): остальные начинают с первого объекта, и старая cookie с офисом
+  // их туда не возвращает — иначе «Сегодня» собиралось бы по офису.
+  const officeStaff = office !== null && args.userBuildingIds.includes(office.id);
+  const officeAllowed = canViewOrganization || officeStaff;
+  const chosen = buildings.find((building) => building.id === args.cookieBuildingId);
+  const fallback = officeStaff
+    ? (office ?? buildings[0])
+    : officeAllowed
+      ? buildings[0]
+      : (buildings.find((building) => !isOfficeBuilding(building)) ?? buildings[0]);
   const active = wantsOrganization
     ? (office ?? buildings[0])
-    : (buildings.find((building) => building.id === args.cookieBuildingId) ?? buildings[0]);
+    : chosen && (officeAllowed || !isOfficeBuilding(chosen))
+      ? chosen
+      : fallback;
   const organizationView = wantsOrganization || isOfficeBuilding(active);
   return {
     enabled: true,

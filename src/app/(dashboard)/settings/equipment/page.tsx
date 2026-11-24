@@ -26,7 +26,7 @@ import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { PageActions } from "@/components/layout/page-actions";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
-import { viewedPointId } from "@/lib/building-scope";
+import { objectsFirst, soleObjectId, viewedPointId } from "@/lib/building-scope";
 import { buildPlaceOptions, groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
@@ -150,7 +150,8 @@ export default async function EquipmentSettingsPage({
     personBuildingIds: buildingContext.buildings.map((building) => building.id),
     actor: session.user,
   });
-  const dialogBuildings = buildings.filter((building) => objectInScope(dialogScopeIds, orgBuildingIds, building.id));
+  // Объекты первыми: «по умолчанию первое здание» в окне оборудования — объект, не офис.
+  const dialogBuildings = objectsFirst(buildings).filter((building) => objectInScope(dialogScopeIds, orgBuildingIds, building.id));
   const dialogAreas = areas.filter((area) => objectSelectable(session.user, dialogScopeIds, orgBuildingIds, area.buildingId));
   const dialogRooms = rooms.filter((room) => objectSelectable(session.user, dialogScopeIds, orgBuildingIds, room.buildingId));
   const buildingOptions = dialogBuildings.map((building) => ({ id: building.id, name: building.name }));
@@ -159,7 +160,8 @@ export default async function EquipmentSettingsPage({
   const qrPoint = showPlaceFilter ? (place === PLACE_NONE ? PLACE_NONE : (placePointId ?? PLACE_ALL)) : null;
   const places = buildPlaceOptions({ buildings: dialogBuildings, areas: dialogAreas, rooms: dialogRooms });
   // Новое оборудование — в отмеченную точку, а если точка одна — в неё.
-  const defaultBuildingId = placePointId ?? (buildings.length === 1 ? buildings[0].id : null);
+  // Единственный объект — по умолчанию он (офис не в счёт, 2026-11-24).
+  const defaultBuildingId = placePointId ?? soleObjectId(buildings);
   // «Кто заполняет» по QR: руководство заполняет любой объект — в выборе не нужно.
   const fillerOptions = staff
     .filter((user) => staffInObjectScope(dialogScopeIds, orgBuildingIds, user.buildingIds))

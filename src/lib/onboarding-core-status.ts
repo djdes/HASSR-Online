@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { normalizeSphere, type OrgSphere } from "@/lib/org-profile";
 import {
   computeDocumentsPhase,
@@ -78,7 +79,8 @@ export async function getCoreSetupStatus(
     db.user.count({
       where: { organizationId, isActive: true, archivedAt: null },
     }),
-    db.building.count({ where: { organizationId } }),
+    // Объекты: офис (с 2026-11-24 у всех с объектами) шагом «здания» не считается.
+    db.building.count({ where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } } }),
     db.room.count({ where: { building: { organizationId } } }),
     db.equipment.count({ where: { area: { organizationId } } }),
     db.journalTemplate.findMany({

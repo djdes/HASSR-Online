@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { equipmentBuildingWhere } from "@/lib/building-scope";
+import { OFFICE_BUILDING_KIND, equipmentBuildingWhere } from "@/lib/building-scope";
 import type { ColdEquipmentConfigItem } from "@/lib/cold-equipment-document";
 
 /**
@@ -43,8 +43,9 @@ export async function ensureDefaultArea(organizationId: string, pointId: string 
   });
   if (existing) return existing.id;
   // Точка одна — цех сразу её (2026-10-17, «точка → помещения → оборудование»).
+  // Офис — не точка (2026-11-24): цех в офис не попадает.
   const buildings = await db.building.findMany({
-    where: { organizationId },
+    where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } },
     select: { id: true },
     take: 2,
   });
