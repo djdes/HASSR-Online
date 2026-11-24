@@ -131,3 +131,9 @@ dispatcher/logs/
 /smoke-shots/
 /.prod-monitor/
 /.playwright-mcp/
+
+# Выгрузки SEO-отчётов и ключи сервисных аккаунтов (npm run seo:export)
+/exports/
+/secrets/
+*service-account*.json
+gsc-*.json
