@@ -27,6 +27,7 @@ import {
 import { ChatWebmasterPlacementDialog } from "./ChatWebmasterPlacementDialog";
 import {
   getCachedThreadMessages,
+  getLastKnownThreadMessages,
   invalidateOverviewCache,
   invalidateThreadMessagesCache,
   setCachedThreadMessages,
@@ -90,10 +91,21 @@ export function ChatsTab({
   const [search, setSearch] = useState("");
   const [messagesByThread, setMessagesByThread] = useState<
     Record<string, GglMessageDto[]>
-  >({});
+  >(() => {
+    const initial: Record<string, GglMessageDto[]> = {};
+    for (const t of threads) {
+      const known = getLastKnownThreadMessages(t.id);
+      if (known) initial[t.id] = known.messages;
+    }
+    return initial;
+  });
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [placementDialogOpen, setPlacementDialogOpen] = useState(false);
+  const threadsRef = useRef(threads);
+  useEffect(() => {
+    threadsRef.current = threads;
+  }, [threads]);
 
   const [replyBody, setReplyBody] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
@@ -147,14 +159,18 @@ export function ChatsTab({
 
   const loadThreadMessages = useCallback(
     async (threadId: string, refreshRemote = true, forceNetwork = false) => {
-      const targetThread = threads.find((t) => t.id === threadId);
+      const targetThread = threadsRef.current.find((t) => t.id === threadId);
       if (!forceNetwork && targetThread) {
         const cached = getCachedThreadMessages(targetThread);
         if (cached) {
-          setMessagesByThread((prev) => ({
-            ...prev,
-            [threadId]: cached.messages,
-          }));
+          setMessagesByThread((prev) =>
+            prev[threadId] === cached.messages
+              ? prev
+              : {
+                  ...prev,
+                  [threadId]: cached.messages,
+                },
+          );
           setRefreshError(cached.refreshError);
           return;
         }
@@ -179,8 +195,10 @@ export function ChatsTab({
         }
         const loadedMessages = data?.messages ?? [];
         const loadedError = data?.refreshError ?? null;
-        if (targetThread) {
-          setCachedThreadMessages(targetThread, {
+        const latestThread =
+          threadsRef.current.find((t) => t.id === threadId) ?? targetThread;
+        if (latestThread) {
+          setCachedThreadMessages(latestThread, {
             messages: loadedMessages,
             refreshError: loadedError,
           });
@@ -198,7 +216,7 @@ export function ChatsTab({
         setLoadingThreadId((curr) => (curr === threadId ? null : curr));
       }
     },
-    [threads],
+    [],
   );
 
   useEffect(() => {
@@ -215,9 +233,14 @@ export function ChatsTab({
     };
   }, [activeThreadId, loadThreadMessages]);
 
-  const activeMessages = activeThreadId
-    ? messagesByThread[activeThreadId] ?? []
-    : [];
+  const activeMessages = useMemo(() => {
+    if (!activeThreadId) return [];
+    return (
+      messagesByThread[activeThreadId] ??
+      getLastKnownThreadMessages(activeThreadId)?.messages ??
+      []
+    );
+  }, [activeThreadId, messagesByThread]);
   const isReadOnlyArchive = activeThread?.campaign?.isWesetup === false;
 
   const activeMatchedOrders = useMemo(
@@ -282,12 +305,15 @@ export function ChatsTab({
       const sentMsg = data.message;
       replyIdempotencyRef.current = null;
       setReplyBody("");
-      const updatedMessages = [...(messagesByThread[activeThread.id] ?? []), sentMsg];
+      const updatedMessages = [...activeMessages, sentMsg];
       setMessagesByThread((prev) => ({
         ...prev,
         [activeThread.id]: updatedMessages,
       }));
-      invalidateThreadMessagesCache(activeThread.id);
+      setCachedThreadMessages(activeThread, {
+        messages: updatedMessages,
+        refreshError,
+      });
       invalidateOverviewCache();
       toast.success("Ответ отправлен вебмастеру в GoGetLinks");
       await onRefreshOverview();
@@ -358,9 +384,9 @@ export function ChatsTab({
   const needsReplyTotal = threads.filter((t) => t.needsReply).length;
 
   return (
-    <div className="grid min-h-[600px] gap-4 lg:grid-cols-12">
+    <div className="grid min-h-[640px] gap-4 lg:h-[700px] lg:grid-cols-12">
       {/* Left column: Thread list */}
-      <div className="flex flex-col rounded-3xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] lg:col-span-5 xl:col-span-4">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-[#ececf4] bg-white p-4 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] lg:col-span-5 xl:col-span-4">
         <div className="flex flex-wrap gap-1.5">
           {(
             [
@@ -484,7 +510,7 @@ export function ChatsTab({
       </div>
 
       {/* Right column: Conversation feed & order context */}
-      <div className="flex flex-col rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)] lg:col-span-7 xl:col-span-8">
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)] lg:col-span-7 xl:col-span-8">
         {!activeThread ? (
           <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
             <MessageSquare className="size-9 text-[#9b9fb3]" />
@@ -668,7 +694,7 @@ export function ChatsTab({
             </div>
 
             {/* Messages feed */}
-            <div className="flex-1 space-y-3 overflow-y-auto bg-[#fafbff]/60 p-5">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#fafbff]/60 p-5">
               {loadingThreadId === activeThread.id &&
               activeTimeline.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-14 text-[13.5px] text-[#6f7282]">

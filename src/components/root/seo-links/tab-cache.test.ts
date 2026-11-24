@@ -9,6 +9,7 @@ import {
   getCachedApplicationsView,
   getCachedOverview,
   getCachedThreadMessages,
+  getLastKnownThreadMessages,
   invalidateApplicationsCache,
   invalidateOverviewCache,
   invalidateThreadMessagesCache,
@@ -286,6 +287,10 @@ describe("seo-links tab-cache", () => {
 
       const cached = getCachedThreadMessages(thread);
       assert.deepEqual(cached, { messages, refreshError: null });
+      assert.deepEqual(getLastKnownThreadMessages("thread-1"), {
+        messages,
+        refreshError: null,
+      });
     });
 
     it("invalidates automatically when thread fingerprint changes", () => {

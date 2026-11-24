@@ -207,6 +207,23 @@ export function getCachedThreadMessages(
   };
 }
 
+/**
+ * Returns the last loaded messages for a thread even if its fingerprint changed,
+ * so the chat feed can render existing messages immediately on tab switch without
+ * collapsing or jumping while a background refresh runs.
+ */
+export function getLastKnownThreadMessages(
+  threadId: string | null | undefined,
+): CachedThreadMessagesEntry | null {
+  if (!threadId) return null;
+  const entry = threadMessagesCache.get(threadId);
+  if (!entry) return null;
+  return {
+    messages: entry.messages,
+    refreshError: entry.refreshError,
+  };
+}
+
 export function setCachedThreadMessages(
   thread: Parameters<typeof buildThreadCacheFingerprint>[0],
   data: { messages: GglMessageDto[]; refreshError?: string | null },
