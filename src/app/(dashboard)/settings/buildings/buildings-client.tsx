@@ -622,7 +622,7 @@ function BuildingCard({
             </div>
             {isOffice ? null : (
               <div className="space-y-1" data-building-sphere-edit>
-                <ObjectCategoryPicker variant="select" value={draftSphere} onChange={setDraftSphere} disabled={savingHead} />
+                <ObjectCategoryPicker variant="select" examples value={draftSphere} onChange={setDraftSphere} disabled={savingHead} />
                 <p className="px-1 text-[12px] leading-[1.45] text-[#6f7282]">{t("sphereHint")}</p>
               </div>
             )}

@@ -12,9 +12,10 @@ test("id каталога уникальны, у каждого записи е�
   }
 });
 
-test("состав каталога: 14 документов, 10 рекомендуемых", () => {
-  assert.equal(NORM_CATALOG.length, 14);
+test("состав каталога: 17 документов, 10 рекомендуемых (три — для сфер без пищевой продукции)", () => {
+  assert.equal(NORM_CATALOG.length, 17);
   assert.equal(NORM_CATALOG.filter((doc) => doc.recommended).length, 10);
   assert.ok(NORM_CATALOG.find((doc) => doc.id === "sanpin-4282")?.recommended);
   assert.equal(NORM_CATALOG.find((doc) => doc.id === "trts-033")?.recommended, false);
+  for (const id of ["sanpin-3678", "sanpin-3684", "sp-3648"]) assert.equal(NORM_CATALOG.find((doc) => doc.id === id)?.recommended, false, id);
 });

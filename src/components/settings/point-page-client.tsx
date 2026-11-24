@@ -189,7 +189,7 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
             ))}
             <div className="space-y-1.5" data-point-sphere-edit>
               <Label htmlFor="point-sphere">{tc("objectCategoryLabel")}</Label>
-              <ObjectCategoryPicker id="point-sphere" variant="select" value={draftSphere} onChange={setDraftSphere} disabled={saving} />
+              <ObjectCategoryPicker id="point-sphere" variant="select" examples value={draftSphere} onChange={setDraftSphere} disabled={saving} />
               <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">{tc("objectCategoryChangeHint")}</p>
             </div>
             <div className="flex flex-wrap justify-end gap-2">

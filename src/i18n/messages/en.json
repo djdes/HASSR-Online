@@ -768,18 +768,18 @@
       "pill": "Read {done}/{total}"
     },
     "starter": {
-      "cardTitle": "Fill in the basics in 10 minutes",
-      "cardLead": "Pick your venue type and products, hazards, flowcharts, lab and pest control plans appear at once. You only need to adjust them.",
-      "choose": "Choose venue type",
-      "dialogTitle": "Venue type",
-      "dialogLead": "We add standard data to empty sections only. You can change everything afterwards.",
+      "cardTitle": "Fill the programme with typical data.",
+      "cardLead": "Choose the facility's field — typical plans and regulations appear at once, then adjust them.",
+      "choose": "Fill with typical data",
+      "dialogTitle": "Typical data by field",
+      "dialogLead": "Only empty sections are filled — everything can be changed later.",
       "kinds": {
         "cafe": {
           "title": "Cafe, restaurant",
           "hint": "Hot and cold kitchen"
         },
         "canteen": {
-          "title": "School or kindergarten canteen",
+          "title": "Canteen, catering plant",
           "hint": "Children's meals, hot and cold kitchen"
         },
         "bakery": {
@@ -816,7 +816,9 @@
       "cancel": "Cancel",
       "done": "Done: added {summary}",
       "nothing": "Everything is already filled in, nothing added",
-      "failed": "Could not fill in"
+      "failed": "Could not fill in",
+      "sphereLabel": "Facility field",
+      "kindLabel": "Type of establishment"
     },
     "package": {
       "typicalTitle": "Template document pack",
@@ -1372,6 +1374,40 @@
       "placeholder": "Sign here with your finger",
       "hint": "Finger, stylus or mouse",
       "clear": "Clear"
+    },
+    "overviewV2": {
+      "readinessTitle": "Inspection readiness",
+      "readinessFilled": "Items filled: {done} of {total}",
+      "docsTitle": "Document revisions",
+      "docsNone": "No documents with text yet",
+      "docsPending": "{count, plural, one {# document without an approved revision} other {# documents without an approved revision}}",
+      "docsApproved": "All revisions approved",
+      "docsOpen": "Revision register",
+      "ackTitle": "Program acknowledgement",
+      "ackValue": "Acknowledged {done} of {total}",
+      "ackClosed": "Opens once the program is approved",
+      "ackOpen": "Acknowledgement sheet",
+      "reviewTitle": "Program review",
+      "reviewDue": "By {date}",
+      "reviewOverdue": "Overdue since {date}",
+      "reviewNone": "No program version approved yet",
+      "reviewOpen": "Program versions",
+      "downloadPdf": "Download program (PDF)",
+      "inspectionOpen": "Inspection visit",
+      "structureTitle": "Program structure",
+      "filterLabel": "Show items",
+      "filters": {
+        "all": "All",
+        "empty": "Not filled",
+        "started": "Partly filled",
+        "done": "Filled"
+      },
+      "sectionsNav": "Program sections",
+      "noMatches": "No such items",
+      "revisionPending": "Not approved",
+      "viewClassic": "Previous view",
+      "viewNew": "New view",
+      "viewHint": "You can switch the page view at any time"
     }
   },
   "inspectionDay": {
@@ -1763,16 +1799,16 @@
       }
     },
     "objectCategories": {
-      "food": "Food service (HACCP)",
+      "food": "Food service and food production",
       "medical": "Medical services",
       "consumer": "Consumer services",
       "sport": "Sport and recreation"
     },
     "objectCategoryHints": {
-      "food": "Cafés, canteens, school and children's catering, food production and grocery stores — sanitary and HACCP logs",
-      "medical": "Clinics, medical offices, sanatoriums — disinfection, sterilization, patient catering",
-      "consumer": "Beauty salons, barbershops, hotels and other consumer services — disinfection and cleaning",
-      "sport": "Fitness clubs, swimming pools, sports and recreation facilities — cleaning, disinfection, water"
+      "food": "Cafés and restaurants, catering plants, canteens, food production",
+      "medical": "Multidisciplinary medical centres, dentistry",
+      "consumer": "Beauty salons and hairdressers (barbershops), tattoo studios, cosmetology, manicure and pedicure rooms",
+      "sport": "Gyms and fitness, spa and aqua centres, holiday homes and boarding houses, children's camps and wellness centres"
     },
     "objectCategoryLabel": "Site type",
     "objectCategoryRequired": "Choose the site type",

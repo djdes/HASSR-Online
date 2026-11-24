@@ -1,0 +1,15 @@
+{
+  "task": "ppk-overview-spheres-2026-11-24",
+  "base": "c73c13e69",
+  "branch": "claude/fervent-brown-ed5apv",
+  "stand": "next build + next start :3000, local PostgreSQL, demo org admin@haccp.local",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/ppk/starter-packs.test.ts 8/8", "src/lib/ppk/norm-catalog.test.ts", "raw/e2e-tz2-output.txt: 4 spheres, default = object sphere (medical, food), food kinds 4, medical fill = lab-plan/pest-plan/norms only, legacy {kind} 200 without touching filled blocks, unknown sphere 400"] },
+    "AC2": { "status": "PASS", "evidence": ["raw/e2e-tz2-output.txt: card 57px, dialog 1440x900 no inner scroll (medical 463px, food 0px extra), iPhone 13 no horizontal scroll 390/390"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/e2e-tz2-output.txt: object edit select new name + examples change with sphere; new object wizard 4 spheres with A4 examples", "src/lib/object-categories.test.ts", "src/content/kb/articles.test.ts", "raw/i18n-check.txt 103/103"] },
+    "AC4": { "status": "PASS", "evidence": ["raw/e2e-tz2-output.txt: item click new+classic view, next item, item->item 2.7->2.6, close — min scrollY = start", "raw/jump-probe-before.txt 3/4 jumps", "raw/jump-probe-after.txt 0/4 jumps", "src/lib/route-overlay.test.ts"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/e2e-tz2-output.txt: point menu open at scrollY 1400 — header top 0, menu 64-305px; item dialog open while scrolled — header top 0"] },
+    "AC6": { "status": "PASS", "evidence": ["raw/e2e-tz2-output.txt: readiness panel (percent, docs->register, ack X/Y, review date), PDF 200 application/pdf, inspection link, filter counts match statuses, section jump without hash, revision badge on 1.9, classic toggle persists and returns", "raw/e2e-killswitch-output.txt: PPK_OVERVIEW_CLASSIC=1 forces classic even with cookie new, no toggle", "src/lib/ppk/overview-view.test.ts 3/3"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/typecheck.txt exit 0", "raw/eslint.txt exit 0 (26 files)", "raw/test-changed.txt full suite 7483/0 (auto-escalated)", "raw/i18n-check.txt 103/103", "next build exit 0", "stand 52/52, no page errors"], "note": "deploy follows the merge to master" }
+  }
+}

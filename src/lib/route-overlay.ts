@@ -17,3 +17,16 @@ export function routeOverlayBase(pathname: string | null | undefined): string | 
   if (!pathname) return null;
   return ROUTE_OVERLAYS.find((overlay) => pathname.startsWith(overlay.prefix))?.base ?? null;
 }
+
+/**
+ * Смена адреса без прокрутки наверх (2026-11-24, владелец: «при нажатии на
+ * ссылки сначала скролит вверх, а потом открывается окно»): открыли или
+ * закрыли окно поверх той же страницы либо перешли из окна в окно.
+ */
+export function isOverlayTransition(previous: string | null | undefined, next: string | null | undefined): boolean {
+  if (!previous || !next || previous === next) return false;
+  const previousBase = routeOverlayBase(previous);
+  const nextBase = routeOverlayBase(next);
+  if (previousBase === null && nextBase === null) return false;
+  return (previousBase ?? previous) === (nextBase ?? next);
+}

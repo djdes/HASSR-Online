@@ -1,0 +1,1 @@
+PASS AC6 PPK_OVERVIEW_CLASSIC=1: прежний вид у всех (даже с cookie «new»), кнопки вида нет — classic=1, toggle=0

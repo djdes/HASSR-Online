@@ -768,18 +768,18 @@
       "pill": "Tanishgan {done}/{total}"
     },
     "starter": {
-      "cardTitle": "10 daqiqada tipik ma'lumotlar bilan to'ldiramiz",
-      "cardLead": "Muassasa turini tanlang: mahsulotlar, xavflar, blok-sxemalar, laboratoriya va dezinsektsiya rejalari darhol paydo bo'ladi, faqat o'zingizga moslashtirish qoladi.",
-      "choose": "Muassasa turini tanlash",
-      "dialogTitle": "Muassasa turi",
-      "dialogLead": "Tipik ma'lumotlar faqat bo'sh bo'limlarga qo'shiladi. Keyin hammasini o'zgartirish mumkin.",
+      "cardTitle": "Dasturni namunaviy ma'lumotlar bilan to'ldirish.",
+      "cardLead": "Obyekt sohasini tanlang — namunaviy rejalar va me'yoriy hujjatlar darhol paydo bo'ladi, keyin o'zingizga moslang.",
+      "choose": "Namunaviy bilan to'ldirish",
+      "dialogTitle": "Soha bo'yicha namunaviy ma'lumotlar",
+      "dialogLead": "Faqat bo'sh bo'limlar to'ldiriladi — hammasini keyin o'zgartirish mumkin.",
       "kinds": {
         "cafe": {
           "title": "Kafe, restoran",
           "hint": "Issiq va sovuq sex"
         },
         "canteen": {
-          "title": "Maktab yoki bolalar bog'chasi oshxonasi",
+          "title": "Oshxona, ovqatlanish kombinati",
           "hint": "Bolalar ovqati, issiq va sovuq sex"
         },
         "bakery": {
@@ -816,7 +816,9 @@
       "cancel": "Bekor qilish",
       "done": "Tayyor: qo'shildi {summary}",
       "nothing": "Hammasi allaqachon to'ldirilgan, hech narsa qo'shilmadi",
-      "failed": "To'ldirib bo'lmadi"
+      "failed": "To'ldirib bo'lmadi",
+      "sphereLabel": "Obyekt sohasi",
+      "kindLabel": "Muassasa turi"
     },
     "package": {
       "typicalTitle": "Namunaviy hujjatlar to‘plami",
@@ -1372,6 +1374,40 @@
       "placeholder": "Bu yerda barmoq bilan imzo qo‘ying",
       "hint": "Barmoq, stilus yoki sichqoncha bilan",
       "clear": "Tozalash"
+    },
+    "overviewV2": {
+      "readinessTitle": "Tekshiruvga tayyorlik",
+      "readinessFilled": "Toʻldirilgan bandlar: {done} / {total}",
+      "docsTitle": "Hujjat tahrirlari",
+      "docsNone": "Matnli hujjatlar hali yoʻq",
+      "docsPending": "{count, plural, one {# hujjat tasdiqlangan tahrirsiz} other {# hujjat tasdiqlangan tahrirsiz}}",
+      "docsApproved": "Barcha tahrirlar tasdiqlangan",
+      "docsOpen": "Tahrirlar reyestri",
+      "ackTitle": "Dastur bilan tanishish",
+      "ackValue": "Tanishganlar: {done} / {total}",
+      "ackClosed": "Dastur tasdiqlangach ochiladi",
+      "ackOpen": "Tanishish varaqasi",
+      "reviewTitle": "Dasturni qayta koʻrib chiqish",
+      "reviewDue": "{date} gacha",
+      "reviewOverdue": "Muddati oʻtgan: {date}",
+      "reviewNone": "Dastur versiyasi hali tasdiqlanmagan",
+      "reviewOpen": "Dastur versiyalari",
+      "downloadPdf": "Dasturni yuklab olish (PDF)",
+      "inspectionOpen": "Tekshiruv keldi",
+      "structureTitle": "Dastur tuzilmasi",
+      "filterLabel": "Bandlarni koʻrsatish",
+      "filters": {
+        "all": "Hammasi",
+        "empty": "Toʻldirilmagan",
+        "started": "Qisman",
+        "done": "Toʻldirilgan"
+      },
+      "sectionsNav": "Dastur boʻlimlari",
+      "noMatches": "Bunday bandlar yoʻq",
+      "revisionPending": "Tasdiqlanmagan",
+      "viewClassic": "Avvalgi koʻrinish",
+      "viewNew": "Yangi koʻrinish",
+      "viewHint": "Sahifa koʻrinishini istalgan vaqtda almashtirish mumkin"
     }
   },
   "inspectionDay": {
@@ -1763,16 +1799,16 @@
       }
     },
     "objectCategories": {
-      "food": "Umumiy ovqatlanish (XASSP)",
+      "food": "Umumiy ovqatlanish va oziq-ovqat mahsulotlari ishlab chiqarish",
       "medical": "Tibbiy xizmatlar",
       "consumer": "Iste'molchilarga xizmatlar",
       "sport": "Sport va rekreatsiya"
     },
     "objectCategoryHints": {
-      "food": "Kafelar, oshxonalar, maktab va bolalar ovqatlanishi, oziq-ovqat ishlab chiqarish va do'konlari — SanPiN va XASSP jurnallari",
-      "medical": "Klinikalar, tibbiy xonalar, sanatoriylar — dezinfeksiya, sterilizatsiya, bemorlar ovqatlanishi",
-      "consumer": "Go'zallik salonlari, sartaroshxonalar, mehmonxonalar va boshqa maishiy xizmatlar — dezinfeksiya va tozalash",
-      "sport": "Fitnes-klublar, basseynlar, sport va dam olish obyektlari — tozalash, dezinfeksiya, suv"
+      "food": "Kafe va restoranlar, ovqatlanish kombinatlari, oshxonalar, oziq-ovqat ishlab chiqarish",
+      "medical": "Ko'p tarmoqli tibbiyot markazlari, stomatologiya",
+      "consumer": "Go'zallik salonlari va sartaroshxonalar (barbershoplar), tatu-salonlar, kosmetologiya, manikyur va pedikyur xonalari",
+      "sport": "Sport zallari va fitnes, SPA va akva-markazlar, dam olish uylari va pansionatlar, bolalar lagerlari va sog'lomlashtirish markazlari"
     },
     "objectCategoryLabel": "Obyekt sohasi",
     "objectCategoryRequired": "Obyekt sohasini tanlang",

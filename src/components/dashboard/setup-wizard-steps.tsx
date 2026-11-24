@@ -348,6 +348,7 @@ export function SetupPointsStep({
               <div className="col-span-2">
                 <ObjectCategoryPicker
                   variant="select"
+                  examples
                   value={row.sphere}
                   invalid={missingSphere.has(row.key)}
                   disabled={busy}
