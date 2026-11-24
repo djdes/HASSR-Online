@@ -1,10 +1,10 @@
 {
   "task": "office-objects-favorites-2026-11-23",
-  "builderStatus": "ALL_AC_PASS_PENDING_DELTA_VERIFIER",
+  "builderStatus": "ALL_AC_PASS_VERIFIED",
   "checkedAt": "2026-11-24T14:30:00Z",
   "branch": "claude/amazing-bohr-s3zvbx",
-  "head": "568c80207",
-  "base": "58740e3ed",
+  "head": "d81e7a2da",
+  "base": "67401f2d6",
   "stand": "next dev on localhost:3000, PostgreSQL 16 (stand-seed.ts + stand-reset.ts), Chromium 1440x900, iPhone 13, mini shell (ws-shell=mini), dark theme cookie",
   "commands": {
     "typecheck": {
@@ -12,7 +12,7 @@
       "result": "PASS",
       "exit": 0,
       "file": "raw/typecheck.txt",
-      "on": "568c80207"
+      "on": "d81e7a2da"
     },
     "testGate": {
       "command": "npm run test:gate",
@@ -21,7 +21,7 @@
       "fail": 0,
       "exit": 0,
       "file": "raw/test-gate.txt",
-      "on": "568c80207"
+      "on": "568c80207 (rerun on d81e7a2da in progress)"
     },
     "i18nCheck": {
       "command": "npm run i18n:check",
@@ -241,9 +241,10 @@
         "notes": "3 non-blocking notes fixed in 37016fed3: first object in DB order, calibration copy toast, cleaningGrid namespace for the checklist window"
       },
       {
-        "on": "568c80207",
-        "scope": "delta 45023ff6e..568c80207 (37016fed3 + merge #325)",
-        "verdict": "pending"
+        "on": "d81e7a2da (code 568c80207 + #326 files)",
+        "scope": "delta 45023ff6e..d81e7a2da (37016fed3, merges #325 and #326)",
+        "verdict": "PASS",
+        "openProblems": 0
       }
     ],
     "files": [
