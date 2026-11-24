@@ -100,12 +100,31 @@ async function main() {
   });
   await page.addInitScript(FAKE_PLUGIN);
 
+  /**
+   * Дождаться, пока страница встанет. У компании с офисом (быстрая настройка
+   * открывает его вместе с первым объектом) шапка сама меняет объект уже после
+   * загрузки: в журналах включает единственный объект, в настройках — «Выберите
+   * объект» (`PointSectionSync`). Пока смена идёт, страница спрятана под скелетом
+   * `[data-content-pending]`, и текст за фиксированную паузу мог не успеть
+   * появиться. Не дождались — проверка ниже упадёт с тем, что на экране.
+   */
+  async function settle(expectText) {
+    await page
+      .waitForFunction(
+        (text) => !document.querySelector("[data-content-pending]") && (!text || document.body.innerText.toLocaleLowerCase("ru").includes(text)),
+        expectText ? expectText.toLocaleLowerCase("ru") : "",
+        { timeout: 60_000, polling: 250 },
+      )
+      .catch(() => undefined);
+  }
+
   /** Экран: открыть, дождаться, проверить ошибки и прокрутку, снять скриншот. */
   async function screen(name, url, expectText) {
     pageErrors = [];
     // Не «networkidle»: страницы держат долгое соединение /api/live, сеть не затихает.
     const response = await page.goto(`${BASE}${url}`, { waitUntil: "load", timeout: 180_000 });
     await page.waitForTimeout(1500);
+    await settle(expectText);
     await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((node) => node.remove()));
     const status = response ? response.status() : 0;
     const text = await page.locator("body").innerText();

@@ -21,7 +21,16 @@
       "file": "raw/open-office-run.txt"
     },
     "ui": { "command": "node raw/ui-check.cjs (+ ui-stand.ts setup/check)", "file": "raw/ui-check.json", "db": "raw/ui-stand-check.json" },
-    "uiDeleteLastObject": { "command": "node raw/ui-check-delete-last.cjs", "file": "raw/ui-check-delete-last.json" }
+    "uiDeleteLastObject": { "command": "node raw/ui-check-delete-last.cjs", "file": "raw/ui-check-delete-last.json" },
+    "ciSmokeAfterVerdict": {
+      "on": ["a071df0a2", "bd26f8fcc", "ab835c837"],
+      "failedCheck": "04-acceptance: есть «ждут приёмки»",
+      "rootCause": "quick setup now opens the office with the first object; the journal page switches the header to the only object after the load (PointSectionSync, #317) and hides the page under [data-content-pending]; the smoke read the text after a fixed 1.5 s",
+      "fix": "scripts/smoke/new-features.smoke.cjs settle(): screen() waits until the switch skeleton is gone and the expected text is there (up to 60 s); the check is unchanged",
+      "local": "SMOKE_ONLY=browser npm run smoke:local: «ждут приёмки» PASS after POST /api/me/active-building; 47 of 48, the remaining failure is the older header hydration error (useId) from master (#321, #330)",
+      "checksAfterFix": "npm run typecheck PASS; npm run test:changed (full, 45 code files) 7424/0",
+      "file": "raw/ci-smoke-autoswitch.txt"
+    }
   },
   "criteria": {
     "AC1": { "status": "PASS", "evidence": ["raw/ui-check.json: AC1_noscript/login, /register, /mini/login, AC1_login", "src/app/password-forms-post.test.ts"] },

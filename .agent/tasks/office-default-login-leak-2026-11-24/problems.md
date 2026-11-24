@@ -18,6 +18,17 @@ and the «Fixes after the fresh verifier (round 1…)» section of the spec).
   «Создать объект» and «Объектов пока нет» shown. The office row stays by decision; see the non-blocking note in
   `verdict.json`.
 
+## After the verdict — CI browser smoke (builder)
+
+- **P3 (AC9, CI) — fixed in the smoke.** `04-acceptance: есть «ждут приёмки»` failed on `a071df0a2`, `bd26f8fcc` and
+  `ab835c837`: at the check the page was hidden under `[data-content-pending]` and the header showed «Выберите объект».
+  Quick setup now opens the office with the first object, so the journal page switches the header to the only object
+  right after the load (`PointSectionSync`, designed in #317) and the smoke read the text after a fixed 1.5 s. Fix:
+  `scripts/smoke/new-features.smoke.cjs` `settle()` — `screen()` waits until the switch skeleton is gone and the
+  expected text is there (up to 60 s); the check itself is unchanged. Local smoke: the text check passes after
+  `POST /api/me/active-building`; `raw/ci-smoke-autoswitch.txt`. The «нет ошибок страницы» hydration error (`useId`
+  in the cabinet header) is older and comes from master (#321, #330).
+
 Round-1 notes that were fixed and re-checked: management bound to every object (or to the only object) stays
 company-wide; the deploy loop survives a failing company; the ROOT metrics no longer count the office; the
 «не распределены» strip is readable in dark theme.
