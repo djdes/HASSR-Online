@@ -512,12 +512,16 @@ function ChannelRow({
     const p = reach.channels.push;
     line = t("channels.reachPush", { queued: String(p.queued), users: String(reach.users), webSubs: String(p.webSubs), appDevices: String(p.appDevices), optedOut: p.optedOut ? "yes" : "no", optedOutCount: String(p.optedOut) });
     if (!p.appConfigured || !p.webConfigured) warn = t("channels.pushWarning", { app: p.appConfigured ? "ready" : "missing", web: p.webConfigured ? "ready" : "missing" });
+  } else if (channel === "max") {
+    const max = reach.channels.max;
+    line = t("channels.reachMax", { queued: String(max.queued), users: String(reach.users), optedOut: max.optedOut ? "yes" : "no", optedOutCount: String(max.optedOut) });
+    if (!max.botConfigured) warn = t("channels.maxWarning");
   } else {
     const telegram = reach.channels.telegram;
     line = t("channels.reachTelegram", { queued: String(telegram.queued), users: String(reach.users), optedOut: telegram.optedOut ? "yes" : "no", optedOutCount: String(telegram.optedOut) });
     if (!telegram.botConfigured) warn = t("channels.telegramWarning");
   }
-  const ok = !reach || (channel === "email" ? reach.channels.email.queued : channel === "inApp" ? reach.channels.inApp.queued : channel === "push" ? reach.channels.push.queued : reach.channels.telegram.queued) > 0;
+  const ok = !reach || reach.channels[channel].queued > 0;
   return (
     <label
       className={cn(
@@ -626,6 +630,21 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
           </div>
         ) : (
           <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyPush")}</p>
+        )
+      ) : channel === "max" ? (
+        r.max ? (
+          <div className="rounded-2xl bg-[#eef0ff] p-3" data-testid="preview-max">
+            <div className="max-w-[92%] whitespace-pre-wrap rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[14px] leading-[1.5] text-[#0b1024] [overflow-wrap:anywhere]">
+              {r.max.text}
+            </div>
+            {r.max.url ? (
+              <div className="mt-1.5 max-w-[92%] rounded-xl bg-white px-3 py-2 text-center text-[14px] font-medium text-[#3848c7]">
+                {r.max.buttonText || t("preview.maxButton")}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyMax")}</p>
         )
       ) : r.telegram ? (
         <div className="rounded-2xl bg-[#e7ebf0] p-3">

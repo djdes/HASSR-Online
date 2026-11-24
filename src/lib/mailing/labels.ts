@@ -3,7 +3,7 @@
  * тестов. Без импорта базы.
  */
 
-export const MAILING_CHANNELS = ["email", "inApp", "push", "telegram"] as const;
+export const MAILING_CHANNELS = ["email", "inApp", "push", "telegram", "max"] as const;
 export type MailingChannel = (typeof MAILING_CHANNELS)[number];
 export type MailingChannels = Record<MailingChannel, boolean>;
 
@@ -12,9 +12,10 @@ export const CHANNEL_LABELS: Record<MailingChannel, string> = {
   inApp: "Колокольчик",
   push: "Push",
   telegram: "Telegram",
+  max: "MAX",
 };
 
-export const NO_CHANNELS: MailingChannels = { email: false, inApp: false, push: false, telegram: false };
+export const NO_CHANNELS: MailingChannels = { email: false, inApp: false, push: false, telegram: false, max: false };
 
 export function normalizeChannels(raw: unknown): MailingChannels {
   const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
@@ -23,6 +24,7 @@ export function normalizeChannels(raw: unknown): MailingChannels {
     inApp: r.inApp === true,
     push: r.push === true,
     telegram: r.telegram === true,
+    max: r.max === true,
   };
 }
 

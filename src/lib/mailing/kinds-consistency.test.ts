@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { buildRecipientContext } from "@/lib/mailing/queue";
+import { buildRecipientContext, withMaxFallback } from "@/lib/mailing/queue";
 import { mailingKindOptions, mailingTemplates } from "@/lib/mailing/kinds";
 import { validateMessagePayload } from "@/lib/mailing/kinds/message-shared";
 import { getMailingTemplate, registerMailingTemplate } from "@/lib/mailing/templates";
@@ -92,5 +92,50 @@ describe("тип «Сообщение»", () => {
     assert.equal(r.push?.url, "/dashboard");
     assert.match(r.telegram?.text ?? "", /^<b>Иван Петров, новое в WeSetup<\/b>/);
     assert.match(r.telegram?.text ?? "", /<a href="https:\/\/wesetup\.ru\/r\/mr1\.sig\/1">Открыть кабинет<\/a>$/);
+  });
+
+  it("короткий текст — в Telegram, MAX, колокольчик и push; письмо — полный", async () => {
+    const template = getMailingTemplate("message");
+    assert.ok(template);
+    const { ctx } = buildRecipientContext(
+      {
+        id: "mr2",
+        token: "mr2.sig",
+        email: "ivan@mail.ru",
+        name: "Иван",
+        companyName: null,
+        sphere: "cafe",
+        userId: "u1",
+        organizationId: "o1",
+        contactId: null,
+        links: [],
+        payload: null,
+      },
+      "https://wesetup.ru"
+    );
+    const short = { ...payload, shortBody: "{имя}, коротко: **скидка** до пятницы." };
+    assert.equal(validateMessagePayload(short).ok, true);
+    assert.equal(validateMessagePayload({ ...payload, shortBody: "я".repeat(1001) }).ok, false);
+    const r = withMaxFallback(await template.render(short, ctx));
+    assert.match(r.email?.html ?? "", /Для вашего заведения/);
+    assert.doesNotMatch(r.email?.html ?? "", /коротко/);
+    assert.match(r.telegram?.text ?? "", /Иван, коротко: <b>скидка<\/b> до пятницы\./);
+    assert.doesNotMatch(r.telegram?.text ?? "", /Для вашего заведения/);
+    assert.equal(r.inApp?.body, "Иван, коротко: скидка до пятницы.");
+    assert.equal(r.max?.text, "Иван, новое в WeSetup\n\nИван, коротко: скидка до пятницы.");
+    assert.equal(r.max?.buttonText, "Открыть кабинет");
+    assert.equal(r.max?.url, "https://wesetup.ru/r/mr2.sig/1");
+  });
+
+  it("без короткого текста мессенджеры получают полный", async () => {
+    const template = getMailingTemplate("message");
+    assert.ok(template);
+    const { ctx } = buildRecipientContext(
+      { id: "mr3", token: "mr3.sig", email: null, name: "Иван", companyName: null, sphere: null, userId: "u1", organizationId: "o1", contactId: null, links: [], payload: null },
+      "https://wesetup.ru"
+    );
+    const r = withMaxFallback(await template.render({ ...payload, shortBody: "  " }, ctx));
+    assert.match(r.telegram?.text ?? "", /Для вашего заведения/);
+    assert.match(r.max?.text ?? "", /тарифы \(https:\/\/wesetup\.ru\/r\/mr3\.sig\/0\)/);
   });
 });

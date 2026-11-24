@@ -18,6 +18,7 @@ const STATUS_COLUMN = {
   inApp: "inAppStatus",
   push: "pushStatus",
   telegram: "telegramStatus",
+  max: "maxStatus",
 } as const satisfies Record<MailingChannel, string>;
 
 const ERROR_COLUMN = {
@@ -25,6 +26,7 @@ const ERROR_COLUMN = {
   inApp: "inAppError",
   push: "pushError",
   telegram: "telegramError",
+  max: "maxError",
 } as const satisfies Record<MailingChannel, string>;
 
 export const STALE_SENDING_ERROR =
@@ -60,6 +62,7 @@ const recipientSelect = {
   inAppStatus: true,
   pushStatus: true,
   telegramStatus: true,
+  maxStatus: true,
   attempts: true,
   nextAttemptAt: true,
   links: true,
@@ -76,6 +79,7 @@ export function toQueueRecipient(row: RecipientRow): QueueRecipient {
     inAppStatus: row.inAppStatus as ChannelStatus | null,
     pushStatus: row.pushStatus as ChannelStatus | null,
     telegramStatus: row.telegramStatus as ChannelStatus | null,
+    maxStatus: row.maxStatus as ChannelStatus | null,
     links: Array.isArray(row.links) ? row.links.filter((l): l is string => typeof l === "string") : [],
     payload:
       row.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
@@ -102,7 +106,7 @@ async function recomputeStatuses(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   const rows = await db.mailingRecipient.findMany({
     where: { id: { in: ids } },
-    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true },
+    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true, maxStatus: true },
   });
   for (const row of rows) {
     const status = overallRecipientStatus([
@@ -110,6 +114,7 @@ async function recomputeStatuses(ids: string[]): Promise<void> {
       row.inAppStatus as ChannelStatus | null,
       row.pushStatus as ChannelStatus | null,
       row.telegramStatus as ChannelStatus | null,
+      row.maxStatus as ChannelStatus | null,
     ]);
     await db.mailingRecipient.update({ where: { id: row.id }, data: { status } });
   }

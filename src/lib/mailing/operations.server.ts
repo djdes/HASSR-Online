@@ -317,6 +317,8 @@ const journalSelect = {
   pushError: true,
   telegramStatus: true,
   telegramError: true,
+  maxStatus: true,
+  maxError: true,
   waitReason: true,
   attempts: true,
   nextAttemptAt: true,

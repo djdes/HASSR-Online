@@ -2,12 +2,13 @@
 
 import { useId, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Bold, Link2, MousePointerClick } from "lucide-react";
+import { Bold, Link2, MessageCircle, MousePointerClick } from "lucide-react";
 
 import type { MailingKindFieldsProps } from "@/components/mailing/kind-fields";
 import {
   MESSAGE_BODY_MAX,
   MESSAGE_BUTTON_TEXT_MAX,
+  MESSAGE_SHORT_BODY_MAX,
   MESSAGE_SUBJECT_MAX,
   coerceMessagePayload,
   type MessagePayload,
@@ -47,7 +48,7 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
     });
   }
 
-  const used = usedVariables(`${value.subject}\n${value.body}\n${value.buttonText}`);
+  const used = usedVariables(`${value.subject}\n${value.body}\n${value.shortBody}\n${value.buttonText}`);
   const buttonUrlBad = value.buttonUrl.trim() !== "" && !isSafeLinkUrl(value.buttonUrl.trim());
 
   return (
@@ -135,6 +136,30 @@ export default function MessageFields({ payload, onChange, disabled }: MailingKi
             fallback: (chunks) => <code className="rounded bg-[#f5f6ff] px-1">{chunks}</code>,
           })}
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4" data-testid="message-short-body">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2 text-[13px] font-semibold text-[#0b1024]">
+            <MessageCircle className="size-4 text-[#5566f6]" />
+            {t("message.shortTitle")}
+          </span>
+          <span className="tabular-nums text-[12px] font-normal text-[#9b9fb3]">
+            {value.shortBody.length}/{MESSAGE_SHORT_BODY_MAX}
+          </span>
+        </div>
+        <p className="mb-2 text-[12px] leading-[1.55] text-[#6f7282]">{t("message.shortHint")}</p>
+        <textarea
+          name="shortBody"
+          aria-label={t("message.shortTitle")}
+          value={value.shortBody}
+          disabled={disabled}
+          maxLength={MESSAGE_SHORT_BODY_MAX}
+          onChange={(e) => set({ shortBody: e.target.value })}
+          rows={4}
+          placeholder={t("message.shortExample", { nameToken: "{имя}" })}
+          className="w-full rounded-2xl border border-[#dcdfed] bg-white px-3.5 py-3 text-[15px] leading-[1.6] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15 disabled:opacity-60"
+        />
       </div>
 
       <div className="rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4">

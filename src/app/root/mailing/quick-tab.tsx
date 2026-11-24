@@ -577,6 +577,7 @@ function Summary({
         ) : null}
         {preset?.channels.inApp ? <li>Колокольчик в кабинете: {stats.channels.inApp.queued}</li> : null}
         {preset?.channels.telegram ? <li>Telegram: {stats.channels.telegram.queued}</li> : null}
+        {preset?.channels.max ? <li>MAX: {stats.channels.max.queued}</li> : null}
         {preset?.channels.push ? <li>Push: {stats.channels.push.queued}</li> : null}
         {stats.duplicates > 0 ? (
           <li className="text-[#6f7282]">Совпали по почте и получат одно письмо: {stats.duplicates}</li>

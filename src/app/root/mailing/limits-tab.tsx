@@ -179,7 +179,7 @@ export function LimitsTab({
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-[640px] text-[12px] leading-relaxed text-[#6f7282]">
-            Работает меньший из лимитов. Колокольчик, push и Telegram письма не считают. Перерыв считается между
+            Работает меньший из лимитов. Колокольчик, push, Telegram и MAX письма не считают. Перерыв считается между
             разными рассылками на один адрес почты: письмо следующей ждёт его окончания, остальные каналы того же
             получателя ждут вместе с ним.
           </p>

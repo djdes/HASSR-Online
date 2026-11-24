@@ -33,11 +33,12 @@ type StoredRecipient = QueueRecipient & {
 };
 type StoredCampaign = QueueCampaign & { scheduledAt: Date | null; preparedAt: Date | null; prepareError: string | null };
 
-const FIELD: Record<MailingChannel, "emailStatus" | "inAppStatus" | "pushStatus" | "telegramStatus"> = {
+const FIELD: Record<MailingChannel, "emailStatus" | "inAppStatus" | "pushStatus" | "telegramStatus" | "maxStatus"> = {
   email: "emailStatus",
   inApp: "inAppStatus",
   push: "pushStatus",
   telegram: "telegramStatus",
+  max: "maxStatus",
 };
 
 class MemoryStore implements MailingQueueStore {
@@ -79,6 +80,7 @@ class MemoryStore implements MailingQueueStore {
       inAppStatus: null,
       pushStatus: null,
       telegramStatus: null,
+      maxStatus: null,
       attempts: 0,
       nextAttemptAt: null,
       links: [],
@@ -150,7 +152,7 @@ class MemoryStore implements MailingQueueStore {
       }
       if (touched) {
         count += 1;
-        r.status = overallRecipientStatus([r.emailStatus, r.inAppStatus, r.pushStatus, r.telegramStatus]);
+        r.status = overallRecipientStatus([r.emailStatus, r.inAppStatus, r.pushStatus, r.telegramStatus, r.maxStatus]);
       }
     }
     return count;
@@ -161,7 +163,7 @@ class MemoryStore implements MailingQueueStore {
         const c = this.campaigns.get(r.campaignId);
         if (!c || c.status !== "sending" || !c.preparedAt || r.isTest || r.status !== "queued") return false;
         if (r.nextAttemptAt && r.nextAttemptAt > now) return false;
-        const other = r.inAppStatus === "queued" || r.pushStatus === "queued" || r.telegramStatus === "queued";
+        const other = r.inAppStatus === "queued" || r.pushStatus === "queued" || r.telegramStatus === "queued" || r.maxStatus === "queued";
         return other || (emailAllowed && r.emailStatus === "queued");
       })
       .slice(0, limit)
@@ -228,7 +230,7 @@ class MemoryStore implements MailingQueueStore {
 type Script = Partial<Record<MailingChannel, (msg: unknown, call: number) => SendOutcome>>;
 
 function fakeSenders(script: Script = {}) {
-  const calls: Record<MailingChannel, unknown[]> = { email: [], inApp: [], push: [], telegram: [] };
+  const calls: Record<MailingChannel, unknown[]> = { email: [], inApp: [], push: [], telegram: [], max: [] };
   const run = (channel: MailingChannel) => async (msg: unknown): Promise<SendOutcome> => {
     calls[channel].push(msg);
     const fn = script[channel];
@@ -239,6 +241,7 @@ function fakeSenders(script: Script = {}) {
     inApp: run("inApp"),
     push: run("push"),
     telegram: run("telegram"),
+    max: run("max"),
   };
   return { senders, calls };
 }

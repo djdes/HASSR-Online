@@ -280,3 +280,45 @@ export function extractLinks(prepared: PreparedText): string[] {
   prepared.doc.forEach(walk);
   return urls;
 }
+
+/** Предел текста одного сообщения MAX (4000) с запасом на подпись теста. */
+export const MAX_TEXT_LIMIT = 3800;
+
+function decodeTelegramEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+/**
+ * Сообщение для бота MAX из уже готового сообщения Telegram: MAX не
+ * понимает HTML, поэтому теги снимаются. Ссылка кнопки (`url`) уходит
+ * кнопкой под сообщением — из текста её убираем; прочие ссылки остаются
+ * как «текст (адрес)», чтобы их можно было открыть.
+ */
+export function maxFromTelegram(telegram: { text: string; url?: string | null }): {
+  text: string;
+  url: string | null;
+  buttonText: string | null;
+} {
+  const url = telegram.url ?? null;
+  let buttonText: string | null = null;
+  let text = telegram.text.replace(/<a\s+href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, rawHref: string, rawLabel: string) => {
+    const href = decodeTelegramEntities(rawHref);
+    const label = decodeTelegramEntities(rawLabel.replace(/<[^>]+>/g, "")).trim();
+    if (url && href === url && buttonText === null) {
+      buttonText = label || "Открыть";
+      return "";
+    }
+    return label && label !== href ? `${label} (${href})` : href;
+  });
+  text = decodeTelegramEntities(text.replace(/<[^>]+>/g, ""))
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  if (text.length > MAX_TEXT_LIMIT) text = `${text.slice(0, MAX_TEXT_LIMIT - 1).trimEnd()}…`;
+  return { text, url, buttonText: url ? (buttonText ?? "Открыть") : null };
+}

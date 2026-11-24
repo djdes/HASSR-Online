@@ -5410,7 +5410,7 @@ model MailingCampaign {
   title          String
   /// Тип шаблона (`src/lib/mailing/templates.ts`): "message", дальше — "kp"…
   kind           String             @default("message")
-  /// { email, inApp, push, telegram } — галочки каналов.
+  /// { email, inApp, push, telegram, max } — галочки каналов.
   channels       Json               @default("{}")
   /// Данные шаблона: тема, текст, кнопка… (у каждого типа свои).
   payload        Json               @default("{}")
@@ -5479,6 +5479,9 @@ model MailingRecipient {
   pushError      String?
   telegramStatus String?
   telegramError  String?
+  /// Бот MAX: короткий текст (как в Telegram), тот же жизненный цикл канала.
+  maxStatus      String?
+  maxError       String?
   /// `<id>.<подпись>` — для отписки и кликов.
   token          String            @unique
   /// Адреса ссылок письма; клик `/r/<token>/<n>` ведёт только по ним.

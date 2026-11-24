@@ -23047,6 +23047,10 @@
       "telegram": {
         "available": "Telegram: есть",
         "missing": "Telegram: нет"
+      },
+      "max": {
+        "available": "MAX: есть",
+        "missing": "MAX: нет"
       }
     },
     "billing": {
@@ -23308,10 +23312,13 @@
       "buttonExample": "Открыть кабинет",
       "linkExample": "https://wesetup.ru/pricing или /dashboard",
       "badUrl": "Ссылка — адрес https://… или путь сайта вида /pricing.",
-      "buttonHint": "В колокольчике — ссылка «Открыть», в Telegram — строкой под текстом.",
+      "buttonHint": "В колокольчике — ссылка «Открыть», в Telegram — строкой под текстом, в MAX — кнопкой.",
       "fallbackTitle": "Если у получателя пусто",
       "fallbackUsed": "Подставим это слово вместо переменной.",
-      "fallbackUnused": "Переменные в тексте пока не используются."
+      "fallbackUnused": "Переменные в тексте пока не используются.",
+      "shortTitle": "Коротко для Telegram и MAX",
+      "shortHint": "Письмо уходит полным текстом, а в Telegram, MAX, колокольчик и push — этот короткий. Оставьте пустым — в мессенджеры уйдёт полный текст.",
+      "shortExample": "{nameToken}, коротко: скидка 50 % на год до 30 ноября. Подробности — по кнопке."
     },
     "kp": {
       "sphere": "Сфера по умолчанию",
@@ -23381,7 +23388,8 @@
         "email": "Почта",
         "inApp": "Колокольчик",
         "push": "Push",
-        "telegram": "Telegram"
+        "telegram": "Telegram",
+        "max": "MAX"
       },
       "reachNone": "Сначала выберите получателей",
       "reachCounting": "Считаем…",
@@ -23391,12 +23399,14 @@
       "reachTelegram": "Дойдёт до {queued} из {users} — у кого привязан бот{optedOut, select, yes{ · отписались {optedOutCount}} other{}}",
       "pushWarning": "{app, select, missing{Firebase не настроен — в приложение push не уходит{web, select, missing{; } other{}}} other{}}{web, select, missing{веб-push на сервере не настроен} other{}}",
       "telegramWarning": "Бот Telegram не настроен на сервере",
-      "dryRun": "Сухая отправка — наружу не уйдёт"
+      "dryRun": "Сухая отправка — наружу не уйдёт",
+      "reachMax": "Дойдёт до {queued} из {users} — у кого привязан бот MAX{optedOut, select, yes{ · отписались {optedOutCount}} other{}}",
+      "maxWarning": "Бот MAX не настроен на сервере"
     },
     "send": {
       "heading": "Отправка",
       "senderWarning": "Рекламные письма уходят с <address></address> — если их пометят спамом, служебные письма (коды входа, счета) тоже начнут попадать в спам. Лучше отдельный адрес/домен.",
-      "dryRunNotice": "Сухая отправка: {mode, select, files{письма, push и Telegram пишутся файлами в {directory}} other{SMTP не настроен — письма только в логе сервера}}. Наружу ничего не уходит.",
+      "dryRunNotice": "Сухая отправка: {mode, select, files{письма, push, Telegram и MAX пишутся файлами в {directory}} other{SMTP не настроен — письма только в логе сервера}}. Наружу ничего не уходит.",
       "rateLine": "Скорость: до <perMinute></perMinute> писем в минуту и <perDay></perDay> в сутки. Сегодня уже ушло <sentToday></sentToday>.{queued, select, yes{ Этой рассылке — {category, select, one{{displayCount} письмо} few{{displayCount} письма} other{{displayCount} писем}}: около {minutes} мин.{overflow, select, yes{ Часть уйдёт завтра — сработает суточный лимит.} other{}}} other{}}",
       "now": "Отправить сейчас",
       "test": "Тестовая отправка мне",
@@ -23434,7 +23444,9 @@
       "emptyPush": "Этот тип не отправляет push.",
       "emptyTelegram": "Этот тип не отправляет в Telegram.",
       "openLink": "Открыть → <url></url>",
-      "pushNow": "WeSetup · сейчас"
+      "pushNow": "WeSetup · сейчас",
+      "emptyMax": "Этот тип не отправляет в MAX.",
+      "maxButton": "Открыть"
     },
     "confirm": {
       "nowTitle": "Отправить рассылку сейчас?",

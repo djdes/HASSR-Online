@@ -23047,6 +23047,10 @@
       "telegram": {
         "available": "Telegram: available",
         "missing": "Telegram: unavailable"
+      },
+      "max": {
+        "available": "MAX: yes",
+        "missing": "MAX: no"
       }
     },
     "billing": {
@@ -23308,10 +23312,13 @@
       "buttonExample": "Open dashboard",
       "linkExample": "https://wesetup.ru/pricing or /dashboard",
       "badUrl": "Use an https://… address or a site path such as /pricing.",
-      "buttonHint": "Notifications show an “Open” link; Telegram shows a line below the text.",
+      "buttonHint": "In the bell it is an “Open” link, in Telegram a line under the text, in MAX a button.",
       "fallbackTitle": "When the recipient’s value is empty",
       "fallbackUsed": "This word replaces an empty variable.",
-      "fallbackUnused": "No variables are used in the text yet."
+      "fallbackUnused": "No variables are used in the text yet.",
+      "shortTitle": "Short text for Telegram and MAX",
+      "shortHint": "The email gets the full text; Telegram, MAX, the bell and push get this short one. Leave it empty to send the full text to messengers.",
+      "shortExample": "{nameToken}, in short: 50% off a year until November 30. Details behind the button."
     },
     "kp": {
       "sphere": "Default business sector",
@@ -23381,7 +23388,8 @@
         "email": "Email",
         "inApp": "Notifications",
         "push": "Push",
-        "telegram": "Telegram"
+        "telegram": "Telegram",
+        "max": "MAX"
       },
       "reachNone": "Select recipients first",
       "reachCounting": "Counting…",
@@ -23391,12 +23399,14 @@
       "reachTelegram": "Will reach {queued} of {users} — those linked to the bot{optedOut, select, yes{ · unsubscribed {optedOutCount}} other{}}",
       "pushWarning": "{app, select, missing{Firebase is not configured — no push to the app{web, select, missing{; } other{}}} other{}}{web, select, missing{web push is not configured on the server} other{}}",
       "telegramWarning": "The Telegram bot is not configured on the server",
-      "dryRun": "Dry run — nothing will be sent externally"
+      "dryRun": "Dry run — nothing will be sent externally",
+      "reachMax": "Will reach {queued} of {users} — those with the MAX bot linked{optedOut, select, yes{ · unsubscribed {optedOutCount}} other{}}",
+      "maxWarning": "The MAX bot is not configured on the server"
     },
     "send": {
       "heading": "Sending",
       "senderWarning": "Promotional emails are sent from <address></address> — if marked as spam, service emails (sign-in codes, invoices) may also go to spam. A separate address/domain is better.",
-      "dryRunNotice": "Dry run: {mode, select, files{emails, push and Telegram messages are written to files in {directory}} other{SMTP is not configured — emails appear only in the server log}}. Nothing is sent externally.",
+      "dryRunNotice": "Dry run: {mode, select, files{emails, push, Telegram and MAX messages are written to files in {directory}} other{SMTP is not configured — emails appear only in the server log}}. Nothing is sent externally.",
       "rateLine": "Email rate: up to <perMinute></perMinute> per minute and <perDay></perDay> per day. Already sent today: <sentToday></sentToday>.{queued, select, yes{ This mailing: {category, select, one{{displayCount} email} other{{displayCount} emails}}, about {minutes} min.{overflow, select, yes{ Some will be sent tomorrow due to the daily limit.} other{}}} other{}}",
       "now": "Send now",
       "test": "Send a test to me",
@@ -23434,7 +23444,9 @@
       "emptyPush": "This type does not send push notifications.",
       "emptyTelegram": "This type does not send to Telegram.",
       "openLink": "Open → <url></url>",
-      "pushNow": "WeSetup · now"
+      "pushNow": "WeSetup · now",
+      "emptyMax": "This type does not send to MAX.",
+      "maxButton": "Open"
     },
     "confirm": {
       "nowTitle": "Send this mailing now?",

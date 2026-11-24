@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Loader2, Mail, Search, Send, Smartphone, UserCheck, UserMinus, Users } from "lucide-react";
+import { Bell, Loader2, Mail, MessageCircle, Search, Send, Smartphone, UserCheck, UserMinus, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMailingFeedback } from "./mailing-feedback";
 import { billingDisplayKey, sphereDisplayKey, literalMailingCounter } from "./mailing-presentation";
@@ -377,6 +377,7 @@ function ChannelDots({ row }: { row: AudienceUserRow }) {
     { on: true, Icon: Bell, channel: "inApp" as const },
     { on: row.webPushCount + row.appDeviceCount > 0, Icon: Smartphone, channel: "push" as const },
     { on: row.hasTelegram, Icon: Send, channel: "telegram" as const },
+    { on: row.hasMax, Icon: MessageCircle, channel: "max" as const },
   ];
   return (
     <span className="inline-flex items-center gap-1">

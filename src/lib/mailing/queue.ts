@@ -12,6 +12,7 @@ import {
   type WaitReason,
 } from "./labels";
 import { createLinkTracker } from "./links";
+import { maxFromTelegram } from "./text-format";
 import {
   PER_HOUR_MAX,
   emailBudget,
@@ -94,6 +95,7 @@ export type QueueRecipient = {
   inAppStatus: ChannelStatus | null;
   pushStatus: ChannelStatus | null;
   telegramStatus: ChannelStatus | null;
+  maxStatus: ChannelStatus | null;
   attempts: number;
   nextAttemptAt: Date | null;
   links: string[];
@@ -110,6 +112,8 @@ export type RecipientPatch = {
   pushError?: string | null;
   telegramStatus?: ChannelStatus | null;
   telegramError?: string | null;
+  maxStatus?: ChannelStatus | null;
+  maxError?: string | null;
   status?: RecipientStatus;
   attempts?: number;
   nextAttemptAt?: Date | null;
@@ -226,12 +230,21 @@ export type OutgoingTelegram = {
   text: string;
   url: string | null;
 };
+export type OutgoingMax = {
+  userId: string;
+  campaignId: string;
+  recipientId: string;
+  text: string;
+  url: string | null;
+  buttonText: string | null;
+};
 
 export interface ChannelSenders {
   email(msg: OutgoingEmail): Promise<SendOutcome>;
   inApp(msg: OutgoingInApp): Promise<SendOutcome>;
   push(msg: OutgoingPush): Promise<SendOutcome>;
   telegram(msg: OutgoingTelegram): Promise<SendOutcome>;
+  max(msg: OutgoingMax): Promise<SendOutcome>;
 }
 
 export type QueueLog = (level: "info" | "debug" | "error", message: string, data?: Record<string, unknown>) => void;
@@ -282,12 +295,14 @@ const STATUS_FIELD: Record<MailingChannel, keyof RecipientPatch> = {
   inApp: "inAppStatus",
   push: "pushStatus",
   telegram: "telegramStatus",
+  max: "maxStatus",
 };
 const ERROR_FIELD: Record<MailingChannel, keyof RecipientPatch> = {
   email: "emailError",
   inApp: "inAppError",
   push: "pushError",
   telegram: "telegramError",
+  max: "maxError",
 };
 
 export function channelStatusOf(r: QueueRecipient, channel: MailingChannel): ChannelStatus | null {
@@ -300,6 +315,8 @@ export function channelStatusOf(r: QueueRecipient, channel: MailingChannel): Cha
       return r.pushStatus;
     case "telegram":
       return r.telegramStatus;
+    case "max":
+      return r.maxStatus;
   }
 }
 
@@ -360,6 +377,15 @@ export function buildRecipientContext(
  * письма, первой строкой текстовой версии и строкой в Telegram. Чтобы
  * тестовое письмо, пересланное коллеге, не выдавало пример за настоящее.
  */
+/**
+ * MAX — то же короткое сообщение, что и в Telegram, только без HTML.
+ * Тип, который сам не нарисовал MAX, получает его из Telegram.
+ */
+export function withMaxFallback(rendered: RenderedMailing): RenderedMailing {
+  if (rendered.max || !rendered.telegram) return rendered;
+  return { ...rendered, max: maxFromTelegram(rendered.telegram) };
+}
+
 export function withTestNotes(rendered: RenderedMailing): RenderedMailing {
   const notes = (rendered.notes ?? []).map((n) => n.trim()).filter(Boolean);
   if (notes.length === 0) return rendered;
@@ -376,6 +402,9 @@ export function withTestNotes(rendered: RenderedMailing): RenderedMailing {
   }
   if (rendered.telegram) {
     out.telegram = { ...rendered.telegram, text: `${rendered.telegram.text}\n\n<i>${escapeHtml(line)}</i>` };
+  }
+  if (rendered.max) {
+    out.max = { ...rendered.max, text: `${rendered.max.text}\n\n${line}` };
   }
   return out;
 }
@@ -488,6 +517,7 @@ export async function deliverRecipient(
     inApp: r.inAppStatus,
     push: r.pushStatus,
     telegram: r.telegramStatus,
+    max: r.maxStatus,
   };
   const note = (channel: MailingChannel, status: ChannelStatus, error: string | null, dryRun?: boolean) => {
     statuses[channel] = status;
@@ -542,7 +572,7 @@ export async function deliverRecipient(
     renderError = `Тип рассылки «${campaign.kind}» не найден`;
   } else {
     try {
-      rendered = await template.render(campaign.payload, ctx);
+      rendered = withMaxFallback(await template.render(campaign.payload, ctx));
     } catch (error) {
       renderError = `Ошибка шаблона: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300);
     }
@@ -679,6 +709,18 @@ async function sendChannel(
         url: rendered.push.url ?? null,
       });
     }
+    if (channel === "max") {
+      const max = rendered.max;
+      if (!max) return { kind: "skipped", reason: "Этот тип не отправляет в MAX" };
+      return await senders.max({
+        userId: r.userId as string,
+        campaignId: campaign.id,
+        recipientId: r.id,
+        text: max.text,
+        url: max.url ?? null,
+        buttonText: max.buttonText ?? null,
+      });
+    }
     if (!rendered.telegram) return { kind: "skipped", reason: "Этот тип не отправляет в Telegram" };
     return await senders.telegram({
       userId: r.userId as string,
@@ -704,7 +746,7 @@ function emptyReport(): QueueReport {
     prepared: 0,
     staleFailed: 0,
     processed: 0,
-    sent: { email: 0, inApp: 0, push: 0, telegram: 0 },
+    sent: { email: 0, inApp: 0, push: 0, telegram: 0, max: 0 },
     failed: 0,
     skipped: 0,
     retried: 0,

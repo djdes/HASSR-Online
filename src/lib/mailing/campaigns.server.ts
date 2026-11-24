@@ -26,6 +26,7 @@ import {
   buildRecipientContext,
   deliverRecipient,
   ensureUnsubscribe,
+  withMaxFallback,
   type DeliverResult,
   type QueueCampaign,
 } from "./queue";
@@ -418,12 +419,12 @@ export async function cancelCampaign(id: string, actor: MailingActor): Promise<C
   // каналов статус NULL, и `NOT (col = 'sending')` для них не истина.
   const pending = await db.mailingRecipient.findMany({
     where: { campaignId: id, isTest: false, status: "queued" },
-    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true },
+    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true, maxStatus: true },
   });
   const sentIds: string[] = [];
   const cancelIds: string[] = [];
   for (const row of pending) {
-    const statuses = [row.emailStatus, row.inAppStatus, row.pushStatus, row.telegramStatus];
+    const statuses = [row.emailStatus, row.inAppStatus, row.pushStatus, row.telegramStatus, row.maxStatus];
     if (statuses.includes("sending")) continue;
     (statuses.includes("sent") ? sentIds : cancelIds).push(row.id);
   }
@@ -725,7 +726,7 @@ export async function previewMailing(input: {
     mailingAppUrl(),
     { track: false, mode: "preview" }
   );
-  const rendered = await template.render(payload, ctx);
+  const rendered = withMaxFallback(await template.render(payload, ctx));
   if (rendered.email) rendered.email = ensureUnsubscribe(rendered.email, ctx.unsubscribeUrl);
   return { label, rendered, recipientPresentation };
 }
@@ -769,6 +770,7 @@ export async function sendTestToMe(campaignId: string, actor: MailingActor): Pro
       inAppStatus: status(channels.inApp),
       pushStatus: status(channels.push),
       telegramStatus: status(channels.telegram),
+      maxStatus: status(channels.max),
     },
   });
   const recipient = await loadQueueRecipient(id);
