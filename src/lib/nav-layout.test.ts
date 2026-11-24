@@ -49,7 +49,7 @@ test("«Все журналы»: слева «Моя компания → Объ
   assert.equal(place.entriesAreTabs, false);
   assert.deepEqual(
     place.entries.map((entry) => entry.id),
-    ["points", "staff", "journals", "productionControl", "areas", "equipment", "qr", "printer", "kiosk", "products"],
+    ["points", "staff", "areas", "equipment", "journals", "productionControl", "qr", "products", "printer", "kiosk"],
   );
   const journals = place.entries.find((entry) => entry.id === "journals");
   assert.equal(journals?.active, true);
@@ -253,7 +253,10 @@ test("короткие названия строки: на трёх языках
   const ru = menusOf("ru");
   const shortIds = (menus: Menus) =>
     Object.entries(menus).flatMap(([section, menu]) => Object.keys(menu.short ?? {}).map((id) => `${section}.${id}`)).sort();
-  assert.ok(shortIds(ru).includes("points.productionControl"));
+  assert.ok(shortIds(ru).includes("points.staff"));
+  // Владелец, 2026-11-23: в строке «Объектов» — полные названия ППК, принтера,
+  // планшета и справочника; коротко остаются только «Сотрудники» и «QR-плакаты».
+  assert.deepEqual(shortIds(ru).filter((id) => id.startsWith("points.")), ["points.qr", "points.staff"]);
   for (const locale of ["ru", "en", "uz"]) {
     const menus = menusOf(locale);
     assert.deepEqual(shortIds(menus), shortIds(ru), locale);

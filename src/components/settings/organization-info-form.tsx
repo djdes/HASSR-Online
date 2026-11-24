@@ -24,12 +24,13 @@ import {
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ORG_OWNERSHIP, normalizeOwnership } from "@/lib/org-profile";
 import {
-  ORG_OWNERSHIP,
-  ORG_SPHERES,
-  normalizeOwnership,
-  normalizeSphere,
-} from "@/lib/org-profile";
+  OBJECT_CATEGORIES,
+  categoryForSphere,
+  normalizeObjectCategory,
+  resolveSphereForCategory,
+} from "@/lib/object-categories";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { mapOrganizationProfileApiError } from "@/lib/organization-profile-error-adapter";
 
@@ -78,7 +79,6 @@ type Meta = {
 
 // Списки живут в src/lib/org-profile.ts — раньше их было четыре штуки
 // в разных файлах, и они успели разъехаться между собой.
-const TYPE_OPTIONS = ORG_SPHERES;
 
 export function OrganizationInfoForm({
   initial,
@@ -91,6 +91,7 @@ export function OrganizationInfoForm({
 }) {
   const t = useTranslations("settingsManagement.organizationProfile");
   const tBilling = useTranslations("common.billing");
+  const tc = useTranslations("common");
   const locale = useLocale();
   function localizedPlanLabel(plan: string): string {
     switch (plan.trim()) {
@@ -293,14 +294,22 @@ export function OrganizationInfoForm({
           />
         </FormRow>
         <FormRow label={t("form.sphere")} hint={t("form.sphereHint")}>
-          <Select value={normalizeSphere(form.type)} onValueChange={(value) => set("type", value)}>
+          {/* Только четыре сферы (владелец, 2026-11-23); выбор той же
+              категории сохраняет точную сферу организации («Школа»). */}
+          <Select
+            value={categoryForSphere(form.type) ?? ""}
+            onValueChange={(value) => {
+              const category = normalizeObjectCategory(value);
+              if (category) set("type", resolveSphereForCategory(initial.type, category));
+            }}
+          >
             <SelectTrigger aria-label={t("form.sphere")} className={ORG_SELECT_TRIGGER_CLASS}>
-              <SelectValue />
+              <SelectValue placeholder={tc("objectCategoryNone")} />
             </SelectTrigger>
             <SelectContent>
-              {TYPE_OPTIONS.map((opt) => (
+              {OBJECT_CATEGORIES.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
-                  {t(`form.spheres.${opt.value}`)}
+                  {tc(`objectCategories.${opt.value}`)}
                 </SelectItem>
               ))}
             </SelectContent>

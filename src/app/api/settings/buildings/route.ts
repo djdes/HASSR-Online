@@ -7,6 +7,8 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { checkPointsForCreation, limitResponse } from "@/lib/billing.server";
 import { COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/point-scope";
 import { closePointManagerSessions } from "@/lib/point-scope.server";
+import { OBJECT_CATEGORY_VALUES } from "@/lib/object-categories";
+import { applyObjectCategoryJournals } from "@/lib/object-category-journals.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +51,8 @@ const CreateSchema = z.object({
   name: z.string().trim().min(1, "Название обязательно").max(120),
   address: z.string().trim().max(200).optional().nullable(),
   sortOrder: z.number().int().optional(),
+  /** Сфера объекта (2026-11-23): одна из четырёх; от неё — набор журналов. */
+  sphere: z.enum(OBJECT_CATEGORY_VALUES, { message: "Выберите сферу объекта" }).optional(),
 });
 
 export async function POST(request: Request) {
@@ -100,10 +104,24 @@ export async function POST(request: Request) {
       name: body.name,
       address: body.address ?? null,
       sortOrder: body.sortOrder ?? 0,
+      ...(body.sphere ? { sphere: body.sphere } : {}),
     },
     include: { rooms: true },
   });
-  return NextResponse.json({ building: created });
+  // Сфера объекта задаёт его журналы (и основную сферу организации, если её
+  // ещё нет). Сбой набора журналов объект не отменяет.
+  const journals = body.sphere
+    ? await applyObjectCategoryJournals({
+        organizationId: orgId,
+        buildingId: created.id,
+        category: body.sphere,
+        reason: "create",
+      }).catch((error) => {
+        console.error("[buildings] sphere journals failed", error);
+        return null;
+      })
+    : null;
+  return NextResponse.json({ building: created, journalsLimited: journals?.limited === true });
 }
 
 const FlagSchema = z.object({

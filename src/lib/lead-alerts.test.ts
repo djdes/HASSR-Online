@@ -36,6 +36,10 @@ describe("горячие лиды — админу в Telegram", () => {
       ].join("\n"),
     );
     assert.match(composeProfileCompletedAlert({ organizationName: "Цех", sphereLabel: "Производство", locationsCount: 0, name: "И", phone: "+7", email: "e@x.ru", escape }), /точек: 1/);
+    // Анкета без сферы (2026-11-23: сфера — у объектов): строки «Сфера» нет.
+    const noSphere = composeProfileCompletedAlert({ organizationName: "Цех", sphereLabel: null, locationsCount: 2, name: "И", phone: "+7", email: "e@x.ru", escape });
+    assert.match(noSphere, /\nТочек: 2\n/);
+    assert.doesNotMatch(noSphere, /Сфера/);
   });
 
   it("низкая оценка: шкала, комментарий или подсказка позвонить; дописанный комментарий — отдельным заголовком", () => {

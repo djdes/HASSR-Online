@@ -1207,6 +1207,11 @@ model Building {
   /// (журналы, задачи) только в офисе. Дизайн:
   /// docs/superpowers/specs/2026-10-26-office-and-points-design.md
   kind                        String                 @default("point")
+  /// Сфера объекта (2026-11-23): "food" | "medical" | "consumer" | "sport"
+  /// (src/lib/object-categories.ts). Задаётся при создании объекта, от неё
+  /// идёт набор журналов объекта. null — как у организации (старые объекты,
+  /// офис).
+  sphere                      String?
   sortOrder                   Int                    @default(0)
   rooms                       Room[]
   /// Точки (2026-09-05): документы и обязательства, привязанные к этому
@@ -2184,6 +2189,8 @@ model FeedbackReport {
   respondedByName   String?
   /// Вложения: [{ url, filename, mimeType, sizeBytes }] — как у SupportMessage.
   attachments       Json?
+  /// Вложения ответа поддержки (скриншоты, 2026-11-23) — тот же формат.
+  replyAttachments  Json?
   /// Страница, с которой отправлен репорт (ярлык с жуком): абсолютный URL
   /// нашего сайта, хост клиента отбрасывается (`src/lib/bug-report.ts`).
   pageUrl           String?
@@ -2247,6 +2254,11 @@ model SupportMessage {
   /// Рассылка ROOT «всем организациям»: один id на рассылку, по нему
   /// пропускаем уже обработанные организации при повторе.
   broadcastId  String?
+  /// Ответ на конкретное сообщение этой ветки (цитата, 2026-11-23): админ
+  /// видит, на что отвечает, клиент — к чему ответ. Без внешнего ключа:
+  /// сообщения живут и удаляются вместе с веткой; чужой или пропавший id
+  /// просто не показывается (src/lib/support-reply-quote.ts).
+  replyToId    String?
   createdAt    DateTime      @default(now())
 
   @@index([threadId, createdAt])

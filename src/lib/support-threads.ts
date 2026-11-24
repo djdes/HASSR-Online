@@ -24,7 +24,6 @@ import { renderEmailLayout, sendFeedbackAdminEmail, sendRawEmail } from "@/lib/e
 import { escapeHtml } from "@/lib/html-escape";
 import { SUPPORT_EMAIL } from "@/lib/support-chat-bus";
 import { notifyManagement } from "@/lib/notifications";
-import { platformOrgId } from "@/lib/partners/partner-hint";
 import { sendPartnerChatMessageEmail } from "@/lib/partners/emails";
 import { notifyPlatformAdmin, sendToSupportEmails } from "@/lib/platform-admin";
 import {
@@ -34,6 +33,8 @@ import {
   validateSignedAttachments,
 } from "@/lib/support-attachments";
 import type { SupportAttachmentMeta } from "@/lib/support-attachments-shared";
+import { sanitizeReplyToId } from "@/lib/support-reply-quote";
+import { alertSupportStaffAboutChat } from "@/lib/support-staff-alerts.server";
 import {
   SUPPORT_CHAT_MAX_LENGTH,
   SUPPORT_CHAT_MIN_LENGTH,
@@ -93,6 +94,8 @@ export const MESSAGE_SELECT = {
   authorName: true,
   partnerId: true,
   attachments: true,
+  // Цитата ответа оператора (2026-11-23): клиент и админка рисуют её сами.
+  replyToId: true,
   createdAt: true,
 } satisfies Prisma.SupportMessageSelect;
 
@@ -361,25 +364,13 @@ export async function deliverClientMessage(ctx: {
       : "";
   const bodyText = (message.body || "(вложение без текста)") + attachmentsNote;
 
-  // Колокольчик ROOT: письмо и Telegram уходят ниже, а в самой админке о
-  // новом сообщении раньше узнавали, только обновив страницу. Одно
-  // уведомление на ветку — новые реплики дописываются в него.
-  await notifyManagement({
-    organizationId: platformOrgId(),
-    kind: "support.message",
-    dedupeKey: `support.message:${thread.id}`,
-    title: `Сообщение в чате: ${
-      thread.organizationName ?? message.authorName ?? thread.userName ?? "гость с сайта"
-    }`,
-    linkHref: "/root/feedback",
-    linkLabel: "Открыть переписку",
-    items: [
-      {
-        id: message.id,
-        label: previewOf(message.body, message.attachments.length, 140) || "📎 Вложение",
-      },
-    ],
-  }).catch((error) => console.error("[support-threads] root notification failed:", error));
+  // Колокольчик и всплывашка всей команде поддержки (ROOT, администраторы,
+  // раздел «Обратная связь»; владелец, 2026-11-23): одно уведомление на ветку
+  // — новые реплики дописываются в него. Раньше колокольчик видело только
+  // руководство платформы, и только после обновления страницы.
+  await alertSupportStaffAboutChat({ thread, message }).catch((error) =>
+    console.error("[support-threads] staff alert failed:", error)
+  );
 
   const partner = thread.organizationId
     ? await getActivePartnerForOrg(thread.organizationId).catch(() => null)
@@ -499,7 +490,17 @@ export async function postOperatorMessage(args: {
   attachments: SupportAttachmentMeta[];
   operator: OperatorIdentity;
   broadcastId?: string | null;
+  /** Сообщение этой ветки, на которое отвечают (цитата). Чужое — молча без цитаты. */
+  replyToId?: string | null;
 }): Promise<{ thread: ThreadRow; message: MessageDto }> {
+  const replyToId = args.replyToId
+    ? (
+        await db.supportMessage.findFirst({
+          where: { id: args.replyToId, threadId: args.threadId },
+          select: { id: true },
+        })
+      )?.id ?? null
+    : null;
   const [thread, message] = await db.$transaction([
     db.supportThread.update({
       where: { id: args.threadId },
@@ -520,6 +521,7 @@ export async function postOperatorMessage(args: {
         authorName: args.operator.name,
         partnerId: args.operator.partnerId,
         broadcastId: args.broadcastId ?? null,
+        ...(replyToId ? { replyToId } : {}),
         ...(args.attachments.length > 0 ? { attachments: args.attachments } : {}),
       },
       select: MESSAGE_SELECT,
@@ -630,7 +632,9 @@ export async function deliverOperatorMessage(ctx: {
 export function parseOperatorInput(
   raw: unknown,
   uploaderKey: string
-): { ok: true; body: string; attachments: SupportAttachmentMeta[] } | { ok: false; error: string } {
+):
+  | { ok: true; body: string; attachments: SupportAttachmentMeta[]; replyToId: string | null }
+  | { ok: false; error: string } {
   const parsed = operatorInputSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Некорректное сообщение" };
@@ -642,7 +646,7 @@ export function parseOperatorInput(
   if (parsed.data.message.length < SUPPORT_CHAT_MIN_LENGTH && attachments.length === 0) {
     return { ok: false, error: "Сообщение слишком короткое" };
   }
-  return { ok: true, body: parsed.data.message, attachments };
+  return { ok: true, body: parsed.data.message, attachments, replyToId: sanitizeReplyToId(parsed.data.replyToId) };
 }
 
 const operatorInputSchema = z.object({
@@ -652,6 +656,7 @@ const operatorInputSchema = z.object({
     .max(SUPPORT_CHAT_MAX_LENGTH, "Сообщение слишком длинное")
     .default(""),
   attachments: z.unknown().optional(),
+  replyToId: z.unknown().optional(),
 });
 
 /** Клиент открыл чат — непрочитанное гасим, лишнюю запись не делаем. */

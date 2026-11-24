@@ -1,0 +1,50 @@
+{
+  "task": "objects-spheres-feedback-2026-11-23",
+  "verdict": "PASS",
+  "base": "6f95d7c6a",
+  "checks": {
+    "typecheck": "EXIT=0",
+    "test_gate_full": "pass=7279 fail=0",
+    "task_tests": "140/140",
+    "i18n_check": "101/101",
+    "eslint_changed_files": "no new errors (2 errors + 5 warnings pre-existing on master)",
+    "browser": "raw/ui-check.json, raw/ui-popup.json, raw/ui-db-climate.txt"
+  },
+  "post_merge": {
+    "master": "42b4fac1d",
+    "merge_commit": "476620012",
+    "conflicts": ["src/components/settings/organization-info-form.tsx", "src/content/kb/articles.ts", "src/app/borderless.css", "src/app/neutral-palette.css"],
+    "typecheck": "EXIT=0",
+    "targeted_tests": "143/143",
+    "i18n_check": "103/103",
+    "pre_commit_full_suite": "pass=7294 fail=0",
+    "browser": "raw/merge-ui-check.json"
+  },
+  "acceptance": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS",
+    "AC13": "PASS",
+    "AC14": "PASS",
+    "AC15": "PASS",
+    "AC16": "PASS",
+    "AC17": "PASS",
+    "AC18": "PASS",
+    "AC19": "PASS"
+  },
+  "schema": ["Building.sphere String?", "FeedbackReport.replyAttachments Json?", "SupportMessage.replyToId String?"],
+  "deviations": [
+    "FeedbackReport.replyAttachments instead of responseAttachments (no model realignment)",
+    "SupportMessage.replyToId without FK relation (quote resolved within the thread)",
+    "Telegram-bot requests: bell only, no live popup (poller is a separate process)"
+  ]
+}

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { AtSign, Settings2 } from "lucide-react";
 import { requireRoot } from "@/lib/auth-helpers";
 import { platformViewerForSession } from "@/lib/platform-access.server";
-import { PLATFORM_SECTIONS, matchPlatformPreset } from "@/lib/platform-access";
+import { PLATFORM_SECTIONS, isSupportStaff, matchPlatformPreset } from "@/lib/platform-access";
+import { SupportStaffAlerts } from "@/components/support/support-staff-alerts";
 import { RootNav } from "@/components/root/root-nav";
 import { db } from "@/lib/db";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
@@ -111,6 +112,9 @@ export default async function RootAreaLayout({
       {/* Тосты ответов из админки (чаты, обращения): без тостера они
           молча пропадали, и было непонятно, ушёл ли ответ. */}
       <Toaster />
+      {/* Всплывашка о новых обращениях и сообщениях чатов — команде
+          поддержки на любой странице панели (владелец, 2026-11-23). */}
+      {viewer.superadmin || isSupportStaff(Boolean(viewer.owner), viewer.sections) ? <SupportStaffAlerts /> : null}
     </SiteThemeProvider>
     </AuthSessionProvider>
     </DomainMessagesBoundary>

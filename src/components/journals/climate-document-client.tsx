@@ -3040,8 +3040,12 @@ export function ClimateDocumentClient({
         users={employees}
         onSaved={async (snapshot) => {
           // Имя и нормы строки — из карточки (snapshot), без ожидания
-          // router.refresh(); ключ строки не меняется.
-          const row = config.rooms.find((r) => r.roomId === snapshot.id);
+          // router.refresh(); ключ строки не меняется. Климат выключили —
+          // строку убрал (или оставил из-за замеров) сервер: свою копию
+          // конфига поверх не пишем, иначе вернули бы строку обратно.
+          const row = snapshot.climateNorms
+            ? config.rooms.find((r) => r.roomId === snapshot.id)
+            : undefined;
           if (row) {
             const next: ClimateRoomConfig = {
               ...row,

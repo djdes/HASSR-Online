@@ -1222,7 +1222,24 @@
         "urgent": "Urgent journal",
         "help": "This help"
       }
-    }
+    },
+    "objectCategories": {
+      "food": "Food service (HACCP)",
+      "medical": "Medical services",
+      "consumer": "Consumer services",
+      "sport": "Sport and recreation"
+    },
+    "objectCategoryHints": {
+      "food": "Cafés, canteens, school and children's catering, food production and grocery stores — sanitary and HACCP logs",
+      "medical": "Clinics, medical offices, sanatoriums — disinfection, sterilization, patient catering",
+      "consumer": "Beauty salons, barbershops, hotels and other consumer services — disinfection and cleaning",
+      "sport": "Fitness clubs, swimming pools, sports and recreation facilities — cleaning, disinfection, water"
+    },
+    "objectCategoryLabel": "Site type",
+    "objectCategoryRequired": "Choose the site type",
+    "objectCategoryNone": "Type not selected",
+    "objectCategoryChangeHint": "The site's journal set depends on its type: when you change it, the mandatory journals of the new type are turned on and nothing is turned off.",
+    "objectCategoryJournalsLimited": "The type is saved, but its journals do not fit your plan's limit — turn on the ones you need in Journal settings."
   },
   "language": {
     "label": "Interface language",
@@ -2983,20 +3000,16 @@
             "staff": "Site staff",
             "journals": "Journals",
             "productionControl": "Production control program",
-            "areas": "Workshops and rooms",
+            "areas": "Rooms",
             "equipment": "Equipment",
             "qr": "QR stickers and posters",
             "printer": "Online printer",
             "kiosk": "Shared tablet",
-            "products": "Product directory"
+            "products": "Products and services directory"
           },
           "short": {
             "staff": "Staff",
-            "productionControl": "PCP",
-            "qr": "QR and posters",
-            "printer": "Printer",
-            "kiosk": "Tablet",
-            "products": "Products"
+            "qr": "QR posters"
           }
         },
         "journals": {
@@ -4200,7 +4213,18 @@
       "orgTrialEnding": "{stage, select, tomorrow {The free days of the organization “{name}” end tomorrow} other {The free days of the organization “{name}” are ending}}",
       "orgTrialLastDay": "Last free day — {date}",
       "addPoint": "Add a location",
-      "orgTrialAccountCovers": "The balances of the account's organizations have enough money — you can pay for the location from the balance in one step."
+      "orgTrialAccountCovers": "The balances of the account's organizations have enough money — you can pay for the location from the balance in one step.",
+      "supportReport": "New support request",
+      "supportChat": "New message in live chat"
+    },
+    "supportAlerts": {
+      "report": "New request",
+      "reportBug": "New request · bug",
+      "reportSuggestion": "New request · suggestion",
+      "reportPartnership": "New request · partnership",
+      "chat": "Live chat message",
+      "open": "Open",
+      "client": "Client"
     }
   },
   "journalControls": {
@@ -9669,7 +9693,7 @@
         "description": "Four steps and the site is ready for journals. You can adjust everything later on the site page.",
         "progress": "Step {step} of {total}",
         "steps": {
-          "head": "Name and address",
+          "head": "Name, address, type",
           "rooms": "Rooms",
           "equipment": "Equipment",
           "summary": "Summary"
@@ -9679,14 +9703,16 @@
         "create": "Create site",
         "creating": "Creating… {done} of {total}",
         "head": {
-          "title": "What is the site called and where is it?",
-          "hint": "The name is shown in the menu and the cabinet header. The address is printed in the journal and PDF header.",
+          "title": "What is the site called, where is it and what does it do?",
+          "hint": "The name is shown in the menu and the cabinet header. The address is printed in the journal and PDF header. The type defines the site's journal set.",
           "name": "Name",
           "namePlaceholder": "For example, “Cafe on Mira”",
           "address": "Address",
           "addressPlaceholder": "City, street, building",
           "nameRequired": "Enter the site name",
-          "nameTaken": "A site with this name already exists — choose another name"
+          "nameTaken": "A site with this name already exists — choose another name",
+          "categoryHint": "The site's journals depend on its type: mandatory ones are turned on automatically, others can be turned on later. You can change the type on the Sites page.",
+          "categoryJournalsLimited": "The site is created, but the journals of its type do not fit your plan's limit — turn on the ones you need in Journal settings or change the plan."
         },
         "rooms": {
           "title": "Which rooms does the site have?",
@@ -10668,8 +10694,8 @@
         "journalShortNameHint": "Printed in each journal header and PDF. Menus and lists keep the organization name. Leave blank to use the short registry name or full name.",
         "journalHeaderPreview": "Journal header: {name}",
         "useFromRegistry": "Use registry name: {name}",
-        "sphere": "Sector",
-        "sphereHint": "Sets your journal list",
+        "sphere": "Main sector",
+        "sphereHint": "Suggested for new sites. Each site has its own type — change it in Sites",
         "ownership": "Organization type",
         "ownershipHint": "Privately owned, chain, or government-owned establishment",
         "locations": "Locations",
@@ -22378,7 +22404,14 @@
       "source": {
         "site": "Website",
         "telegram": "Telegram"
-      }
+      },
+      "requestsTitle": "Requests",
+      "clientCard": "Client card",
+      "enterCabinet": "Enter cabinet",
+      "enterCabinetFailed": "Could not enter the client's cabinet",
+      "call": "Call",
+      "writeEmail": "Email",
+      "openPage": "Request page"
     },
     "reply": {
       "button": "Reply",
@@ -22408,7 +22441,13 @@
         "invalid": "Invalid request data",
         "notFound": "Report not found",
         "failed": "Could not send the reply"
-      }
+      },
+      "to": "To",
+      "requestHeading": "Request {ticket} · {type} · {date}",
+      "noContact": "no contacts",
+      "attachHint": "Screenshot or photo — paperclip button, drag and drop or Ctrl+V.",
+      "waitForUploads": "Wait for the files to upload",
+      "attachmentsHeading": "Reply attachments"
     },
     "test": {
       "button": "Test notifications",
@@ -22546,7 +22585,18 @@
     "invalidMessage": "Invalid message",
     "broadcastTooShort": "Write at least a couple of sentences",
     "invalidBroadcastId": "Invalid broadcast ID",
-    "broadcastRateLimited": "A broadcast was started recently — wait 10 minutes"
+    "broadcastRateLimited": "A broadcast was started recently — wait 10 minutes",
+    "to": "To",
+    "replyingTo": "Replying to",
+    "replyToMessage": "Reply",
+    "clearQuote": "Remove quote",
+    "quoteMissing": "message unavailable",
+    "clientCard": "Client card",
+    "enterCabinet": "Enter cabinet",
+    "call": "Call",
+    "writeEmail": "Email",
+    "dropHint": "Drop to attach the file",
+    "attachHint": "Screenshot — Ctrl+V or drag a file into the window"
   },
   "rootAudit": {
     "title": "Activity log",
@@ -26548,7 +26598,9 @@
       "describeHumidity": "humidity {value}",
       "normsNone": "no norms selected",
       "minAria": "{label}: minimum",
-      "maxAria": "{label}: maximum"
+      "maxAria": "{label}: maximum",
+      "verifiersToggle": "Assign own verifiers",
+      "climateOnHint": "After saving, the room appears in this site's temperature and humidity log, and staff can record readings with the QR code below."
     },
     "roomDirectoryPickerDialog": {
       "areaNoEquipment": "workshop · no equipment",
@@ -27025,7 +27077,7 @@
           "equipment": "What equipment is there"
         },
         "subtitles": {
-          "points": "Café, workshop, branch — the name and address are printed in the logs",
+          "points": "Name, address and type of each site: the address is printed in the logs, and the type defines the journal set",
           "staff": "Add employees — they get tasks and their names go into the logs",
           "equipment": "Fridges and freezers go into the temperature log"
         },
@@ -27040,7 +27092,7 @@
         "pointAddressLabel": "Location {index} address",
         "addPoint": "Add location",
         "removePoint": "Remove location {index}",
-        "pointsNote": "You can skip this and add locations later in “My company → Locations”.",
+        "pointsNote": "You can skip this and add locations later in “My company → Locations”. The site type can be changed there too.",
         "pointsSaved": "Locations saved",
         "pointExists": "Location “{name}” already exists",
         "pointsFailed": "Could not save the locations",
@@ -28866,7 +28918,9 @@
       "roomNamePlaceholder": "Room name",
       "add": "Add",
       "addRoom": "Add room",
-      "officeBadge": "Office"
+      "officeBadge": "Office",
+      "sphereHint": "The site type defines its journal set: when you change it, the mandatory journals of the new type are turned on and nothing is turned off.",
+      "sphereJournalsLimited": "The type is saved, but its journals do not fit your plan's limit — turn on the ones you need in Journal settings."
     },
     "calendarPage": {
       "kindMedbook": "Medical books",

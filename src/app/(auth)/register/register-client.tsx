@@ -16,7 +16,7 @@ import { ArrowRight, CheckCircle2, Gift, Loader2, MousePointerClick, Sparkles, T
 import { LiveGuideStartButton } from "@/components/live-guide/live-guide-host";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { TRIAL_DAYS } from "@/lib/tariff-plans";
-import { ORG_SPHERES, type OrgSphere } from "@/lib/org-profile";
+import type { OrgSphere } from "@/lib/org-profile";
 import { EmailHint, useEmailField } from "@/components/ui/email-field";
 import { CityPicker, type CityValue } from "@/components/shared/city-picker";
 import { browserTimeZone, findGeoPlace } from "@/lib/geo-places";
@@ -107,7 +107,7 @@ function RegisterScreen({
 
   const field = useEmailField(prefilled);
   const challenge = useRegistrationChallenge();
-  const [sphere, setSphere] = useState<OrgSphere | null>(linkSphere);
+  const sphere = linkSphere;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -374,30 +374,9 @@ function RegisterScreen({
               </p>
             ) : null}
 
-            {linkSphere ? (
-              <>
-                <label
-                  htmlFor="register-sphere"
-                  className="mb-1.5 mt-4 block text-[13px] font-medium text-[#0b1024]"
-                >
-                  {t("register.fields.sector")}</label>
-                <select
-                  id="register-sphere"
-                  data-testid="register-sphere"
-                  value={sphere ?? linkSphere}
-                  onChange={(e) => setSphere(e.target.value as OrgSphere)}
-                  className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[16px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-                >
-                  {ORG_SPHERES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {auth(`sectors.${option.value}`)}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1.5 text-[12px] text-[#6f7282]">
-                  {t("register.sector.journalsHint")}</p>
-              </>
-            ) : null}
+            {/* Сферу при регистрации не спрашиваем (владелец, 2026-11-23): её
+                выбирают у каждого объекта. Сфера из ссылки с промокодом
+                уходит на сервер молча — набор журналов сразу её. */}
 
             <LegalConsentCheckbox
               checked={consent}

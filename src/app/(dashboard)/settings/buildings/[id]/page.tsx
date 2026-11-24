@@ -101,6 +101,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
         phone: true,
         journalName: true,
         icon: true,
+        sphere: true,
         rooms: {
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
           select: {
@@ -121,6 +122,9 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
             currentMonthDays: true,
             generalMonthDays: true,
             requirePhoto: true,
+            // Климат помещения: без норм окно помещения показывало «не контролируется»
+            // и при сохранении стирало нормы из журнала климата (2026-11-23).
+            climateNorms: true,
           },
         },
       },
@@ -358,6 +362,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
             phone: point.phone,
             journalName: point.journalName,
             icon: point.icon,
+            sphere: point.sphere,
           }}
           readOnly={readOnly}
         />

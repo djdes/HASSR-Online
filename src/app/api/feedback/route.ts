@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import { alertSupportStaffAboutReport } from "@/lib/support-staff-alerts.server";
 import { z } from "zod";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
@@ -163,6 +164,18 @@ export async function POST(request: Request) {
   });
 
   after(async () => {
+    // Всплывашка и колокольчик команде поддержки (2026-11-23).
+    await alertSupportStaffAboutReport({
+      id: report.id,
+      type: parsed.type,
+      message: parsed.message,
+      userName: session.user.name ?? null,
+      userEmail: session.user.email ?? null,
+      phone,
+      organizationId: orgId || null,
+      organizationName,
+      attachments,
+    }).catch((error) => console.error("[feedback] staff alert failed", error));
     const emailAtts = emailAttachmentPayload(attachments);
     const [telegramOk, emailOk] = await Promise.all([
       notifyPlatformAdmin(

@@ -38,6 +38,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       body: input.body,
       attachments: input.attachments,
       operator,
+      // Цитата: на какое сообщение клиента отвечаем (2026-11-23).
+      replyToId: input.replyToId,
     });
     const delivered = await deliverOperatorMessage({ ...posted, operator });
     return NextResponse.json({

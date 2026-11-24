@@ -14,7 +14,8 @@ export function isLowNpsScore(score: number, scale: NpsScale): boolean {
 
 export function composeProfileCompletedAlert(args: {
   organizationName: string;
-  sphereLabel: string;
+  /** null — анкета сферу не спрашивала (2026-11-23: сфера — у объектов). */
+  sphereLabel: string | null;
   locationsCount: number;
   name: string;
   phone: string;
@@ -25,7 +26,7 @@ export function composeProfileCompletedAlert(args: {
   return [
     "📋 Анкета заполнена — можно звонить",
     `Организация: ${args.escape(args.organizationName)}`,
-    `Сфера: ${args.escape(args.sphereLabel)}, точек: ${points}`,
+    args.sphereLabel ? `Сфера: ${args.escape(args.sphereLabel)}, точек: ${points}` : `Точек: ${points}`,
     `Контакт: ${args.escape(args.name)}, ${args.escape(args.phone)}`,
     `Почта: ${args.escape(args.email)}`,
   ].join("\n");
