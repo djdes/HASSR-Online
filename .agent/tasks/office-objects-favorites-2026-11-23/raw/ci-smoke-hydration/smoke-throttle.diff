@@ -1,0 +1,8 @@
+90a91,93
+>   // Как медленная машина CI: процессор в 6 раз медленнее.
+>   const cdp = await context.newCDPSession(page);
+>   await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.CPU_RATE || 6) });
+94a98
+>     if (message.type() === "error" || message.type() === "warning") console.log(`[console.${message.type()}] ${page.url()} :: ${message.text().slice(0, 700)}`);
+95a100
+>   page.on("pageerror", (error) => console.log(`[pageerror] ${page.url()} :: ${String(error).slice(0, 700)}`));

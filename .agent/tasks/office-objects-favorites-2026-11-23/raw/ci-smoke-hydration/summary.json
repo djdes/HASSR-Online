@@ -1,0 +1,160 @@
+{
+ "what": "Browser smoke (nightly-e2e.yml) on PR #317: React hydration attribute mismatch (useId ids) on random pages; reproduced locally with 6x CPU throttling on the branch AND on origin/master bce1e012b",
+ "branchThrottled": {
+  "result": "RESULT: 5 of 48 check(s) failed",
+  "fails": [
+   {
+    "check": "01-quick-setup: нет ошибок страницы",
+    "idDiff": [
+     "+                                   id=\"radix-_R_12op1etabmilb_\"",
+     "-                                   id=\"radix-_R_4b345rlabmilb_\""
+    ],
+    "first": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+   },
+   {
+    "check": "08-traceability: нет ошибок страницы",
+    "idDiff": [
+     "+                                   id=\"radix-_R_12op1etabmilb_\"",
+     "-                                   id=\"radix-_R_4b345rlabmilb_\""
+    ],
+    "first": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+   },
+   {
+    "check": "09-batch: открывается (HTTP 500)",
+    "first": "http://localhost:3000/batches/cmwua6cpg00049y7dr13pjslb"
+   },
+   {
+    "check": "09-batch: нет ошибок страницы",
+    "idDiff": null,
+    "first": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+   },
+   {
+    "check": "10-poster: есть «Poster № 687409»",
+    "first": "Перейти к содержимому"
+   }
+  ]
+ },
+ "masterThrottled": {
+  "result": "RESULT: 4 of 48 check(s) failed",
+  "fails": [
+   {
+    "check": "01-quick-setup: нет ошибок страницы",
+    "idDiff": [
+     "+                                   id=\"max-lin-_R_1biop1etabmilb_\"",
+     "-                                   id=\"max-lin-_R_5eb345rlabmilb_\""
+    ],
+    "first": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+   },
+   {
+    "check": "09-batch: нет ошибок страницы",
+    "idDiff": [
+     "+                                   id=\"max-lin-_R_1biop1etabmilb_\"",
+     "-                                   id=\"max-lin-_R_5eb345rlabmilb_\""
+    ],
+    "first": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+   },
+   {
+    "check": "10-poster: есть «Poster № 687409»",
+    "first": "Перейти к содержимому"
+   },
+   {
+    "check": "10-poster: нет ошибок страницы",
+    "idDiff": [
+     "+                                   id=\"max-lin-_R_1biop1etabmilb_\"",
+     "-                                   id=\"max-lin-_R_5eb345rlabmilb_\""
+    ],
+    "first": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patche"
+   }
+  ]
+ },
+ "fiberProbeMaster": {
+  "loads": [
+   {
+    "round": 0,
+    "path": "mercury",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 0,
+    "path": "settings",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 0,
+    "path": "batches",
+    "hydrationErrors": 1,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_1biop1etabmilb_"
+   },
+   {
+    "round": 1,
+    "path": "mercury",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 1,
+    "path": "settings",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 1,
+    "path": "batches",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 2,
+    "path": "mercury",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 2,
+    "path": "settings",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 2,
+    "path": "batches",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 3,
+    "path": "mercury",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 3,
+    "path": "settings",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   },
+   {
+    "round": 3,
+    "path": "batches",
+    "hydrationErrors": 0,
+    "domId": "max-lin-_R_5eb345rlabmilb_",
+    "clientId": "max-lin-_R_5eb345rlabmilb_"
+   }
+  ],
+  "sameFiberPathGoodVsBad": true,
+  "pathDepth": 101
+ }
+}

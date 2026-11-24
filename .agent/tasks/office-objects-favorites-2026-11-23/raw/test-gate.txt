@@ -1,9 +1,9 @@
 
-> haccp-online@0.1.0 test:gate
-> bash scripts/test-with-baseline.sh
+> haccp-online@0.1.0 test:changed
+> node scripts/test-changed.mjs
 
 → [test:changed] Эскалация до полного прогона: Затронут ядровый файл (prisma/schema.prisma)
 
-=== Test stats: pass=7331, fail=0 ===
+=== Test stats: pass=7339, fail=0 ===
 ✓ Все тесты прошли.
 EXIT 0

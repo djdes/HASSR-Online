@@ -22,3 +22,9 @@
 ✖ 10 problems (1 error, 9 warnings)
 
 EXIT 1
+
+# f778c8aa4 (исправления после проверки): eslint -f json по 8 изменённым файлам кода
+# (journals/[code]/page.tsx, окна жалоб, протокола аудита, металлопримесей, списка стекла, staff-page-client,
+# journal-qr-rollover, mercury/process-incoming) против тех же файлов origin/master (eslint --stdin):
+# ветка — 10 замечаний, master — 12; новых — нет; ушли — 2 (неиспользуемый readCreatedDocument в окнах протокола
+# аудита и металлопримесей).
