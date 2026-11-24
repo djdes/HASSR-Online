@@ -1,6 +1,6 @@
 {
   "task": "client-mail-templates-2026-11-24",
-  "base": "origin/master 362b3ebf2",
+  "base": "origin/master 98f22cd4a (merged)",
   "criteria": {
     "AC1": "PASS — multipart in /api/root/organizations/[id]/emails, client-email-routes.test.ts, live send with Тарифы.pdf",
     "AC2": "PASS — 17 templates ru/en/uz, client-email-templates.test.ts (4/4), live template with DB prices",
@@ -11,6 +11,6 @@
     "AC7": "PASS — presentation-extended-ru.mp4 115.5 s 14.85 MB 1080p, narrated-video.test.ts 9/9",
     "AC8": "PASS — typecheck clean, i18n:types --check, catalog-validation, borderless/one-accent/neutral-palette green"
   },
-  "full_suite": "pass=7411 fail=1 (platform-access: /api/root/seo/queries from master #329) → fixed, platform-access.test.ts 12/12",
-  "verdict": "PENDING_FRESH_VERIFICATION"
+  "full_suite": "pass=7413 fail=0 on 55de5a7e7 (after verifier fixes and master merge)",
+  "verdict": "PASS"
 }
