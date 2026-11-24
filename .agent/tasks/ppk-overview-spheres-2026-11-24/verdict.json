@@ -1,113 +1,77 @@
 {
-  "round": 1,
-  "verdict": "FAIL",
-  "judged": "Uncommitted working tree on top of c73c13e69 (git diff HEAD + untracked files), 2026-11-24. Local stand :3000 is a next build whose build started 22:24:09 UTC, after the last functional source edit (22:24:00); only comment headers of borderless.css / neutral-palette.css changed later.",
+  "round": 2,
+  "verdict": "PASS",
+  "judged": "Commit 4b619539a on claude/fervent-brown-ed5apv (clean working tree; a8d3695f4 = the round-1 tree, same 33 source files), 2026-11-24. Stand :3000: next build started 23:06:01 UTC, after the last source edit (23:01:05); server started 23:09:19. Only borderless.css / neutral-palette.css were rewritten afterwards, with identical content (no diff).",
   "criteria": {
     "AC1": "PASS",
     "AC2": "PASS",
     "AC3": "PASS",
     "AC4": "PASS",
     "AC5": "PASS",
-    "AC6": "FAIL",
+    "AC6": "PASS",
     "AC7": "PASS"
   },
   "criteria_notes": {
-    "AC1": "starter-packs.ts: STARTER_SPHERES = the 4 object categories, food -> the previous starterPack(kind), medical/consumer/sport -> own lab plan, pest plan, norms; starterBlocksFor() limits writes to lab-plan/pest-plan/norms. Route accepts { sphere, kind? } and legacy { kind } (sphere defaults to food). Default sphere = object sphere from the header (overview.server.ts loadStarterSphere, org/building scoped). Unit tests pass. Stand: 4 spheres, medical object defaults to medical, cafe defaults to food, medical fill created only lab-plan/pest-plan/norms, legacy { kind: canteen } 200 and skipped filled blocks, { sphere: space } 400.",
-    "AC2": "Card 57 px at 1280/1366/1440 and 56 px at 1920 (<= 72). Dialog: no inner scroll at any of those sizes for all 4 spheres (food 589 px, others 463 px). iPhone 13 sheet 0..390 with no horizontal scroll. The letter of AC2 passes. See V3: on phones the card itself became taller and narrower than before.",
-    "AC3": "common.objectCategories.food renamed in ru/en/uz; hints = the A4 examples; ObjectCategoryPicker examples prop used in object edit (point-page-client), objects list edit (buildings-client) and first-entry wizard (setup-wizard-steps); new-object wizard cards show the hints. KB and live-guide texts renamed; no 'Общепит ХАССП' left in the repo. Stand checks pass. See V2: a layout regression on the objects list on phones.",
-    "AC4": "ScrollToTop skips overlay transitions (isOverlayTransition), the modal slot has its own Suspense. Stand: item click (new and classic view), 'Следующий пункт', window to window 2.7 -> 2.6 and close all keep scrollY. Fresh-session jump probe: 0/4 jumps. Standalone item page -> overview still lands at the top (Next's own scroll), so no regression there.",
-    "AC5": "globals.css: html body[data-scroll-locked] gets overflow-x: clip / overflow-y: visible (beats react-remove-scroll-bar's body[data-scroll-locked] by specificity, both !important), so <body> is no longer a scroll container. Stand: at scrollY 1400 the header has top 0 and the point menu sits at 64..391 px; with an item window open the header has top 0.",
-    "AC6": "Blocks a-e are present: readiness 22% with 3 signals (docs -> register, ack 'Ознакомились 1 из 23' -> 3.7, review 'До 24.11.2027'), filter chips with counts that match the dots, section nav with done/total, revision badge (org scope: 1.9 'ППК 002', 2.1 'Не утверждена'), PDF 200 application/pdf and 'Пришла проверка'. 'Прежний вид' renders the previous page and persists; PPK_OVERVIEW_CLASSIC=1 forces classic even with cookie 'new' and hides the toggle (re-checked on a temporary second server on :3001, since stopped). The classic branch keeps the outline, progress bar, documents and order. FAIL because of V1: with a filter active, the section nav (block c) is a no-op for hidden sections. It writes a null-state #hash history entry, after which an item window closes without the router leaving /item/<id>, and the same item cannot be reopened.",
-    "AC7": "Re-run here: npm run typecheck exit 0; eslint --max-warnings=0 on the 26 changed .ts/.tsx files exit 0; targeted tests 31/31; the 81 test files test:changed selects (TEST_CHANGED_MAX_TESTS=300 --list) 375/375; design-rule and related tests 136/136; npm run i18n:check 103/103 and contract up to date; stand e2e (raw/e2e-tz2.mjs) 52/52 with no page errors. next build was not re-run (instructed): the stand build is of the current sources. Deploy happens after the merge and cannot be checked yet."
+    "AC1": "4 spheres, default = object sphere (medical object -> medical, cafe -> food), food = 4 kinds and the previous packs, the other spheres = own lab plan, pest plan and norms; medical fill created only lab-plan/pest-plan/norms; legacy { kind: canteen } 200 and skips filled blocks; { sphere: space } 400. New for V5 on a fresh object: { sphere: medical } and { sphere: food } without kind -> 200; legacy {} and { sphere: food, kind: zoo } -> 400. starter-packs/norm-catalog tests pass.",
+    "AC2": "Card 57/57/57/56 px at 1280/1366/1440/1920. Dialog: no inner scroll for all 4 spheres (food 589 px, others 463 px). iPhone 13 sheet spans 0..390 with no sideways scroll. Phone card after V3: 159 px (previously 245), text 298 px wide.",
+    "AC3": "New name and A4 examples in the object edit, the new-object wizard and the first-entry wizard, ru/en/uz; KB and live-guide renamed; the old name is gone from the repo. After V2, on iPhone 13 /settings/buildings shows the name on one line (146x27) and the food chip below it (240x47, 2 lines).",
+    "AC4": "e2e: item click in the new and classic views, «Следующий пункт», window to window 2.7 -> 2.6, and close all keep scrollY. Fresh-session jump probe 0/4.",
+    "AC5": "At scrollY 1400 with the point menu open, the header has top 0 and the menu sits at 64..463 px. With an item window open on a scrolled page, the header has top 0.",
+    "AC6": "Readiness (22%, docs -> register, ack 1 of 23, review До 24.11.2027), filter counts match the dots, section nav, revision badge 1.9 = «ППК 002», PDF 200 application/pdf, «Пришла проверка». «Прежний вид» persists and «Новый вид» returns. PPK_OVERVIEW_CLASSIC=1 re-checked on a temporary :3001 server, since stopped: classic=1, toggle=0. V1 fixed: with the «Частично» filter, the «2. План ХАССП» chip resets the filter and scrolls to the section (top 96), with no '#' and history.state not null; item 1.1 closes back to /production-control and opens again.",
+    "AC7": "Re-run here: typecheck exit 0; eslint --max-warnings=0 on the 26 changed .ts/.tsx files exit 0; targeted tests 31/31; the 81 files test:changed selects for c73c13e69..HEAD plus 10 design/PPK test files 462/462; i18n:check 103/103 with the contract up to date; e2e raw/e2e-tz2.mjs 57/57 with no page errors. next build not re-run (instructed); the stand build is of these sources. Deploy follows the merge and cannot be checked yet."
+  },
+  "round1_issues": {
+    "V1": "resolved — verified on the stand (my repro and the e2e V1 checks)",
+    "V2": "resolved — name on one line, chip wraps below it (iPhone 13)",
+    "V3": "resolved — phone card 159 vs 245 px (iPhone 13), 179 vs 314 px (320 px), 159 vs 222 px (Pixel 7); desktop unchanged",
+    "V4": "resolved — on a fresh medical object filled only with its 3 sphere blocks (readiness 25%) the card is hidden; dialog uses starter.nothingToAdd (ru/en/uz)",
+    "V5": "resolved — see AC1 note",
+    "V6": "accepted deviation from the Р5 wording (reason in problems.md); no regression",
+    "V7": "resolved by reading: the .catch returns null, which renders the classic branch, and the toggle offers «Новый вид». Not reproduced (would need a forced failure)",
+    "V8": "resolved — the toast uses summary.norms",
+    "V9": "partly resolved (chip titles, ack tile not green at 0 of 0); date format and arrow keys accepted as polish"
   },
   "issues": [
     {
-      "id": "V1",
-      "severity": "major",
-      "file": "src/components/production-control/structure/structure-explorer.tsx",
-      "line": 86,
-      "summary": "Section nav with a filter active. A chip whose section the filter hides falls through to native <a href=\"#ppk-section-…\"> navigation. The click does nothing visible and pushes a history entry with history.state === null. Next's popstate handler ignores such entries, so the next item window's close (router.back()) lands on that entry while the router stays on /production-control/item/<id>. Reproduced on the stand: filter 'Частично', click chip '2. План ХАССП', open item 1.1, Escape. URL is /production-control#ppk-section-plan, and clicking 1.1 again does not open the window. PpkStructureRefresh (pathname === '/production-control') also stops refreshing statuses.",
-      "fix": "Always call event.preventDefault() in the chip onClick. If the target section is not rendered, first reset the filter (flushSync(() => setFilter(\"all\")) from react-dom, or setFilter(\"all\") then requestAnimationFrame) and then scrollIntoView and focus as now. Alternative: render the chips as buttons without href."
-    },
-    {
-      "id": "V2",
-      "severity": "major",
+      "id": "V10",
+      "severity": "minor",
       "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
-      "line": 658,
-      "summary": "Regression on the objects list (/settings/buildings) on phones, caused by the rename. The card header row (flex items-center gap-2, no wrap) holds the name <h2> and the sphere chip. With the new food label the chip becomes 124x106 px (5 lines), and the object name shrinks to a 40 px column that reads 'Каф / е / «Ро / маш / ка»'. With the previous label 'Общепит ХАССП' the name was 81 px wide. Food is the most common sphere; the uz label is even longer (62 chars), the en one shorter (32).",
-      "fix": "Let the header row wrap: 'flex flex-wrap items-center gap-x-2 gap-y-1' on line 658, plus min-w-0 / break-words on the <h2>. The chip then goes under the name on narrow screens and desktop stays one line."
-    },
-    {
-      "id": "V3",
-      "severity": "major",
-      "file": "src/components/production-control/ppk-starter-wizard.tsx",
-      "line": 89,
-      "summary": "The 'compact' starter card is less compact on phones than the card it replaces (owner: 'компактнее на странице'; Р2). The text <p> is 'min-w-0 flex-1' (flex-basis 0), so flex-wrap never moves the 185 px button to a new line and the text is squeezed beside it. Measured new vs previous markup: iPhone 13 329 vs 245 px tall, text column 101 vs 256 px; 320 px phone 391 vs 314 px, text column 31 vs 186 px; Pixel 7 247 vs 222 px.",
-      "fix": "Give the text a real basis so the button wraps under it on phones, e.g. 'min-w-[14rem] flex-1' (or 'basis-full sm:basis-0 sm:flex-1') on the <p>. Optionally make the button w-full under sm. Desktop stays one row (card <= 72 px)."
-    },
-    {
-      "id": "V4",
-      "severity": "minor",
-      "file": "src/app/(dashboard)/production-control/page.tsx",
-      "line": 89,
-      "summary": "For medical/consumer/sport objects the starter card stays visible after the sphere pack is applied, because the condition is still 'all PPK blocks < 40% done'. Opening it then shows 'Всё уже заполнено, ничего не добавлено' with Fill disabled. That message (wizard line 175) is past tense before any action.",
-      "fix": "Hide the card when every block of starterBlocksFor(defaultSphere) is filled, and use a present-tense 'nothing to add' text in the dialog."
-    },
-    {
-      "id": "V5",
-      "severity": "minor",
-      "file": "src/app/api/production-control/starter/route.ts",
-      "line": 33,
-      "summary": "{ sphere: \"food\" } without kind returns 400 'Неизвестный тип заведения', although the spec describes the contract as { sphere, kind? }. The wizard always sends kind, so the UI is unaffected.",
-      "fix": "Default kind to \"cafe\" whenever a sphere is given, keeping 400 for an invalid explicit kind and for legacy {}."
+      "line": 661,
+      "summary": "Cosmetic follow-up to the V2 fix: on phones, a food object's 2-line sphere chip takes the whole second row, so the pin button drops to a row of its own under it.",
+      "fix": "Optional: order the pin before the chip, or give the chip basis-full only below sm, so the pin stays next to the name."
     },
     {
       "id": "V6",
       "severity": "minor",
       "file": "src/app/globals.css",
       "line": 1151,
-      "summary": "Р5 says scroll is locked on <html>, but the fix only stops <body> being a scroll container and relies on react-remove-scroll's wheel/touch blocking. Keyboard and scrollbar can still scroll the page under a window. This is unchanged from before, so not a regression; it is a deviation from the spec wording.",
-      "fix": "Record the deviation in evidence, or accept it. Locking <html> would bring back the scrollbar-width shift the 2026-11-23 rule removed."
-    },
-    {
-      "id": "V7",
-      "severity": "minor",
-      "file": "src/app/(dashboard)/production-control/page.tsx",
-      "line": 77,
-      "summary": "loadOverviewSignals (revision states and Postgres sha256 fingerprints) runs on the default view of the section's main page with no fallback. Any error in it now takes down /production-control instead of only the revisions page (owner: 'ничего текущего не сломало').",
-      "fix": "Wrap it as loadOverviewSignals(scope).catch(() => null), so a failure falls back to the classic page."
-    },
-    {
-      "id": "V8",
-      "severity": "minor",
-      "file": "src/components/production-control/ppk-starter-wizard.tsx",
-      "line": 72,
-      "summary": "Pre-existing: the success toast says '1 норматив' because created.norms counts the single norms record, while the dialog promised '7/10 нормативов'.",
-      "fix": "Use summary.norms (or the length of the selected norms) in the toast when created.norms is set."
+      "summary": "Accepted deviation: scroll is not locked on <html> as the Р5 text says. Wheel and touch are blocked by react-remove-scroll; keyboard and scrollbar behave as before the task.",
+      "fix": "None required; documented in problems.md."
     },
     {
       "id": "V9",
       "severity": "minor",
       "file": "src/lib/ppk/overview.server.ts",
       "line": 41,
-      "summary": "Small polish items: the review date is always dd.mm.yyyy (ruDate) in en/uz too. The new radiogroups (filter chips, spheres, kinds) have no arrow-key navigation (an existing pattern in the codebase). Truncated section chips have no title. The ack tile shows green '0 из 0' when nobody is on the list.",
-      "fix": "Optional: format the date with the locale; add a title on truncated chips; use a neutral colour when the ack total is 0."
+      "summary": "Accepted polish: the review date is always dd.mm.yyyy in en/uz, and the radiogroups have no arrow-key navigation (an existing cabinet pattern).",
+      "fix": "None required."
     }
   ],
   "checks": {
     "typecheck": "npm run typecheck -> exit 0",
-    "eslint": "npx eslint --max-warnings=0 <26 changed .ts/.tsx> -> exit 0",
-    "unit_targeted": "node --import tsx --test overview-view, starter-packs, norm-catalog, route-overlay, object-categories, kb/articles -> 31/31 pass",
-    "unit_related": "81 files from test-changed --list (TEST_CHANGED_MAX_TESTS=300) -> 375/375 pass; design and related tests (borderless, one-accent, neutral-palette, motion, shell, register-guide, setup-wizard, ppk structure/revisions/records...) -> 136/136 pass",
-    "i18n_check": "npm run i18n:check -> contract up to date, 103/103 pass",
-    "build": "not re-run (instructed); stand .next build started 22:24:09 UTC, after the last functional edit 22:24:00",
-    "stand_e2e": "raw/e2e-tz2.mjs re-run -> 52/52 PASS, no page errors",
-    "jump_probe": "raw/jump-probe.mjs re-run -> 0/4 jumps",
-    "kill_switch": "raw/e2e-killswitch.mjs against a temporary PPK_OVERVIEW_CLASSIC=1 server on :3001 -> PASS (classic=1, toggle=0); temp server stopped, :3000 untouched",
-    "revision_badge_org_scope": "1.9 = 'ППК 002', 2.1 = 'Не утверждена', docs tile '1 документ без утверждённой редакции' (active object restored to the cafe afterwards)",
-    "desktop_sizes": "card 57/57/57/56 px and dialog extra 0 px at 1280x800, 1366x768, 1440x900, 1920x1080",
-    "repro_V1": "filter 'Частично' -> chip '2. План ХАССП' -> URL #ppk-section-plan, state null -> open 1.1 -> Escape -> URL /production-control#ppk-section-plan -> click 1.1 -> no window (URL /production-control/item/1-1)",
-    "repro_V2": "iPhone 13 /settings/buildings: food chip 124x106, name h2 40x135 (previous label: name 81x81)",
-    "repro_V3": "new vs previous card height: iPhone 13 329/245, 320 px phone 391/314, Pixel 7 247/222; text column 101/256, 31/186, 123/278 px"
+    "eslint": "npx eslint --max-warnings=0 <26 changed .ts/.tsx since c73c13e69> -> exit 0",
+    "unit_targeted": "overview-view, starter-packs, norm-catalog, route-overlay, object-categories, kb/articles -> 31/31",
+    "unit_related": "test-changed --list --range c73c13e69..HEAD (TEST_CHANGED_MAX_TESTS=300): 81 files, same selection as round 1, + one-accent, motion, public-dark-theme, switch-toast, ppk scope/structure-status/revisions/review, setup-wizard, home-compact -> 462/462",
+    "i18n_check": "npm run i18n:check -> 103/103",
+    "build": "not re-run (instructed); stand build is of 4b619539a sources",
+    "stand_e2e": "raw/e2e-tz2.mjs -> 57/57 PASS, no page errors",
+    "jump_probe": "raw/jump-probe.mjs -> 0/4 jumps",
+    "kill_switch": "raw/e2e-killswitch.mjs on a temporary PPK_OVERVIEW_CLASSIC=1 server on :3001 -> PASS; temp server stopped, :3000 untouched",
+    "v1_repro": "filter «Частично» -> chip «plan» -> url /production-control, state not null, history length unchanged -> open 1.1 -> Escape -> /production-control -> 1.1 reopens",
+    "v2_phone": "food: name 146x27, chip 240x47 (previously name 40x135, chip 124x106)",
+    "v3_phone": "card/text: iPhone 13 159/298, 320 px 179/228, Pixel 7 159/320 px",
+    "desktop_sizes": "card 57/57/57/56 px, dialog extra 0 px at 1280x800, 1366x768, 1440x900, 1920x1080",
+    "v4_v5_probe": "fresh object «Клиника verify 23:22:42»: card shown while empty; { sphere: medical } -> 200 lab-plan/pest-plan/norms; card hidden at readiness 25%; { sphere: food } -> 200; {} -> 400; bad kind -> 400",
+    "stand_side_effects": "e2e created «Клиника e2e 23:19:34»; the V4/V5 probe created and filled «Клиника verify 23:22:42»; admin's active object was restored to «Кафе «Ромашка»»"
   }
 }

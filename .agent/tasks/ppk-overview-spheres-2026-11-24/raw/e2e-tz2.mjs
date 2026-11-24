@@ -424,12 +424,22 @@ const rows = await mp.locator("[data-building-sphere]").evaluateAll((chips) =>
   chips.map((chip) => {
     const row = chip.parentElement;
     const name = row?.querySelector("h2");
-    return { sphere: chip.getAttribute("data-building-sphere"), name: name ? Math.round(name.getBoundingClientRect().width) : 0, chipH: Math.round(chip.getBoundingClientRect().height) };
+    const pin = row?.querySelector("button");
+    const nameBox = name?.getBoundingClientRect();
+    const pinBox = pin?.getBoundingClientRect();
+    return {
+      sphere: chip.getAttribute("data-building-sphere"),
+      name: nameBox ? Math.round(nameBox.width) : 0,
+      chipH: Math.round(chip.getBoundingClientRect().height),
+      // Скрепка не одна под сферой: в строке с названием или рядом со сферой.
+      pinRow: pinBox ? pinBox.top < chip.getBoundingClientRect().bottom - 2 : null,
+    };
   }),
 );
 const food = rows.filter((r) => r.sphere === "food");
 check("V2 телефон: у объекта общепита название не в столбик, сфера не больше двух строк",
   food.length > 0 && food.every((r) => r.name >= 100 && r.chipH <= 48), JSON.stringify(rows.slice(0, 4)));
+check("V10 телефон: скрепка не остаётся одна под сферой", rows.length > 0 && rows.every((r) => r.pinRow !== false), JSON.stringify(rows.map((r) => r.pinRow)));
 await mp.screenshot({ path: `${OUT}/16-phone-buildings.png` });
 await phone.close();
 

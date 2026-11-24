@@ -670,10 +670,11 @@ function BuildingCard({
               ) : (
                 <span
                   data-building-sphere={sphere ?? ""}
+                  // На телефоне сфера — последней: скрепка остаётся в строке с названием.
                   className={
                     sphere
-                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
-                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00]"
+                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7] max-sm:order-last"
+                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00] max-sm:order-last"
                   }
                   title={t("sphereHint")}
                 >
