@@ -21,6 +21,8 @@ import {
   withBuildingLabel,
   withBuildingSuffix,
   buildingPrintName,
+  objectsFirst,
+  soleObjectId,
 } from "./building-scope";
 
 const A = { id: "b-a", name: "Точка 1", address: "ул. Ленина, 5" };
@@ -144,9 +146,13 @@ test("офис: сотрудник офиса видит все точки, а �
   // Сотрудник точки — только своя точка, и видит, и работает.
   assert.deepEqual(allowedBuildingsForUser(all, [A.id]), [A]);
   assert.deepEqual(workBuildingsForUser(all, [A.id]), [A]);
-  // Без места — как раньше, везде.
+  // Без места: видит всё, а работает на всех объектах — не в офисе (2026-11-24).
   assert.deepEqual(allowedBuildingsForUser(all, []), all);
-  assert.deepEqual(workBuildingsForUser(all, []), all);
+  assert.deepEqual(workBuildingsForUser(all, []), [A, B]);
+  // В списке только удалённые места — тоже все объекты.
+  assert.deepEqual(workBuildingsForUser(all, ["gone"]), [A, B]);
+  // Объектов нет — как раньше: всё, что есть.
+  assert.deepEqual(workBuildingsForUser([OFFICE], []), [OFFICE]);
   assert.equal(isOfficeBuilding(OFFICE), true);
   assert.equal(isOfficeBuilding(A), false);
 });
@@ -314,4 +320,31 @@ test("задачи дня: точка — только она, «Вся орга
   assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: ["b-o"], cookieBuildingId: null })), ["b-o"]);
   // Точки выключены — одна общая подборка.
   assert.deepEqual(ids(resolveActiveBuilding({ enabled: false, buildings: [A, B], userBuildingIds: [], cookieBuildingId: "b-a", fullAccess: true })), [null]);
+});
+
+test("сотрудник без места и без «всей организации» по умолчанию на первом объекте, не в офисе (2026-11-24)", () => {
+  const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
+  const ids = (context: Parameters<typeof poolBuildingsFromContext>[0]) => poolBuildingsFromContext(context).map((item) => item.id);
+  // Офис первый в списке зданий: раньше повар без места оказывался в офисе и его «Сегодня» было пустым.
+  const cook = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: null });
+  assert.equal(cook.activeBuildingId, "b-a");
+  assert.equal(cook.organizationView, false);
+  assert.deepEqual(ids(cook), ["b-a"]);
+  // Старая cookie с офисом не возвращает его в офис; выбранный объект — работает.
+  assert.equal(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-o" }).activeBuildingId, "b-a");
+  assert.equal(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b" }).activeBuildingId, "b-b");
+  // Сотрудник офиса — в офисе, руководство на всю компанию — уровень организации.
+  assert.equal(resolveActiveBuilding({ enabled: true, buildings: [A, OFFICE, B], userBuildingIds: ["b-o"], cookieBuildingId: null }).activeBuildingId, "b-o");
+  const owner = resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: null, fullAccess: true });
+  assert.equal(owner.activeBuildingId, "b-o");
+  assert.equal(owner.organizationView, true);
+});
+
+test("по умолчанию — объект, не офис: объекты первыми, единственный объект без офиса", () => {
+  const OFFICE = { id: "b-o", name: "Офис", address: null, kind: "office" };
+  assert.deepEqual(objectsFirst([OFFICE, A, B]).map((building) => building.id), ["b-a", "b-b", "b-o"]);
+  assert.equal(soleObjectId([OFFICE, A]), "b-a");
+  assert.equal(soleObjectId([A]), "b-a");
+  assert.equal(soleObjectId([OFFICE]), null);
+  assert.equal(soleObjectId([OFFICE, A, B]), null);
 });

@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "round": 2,
+  "checkedAt": "2026-11-24T16:13:00Z",
+  "head": "60ec0ef073aa98b043378bddfff35340f4291292",
+  "base": "origin/master 4f93950aa5a5a0203eb56f5d1da128ffb376f578",
+  "previousVerdict": "round 1 FAIL at bd26f8fcc (AC2, AC6) — both fixed and re-checked",
+  "specAmendments": "AC4 amendment (directory exchange does not open the office) and «Fixes after the fresh verifier (round 1)» — judged against them",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS"
+  },
+  "commands": [
+    "git diff bd26f8fcc 60ec0ef07 (8 code files: organization-office.ts/.server.ts/.test.ts, seed-open-office-2026-11.ts, office page, mail-sender-form.tsx, password-forms-post.test.ts, org-metrics.ts, app-theme.css)",
+    "npm run typecheck — exit 0",
+    "node --import tsx --test password-forms-post, demo-organization, organization-office, root-metrics-localization, theme-tiles-model, qr-header-brand, motion, one-accent, print-colors, borderless, neutral-palette, building-scope — 123/123",
+    "TEST_FULL=1 TEST_CONCURRENCY=3 bash scripts/test-with-baseline.sh — pass=7424, fail=0",
+    "npx eslint <8 changed code files> — clean",
+    "bash scripts/e2e/run-all.sh — 20/20 scenarios, 1000 checks passed",
+    "verifier lib script (temp companies, removed): openOrganizationOffice from the office page with the owner as actor; deploy step with an advisory lock held on one company (psql) → failed 1, no once-key; rerun → failed 0, once-key; repeat → already done",
+    "Playwright (Chromium, next dev :3000): /root/me with page bundles blocked; delete the last object of a company with an open office; company without objects; dark-theme office page of the stand company",
+    "round 1 (bd26f8fcc), still valid for unchanged code: login forms before hydration on /login, /mini/login, /register, /invite, /join, /pair; «Объекты» POST and onboarding template on companies without objects; questionnaire ensureLocationBuildings(3); AC8 general document + auto-creation; 4 parallel openings; i18n:check 103/103"
+  ],
+  "notes": [
+    "AC2 — /root/me SMTP form: method=post; with page bundles blocked the click sends POST /root/me (200), URL unchanged, the password is in no URL or request URL. The guard now matches object props and lists the file; no other .tsx file uses that form. Login forms (round 1): method=post, submit disabled before hydration on /login, /mini/login, /register, /invite, /join, /pair; normal sign-in works.",
+    "AC6 — deleting the last object of a company with an open office: office page keeps the four blocks, no «Добавить в офис», no «не распределены», «Создать объект» shown; a company that never had objects renders the same (officePage none). Non-blocking: the office row stays after the last object is deleted (by the spec's fix section); in that state the office is the only building, so the new-equipment dialog and the journal room picker take it as their place (equipment still needs a room first).",
+    "AC5 — management keeps company-wide access: an owner bound to the only object, and a manager bound to every object, become «без места» (pointScope null, no re-login); a manager bound to one of two objects becomes an object manager (sessionVersion bumped); the office-page actor bound to one object moves to the office (no bump, pointScope null); audit details carry keptCompanyWide with the previous places. Deploy loop with one company locked (advisory lock held in psql): «[organization-office] open office failed PrismaClientKnownRequestError P2028» (name and code only), «… failed 1», no once-key, the other company opened, no partial office/audit left; rerun → «failed 0», once-key written; repeat → «already done» for dry-run and real.",
+    "Freed managers keep their old primaryBuildingId; harmless (placeBuildingOfUser only uses it when it is among buildingIds, and the staff dialog resets it on the next edit).",
+    "The office-page path moves an admin bound to some objects into the office on page visit (button parity, written in the spec's fix section); the audit entry keeps the previous places for a revert.",
+    "Managers bound to some objects in companies with journals by objects off still become object managers after the office opens (spec-accepted narrowing, sessions bumped) — this includes an owner bound to only some objects (rare: the staff page shows places only with journals by objects on).",
+    "AC4 (amended) — the exchange does not open the office (guard + E2E 20/20). A company whose first objects come through the exchange stays «objects, no office» until its office page is visited or it creates an object itself.",
+    "AC7 — ROOT metrics now count objects only (org-metrics excludes kind office); billing already did. Dark theme: the «не распределены» strip text is rgb(212,176,120) on the amber tint — readable.",
+    "Kept on purpose by the builder: the dead \"/api/settings/office\" prefix in src/lib/point-scope.ts:97; Max bot / setup-helper / offboarding lists for people without a place follow AC10 (objects only).",
+    "AC9 — deploy log with the open-office totals is a post-merge item. CI Browser smoke 04-acceptance (hydration useId mismatch) is reported by the builder as pre-existing on master; not verified here (no remote access by constraint).",
+    "Stand hygiene: all verifier companies, the temp ROOT user and the once-key were removed; verifier-* scripts deleted from raw/. The builder's ui-office-noobj / ui-office-straggler companies are untouched. Tests rewrote the tracked PDFs under .agent/tasks/english-version-1375e736/raw/ (left as is)."
+  ]
+}

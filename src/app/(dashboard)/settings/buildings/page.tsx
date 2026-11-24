@@ -145,8 +145,10 @@ export default async function BuildingsPage() {
         pinnedIds={pinnedBuildingIds}
         users={users}
         perLocationJournals={organization?.perLocationJournals === true}
-        // Делить журналы есть что, пока точек с офисом две и больше.
-        canSplitJournals={allBuildings.length >= 2}
+        // Делить журналы есть что при двух зданиях и больше; при офисе (офис у
+        // всех по умолчанию, 2026-11-24) журналы ведутся по объектам всегда —
+        // тумблера нет: выключить значило бы сломать офис.
+        canSplitJournals={allBuildings.length >= 2 && !allBuildings.some(isOfficeBuilding)}
         userBuildingIds={Object.fromEntries(users.map((u) => [u.id, u.buildingIds]))}
         readOnly={readOnly}
         pointManager={pointManager}

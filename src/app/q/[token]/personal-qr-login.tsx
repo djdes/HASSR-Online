@@ -5,8 +5,11 @@ import { Loader2 } from "lucide-react";
 
 import { PinPrompt } from "@/components/qr-fill/pin-prompt";
 import { WhoRow } from "@/components/qr-fill/who-row";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export function PersonalQrLogin({ token, name, hasPin }: { token: string; name: string; hasPin: boolean }) {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,12 +47,12 @@ export function PersonalQrLogin({ token, name, hasPin }: { token: string; name: 
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form method="post" onSubmit={submit} className="space-y-4">
       <WhoRow label="Вход" value={name} />
       <PinPrompt value={pin} onChange={setPin} error={error} />
       <button
         type="submit"
-        disabled={busy || pin.length < 4}
+        disabled={busy || pin.length < 4 || !hydrated}
         data-testid="personal-qr-submit"
         className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[18px] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors duration-150 hover:bg-[#4a5bf0] disabled:bg-[#c8cbe0]"
       >

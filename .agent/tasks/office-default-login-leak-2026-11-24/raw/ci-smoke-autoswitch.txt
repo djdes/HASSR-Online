@@ -1,0 +1,41 @@
+# CI smoke 04-acceptance «ждут приёмки» — root cause (2026-11-24)
+
+## CI, PR #332, ab835c837 (job 138589415150): failed check and the page text at that moment
+FAIL 04-acceptance: есть «ждут приёмки» — Перейти к содержимому
+
+Завершите регистрацию: название организации и телефон — они идут в шапку журналов.
+
+Завершить
+Меню
+СР
+Выберите объект
+Объекты
+Сотрудники
+(header shows «Выберите объект»: the page is hidden under [data-content-pending] while the header switches to the only object)
+
+## CI, PR #332, bd26f8fcc (job 138554139643): same text failure, plus the old hydration error
+20Z FAIL 04-acceptance: есть «ждут приёмки» — Перейти к содержимому
+05Z FAIL 04-acceptance: нет ошибок страницы — ["A tree hydrated but some attributes of the server rendered HTML didn't match the client prope
+
+Завершите регистрацию: название организации и телефон — они идут в шапку журналов.
+
+Завершить
+Меню
+СР
+Выберите объект
+Объекты
+Сотрудники
+
+## Local, SMOKE_ONLY=browser npm run smoke:local, smoke with settle() (dev log: quick setup, first visit, auto-switch, refresh)
+348: POST /api/settings/onboarding-template 200 in 2.2s (compile: 2.0s, proxy.ts: 4ms, render: 144ms)
+469: GET /journals/incoming_control/documents/<doc> 200 in 11.8s (compile: 9.4s, proxy.ts: 3ms, render: 2.4s)
+519: POST /api/me/active-building 200 in 748ms (compile: 669ms, proxy.ts: 8ms, render: 71ms)
+599: GET /journals/incoming_control/documents/<doc> 200 in 500ms (compile: 117ms, proxy.ts: 4ms, render: 378ms)
+700: GET /journals/incoming_control/documents/<doc> 200 in 885ms (compile: 35ms, proxy.ts: 32ms, render: 818ms)
+825: GET /journals/incoming_control/documents/<doc> 200 in 990ms (compile: 112ms, proxy.ts: 4ms, render: 873ms)
+
+27:PASS 04-acceptance: открывается (HTTP 200)
+28:PASS 04-acceptance: есть «ждут приёмки»
+29:PASS 04-acceptance: нет горизонтальной прокрутки
+30:FAIL 04-acceptance: нет ошибок страницы — ["A tree hydrated but some attributes of the server rend
+67:RESULT: 1 of 48 check(s) failed

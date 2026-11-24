@@ -29,6 +29,7 @@ import {
 } from "@/lib/signup-source";
 import { blankSignupPlace } from "@/lib/blank-download";
 import { HOME_HREF } from "@/lib/home-page";
+import { useHydrated } from "@/lib/use-hydrated";
 
 /** Те же цели Метрики, что у форм на лендинге, с местом «register». */
 const GOAL_PARAMS = { place: "register" };
@@ -70,6 +71,8 @@ function RegisterScreen({
   /** Сфера из ссылки с промокодом: подставлена, человек может сменить. */
   linkSphere: OrgSphere | null;
 }) {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const t = useTranslations("auth");
   const authError = useAuthError();
   const auth = useTranslations("auth");
@@ -326,7 +329,7 @@ function RegisterScreen({
             </LiveGuideStartButton>
           ) : null}
 
-          <form onSubmit={submit} className="mt-8">
+          <form method="post" onSubmit={submit} className="mt-8">
             <label
               htmlFor="register-email"
               className="mb-1.5 block text-[13px] font-medium text-[#0b1024]"
@@ -403,7 +406,7 @@ function RegisterScreen({
             <button
               type="submit"
               data-guide="reg-submit"
-              disabled={loading || !field.valid}
+              disabled={loading || !field.valid || !hydrated}
               className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] px-6 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (

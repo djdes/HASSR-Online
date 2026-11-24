@@ -11,6 +11,7 @@ import { getTelegramWebApp } from "../_components/telegram-web-app";
 import { isInsideMobileApp } from "@/lib/mobile-app";
 import { clearSignedOutMark, telegramSignInHref } from "../_lib/signed-out-mark";
 import { miniLoginErrorKey, type LoginErrorKey } from "./login-error-presentation";
+import { useHydrated } from "@/lib/use-hydrated";
 
 /**
  * Чем входит человек. Сотрудник знает свой телефон (почта у него
@@ -63,6 +64,8 @@ export function MiniLoginForm({
   /** Номер из строки запроса — приходит с экрана «Готово» после QR-регистрации. */
   initialPhone?: string;
 }) {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const t = useTranslations("miniLogin");
   const tError = useTranslations("miniLogin.errors");
   const inTelegram = useTelegramInitData();
@@ -194,7 +197,7 @@ export function MiniLoginForm({
 
   if (challengeId) {
     return (
-      <form onSubmit={submitCode} className="mt-5 space-y-3">
+      <form method="post" onSubmit={submitCode} className="mt-5 space-y-3">
         <p className="text-[16px] leading-[1.5]" style={{ color: "var(--mini-text-secondary)" }}>
           {t("challenge.instructions")}
         </p>
@@ -217,7 +220,7 @@ export function MiniLoginForm({
         ) : null}
         <button
           type="submit"
-          disabled={busy || code.length !== 6}
+          disabled={busy || code.length !== 6 || !hydrated}
           aria-busy={busy}
           aria-label={busy ? t("actions.confirmingCode") : t("actions.confirmCode")}
           className="mini-btn-primary mini-press w-full"
@@ -272,7 +275,7 @@ export function MiniLoginForm({
 
       {/* noValidate: подсказки браузера к полю почты — по-английски
           («Please include an '@'…»); проверяет сервер и отвечает по-русски. */}
-      <form onSubmit={submit} onFocus={keepSubmitVisible} noValidate className="mt-5 space-y-3">
+      <form method="post" onSubmit={submit} onFocus={keepSubmitVisible} noValidate className="mt-5 space-y-3">
         <div role="radiogroup" aria-label={t("mode.label")} className="mini-seg">
           <button
             type="button"
@@ -377,7 +380,7 @@ export function MiniLoginForm({
         <button
           ref={submitRef}
           type="submit"
-          disabled={busy || !password || (mode === "phone" ? !phone : !email.trim())}
+          disabled={busy || !password || (mode === "phone" ? !phone : !email.trim()) || !hydrated}
           aria-busy={busy}
           aria-label={busy ? t("actions.loggingIn") : t("actions.login")}
           className="mini-btn-primary mini-press w-full"

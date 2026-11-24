@@ -14,6 +14,8 @@ import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { positionMatchKey } from "@/lib/sphere-positions";
 import { pickMirrorArea } from "@/lib/area-building";
 import { checkJournalLimit, limitResponse } from "@/lib/billing.server";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
+import { openOrganizationOffice } from "@/lib/organization-office.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -149,8 +151,11 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Building + Rooms (для журнала уборки) + Areas (производственные зоны)
+  // Помещения и цеха — на объекте, не в офисе (2026-11-24: офис у всех по
+  // умолчанию; офис — место руководства).
   let building = await db.building.findFirst({
-    where: { organizationId },
+    where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: { id: true },
   });
   if (!building) {
@@ -162,6 +167,10 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true },
     });
+    // С первым объектом открывается и офис.
+    await openOrganizationOffice(organizationId, { source: "onboarding-template" }).catch((error) =>
+      console.error("[onboarding-template] open office failed", error),
+    );
   }
   buildingId = building.id;
 

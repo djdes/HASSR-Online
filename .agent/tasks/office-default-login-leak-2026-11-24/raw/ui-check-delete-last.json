@@ -1,0 +1,19 @@
+{
+  "before": {
+    "officePage": "cmwuvorbn0047i27ddyzt0wqe",
+    "addToOffice": true,
+    "unplacedWarning": true,
+    "objects": [
+      "Кафе у моряАдрес не указаннет сотрудников"
+    ],
+    "createObject": true
+  },
+  "deleted": 200,
+  "after": {
+    "officePage": "cmwuvorbn0047i27ddyzt0wqe",
+    "addToOffice": false,
+    "unplacedWarning": false,
+    "objects": [],
+    "createObject": true
+  }
+}

@@ -1,0 +1,9 @@
+
+> haccp-online@0.1.0 test:gate
+> bash scripts/test-with-baseline.sh
+
+→ [test:changed] Эскалация до полного прогона: Изменено 44 файлов кода (порог 25)
+
+=== Test stats: pass=7424, fail=0 ===
+✓ Все тесты прошли.
+exit 0

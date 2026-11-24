@@ -8,6 +8,7 @@
  * не расходились в наборе полей.
  */
 import { db } from "@/lib/db";
+import { objectsFirst } from "@/lib/building-scope";
 import { orphanAreas } from "@/lib/orphan-areas";
 import { areaPointWhere } from "@/lib/point-filters";
 
@@ -75,7 +76,9 @@ export async function loadDirectoryBuildings(
       },
     },
   });
-  return buildings.map((b) => ({
+  // Объекты первыми (2026-11-24): новое помещение по умолчанию — в первое
+  // здание списка, и это должен быть объект, а не офис.
+  return objectsFirst(buildings).map((b) => ({
     id: b.id,
     name: b.name,
     rooms: b.rooms.map((r) => ({

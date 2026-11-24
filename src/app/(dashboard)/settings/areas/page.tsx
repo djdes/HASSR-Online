@@ -13,7 +13,7 @@ import { BuildingGroupHeader } from "@/components/settings/building-group-header
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
 import { PageActions } from "@/components/layout/page-actions";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
-import { viewedPointId } from "@/lib/building-scope";
+import { objectsFirst, soleObjectId, viewedPointId } from "@/lib/building-scope";
 import { groupByBuilding } from "@/lib/area-building";
 import { PLACE_ALL, PLACE_NONE, resolvePlaceFilter, scopePlaces } from "@/lib/place-filter";
 import { buildingInScope, isPointScoped } from "@/lib/point-scope";
@@ -78,7 +78,8 @@ export default async function AreasSettingsPage({
     personBuildingIds: buildingContext.buildings.map((building) => building.id),
     actor: session.user,
   });
-  const buildingOptions = buildings
+  // Объекты первыми: «по умолчанию первое здание» в окне цеха — объект, не офис.
+  const buildingOptions = objectsFirst(buildings)
     .filter((building) => objectInScope(dialogScopeIds, orgBuildingIds, building.id))
     .map((building) => ({ id: building.id, name: building.name }));
   // Цех без точки — общий, его ведёт офис: руководителю точки — только просмотр.
@@ -87,8 +88,8 @@ export default async function AreasSettingsPage({
   const visibleAreas = buildings.length === 0 ? areas : groups.flatMap((group) => group.items);
   const equipmentCount = visibleAreas.reduce((sum, area) => sum + area._count.equipment, 0);
   const qrPoint = showPlaceFilter ? (place === PLACE_NONE ? PLACE_NONE : (placePointId ?? PLACE_ALL)) : null;
-  // Новый цех — в отмеченную точку, а если точка одна — в неё.
-  const defaultBuildingId = placePointId ?? (buildings.length === 1 ? buildings[0].id : null);
+  // Новый цех — в отмеченную точку, а если объект один — в него (офис не в счёт, 2026-11-24).
+  const defaultBuildingId = placePointId ?? soleObjectId(buildings);
 
   const canManage = isManagementRole(session.user.role);
   // Раньше: isManagerRole — только role=manager. head_chef видел список,
