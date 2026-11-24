@@ -23,6 +23,7 @@ export function DiagramPage({
   initial,
   areas,
   controlNumbers,
+  variant = "default",
 }: {
   id: string;
   kind: "flowchart" | "floor-plan";
@@ -30,6 +31,8 @@ export function DiagramPage({
   initial: DiagramData;
   areas: { id: string; name: string }[];
   controlNumbers: string[];
+  /** Оргструктура (пункт 1.2 структуры ППК) рисуется редактором блок-схемы. */
+  variant?: "default" | "org-chart";
 }) {
   const t = useTranslations("productionControl.diagram");
   const [data, setData] = useState<DiagramData>(initial);
@@ -154,7 +157,7 @@ export function DiagramPage({
         </div>
       </div>
 
-      <DiagramEditor kind={kind} value={data} onChange={change} areas={areas} controlNumbers={controlNumbers} />
+      <DiagramEditor kind={kind} value={data} onChange={change} areas={areas} controlNumbers={controlNumbers} variant={variant} />
     </div>
   );
 }

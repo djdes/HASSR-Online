@@ -20,7 +20,14 @@ export type InspectionNorms = {
   norms: string[];
   /** org — отмечены заведением; recommended — заведение ещё не отмечало, показываем основные. */
   normsSource: "org" | "recommended";
+  /**
+   * Договоры перечня ППК (пункт 1.3 структуры), отмеченные «видно проверяющему»:
+   * только реквизиты, без файлов. Необязательно — у старых снимков поля нет.
+   */
+  contracts?: InspectionContract[];
 };
+
+export type InspectionContract = { title: string; counterparty: string; number: string; date: string | null };
 
 /** Перечень норм: отмеченные заведением (каталог + свои), иначе — рекомендуемые из каталога. */
 export function resolveNormTitles(data: NormsData | null): { norms: string[]; source: "org" | "recommended" } {

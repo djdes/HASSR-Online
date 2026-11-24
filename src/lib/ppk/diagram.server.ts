@@ -6,7 +6,7 @@ import { ppkWhere, type PpkScope } from "./scope";
 /** Схема своей организации нужного блока; чужая, битая или несуществующая — 404. */
 export async function loadDiagramRecord(
   scope: PpkScope,
-  block: "flowchart" | "floor-plan",
+  block: "flowchart" | "floor-plan" | "org-chart",
   id: string,
 ): Promise<{ id: string; data: DiagramData; updatedAt: Date }> {
   const row = await db.ppkRecord.findFirst({

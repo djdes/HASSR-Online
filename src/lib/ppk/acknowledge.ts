@@ -2,7 +2,12 @@
  * Ознакомление сотрудников с документами ППК: ключи документов.
  * Чистый модуль — им пользуются страницы, API и тесты.
  */
-export const ACK_STATIC_KEYS = ["policy", "team-regulation"] as const;
+/**
+ * «ppk» — сама Программа производственного контроля: лист ознакомления
+ * (пункт 3.7 структуры, 2026-11-24). Доступна, когда программа утверждена
+ * версией или загружена своим файлом.
+ */
+export const ACK_STATIC_KEYS = ["policy", "team-regulation", "ppk"] as const;
 const KNOWLEDGE_PREFIX = "knowledge:";
 const KNOWLEDGE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 

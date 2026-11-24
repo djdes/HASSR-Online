@@ -15,12 +15,23 @@ const ok = (block: (typeof PPK_RECORD_BLOCKS)[number], data: unknown) =>
   PPK_RECORD_SCHEMAS[block].safeParse(data).success;
 
 test("блоки записей и лимиты", () => {
-  assert.deepEqual([...PPK_RECORD_BLOCKS], ["team", "policy", "products", "hazards", "control-points", "flowchart", "floor-plan", "pest-plan", "lab-plan", "norms", "doc-versions", "team-meetings"]);
+  assert.deepEqual([...PPK_RECORD_BLOCKS], [
+    "team", "policy", "products", "hazards", "control-points", "flowchart", "floor-plan", "pest-plan", "lab-plan", "norms", "doc-versions", "team-meetings",
+    // Структура ППК по документу владельца (2026-11-24).
+    "org-chart", "contracts", "production-info",
+    "text-haccp-principles", "text-terms", "text-team-regulation", "text-team-leader", "text-ccp-method", "text-flow-schedule",
+    "prp-infections", "prp-disinfection", "prp-emergencies", "prp-medical",
+  ]);
   assert.equal(isPpkRecordBlock("team"), true);
   assert.equal(isPpkRecordBlock("flowchart"), true);
   assert.equal(isPpkRecordBlock("unknown"), false);
   assert.equal(isPpkRecordBlock(undefined), false);
-  assert.deepEqual(PPK_RECORD_LIMITS, { team: 30, policy: 1, products: 300, hazards: 300, "control-points": 200, flowchart: 50, "floor-plan": 50, "pest-plan": 100, "lab-plan": 100, norms: 1, "doc-versions": 200, "team-meetings": 200 });
+  assert.deepEqual(PPK_RECORD_LIMITS, {
+    team: 30, policy: 1, products: 300, hazards: 300, "control-points": 200, flowchart: 50, "floor-plan": 50, "pest-plan": 100, "lab-plan": 100, norms: 1, "doc-versions": 200, "team-meetings": 200,
+    "org-chart": 20, contracts: 200, "production-info": 1,
+    "text-haccp-principles": 1, "text-terms": 1, "text-team-regulation": 1, "text-team-leader": 1, "text-ccp-method": 1, "text-flow-schedule": 1,
+    "prp-infections": 100, "prp-disinfection": 100, "prp-emergencies": 100, "prp-medical": 100,
+  });
 });
 
 test("план дезинсекции и лаборатории: вид, периодичность 1..24 месяцев, даты YYYY-MM-DD", () => {
@@ -151,7 +162,10 @@ test("checkTeamGroup: один руководитель, сотрудник не
 test("блоки-одиночки — ровно те, у которых лимит 1", () => {
   const singles = PPK_RECORD_BLOCKS.filter((block) => PPK_RECORD_LIMITS[block] === 1);
   assert.deepEqual([...PPK_SINGLETON_BLOCKS].sort(), [...singles].sort());
-  assert.deepEqual([...PPK_SINGLETON_BLOCKS], ["policy", "norms"]);
+  assert.deepEqual([...PPK_SINGLETON_BLOCKS], [
+    "policy", "norms", "production-info",
+    "text-haccp-principles", "text-terms", "text-team-regulation", "text-team-leader", "text-ccp-method", "text-flow-schedule",
+  ]);
 });
 
 test("версия документа: ППК или ХАССП-план, номер 1..999, дата, комментарий до 500", () => {

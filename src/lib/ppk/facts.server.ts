@@ -43,14 +43,20 @@ type ValidRecords = {
   /** Версии и заседания в статус блоков не входят — только разбираются вместе с остальными. */
   "doc-versions": Valid<unknown>[];
   "team-meetings": Valid<unknown>[];
-};
+} & Record<Exclude<PpkRecordBlock, ValidRecordKey>, Valid<unknown>[]>;
+
+/** Блоки со своим типом в `ValidRecords`; новые блоки структуры (2026-11-24) — `unknown`. */
+type ValidRecordKey =
+  | "team" | "policy" | "products" | "hazards" | "control-points" | "flowchart" | "floor-plan"
+  | "pest-plan" | "lab-plan" | "norms" | "doc-versions" | "team-meetings";
 
 /**
  * Разобрать записи по блокам. Записи с битыми данными пропускаются: одна
  * испорченная строка не должна ломать весь раздел.
  */
 function groupValidRecords(rows: { id: string; block: string; data: unknown }[]): ValidRecords {
-  const out: ValidRecords = { team: [], policy: [], products: [], hazards: [], "control-points": [], flowchart: [], "floor-plan": [], "pest-plan": [], "lab-plan": [], norms: [], "doc-versions": [], "team-meetings": [] };
+  // Пустой список на каждый блок реестра: новый блок не должен ронять разбор.
+  const out = Object.fromEntries(PPK_RECORD_BLOCKS.map((block) => [block, []])) as unknown as ValidRecords;
   for (const row of rows) {
     if (!(PPK_RECORD_BLOCKS as readonly string[]).includes(row.block)) continue;
     const block = row.block as PpkRecordBlock;

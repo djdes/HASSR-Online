@@ -23,7 +23,8 @@ import {
   PpkEmptyState,
 } from "@/components/production-control/ppk-ui";
 
-type Kind = "flowchart" | "floor-plan";
+/** «org-chart» — оргструктура (пункт 1.2 структуры ППК): те же блоки и связи, что у блок-схемы. */
+type Kind = "flowchart" | "floor-plan" | "org-chart";
 type TemplateChoice = FlowchartTemplate | "blank";
 
 const TEMPLATES: TemplateChoice[] = ["blank", "hot", "cold", "pastry"];
@@ -45,7 +46,8 @@ export function DiagramList({
 }) {
   const tFlow = useTranslations("productionControl.flowcharts");
   const tPlan = useTranslations("productionControl.floorPlans");
-  const t = kind === "flowchart" ? tFlow : tPlan;
+  const tOrg = useTranslations("productionControl.orgCharts");
+  const t = kind === "flowchart" ? tFlow : kind === "org-chart" ? tOrg : tPlan;
   const locale = useLocale();
   const router = useRouter();
   const { records, remove } = usePpkRecords<DiagramData>(kind, initial);
@@ -84,7 +86,7 @@ export function DiagramList({
                 >
                   <DiagramSvg
                     data={row.data}
-                    kind={kind}
+                    kind={kind === "org-chart" ? "flowchart" : kind}
                     idPrefix={`pv-${row.id}`}
                     viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
                     className="pointer-events-none h-44 w-full"
@@ -96,7 +98,9 @@ export function DiagramList({
                     <div className="mt-1 text-[13.5px] text-[#3c4053]">
                       {kind === "flowchart"
                         ? tFlow("stats", { steps: String(stats.steps) })
-                        : tPlan("stats", { rooms: String(stats.rooms), flows: String(stats.flows) })}
+                        : kind === "org-chart"
+                          ? tOrg("stats", { blocks: String(stats.steps) })
+                          : tPlan("stats", { rooms: String(stats.rooms), flows: String(stats.flows) })}
                     </div>
                     <div className="mt-0.5 text-[12.5px] text-[#9b9fb3]">{t("updated", { date: date(row.updatedAt) })}</div>
                   </Link>
@@ -156,7 +160,8 @@ function CreateDialog({
 }) {
   const tFlow = useTranslations("productionControl.flowcharts");
   const tPlan = useTranslations("productionControl.floorPlans");
-  const t = kind === "flowchart" ? tFlow : tPlan;
+  const tOrg = useTranslations("productionControl.orgCharts");
+  const t = kind === "flowchart" ? tFlow : kind === "org-chart" ? tOrg : tPlan;
   const [name, setName] = useState("");
   const [template, setTemplate] = useState<TemplateChoice>(kind === "flowchart" ? "hot" : "blank");
   const [saving, setSaving] = useState(false);

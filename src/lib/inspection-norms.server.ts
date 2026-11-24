@@ -4,7 +4,7 @@ import {
   resolveNormTitles,
   type InspectionNorms,
 } from "@/lib/inspection-norms";
-import { PPK_RECORD_SCHEMAS, type DocVersion, type NormsData } from "@/lib/ppk/records";
+import { PPK_RECORD_SCHEMAS, type ContractData, type DocVersion, type NormsData } from "@/lib/ppk/records";
 import { ppkDocKindKeys, ppkDocKindOf, ppkWhere, type PpkScope } from "@/lib/ppk/scope";
 
 /**
@@ -20,12 +20,12 @@ export async function loadInspectionNorms(scope: PpkScope): Promise<InspectionNo
       select: { kind: true, fileName: true, updatedAt: true },
     }),
     db.ppkRecord.findMany({
-      where: { ...ppkWhere(scope), block: { in: ["norms", "doc-versions"] } },
+      where: { ...ppkWhere(scope), block: { in: ["norms", "doc-versions", "contracts"] } },
       select: { block: true, data: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
   ]);
-  const valid = <T,>(block: "norms" | "doc-versions"): T[] =>
+  const valid = <T,>(block: "norms" | "doc-versions" | "contracts"): T[] =>
     rows.flatMap((row) => {
       if (row.block !== block) return [];
       const parsed = PPK_RECORD_SCHEMAS[block].safeParse(row.data);
@@ -41,5 +41,9 @@ export async function loadInspectionNorms(scope: PpkScope): Promise<InspectionNo
     approvals: resolveNormApprovals(valid<DocVersion>("doc-versions")),
     norms: titles.norms,
     normsSource: titles.source,
+    // Договоры, которые заведение отметило «видно проверяющему» (без файлов).
+    contracts: valid<ContractData>("contracts")
+      .filter((item) => item.visibleToInspector)
+      .map(({ title, counterparty, number, date }) => ({ title, counterparty, number, date })),
   };
 }

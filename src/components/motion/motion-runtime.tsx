@@ -20,6 +20,7 @@ import {
   type Look,
 } from "@/components/motion/motion-model";
 import { startPresence } from "@/components/motion/motion-presence";
+import { routeOverlayBase } from "@/lib/route-overlay";
 
 /**
  * Motion that CSS alone cannot play, because it depends on the previous state (spec
@@ -390,6 +391,8 @@ export function MotionRuntime() {
     const before = previousPath.current;
     previousPath.current = pathname;
     if (before === null || before === pathname || motionOff()) return;
+    // Окно поверх страницы (`route-overlay.ts`): страница под ним та же — не проявляем её заново.
+    if (routeOverlayBase(before) || routeOverlayBase(pathname)) return;
     const area = document.querySelector("[data-page-area]");
     if (!area) return;
     for (const child of Array.from(area.children)) {

@@ -31,8 +31,19 @@ function dynamicSlugName(dirName: string): string | null {
   return match ? match[1] : null;
 }
 
+/**
+ * Перехватывающий сегмент (`(.)item`, `(..)photo`, `(...)x`, `(..)(..)y`) — это
+ * НЕ группа: маркер `(.)` лишь говорит, откуда перехватывать, а сам сегмент
+ * — обычный уровень пути (`item`). Отдаёт имя сегмента без маркера или null.
+ */
+function interceptedSegment(dirName: string): string | null {
+  const match = /^(?:\(\.{1,3}\))+(.+)$/.exec(dirName);
+  return match ? match[1] : null;
+}
+
 /** Сегмент, не влияющий на URL: `(group)` и параллельный слот `@slot`. */
 function isTransparentSegment(dirName: string): boolean {
+  if (interceptedSegment(dirName) !== null) return false;
   return dirName.startsWith("(") || dirName.startsWith("@");
 }
 
@@ -60,7 +71,8 @@ function collectCollisions(): Collision[] {
         continue;
       }
 
-      const slug = dynamicSlugName(entry.name);
+      const segment = interceptedSegment(entry.name) ?? entry.name;
+      const slug = dynamicSlugName(segment);
       if (slug) {
         const slugs = byRoutePath.get(routePath) ?? new Map<string, string[]>();
         const dirs = slugs.get(slug) ?? [];
@@ -69,7 +81,7 @@ function collectCollisions(): Collision[] {
         byRoutePath.set(routePath, slugs);
       }
 
-      walk(diskChild, `${routePath}/${entry.name}`);
+      walk(diskChild, `${routePath}/${segment}`);
     }
   }
 
@@ -118,4 +130,10 @@ test("страж действительно ловит коллизию", () => 
   assert.equal(isTransparentSegment("(dashboard)"), true);
   assert.equal(isTransparentSegment("@modal"), true);
   assert.equal(isTransparentSegment("journals"), false);
+  // Окно-перехват (`@modal/(.)item/[id]`) — уровень `item`, а не группа.
+  assert.equal(isTransparentSegment("(.)item"), false);
+  assert.equal(interceptedSegment("(.)item"), "item");
+  assert.equal(interceptedSegment("(..)(..)photo"), "photo");
+  assert.equal(interceptedSegment("(...)feed"), "feed");
+  assert.equal(interceptedSegment("(dashboard)"), null);
 });

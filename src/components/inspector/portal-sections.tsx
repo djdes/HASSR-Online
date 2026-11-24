@@ -150,6 +150,33 @@ export function PortalProductionControl({ token, norms }: { token: string; norms
           );
         })}
       </ol>
+      {norms.contracts && norms.contracts.length > 0 ? (
+        <div className="mt-4" data-ppk-contracts>
+          <div className="text-[13px] font-medium text-[#5b6170]">{t("contractsTitle")}</div>
+          <ol className="mt-1 border-t border-[#e3e5ea]">
+            {norms.contracts.map((contract, index) => (
+              <li
+                key={`${index}:${contract.title}`}
+                className="grid grid-cols-[2.25rem_1fr] gap-x-2 border-b border-[#e3e5ea] py-2.5 sm:grid-cols-[2.5rem_1fr]"
+              >
+                <span className="text-right text-[13px] tabular-nums text-[#8a8f9c]">{index + 1}.</span>
+                <div className="min-w-0">
+                  <div className="text-[15px] leading-snug text-[#141821] [overflow-wrap:anywhere]">{contract.title}</div>
+                  <div className="mt-0.5 text-[13px] text-[#5b6170] [overflow-wrap:anywhere]">
+                    {[
+                      contract.counterparty,
+                      contract.number ? t("contractNumber", { number: contract.number }) : null,
+                      contract.date ? dayRu(contract.date) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
     </PortalSection>
   );
 }

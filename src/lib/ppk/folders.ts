@@ -15,6 +15,15 @@ export const PPK_FOLDERS = [
   "norm-files",
   // «Пакет документов»: свои документы организации (тарифы 2026-10).
   "package",
+  // Структура ППК по документу владельца (2026-11-24): файлы договоров и актов
+  // (1.3), сканы своих документов вместо шаблона (2.1–2.4) и график разделения
+  // потоков (приложение № 3).
+  "contracts",
+  "policy-scan",
+  "team-regulation-scan",
+  "team-leader-scan",
+  "team-order-scan",
+  "flow-schedule",
 ] as const;
 
 export type PpkFolderKey = (typeof PPK_FOLDERS)[number];
