@@ -1113,7 +1113,9 @@
         "placeholder": "Type the text or paste it from your document",
         "save": "Save",
         "resetTemplate": "Restore template",
-        "scanOrText": "Instead of the text, you can upload a scan of your own document below — then the scan goes into the program."
+        "scanOrText": "Instead of the text, you can upload a scan of your own document below — then the scan goes into the program.",
+        "revisionTitle": "Document revision",
+        "revisionHint": "An approved revision gets a programme number. If even one word changes, the programme asks to approve a new revision with a new number."
       },
       "order": {
         "ordersTitle": "Order establishing the HACCP team",
@@ -1234,7 +1236,7 @@
         "colPosition": "Position",
         "colDuty": "Duties",
         "sheetTitle": "Acknowledgement sheet",
-        "sheetHint": "Staff mark \"Read and agreed\" in their account or with a PIN on this device.",
+        "sheetHint": "Staff mark \"Read and agreed\" in their account, or with a PIN or a finger signature on this device.",
         "needApproval": "The acknowledgement sheet opens once the program is approved as a version or uploaded as your own file.",
         "toProgram": "Program and versions",
         "colMark": "Mark",
@@ -1248,7 +1250,14 @@
         "pinHint": "The employee enters their PIN — the same as for QR forms. It signs \"Read and agreed\" for the current program version.",
         "pinLabel": "PIN",
         "cancel": "Cancel",
-        "agreeButton": "Read and agreed"
+        "agreeButton": "Read and agreed",
+        "signWithFinger": "Finger signature",
+        "fingerHint": "Sign with your finger in the field below and press “Read and agreed”. The signature goes to the printed acknowledgement sheet.",
+        "method": {
+          "self": "in the cabinet",
+          "pin": "PIN code",
+          "finger": "finger signature"
+        }
       },
       "equipment": {
         "empty": "No equipment yet",
@@ -1272,7 +1281,8 @@
       "instructions": {
         "empty": "No work instructions yet",
         "emptyHint": "Upload instructions in \"Work instructions\" — they will appear here.",
-        "open": "Work instructions"
+        "open": "Work instructions",
+        "note": "Work instructions as text with our header and numbering, or as a file. Each one has its own revision with a programme number."
       }
     },
     "orgCharts": {
@@ -1293,6 +1303,75 @@
       "createFailed": "Could not create the diagram",
       "fromPositions": "Build from positions",
       "editorHint": "The diagram is drawn on a separate page: blocks are positions, arrows are reporting lines. Check the draft built from positions: the system has no reporting lines."
+    },
+    "revisions": {
+      "approved": "Revision {code} of {date}",
+      "approvedBy": "approved by {name}",
+      "none": "Revision not approved",
+      "changed": "Changed after approval of {code} — new revision not approved",
+      "approve": "Approve revision",
+      "approveNew": "Approve new revision",
+      "confirmTitle": "Approve revision",
+      "confirmBody": "Document “{title}” will get number {code}. If even one word changes later, a new revision with a new number will be needed.",
+      "changedTitle": "Document changed",
+      "changedBody": "The text of “{title}” changed after revision {old} was approved. Approve a new revision? It will get number {code}.",
+      "confirmLabel": "Approve — {code}",
+      "later": "Later",
+      "approvedToast": "Revision {code} approved",
+      "sameToast": "No changes — revision {code} stays in force",
+      "failed": "Could not approve the revision",
+      "emptyHint": "Save the text or upload a scan to approve a revision",
+      "registerLink": "Revision register",
+      "registerTitle": "Document revision register",
+      "registerLead": "Each approved revision gets the next number. If even one word changes, the document is approved again and the new revision gets a new number; earlier ones stay here.",
+      "colNumber": "Number",
+      "colDocument": "Document",
+      "colDate": "Approved",
+      "colApprover": "Approved by",
+      "colState": "State",
+      "stateCurrent": "Latest revision",
+      "stateSuperseded": "Replaced by {code}",
+      "registerEmpty": "No approved revisions yet. Open a programme document (item texts, procedures, instructions) and press “Approve revision”.",
+      "back": "Back to the programme"
+    },
+    "textDocs": {
+      "createInstruction": "Write an instruction",
+      "createProcedure": "Write a procedure",
+      "editTitle": "Edit document",
+      "hint": "The document is printed in the programme with our header and numbering. After an approved document is edited, the programme will ask about a new revision.",
+      "loading": "Loading…",
+      "loadFailed": "Could not load documents",
+      "titleLabel": "Title",
+      "textLabel": "Text",
+      "instructionPlaceholder": "For example: Personal hygiene",
+      "procedurePlaceholder": "For example: Goods receiving",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saved": "Document saved",
+      "created": "Document created",
+      "saveFailed": "Could not save the document",
+      "upload": "Upload file",
+      "uploadFailed": "Could not upload the file",
+      "tooLarge": "“{name}” is larger than 25 MB",
+      "replaced": "File of “{title}” replaced",
+      "replace": "Replace file",
+      "replaceAria": "Replace the file of “{title}”",
+      "edit": "Edit",
+      "editAria": "Edit “{title}”",
+      "delete": "Delete",
+      "deleteAria": "Delete “{title}”",
+      "deleteTitle": "Delete the document?",
+      "deleted": "Document deleted",
+      "deleteFailed": "Could not delete the document",
+      "emptyProcedures": "No procedures yet: write one or upload a file",
+      "emptyInstructions": "No instructions yet: write one or upload a file",
+      "textDoc": "Text"
+    },
+    "signature": {
+      "area": "Signature field",
+      "placeholder": "Sign here with your finger",
+      "hint": "Finger, stylus or mouse",
+      "clear": "Clear"
     }
   },
   "inspectionDay": {
@@ -20089,7 +20168,10 @@
     "ppkLead": "Production control program, version {version}. Open the program, read it and confirm that you have read and agree with it.",
     "ppkOfficials": "Officials",
     "ppkLeadFile": "Production control program. Open the program, read it and confirm that you have read and agree with it.",
-    "ppkOpen": "Open the program"
+    "ppkOpen": "Open the program",
+    "signatureTitle": "Signature",
+    "signatureHint": "You can sign with your finger — the signature goes to the printed acknowledgement sheet of the programme. The mark counts without a signature too.",
+    "revision": "Revision {code} of {date}"
   },
   "staffPages": {
     "positions": {
@@ -28350,7 +28432,11 @@
       "loadingPreview": "Loading preview…",
       "titleLabel": "Document title",
       "fileStays": "The file itself will stay the same.",
-      "deleteTitle": "Delete the document?"
+      "deleteTitle": "Delete the document?",
+      "createText": "Write as text",
+      "replaced": "File “{name}” replaced",
+      "replace": "Replace file",
+      "replaceAria": "Replace the file of “{title}”"
     }
   },
   "layoutUi": {

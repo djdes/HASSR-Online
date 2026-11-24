@@ -2,10 +2,18 @@ import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
-import { loadPpkBundle } from "@/lib/ppk/assemble.server";
-import { buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { loadPpkPrintData } from "@/lib/ppk/structure-print.server";
+import { buildPpkStructurePdf } from "@/lib/ppk/structure-pdf";
 import { ppkDocKindKey } from "@/lib/ppk/scope";
 import { ppkScopeForSession } from "@/lib/ppk/scope.server";
+import { createRateLimiter } from "@/lib/rate-limit";
+
+/**
+ * Сборка программы со сканами тяжёлая (до 80 МБ сканов): сотруднику — не чаще
+ * 6 раз в минуту, организации — 30 (как PDF на портале проверяющего).
+ */
+const userPdfLimiter = createRateLimiter({ tokensPerInterval: 6, intervalMs: 60_000 });
+const orgPdfLimiter = createRateLimiter({ tokensPerInterval: 30, intervalMs: 60_000 });
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,11 +51,14 @@ export async function GET() {
     });
   }
 
-  const bundle = await loadPpkBundle(scope);
-  return new NextResponse(new Uint8Array(buildPpkProgramPdf(bundle)), {
+  if (!userPdfLimiter.consume(auth.session.user.id) || !orgPdfLimiter.consume(scope.organizationId)) {
+    return NextResponse.json({ error: "Программа собирается слишком часто — попробуйте через минуту" }, { status: 429 });
+  }
+  const data = await loadPpkPrintData(scope);
+  return new NextResponse(new Uint8Array(await buildPpkStructurePdf(data)), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": contentDisposition("inline", `ППК — ${bundle.org.orgName || "организация"}.pdf`),
+      "Content-Disposition": contentDisposition("inline", `ППК — ${data.bundle.org.orgName || "организация"}.pdf`),
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-store",
     },

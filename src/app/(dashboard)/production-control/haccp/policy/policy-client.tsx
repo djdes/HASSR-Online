@@ -76,6 +76,8 @@ export function PolicyClient({
     if (ok) {
       toast.success(t("saved"));
       router.refresh();
+      // Плашка редакции (2.1) перечитывается и спрашивает про новую редакцию.
+      window.dispatchEvent(new Event("ppk:changed"));
     }
   }
 

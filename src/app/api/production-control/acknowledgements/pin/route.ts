@@ -44,7 +44,14 @@ export async function POST(request: Request) {
     where: {
       organizationId_docKey_version_userId: { organizationId: scope.organizationId, docKey: doc.docKey, version: doc.version, userId },
     },
-    create: { organizationId: scope.organizationId, docKey: doc.docKey, version: doc.version, userId },
+    create: {
+      organizationId: scope.organizationId,
+      docKey: doc.docKey,
+      version: doc.version,
+      userId,
+      method: "pin",
+      collectedById: auth.session.user.id,
+    },
     update: {},
     select: { acknowledgedAt: true },
   });

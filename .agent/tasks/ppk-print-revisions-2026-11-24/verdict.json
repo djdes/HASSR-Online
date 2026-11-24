@@ -1,0 +1,104 @@
+{
+  "round": 2,
+  "verdict": "PASS",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "Judged HEAD 8c53aab7c, clean tree. revisions.ts:43-64: code 'ППК 001'/'ППК 1000', next = max+1, whitespace-only normalisation, status none/approved/changed. revisions.server.ts: hash = title + normalised text, or title + sha256 of every scan/file (Postgres sha256). approveRevision (revisions.server.ts:214-249) now runs in one transaction under pg_advisory_xact_lock(hashtext('ppk-revision:<org>')) (same pattern as demo-request, checklists attachments, organization-office), re-reads the latest revision inside the lock (same hash -> created:false) and takes max+1 inside the lock; @@unique([organizationId, number]) stays; approveRevision is the only PpkRevision writer, so concurrent approvals neither share a number nor give one content two numbers (V9 fixed). Old rows are never deleted (register history). revisions.test.ts 9/9 pass. Stand e2e (raw/e2e-b-output.txt) is consistent: ППК 001, repeat -> created:false, whitespace -> same, word change -> 'изменён' -> ППК 002, register 'ППК 003:ППК 004 ...'."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "RevisionBar on TextPanel (1.8, 1.9, 2.2, 2.3, 2.9, app 3) and PolicyPanel (2.1); RevisionControl in PpkDocsList (app 5/6) and on /knowledge. Compact rows now render 'утвердил {name}' (revision-control.tsx:154-158, V2 fixed). Confirm dialog shows the future code (revision-control.tsx:133, 189-195). The re-ask is automatic: ppk:changed -> chunked reload -> approved->changed -> prompt (revision-control.tsx:40-64); dispatched by text-doc-editor, policy-client, text-doc-dialog, file replace, scan folders, and now rename on /knowledge (knowledge-documents-client.tsx:105, V3 fixed). Register page /production-control/revisions with a link from the overview. Minor gap R2-2: read-only viewers of app 6 (head_chef/technologist without admin.full) see no plaques at all (ppk-docs-list.tsx:83)."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "POST /api/production-control/text-docs creates a text/plain KnowledgeDocument (knowledge base with admin.full, or the point's 'procedures' folder with PPK access); PATCH edits title/text (text only for text docs, 400 for files); PUT replaces the file in the same row (knowledgeFileType check, 25 MB). requireEditableDoc scopes by org, folder and point. Docs appear in app 5 (server list, ProceduresPanel), app 6 and /knowledge; /acknowledge/knowledge:<id> renders the text inline. Stand e2e: create/edit/replace/400/404 consistent with the code."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "Fresh probe with the current code (sample with text docs, 2-page PDF scan, PNG scans, landscape PDF, corrupt PDF, 2.4 order scan, DOCX, ZIP, flowchart, 3.7 sheet): 30 pages; page 1 = title page (УТВЕРЖДАЮ) with no footer; page 2 = 'Содержание'; all 36 TOC entries (4 parts + 32 items, document numbering 1.1-3.7, Приложение №1-6) point to the page where the heading is actually printed (checked with pdftotext); 'Стр. N из 30' on every page 2-30; running header (organisation + label) on every page 2-30. structure-pdf.test.ts 'все 32 пункта' passes."
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": "Probe: the 2-page policy scan fills pages 8-9, PNG scans pages 10 and 30, the landscape PDF page 21, the 2.4 order scan page 12, all framed under the header with 'Стр. N из M'; layout.scanPages = [8,9,10,12,21,30]; corrupt PDF -> 'Файл «Битый скан» не удалось вставить …' (page 22) and the PDF still builds; ZIP -> line; DOCX -> text with our header. 80 MB / 300-page limits print a line. V1: docxText now calls officeZipWithinLimits first (structure-pdf.ts:79), an honestly-labelled DOCX bomb is skipped (new test). Residual R2-1 (minor): a DOCX whose central directory under-declares sizes passes the shared guard (pre-existing weakness, identical in master's preview route)."
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": "structure-print.server.ts:111-113 gives a label only for status 'approved' (org time zone); renderDoc/docHeader/stampPages print it. Probe: pages 4-5 'Принципы ХАССП · ППК 001 от 20.11.2026', 8-9 'ППК 004 от 24.11.2026', 25 'ППК 003 …', 29 'ППК 005 …'; unapproved docs 'Редакция не утверждена' (pages 6, 10, 16, 21-22, 26-27, 30). Stand e2e checks both."
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": "POST /api/production-control/acknowledgements/sign mirrors the PIN route (requirePpkAccess + visibleStaffWhere + ackDocForUser) and stores method 'finger', the PNG and collectedById; the employee's own POST /api/acknowledgements accepts an optional signature; /pin writes method 'pin'. 3.7 panel shows the method and time. Probe page 18: the signature is drawn as a 600x200 image in the 'Подпись' cell; PIN/cabinet cells use the org time zone with time ('PIN-код, 24.11.2026, 18:00' for Asia/Novosibirsk, V5 fixed). parseSignatureDataUrl: non-PNG, '', >300 KB, <20 px and >1600x800 -> 400 (signature.test.ts). Minor: a blank canvas is still accepted server-side (V6 limitation; the client disables the button until a stroke), R2-3 (PDF size per signature)."
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": "program/pdf, inspector/[token]/production-control/[doc] (ppk), acknowledgements/ppk/file and reports/compliance-bundle all call loadPpkPrintData + buildPpkStructurePdf; the HACCP plan still uses buildHaccpPlanPdf. Schema diff is additive only: model PpkRevision, three nullable PpkAcknowledgement columns, Organization back-relation."
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": "All new APIs authenticate and scope by organisation/point: revisions (requirePpkAccess; other points' text keys dropped; knowledge rows by organizationId, kind IS NULL, base or own-point procedures; knowledge-base approvals need admin.full -> 403, V7a fixed), text-docs (requireKnowledgeAccess(true) or requirePpkAccess + building match; other folders/kinds/orgs -> 404), sign (as PIN). Register filtered for point-scoped managers on page and API (V8 fixed; nit R2-8). Stand: cook -> 403 on revisions GET/POST, text-docs, sign; anonymous -> 401; unknown doc -> 404."
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": "Local part, run by this verifier on HEAD 8c53aab7c: npm run typecheck -> exit 0; npx eslint on the 43 changed .ts/.tsx files -> 0 errors, 0 warnings; requested unit tests (revisions, structure-pdf, signature, pdf, route-slug-collisions, borderless, neutral-palette) 32/32; all src/lib/ppk tests + related PDF/route tests 251/251; scripts/test-changed.mjs targeted set for the round-1 fix commit (70 files, --range 6d58f5a98..HEAD) 312/312; npm run i18n:check 103/103. Not run here by instruction: next build, full suite, stand (builder reports build PASS, full suite 7474/0 before the fix commit, stand 49/49 after it; consistent with the code). Merge, deploy and production: NOT_VERIFIABLE for this verifier."
+    }
+  },
+  "problems": [
+    {
+      "id": "R2-1",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-pdf.ts:78-81 (docxText); src/lib/knowledge-documents.ts:31 (officeZipWithinLimits); src/app/api/knowledge-documents/[id]/preview/route.ts:22-25",
+      "detail": "V1 is fixed for an honestly-labelled bomb, but officeZipWithinLimits trusts the uncompressed sizes declared in the central directory and JSZip inflates the whole entry before its size-mismatch check. Probe: a DOCX whose central directory declares 1000 bytes for word/document.xml passes the guard; 60 KB -> 60 MB inflated (+95 MB RSS), 398 KB -> 400 MB (+457 MB RSS), both end as 'broken'; a 1.2 MB file crashed a node process with a 1 GB heap during planPrintFiles (FATAL heap out of memory). The 25 MB upload limit allows far larger. Rated minor for this task because the identical weakness already exists on master in the knowledge preview route (same guard, same JSZip call, reachable by the same managers with the same file), so this change reaches parity with the existing protection, which is what round 1 asked for. It is still a cross-tenant DoS vector in the shared helper.",
+      "suggestion": "Add one bounded extractor and use it in docxText and the preview route: inflate word/document.xml with a hard output cap (e.g. zip.file(...).internalStream('uint8array') counting bytes and pausing/rejecting past ~20 MB, or zlib.inflateRawSync(compressed, { maxOutputLength: 20 MB }))."
+    },
+    {
+      "id": "R2-2",
+      "severity": "minor",
+      "file": "src/components/production-control/ppk-docs-list.tsx:83",
+      "detail": "The V7(b) decision says read-only viewers 'видят список и номера без кнопок', but keys = canManage ? … : [] means no revision states are requested, so RevisionControl renders nothing. head_chef/technologist (management, no admin.full) open app 6 and see the list without any revision number. Р5 says everyone sees the number, and the GET states API only needs PPK access, which these users have.",
+      "suggestion": "Always build keys from docs; keep canApprove={canManage}."
+    },
+    {
+      "id": "R2-3",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-pdf.ts:345-347",
+      "detail": "jsPDF addImage without a compression argument stores the decoded pixels. One 600x200 RGBA canvas signature (about 2 KB as PNG) adds about 350 KB to the PDF. Measured: 294 KB with no signatures, 646 KB with one, 7.36 MB with 20. With a staff of 100 the employee file, the inspector link and the compliance bundle get a PDF of about 35 MB.",
+      "suggestion": "ctx.doc.addImage(dataUrl, 'PNG', x, y, w, h, undefined, 'FAST'), or flatten the signature to greyscale before embedding."
+    },
+    {
+      "id": "R2-4",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/acknowledge/[docKey]/page.tsx:186-198",
+      "detail": "The new 'Редакция ППК NNN от …' line can label content that was never approved. For 'team-regulation' the page body is the generic template (teamRegulationSections), while the revision belongs to item 2.2's saved text or scan. For 'policy' with an uploaded scan, the hash covers the scans, yet the page shows the policy text, which may have been edited after approval.",
+      "suggestion": "Show the line only when the page shows the hashed content (knowledge docs; policy without scans). Otherwise link to the approved scan or leave the line out."
+    },
+    {
+      "id": "R2-5",
+      "severity": "minor",
+      "file": "src/lib/ppk/revisions.server.ts:63-71, 103-117",
+      "detail": "Performance. Every state lookup has Postgres read and sha256 the full content of each file, and it loads the content of text docs. This runs on every /knowledge mount and every ppk:changed event (all docs, in chunks of 60), on every text and policy panel render, on every acknowledgement page, and on every PPK print (up to 300 docs). Large knowledge bases (hundreds of documents of several MB) make each view or print read gigabytes.",
+      "suggestion": "Cache hashes in process memory keyed by (id, updatedAt, sizeBytes), or hash only documents that have a revision."
+    },
+    {
+      "id": "R2-6",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-print.server.ts:93-109 (attachBytes)",
+      "detail": "V4 is only partly fixed. Text docs are always read now. But formats that print only as a line (ZIP, RAR, 7Z, XLS, XLSX, DOC) and DOCX still consume the 80 MB byte budget and are read into memory. A later PDF or image scan can then print 'не вставлен: в программе уже много страниц сканов' even though the scans total under 80 MB, while Р7 limits only the scans.",
+      "suggestion": "Do not load bytes for formats printed as a line, and count only PDF and images against SCAN_MAX_BYTES (DOCX bounded separately)."
+    },
+    {
+      "id": "R2-7",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/acknowledge/layout.tsx:9; src/app/(dashboard)/knowledge/layout.tsx:6",
+      "detail": "Nit. Every employee /acknowledge page (Mini App included) and /knowledge now ships the whole productionControl namespace, about 72 KB of JSON, to the client. They use about 0.2 KB of signature and revision strings from it.",
+      "suggestion": "Move the strings the client needs (signature, revisions, textDocs) into a small namespace or into 'acknowledge'."
+    },
+    {
+      "id": "R2-8",
+      "severity": "minor",
+      "file": "src/lib/ppk/revisions.server.ts:272-281",
+      "detail": "Nit. A point-scoped register hides other points' procedures only while they still exist. Once a procedure is deleted its row is no longer found, so its title and approver show up for managers of every point.",
+      "suggestion": "For point-scoped users, also drop knowledge rows whose document no longer exists, or store the building in the docKey or the revision row for procedures."
+    }
+  ]
+}

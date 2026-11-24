@@ -6,6 +6,8 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/page-header";
 import { ackKnowledgeId, formatAckMoment } from "@/lib/ppk/acknowledge";
+import { isTextDoc } from "@/lib/ppk/text-docs";
+import { loadRevisionStates } from "@/lib/ppk/revisions.server";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
@@ -154,9 +156,21 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
       </div>
     );
   } else if (ackKnowledgeId(doc.docKey)) {
+    // Инструкция текстом (написана в кабинете) — текст прямо на странице.
+    const file = await db.knowledgeDocument.findFirst({
+      where: { id: ackKnowledgeId(doc.docKey)!, organizationId },
+      select: { mimeType: true, content: true },
+    });
+    const ownText = file && isTextDoc(file.mimeType) ? Buffer.from(file.content).toString("utf8") : null;
     body = (
       <div className="space-y-4">
-        <p className="text-[14px] text-[#6f7282]">{t("fileHint")}</p>
+        {ownText !== null ? (
+          <div className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-[#0b1024]" data-ack-text>
+            {ownText}
+          </div>
+        ) : (
+          <p className="text-[14px] text-[#6f7282]">{t("fileHint")}</p>
+        )}
         <a
           href={`/api/knowledge-documents/${ackKnowledgeId(doc.docKey)}/file`}
           className={PPK_BUTTON_OUTLINE_CLASS}
@@ -168,6 +182,16 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
     );
   }
 
+  // Номер утверждённой редакции документа (spec, Р5: сотрудник видит номер), если текст с тех пор не менялся.
+  // Только у документа базы знаний страница показывает ровно утверждённое содержимое
+  // (у политики и положения отпечаток может быть по скану или тексту пункта — R2-4).
+  const revisionKey = ackKnowledgeId(doc.docKey) ? doc.docKey : null;
+  const revision = revisionKey ? (await loadRevisionStates(scope, [revisionKey])).get(revisionKey) : undefined;
+  const revisionLine =
+    revision?.status === "approved" && revision.latest
+      ? t("revision", { code: revision.latest.code, date: formatAckMoment(revision.latest.approvedAt, org?.timezone ?? "Europe/Moscow").date })
+      : null;
+
   return (
     <div className="space-y-5">
       <Link
@@ -178,8 +202,14 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
         {t("back")}
       </Link>
       <PageHeader title={doc.title} />
+      {revisionLine ? (
+        <p className="-mt-3 text-[13.5px] font-medium text-[#116b2a]" data-ack-revision>
+          {revisionLine}
+        </p>
+      ) : null}
       <article className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">{body}</article>
       <AcknowledgeButton
+        withSignature={doc.docKey === "ppk"}
         docKey={doc.docKey}
         doneText={moment ? t("done", { date: moment.date, time: moment.time }) : null}
       />

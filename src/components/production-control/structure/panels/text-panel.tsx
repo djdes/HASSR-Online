@@ -5,7 +5,10 @@ import { parsePpkRecords, type PpkTextBlock } from "@/lib/ppk/records";
 import { ppkWhere, type PpkScope } from "@/lib/ppk/scope";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
 import { ppkTextTemplate, type RegulationMember } from "@/lib/ppk/structure-templates";
+import { revisionDocKey, type RevisionTextBlock } from "@/lib/ppk/revisions";
+import { clientRevisionState, loadRevisionStates } from "@/lib/ppk/revisions.server";
 import { PpkFolder } from "@/components/production-control/ppk-folder";
+import { RevisionBar } from "@/components/production-control/revision-control";
 import type { PpkPanelProps } from "../item-panel";
 import { PanelNote, PanelSection, SourceLink } from "./panel-ui";
 import { TextDocEditor } from "./text-doc-editor";
@@ -51,6 +54,10 @@ export async function TextPanel({ item, scope }: PpkPanelProps) {
   const record = row ? (parsePpkRecords(text.block as PpkTextBlock, [row])[0] ?? null) : null;
   const orgName = orgBlock?.org.shortName || orgBlock?.org.fullName || "";
   const template = ppkTextTemplate(text.template, orgName, members);
+  // Редакция документа: «ППК NNN», после правки — вопрос о новой редакции.
+  const docKey = revisionDocKey({ kind: "text", block: text.block as RevisionTextBlock }, scope.buildingId);
+  const revision = (await loadRevisionStates(scope, [docKey])).get(docKey) ?? null;
+  const timeZone = org?.timezone || "Europe/Moscow";
 
   return (
     <div className="space-y-8">
@@ -62,12 +69,20 @@ export async function TextPanel({ item, scope }: PpkPanelProps) {
         </PanelNote>
       ) : null}
 
+      <PanelSection title={t("revisionTitle")} hint={t("revisionHint")}>
+        <RevisionBar
+          docKey={docKey}
+          timeZone={timeZone}
+          initial={revision ? clientRevisionState(revision) : null}
+        />
+      </PanelSection>
+
       <TextDocEditor
         block={text.block}
         record={record ? { id: record.id, text: record.data.text, updatedAt: record.updatedAt.toISOString() } : null}
         template={template}
         scanFolder={item.scanFolder ?? null}
-        timeZone={org?.timezone || "Europe/Moscow"}
+        timeZone={timeZone}
       />
 
       {item.scanFolder ? (

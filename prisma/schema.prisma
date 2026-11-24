@@ -256,6 +256,7 @@ model Organization {
   qrIcon                         OrganizationQrIcon?
   ppkRecords                     PpkRecord[]
   ppkAcknowledgements            PpkAcknowledgement[]
+  ppkRevisions                   PpkRevision[]
   checklistTemplates             ChecklistTemplate[]
   checklistInspections           ChecklistInspection[]
   checklistAttachments           ChecklistAttachment[]
@@ -865,9 +866,41 @@ model PpkAcknowledgement {
   userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   acknowledgedAt DateTime     @default(now())
+  /// Как поставлена отметка (2026-11-24): "self" — сотрудник в своём кабинете,
+  /// "pin" — PIN-кодом на устройстве руководителя, "finger" — подписью пальцем
+  /// на экране. null — отметки до 2026-11-24 (в своём кабинете).
+  method         String?
+  /// Подпись пальцем: PNG до 300 КБ (лист ознакомления 3.7 и печатная ППК).
+  signature      Bytes?
+  /// Кто держал устройство, на котором поставлена отметка PIN-кодом или подписью.
+  collectedById  String?
 
   @@unique([organizationId, docKey, version, userId])
   @@index([organizationId, docKey, version])
+}
+
+/// Утверждённая редакция документа ППК (2026-11-24, владелец: «нажал «Утвердить
+/// редакцию» — ей присваивается порядковый номер по ХАССП; если хоть одно слово
+/// меняется — новая редакция и новый номер»). Номер — следующий в реестре
+/// организации: «ППК 001», «ППК 002»… Прежние редакции остаются в реестре.
+model PpkRevision {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Документ: "text:<блок>", "policy" (с "@<точка>" для ППК точки), "knowledge:<id>".
+  docKey         String
+  /// Название документа на момент утверждения.
+  title          String
+  /// Порядковый номер в реестре организации: «ППК 001» — 1.
+  number         Int
+  /// Отпечаток содержания (sha256): другой отпечаток — документ изменён.
+  contentHash    String
+  approvedById   String?
+  approvedByName String
+  approvedAt     DateTime     @default(now())
+
+  @@unique([organizationId, number])
+  @@index([organizationId, docKey, approvedAt])
 }
 
 /// Логотип организации — для сайдбара кабинета (2026-10-16). Отдельной

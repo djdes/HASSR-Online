@@ -10,6 +10,9 @@ import { visibleStaffWhere } from "@/lib/people-scope.server";
 import { AckSummary } from "@/components/production-control/ack-summary";
 import { PpkFolder } from "@/components/production-control/ppk-folder";
 import { PolicyClient } from "@/app/(dashboard)/production-control/haccp/policy/policy-client";
+import { revisionDocKey } from "@/lib/ppk/revisions";
+import { clientRevisionState, loadRevisionStates } from "@/lib/ppk/revisions.server";
+import { RevisionBar } from "@/components/production-control/revision-control";
 import type { PpkPanelProps } from "../item-panel";
 import { PanelSection } from "./panel-ui";
 
@@ -31,9 +34,18 @@ export async function PolicyPanel({ item, scope, session }: PpkPanelProps) {
   const ack = row
     ? await ackSummaryFor(scope, "policy", org?.timezone ?? "Europe/Moscow", await visibleStaffWhere(session))
     : null;
+  const docKey = revisionDocKey({ kind: "policy" }, scope.buildingId);
+  const revision = (await loadRevisionStates(scope, [docKey])).get(docKey) ?? null;
 
   return (
     <div className="space-y-8">
+      <PanelSection title={t("revisionTitle")} hint={t("revisionHint")}>
+        <RevisionBar
+          docKey={docKey}
+          timeZone={org?.timezone || "Europe/Moscow"}
+          initial={revision ? clientRevisionState(revision) : null}
+        />
+      </PanelSection>
       <PolicyClient
         header={null}
         record={row && data ? { id: row.id, text: data.text, approvedById: data.approvedById, approvedAt: data.approvedAt } : null}

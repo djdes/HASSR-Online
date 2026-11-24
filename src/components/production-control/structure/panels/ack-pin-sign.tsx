@@ -4,19 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { KeyRound, Loader2 } from "lucide-react";
+import { KeyRound, Loader2, PenLine } from "lucide-react";
+import { SignaturePad } from "@/components/production-control/signature-pad";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PPK_BUTTON_OUTLINE_CLASS, PPK_BUTTON_PRIMARY_CLASS, PPK_FIELD_CLASS } from "@/components/production-control/ppk-ui";
 
 /**
- * Подпись листа ознакомления PIN-кодом сотрудника на устройстве руководителя
- * (общий планшет на производстве): сотрудник выбирает себя, вводит свой PIN и
- * подтверждает «Ознакомлен и согласен».
+ * Подпись листа ознакомления на устройстве руководителя (общий планшет на
+ * производстве): сотрудник выбирает себя и подтверждает «Ознакомлен и
+ * согласен» своим PIN-кодом или подписью пальцем по экрану (2026-11-24).
  */
 export function AckPinSign({ pending }: { pending: { userId: string; name: string }[] }) {
   const t = useTranslations("productionControl.structure.acquaintance");
   const router = useRouter();
   const [person, setPerson] = useState<{ userId: string; name: string } | null>(null);
+  const [mode, setMode] = useState<"pin" | "finger">("pin");
+  const [signature, setSignature] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +28,18 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
 
   async function sign() {
     if (!person || busy) return;
+    if (mode === "finger" && !signature) return;
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/production-control/acknowledgements/pin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: person.userId, pin }),
-      });
+      const response = await fetch(
+        mode === "finger" ? "/api/production-control/acknowledgements/sign" : "/api/production-control/acknowledgements/pin",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(mode === "finger" ? { userId: person.userId, signature } : { userId: person.userId, pin }),
+        },
+      );
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) {
         setError(body?.error || t("pinFailed"));
@@ -41,6 +48,7 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
       toast.success(t("signed", { name: person.name }));
       setPerson(null);
       setPin("");
+      setSignature(null);
       window.dispatchEvent(new Event("ppk:changed"));
       router.refresh();
     } catch {
@@ -55,11 +63,12 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
       <h4 className="text-[14px] font-semibold text-[#0b1024]">{t("pendingTitle", { count: String(pending.length) })}</h4>
       <ul className="grid gap-2 sm:grid-cols-2">
         {pending.map((row) => (
-          <li key={row.userId} className="flex items-center gap-2 rounded-2xl bg-[var(--app-veil)] py-1.5 pr-1.5 pl-4">
+          <li key={row.userId} className="flex flex-wrap items-center gap-1 rounded-2xl bg-[var(--app-veil)] py-1.5 pr-1.5 pl-4">
             <span className="min-w-0 flex-1 truncate text-[14px] text-[#0b1024]">{row.name}</span>
             <button
               type="button"
               onClick={() => {
+                setMode("pin");
                 setPerson(row);
                 setPin("");
                 setError(null);
@@ -69,16 +78,32 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
               <KeyRound className="size-4" aria-hidden />
               {t("signWithPin")}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("finger");
+                setPerson(row);
+                setSignature(null);
+                setError(null);
+              }}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3 text-[13px] font-medium text-[#3848c7] transition-colors duration-150 hover:bg-[var(--app-veil-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+              data-ack-finger
+            >
+              <PenLine className="size-4" aria-hidden />
+              {t("signWithFinger")}
+            </button>
           </li>
         ))}
       </ul>
 
       {person ? (
         <Dialog open onOpenChange={(open) => (open ? undefined : setPerson(null))}>
-          <DialogContent className="sm:max-w-[440px]">
+          <DialogContent className={mode === "finger" ? "sm:max-w-[640px]" : "sm:max-w-[440px]"}>
             <DialogHeader className="text-left">
               <DialogTitle className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{person.name}</DialogTitle>
-              <DialogDescription className="text-[13.5px] text-[#6f7282]">{t("pinHint")}</DialogDescription>
+              <DialogDescription className="text-[13.5px] text-[#6f7282]">
+                {mode === "finger" ? t("fingerHint") : t("pinHint")}
+              </DialogDescription>
             </DialogHeader>
             {/* `method="post"`: PIN не должен уйти в адрес, если форму отправят до загрузки скриптов. */}
             <form
@@ -89,6 +114,9 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
                 void sign();
               }}
             >
+              {mode === "finger" ? (
+                <SignaturePad onChange={setSignature} disabled={busy} />
+              ) : (
               <input
                 value={pin}
                 onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -101,6 +129,7 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
                 aria-invalid={error ? true : undefined}
                 className={`${PPK_FIELD_CLASS} text-center text-[20px] tracking-[0.4em]`}
               />
+              )}
               {error ? (
                 <p role="alert" className="text-[13px] text-[#a13a32]">
                   {error}
@@ -110,7 +139,11 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
                 <button type="button" onClick={() => setPerson(null)} className={PPK_BUTTON_OUTLINE_CLASS}>
                   {t("cancel")}
                 </button>
-                <button type="submit" disabled={busy || pin.length < 4} className={PPK_BUTTON_PRIMARY_CLASS}>
+                <button
+                  type="submit"
+                  disabled={busy || (mode === "finger" ? !signature : pin.length < 4)}
+                  className={PPK_BUTTON_PRIMARY_CLASS}
+                >
                   {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
                   {t("agreeButton")}
                 </button>

@@ -16,31 +16,31 @@ import { EMERGENCIES, MEDICAL_PHRASE } from "./program-content";
 import type { DiagramData } from "./records";
 import type { BundleApproval, PpkBundle } from "./assemble.server";
 
-const ROLE_PROGRAM = {
+export const ROLE_PROGRAM = {
   leader: "Руководитель группы ХАССП",
   deputy: "Заместитель руководителя группы ХАССП",
   member: "Член группы ХАССП",
   secretary: "Секретарь группы ХАССП",
 } as const;
-const ROLE_PLAN = {
+export const ROLE_PLAN = {
   leader: "Руководитель",
   deputy: "Заместитель руководителя",
   member: "Член группы",
   secretary: "Секретарь",
 } as const;
 const PEST_KIND_RU = { disinsection: "Дезинсекция", deratization: "Дератизация", disinfection: "Дезинфекция" } as const;
-const LAB_OBJECT_RU = { product: "Продукция", swabs: "Смывы", water: "Вода", air: "Воздух", other: "Другое" } as const;
-const HAZARD_TYPE_RU = { bio: "Биологическая", chem: "Химическая", phys: "Физическая", allergen: "Аллерген" } as const;
-const KIND_RU = { ccp: "ККТ", oprp: "ОПП", prp: "ПРП", none: "—" } as const;
+export const LAB_OBJECT_RU = { product: "Продукция", swabs: "Смывы", water: "Вода", air: "Воздух", other: "Другое" } as const;
+export const HAZARD_TYPE_RU = { bio: "Биологическая", chem: "Химическая", phys: "Физическая", allergen: "Аллерген" } as const;
+export const KIND_RU = { ccp: "ККТ", oprp: "ОПП", prp: "ПРП", none: "—" } as const;
 /** Лист ознакомления: строк не больше этого числа (как на странице). */
 const ACQUAINTANCE_MAX = 30;
 
-const MARGIN = 15;
-type Rgb = [number, number, number];
-const INK: Rgb = [11, 16, 36];
-const MUTED: Rgb = [111, 114, 130];
+export const MARGIN = 15;
+export type Rgb = [number, number, number];
+export const INK: Rgb = [11, 16, 36];
+export const MUTED: Rgb = [111, 114, 130];
 
-function ruDate(value: string | null | undefined): string {
+export function ruDate(value: string | null | undefined): string {
   if (!value) return "—";
   const [year, month, day] = value.split("-");
   return `${day}.${month}.${year}`;
@@ -54,20 +54,20 @@ const NODE_STROKE: Rgb = [85, 102, 246];
  * Контекст построения: документ, шрифт, текущая вертикальная позиция и
  * акцент — фирменный цвет организации или прежние цвета WeSetup.
  */
-type Ctx = { doc: jsPDF; font: string; y: number; headFill: Rgb; accent: Rgb };
+export type Ctx = { doc: jsPDF; font: string; y: number; headFill: Rgb; accent: Rgb };
 
-function pageSize(ctx: Ctx) {
+export function pageSize(ctx: Ctx) {
   return { w: ctx.doc.internal.pageSize.getWidth(), h: ctx.doc.internal.pageSize.getHeight() };
 }
 
-function ensureSpace(ctx: Ctx, height: number) {
+export function ensureSpace(ctx: Ctx, height: number) {
   if (ctx.y + height > pageSize(ctx).h - MARGIN - 6) {
     ctx.doc.addPage();
     ctx.y = MARGIN;
   }
 }
 
-function text(ctx: Ctx, value: string, opts: { size?: number; bold?: boolean; color?: Rgb; gap?: number } = {}) {
+export function text(ctx: Ctx, value: string, opts: { size?: number; bold?: boolean; color?: Rgb; gap?: number } = {}) {
   const { doc } = ctx;
   const size = opts.size ?? 10;
   doc.setFont(ctx.font, opts.bold ? "bold" : "normal");
@@ -83,23 +83,23 @@ function text(ctx: Ctx, value: string, opts: { size?: number; bold?: boolean; co
   ctx.y += opts.gap ?? 1.5;
 }
 
-function section(ctx: Ctx, title: string) {
+export function section(ctx: Ctx, title: string) {
   ensureSpace(ctx, 20);
   ctx.y += 3;
   text(ctx, title, { size: 12, bold: true, gap: 2 });
 }
 
-function empty(ctx: Ctx) {
+export function empty(ctx: Ctx) {
   text(ctx, "Не заполнено", { color: MUTED, gap: 3 });
 }
 
-function table(ctx: Ctx, heads: string[], rows: CellInput[][], small = false) {
+export function table(ctx: Ctx, heads: string[], rows: CellInput[][], small = false) {
   autoTable(ctx.doc, {
     startY: ctx.y,
     head: [heads],
     body: rows,
     theme: "grid",
-    margin: { left: MARGIN, right: MARGIN, bottom: MARGIN + 6 },
+    margin: { top: MARGIN, left: MARGIN, right: MARGIN, bottom: MARGIN + 6 },
     styles: { font: ctx.font, fontSize: small ? 8 : 9, cellPadding: 1.6, textColor: INK, lineColor: [200, 203, 220], lineWidth: 0.2 },
     headStyles: { font: ctx.font, fontStyle: "bold", fillColor: ctx.headFill, textColor: INK },
   });
@@ -107,12 +107,12 @@ function table(ctx: Ctx, heads: string[], rows: CellInput[][], small = false) {
   ctx.y = (last?.finalY ?? ctx.y) + 4;
 }
 
-function list(ctx: Ctx, items: string[], numbered: boolean) {
+export function list(ctx: Ctx, items: string[], numbered: boolean) {
   items.forEach((item, index) => text(ctx, `${numbered ? `${index + 1}.` : "•"} ${item}`, { gap: 0.8 }));
   ctx.y += 1.5;
 }
 
-function start(bundle: PpkBundle, title: string, approval: BundleApproval | null): Ctx {
+export function start(bundle: PpkBundle, title: string, approval: BundleApproval | null): Ctx {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const { org } = bundle;
   // Фирменный цвет организации — подложка шапок таблиц, рамки этапов и
@@ -213,7 +213,7 @@ function hexToRgb(hex: string): Rgb {
 }
 
 /** Блок-схема на отдельной альбомной странице; масштаб по `diagramBounds`. */
-function drawFlowchart(ctx: Ctx, chart: DiagramData) {
+export function drawFlowchart(ctx: Ctx, chart: DiagramData) {
   const { doc } = ctx;
   doc.addPage("a4", "landscape");
   const { w, h } = pageSize(ctx);

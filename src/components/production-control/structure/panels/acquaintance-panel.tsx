@@ -84,7 +84,11 @@ export async function AcquaintancePanel({ scope, session }: PpkPanelProps) {
             {summary.acknowledged.length > 0 ? (
               <PanelTable
                 heads={[t("colName"), t("colMark"), t("colDate")]}
-                rows={summary.acknowledged.map((row) => [row.name, t("agreed"), row.date])}
+                rows={summary.acknowledged.map((row) => [
+                  row.name,
+                  `${t("agreed")} · ${t(`method.${row.method}`)}`,
+                  `${row.date} ${row.time}`,
+                ])}
               />
             ) : null}
             <AckPinSign pending={summary.pending} />

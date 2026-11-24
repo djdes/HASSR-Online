@@ -1113,7 +1113,9 @@
         "placeholder": "Matnni kiriting yoki oʻz hujjatingizdan qoʻying",
         "save": "Saqlash",
         "resetTemplate": "Shablonni qaytarish",
-        "scanOrText": "Matn oʻrniga quyida oʻz hujjatingiz skanini yuklash mumkin — unda dasturga skan kiradi."
+        "scanOrText": "Matn oʻrniga quyida oʻz hujjatingiz skanini yuklash mumkin — unda dasturga skan kiradi.",
+        "revisionTitle": "Hujjat tahriri",
+        "revisionHint": "Tasdiqlangan tahrir dastur raqamini oladi. Bitta so‘z o‘zgarsa ham, dastur yangi raqamli yangi tahrirni tasdiqlashni so‘raydi."
       },
       "order": {
         "ordersTitle": "HACCP guruhini tuzish toʻgʻrisidagi buyruq",
@@ -1234,7 +1236,7 @@
         "colPosition": "Lavozim",
         "colDuty": "Vazifalar",
         "sheetTitle": "Tanishuv varaqasi",
-        "sheetHint": "Xodim «Tanishdim va roziman» belgisini oʻz kabinetida yoki shu qurilmada PIN-kod bilan qoʻyadi.",
+        "sheetHint": "Xodim «Tanishdim va roziman» belgisini oʻz kabinetida, shu qurilmada PIN-kod yoki barmoq bilan imzo orqali qoʻyadi.",
         "needApproval": "Tanishuv varaqasi dastur versiya sifatida tasdiqlanganda yoki oʻz faylingiz yuklanganda ochiladi.",
         "toProgram": "Dastur va versiyalar",
         "colMark": "Belgi",
@@ -1248,7 +1250,14 @@
         "pinHint": "Xodim oʻz PIN-kodini kiritadi — QR-shakllar uchun ishlatiladigan kod. Bu dasturning joriy versiyasi uchun «Tanishdim va roziman» imzosi.",
         "pinLabel": "PIN-kod",
         "cancel": "Bekor qilish",
-        "agreeButton": "Tanishdim va roziman"
+        "agreeButton": "Tanishdim va roziman",
+        "signWithFinger": "Barmoq bilan imzo",
+        "fingerHint": "Quyidagi maydonda barmoq bilan imzo qo‘ying va «Tanishdim va roziman»ni bosing. Imzo bosma tanishuv varag‘iga tushadi.",
+        "method": {
+          "self": "kabinetda",
+          "pin": "PIN-kod",
+          "finger": "barmoq bilan imzo"
+        }
       },
       "equipment": {
         "empty": "Hozircha uskunalar yoʻq",
@@ -1272,7 +1281,8 @@
       "instructions": {
         "empty": "Hozircha ish yoʻriqnomalari yoʻq",
         "emptyHint": "Yoʻriqnomalarni «Ish yoʻriqnomalari»ga yuklang — ular bu yerda paydo boʻladi.",
-        "open": "Ish yoʻriqnomalari"
+        "open": "Ish yoʻriqnomalari",
+        "note": "Ish yo‘riqnomalari — bizning sarlavha va raqamlash bilan matn yoki fayl. Har birining dastur raqamli o‘z tahriri bor."
       }
     },
     "orgCharts": {
@@ -1293,6 +1303,75 @@
       "createFailed": "Sxemani yaratib boʻlmadi",
       "fromPositions": "Lavozimlardan yigʻish",
       "editorHint": "Sxema alohida sahifada chiziladi: bloklar — lavozimlar, strelkalar — boʻysunish. Lavozimlardan yigʻilgan qoralamani tekshiring: tizimda boʻysunish aloqalari yoʻq."
+    },
+    "revisions": {
+      "approved": "{code} tahriri, {date}",
+      "approvedBy": "tasdiqladi: {name}",
+      "none": "Tahrir tasdiqlanmagan",
+      "changed": "{code} tasdiqlangandan keyin o‘zgargan — yangi tahrir tasdiqlanmagan",
+      "approve": "Tahrirni tasdiqlash",
+      "approveNew": "Yangi tahrirni tasdiqlash",
+      "confirmTitle": "Tahrirni tasdiqlash",
+      "confirmBody": "«{title}» hujjatiga {code} raqami beriladi. Keyin bitta so‘z o‘zgarsa ham, yangi raqamli yangi tahrir kerak bo‘ladi.",
+      "changedTitle": "Hujjat o‘zgardi",
+      "changedBody": "«{title}» matni {old} tahriri tasdiqlangandan keyin o‘zgardi. Yangi tahrirni tasdiqlaysizmi? Unga {code} raqami beriladi.",
+      "confirmLabel": "Tasdiqlash — {code}",
+      "later": "Keyinroq",
+      "approvedToast": "{code} tahriri tasdiqlandi",
+      "sameToast": "O‘zgarish yo‘q — {code} tahriri amalda",
+      "failed": "Tahrirni tasdiqlab bo‘lmadi",
+      "emptyHint": "Tahrirni tasdiqlash uchun matnni saqlang yoki skan yuklang",
+      "registerLink": "Tahrirlar reyestri",
+      "registerTitle": "Hujjatlar tahrirlari reyestri",
+      "registerLead": "Har bir tasdiqlangan tahrir navbatdagi raqamni oladi. Bitta so‘z o‘zgarsa ham, hujjat qayta tasdiqlanadi va yangi tahrir yangi raqam oladi; avvalgilari shu yerda qoladi.",
+      "colNumber": "Raqam",
+      "colDocument": "Hujjat",
+      "colDate": "Tasdiqlangan",
+      "colApprover": "Tasdiqlagan",
+      "colState": "Holat",
+      "stateCurrent": "Oxirgi tahrir",
+      "stateSuperseded": "{code} bilan almashtirilgan",
+      "registerEmpty": "Hali tasdiqlangan tahrirlar yo‘q. Dastur hujjatini (band matnlari, tartiblar, yo‘riqnomalar) oching va «Tahrirni tasdiqlash»ni bosing.",
+      "back": "Dasturga qaytish"
+    },
+    "textDocs": {
+      "createInstruction": "Yo‘riqnomani matn bilan yaratish",
+      "createProcedure": "Tartibni matn bilan yaratish",
+      "editTitle": "Hujjatni o‘zgartirish",
+      "hint": "Hujjat dasturda bizning sarlavha va raqamlash bilan chop etiladi. Tasdiqlangan hujjat o‘zgartirilsa, dastur yangi tahrir haqida so‘raydi.",
+      "loading": "Yuklanmoqda…",
+      "loadFailed": "Hujjatlarni yuklab bo‘lmadi",
+      "titleLabel": "Nomi",
+      "textLabel": "Matn",
+      "instructionPlaceholder": "Masalan: Shaxsiy gigiyena",
+      "procedurePlaceholder": "Masalan: Mahsulotni qabul qilish",
+      "cancel": "Bekor qilish",
+      "save": "Saqlash",
+      "saved": "Hujjat saqlandi",
+      "created": "Hujjat yaratildi",
+      "saveFailed": "Hujjatni saqlab bo‘lmadi",
+      "upload": "Faylni yuklash",
+      "uploadFailed": "Faylni yuklab bo‘lmadi",
+      "tooLarge": "«{name}» 25 MB dan katta",
+      "replaced": "«{title}» fayli almashtirildi",
+      "replace": "Faylni almashtirish",
+      "replaceAria": "«{title}» hujjati faylini almashtirish",
+      "edit": "O‘zgartirish",
+      "editAria": "«{title}» hujjatini o‘zgartirish",
+      "delete": "O‘chirish",
+      "deleteAria": "«{title}» hujjatini o‘chirish",
+      "deleteTitle": "Hujjat o‘chirilsinmi?",
+      "deleted": "Hujjat o‘chirildi",
+      "deleteFailed": "Hujjatni o‘chirib bo‘lmadi",
+      "emptyProcedures": "Hali tartiblar yo‘q: matn bilan yarating yoki fayl yuklang",
+      "emptyInstructions": "Hali yo‘riqnomalar yo‘q: matn bilan yarating yoki fayl yuklang",
+      "textDoc": "Matn"
+    },
+    "signature": {
+      "area": "Imzo maydoni",
+      "placeholder": "Bu yerda barmoq bilan imzo qo‘ying",
+      "hint": "Barmoq, stilus yoki sichqoncha bilan",
+      "clear": "Tozalash"
     }
   },
   "inspectionDay": {
@@ -20089,7 +20168,10 @@
     "ppkLead": "Ishlab chiqarish nazorati dasturi, {version}-versiya. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
     "ppkOfficials": "Mansabdor shaxslar",
     "ppkLeadFile": "Ishlab chiqarish nazorati dasturi. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
-    "ppkOpen": "Dasturni ochish"
+    "ppkOpen": "Dasturni ochish",
+    "signatureTitle": "Imzo",
+    "signatureHint": "Barmoq bilan imzo qo‘yishingiz mumkin — imzo dastur bilan tanishuv bosma varag‘iga tushadi. Imzosiz ham belgi hisoblanadi.",
+    "revision": "{code} tahriri, {date}"
   },
   "staffPages": {
     "positions": {
@@ -28350,7 +28432,11 @@
       "loadingPreview": "Oldindan ko‘rish yuklanmoqda…",
       "titleLabel": "Hujjat nomi",
       "fileStays": "Fayl o‘zgarishsiz qoladi.",
-      "deleteTitle": "Hujjat o‘chirilsinmi?"
+      "deleteTitle": "Hujjat o‘chirilsinmi?",
+      "createText": "Matn bilan yaratish",
+      "replaced": "«{name}» fayli almashtirildi",
+      "replace": "Faylni almashtirish",
+      "replaceAria": "«{title}» hujjati faylini almashtirish"
     }
   },
   "layoutUi": {

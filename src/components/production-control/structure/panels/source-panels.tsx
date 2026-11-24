@@ -1,9 +1,10 @@
-import { getLocale, getTranslations } from "next-intl/server";
-import { FileText } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { loadEnabledJournals } from "@/lib/ppk/journals.server";
 import { ppkEquipmentWhere } from "@/lib/ppk/structure-facts.server";
-import { PpkFolder } from "@/components/production-control/ppk-folder";
+import { PpkDocsList, type DocRow } from "@/components/production-control/ppk-docs-list";
+import { hasCapability } from "@/lib/permission-presets";
+import { ppkWhere } from "@/lib/ppk/scope";
 import type { PpkPanelProps } from "../item-panel";
 import { PanelEmpty, PanelNote, PanelTable, SourceLink } from "./panel-ui";
 
@@ -78,53 +79,50 @@ export async function JournalsPanel({ scope }: PpkPanelProps) {
   );
 }
 
-/** Приложение № 5 «Документированные процедуры» — папка процедур (текст с шапкой или скан). */
-export async function ProceduresPanel(_props: PpkPanelProps) {
-  const t = await getTranslations("productionControl.structure.procedures");
+const DOC_SELECT = { id: true, title: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true } as const;
+const docRow = (row: { id: string; title: string; fileName: string; mimeType: string; sizeBytes: number; createdAt: Date }): DocRow => ({
+  ...row,
+  title: row.title || row.fileName,
+  createdAt: row.createdAt.toISOString(),
+});
+
+/** Приложение № 5 «Документированные процедуры» — текстом с нашей шапкой или файлом, у каждого — редакция. */
+export async function ProceduresPanel({ scope }: PpkPanelProps) {
+  const [t, org, docs] = await Promise.all([
+    getTranslations("productionControl.structure.procedures"),
+    db.organization.findUnique({ where: { id: scope.organizationId }, select: { timezone: true } }),
+    db.knowledgeDocument.findMany({ where: { ...ppkWhere(scope), folder: "procedures" }, select: DOC_SELECT, orderBy: { createdAt: "desc" }, take: 500 }),
+  ]);
   return (
     <div className="space-y-4">
       <PanelNote>{t("note")}</PanelNote>
-      <PpkFolder folder="procedures" canManage />
+      {/* Окно пункта открывает тот, кто ведёт ППК, — он же правит процедуры. */}
+      <PpkDocsList source="procedures" timeZone={org?.timezone || "Europe/Moscow"} canManage initial={docs.map(docRow)} />
     </div>
   );
 }
 
-/** Приложение № 6 «Рабочие инструкции» — документы «Рабочих инструкций» (база знаний). */
-export async function InstructionsPanel({ scope }: PpkPanelProps) {
-  const [docs, t, locale] = await Promise.all([
+/** Приложение № 6 «Рабочие инструкции» — документы базы знаний: текстом или файлом, у каждого — редакция. */
+export async function InstructionsPanel({ scope, session }: PpkPanelProps) {
+  const [t, org, docs] = await Promise.all([
+    getTranslations("productionControl.structure.instructions"),
+    db.organization.findUnique({ where: { id: scope.organizationId }, select: { timezone: true } }),
     db.knowledgeDocument.findMany({
       where: { organizationId: scope.organizationId, kind: null, folder: null },
-      select: { id: true, title: true, fileName: true, updatedAt: true },
+      select: DOC_SELECT,
       orderBy: { createdAt: "desc" },
-      take: 300,
+      take: 500,
     }),
-    getTranslations("productionControl.structure.instructions"),
-    getLocale(),
   ]);
-  if (docs.length === 0) {
-    return <PanelEmpty title={t("empty")} hint={t("emptyHint")} action={<SourceLink href="/knowledge">{t("open")}</SourceLink>} />;
-  }
   return (
-    <div className="space-y-3">
-      <ul className="space-y-2">
-        {docs.map((doc, index) => (
-          <li key={doc.id}>
-            <a
-              href={`/api/knowledge-documents/${doc.id}/file`}
-              className="flex items-center gap-3 rounded-2xl bg-[var(--app-veil)] px-4 py-3 transition-colors duration-150 hover:bg-[var(--app-veil-hover)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-            >
-              <span className="w-6 shrink-0 text-right text-[13px] tabular-nums text-[#6f7282]">{index + 1}.</span>
-              <FileText className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-medium text-[#0b1024] [overflow-wrap:anywhere]">{doc.title}</span>
-                <span className="block text-[12.5px] text-[#6f7282] [overflow-wrap:anywhere]">
-                  {doc.fileName} · {doc.updatedAt.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
-                </span>
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-4">
+      <PanelNote>{t("note")}</PanelNote>
+      <PpkDocsList
+        source="knowledge"
+        timeZone={org?.timezone || "Europe/Moscow"}
+        canManage={hasCapability(session.user, "admin.full")}
+        initial={docs.map(docRow)}
+      />
       <SourceLink href="/knowledge">{t("open")}</SourceLink>
     </div>
   );

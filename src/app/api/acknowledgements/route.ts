@@ -4,11 +4,16 @@ import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
 import { ppkScopeForSession } from "@/lib/ppk/scope.server";
+import { parseSignatureDataUrl } from "@/lib/ppk/signature";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ docKey: z.string().min(1).max(100) });
+const bodySchema = z.object({
+  docKey: z.string().min(1).max(100),
+  /** Подпись пальцем (лист ознакомления с Программой, 2026-11-24): PNG data URL, необязательно. */
+  signature: z.string().min(1).max(450_000).optional(),
+});
 
 /**
  * POST — сотрудник отмечает, что ознакомился с текущей версией документа.
@@ -26,11 +31,20 @@ export async function POST(request: Request) {
   const doc = await ackDocForUser(await ppkScopeForSession(auth.session), userId, parsed.data.docKey);
   if (!doc) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
 
+  const signature = parsed.data.signature !== undefined ? parseSignatureDataUrl(parsed.data.signature) : null;
+  if (signature && !signature.ok) return NextResponse.json({ error: signature.error }, { status: 400 });
   const mark = await db.ppkAcknowledgement.upsert({
     where: {
       organizationId_docKey_version_userId: { organizationId, docKey: doc.docKey, version: doc.version, userId },
     },
-    create: { organizationId, docKey: doc.docKey, version: doc.version, userId },
+    create: {
+      organizationId,
+      docKey: doc.docKey,
+      version: doc.version,
+      userId,
+      method: signature?.ok ? "finger" : "self",
+      ...(signature?.ok ? { signature: signature.bytes } : {}),
+    },
     update: {},
     select: { acknowledgedAt: true },
   });
