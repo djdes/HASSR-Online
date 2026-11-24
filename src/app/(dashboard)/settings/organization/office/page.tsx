@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { AlertTriangle, ArrowRight, Building2, MapPin, Plus, Store } from "lucide-react";
+import { AlertTriangle, ArrowRight, Building2, MapPin, Plus, Refrigerator, Store } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
@@ -16,6 +16,7 @@ import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { OpenAtPointButton } from "@/components/settings/open-at-point-button";
 import { OfficeCreateButton } from "@/components/settings/office-create-button";
 import { officeSetupState } from "@/lib/office-setup";
+import { isOfficeLeader } from "@/lib/office-roster";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,13 @@ function initialsOf(name: string): string {
 
 /**
  * «Моя компания → Офис» (2026-10-26): всё, что касается всей компании.
- * Сотрудники офиса (директор, бренд-шеф, территориалы) видят все точки, а
- * журналы и задачи у них только офисные; ниже — точки компании со
- * ссылками на их страницы, где всё конкретное по точке. Дизайн:
- * docs/superpowers/specs/2026-10-26-office-and-points-design.md
+ * С 2026-11-23 (владелец: «офис — не объект»): «Руководство» — люди офиса и
+ * руководство всей компании, «Показать всех сотрудников объектов» — общий
+ * список с местом работы у каждого; журналы ведутся на объектах — отсюда
+ * открываются журналы объекта или «Создать объект»; объекты и оборудование
+ * объектов — со ссылками на полные списки. Дизайн:
+ * docs/superpowers/specs/2026-10-26-office-and-points-design.md,
+ * .agent/tasks/office-objects-favorites-2026-11-23/spec.md
  */
 export default async function OrganizationOfficePage() {
   const session = await requireAuth();
@@ -42,7 +46,7 @@ export default async function OrganizationOfficePage() {
   const organizationId = getActiveOrgId(session);
   const readOnly = session.user.partnerAccess?.level === "view";
 
-  const [t, org, buildings, roster] = await Promise.all([
+  const [t, org, buildings, roster, areas] = await Promise.all([
     getTranslations("settingsManagement.office"),
     db.organization.findUnique({ where: { id: organizationId }, select: { perLocationJournals: true } }),
     listOrganizationBuildings(organizationId),
@@ -50,12 +54,29 @@ export default async function OrganizationOfficePage() {
       // Все люди, включая бракеражную комиссию, — как в «Сотрудниках».
       where: { organizationId, ...ORG_SIGNER_WHERE },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, role: true, positionTitle: true, buildingIds: true, jobPosition: { select: { name: true } } },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        positionTitle: true,
+        buildingIds: true,
+        jobPosition: { select: { name: true, categoryKey: true } },
+      },
+    }),
+    // Оборудование объектов: сколько единиц в цехах каждого объекта.
+    db.area.findMany({
+      where: { organizationId },
+      select: { buildingId: true, _count: { select: { equipment: true } } },
     }),
   ]);
   const office = buildings.find(isOfficeBuilding) ?? null;
   const points = buildings.filter((building) => !isOfficeBuilding(building));
-  const officeStaff = office ? roster.filter((person) => person.buildingIds.includes(office.id)) : [];
+  const knownIds = buildings.map((building) => building.id);
+  // «Руководство»: люди офиса и руководство всей компании (2026-11-23).
+  const officeStaff = roster.filter((person) => isOfficeLeader(person, office?.id ?? null, knownIds));
+  const equipmentAt = (pointId: string | null) =>
+    areas.filter((area) => area.buildingId === pointId).reduce((sum, area) => sum + area._count.equipment, 0);
+  const looseEquipment = equipmentAt(null);
   const unplaced = roster.filter((person) => person.buildingIds.length === 0).length;
   const staffAt = (pointId: string) => roster.filter((person) => person.buildingIds.includes(pointId)).length;
   const setup = officeSetupState({
@@ -134,14 +155,17 @@ export default async function OrganizationOfficePage() {
                       {t("staff.add")}
                     </Link>
                   )}
+                  <Link href="/settings/users?place=all" className={OUTLINE_LINK} data-office-staff-all>
+                    {t("staff.all")}
+                    <ArrowRight className="size-4 text-[#5566f6]" />
+                  </Link>
                 </>
               }
             >
               {officeStaff.length === 0 ? (
                 <PointBlockEmpty title={t("staff.emptyTitle")} body={t("staff.emptyBody")} />
               ) : (
-                <div className="space-y-3">
-                  <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {officeStaff.map((person) => (
                       <li
                         key={person.id}
@@ -159,26 +183,43 @@ export default async function OrganizationOfficePage() {
                         </span>
                       </li>
                     ))}
-                  </ul>
-                  <Link href={`/settings/users?place=${encodeURIComponent(office.id)}`} className={OUTLINE_LINK}>
-                    {t("staff.all")}
-                    <ArrowRight className="size-4 text-[#5566f6]" />
-                  </Link>
-                </div>
+                </ul>
               )}
             </PointBlock>
 
+            {/* Журналы — на объектах (владелец, 2026-11-23: офис не объект):
+                кнопка объекта открывает его «Сегодня» уже с этим объектом. */}
             <PointBlock
               number={2}
               testId="office-journals"
               title={t("journals.title")}
               hint={t("journals.hint")}
-              action={
-                <OpenAtPointButton buildingId={office.id} href="/dashboard" failedText={t("journals.failed")} testId="office-today">
-                  {t("journals.open")}
-                </OpenAtPointButton>
-              }
-            />
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                {points.map((point) => (
+                  <OpenAtPointButton
+                    key={point.id}
+                    buildingId={point.id}
+                    href="/dashboard"
+                    failedText={t("journals.failed")}
+                    testId={`office-journals-${point.id}`}
+                    className="max-w-full"
+                  >
+                    <Store className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+                    <span className="truncate">{point.name}</span>
+                  </OpenAtPointButton>
+                ))}
+                {points.length === 0 ? (
+                  <span className="text-[13.5px] text-[#6f7282]">{t("journals.empty")}</span>
+                ) : null}
+                {readOnly ? null : (
+                  <Link href="/settings/buildings/new" className={OUTLINE_LINK} data-office-create-point>
+                    <Plus className="size-4 text-[#5566f6]" />
+                    {t("journals.create")}
+                  </Link>
+                )}
+              </div>
+            </PointBlock>
 
             <PointBlock
               number={3}
@@ -186,12 +227,18 @@ export default async function OrganizationOfficePage() {
               title={t("points.title")}
               hint={t("points.hint")}
               action={
-                readOnly ? null : (
-                  <Link href="/settings/buildings/new" className={OUTLINE_LINK}>
-                    <Plus className="size-4 text-[#5566f6]" />
-                    {t("points.add")}
+                <>
+                  {readOnly ? null : (
+                    <Link href="/settings/buildings/new" className={OUTLINE_LINK}>
+                      <Plus className="size-4 text-[#5566f6]" />
+                      {t("points.add")}
+                    </Link>
+                  )}
+                  <Link href="/settings/buildings" className={OUTLINE_LINK} data-office-points-all>
+                    {t("points.all")}
+                    <ArrowRight className="size-4 text-[#5566f6]" />
                   </Link>
-                )
+                </>
               }
             >
               <div className="space-y-3">
@@ -230,6 +277,45 @@ export default async function OrganizationOfficePage() {
                   ))}
                 </ul>
               </div>
+            </PointBlock>
+
+            {/* Оборудование объектов (2026-11-23): сколько где, полный список —
+                по объектам, с переносом единицы на другой объект. */}
+            <PointBlock
+              number={4}
+              testId="office-equipment"
+              title={t("equipment.title")}
+              hint={t("equipment.hint")}
+              action={
+                <Link href="/settings/equipment?place=all" className={OUTLINE_LINK} data-office-equipment-all>
+                  {t("equipment.all")}
+                  <ArrowRight className="size-4 text-[#5566f6]" />
+                </Link>
+              }
+            >
+              <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {points.map((point) => (
+                  <li
+                    key={point.id}
+                    data-office-equipment-point={point.id}
+                    className="flex min-w-0 items-center gap-3 rounded-2xl bg-[var(--app-veil)] px-3.5 py-2.5"
+                  >
+                    <Refrigerator className="size-4 shrink-0 text-[#5566f6]" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-[#0b1024]">{point.name}</span>
+                    <span className="shrink-0 text-[12.5px] font-medium tabular-nums text-[#3848c7]">
+                      {t("equipment.count", { count: equipmentAt(point.id) })}
+                    </span>
+                  </li>
+                ))}
+                {looseEquipment > 0 ? (
+                  <li className="flex min-w-0 items-center gap-3 rounded-2xl bg-[var(--app-veil)] px-3.5 py-2.5" data-office-equipment-loose>
+                    <Refrigerator className="size-4 shrink-0 text-[#9b9fb3]" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate text-[14px] text-[#6f7282]">
+                      {t("equipment.loose", { count: String(looseEquipment) })}
+                    </span>
+                  </li>
+                ) : null}
+              </ul>
             </PointBlock>
           </>
         )}

@@ -46,6 +46,7 @@ import {
   JOURNAL_LIST_CARDS_CLASS,
 } from "@/components/journals/journal-responsive";
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
+import { PointRequiredError, readCreatedDocument } from "@/components/journals/use-document-dialog-submit";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { formatJournalDate } from "@/lib/journal-card-date";
 function useAuditReportCopy() {
@@ -164,7 +165,7 @@ function SettingsDialog({
             <Input value={state.auditedObject} aria-label={text("journalAuditReport.subdivisionAuditObject")} onChange={(e) => setState({ ...state, auditedObject: e.target.value })} className="h-10 rounded-xl border-[#dfe1ec] px-3.5 text-[13.5px]" />
           </div>
           <div className="flex justify-end">
-            <Button type="button" disabled={submitting} onClick={async () => { setSubmitting(true); try { await onSubmit(state); onOpenChange(false); } finally { setSubmitting(false); } }} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]">
+            <Button type="button" disabled={submitting} onClick={async () => { setSubmitting(true); try { await onSubmit(state); onOpenChange(false); } catch (error) { toast.error(error instanceof PointRequiredError ? text("journalControls.documentDialog.pointRequired") : humanizeFetchError(error, text("journalControls.documentDialog.createError"))); } finally { setSubmitting(false); } }} className="h-10 rounded-xl bg-[#5566f6] px-3.5 text-[13.5px] text-white hover:bg-[#4b57ff]">
               {submitting ? text("journalAuditReport.saving") : submitLabel}
             </Button>
           </div>
@@ -238,9 +239,9 @@ export function AuditReportDocumentsClient({ activeTab, routeCode, documents }: 
         config,
       }),
     });
-    const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.document?.id) throw new Error(result?.error || text("journalControls.documentDialog.createError"));
-    router.push(`/journals/${routeCode}/documents/${result.document.id}`);
+    // Нет объекта — PointRequiredError («Выберите объект…»), документ за период уже есть — понятный текст.
+    const created = await readCreatedDocument(response, text("journalControls.documentDialog.createError"));
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 

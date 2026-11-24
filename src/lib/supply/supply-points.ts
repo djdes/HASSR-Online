@@ -1,4 +1,4 @@
-import { viewedPointId } from "@/lib/building-scope";
+import { isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 
 /**
  * Поставки по точкам (2026-11-01): накладная, потеря и этикетка знают свою
@@ -127,13 +127,17 @@ export function supplyPointAccessFrom(context: {
   enabled: boolean;
   organizationView: boolean;
   activeBuildingId: string | null;
-  buildings: ReadonlyArray<{ id: string; name: string }>;
+  buildings: ReadonlyArray<{ id: string; name: string; kind?: string | null }>;
 }): SupplyPointAccess {
   if (!context.enabled) {
     return { enabled: false, points: [], viewedPointId: null, canSee: () => true, listWhere: {}, seeWhere: {} };
   }
-  const points = context.buildings.map((building) => ({ id: building.id, name: building.name }));
-  const allowed = new Set(points.map((point) => point.id));
+  // Принимают товар только на объект: офис — не объект (2026-11-23), журнал
+  // приёмки на офис не заводится. Накладные, уже привязанные к офису, видны.
+  const points = context.buildings
+    .filter((building) => !isOfficeBuilding(building))
+    .map((building) => ({ id: building.id, name: building.name }));
+  const allowed = new Set(context.buildings.map((building) => building.id));
   const viewed = viewedPointId(context);
   const seeWhere = { OR: [{ buildingId: { in: [...allowed] } }, { buildingId: null }] };
   return {

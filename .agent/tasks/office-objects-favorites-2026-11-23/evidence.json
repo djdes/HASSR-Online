@@ -1,0 +1,255 @@
+{
+  "task": "office-objects-favorites-2026-11-23",
+  "builderStatus": "ALL_AC_PASS_VERIFIED",
+  "checkedAt": "2026-11-24T14:30:00Z",
+  "branch": "claude/amazing-bohr-s3zvbx",
+  "head": "d81e7a2da",
+  "base": "67401f2d6",
+  "stand": "next dev on localhost:3000, PostgreSQL 16 (stand-seed.ts + stand-reset.ts), Chromium 1440x900, iPhone 13, mini shell (ws-shell=mini), dark theme cookie",
+  "commands": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "exit": 0,
+      "file": "raw/typecheck.txt",
+      "on": "d81e7a2da"
+    },
+    "testGate": {
+      "command": "npm run test:gate",
+      "mode": "full (prisma/schema.prisma changed)",
+      "pass": 7394,
+      "fail": 0,
+      "exit": 0,
+      "file": "raw/test-gate.txt",
+      "on": "d81e7a2da"
+    },
+    "i18nCheck": {
+      "command": "npm run i18n:check",
+      "pass": 103,
+      "fail": 0,
+      "exit": 0,
+      "file": "raw/i18n-check.txt",
+      "on": "568c80207"
+    },
+    "eslint": {
+      "command": "npx eslint <74 changed code files>",
+      "errors": 1,
+      "warnings": 9,
+      "newVersusMaster": 0,
+      "note": "no new findings vs origin/master; f778c8aa4 re-lint of 8 files: 10 vs 12 on master, 2 old warnings gone",
+      "files": [
+        "raw/eslint.txt",
+        "raw/eslint-baseline.txt"
+      ]
+    },
+    "officeJournalsMigration": {
+      "command": "npx tsx prisma/seed-office-journals-to-points-2026-11.ts [--dry-run]",
+      "dryRun": "would move 1, kept as duplicates 1",
+      "apply": "moved 1, kept as duplicates 1, audit journals.office_to_point with ids",
+      "secondRun": "already done (once key)",
+      "file": "raw/office-journals-migration.txt"
+    },
+    "ui": {
+      "command": "npx tsx raw/stand-reset.ts && node raw/ui-check-final.cjs",
+      "stepErrors": 0,
+      "file": "raw/ui-check-final.json"
+    },
+    "qrRolloverRepro": {
+      "command": "npx tsx <verifier scratch>/repro-office-rollover.ts (temp org, deleted)",
+      "before": "office documents created 16-30.11 and 1-15.12",
+      "after": "no office documents (created: [])"
+    },
+    "ciSmokeHydration": {
+      "what": "React hydration useId mismatch in CI browser smoke",
+      "masterThrottled6x": "4 of 48 checks failed, same ids",
+      "branchThrottled6x": "5 of 48 checks failed, same ids",
+      "file": "raw/ci-smoke-hydration/summary.json"
+    },
+    "uiPointWindows": {
+      "command": "node raw/ui-check-point-windows.cjs",
+      "file": "raw/ui-check-point-windows.json",
+      "result": "audit_report toast «Выберите объект…» (was silent); cleaning and traceability show it in the dialog; scan-journal templates absent on the local stand"
+    },
+    "officePathsRepro": {
+      "command": "npx tsx <verifier2>/repro-ac5.ts + ensureActiveDocument probe (temp orgs, deleted)",
+      "result": "QR rollover 0 office docs; external API -> first object; EDO office not offered, office acceptance point_forbidden; ensureActiveDocument(office) -> first object"
+    },
+    "uiThirdFixes": {
+      "command": "npx tsx raw/stand-calibration-doc.ts create && node raw/ui-check-third-fixes.cjs && npx tsx raw/stand-calibration-doc.ts delete",
+      "file": "raw/ui-check-third-fixes.json",
+      "result": "cleaning_ventilation_checklist window: «Создание документа» / «Создать», no raw cleaningGrid keys; equipment_calibration «Сделать копию» at «Выберите объект»: toast «Выберите объект: документ журнала создаётся для объекта» (was «Проверьте введённые данные»), no copy created; temp document deleted"
+    },
+    "firstObjectOrder": {
+      "command": "npx tsx raw/repro-first-object-order.ts (temp org office + «Cafe Mira» + «Кафе», sortOrder 0, deleted)",
+      "file": "raw/repro-first-object-order.json",
+      "result": "objects list order, transfer target, documentBuildingFor and ensureActiveDocument(office) all give «Cafe Mira»"
+    }
+  },
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC1_office_trigger, AC1_menu, phone_bar, phone_sheet",
+        "src/lib/header-point.test.ts"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC2_manual_switch (object page in 910 ms, toasts 0), mini_switch",
+        "src/components/layout/silent-point-switch.test.ts"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC3_company_section, AC3_object_section_restore, AC8_users_page",
+        "src/lib/point-section-sync.test.ts"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "fixedIn": [
+        "f778c8aa4",
+        "fcff0fc7a",
+        "37016fed3"
+      ],
+      "evidence": [
+        "ui-check-final.json: AC4_*",
+        "raw/ui-check-point-windows.json",
+        "src/components/journals/read-created-document.test.ts",
+        "raw/ui-check-third-fixes.json (calibration copy toast)",
+        "src/components/journals/equipment-calibration-localization.test.ts"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "ownerDecision": "2026-11-24: transfer on deploy, duplicates stay on the office",
+      "fixedIn": [
+        "f778c8aa4",
+        "2cc6b7b0b",
+        "fcff0fc7a",
+        "37016fed3"
+      ],
+      "evidence": [
+        "src/lib/office-journals.test.ts (documentBuildingFor, auto-create guard, deploy wiring after post-deploy-check)",
+        "src/lib/journal-qr-rollover.test.ts",
+        "src/lib/supply/supply-points.test.ts",
+        "raw/office-journals-migration.txt",
+        "raw/repro-first-object-order.json (first object in DB order, same as the transfer)"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC6_pin_in_header, phone_pin",
+        "src/components/layout/pinned-buildings.test.ts",
+        "src/lib/pinned-buildings.test.ts"
+      ]
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC7_office_blocks",
+        "src/lib/office-roster.test.ts"
+      ]
+    },
+    "AC8": {
+      "status": "PASS",
+      "fixedIn": "f778c8aa4",
+      "evidence": [
+        "ui-check-final.json: AC8_place_pills (Все объекты), AC8_pill_opens_edit",
+        "src/components/staff/staff-place-pill.test.ts"
+      ]
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC9_top_menu",
+        "src/components/layout/section-top-menu.test.ts"
+      ]
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC10_star, AC10_context_menu, AC10_home, phone_sheet.visibleStars",
+        "src/lib/home-page.test.ts",
+        "src/components/favorites/favorite-star.test.ts"
+      ]
+    },
+    "AC11": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC11_qr_api, AC11_qr_missing, AC11_after_save",
+        "src/lib/qr-fill-missing.test.ts"
+      ]
+    },
+    "AC12": {
+      "status": "PASS",
+      "evidence": [
+        "ui-check-final.json: AC12_areas_guide"
+      ]
+    },
+    "AC13": {
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.txt",
+        "raw/test-gate.txt",
+        "raw/i18n-check.txt",
+        "raw/eslint.txt",
+        "ui-check-final.json: dark_theme",
+        "src/i18n/journal-namespace-localization.test.ts (cleaningGrid for cleaning_ventilation_checklist, master bug)"
+      ]
+    }
+  },
+  "review": {
+    "reviewer": "fresh read-only code reviewer, range 84711ac24..8e29325f2",
+    "verdict": "ready with fixes",
+    "fixedIn": "1225d2a9b",
+    "deferredMinor": [
+      "single-object manager sees «Выберите объект» on the objects list",
+      "favorites cap counts pages that left the menu",
+      "fast second pin can be lost",
+      "complaint dialog shows a generic error on point_required",
+      "copy document at «Выберите объект» does not create a copy — the object must be chosen; every copy action now says «Выберите объект…»",
+      "QR hint for a manager of another object",
+      "«Без объекта» vs «Все объекты» wording in the edit dialog",
+      "context menu opens on long press on phones",
+      "journal page flashes before the object is auto-selected"
+    ]
+  },
+  "deployNotes": [
+    "new column User.pinnedBuildingIds String[] default [] (additive, scripts/apply-safe-schema.cjs)",
+    "office journals transfer runs once on this deploy after post-deploy-check: dry-run totals, then the move; duplicates and journals disabled on the object stay on the office; ids in AuditLog journals.office_to_point",
+    "master-side fixes ported in the merges: StatusBadgeMeta type alias (seo), theme token for link colour in two seo-links components, inputMode on the Avito number field; cleaningGrid messages for the cleaning/ventilation checklist window"
+  ],
+  "verifier": {
+    "rounds": [
+      {
+        "on": "c88a30e8f",
+        "verdict": "FAIL (AC4, AC5, AC8)",
+        "fixedIn": "f778c8aa4"
+      },
+      {
+        "on": "2cc6b7b0b",
+        "verdict": "FAIL (AC4, AC5)",
+        "fixedIn": "fcff0fc7a"
+      },
+      {
+        "on": "e53f912d2 (head 45023ff6e)",
+        "verdict": "PASS",
+        "notes": "3 non-blocking notes fixed in 37016fed3: first object in DB order, calibration copy toast, cleaningGrid namespace for the checklist window"
+      },
+      {
+        "on": "d81e7a2da (code 568c80207 + #326 files)",
+        "scope": "delta 45023ff6e..d81e7a2da (37016fed3, merges #325 and #326)",
+        "verdict": "PASS",
+        "openProblems": 0
+      }
+    ],
+    "files": [
+      "verdict.json",
+      "problems.md"
+    ]
+  }
+}

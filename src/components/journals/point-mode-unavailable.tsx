@@ -6,7 +6,6 @@ import { ArrowLeft, Building2, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { ORGANIZATION_VIEW_ID } from "@/lib/building-scope";
 import { useContentTransition } from "@/components/layout/content-transition";
-import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /**
  * Страница всей организации («Журналы точек», «Все журналы»), а в шапке
@@ -15,17 +14,15 @@ import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components
  * после неё страница откроется на месте.
  */
 export function PointModeUnavailable({
-  pointId,
   pointName,
   canViewOrganization,
 }: {
-  /** Выбранный объект — «Вернуться на «…»» в тосте смены. */
+  /** Выбранный объект; смена теперь без тоста, id не нужен (оставлен для вызовов). */
   pointId: string | null;
   pointName: string;
   canViewOrganization: boolean;
 }) {
   const t = useTranslations("navigation.shell.pointMode");
-  const tPoint = useTranslations("navigation.shell.point");
   const router = useRouter();
   // Тот же переход, что у переключателя в шапке: пока страница всей
   // организации собирается, вместо панели — скелет (2026-10-29).
@@ -53,26 +50,10 @@ export function PointModeUnavailable({
     }
   }
 
-  /** Единый тост смены: «Общий раздел — выбрано …» и «Вернуться на «точку»». */
+  /** Уровень организации — «Выберите объект», без оповещений (2026-11-23). */
   function chooseOrganization() {
     if (busy) return;
-    const organizationName = tPoint("organization");
-    const organization: SwitchSide = {
-      tag: ORGANIZATION_VIEW_ID,
-      go: () => postBuilding(ORGANIZATION_VIEW_ID),
-      message: tPoint("companySection", { name: organizationName }),
-      returnLabel: tPoint("returnTo", { name: shortSwitchName(organizationName) }),
-    };
-    const point: SwitchSide | null =
-      pointId && pointName
-        ? {
-            tag: pointId,
-            go: () => postBuilding(pointId),
-            message: tPoint("switched", { name: pointName }),
-            returnLabel: tPoint("returnTo", { name: shortSwitchName(pointName) }),
-          }
-        : null;
-    switchWithReturn(refreshAfter, organization, point);
+    refreshAfter(ORGANIZATION_VIEW_ID, () => postBuilding(ORGANIZATION_VIEW_ID));
   }
 
   return (

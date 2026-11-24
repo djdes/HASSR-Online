@@ -2,7 +2,7 @@ import { getJournalControls } from "@/lib/journal-controls.server";
 import { automationOn } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { buildingTargets } from "@/lib/active-building";
+import { documentBuildingTargets } from "@/lib/active-building";
 import { checkCronSecret } from "@/lib/cron-auth";
 import {
   closeExpiredDocuments,
@@ -76,9 +76,9 @@ async function handle(request: Request) {
     // Закрытая после своих 14 дней организация — задач и напоминаний не получает (org-trial.server.ts).
     if (locked.has(org.id)) continue;
     if (!automationOn(await getJournalControls(org.id), "autoCreate")) continue;
-    // Точки: документы создаются на каждую точку организации (или один
-    // общий, если точки не включены).
-    const targets = await buildingTargets(org.id);
+    // Объекты: документы создаются на каждый объект организации (офис — не
+    // объект, 2026-11-23) или один общий, если объекты не включены.
+    const targets = await documentBuildingTargets(org.id);
     // Отключённый журнал не должен возвращаться сам: его страница отвечает
     // «Этот журнал отключён», а ночной крон всё равно заводил документ.
     const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);

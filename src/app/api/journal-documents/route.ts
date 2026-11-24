@@ -7,10 +7,11 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
 import { getViewedPointId, loadBuildingContext } from "@/lib/active-building";
-import { buildingWhere, isOfficeBuilding } from "@/lib/building-scope";
+import { buildingWhere } from "@/lib/building-scope";
 import { documentRowsPointId, pointRowsWhere } from "@/lib/document-point-rows";
 import { worksAtBuilding } from "@/lib/building-settings";
 import { buildingTargets } from "@/lib/building-targets";
+import { POINT_REQUIRED_CODE, documentPointProblem } from "@/lib/office-journals";
 import { isOtherPointStaff, trimPointDocumentConfig } from "@/lib/point-document-rows-sync";
 import { findOverlappingDocument } from "@/lib/journal-document-overlap";
 import { db } from "@/lib/db";
@@ -261,22 +262,19 @@ export async function POST(request: Request) {
   // Точки: новый документ принадлежит активной точке, его строки — из её
   // справочников (2026-10-29: «в журналы конкретной точки выводятся все
   // помещения / сотрудники / оборудование организации»).
-  // Точку можно передать явно (`buildingId`) — только из доступных человеку.
-  // В режиме «Вся организация» без офиса документ молча уходил на первую
-  // точку (2026-11-01) — теперь просим выбрать точку в шапке.
+  // Объект можно передать явно (`buildingId`) — только из доступных человеку.
+  // Офис — не объект (владелец, 2026-11-23): при «Выберите объект» (офис или
+  // вся организация) документ без явного объекта не создаётся — окно
+  // создания просит выбрать объект; явный офис — тоже нет.
   const buildingContext = await loadBuildingContext(session);
   const requestedBuildingId = typeof body.buildingId === "string" && body.buildingId ? body.buildingId : null;
-  if (requestedBuildingId && buildingContext.enabled && !buildingContext.buildings.some((building) => building.id === requestedBuildingId)) {
-    return NextResponse.json({ error: "Точка не найдена" }, { status: 404 });
+  const pointProblem = documentPointProblem(buildingContext, requestedBuildingId);
+  if (pointProblem === "not_found") {
+    return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
   }
-  if (
-    !requestedBuildingId &&
-    buildingContext.enabled &&
-    buildingContext.organizationView &&
-    !isOfficeBuilding(buildingContext.activeBuilding)
-  ) {
+  if (pointProblem === POINT_REQUIRED_CODE) {
     return NextResponse.json(
-      { error: "Выберите точку в шапке: документ журнала создаётся для одной точки." },
+      { error: "Выберите объект: документ журнала создаётся для объекта.", code: POINT_REQUIRED_CODE },
       { status: 400 }
     );
   }

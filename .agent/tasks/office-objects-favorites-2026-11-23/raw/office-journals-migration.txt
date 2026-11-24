@@ -1,0 +1,18 @@
+## before
+Гигиена (создан в офисе)|2026-11-01|Цех пищевых продуктов
+Гигиена — копия автоматики на офисе|2026-11-01|Офис
+Журнал холодильников (создан в офисе)|2026-11-01|Цех пищевых продуктов
+Холодильники на декабрь (создан в офисе)|2026-12-01|Офис
+## dry-run (deploy)
+[office-journals:dry-run] organizations with office journals 1 (without sites 0); documents would move 1, kept as duplicates 1, kept as disabled 0; paper would move 0, kept as duplicates 0, kept as disabled 0
+## apply (legacy-gated run)
+[office-journals] organizations with office journals 1 (without sites 0); documents moved 1, kept as duplicates 1, kept as disabled 0; paper moved 0, kept as duplicates 0, kept as disabled 0
+## second run
+[office-journals] once:office-journals-to-points:v1: already done
+## after
+Гигиена (создан в офисе)|2026-11-01|Цех пищевых продуктов
+Гигиена — копия автоматики на офисе|2026-11-01|Офис
+Журнал холодильников (создан в офисе)|2026-11-01|Цех пищевых продуктов
+Холодильники на декабрь (создан в офисе)|2026-12-01|Цех пищевых продуктов
+## audit (latest)
+{"officeId": "cmwtln1r000011a7dt372otba", "targetId": "cmwtln1r400021a7d7na25zoj", "keptAsOverlap": {"paper": [], "documents": ["stand-dup-hygiene"]}, "keptAsDisabled": {"paper": [], "documents": []}, "movedDocumentIds": ["stand-december-cold"], "movedPaperDocumentIds": []}

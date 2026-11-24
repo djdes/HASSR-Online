@@ -5,6 +5,7 @@ import { EQUIPMENT_CALIBRATION_DOCUMENT_TITLE, formatCalibrationDate, formatCali
 import { USER_ROLE_LABELS, type UserRole } from "@/lib/user-roles";
 import type { PersonDisplayUser } from "@/lib/approver-display";
 import { isFetchNetworkError } from "@/lib/humanize-fetch-error";
+import { POINT_REQUIRED_CODE } from "@/lib/office-journals";
 
 export function calibrationDate(value: string, locale: Locale, long = false) {
   if (!value) return "";
@@ -25,7 +26,7 @@ export function calibrationDocumentTitle(title: string, year: number, locale: Lo
   return presentDocumentTitle({ title, templateCode: "equipment_calibration", sourceNames: [EQUIPMENT_CALIBRATION_DOCUMENT_TITLE], localizedName, dateFrom: `${year}-01-01`, dateTo: `${year}-12-31`, locale, formatTitle });
 }
 
-export type CalibrationErrorKey = "save" | "delete" | "status" | "copy" | "saveJournal" | "saveSettings" | "network" | "forbidden" | "unauthorized" | "notFound" | "closed" | "invalid";
+export type CalibrationErrorKey = "save" | "delete" | "status" | "copy" | "saveJournal" | "saveSettings" | "network" | "forbidden" | "unauthorized" | "notFound" | "closed" | "invalid" | "pointRequired";
 
 class CalibrationRequestError extends Error {
   constructor(readonly key: CalibrationErrorKey) { super(key); }
@@ -46,6 +47,8 @@ export function calibrationErrorKey(error: unknown, fallback: CalibrationErrorKe
   if (status === 403 || /^(FORBIDDEN|Forbidden|Нет доступа|Нет доступа к журналу|Недостаточно прав)$/.test(message)) return "forbidden";
   if (status === 404 || /^(DOCUMENT_NOT_FOUND|Документ не найден)$/.test(message)) return "notFound";
   if (/^(DOCUMENT_CLOSED|Документ закрыт)/.test(message)) return "closed";
+  // Копия на «Выберите объект»: офис — не объект, документ создаётся для объекта (2026-11-23).
+  if (message === POINT_REQUIRED_CODE) return "pointRequired";
   if (status === 400 || /^(VALIDATION_ERROR|Некорректные данные)/.test(message)) return "invalid";
   return fallback;
 }

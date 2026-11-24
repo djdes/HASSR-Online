@@ -7,6 +7,7 @@ import { isImpersonating, requireAuth, getActiveOrgId, signInHrefFor } from "@/l
 import { KioskSessionGuard } from "@/components/layout/kiosk-session-guard";
 import { listOrganizationBuildings, loadBuildingContext } from "@/lib/active-building";
 import { resolveHeaderPoint } from "@/lib/header-point";
+import { sortPinnedFirst } from "@/lib/pinned-buildings";
 import { ORGANIZATION_VIEW_ID, isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { syncOrganizationPointDocumentsSoon } from "@/lib/point-document-rows-sync";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
@@ -84,6 +85,7 @@ import { PointSectionSync } from "@/components/layout/point-section-sync";
 import { SectionTopMenu } from "@/components/layout/section-top-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppNavProvider } from "@/components/layout/app-nav-context";
+import { FavoritesProvider } from "@/components/favorites/favorites-context";
 import { buildNavModel, loadNavFacts } from "@/lib/app-nav.server";
 import { JournalUndoProvider } from "@/components/journals/journal-undo-slot";
 import { PartnerAccessBanner } from "@/components/dashboard/partner-access-banner";
@@ -195,6 +197,9 @@ export default async function DashboardLayout({
         // тоже входит в панель: «Переводы» — её вкладка.
         platformSections: true,
         canEditTranslations: true,
+        // Скрепка у объектов (2026-11-23) и звёздочки «Избранного» в меню.
+        pinnedBuildingIds: true,
+        homeFavorites: true,
       },
     }),
     // H1 — white-label: читаем brandColor для override основного
@@ -277,39 +282,39 @@ export default async function DashboardLayout({
   // контекст точек пуст — тогда смотрим все точки организации.
   const companyName =
     orgDisplayName(impersonatedOrg?.name ?? session.user.organizationName ?? "", "") || "WeSetup";
+  // Закреплённые скрепкой объекты — первыми (личное, 2026-11-23).
+  const pinnedBuildingIds = profile?.pinnedBuildingIds ?? [];
+  const pinnedFirstBuildings = sortPinnedFirst(buildingContext.buildings, pinnedBuildingIds);
   const headerPoint = resolveHeaderPoint({
     companyName,
     organizationBuildings: buildingContext.enabled
-      ? buildingContext.buildings
-      : await listOrganizationBuildings(activeOrgId).catch(() => []),
-    context: buildingContext,
+      ? pinnedFirstBuildings
+      : sortPinnedFirst(await listOrganizationBuildings(activeOrgId).catch(() => []), pinnedBuildingIds),
+    context: { ...buildingContext, buildings: pinnedFirstBuildings },
     canManage: hasFullWorkspaceAccess(session.user),
   });
-  // «Вся организация» (без офиса) — первым пунктом и в листе меню на телефоне.
-  const tPoint = await getTranslations("navigation.shell.point");
-  const switcherBuildings =
-    headerPoint.kind === "switch" && headerPoint.options[0]?.id === ORGANIZATION_VIEW_ID
-      ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...buildingContext.buildings]
-      : buildingContext.buildings;
+  // Объекты переключателя — без офиса: офис не объект (владелец, 2026-11-23).
+  const switcherBuildings = pinnedFirstBuildings.filter((building) => !isOfficeBuilding(building));
 
   // Область данных (2026-11-12): другая организация — оболочка собирается
   // заново, другая точка — заново только страница (`lib/cabinet-scope.ts`).
   const scope = cabinetScopeKeys({ userId: session.user.id, organizationId: activeOrgId, points: buildingContext });
 
-  // Точка в шапке и раздел согласованы (`PointSectionSync`, 2026-11-10):
-  // куда переключать в разделах всей компании и какие точки можно выбрать.
+  // Объект в шапке и раздел согласованы (`PointSectionSync`, 2026-11-10):
+  // куда переключать в разделах всей компании («Выберите объект»: офис, а без
+  // офиса — «вся организация») и какие объекты можно выбрать.
+  const officeBuilding = buildingContext.buildings.find((building) => isOfficeBuilding(building)) ?? null;
   const pointSync =
     headerPoint.kind === "switch"
       ? {
           viewedPointId: viewedPointId(buildingContext),
           canViewOrganization: buildingContext.canViewOrganization,
-          organizationTarget: (() => {
-            const office = switcherBuildings.find((building) => isOfficeBuilding(building));
-            return office && buildingContext.canViewOrganization ? { id: office.id, name: office.name } : null;
-          })(),
-          points: switcherBuildings
-            .filter((building) => !isOfficeBuilding(building))
-            .map((building) => ({ id: building.id, name: building.name })),
+          organizationTarget: buildingContext.canViewOrganization
+            ? officeBuilding
+              ? { id: officeBuilding.id, name: officeBuilding.name }
+              : { id: ORGANIZATION_VIEW_ID, name: "" }
+            : null,
+          points: switcherBuildings.map((building) => ({ id: building.id, name: building.name })),
         }
       : null;
 
@@ -531,6 +536,8 @@ export default async function DashboardLayout({
               нижний угол страницы. */}
           <FabDockProvider withTabBar>
           <AppNavProvider model={navModel}>
+          {/* «Избранное» главной — звёздочки и правая кнопка в меню (2026-11-23). */}
+          <FavoritesProvider enabled={canSeeHomePage(session.user)} initial={profile?.homeFavorites ?? []}>
           {/* Сайдбар слева во всю высоту, справа — колонка: баннеры, шапка,
               страница, футер. Сайдбар — только когда разделов два и больше. */}
           <div className="flex min-h-screen flex-1 print:block">
@@ -616,6 +623,7 @@ export default async function DashboardLayout({
               buildings: buildingContext.canSwitch ? switcherBuildings : [],
               activeBuildingId: headerPoint.kind === "switch" ? headerPoint.activeId : buildingContext.activeBuildingId,
               manageHref: hasFullWorkspaceAccess(session.user) ? "/settings/buildings" : null,
+              pinnedIds: pinnedBuildingIds,
             }}
             canCreateOrganization={Boolean(ownedAccount)}
             organizationSphere={brandedOrg?.type ?? "restaurant"}
@@ -825,6 +833,7 @@ export default async function DashboardLayout({
           <CommandPalette />
           {/* P2.A.1 — Ctrl+Shift+N → срочный журнал → /journals/[code]/new */}
           <UrgentJournalHotkey />
+          </FavoritesProvider>
           </AppNavProvider>
           </FabDockProvider>
           </ScopeBoundary>
@@ -949,6 +958,11 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     return null;
   });
 
+  // «Избранное» главной: список из аккаунта для общего провайдера.
+  const favoritesRow = await db.user
+    .findUnique({ where: { id: session.user.id }, select: { homeFavorites: true } })
+    .catch(() => null);
+
   return (
     // Сообщения пространства miniHome нужны навигации мини-приложения
     // (mini-nav); без них next-intl пишет MISSING_MESSAGE в консоль.
@@ -975,6 +989,8 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       <SiteThemeProvider initialTheme={shell.initialTheme} controlled>
         <MiniAppShell {...shell}>
             <AppNavProvider model={navModel}>
+            {/* «Избранное» главной — тот же общий список, что на сайте (2026-11-24). */}
+            <FavoritesProvider enabled={canSeeHomePage(session.user)} initial={favoritesRow?.homeFavorites ?? []}>
             <ContentTransitionProvider>
             {/* Другая организация (выход из демо) — всё ниже заново, как на
                 сайте; переход и тост — выше границы. */}
@@ -1049,6 +1065,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
             </PageNavProvider>
             </ScopeBoundary>
             </ContentTransitionProvider>
+            </FavoritesProvider>
             </AppNavProvider>
         </MiniAppShell>
       </SiteThemeProvider>

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { comparableName, headerPointHidden, miniLocationLabel, resolveHeaderPoint, sameAsCompany, type HeaderPoint } from "./header-point";
+import { comparableName, headerPointChoosing, headerPointHidden, miniLocationLabel, resolveHeaderPoint, sameAsCompany, type HeaderPoint } from "./header-point";
 
 const COMPANY = "Столовая «Берёзка»";
 const OFF = { enabled: false, buildings: [], activeBuildingId: null, canSwitch: false };
@@ -133,7 +133,7 @@ test("подпись в центре шапки никогда не равна �
   }
 });
 
-test("переключатель точки скрыт на страницах про всю компанию", () => {
+test("подпись «все объекты» скрыта на страницах про всю компанию и на главной", () => {
   for (const path of [
     "/home",
     "/settings/organization",
@@ -146,24 +146,33 @@ test("переключатель точки скрыт на страницах �
     "/settings/buildings",
     "/settings/buildings/",
   ]) {
-    assert.ok(headerPointHidden(path), path);
+    assert.ok(headerPointHidden(path, "all"), path);
   }
+});
+
+test("один объект и «нет объектов» видны везде, кроме главной: в разделах компании — «Выберите объект»", () => {
+  for (const path of ["/settings/organization", "/settings/organization/office", "/settings/subscription", "/settings/buildings", "/dashboard"]) {
+    assert.ok(!headerPointHidden(path, "single"), path);
+    assert.ok(!headerPointHidden(path, "add"), path);
+  }
+  assert.ok(headerPointHidden("/home", "single"));
+  assert.ok(headerPointHidden("/home", "add"));
 });
 
 test("на страницах точки переключатель остаётся", () => {
   for (const path of ["/journals", "/journals/hygiene", "/dashboard", "/settings/qr-posters", "/settings/buildings/b1", "/monitoring"]) {
-    assert.ok(!headerPointHidden(path), path);
+    assert.ok(!headerPointHidden(path, "all"), path);
   }
 });
 
 test("на вкладках с фильтром по местам точка в шапке видна — фильтр с ней согласован", () => {
   for (const path of ["/settings/users", "/settings/areas", "/settings/equipment/", "/journals/points"]) {
-    assert.ok(!headerPointHidden(path), path);
+    assert.ok(!headerPointHidden(path, "all"), path);
     assert.ok(!headerPointHidden(path, "switch"), path);
   }
 });
 
-test("«Вся организация»: первым пунктом у руководства без офиса, офис сам её заменяет", () => {
+test("уровень организации — «Выберите объект»: ни офиса, ни «Вся организация» в списке", () => {
   const buildings = [
     { id: "b1", name: "Кафе", address: null },
     { id: "b2", name: "Цех", address: null },
@@ -174,42 +183,94 @@ test("«Вся организация»: первым пунктом у руко
   });
   assert.equal(organization.kind, "switch");
   if (organization.kind !== "switch") return;
-  assert.equal(organization.options[0].id, "organization");
-  assert.deepEqual(organization.options[0].title, { source: "organization", text: null });
-  assert.equal(organization.activeId, "organization");
-  // Выбрана точка — активна она, пункт «Вся организация» остаётся в списке.
+  assert.deepEqual(organization.options.map((option) => option.id), ["b1", "b2"]);
+  assert.equal(organization.activeId, null);
+  assert.equal(organization.organizationLevel, true);
+  // Выбран объект — активен он.
   const point = resolve({
     organizationBuildings: buildings,
     context: { enabled: true, buildings, activeBuildingId: "b2", canSwitch: true, organizationView: false, canViewOrganization: true },
   });
   assert.equal(point.kind === "switch" && point.activeId, "b2");
-  // Есть офис — отдельного пункта нет.
+  // Офис — не объект: в списке его нет, выбран офис — «Выберите объект».
   const withOffice = [{ id: "o", name: "Офис", address: null, kind: "office" }, ...buildings];
   const office = resolve({
     organizationBuildings: withOffice,
     context: { enabled: true, buildings: withOffice, activeBuildingId: "o", canSwitch: true, organizationView: true, canViewOrganization: true },
   });
-  assert.equal(office.kind === "switch" && office.options.some((option) => option.id === "organization"), false);
-  // Не руководство — пункта нет.
+  assert.equal(office.kind, "switch");
+  if (office.kind !== "switch") return;
+  assert.deepEqual(office.options.map((option) => option.id), ["b1", "b2"]);
+  assert.equal(office.activeId, null);
+  // Офис и один объект — переключатель с одним объектом.
+  const officeAndOne = [{ id: "o", name: "Офис", address: null, kind: "office" }, buildings[0]];
+  const one = resolve({
+    organizationBuildings: officeAndOne,
+    context: { enabled: true, buildings: officeAndOne, activeBuildingId: "o", canSwitch: true, organizationView: true, canViewOrganization: true },
+  });
+  assert.equal(one.kind === "switch" && one.options.length, 1);
+  // Не руководство — объекты свои, уровня организации нет.
   const staff = resolve({
     organizationBuildings: buildings,
     context: { enabled: true, buildings, activeBuildingId: "b1", canSwitch: true, organizationView: false, canViewOrganization: false },
   });
   assert.equal(staff.kind === "switch" && staff.options.length, 2);
+  assert.equal(staff.kind === "switch" && staff.organizationLevel, false);
+  assert.equal(staff.kind === "switch" && staff.activeId, "b1");
 });
 
-test("Mini App: в верхней панели «Вся организация», а не первая точка списка", () => {
+test("без журналов по объектам офис тоже не объект", () => {
+  const office = { id: "o", name: "Офис", address: null, kind: "office" };
+  assert.deepEqual(resolve({ organizationBuildings: [office] }), { kind: "add" });
+  assert.deepEqual(resolve({ organizationBuildings: [office], canManage: false }), { kind: "none" });
+  const single = resolve({ organizationBuildings: [office, { id: "b1", name: "Кафе", address: null }] });
+  assert.deepEqual(single, { kind: "single", point: { id: "b1", title: { source: "name", text: "Кафе" }, address: null } });
+  const all = resolve({
+    organizationBuildings: [office, { id: "b1", name: "Кафе", address: null }, { id: "b2", name: "Цех", address: null }],
+  });
+  assert.equal(all.kind === "all" && all.count, 2);
+});
+
+test("«Выберите объект»: нет объектов, уровень организации, один объект в разделах компании", () => {
+  const add: HeaderPoint = { kind: "add" };
+  const single: HeaderPoint = { kind: "single", point: { id: "b1", title: { source: "name", text: "Кафе" }, address: null } };
+  const options = [
+    { id: "b1", title: { source: "name" as const, text: "Кафе" }, address: null },
+    { id: "b2", title: { source: "name" as const, text: "Цех" }, address: null },
+  ];
+  const organization: HeaderPoint = { kind: "switch", activeId: null, options, organizationLevel: true };
+  const point: HeaderPoint = { kind: "switch", activeId: "b1", options, organizationLevel: true };
+  const pointManager: HeaderPoint = { kind: "switch", activeId: "b1", options, organizationLevel: false };
+  assert.ok(headerPointChoosing("/dashboard", add));
+  assert.ok(headerPointChoosing("/dashboard", organization));
+  assert.ok(headerPointChoosing("/settings/organization/office", organization));
+  // Раздел всей компании — «Выберите объект» сразу, не дожидаясь автосмены.
+  assert.ok(headerPointChoosing("/settings/organization/office", point));
+  assert.ok(headerPointChoosing("/journals/points", point));
+  assert.ok(!headerPointChoosing("/dashboard", point));
+  assert.ok(!headerPointChoosing("/journals/hygiene", point));
+  assert.ok(!headerPointChoosing("/settings/buildings/b1", point));
+  // Руководитель точки на уровень организации не уходит.
+  assert.ok(!headerPointChoosing("/settings/buildings", pointManager));
+  // Один объект: в разделах компании и в списке объектов — выбрать, в журналах — он сам.
+  assert.ok(headerPointChoosing("/settings/organization/office", single));
+  assert.ok(headerPointChoosing("/settings/buildings", single));
+  assert.ok(!headerPointChoosing("/journals", single));
+  assert.ok(!headerPointChoosing("/dashboard", single));
+});
+
+test("Mini App: на уровне организации — «Выберите объект», офис не подписываем объектом", () => {
   const pointA = { id: "a", name: "Точка А", address: null };
   const office = { id: "o", name: "Офис", address: null, kind: "office" };
-  // «Вся организация» без офиса: активной считается первая точка, но подпись — организация.
-  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: pointA }, "Вся организация"), "Вся организация");
-  // Выбрана точка — её название.
-  assert.equal(miniLocationLabel({ enabled: true, organizationView: false, activeBuilding: pointA }, "Вся организация"), "Точка А");
-  // Офис играет роль всей организации — пишем офис, как в шапке сайта.
-  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: office }, "Вся организация"), "Офис");
-  // Точки выключены или контекста нет — подписи нет.
-  assert.equal(miniLocationLabel({ enabled: false, organizationView: true, activeBuilding: null }, "Вся организация"), null);
-  assert.equal(miniLocationLabel(null, "Вся организация"), null);
+  // «Вся организация» без офиса: активной считается первая точка, но объект не выбран.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: pointA }, "Выберите объект"), "Выберите объект");
+  // Выбран объект — его название.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: false, activeBuilding: pointA }, "Выберите объект"), "Точка А");
+  // Офис — не объект (2026-11-23): тоже «Выберите объект», а не «Офис».
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: office }, "Выберите объект"), "Выберите объект");
+  // Объекты выключены или контекста нет — подписи нет.
+  assert.equal(miniLocationLabel({ enabled: false, organizationView: true, activeBuilding: null }, "Выберите объект"), null);
+  assert.equal(miniLocationLabel(null, "Выберите объект"), null);
 });
 
 test("переключатель (kind: switch) виден и в разделах всей компании, и на главной", () => {
@@ -220,7 +281,7 @@ test("переключатель (kind: switch) виден и в раздела�
   for (const path of ["/settings/users", "/settings/areas", "/settings/equipment", "/journals/points"]) {
     assert.ok(!headerPointHidden(path, "switch"), path);
   }
-  // Подписи без переключения в разделах компании по-прежнему прячутся.
+  // Подпись «все объекты» в разделах компании по-прежнему прячется, один объект — на главной.
   assert.ok(headerPointHidden("/home", "single"));
   assert.ok(headerPointHidden("/settings/subscription", "all"));
 });

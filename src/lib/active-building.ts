@@ -115,7 +115,7 @@ export async function listOrganizationBuildings(
 }
 
 // Кроны и обязательства импортируют цели точек без next/headers.
-export { buildingTargets } from "@/lib/building-targets";
+export { buildingTargets, documentBuildingTargets } from "@/lib/building-targets";
 
 /** Записать выбор точки в cookie (route handlers). */
 export async function setActiveBuildingCookie(

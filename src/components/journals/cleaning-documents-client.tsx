@@ -502,12 +502,10 @@ export function CleaningDocumentsClient(props: Props) {
       }),
     });
 
-    const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.document?.id) {
-    throw new Error(result?.error || t("saveError"));
-    }
+    // Нет объекта — PointRequiredError («Выберите объект…»), документ за период уже есть — развилка.
+    const created = await readCreatedDocument(response, t("saveError"));
 
-    router.push(`/journals/${props.routeCode}/documents/${result.document.id}`);
+    router.push(`/journals/${props.routeCode}/documents/${created.id}`);
     router.refresh();
   }
 

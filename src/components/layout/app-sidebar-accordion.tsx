@@ -16,6 +16,7 @@ import { NavBadge } from "@/components/layout/section-menu-list";
 import { NavIcon } from "@/components/layout/nav-icons";
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 import { ScrollPane } from "@/components/ui/scroll-list";
+import { FavoriteStar, NavContextMenu } from "@/components/favorites/favorite-star";
 import { INSPECTION_ACTIVE, INSPECTION_DOCK, INSPECTION_ICON, INSPECTION_IDLE } from "@/components/layout/nav-inspection-style";
 
 // Дерево меню (владелец, 2026-11-11: «меню как в документации, чуть
@@ -132,6 +133,8 @@ export function NavAccordion({
     const active = (isCurrentItem && tabs.length === 0) || atChildRoot;
     return (
       <div key={item.id}>
+        <div className="group/fav relative">
+        <NavContextMenu href={item.href} label={item.label}>
         <Link
           href={item.href}
           onClick={(event) => {
@@ -153,14 +156,18 @@ export function NavAccordion({
           {item.badge ? <NavBadge>{item.badge}</NavBadge> : null}
           {hasKids ? <TreeChevron open={open} /> : null}
         </Link>
+        </NavContextMenu>
+        {touch ? null : <FavoriteStar href={item.href} label={item.label} />}
+        </div>
         {open && child ? <div className="mt-0.5 space-y-0.5">{renderItems(child, depth + 1)}</div> : null}
         {open && tabs.length > 0 ? (
           <div className="mt-0.5 space-y-0.5">
             {tabs.map((tab) => {
               const tabActive = tab.href === tabHref;
               return (
+                <div key={tab.id} className="group/fav relative">
+                <NavContextMenu href={tab.href} label={tab.label}>
                 <Link
-                  key={tab.id}
                   href={tab.href}
                   aria-current={tabActive ? "page" : undefined}
                   data-nav-tree-row
@@ -171,6 +178,9 @@ export function NavAccordion({
                   <TreeIcon name={item.icon} active={tabActive} />
                   <span className="min-w-0 flex-1">{tab.label}</span>
                 </Link>
+                </NavContextMenu>
+                {touch ? null : <FavoriteStar href={tab.href} label={tab.label} />}
+                </div>
               );
             })}
           </div>
@@ -185,9 +195,10 @@ export function NavAccordion({
     const inside = place.top === section.key;
     const open = Boolean(section.menu) && openKey === section.key;
     const active = inside && !section.menu;
-    return (
+    const href = sectionEntryHref(section);
+    const link = (
       <Link
-        href={sectionEntryHref(section)}
+        href={href}
         onClick={onSection(section)}
         aria-current={inside ? (section.menu ? "true" : "page") : undefined}
         aria-expanded={section.menu ? open : undefined}
@@ -211,6 +222,16 @@ export function NavAccordion({
         <span className="min-w-0 flex-1">{section.label}</span>
         {section.menu ? <TreeChevron open={open} /> : null}
       </Link>
+    );
+    if (action) return link;
+    // Звёздочка при наведении и правая кнопка «В избранное» (2026-11-23).
+    return (
+      <div className="group/fav relative">
+        <NavContextMenu href={href} label={section.label}>
+          {link}
+        </NavContextMenu>
+        {touch ? null : <FavoriteStar href={href} label={section.label} />}
+      </div>
     );
   };
 

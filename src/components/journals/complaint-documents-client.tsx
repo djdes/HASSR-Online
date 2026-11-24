@@ -1,7 +1,7 @@
 "use client";
 
 import { useJournalDocumentActions } from "./use-journal-document-actions";
-import { DuplicatePeriodError, readCreatedDocument } from "./use-document-dialog-submit";
+import { DuplicatePeriodError, PointRequiredError, readCreatedDocument } from "./use-document-dialog-submit";
 import { useComplaintCopy } from "./use-complaint-copy";
 import { complaintDate, complaintTitle } from "./complaint-presentation";
 
@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Ellipsis, Plus, Printer, Settings2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -74,6 +75,8 @@ function CreateDialog({
   onCreated: () => void;
 }) {
   const { t, locale, latest } = useComplaintCopy();
+  // «Выберите объект» (офис или вся организация): документ создаётся для объекта.
+  const tDialog = useTranslations("journalControls.documentDialog");
   const router = useRouter();
   const today = localDayKey();
   const [dateFrom, setDateFrom] = useState(today);
@@ -123,7 +126,9 @@ function CreateDialog({
       const current = latest.current.t;
       toast.error(error instanceof DuplicatePeriodError
         ? error.existing.title ? current("errors.duplicate", { title: error.existing.title }) : current("errors.duplicateWithoutTitle")
-        : current("errors.create"));
+        : error instanceof PointRequiredError
+          ? tDialog("pointRequired")
+          : current("errors.create"));
     } finally {
       setSubmitting(false);
     }

@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 
 import { normalizeAcceptanceDocumentConfig } from "@/lib/acceptance-document";
 import { logAudit } from "@/lib/audit";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { ensureActiveDocument } from "@/lib/journal-auto-create";
 import { generateBatchKey } from "@/lib/journal-traceability";
@@ -109,8 +109,9 @@ export async function processIncomingVetDocument(input: {
 
   // 1. Документ журнала приёмки — тем же путём, что ночной cron, на точку
   // площадки ВСД (2026-11-01): раньше строка падала в журнал приёмки любой
-  // точки, а без него создавался общий.
-  const targets = await buildingTargets(input.organizationId);
+  // точки, а без него создавался общий. Офис — не объект (2026-11-23):
+  // приёмка на офис не заводится — просим выбрать объект.
+  const targets = await documentBuildingTargets(input.organizationId);
   const orgPoints = targets.filter((id): id is string => Boolean(id));
   const pointId = orgPoints.length === 0
     ? null

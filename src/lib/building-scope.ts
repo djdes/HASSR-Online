@@ -103,7 +103,8 @@ export function viewedPointId(
  * помещения, документы и люди.
  *  - точки выключены — `[null]`, вся организация как раньше;
  *  - человек смотрит на объект — только она;
- *  - руководство в режиме «Вся организация» — все точки, каждая отдельно;
+ *  - руководство в режиме «Вся организация» — все объекты, каждый отдельно
+ *    (офис — не объект, его подборки нет);
  *  - сотрудник офиса — офис.
  */
 export function poolBuildingsFromContext(
@@ -114,7 +115,9 @@ export function poolBuildingsFromContext(
   const viewed = viewedPointId(context);
   if (viewed) return [named(viewed)];
   if (context.canViewOrganization && context.buildings.length > 0) {
-    return context.buildings.map((building) => ({ id: building.id, name: building.name }));
+    // Офис — не объект (2026-11-23): своих журналов у него нет — подборки тоже.
+    const points = context.buildings.filter((building) => !isOfficeBuilding(building));
+    return (points.length > 0 ? points : context.buildings).map((building) => ({ id: building.id, name: building.name }));
   }
   return [named(context.activeBuildingId)];
 }

@@ -7,11 +7,20 @@
 import { COMPANY_MOBILE, COMPANY_PHONES } from "@/lib/company-contacts";
 import { hasCapability } from "@/lib/permission-presets";
 import type { NavModelSection } from "@/lib/app-nav.server";
+import { sectionEntryHref } from "@/lib/nav-layout";
 
 export const HOME_HREF = "/home";
 
-/** Сколько слотов «Избранного» на главной. */
-export const HOME_FAVORITES_MAX = 3;
+/**
+ * Сколько страниц в «Избранном» (было три слота; 2026-11-23 — звёздочка у
+ * любого пункта меню, до семи страниц: второй ряд карточек на главной).
+ */
+export const HOME_FAVORITES_MAX = 7;
+
+/** Сколько карточек «Избранного» на главной: не меньше трёх, одна пустая «Добавить», пока есть место. */
+export function homeFavoriteSlots(filled: number): number {
+  return Math.max(3, Math.min(HOME_FAVORITES_MAX, filled + 1));
+}
 
 /** Телефоны на главной: основной и мобильный, как на визитке (2026-11-06). */
 export const HOME_PHONES = COMPANY_PHONES;
@@ -33,8 +42,10 @@ export function canSeeHomePage(actor: HomeActor): boolean {
 export type FavoriteCandidate = { href: string; label: string; icon: string; sectionLabel: string };
 
 /**
- * Что можно закрепить: пункты меню человека (без пунктов-разделов — у них
- * свой корень) и корни разделов без меню. Адрес встречается один раз.
+ * Что можно закрепить — любой пункт меню человека (2026-11-23: «при наведении
+ * на любое меню — звёздочка»): пункты разделов и их вкладки, вложенные разделы
+ * (своим названием) и корни разделов. Адрес встречается один раз: у адреса,
+ * который есть и пунктом, и корнем раздела, — подпись пункта.
  */
 export function favoriteCandidates(sections: readonly NavModelSection[]): FavoriteCandidate[] {
   const result: FavoriteCandidate[] = [];
@@ -45,16 +56,16 @@ export function favoriteCandidates(sections: readonly NavModelSection[]): Favori
     result.push(candidate);
   };
   for (const section of sections) {
-    if (!section.menu) {
-      add({ href: section.rootHref, label: section.label, icon: section.icon, sectionLabel: section.label });
-      continue;
-    }
-    for (const group of section.menu) {
+    for (const group of section.menu ?? []) {
       for (const item of group.items) {
-        if (item.section) continue;
         add({ href: item.href, label: item.label, icon: item.icon, sectionLabel: section.label });
+        if (item.section) continue;
+        for (const tab of item.tabs ?? []) {
+          add({ href: tab.href, label: tab.label, icon: item.icon, sectionLabel: item.label });
+        }
       }
     }
+    add({ href: sectionEntryHref(section), label: section.label, icon: section.icon, sectionLabel: section.label });
   }
   return result;
 }

@@ -13,6 +13,7 @@ import { decodeRouteParam } from "@/lib/route-param";
 import { db } from "@/lib/db";
 import { documentInWorkerScope, loadManagerPointScope } from "@/lib/worker-point-scope";
 import { splitJournalPosterId } from "@/lib/journal-qr-target";
+import { qrMissingError } from "@/lib/qr-fill-missing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export async function GET(
           ? (await db.equipment.findFirst({ where: { id, area: { organizationId } }, select: { area: { select: { buildingId: true } } } }))?.area.buildingId
           : (await db.room.findFirst({ where: { id, building: { organizationId } }, select: { buildingId: true } }))?.buildingId;
       if (!documentInWorkerScope(await loadManagerPointScope(organizationId, session.user.id), objectPoint)) {
-        return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
+        return NextResponse.json(qrMissingError(kind), { status: 404 });
       }
     } else {
       // QR документа чужой точки — как несуществующий (аудит 2026-11-01): его
@@ -63,7 +64,7 @@ export async function GET(
       if (documentId) {
         const document = await db.journalDocument.findFirst({ where: { id: documentId, organizationId }, select: { buildingId: true } });
         if (!document || !documentInWorkerScope(await loadManagerPointScope(organizationId, session.user.id), document.buildingId)) {
-          return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
+          return NextResponse.json(qrMissingError(kind), { status: 404 });
         }
       }
     }
@@ -81,7 +82,7 @@ export async function GET(
         kind === "journal" ? null : await resolveMainJournalQrBuilding(organizationId, await getViewedPointId(session)),
     });
     if (!poster) {
-      return NextResponse.json({ error: "Объект не найден" }, { status: 404 });
+      return NextResponse.json(qrMissingError(kind), { status: 404 });
     }
     return NextResponse.json({ poster });
   } catch (error) {

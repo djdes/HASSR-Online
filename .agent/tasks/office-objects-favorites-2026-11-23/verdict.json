@@ -1,0 +1,101 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-11-24T13:05:00Z",
+  "base": "d81e7a2da4e815ab403e0f8960de6dbad50198a0",
+  "comparedTo": "Head d81e7a2da = the app code of 568c80207 plus the #326 merge from master 67401f2d6: scripts/seo-queries-export.ts, one package.json script line (seo:export), .env.example and .gitignore entries. Those four files are identical to master, and there are no src/ or test changes. 1da99f0ad added evidence files only. Delta since the previous PASS at 45023ff6e: 37016fed3 fixes the three notes of that check; 568c80207 merges master #325 (ChatWebmasterPlacementDialog.tsx only); d81e7a2da merges master #326. origin/master is 67401f2d6 and is the merge-base. de514156b, committed on top by the coordinator, contains only the previous version of this verdict and problems.md.",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS",
+    "AC13": "PASS"
+  },
+  "commands": [
+    {
+      "command": "git diff 568c80207 d81e7a2da outside .agent; git diff 67401f2d6 HEAD on the 4 #326 files; git ls-files against the new .gitignore patterns",
+      "result": "INFO",
+      "note": "Only .env.example, .gitignore, package.json (+seo:export) and scripts/seo-queries-export.ts changed, all identical to master. typecheck covers src/** only, so the new script is outside it. No tracked file matches the new ignore patterns (/exports/, /secrets/, *service-account*.json, gsc-*.json)."
+    },
+    {
+      "command": "npm run typecheck (on d81e7a2da)",
+      "result": "PASS",
+      "exit": 0
+    },
+    {
+      "command": "node --import tsx --test on every test that reads package.json / .gitignore / .env.example (qr-player, narrated-video, landing-proposals, autofill-page, crm actions and imap-transport, autofill-clips, deploy-scripts) plus office-journals, equipment-calibration-localization and journal-namespace-localization (on d81e7a2da)",
+      "result": "PASS",
+      "note": "94/94. test-changed --ci-plan gives mode=full (schema), as before. The full gate was not rerun on d81e7a2da: #326 changes no src/ or test file, and the full run on the same app code (568c80207) is 7394/0 below."
+    },
+    {
+      "command": "git log / git diff / git ls-remote (no fetch, no git state change)",
+      "result": "INFO",
+      "note": "HEAD 1da99f0ad = origin/claude/amazing-bohr-s3zvbx; origin/master 58740e3ed is merged (merge-base). The merged ChatWebmasterPlacementDialog.tsx equals master plus the branch's one-line theme-token change ([&_a]:text-[var(--app-indigo-deep)]). Only the PDFs under .agent/tasks/english-version-1375e736/raw/ rewritten by the full run are modified in the tree; they are left as they are."
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "exit": 0,
+      "note": "16 s, on code 568c80207"
+    },
+    {
+      "command": "node --import tsx --test (16 files): office-journals, equipment-calibration-localization, i18n/journal-namespace-localization, journal-auto-create-broken-chains, journal-auto-create-restore-chain, read-created-document, supply-points, external/entry-point, journal-qr-rollover, paper-journal-point, borderless, neutral-palette, one-accent and the 5 seo-links tests",
+      "result": "PASS",
+      "note": "98/98"
+    },
+    {
+      "command": "npm run test:gate",
+      "result": "PASS",
+      "exit": 0,
+      "note": "Escalated to the full suite because prisma/schema.prisma changed: pass=7394, fail=0, 4 min 19 s. This includes public-dark-theme.test.ts and the other design guards."
+    },
+    {
+      "command": "npm run i18n:check",
+      "result": "PASS",
+      "exit": 0,
+      "note": "message-contract.d.ts fresh, 103/103; equipmentCalibration.errors.pointRequired is present in ru/en/uz"
+    },
+    {
+      "command": "npx eslint on the 7 changed source and test files compared with 45023ff6e, and on the merged ChatWebmasterPlacementDialog.tsx compared with master 58740e3ed",
+      "result": "PASS",
+      "note": "0 errors. The only warning is the old unused-var in dispatch.ts, identical to the base; nothing new."
+    },
+    {
+      "command": "npx tsx <scratch>/verifier3/repro-ac5-ext.ts creation (rerun on 568c80207; local DB, throw-away orgs, leftover 0)",
+      "result": "PASS",
+      "note": "Ordering (G): the header list, the transfer target (DB order), documentBuildingFor and ensureActiveDocument(office) all give 'Cafe Mira'. Before 37016fed3, documentBuildingFor gave 'Кафе'. All other sections are unchanged from the previous run: QR rollover, external API, EDO (point_forbidden; a direct acceptSupplyDocument with the office lands on the first object), the helpers, the UV lamp and the API rules. SUMMARY_newDocumentsOnOffice = []."
+    },
+    {
+      "command": "raw/stand-calibration-doc.ts create; UI_OUT=<scratch>/verifier3/delta/ui-third-fixes.json node raw/ui-check-third-fixes.cjs; raw/stand-calibration-doc.ts delete",
+      "result": "PASS",
+      "note": "The cleaning_ventilation_checklist create window shows «Создание документа» / «Создать» with no raw cleaningGrid keys. equipment_calibration «Сделать копию» at «Выберите объект» shows the toast «Выберите объект: документ журнала создаётся для объекта» and not «Проверьте введённые данные». No copy was created: delete removed exactly 1, the temporary document, and the stand has 0 calibration documents afterwards."
+    },
+    {
+      "command": "node <scratch>/verifier3/ui-followup3.cjs (next dev :3000 after the restart)",
+      "result": "PASS",
+      "note": "Checklist «Создать» at «Выберите объект»: POST 400 point_required and the window shows «Выберите объект: документ журнала создаётся для объекта». AC8: the pills are «Офис», «Все объекты», «Кафе на Мира», «Цех пищевых продуктов»; the «Все объекты» pill opens the edit dialog with «Где работает» and «Все объекты»."
+    },
+    {
+      "command": "Previous check at 45023ff6e (code e53f912d2), still applicable to unchanged areas",
+      "result": "PASS",
+      "note": "The full transfer run of the real deploy script (dry run, then real run, then 'already done', totals-only lines, audit row, key restored); the UI check of 21 journals' create windows (all «Выберите объект…», the plaque everywhere, the general dialog requires «Объект»); the AST check that page.tsx creates only for demo orgs; the collation probe. Neither the deploy step, the transfer script, the create windows nor page.tsx changed since then."
+    }
+  ],
+  "notes": [
+    "Delta 37016fed3 is correct and has no regressions. (1) officeJournalTarget (office-journals.ts:23-24) now returns the first non-office building of the list it gets. Its only callers pass a DB-ordered list: documentBuildingFor (:46-59, findMany with orderBy [{sortOrder:'asc'},{name:'asc'}] at :54 and select {id, kind}) and dispatch.ts:788-795 (findMany with the same orderBy at :791). The transfer (office-journals.server.ts:56-60: findFirst, NOT kind office, same orderBy) is equivalent because Building.kind is non-null with default 'point'. No other caller relied on the old JS sort (grep: journal-auto-create.ts via documentBuildingFor, dispatch.ts and tests only). The journal-auto-create test fakes ignore the args, and their tests pass. (2) calibrationErrorKey (equipment-calibration-presentation.ts:51) maps code point_required to 'pointRequired'. checkCalibrationResponse passes payload.code first; 401/403/404 are checked before it and 400 'invalid' after it, so other errors keep their keys. The new key exists in ru/en/uz with the same text as journalControls.documentDialog.pointRequired, and the contract is regenerated. (3) journals/[code]/layout.tsx:25 (JOURNAL_MESSAGES) gives cleaning_ventilation_checklist the cleaningGrid namespace for the whole /journals/<code> subtree.",
+    "AC5 PASS. Unchanged since the previous check apart from the ordering fix, which makes 'first object' for new office-path documents the same object as the transfer target and the header list. Creation paths are as listed in the previous verdict: main and paper APIs refuse the office; the four helpers map the office through documentBuildingFor; QR rollover, external API, EDO, Mercury, recreate, TasksFlow and UV use only objects; page.tsx creates only for demo orgs and sets no building; no deploy seed creates documents. deploy.yml is unchanged: the transfer runs after post-deploy-check (:1066, :1084-1090), outside the prisma and legacy blocks, as dry run then real run, with || echo.",
+    "AC4 PASS. Also confirmed on the new code: the calibration copy action now shows «Выберите объект…», and the checklist window shows real labels and «Выберите объект…» on point_required. Every create window and copy action now shows «Выберите объект…» or the server text with that meaning.",
+    "AC8 PASS (quick check, UI on the new code).",
+    "AC13 PASS: the new UI text is in ru/en/uz and the contract is regenerated (i18n:check); typecheck, full gate 7394/0, eslint without new findings, design guards green.",
+    "AC1-AC3, AC6, AC7, AC9-AC12: the delta does not touch these areas; the full suite is green.",
+    "Info, by design and not blocking: a first-document scan with an office anchor opens the first document on every object; kept duplicate office documents can still receive writes through old posters of that exact document (the owner's ruling keeps them on the office). Two objects with the same sortOrder and the same name have no tie-break in either the header or the transfer; this is negligible.",
+    "Local stand only. Nothing remote was written (read-only GitHub reads). No git state changes; only verdict.json and problems.md were edited. Throw-away orgs were deleted (leftover 0); the stand calibration document was created and deleted with the coordinator's script; the stand still has 1 office document (a kept duplicate). The dev server and PostgreSQL were left running. Outputs are in /tmp/claude-0/-home-user-HASSR-Online/9db99cea-0bbc-5d62-bbca-aabb50b143e4/scratchpad/verifier3/delta/."
+  ]
+}

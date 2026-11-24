@@ -25,6 +25,12 @@ export type JournalCreateDefaults = {
    * колонок в диалоге создания стартуют с них.
    */
   columnDefaults?: Record<string, JournalColumnsConfig>;
+  /**
+   * В шапке «Выберите объект» (офис или вся организация): документ журнала
+   * создаётся для объекта (владелец, 2026-11-23: офис — не объект), окно
+   * создания просит выбрать его. `createHref` — «Создать объект» (руководителю).
+   */
+  point?: { options: Array<{ id: string; name: string }>; createHref: string | null } | null;
 };
 
 const JournalCreateDefaultsContext = createContext<JournalCreateDefaults>({

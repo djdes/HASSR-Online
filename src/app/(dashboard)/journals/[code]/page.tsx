@@ -23,7 +23,7 @@ import { loadBuildingContext } from "@/lib/active-building";
 import { effectiveJournalSlots } from "@/lib/journal-responsibles-points";
 import { readBuildingJournalSettings, withBuildingJournalSettings, worksAtBuilding } from "@/lib/building-settings";
 import { documentRowsPointId } from "@/lib/document-point-rows";
-import { buildingWhere, viewedPointId } from "@/lib/building-scope";
+import { buildingWhere, isOfficeBuilding, viewedPointId } from "@/lib/building-scope";
 import { journalEntryPointWhere } from "@/lib/point-filters";
 import { sharedDocumentFlag } from "@/lib/journal-document-shared";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
@@ -57,6 +57,7 @@ import {
   getJournalDocumentDefaultTitle,
   getJournalDocumentPeriodLabel,
   isDocumentTemplate,
+  hasDocumentFillUi,
 } from "@/lib/journal-document-helpers";
 import {
   buildFinishedProductArchiveSeed,
@@ -284,6 +285,7 @@ import {
 } from "@/lib/user-roles";
 import { JournalAutoCreateToggle } from "@/components/journals/journal-auto-create-toggle";
 import { JournalCreateDefaultsProvider } from "@/components/journals/journal-create-defaults";
+import { JournalPointNotice } from "@/components/journals/journal-point-notice";
 import { JournalManageProvider } from "@/components/journals/document-list-ui";
 import { parseOrgColumnDefaults } from "@/lib/journal-columns";
 import { getPrimarySlotId } from "@/lib/journal-responsible-schemas";
@@ -1502,7 +1504,20 @@ export default async function JournalDocumentsPage({
     (await effectiveJournalSlots(getActiveOrgId(session), activeBuildingId, resolvedCode))[
       getPrimarySlotId(resolvedCode)
     ] ?? null;
+  // «Выберите объект» (офис или вся организация): документ журнала создаётся
+  // для объекта (владелец, 2026-11-23) — окно создания просит выбрать его,
+  // над списком — плашка с объектами и «Создать объект».
+  const pointChoice =
+    buildingContext.enabled && (buildingContext.organizationView || isOfficeBuilding(buildingContext.activeBuilding))
+      ? {
+          options: buildingContext.buildings
+            .filter((building) => !isOfficeBuilding(building))
+            .map((building) => ({ id: building.id, name: building.name })),
+          createHref: hasFullWorkspaceAccess(session.user) ? "/settings/buildings/new" : null,
+        }
+      : null;
   const journalCreateDefaults = {
+    point: pointChoice,
     defaultResponsibleUserId:
       savedPrimaryResponsibleId &&
       orgUsers.some((user) => user.id === savedPrimaryResponsibleId)
@@ -1539,6 +1554,11 @@ export default async function JournalDocumentsPage({
             Показываем только там, где это осмысленно: у field-based
             журналов автосоздание плодило документы-сироты, а сотрудник
             без прав на настройки ловил 403 при переключении. */}
+        {/* Плашка — у всех журналов со списком документов, и у тех, что со
+            своим экраном (жалобы, реестры, протокол и отчёт аудита). */}
+        {pointChoice && hasDocumentFillUi(resolvedCode) ? (
+          <JournalPointNotice options={pointChoice.options} createHref={pointChoice.createHref} />
+        ) : null}
         {canManageAutomation && isDocumentTemplate(resolvedCode) ? (
           <JournalAutoCreateToggle
             templateCode={resolvedCode}

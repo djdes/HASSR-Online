@@ -1081,6 +1081,14 @@ jobs:
             # не пройдёт.
             rm -rf .next-previous .next-failed 2>/dev/null || true
 
+            echo "=== Журналы офиса — на объект (one-shot, PlatformSetting-guard; решение владельца 2026-11-24: переносить при выкладке, дубли оставить на офисе) ==="
+            # После проверки новой сборки: она уже не заводит документы на офис,
+            # и перенос забирает то, что старая сборка успела завести во время
+            # выката. Сначала подсчёт, затем перенос; в лог — только итоги, id —
+            # в журнал действий (journals.office_to_point). Сбой не роняет выкатку.
+            timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts --dry-run 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points dry-run failed"
+            timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points-2026-11 failed — deploy continues"
+
             echo "=== CRM: крон /api/cron/crm раз в 5 минут (crontab, идемпотентно) ==="
             # Строку ставит и обновляет сам деплой (docs/crm.md): сбой — не повод
             # ронять выкатку, CRM работает и по кнопке «Обновить сейчас».

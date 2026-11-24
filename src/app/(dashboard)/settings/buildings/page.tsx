@@ -84,6 +84,10 @@ export default async function BuildingsPage() {
     // Чью страницу точки человек откроет — у тех «Открыть точку».
     listPersonBuildings(session),
   ]);
+  // Скрепка (личное, 2026-11-23): закреплённые объекты — первыми.
+  const pinnedBuildingIds =
+    (await db.user.findUnique({ where: { id: session.user.id }, select: { pinnedBuildingIds: true } }))
+      ?.pinnedBuildingIds ?? [];
   // Только объекты (скан 98, 2026-10-28): офис — в «Моя компания → Офис».
   // Офис с заведёнными помещениями остаётся: править их больше негде
   // (страница точки для офиса уводит на «Офис»).
@@ -138,6 +142,7 @@ export default async function BuildingsPage() {
       />
       <BuildingsClient
         initial={buildings}
+        pinnedIds={pinnedBuildingIds}
         users={users}
         perLocationJournals={organization?.perLocationJournals === true}
         // Делить журналы есть что, пока точек с офисом две и больше.

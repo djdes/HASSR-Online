@@ -2927,7 +2927,6 @@
         "list": "Nuqtalar",
         "switch": "Nuqtani almashtirish",
         "manage": "Nuqtalarni sozlash",
-        "switched": "Nuqta: {name}",
         "failed": "Nuqtani almashtirib bo‘lmadi",
         "caption": "Nuqta",
         "captionMany": "Nuqtalar",
@@ -2937,12 +2936,14 @@
         "add": "Nuqta qo‘shish",
         "addHint": "Qadam-baqadam qo‘shish ochiladi: nomi va manzil, xonalar, uskunalar",
         "open": "Nuqtani ochish",
-        "captionOffice": "Tashkilot",
-        "organization": "Butun tashkilot",
-        "companySection": "Umumiy bo‘lim — tanlandi: {name}",
-        "returnTo": "«{name}»ga qaytish",
         "search": "Nuqtani topish",
-        "nothingFound": "Hech narsa topilmadi"
+        "nothingFound": "Hech narsa topilmadi",
+        "choose": "Nuqtani tanlang",
+        "create": "Nuqta yaratish",
+        "empty": "Hozircha nuqtalar yo‘q",
+        "pin": "«{name}»ni birinchi qilib qadash",
+        "pinFailed": "Nuqtani qadab bo‘lmadi",
+        "unpin": "«{name}»ni ajratish"
       },
       "switchToast": {
         "close": "Yopish",
@@ -3209,7 +3210,6 @@
       "scrollLeft": "Menyuni chapga aylantirish",
       "scrollRight": "Menyuni o‘ngga aylantirish",
       "openSection": "Bo‘limni ochish",
-      "submenu": "Ichki bandlar: {name}",
       "tabBar": {
         "aria": "Pastki menyu",
         "home": "Bosh sahifa",
@@ -3223,7 +3223,18 @@
         "qr": "QR",
         "qrTitle": "QR stikerlar va plakatlar"
       },
-      "brandingSettings": "Brend uslubi"
+      "brandingSettings": "Brend uslubi",
+      "favorites": {
+        "add": "«{name}»ni sevimlilarga qo‘shish",
+        "addShort": "Sevimlilarga qo‘shish",
+        "added": "Bosh sahifadagi sevimlilarga qo‘shildi",
+        "failed": "Sevimlilarni saqlab bo‘lmadi",
+        "full": "Sevimlilar to‘ldi: {max} dan {max}. Bosh sahifada bitta sahifani olib tashlang.",
+        "openNewTab": "Yangi oynada ochish",
+        "remove": "«{name}»ni sevimlilardan olib tashlash",
+        "removeShort": "Sevimlilardan olib tashlash",
+        "removed": "Sevimlilardan olib tashlandi"
+      }
     },
     "header": {
       "staff": "Xodimlar",
@@ -5681,7 +5692,12 @@
       "openExisting": "Mavjud hujjatni ochish",
       "forceCreate": "Baribir yaratish",
       "duplicateFallback": "Bu davr uchun hujjat allaqachon mavjud. Uni oching yoki boshqa davrni tanlang.",
-      "namedDuplicateFallback": "Bu davr uchun “{title}” hujjati allaqachon mavjud. Uni oching yoki boshqa davrni tanlang."
+      "namedDuplicateFallback": "Bu davr uchun “{title}” hujjati allaqachon mavjud. Uni oching yoki boshqa davrni tanlang.",
+      "pointCreate": "Nuqta yaratish",
+      "pointEmpty": "Hozircha nuqtalar yo‘q — avval nuqta yarating",
+      "pointLabel": "Nuqta",
+      "pointPlaceholder": "Nuqtani tanlang",
+      "pointRequired": "Nuqtani tanlang: jurnal hujjati nuqta uchun yaratiladi"
     },
     "recordCards": {
       "empty": "Yozuvlar yo‘q.",
@@ -5751,6 +5767,12 @@
         "noCertificates": "Kalitli amaldagi sertifikatlar yo‘q. Elektron imzo kalitini (token) ulang.",
         "signFailed": "Plagin hujjatni imzolamadi: {reason}"
       }
+    },
+    "pointNotice": {
+      "body": "Ofis — nuqta emas. Nuqtani tanlang — yangi jurnal hujjatlari unda yuritiladi.",
+      "create": "Nuqta yaratish",
+      "empty": "Hozircha nuqtalar yo‘q — birinchisini yarating.",
+      "title": "Jurnal hujjati nuqta uchun yaratiladi"
     }
   },
   "publicChrome": {
@@ -6955,7 +6977,8 @@
       "todayMeasurementsTitle": "{date} kungi o‘lchovlar",
       "clearStatus": "Belgini olib tashlash",
       "selectionHint": "Uskuna harorat o‘lchovlari bilan birga o‘chiriladi",
-      "temperatureValue": "Harorat: {value, number} °C"
+      "temperatureValue": "Harorat: {value, number} °C",
+      "qrMissingHint": "Bu uskuna endi ma’lumotnomada yo‘q. «Saqlash»ni bosing — qator yana ma’lumotnomaga qo‘shiladi va QR-kod oladi."
     },
     "dialogs": {
       "equipmentAddTitle": "Uskuna qo‘shish",
@@ -8412,7 +8435,7 @@
       "collapse": "Yig‘ish",
       "more": "Yana {count, number}",
       "office": "Ofis",
-      "officeTitle": "Ofis: kompaniyaning barcha nuqtalarini ko‘radi, jurnallar va vazifalar faqat ofisniki",
+      "officeTitle": "Ofis: rahbariyat, kompaniyaning barcha nuqtalarini ko‘radi; jurnallar nuqtalarda yuritiladi",
       "officeHint": "Ofis — barcha nuqtalarni ko‘radi, ofisda ishlaydi",
       "primaryHint": "★ — asosiy nuqta: «joy bo‘yicha» bildirishnomalar unga keladi",
       "primaryOn": "«{name}» — asosiy nuqta. Olib tashlash uchun bosing",
@@ -8787,7 +8810,11 @@
       "staffingVacancies": "Yetishmaydi: {count, plural, one {# kishi} other {# kishi}}",
       "staffingOver": "Shtatdan ortiq: {count, plural, one {# kishi} other {# kishi}}",
       "phoneLabel": "Telefon",
-      "emailLabel": "Pochta"
+      "emailLabel": "Pochta",
+      "placeEdit": "Qayerda ishlaydi: {place}. O‘zgartirish uchun bosing.",
+      "placeNone": "Barcha manzillar",
+      "placeNoneTitle": "Nuqtaga biriktirilmagan — barcha nuqtalar jurnallariga tushadi. Qayerda ishlashini tanlash uchun bosing.",
+      "placeOffice": "Ofis"
     },
     "dialogs": {
       "positionNameRequired": "Nomini kiriting",
@@ -11266,12 +11293,12 @@
       }
     },
     "office": {
-      "description": "Butun kompaniyaga tegishli hamma narsa: ofis xodimlari va ofis jurnallari. Nuqtaga oid aniq ishlar — nuqta sahifasida.",
+      "description": "Butun kompaniyaga tegishli hamma narsa: rahbariyat, nuqtalar va ularning uskunalari. Jurnallar nuqtalarda yuritiladi.",
       "guide": {
         "title": "Ofis va nuqtalar qanday tuzilgan",
         "office": {
           "title": "Ofis — kompaniya rahbariyati",
-          "body": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi. Ularning o‘z jurnallari va vazifalari ofisga tegishli va nuqta jurnallariga qo‘shilmaydi."
+          "body": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi. Ofis — nuqta emas: jurnallar va vazifalar nuqtalarda yuritiladi."
         },
         "points": {
           "title": "Nuqta — uning xodimlari va jurnallari",
@@ -11284,34 +11311,35 @@
       },
       "disabled": {
         "title": "Avval obyektni qo‘shing",
-        "body": "Kompaniyada kamida bitta obyekt bo‘lsa, ofisni ajratish mumkin. Uni qo‘shing — bu yerda ofis xodimlari va jurnallari paydo bo‘ladi.",
+        "body": "Kompaniyada kamida bitta obyekt bo‘lsa, ofisni ajratish mumkin. Uni qo‘shing — bu yerda rahbariyat va kompaniya nuqtalari paydo bo‘ladi.",
         "link": "Obyektlarni ochish"
       },
       "create": {
         "title": "Ofisni ajrating",
         "body": "Ofis — kompaniya rahbarlari joyi: ular barcha nuqtalarni ko‘radi, lekin nuqtalar jurnali va vazifalariga qo‘shilmaydi. Nuqta xodimlariga ta’sir qilmaydi.",
-        "split": "Ofis va obyektlar jurnallari alohida yuritiladi.",
-        "switcher": "Sarlavhada «Ofis / obyekt» almashtirgichi paydo bo‘ladi.",
+        "split": "Jurnallar nuqtalarda yuritiladi, ofis — rahbariyat joyi.",
+        "switcher": "Sarlavhada — nuqta tanlash; kompaniya bo‘limlarida u yerda «Nuqtani tanlang».",
         "existing": "Allaqachon to‘ldirilgan hujjatlar umumiy bo‘lib qoladi va hamma joyda ko‘rinadi.",
         "button": "Ofisni ajratish",
         "done": "Ofis ajratildi",
         "failed": "Ofisni ajratib bo‘lmadi"
       },
       "staff": {
-        "title": "Ofis xodimlari",
-        "hint": "Direktor va yo‘nalish rahbarlari barcha nuqtalarni ko‘radi; ularning jurnallari va vazifalari ofisga tegishli.",
+        "title": "Rahbariyat",
+        "hint": "Direktor, boshqaruvchi va butun kompaniya jurnallari hamda sozlamalarini yurituvchilar. Nuqta xodimlari — nuqta sahifalarida.",
         "count": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
         "add": "Ofisga qo‘shish",
-        "emptyTitle": "Ofisda hozircha hech kim yo‘q",
-        "emptyBody": "Kompaniya rahbarlarini qo‘shing — ular barcha nuqtalarni ko‘radi.",
+        "emptyTitle": "Rahbariyat hali ko‘rsatilmagan",
+        "emptyBody": "Direktor yoki boshqaruvchini ofisga qo‘shing — ular barcha nuqtalarni ko‘radi.",
         "noPosition": "Lavozim ko‘rsatilmagan",
-        "all": "«Xodimlar»da ochish"
+        "all": "Nuqtalarning barcha xodimlarini ko‘rsatish"
       },
       "journals": {
-        "title": "Ofis jurnallari",
-        "hint": "Ofis o‘z jurnallarini yuritsa (ombor, ofis xodimlari gigiyenasi) — ular nuqtalardan alohida.",
-        "open": "Ofis jurnallarini ochish",
-        "failed": "Ofisni ochib bo‘lmadi"
+        "title": "Jurnallar nuqtalarda yuritiladi",
+        "hint": "Ofis — nuqta emas: jurnal hujjatlari nuqta uchun yaratiladi. Kerakli nuqta jurnallarini oching.",
+        "failed": "Ofisni ochib bo‘lmadi",
+        "create": "Nuqta yaratish",
+        "empty": "Hozircha nuqtalar yo‘q — birinchisini yarating, uning jurnallari shu yerda paydo bo‘ladi."
       },
       "points": {
         "title": "Kompaniyaning obyektlari",
@@ -11320,7 +11348,15 @@
         "unplaced": "{count, plural, other {# ta xodimga}} hali joy belgilanmagan: ular barcha nuqtalar jurnaliga tushadi.",
         "unplacedLink": "Taqsimlash",
         "noAddress": "Manzil ko‘rsatilmagan",
-        "staff": "{count, plural, =0 {xodim yo‘q} other {# xodim}}"
+        "staff": "{count, plural, =0 {xodim yo‘q} other {# xodim}}",
+        "all": "Barcha nuqtalarni ko‘rsatish"
+      },
+      "equipment": {
+        "all": "Nuqtalarning barcha uskunalarini ko‘rsatish",
+        "count": "{count, plural, =0 {uskuna yo‘q} other {# birlik}}",
+        "hint": "Muzlatgichlar, yuvish joylari va boshqa uskunalar — nuqtalar bo‘yicha. To‘liq ro‘yxatda har bir birlik qaysi nuqtaga bog‘langani ko‘rinadi va uni ko‘chirish mumkin.",
+        "loose": "Nuqtasiz: {count}",
+        "title": "Nuqtalar uskunalari"
       }
     },
     "network": {
@@ -11768,7 +11804,8 @@
       "unauthorized": "Tizimga kiring",
       "notFound": "Hujjat topilmadi",
       "closed": "Hujjat yopilgan. Tahrirlash uchun uni qayta oching.",
-      "invalid": "Kiritilgan ma’lumotlarni tekshiring"
+      "invalid": "Kiritilgan ma’lumotlarni tekshiring",
+      "pointRequired": "Nuqtani tanlang: jurnal hujjati nuqta uchun yaratiladi"
     },
     "noName": "ismsiz"
   },
@@ -28768,8 +28805,6 @@
       "guide1Body": "“Nuqtalar va xonalar”da yaratilgan xona bu yerda o‘z nuqtasining sexi sifatida ko‘rinadi. Nuqtasiz sex har bir nuqtada ko‘rinadi — qalamni bosing va nuqtani tanlang.",
       "guide2Title": "Xonalar = dasturiy moduldagi vazifalar",
       "guide2Body": "Agar “Vazifalarni taqsimlash va tekshirish” bo‘limida tozalash uchun “Har bir xona uchun” rejimi tanlangan bo‘lsa, dasturiy modulda har bir sex uchun alohida vazifa yaratiladi.",
-      "guide3Title": "Uskunalarni guruhlash",
-      "guide3Body": "Har bir muzlatkich/yuvish joyi/idish yuvish mashinasi sexga bog‘lanadi — hisobotlarda nima qayerda turgani ko‘rinadi.",
       "guide4Title": "Harorat xaritalari",
       "guide4Body": "“Bugun” ekrani “issiq sexdagi harorat” va “sovuq sexdagi harorat”ni alohida ko‘rsatadi — buning uchun uskunalar sexlar bo‘yicha taqsimlangan bo‘lishi kerak.",
       "workshopCount": "{count, plural, one {# ta sex} other {# ta sex}}",
@@ -31729,7 +31764,7 @@
     "favorites": {
       "title": "Sevimlilar",
       "add": "Sevimlilarga qo‘shish",
-      "addHint": "Eng ko‘p ochadigan sahifangizni mahkamlang",
+      "addHint": "Sahifani shu yerda yoki menyu bandi yonidagi yulduzcha bilan qadang",
       "remove": "Sevimlilardan olib tashlash",
       "pickDescription": "Sahifa bosh sahifada paydo bo‘ladi — uni bir bosishda oching.",
       "search": "Sahifani topish",

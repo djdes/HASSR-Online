@@ -1,0 +1,20 @@
+{
+  "cleaning_ventilation_checklist": {
+    "header": "Выберите объект",
+    "createButton": 1,
+    "dialogText": "Закрыть Создание документа Название документа Дата начала Проветривание Если у вас есть окна и возможность проветривать помещение Периодичность контроля Создать",
+    "rawKeys": false,
+    "titleShown": true
+  },
+  "equipment_calibration_copy": {
+    "header": "Выберите объект",
+    "documents": 1,
+    "copyItem": 1,
+    "toasts": [
+      "Выберите объект: документ журнала создаётся для объекта"
+    ],
+    "pointMessageShown": true,
+    "genericInvalidShown": false,
+    "newPageErrors": []
+  }
+}

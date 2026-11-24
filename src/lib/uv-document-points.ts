@@ -1,4 +1,4 @@
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { rowsPointFromTargets } from "@/lib/document-point-rows";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
@@ -64,7 +64,7 @@ export async function uvLampPointId(organizationId: string, equipmentId: string)
     select: { area: { select: { buildingId: true } } },
   });
   if (!lamp?.area.buildingId) return null;
-  return rowsPointFromTargets(await buildingTargets(organizationId), lamp.area.buildingId);
+  return rowsPointFromTargets(await documentBuildingTargets(organizationId), lamp.area.buildingId);
 }
 
 /**
@@ -73,7 +73,7 @@ export async function uvLampPointId(organizationId: string, equipmentId: string)
  * раз в час кроном и после переноса лампы или цеха.
  */
 export async function syncUvDocumentPoints(organizationId: string): Promise<number> {
-  const targets = await buildingTargets(organizationId);
+  const targets = await documentBuildingTargets(organizationId);
   if (!targets.some(Boolean)) return 0;
   const documents = await db.journalDocument.findMany({
     where: { organizationId, template: { code: UV_LAMP_RUNTIME_TEMPLATE_CODE } },

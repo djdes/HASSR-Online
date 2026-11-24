@@ -22,6 +22,7 @@ const JOURNAL_MESSAGES: Record<string, readonly MessageNamespace[]> = {
   cleaning: ["cleaningGrid"],
   general_cleaning: ["cleaningGrid"],
   sanitary_day_control: ["cleaningGrid"],
+  cleaning_ventilation_checklist: ["cleaningGrid"],
   equipment_calibration: ["equipmentCalibration"],
   finished_product: ["finishedProduct"],
   perishable_rejection: ["perishableRejection"],

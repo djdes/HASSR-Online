@@ -14,7 +14,7 @@ import {
   buildStaffObligationDigest,
 } from "@/lib/telegram-obligation-digests";
 import { NOT_DIRECTORY_ORG_WHERE } from "@/lib/master-directory";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { lockedOrganizationIds } from "@/lib/org-trial.server";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
@@ -103,7 +103,8 @@ function createDefaultDeps(): MiniDigestDeps {
     listOpenJournalObligationsForUser,
     getManagerObligationSummary,
     async listOrganizationPoints(organizationId) {
-      const ids = (await buildingTargets(organizationId)).filter((id): id is string => id !== null);
+      // Офис — не объект (2026-11-23): в сводке по объектам его нет.
+      const ids = (await documentBuildingTargets(organizationId)).filter((id): id is string => id !== null);
       if (ids.length === 0) return [];
       return db.building.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
     },

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getActiveOrgId, requireApiAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
-import { buildingTargets } from "@/lib/active-building";
+import { documentBuildingTargets } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { ACTIVE_JOURNAL_CATALOG } from "@/lib/journal-catalog";
 import { resolveJournalPeriod, parseJournalPeriodsJson } from "@/lib/journal-period";
@@ -103,8 +103,9 @@ export async function POST() {
   let skipped = 0;
   const errors: string[] = [];
 
-  // Точки: пересоздаём документ на каждую точку (или один общий).
-  const targets = await buildingTargets(organizationId);
+  // Объекты: пересоздаём документ на каждый объект (или один общий); офис —
+  // не объект (2026-11-23).
+  const targets = await documentBuildingTargets(organizationId);
 
   for (const tpl of templates) {
     if (disabledCodes.has(tpl.code)) {

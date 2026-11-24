@@ -8,6 +8,8 @@ import type { Locale } from "@/i18n/locales";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, Check, Copy, MapPin, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
+import { PinButton, usePinnedBuildings } from "@/components/layout/pinned-buildings";
+import { sortPinnedFirst } from "@/lib/pinned-buildings";
 import { Switch } from "@/components/ui/switch";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import {
@@ -121,6 +123,7 @@ export function roomEditorInitial(room: Room): RoomEditorInitial {
 
 export function BuildingsClient({
   initial,
+  pinnedIds = [],
   users,
   perLocationJournals = false,
   readOnly = false,
@@ -131,6 +134,8 @@ export function BuildingsClient({
   canSplitJournals,
 }: {
   initial: Building[];
+  /** Закреплённые скрепкой объекты — первыми (личное, 2026-11-23). */
+  pinnedIds?: string[];
   /**
    * Показывать «Вести журналы отдельно по точкам»: точек вместе с офисом две
    * и больше. Офиса в списке нет (он в «Моя компания → Офис»), а делить
@@ -156,6 +161,7 @@ export function BuildingsClient({
 }) {
   const router = useRouter();
   const tPoint = useTranslations("navigation.shell.point");
+  const pins = usePinnedBuildings(pinnedIds);
   const t = useTranslations("settingsUi.buildingsClient");
   const [, startTransition] = useTransition();
   const [flagPending, setFlagPending] = useState(false);
@@ -304,10 +310,12 @@ export function BuildingsClient({
         </div>
       ) : null}
 
-      {initial.map((b) => (
+      {sortPinnedFirst(initial, pins.pinned).map((b) => (
         <BuildingCard
           key={b.id}
           building={b}
+          pinned={pins.isPinned(b.id)}
+          onTogglePin={b.kind === "office" || initial.length < 2 ? null : () => void pins.toggle(b.id)}
           userNameById={userNameById}
           readOnly={readOnly}
           perLocationJournals={perLocationJournals}
@@ -356,6 +364,8 @@ export function BuildingsClient({
 
 function BuildingCard({
   building,
+  pinned = false,
+  onTogglePin = null,
   userNameById,
   readOnly = false,
   perLocationJournals = false,
@@ -368,6 +378,9 @@ function BuildingCard({
   openHref = null,
   openLabel,
 }: {
+  /** Скрепка (личное закрепление первым); null — у офиса и одного объекта её нет. */
+  pinned?: boolean;
+  onTogglePin?: (() => void) | null;
   /** Страница точки (блоки 1–5); null — точка человеку недоступна. */
   openHref?: string | null;
   openLabel: string;
@@ -554,7 +567,7 @@ function BuildingCard({
   }
 
   return (
-    <div className="rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+    <div className="group rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]" data-building-card={building.id}>
       <div className="mb-3 flex items-start justify-between gap-3">
         {editing ? (
           <div className="min-w-0 flex-1 space-y-2">
@@ -664,6 +677,7 @@ function BuildingCard({
                   {categoryLabel(sphere)}
                 </span>
               )}
+              {onTogglePin ? <PinButton pinned={pinned} onToggle={onTogglePin} name={building.name} /> : null}
             </div>
             {building.address ? (
               <div className="mt-0.5 text-[13px] text-[#6f7282]">{building.address}</div>

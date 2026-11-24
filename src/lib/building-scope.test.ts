@@ -308,7 +308,8 @@ test("задачи дня: точка — только она, «Вся орга
   assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: "b-b", fullAccess: true })), ["b-b"]);
   // «Вся организация» у руководства — все точки по отдельности.
   assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [A, B], userBuildingIds: [], cookieBuildingId: ORGANIZATION_VIEW_ID, fullAccess: true })), ["b-a", "b-b"]);
-  assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: null, fullAccess: true })), ["b-o", "b-a", "b-b"]);
+  // Офис — не объект (2026-11-23): на «Сегодня» всей организации его подборки нет.
+  assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: [], cookieBuildingId: null, fullAccess: true })), ["b-a", "b-b"]);
   // Сотрудник офиса — офис, не все точки.
   assert.deepEqual(ids(resolveActiveBuilding({ enabled: true, buildings: [OFFICE, A, B], userBuildingIds: ["b-o"], cookieBuildingId: null })), ["b-o"]);
   // Точки выключены — одна общая подборка.

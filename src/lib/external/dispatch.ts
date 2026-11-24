@@ -4,8 +4,9 @@ import { Prisma, type JournalDocument, type JournalTemplate } from "@prisma/clie
 import { db } from "@/lib/db";
 import { resolveJournalCodeAlias } from "@/lib/source-journal-map";
 import { resolveJournalPeriod } from "@/lib/journal-period";
-import { buildingTargets } from "@/lib/building-targets";
-import { withBuildingSuffix, workBuildingsForUser } from "@/lib/building-scope";
+import { documentBuildingTargets } from "@/lib/building-targets";
+import { isOfficeBuilding, withBuildingSuffix, workBuildingsForUser } from "@/lib/building-scope";
+import { officeJournalTarget } from "@/lib/office-journals";
 import { staffAtBuildingWhere, worksAtBuilding } from "@/lib/building-settings";
 import { resolveExternalEntryPoint } from "@/lib/external/entry-point";
 import {
@@ -778,8 +779,11 @@ export async function dispatchExternalEntries(params: {
     return { ok: false, httpStatus: 400, error: "entries array is empty" };
   }
 
-  // Точки организации: id точек или `[null]` без точек.
-  const targets = await buildingTargets(organizationId);
+  // Точки организации: id объектов или `[null]` без точек. Офис — не объект
+  // (2026-11-23): документ на офис не заводится. Запрос с id офиса и строки
+  // сотрудников офиса идут на объект, куда перенесены журналы офиса
+  // (`officeJournalTarget`: первый объект в порядке базы, финальная проверка 2026-11-24).
+  const targets = await documentBuildingTargets(organizationId);
   const pointsEnabled = targets.some(Boolean);
   const buildings = pointsEnabled
     ? await db.building.findMany({
@@ -788,10 +792,13 @@ export async function dispatchExternalEntries(params: {
         select: { id: true, name: true, address: true, kind: true },
       })
     : [];
+  const officeTarget = officeJournalTarget(buildings);
+  const asPoint = (id: string) =>
+    buildings.some((b) => b.id === id && isOfficeBuilding(b)) ? officeTarget ?? id : id;
+  const requestedRaw = typeof params.buildingId === "string" ? params.buildingId : null;
+  const requested = requestedRaw ? asPoint(requestedRaw) : null;
   const requestedPoint =
-    pointsEnabled && typeof params.buildingId === "string" && buildings.some((b) => b.id === params.buildingId)
-      ? params.buildingId
-      : null;
+    pointsEnabled && requested && buildings.some((b) => b.id === requested) ? requested : null;
 
   const fallbackEmployeeId = await pickDefaultEmployeeId(organizationId, requestedPoint);
   const anchorDate = (() => {
@@ -848,10 +855,10 @@ export async function dispatchExternalEntries(params: {
   // Точка документа: явная из запроса или общая точка сотрудников строк.
   const point = resolveExternalEntryPoint({
     targets,
-    requested: typeof params.buildingId === "string" ? params.buildingId : null,
+    requested,
     employees: [...new Set(normalized.map((entry) => entry.employeeId))].map((id) => ({
       id,
-      points: workBuildingsForUser(buildings, employeesById.get(id)?.buildingIds ?? []).map((b) => b.id),
+      points: workBuildingsForUser(buildings, employeesById.get(id)?.buildingIds ?? []).map((b) => asPoint(b.id)),
     })),
   });
   if (!point.ok) {

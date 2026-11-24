@@ -24,4 +24,9 @@ test("generic journal layouts supply their client copy without leaking that name
     assert.ok(props.namespaces.includes("journalFields"));
     assert.equal(new Set(props.namespaces).size, props.namespaces.length);
   }
+  // Окна уборочных журналов зовут g("cleaningGrid.…"): без словаря — сырые ключи вместо «Создать документ».
+  for (const code of ["cleaning", "general_cleaning", "sanitary_day_control", "cleaning_ventilation_checklist"]) {
+    const { props } = await layout({ children: null, params: Promise.resolve({ code }) });
+    assert.ok(props.namespaces.includes("cleaningGrid"), code);
+  }
 });

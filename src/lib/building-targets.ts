@@ -1,5 +1,6 @@
 import { workBuildingsForUser } from "@/lib/building-scope";
 import { db } from "@/lib/db";
+import { documentTargetIds } from "@/lib/office-journals";
 
 /**
  * Точки (2026-09-05): на какие точки раздавать документы и обязательства.
@@ -25,6 +26,25 @@ export async function buildingTargets(
     select: { id: true },
   });
   return buildings.length >= 2 ? buildings.map((building) => building.id) : [null];
+}
+
+/**
+ * На какие здания заводить документы журналов (автосоздание, пересоздание,
+ * автоматика): только объекты — офис не объект (владелец, 2026-11-23),
+ * журналы на него больше не создаются. Без деления по объектам — `[null]`.
+ */
+export async function documentBuildingTargets(organizationId: string): Promise<Array<string | null>> {
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { perLocationJournals: true },
+  });
+  if (!organization?.perLocationJournals) return [null];
+  const buildings = await db.building.findMany({
+    where: { organizationId },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { id: true, kind: true },
+  });
+  return documentTargetIds(true, buildings);
 }
 
 /**

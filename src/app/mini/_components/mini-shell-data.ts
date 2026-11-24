@@ -117,7 +117,7 @@ export async function loadMiniShellData(session: Session | null) {
       : false,
     locationName: miniLocationLabel(
       buildingContext,
-      (await getTranslations("navigation.shell.point"))("organization"),
+      (await getTranslations("navigation.shell.point"))("choose"),
     ),
     partnerHint,
     // Область данных (2026-11-12): смена организации/точки собирает экран

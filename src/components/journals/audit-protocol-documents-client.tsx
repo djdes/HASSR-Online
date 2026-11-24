@@ -265,11 +265,9 @@ export function AuditProtocolDocumentsClient({
         config,
       }),
     });
-    const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || committed.current.text("journalControls.documentDialog.createError"));
-    }
-    router.push(`/journals/${routeCode}/documents/${result.document.id}`);
+    // Нет объекта — PointRequiredError, документ за период уже есть — развилка.
+    const created = await readCreatedDocument(response, committed.current.text("journalControls.documentDialog.createError"));
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
     router.refresh();
   }
 

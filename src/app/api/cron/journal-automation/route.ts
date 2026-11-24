@@ -2,7 +2,7 @@ import { getJournalControls } from "@/lib/journal-controls.server";
 import { automationOn } from "@/lib/journal-controls";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { buildingTargets } from "@/lib/active-building";
+import { documentBuildingTargets } from "@/lib/active-building";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { raisePlatformAlert } from "@/lib/platform-alerts";
 import { toDateKey } from "@/lib/hygiene-document";
@@ -110,7 +110,8 @@ async function runForOrganization(
   const disabledCodes = parseDisabledCodes(org.disabledJournalCodes);
   // Точки: каждый журнал автоматики ведётся на каждой точке отдельно, а
   // у точки со своей автоматикой (слитая организация) — по её настройкам.
-  const targets = await buildingTargets(org.id);
+  // Офис — не объект (2026-11-23): на него журналы не заводятся.
+  const targets = await documentBuildingTargets(org.id);
   const buildingSettings = await loadBuildingJournalSettings(db, org.id);
   const jobs = targets.flatMap((buildingId) => {
     const settings = withBuildingJournalSettings(org, buildingId ? buildingSettings.get(buildingId) : null);

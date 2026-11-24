@@ -13,6 +13,7 @@ import { NavIcon, NavIconChip } from "@/components/layout/nav-icons";
 import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
 import { NavBadge } from "@/components/layout/section-menu-list";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { FavoriteStar } from "@/components/favorites/favorite-star";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,9 +49,11 @@ const FADE_PX = 44;
  * вкладки пункта; первая вкладка — сам раздел, если его страницы нет среди
  * пунктов («Объекты», `buildNewNav`).
  *
- * У пункта с продолжением две кнопки (владелец, 2026-11-23: «раздельно»):
- * название открывает раздел, стрелка в своей кнопке — вложенные пункты
- * (`PanelEntry`): на компьютере выпадающей панелью, на телефоне — листом снизу.
+ * Пункт с продолжением — одна кнопка списка (владелец, 2026-11-23: «при
+ * нажатии по „Журналам“ не должно быть перехода в „Сегодня“ — открывать
+ * выпадающее меню»): нажатие на название или стрелку открывает вложенные
+ * пункты (`PanelEntry`) — на компьютере панелью, на телефоне листом снизу;
+ * сам раздел — первой строкой списка.
  *
  * Одна строка на всех экранах: у длинных пунктов — короткое название
  * (`entry.short`), иконки на месте всегда (раньше прятались по замеру после
@@ -201,6 +204,25 @@ function TabLabel({ entry }: { entry: NewNavEntry }) {
   );
 }
 
+/** Содержимое вкладки-кнопки (пункт с вложенными): без ожидания перехода — переход здесь не начинается. */
+function TabLabelStatic({ entry }: { entry: NewNavEntry }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 @max-[1380px]/toprow:gap-1">
+      {entry.icon ? (
+        <NavIcon
+          name={entry.icon}
+          className={cn(
+            "size-4 shrink-0 transition-colors duration-150",
+            entry.active ? "text-[var(--tone)]" : "text-[#9b9fb3] group-hover/tab:text-[var(--tone)]",
+          )}
+        />
+      ) : null}
+      <span>{entry.short ?? entry.label}</span>
+      {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
+    </span>
+  );
+}
+
 /** Вкладка строки: обёртка с формой вкладки и атрибутом выбора. */
 function Tab({ entry, children, tabRef }: { entry: NewNavEntry; children: ReactNode; tabRef?: Ref<HTMLDivElement> }) {
   return (
@@ -211,7 +233,7 @@ function Tab({ entry, children, tabRef }: { entry: NewNavEntry; children: ReactN
       data-top-menu-current={entry.active ? "" : undefined}
       data-active={entry.active ? "" : undefined}
       data-tone={entry.icon ? navTone(entry.icon) : undefined}
-      className={TAB}
+      className={cn(TAB, "group/fav")}
     >
       {children}
     </div>
@@ -231,9 +253,14 @@ function TopEntry({ entry }: { entry: NewNavEntry }) {
       >
         <TabLabel entry={entry} />
       </Link>
+      {/* Звёздочка «в избранное» — в углу вкладки при наведении (2026-11-23). */}
+      <FavoriteStar href={entry.href} label={entry.label} className={TAB_STAR} />
     </Tab>
   );
 }
+
+/** Звёздочка вкладки: маленькая, в правом верхнем углу, поверх края вкладки. */
+const TAB_STAR = "top-0 right-0 size-5 translate-y-0 rounded-md shadow-[0_2px_8px_-4px_rgba(11,16,36,0.35)] [&>svg]:size-3.5";
 
 // Строка панели: иконка-плашка в цвет пункта и название. Выбранная — фон и
 // текст тона, как у выбранного пункта меню слева.
@@ -258,9 +285,9 @@ const PANEL_COLUMNS: Record<number, string> = {
 };
 
 /**
- * Пункт с вложенными пунктами — четвёртый уровень меню. Название — ссылка в
- * раздел, стрелка — отдельная кнопка с мягкой подложкой (видно, что она тоже
- * нажимается). Панель:
+ * Пункт с вложенными пунктами — четвёртый уровень меню. Вся вкладка — одна
+ * кнопка: нажатие открывает список, перехода в раздел нет (владелец,
+ * 2026-11-23). Панель:
  *   • первая строка — сам раздел со стрелкой «открыть» (если его корень не
  *     повторяет один из пунктов);
  *   • у каждого пункта — иконка-плашка своего цвета: строка с плашкой — это
@@ -270,14 +297,9 @@ const PANEL_COLUMNS: Record<number, string> = {
  *     друг под другом.
  */
 function PanelEntry({ entry }: { entry: NewNavEntry }) {
-  const t = useTranslations("navigation.shell");
   const narrow = useIsNarrowViewport();
   const [open, setOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  // Панель встаёт от начала вкладки, а не от стрелки (она справа от названия).
-  const [alignOffset, setAlignOffset] = useState(0);
-  const tabRef = useRef<HTMLDivElement>(null);
-  const chevronRef = useRef<HTMLButtonElement>(null);
   const groups = entry.panel ?? [];
   // Одна длинная группа делится на две колонки сама (`columns`); несколько
   // групп — колонка на группу, не больше трёх в ряд.
@@ -293,50 +315,40 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
       setSheetOpen(true);
       return;
     }
-    if (next) {
-      const tab = tabRef.current?.getBoundingClientRect();
-      const chevron = chevronRef.current?.getBoundingClientRect();
-      if (tab && chevron) setAlignOffset(Math.round(tab.left - chevron.left));
-    }
     setOpen(next);
   };
 
   return (
-    <Tab entry={entry} tabRef={tabRef}>
-      <Link
-        href={entry.href}
-        aria-current={entry.active ? "true" : undefined}
-        title={entry.short ? entry.label : undefined}
-        data-top-menu-link={entry.id}
-        className={cn(TAB_LINK, "pr-1.5 @max-[1380px]/toprow:pr-1", entry.active ? TAB_LINK_ACTIVE : TAB_LINK_IDLE)}
-      >
-        <TabLabel entry={entry} />
-      </Link>
+    <Tab entry={entry}>
       {/* Немодальное меню: страница под ним не блокируется и не сдвигается. */}
       <DropdownMenu modal={false} open={open} onOpenChange={onOpenChange}>
         <DropdownMenuTrigger asChild>
           <button
-            ref={chevronRef}
             type="button"
-            aria-label={t("submenu", { name: entry.label })}
-            title={t("submenu", { name: entry.label })}
+            title={entry.short ? entry.label : undefined}
+            aria-current={entry.active ? "true" : undefined}
             aria-expanded={expanded}
+            data-top-menu-trigger={entry.id}
             data-top-menu-toggle={entry.id}
             data-open={expanded ? "" : undefined}
-            className="my-auto mr-1.5 inline-flex size-6 shrink-0 items-center justify-center rounded-md @max-[1380px]/toprow:mr-1 @max-[1380px]/toprow:size-5 bg-[var(--app-veil)] text-[#6f7282] transition-colors duration-150 hover:bg-[var(--app-veil-hover)] hover:text-[#0b1024] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 data-[open]:bg-[#5566f6]/10 data-[open]:text-[#3848c7]"
+            className={cn(
+              TAB_LINK,
+              "gap-1 pr-2 @max-[1380px]/toprow:pr-1.5",
+              entry.active ? TAB_LINK_ACTIVE : TAB_LINK_IDLE,
+            )}
           >
+            <TabLabelStatic entry={entry} />
             <ChevronDown
               aria-hidden
               className={cn(
-                "size-3.5 transition-transform duration-200 motion-reduce:transition-none",
-                expanded && "rotate-180",
+                "size-3.5 shrink-0 text-[#9b9fb3] transition-transform duration-200 motion-reduce:transition-none group-hover/tab:text-[#0b1024]",
+                expanded && "rotate-180 text-[var(--tone)]",
               )}
             />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          alignOffset={alignOffset}
           collisionPadding={12}
           data-top-menu-panel={entry.id}
           data-nav-flat=""
@@ -344,17 +356,19 @@ function PanelEntry({ entry }: { entry: NewNavEntry }) {
         >
           {ownRow ? (
             <>
-              <DropdownMenuItem asChild className={cn(PANEL_ROW, "font-semibold")}>
-                <Link href={entry.href} data-nav-row data-tone={entry.icon ? navTone(entry.icon) : undefined} data-top-menu-own>
-                  {entry.icon ? (
-                    <NavIconChip name={entry.icon} className={PANEL_CHIP} iconClassName={PANEL_CHIP_ICON} />
-                  ) : null}
-                  <span className="min-w-0 flex-1">{entry.label}</span>
-                  {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
-                  <span className="sr-only">{t("openSection")}</span>
-                  <ArrowRight aria-hidden className="size-4 text-[#9b9fb3]" />
-                </Link>
-              </DropdownMenuItem>
+              <div className="group/fav relative">
+                <DropdownMenuItem asChild className={cn(PANEL_ROW, "font-semibold")}>
+                  <Link href={entry.href} data-nav-row data-tone={entry.icon ? navTone(entry.icon) : undefined} data-top-menu-own>
+                    {entry.icon ? (
+                      <NavIconChip name={entry.icon} className={PANEL_CHIP} iconClassName={PANEL_CHIP_ICON} />
+                    ) : null}
+                    <span className="min-w-0 flex-1">{entry.label}</span>
+                    {entry.badge ? <NavBadge>{entry.badge}</NavBadge> : null}
+                    <ArrowRight aria-hidden className="size-4 text-[#9b9fb3]" />
+                  </Link>
+                </DropdownMenuItem>
+                <FavoriteStar href={entry.href} label={entry.label} />
+              </div>
               <DropdownMenuSeparator className="mx-0 my-1.5" />
             </>
           ) : null}
@@ -408,6 +422,7 @@ function PanelLink({ link }: { link: NewNavPanelLink }) {
   const tone = link.icon ? navTone(link.icon) : undefined;
   return (
     <div data-tone={tone} className="break-inside-avoid">
+      <div className="group/fav relative">
       <DropdownMenuItem
         asChild
         className={cn(
@@ -429,15 +444,20 @@ function PanelLink({ link }: { link: NewNavPanelLink }) {
           {link.badge ? <NavBadge>{link.badge}</NavBadge> : null}
         </Link>
       </DropdownMenuItem>
+      <FavoriteStar href={link.href} label={link.label} />
+      </div>
       {hasTabs ? (
         // Линия — под серединой плашки пункта (поле строки 8px + половина плашки 14px).
         <div className="mt-0.5 mb-1 ml-[21px] border-l border-[var(--app-border-strong)] pl-2" data-top-menu-tabs={link.id}>
           {link.tabs.map((tab) => (
-            <DropdownMenuItem key={tab.id} asChild className={cn(PANEL_TAB, tab.active && PANEL_TAB_ACTIVE)}>
-              <Link href={tab.href} aria-current={tab.active ? "page" : undefined}>
-                {tab.label}
-              </Link>
-            </DropdownMenuItem>
+            <div key={tab.id} className="group/fav relative">
+              <DropdownMenuItem asChild className={cn(PANEL_TAB, tab.active && PANEL_TAB_ACTIVE)}>
+                <Link href={tab.href} aria-current={tab.active ? "page" : undefined}>
+                  {tab.label}
+                </Link>
+              </DropdownMenuItem>
+              <FavoriteStar href={tab.href} label={tab.label} className="right-1 size-6" />
+            </div>
           ))}
         </div>
       ) : null}

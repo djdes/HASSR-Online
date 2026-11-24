@@ -1,0 +1,30 @@
+
+/home/user/HASSR-Online/src/app/(dashboard)/journals/[code]/page.tsx
+    12:31  warning  'redirect' is defined but never used. Allowed unused vars must match /^_/u                                                                                               @typescript-eslint/no-unused-vars
+  1434:15  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+/home/user/HASSR-Online/src/app/api/cron/compliance/route.ts
+  20:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/app/api/cron/mini-digest/route.ts
+  20:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/app/api/integrations/tasksflow/bulk-assign-today/route.ts
+   45:10  warning  'filterSubordinates' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  110:10  warning  'currentMonthBounds' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  119:10  warning  'monthLabel' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/app/api/journal-documents/route.ts
+   30:3   warning  'getDefaultClimateDocumentConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   73:3   warning  'normalizeSanitationDayConfig' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  127:31  warning  'canWriteJournal' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+
+✖ 10 problems (1 error, 9 warnings)
+
+EXIT 1
+
+# f778c8aa4 (исправления после проверки): eslint -f json по 8 изменённым файлам кода
+# (journals/[code]/page.tsx, окна жалоб, протокола аудита, металлопримесей, списка стекла, staff-page-client,
+# journal-qr-rollover, mercury/process-incoming) против тех же файлов origin/master (eslint --stdin):
+# ветка — 10 замечаний, master — 12; новых — нет; ушли — 2 (неиспользуемый readCreatedDocument в окнах протокола
+# аудита и металлопримесей).

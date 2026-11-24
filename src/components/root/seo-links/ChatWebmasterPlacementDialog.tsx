@@ -786,7 +786,7 @@ export function ChatWebmasterPlacementDialog({
                             </h4>
                           ) : null}
                           <div
-                            className="prose prose-sm max-w-none text-[13.5px] leading-relaxed text-[#0b1024] [&_a]:font-semibold [&_a]:text-[#3848c7] [&_a]:underline [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-[15.5px] [&_h2]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-[14px] [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2.5"
+                            className="prose prose-sm max-w-none text-[13.5px] leading-relaxed text-[#0b1024] [&_a]:font-semibold [&_a]:text-[var(--app-indigo-deep)] [&_a]:underline [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-[15.5px] [&_h2]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-[14px] [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2.5"
                             dangerouslySetInnerHTML={{
                               __html: sanitizeArticleHtmlForPreview(
                                 draft.bodyHtml,

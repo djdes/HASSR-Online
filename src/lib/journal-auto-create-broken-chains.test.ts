@@ -28,6 +28,8 @@ type Template = {
 function fakeDb(groups: Group[], templates: Template[]) {
   const calls = { creates: 0 };
   const db = {
+    // Здания организации для `documentBuildingFor` (офис — не объект): офиса нет — точка как есть.
+    building: { findMany: async () => [] },
     journalDocument: {
       groupBy: async () => groups,
       create: async () => {

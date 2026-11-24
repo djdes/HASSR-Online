@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { isOfficeBuilding, ORGANIZATION_VIEW_ID, type BuildingOption } from "@/lib/building-scope";
+import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
 import { useContentTransition } from "@/components/layout/content-transition";
-import { shortSwitchName, switchWithReturn, type SwitchSide } from "@/components/layout/switch-toast";
 
 /** Блок `location` из /api/mini/home. */
 export type MiniLocationPayload = {
@@ -23,12 +22,12 @@ export type MiniLocationPayload = {
  * переключатель организации в этом же профиле.
  *
  * Как и на сайте (2026-10-29), запрос и обновление страницы — один переход:
- * «…» у пункта держится, пока не придут данные новой точки, тост — после.
- * Тост — единый тост смены с «Вернуться на «…»» (2026-11-12).
+ * «…» у пункта держится, пока не придут данные новой точки. С 2026-11-23 —
+ * как в шапке сайта: в списке только объекты (офис — не объект, «Вся
+ * организация» не пункт), смена без тоста и «Вернуться на «…»».
  */
 export function MiniLocationSwitcher() {
   const t = useTranslations("notificationSettings.miniSwitchers");
-  const tPoint = useTranslations("navigation.shell.point");
   const currentT = useRef(t);
   useEffect(() => {
     currentT.current = t;
@@ -53,20 +52,17 @@ export function MiniLocationSwitcher() {
   }, []);
 
   if (!location?.canSwitch) return null;
-  // «Вся организация» — первым пунктом, если офиса нет (как в шапке сайта).
-  const virtualOrganization =
-    location.canViewOrganization === true && !location.buildings.some(isOfficeBuilding);
-  const options: BuildingOption[] = virtualOrganization
-    ? [{ id: ORGANIZATION_VIEW_ID, name: tPoint("organization"), address: null, kind: "office" }, ...location.buildings]
-    : location.buildings;
-  const activeId =
-    virtualOrganization && location.organizationView ? ORGANIZATION_VIEW_ID : location.activeBuildingId;
+  // Только объекты: офис — не объект (2026-11-23), «Вся организация» — не пункт.
+  const options: BuildingOption[] = location.buildings.filter((building) => !isOfficeBuilding(building));
+  // Уровень организации (офис или вся организация) — выбранного объекта нет.
+  const activeBuilding = location.buildings.find((building) => building.id === location.activeBuildingId);
+  const activeId = location.organizationView || isOfficeBuilding(activeBuilding) ? null : location.activeBuildingId;
 
-  function buildingSide(building: BuildingOption): SwitchSide {
-    return {
-      tag: building.id,
-      go: async () => {
-        try {
+  /** Смена объекта — без тоста (как на сайте, 2026-11-23). */
+  function switchTo(building: BuildingOption) {
+    if (!location || building.id === activeId || isPending) return;
+    refreshAfter(building.id, async () => {
+      try {
           const response = await fetch("/api/me/active-building", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -74,30 +70,16 @@ export function MiniLocationSwitcher() {
           });
           if (!response.ok) throw new Error();
           setLocation((current) =>
-            !current
-              ? current
-              : building.id === ORGANIZATION_VIEW_ID
-                ? { ...current, organizationView: true }
-                : { ...current, activeBuildingId: building.id, organizationView: isOfficeBuilding(building) },
+            current ? { ...current, activeBuildingId: building.id, organizationView: false } : current,
           );
           return true;
         } catch {
           // Как и у организации: сбой должен быть виден, иначе человек решит,
-          // что точка переключилась, а данные показываются от прежней.
+          // что объект переключился, а данные показываются от прежнего.
           toast.error(currentT.current("locationSwitchFailed"));
           return false;
         }
-      },
-      message: tPoint("switched", { name: building.name }),
-      returnLabel: tPoint("returnTo", { name: shortSwitchName(building.name) }),
-    };
-  }
-
-  /** Единый тост смены, как на сайте: «Объект: …» и «Вернуться на «…»». */
-  function switchTo(building: BuildingOption) {
-    if (!location || building.id === activeId || isPending) return;
-    const current = options.find((option) => option.id === activeId) ?? null;
-    switchWithReturn(refreshAfter, buildingSide(building), current ? buildingSide(current) : null);
+    });
   }
 
   return (

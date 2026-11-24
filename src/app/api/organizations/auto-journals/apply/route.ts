@@ -6,7 +6,7 @@ import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import {
   loadBuildingJournalSettings,
   readBuildingJournalSettings,
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
   if (automation.autoCreate && automationOn(await getJournalControls(organizationId), "autoCreate")) {
     // «Вся организация» — документ каждой точке, где автоматика журнала
     // включена (у точки со своей автоматикой — по её настройкам).
-    const targets = pointId ? [pointId] : await buildingTargets(organizationId);
+    const targets = pointId ? [pointId] : await documentBuildingTargets(organizationId);
     const ownByBuilding = pointId ? null : await loadBuildingJournalSettings(db, organizationId);
     for (const buildingId of targets) {
       const effective =

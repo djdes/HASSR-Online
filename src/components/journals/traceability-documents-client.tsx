@@ -54,9 +54,11 @@ import { useAutoDocumentTitle } from "@/components/journals/use-auto-document-ti
 import { SharedDocumentBadge } from "@/components/journals/shared-document-badge";
 import {
   DocumentDialogFeedback,
+  PointRequiredError,
   readCreatedDocument,
   useDocumentDialogSubmit,
 } from "@/components/journals/use-document-dialog-submit";
+import { POINT_REQUIRED_CODE } from "@/lib/office-journals";
 type TraceabilityDocumentItem = {
   id: string;
   title: string;
@@ -383,6 +385,8 @@ export function TraceabilityDocumentsClient({
       // Текст сервера объясняет отказ («За этот период уже есть
       // документ…»); служебное «request failed» человеку ничего не давало.
       const failure = await response.json().catch(() => null);
+      // «Выберите объект»: документ создаётся для объекта — окно пишет это, а не общий текст.
+      if (!documentId && failure?.code === POINT_REQUIRED_CODE) throw new PointRequiredError();
       throw new Error(failure?.error || ui("saveFailed"));
     }
 

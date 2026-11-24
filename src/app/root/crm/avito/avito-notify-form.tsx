@@ -105,6 +105,8 @@ export function AvitoNotifyForm({
           type="number"
           min={0}
           step={100}
+          // Сумма без минуса и копеек — цифровая клавиатура (`numberInputMode`).
+          inputMode="numeric"
           value={form.lowBalanceRub}
           onChange={(event) => setForm((current) => ({ ...current, lowBalanceRub: Number(event.target.value) || 0 }))}
           disabled={!canEdit}

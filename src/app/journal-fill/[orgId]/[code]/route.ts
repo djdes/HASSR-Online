@@ -21,7 +21,7 @@ import {
 } from "@/lib/journal-fill";
 import { journalFillHints, type JournalFillHints } from "@/lib/journal-fill-hints";
 import { decideQrFirstDocument, ensureQrPeriodDocuments, qrRolloverMessage, resolveTokenDocumentIds } from "@/lib/journal-qr-rollover";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { getDisabledJournalCodes } from "@/lib/disabled-journals";
 import { employeeWorksAtQrPoint, loadQrPointScope } from "@/lib/qr-point-roster";
 import { journalResponsibleLabel } from "@/lib/journal-responsible-person";
@@ -375,7 +375,8 @@ async function handle(request: Request, ctx: Ctx, posted: FormData | null): Prom
   // Дополнительный QR документа со сроком «прибит» к своему документу:
   // без перехода в новый период и без создания документов.
   const pinned = check.validUntil !== null;
-  const orgTargets = await buildingTargets(orgId);
+  // Первый документ — только объекту: офис не объект (2026-11-23).
+  const orgTargets = await documentBuildingTargets(orgId);
   // Период сменился (1-е число, прошлый документ до 30-го) — документ
   // нового периода по образцу прошлого создаётся здесь же, тем же правилом,
   // что у ночного крона. Журналом не пользовались — первый документ, но
