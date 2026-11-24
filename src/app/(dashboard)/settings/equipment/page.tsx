@@ -168,7 +168,13 @@ export default async function EquipmentSettingsPage({
     name: user.name,
     position: getUserDisplayTitle(user) || null,
     management: isManagementRole(user.role) || user.canManageSettings,
+    // Объекты человека: окно показывает в «Кто заполняет» людей выбранного объекта.
+    buildingIds: user.buildingIds,
   }));
+
+  // «Кто заполняет по QR» фильтруется по объекту по тому же правилу, что и
+  // QR-страница (`loadQrPointScope`): точки включены и их хотя бы две.
+  const fillerScopeBuildingIds = showPlaceFilter && buildings.length >= 2 ? orgBuildingIds : [];
 
   // IoT readings — только оборудование на экране своих точек.
   const iotIds = scope.items.filter((e) => e.tuyaDeviceId).map((e) => e.id);
@@ -207,6 +213,7 @@ export default async function EquipmentSettingsPage({
     places,
     existingNames: equipmentNames,
     fillerOptions,
+    orgBuildingIds: fillerScopeBuildingIds,
   };
 
   // Датчики температуры (раньше — на главной, меню 2026-10-16) — своих точек.
@@ -278,6 +285,7 @@ export default async function EquipmentSettingsPage({
             defaultBuildingId={defaultBuildingId}
             existingNames={equipmentNames}
             fillerOptions={fillerOptions}
+            orgBuildingIds={fillerScopeBuildingIds}
           />
         </PageActions>
         ) : null}
@@ -349,7 +357,7 @@ export default async function EquipmentSettingsPage({
 
 type EquipmentDialogShared = Pick<
   ComponentProps<typeof EquipmentDialog>,
-  "areas" | "buildings" | "places" | "existingNames" | "fillerOptions"
+  "areas" | "buildings" | "places" | "existingNames" | "fillerOptions" | "orgBuildingIds"
 >;
 
 type EquipmentRow = Prisma.EquipmentGetPayload<{

@@ -1,5 +1,6 @@
 "use client";
 import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
+import { TASKSFLOW_SITE_URL } from "@/lib/tasksflow-promo";
 
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -313,7 +314,20 @@ export function PhoneBindingClient(props: Props) {
             <li className="flex gap-2">
               <span className="mt-1 size-1.5 shrink-0 rounded-full bg-[#5566f6]" />
               <span>
-                {t.rich("sidebar.tasksflow", { b: chunks => <b>{chunks}</b> })}
+                {t.rich("sidebar.tasksflow", {
+                  b: chunks => <b>{chunks}</b>,
+                  // «Программный модуль — сервис задач …» со ссылкой на его сайт (владелец, 2026-11-23).
+                  link: chunks => (
+                    <a
+                      href={TASKSFLOW_SITE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-[#3848c7] underline-offset-2 hover:underline"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
               </span>
             </li>
             <li className="flex gap-2">

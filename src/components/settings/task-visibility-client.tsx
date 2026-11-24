@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, Eye, Loader2, Save } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useTaskVisibilityFeedback } from "./task-visibility-feedback";
 import { taskVisibilitySaveError } from "@/lib/task-visibility-presentation";
@@ -22,6 +23,7 @@ type Props = {
 export function TaskVisibilityClient({ positions }: Props) {
   const router = useRouter();
   const t = useTranslations("settingsTaskVisibility");
+  const tNav = useTranslations("navigation");
   const feedback = useTaskVisibilityFeedback();
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(positions.filter((p) => p.seesAllTasks).map((p) => p.id)),
@@ -99,8 +101,8 @@ export function TaskVisibilityClient({ positions }: Props) {
             <p className="mt-2 text-[12px] text-[#6f7282]">
               {t.rich("intro.recommendation", {
                 recommendation: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
-                hierarchy: (chunks) => <a href="/settings/staff-hierarchy" className="text-[#5566f6] hover:underline">{chunks}</a>,
-                hierarchyPath: "/settings/staff-hierarchy",
+                hierarchy: (chunks) => <Link href="/settings/staff-hierarchy" className="text-[#5566f6] hover:underline">{chunks}</Link>,
+                hierarchyPath: tNav("shell.menus.staff.items.hierarchy"),
               })}
             </p>
           </div>

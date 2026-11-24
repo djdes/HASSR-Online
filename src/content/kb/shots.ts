@@ -876,7 +876,7 @@ export const KB_SHOTS: Record<string, KbShot> = {
     "marks": [
       {
         "n": 1,
-        "title": "Умные пресеты",
+        "title": "Умный подбор",
         "text": "Одна кнопка — назначения для всех журналов",
         "warn": false,
         "x": 4.14,

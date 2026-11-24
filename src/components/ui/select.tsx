@@ -15,10 +15,54 @@ import {
   MENU_SEPARATOR_CLASS,
 } from "@/components/ui/menu-styles"
 
+/**
+ * Кнопка-триггер открытого списка: по ней `SelectContent` находит рамку поля с
+ * подписью внутри (`FloatingLabelField`) и выравнивает список по рамке.
+ */
+const SelectAnchorContext = React.createContext<React.RefObject<HTMLButtonElement | null> | null>(null)
+
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+  const anchor = React.useRef<HTMLButtonElement | null>(null)
+  return (
+    <SelectAnchorContext.Provider value={anchor}>
+      <SelectPrimitive.Root data-slot="select" {...props} />
+    </SelectAnchorContext.Provider>
+  )
+}
+
+/** Записать узел в ref любого вида (функция или объект). */
+function assignRef<T>(ref: React.Ref<T> | undefined, node: T | null) {
+  if (typeof ref === "function") ref(node)
+  else if (ref) (ref as React.RefObject<T | null>).current = node
+}
+
+/**
+ * Рамка поля вокруг кнопки (`data-field-frame`, подпись внутри рамки): где она
+ * относительно кнопки. Кнопка там — строка значения под подписью, и список,
+ * привязанный к ней, съезжал вправо и налезал на рамку (владелец, 2026-11-23).
+ */
+function frameGeometry(trigger: HTMLElement | null): React.CSSProperties | null {
+  const frame = trigger?.parentElement?.closest<HTMLElement>("[data-field-frame]")
+  if (!trigger || !frame) return null
+  const t = trigger.getBoundingClientRect()
+  const f = frame.getBoundingClientRect()
+  if (f.width === 0 || t.width === 0) return null
+  return {
+    "--select-frame-width": `${f.width}px`,
+    "--select-frame-dx": `${f.left - t.left}px`,
+    "--select-frame-below": `${f.bottom - t.bottom}px`,
+    "--select-frame-above": `${t.top - f.top}px`,
+  } as React.CSSProperties
+}
+
+/** Открытый список у поля с рамкой: переменные рамки и пометка, включающая выравнивание по ней. */
+function markFrameAnchor(content: HTMLElement, trigger: HTMLElement | null) {
+  const frame = frameGeometry(trigger)
+  if (!frame) return
+  for (const [name, value] of Object.entries(frame)) content.style.setProperty(name, String(value))
+  content.setAttribute("data-field-frame-anchor", "")
 }
 
 /**
@@ -56,12 +100,22 @@ function SelectTrigger({
   className,
   size = "default",
   children,
+  ref,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default"
 }) {
+  const anchorRef = React.useContext(SelectAnchorContext)
+  const setRef = React.useCallback(
+    (node: HTMLButtonElement | null) => {
+      assignRef(anchorRef ?? undefined, node)
+      assignRef(ref, node)
+    },
+    [anchorRef, ref]
+  )
   return (
     <SelectPrimitive.Trigger
+      ref={setRef}
       data-slot="select-trigger"
       data-size={size}
       className={cn(
@@ -84,6 +138,11 @@ function SelectTrigger({
  * поля как нативный select (`item-aligned` — случайность шаблона shadcn).
  * `align="start"` — дефолт Radix для popper; обёртка раньше навязывала
  * `center`.
+ *
+ * Ширина — ровно как у поля (узкое — не меньше 12rem), длинные пункты
+ * переносятся, высота — не больше 24rem. У поля с подписью внутри рамки —
+ * по рамке: левый край, ширина и зазор 6px от её низа (или верха). На
+ * телефоне список — лист снизу (globals.css, `data-slot="select-content"`).
  */
 function SelectContent({
   className,
@@ -91,14 +150,30 @@ function SelectContent({
   position = "popper",
   align = "start",
   sideOffset = 6,
+  ref,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const anchorRef = React.useContext(SelectAnchorContext)
+  // Список монтируется при открытии: тогда кнопка и рамка уже на экране, и
+  // сдвиг между ними от прокрутки не меняется. Ставим переменные до первой
+  // отрисовки (ref — в фазе commit, до расчёта позиции Radix). Сдвиг к рамке
+  // вычитается из высоты: Radix считал свободное место от кнопки, а не от рамки.
+  const setRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      if (node && position === "popper") markFrameAnchor(node, anchorRef?.current ?? null)
+      assignRef(ref, node)
+    },
+    [anchorRef, position, ref]
+  )
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
+        ref={setRef}
         data-slot="select-content"
         className={cn(
-          "relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          "relative z-50 max-h-[min(var(--radix-select-content-available-height),24rem)] max-w-[calc(100vw-1rem)] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto",
+          position === "popper" &&
+            "w-[max(var(--radix-select-trigger-width),12rem)] data-[field-frame-anchor]:w-(--select-frame-width) data-[field-frame-anchor]:translate-x-(--select-frame-dx) data-[field-frame-anchor]:data-[side=bottom]:translate-y-(--select-frame-below) data-[field-frame-anchor]:data-[side=top]:translate-y-[calc(var(--select-frame-above)*-1)] data-[field-frame-anchor]:data-[side=bottom]:max-h-[calc(min(var(--radix-select-content-available-height),24rem)-var(--select-frame-below))] data-[field-frame-anchor]:data-[side=top]:max-h-[calc(min(var(--radix-select-content-available-height),24rem)-var(--select-frame-above))]",
           MENU_PANEL_CLASS,
           MENU_MOTION_CLASS,
           className
@@ -112,8 +187,7 @@ function SelectContent({
         <SelectPrimitive.Viewport
           className={cn(
             MENU_PANEL_PADDING_CLASS,
-            position === "popper" &&
-              "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) scroll-my-1.5"
+            position === "popper" && "h-(--radix-select-trigger-height) w-full scroll-my-1.5"
           )}
         >
           {children}
@@ -147,7 +221,7 @@ function SelectItem({
       data-slot="select-item"
       className={cn(
         MENU_ITEM_CLASS,
-        "pr-9 data-[state=checked]:bg-[var(--app-tint-indigo-2)] data-[state=checked]:font-medium data-[state=checked]:text-[var(--app-indigo-deep)] data-[state=checked]:focus:bg-[var(--app-tint-indigo-2)] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "pr-9 whitespace-normal data-[state=checked]:bg-[var(--app-tint-indigo-2)] data-[state=checked]:font-medium data-[state=checked]:text-[var(--app-indigo-deep)] data-[state=checked]:focus:bg-[var(--app-tint-indigo-2)] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}

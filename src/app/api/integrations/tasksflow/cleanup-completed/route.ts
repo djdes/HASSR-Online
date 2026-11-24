@@ -49,7 +49,7 @@ export async function POST() {
   });
   if (!integration) {
     return NextResponse.json(
-      { error: "Интеграция с TasksFlow не настроена" },
+      { error: "Программный модуль не подключён" },
       { status: 400 },
     );
   }
@@ -62,7 +62,7 @@ export async function POST() {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown";
     return NextResponse.json(
-      { error: `TasksFlow listTasks failed: ${msg}` },
+      { error: `Не удалось получить задачи из программного модуля: ${msg}` },
       { status: 502 },
     );
   }
@@ -72,9 +72,9 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          "Интеграция не привязана к конкретной компании в TasksFlow " +
-          "(tasksflowCompanyId=null). Удалить безопасно невозможно. " +
-          "Выполните sync-users в настройках интеграции.",
+          "Подключение не привязано к вашей компании в программном модуле, " +
+          "поэтому безопасно удалить задачи нельзя. " +
+          "Нажмите «Синхронизировать сотрудников» на странице «Программный модуль».",
       },
       { status: 400 },
     );
@@ -93,7 +93,7 @@ export async function POST() {
       deletedTfTasks: 0,
       removedLocalLinks: 0,
       totalScanned: allTasks.length,
-      message: "Нет выполненных задач — TF архив пуст",
+      message: "Нет выполненных задач — архив программного модуля пуст",
     });
   }
 
@@ -151,6 +151,6 @@ export async function POST() {
     removedLocalLinks,
     totalScanned: allTasks.length,
     errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
-    message: `Удалено выполненных задач: ${deletedTfTasks} (плюс ${alreadyGone} уже отсутствовали в TF)`,
+    message: `Удалено выполненных задач: ${deletedTfTasks}. Уже отсутствовали в программном модуле: ${alreadyGone}.`,
   });
 }

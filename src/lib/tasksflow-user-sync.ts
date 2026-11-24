@@ -157,7 +157,7 @@ export async function syncTasksflowUsers(args: {
           phone: user.phone,
           reason: "phone_invalid",
           message:
-            "Телефон не в формате +7… — TasksFlow не сможет его принять",
+            "Телефон не в формате +7… — программный модуль не сможет его принять",
         });
       }
       continue;

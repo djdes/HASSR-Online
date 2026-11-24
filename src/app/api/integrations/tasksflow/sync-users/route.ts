@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   });
   if (!integration || !integration.enabled) {
     return NextResponse.json(
-      { error: "Интеграция не подключена" },
+      { error: "Программный модуль не подключён" },
       { status: 400 }
     );
   }
@@ -74,12 +74,12 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof TasksFlowError) {
       return NextResponse.json(
-        { error: `TasksFlow ошибка: ${err.message}` },
+        { error: `Ошибка программного модуля: ${err.message}` },
         { status: 502 }
       );
     }
     return NextResponse.json(
-      { error: "Не удалось получить список пользователей TasksFlow" },
+      { error: "Не удалось получить список пользователей программного модуля" },
       { status: 502 }
     );
   }
@@ -139,12 +139,12 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof TasksFlowError) {
       return NextResponse.json(
-        { error: `TasksFlow ошибка: ${err.message}` },
+        { error: `Ошибка программного модуля: ${err.message}` },
         { status: 502 }
       );
     }
     return NextResponse.json(
-      { error: "Не удалось синхронизировать сотрудников с TasksFlow" },
+      { error: "Не удалось синхронизировать сотрудников с программным модулем" },
       { status: 502 }
     );
   }
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
       const created = await db.user.create({
         data: {
           email: synthEmail,
-          name: tf.name?.trim() || `TF #${tf.id}`,
+          name: tf.name?.trim() || `Сотрудник #${tf.id}`,
           phone,
           passwordHash,
           role: "cook",

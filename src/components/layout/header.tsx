@@ -8,7 +8,7 @@ import type { PartnerHintRates } from "@/lib/partners/partner-hint";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Handshake, Loader2, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
+import { Handshake, Loader2, Menu, Search, ShieldCheck } from "lucide-react";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { NewProfileMenu } from "@/components/layout/new-profile-menu";
 import { openCommandPalette } from "@/components/layout/command-palette";
@@ -311,8 +311,10 @@ export function Header({
           )}
           <OfflineIndicator />
           <LiveConnectionIndicator />
-          {/* «Новая» тема — глобальный поиск (Ctrl+K): разделы, сотрудники,
-              журналы, документы, оборудование, помещения, продукты. */}
+          {/* Глобальный поиск (Ctrl+K): разделы, сотрудники, журналы,
+              документы, оборудование, помещения, продукты. Классический вид
+              (владелец, 2026-11-23): на компьютере — поле «Поиск…» с Ctrl K,
+              уже — значок; «Новая» тема — как была. */}
           {newDesign ? (
           <button
             type="button"
@@ -325,7 +327,22 @@ export function Header({
             <Search className="size-[18px] shrink-0 stroke-[1.75]" aria-hidden />
             <span className="hidden flex-1 text-left text-[14.5px] text-[#9a9ca8] 2xl:inline">{tSearch("field")}</span>
           </button>
-          ) : null}
+          ) : (
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label={t("header.search")}
+            title={t("header.searchTitle")}
+            data-header-search
+            className="hidden h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 hover:bg-[#eef1ff] hover:text-[#3848c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 sm:inline-flex lg:w-[220px] lg:justify-start lg:px-3 xl:w-[260px]"
+          >
+            <Search className="size-[18px] shrink-0" aria-hidden />
+            <span className="hidden flex-1 truncate text-left text-[14px] lg:inline">{tSearch("field")}</span>
+            <kbd className="hidden shrink-0 rounded-md bg-white px-1.5 py-0.5 font-sans text-[11.5px] font-medium text-[#6f7282] lg:inline">
+              Ctrl K
+            </kbd>
+          </button>
+          )}
           <MaxConnectButton linked={maxLinked} />
           <NotificationsBell triggerClassName="max-sm:size-11" />
 
@@ -358,19 +375,8 @@ export function Header({
             </Link>
           ) : null}
 
-          {/* Выход — нейтральный, краснеет только при наведении. В «Новой»
-              теме — только в меню пользователя (аватар). */}
-          {newDesign ? null : (
-          <button
-            type="button"
-            onClick={handleLogout}
-            aria-label={t("header.logout")}
-            title={t("header.logout")}
-            className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#f4f5fb] text-[#6f7282] transition-colors duration-200 md:inline-flex hover:bg-[#fff4f2] hover:text-[#d2453d]"
-          >
-            <LogOut className="size-5" />
-          </button>
-          )}
+          {/* Отдельной кнопки «Выйти» в шапке нет (владелец, 2026-11-23):
+              выход — внизу меню профиля, справа от языка. */}
 
           {narrowViewport ? (
             <Button
@@ -433,7 +439,6 @@ export function Header({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-0">
-              <div className="px-3 py-2"><PersonalLanguageSelect /></div>
               {/* Шапка меню: кто вошёл + строка тарифа. Тариф здесь, а
                   не отдельной пилюлей в header'е: это редко нужная,
                   но важная справка — ровно формат меню аккаунта. */}
@@ -619,11 +624,14 @@ export function Header({
 
               <DropdownMenuSeparator className="my-0" />
 
-              <div className="p-1">
+              {/* Низ меню (владелец, 2026-11-23): слева — язык, справа — «Выйти». */}
+              <div className="flex items-center justify-between gap-2 p-1.5" data-testid="profile-menu-footer">
+                <PersonalLanguageSelect compact />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-[#a13a32] focus:bg-[#fff4f2] focus:text-[#a13a32]"
+                  className="w-auto shrink-0 text-[#a13a32] focus:bg-[#fff4f2] focus:text-[#a13a32]"
                   data-nav-row
+                  data-testid="profile-logout"
                 >
                   <NavIconChip name="LogOut" className={MENU_CHIP} iconClassName="size-4" />
                   {t("header.logout")}
