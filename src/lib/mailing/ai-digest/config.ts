@@ -43,7 +43,33 @@ export type AiDigestConfig = {
   aiInstructions: string;
   /** Сильно сокращённый текст для Telegram и MAX, с переменными. */
   shortTemplate: string;
+  /**
+   * Кому ещё слать короткий текст в Telegram, кроме пользователей root:
+   * chat_id и подпись (например, «@djdes»). Нужен, когда сводку читают
+   * несколько человек, а аккаунт root один.
+   */
+  telegramExtra: AiDigestTelegramExtra[];
 };
+
+export type AiDigestTelegramExtra = { chatId: string; label: string };
+
+export const AI_DIGEST_TELEGRAM_EXTRA_MAX = 10;
+const CHAT_ID_RE = /^-?\d{3,20}$/;
+
+function normalizeTelegramExtra(raw: unknown): AiDigestTelegramExtra[] {
+  if (!Array.isArray(raw)) return [];
+  const out: AiDigestTelegramExtra[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const r = item as Record<string, unknown>;
+    const chatId = typeof r.chatId === "string" || typeof r.chatId === "number" ? String(r.chatId).trim() : "";
+    const label = typeof r.label === "string" ? r.label.replace(/\s+/g, " ").trim().slice(0, 60) : "";
+    if (!chatId && !label) continue;
+    out.push({ chatId: chatId.slice(0, 40), label });
+    if (out.length >= AI_DIGEST_TELEGRAM_EXTRA_MAX * 2) break;
+  }
+  return out;
+}
 
 /** Переменные шаблона: подставляются и в тему, и во вступление, и в короткий текст. */
 export const AI_DIGEST_VARIABLES: Array<{ key: string; label: string }> = [
@@ -128,6 +154,7 @@ export function normalizeAiDigestConfig(raw: unknown): AiDigestConfig {
     recommendationsCount: Number.isInteger(count) && count >= 1 && count <= 7 ? count : d.recommendationsCount,
     aiInstructions: str(r.aiInstructions, AI_DIGEST_INSTRUCTIONS_MAX * 2, d.aiInstructions),
     shortTemplate: str(r.shortTemplate, AI_DIGEST_SHORT_MAX * 2, d.shortTemplate),
+    telegramExtra: normalizeTelegramExtra(r.telegramExtra),
   };
 }
 
@@ -161,6 +188,18 @@ export function validateAiDigestConfig(raw: unknown): AiDigestValidation {
   if (config.shortTemplate.length > AI_DIGEST_SHORT_MAX) {
     return { ok: false, error: `Короткий текст — не длиннее ${AI_DIGEST_SHORT_MAX} знаков` };
   }
+  if (config.telegramExtra.length > AI_DIGEST_TELEGRAM_EXTRA_MAX) {
+    return { ok: false, error: `Дополнительных получателей в Telegram — не больше ${AI_DIGEST_TELEGRAM_EXTRA_MAX}` };
+  }
+  const badChat = config.telegramExtra.find((x) => !CHAT_ID_RE.test(x.chatId));
+  if (badChat) {
+    return {
+      ok: false,
+      error: `Telegram chat_id — только цифры, например 66092185${badChat.label ? ` (строка «${badChat.label}»)` : ""}`,
+    };
+  }
+  const seen = new Set<string>();
+  config.telegramExtra = config.telegramExtra.filter((x) => (seen.has(x.chatId) ? false : (seen.add(x.chatId), true)));
   if (!AI_DIGEST_CHANNELS.some((c) => config.channels[c])) {
     return { ok: false, error: "Выберите хотя бы один канал: почта, Telegram или MAX" };
   }

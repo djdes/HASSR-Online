@@ -69,6 +69,27 @@ describe("ai-digest config", () => {
     const badTime = validateAiDigestConfig({ ...DEFAULT_AI_DIGEST_CONFIG, schedule: { weekday: 7, time: "24:10" } });
     assert.equal(badTime.ok, false);
   });
+
+  it("дополнительные получатели Telegram: только числовой chat_id, без повторов", () => {
+    assert.deepEqual(normalizeAiDigestConfig({}).telegramExtra, []);
+    const ok = validateAiDigestConfig({
+      ...DEFAULT_AI_DIGEST_CONFIG,
+      telegramExtra: [
+        { chatId: "66092185", label: " @djdes " },
+        { chatId: 5438186408, label: "@mrlinux0" },
+        { chatId: "66092185", label: "дубль" },
+        { chatId: "", label: "" },
+      ],
+    });
+    assert.ok(ok.ok);
+    assert.deepEqual(ok.config.telegramExtra, [
+      { chatId: "66092185", label: "@djdes" },
+      { chatId: "5438186408", label: "@mrlinux0" },
+    ]);
+    const bad = validateAiDigestConfig({ ...DEFAULT_AI_DIGEST_CONFIG, telegramExtra: [{ chatId: "@djdes", label: "Денис" }] });
+    assert.equal(bad.ok, false);
+    assert.match(bad.ok ? "" : bad.error, /Денис/);
+  });
 });
 
 function sales(revenue: number, orders: number, extra: Partial<SalesWeek> = {}): SalesWeek {
