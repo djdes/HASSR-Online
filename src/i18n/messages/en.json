@@ -298,7 +298,8 @@
       "limitNodes": "Limit reached: a diagram holds at most {count} elements",
       "limitEdges": "Limit reached: a diagram holds at most {count} connections",
       "limitPoints": "Limit reached: a line has at most {count} points. Finish the line (Enter)",
-      "limitDoors": "Limit reached: a plan can have at most {count} doors and openings"
+      "limitDoors": "Limit reached: a plan can have at most {count} doors and openings",
+      "position": "Position"
     },
     "flowcharts": {
       "lead": "Process steps from receiving to serving. Mark the steps where CCPs are.",
@@ -833,6 +834,465 @@
       "title": "A production control programme for your site",
       "text": "A specialist will develop the production control programme and document pack for your site: control points, lab testing, responsible staff. Available with any plan.",
       "cta": "Order a custom programme"
+    },
+    "structure": {
+      "title": "Program structure",
+      "lead": "Based on HACCP principles. Tap an item to upload, fill in or check its data.",
+      "progress": "{done} of {total} items filled",
+      "documentsTitle": "Program documents",
+      "sections": {
+        "primary": "Primary information used for the hazard analysis",
+        "plan": "HACCP plan",
+        "prp": "Prerequisite programs (PRP)",
+        "appendix": "Appendices"
+      },
+      "appendixNumber": "Appendix No. {n}",
+      "openSection": "Open section",
+      "backToProgram": "Production control program",
+      "nextItem": "Next item: {item}",
+      "fill": "Fill in",
+      "items": {
+        "1-1": {
+          "title": "General information about the organization",
+          "source": "Taken from the organization details. Items required for the program are marked with an asterisk; you can skip them with a warning."
+        },
+        "1-2": {
+          "title": "Organizational structure",
+          "source": "Diagram builder: positions and reporting lines. You can build a draft from staff positions."
+        },
+        "1-3": {
+          "title": "List of main contracts",
+          "source": "Contract name, counterparty, number and date in our template, contract and act files, visibility for inspectors."
+        },
+        "1-4": {
+          "title": "General information about the production",
+          "source": "Taken from the site details. Items required for the program are marked with an asterisk; you can skip them with a warning."
+        },
+        "1-5": {
+          "title": "List of manufactured products",
+          "source": "Product descriptions; finished products and semi-finished products can be loaded from the product directory."
+        },
+        "1-6": {
+          "title": "Production floor plan and flow organization",
+          "source": "Builder for the floor plan and flows (raw materials, finished products, waste, staff)."
+        },
+        "1-7": {
+          "title": "List of main regulatory documents",
+          "source": "Taken from the regulatory documents you ticked."
+        },
+        "1-8": {
+          "title": "Basic HACCP principles",
+          "source": "Ready-made template: edit, extend or write your own text."
+        },
+        "1-9": {
+          "title": "Basic terms and definitions",
+          "source": "Your own text: there is no template, fill it in when ready."
+        },
+        "2-1": {
+          "title": "Food safety policy",
+          "source": "Ready-made template with editing and approval, or a scan of your own document."
+        },
+        "2-2": {
+          "title": "HACCP team regulation",
+          "source": "Ready-made template with the team members: edit, extend, write your own text or upload a scan."
+        },
+        "2-3": {
+          "title": "HACCP team leader regulation",
+          "source": "Ready-made template: edit, extend, write your own text or upload a scan."
+        },
+        "2-4": {
+          "title": "Order on the HACCP team",
+          "source": "Order template from \"Orders\" with the team members, or a scan of your own order."
+        },
+        "2-5": {
+          "title": "Process flowcharts (cooking)",
+          "source": "Flowchart builder: steps from receiving to serving, CCP marks."
+        },
+        "2-6": {
+          "title": "Hazard analysis and hazard identification",
+          "source": "Table of hazards by step: type, probability, severity and control measures."
+        },
+        "2-7": {
+          "title": "Identification of significant hazards",
+          "source": "Calculated from the hazard analysis: significant where probability × severity reaches the threshold."
+        },
+        "2-8": {
+          "title": "Probability of hazard occurrence",
+          "source": "Score scales and the probability × severity matrix from the hazard analysis."
+        },
+        "2-9": {
+          "title": "Method for determining CCPs and OPRP points",
+          "source": "Standard template: a four-question decision tree."
+        },
+        "2-10": {
+          "title": "Determination of CCPs and OPRP points",
+          "source": "Decision tree for significant hazards, limits, responsible staff and hazard control plan worksheets."
+        },
+        "3-1": {
+          "title": "Measures to prevent acute intestinal infections and food poisoning",
+          "source": "Table according to the guidelines or HACCP; can be filled with typical rows."
+        },
+        "3-2": {
+          "title": "Sanitary and hygienic disinfection program",
+          "source": "Table according to the guidelines or HACCP; can be filled with typical rows."
+        },
+        "3-3": {
+          "title": "Possible emergencies and violations threatening sanitary and epidemiological well-being, and measures to eliminate them",
+          "source": "Typical list you can take as a basis and change."
+        },
+        "3-4": {
+          "title": "Required medical examinations, tests and vaccinations of staff",
+          "source": "According to Order No. 29n of the Russian Ministry of Health; can be filled with typical rows."
+        },
+        "3-5": {
+          "title": "Staff by position subject to medical examinations, hygiene training and certification",
+          "source": "Taken from the site's \"Staff\"."
+        },
+        "3-6": {
+          "title": "Laboratory and instrumental testing under the production control program",
+          "source": "From the \"Laboratory testing\" block: plan and schedule, contract, reports and acts."
+        },
+        "3-7": {
+          "title": "Officials responsible for the production control program (acknowledgement sheet)",
+          "source": "\"Read and agreed\" marks of the site staff: in their account or with a PIN."
+        },
+        "app-1": {
+          "title": "List of production equipment",
+          "source": "Taken from the site's \"Equipment\"."
+        },
+        "app-2": {
+          "title": "Hazard control plan worksheets",
+          "source": "Built from the determined CCPs and OPRP points."
+        },
+        "app-3": {
+          "title": "Flow separation schedule",
+          "source": "Uploaded separately: as text or a scan."
+        },
+        "app-4": {
+          "title": "List of HACCP journals",
+          "source": "Taken from the site's enabled journals."
+        },
+        "app-5": {
+          "title": "Documented procedures",
+          "source": "Uploaded separately: as text with a header and numbering, or a scan."
+        },
+        "app-6": {
+          "title": "Work instructions",
+          "source": "Uploaded separately in \"Work instructions\": as text or a scan."
+        }
+      },
+      "orgInfo": {
+        "allRequisites": "All details for documents",
+        "fromRegistry": "From the state register: {value}",
+        "sameAsLegal": "Same as the legal address",
+        "saveFailed": "Could not save the details",
+        "saved": "Organization details saved",
+        "incomplete": "Your documents may be incomplete: some details are missing",
+        "missingList": "Missing: {fields}",
+        "save": "Save",
+        "noChanges": "No changes",
+        "readOnly": "Only a manager with full access can edit the organization details.",
+        "skipAndSave": "Skip and save",
+        "keepFilling": "Fill in",
+        "fields": {
+          "legalFullName": "Full name",
+          "inn": "Taxpayer ID (INN)",
+          "kpp": "KPP",
+          "ogrn": "OGRN / OGRNIP",
+          "legalAddress": "Legal address",
+          "address": "Actual address",
+          "phone": "Phone",
+          "directorName": "Head (full name)",
+          "directorPost": "Head's position"
+        }
+      },
+      "production": {
+        "saveFailed": "Could not save the details",
+        "saved": "Production details saved",
+        "incomplete": "Your documents may be incomplete: some details are missing",
+        "missingList": "Missing: {fields}",
+        "pulledTitle": "From the site details",
+        "editObject": "Edit site details",
+        "notSet": "Not set",
+        "save": "Save",
+        "noChanges": "No changes",
+        "skipAndSave": "Skip and save",
+        "keepFilling": "Fill in",
+        "fields": {
+          "objectName": "Site name",
+          "objectAddress": "Site address",
+          "staffCount": "Number of staff",
+          "activity": "Type of activity",
+          "workingHours": "Working hours",
+          "seats": "Number of seats",
+          "capacity": "Production capacity",
+          "area": "Floor area, m²",
+          "waterSupply": "Water supply",
+          "sewage": "Sewage",
+          "ventilation": "Ventilation",
+          "heating": "Heating",
+          "serviceForm": "Service type",
+          "extra": "Additional information"
+        },
+        "placeholders": {
+          "activity": "For example, a restaurant with a full production cycle",
+          "workingHours": "For example, daily 10:00–23:00",
+          "seats": "For example, 60",
+          "capacity": "For example, 400 dishes per shift",
+          "area": "For example, 250",
+          "waterSupply": "For example, central, hot and cold",
+          "sewage": "For example, central sewage system",
+          "ventilation": "For example, mechanical supply and exhaust",
+          "heating": "For example, central water heating",
+          "serviceForm": "For example, table service, delivery",
+          "extra": "Production specifics"
+        }
+      },
+      "contracts": {
+        "listTitle": "List of contracts",
+        "add": "Add contract",
+        "emptyTitle": "No contracts yet",
+        "emptyHint": "Add contracts for waste removal, pest control, laboratory testing, water supply, uniform laundry and others.",
+        "fields": {
+          "title": "Contract name",
+          "counterparty": "Counterparty",
+          "number": "Number",
+          "date": "Date signed",
+          "validUntil": "Valid until",
+          "visibleToInspector": "Visible to inspectors"
+        },
+        "visibleShort": "Visible to inspectors",
+        "visibleHint": "The name, counterparty, number and date will appear on the inspector portal (without files).",
+        "titlePlaceholder": "For example, Waste removal contract",
+        "edit": "Edit",
+        "remove": "Delete",
+        "removeTitle": "Delete the contract \"{name}\"?",
+        "removeBody": "The entry will disappear from the list. Contract files stay in the folder.",
+        "cancel": "Cancel",
+        "save": "Save",
+        "addTitle": "New contract",
+        "editTitle": "Contract",
+        "filesTitle": "Contract and act files",
+        "filesHint": "Contract scans, acts of completed work and other contract documents.",
+        "labContract": "Contract with the laboratory",
+        "pestContract": "Contract with the pest control service",
+        "openLab": "Laboratory testing",
+        "openPest": "Pest and rodent control"
+      },
+      "products": {
+        "emptyDirectory": "The product directory is empty — fill it in",
+        "importFailed": "Could not load from the directory",
+        "importNothing": "All products from the directory are already listed",
+        "imported": "Added from the directory: {count}",
+        "importFromDirectory": "Load from directory ({count})"
+      },
+      "text": {
+        "flowScheduleHint": "Flow diagrams are drawn on the floor plan; here goes the schedule text or a scan.",
+        "openFloorPlans": "Floor plan and flows",
+        "scanTitle": "Scan of your own document",
+        "scanHint": "If a scan is uploaded, it goes into the program with a header and continuous page numbering.",
+        "legacyTitle": "Previously uploaded signed team documents",
+        "legacyHint": "Files from the former \"Signed team documents\" folder: the order and the regulation.",
+        "teamTitle": "HACCP team members",
+        "editTeam": "Edit members",
+        "printRegulation": "Print the regulation",
+        "teamEmpty": "The HACCP team is not set up yet — the regulation template will list its members once they are added.",
+        "roles": {
+          "leader": "team leader",
+          "deputy": "deputy",
+          "member": "team member",
+          "secretary": "secretary"
+        },
+        "saveFailed": "Could not save the text",
+        "saved": "Text saved",
+        "statusTemplate": "Template — check and save",
+        "statusEmpty": "Not filled in",
+        "statusSaved": "Saved {date}",
+        "textTitle": "Document text",
+        "ownTextTitle": "Your own text",
+        "placeholder": "Type the text or paste it from your document",
+        "save": "Save",
+        "resetTemplate": "Restore template",
+        "scanOrText": "Instead of the text, you can upload a scan of your own document below — then the scan goes into the program."
+      },
+      "order": {
+        "ordersTitle": "Order establishing the HACCP team",
+        "prefillHint": "The leader and team members are taken from \"HACCP team\"; you can edit the order text.",
+        "create": "Prepare order",
+        "pointNoOrders": "Company orders are prepared by the organization's management.",
+        "noOrders": "The order has not been prepared yet.",
+        "noTeam": "Set up the HACCP team first — its members go into the order.",
+        "orderLine": "Order No. {number} of {date}",
+        "toTeam": "HACCP team",
+        "scanTitle": "Scan of your own order",
+        "scanHint": "If a scan of the signed order is uploaded, it goes into the program.",
+        "legacyTitle": "Previously uploaded signed team documents",
+        "legacyHint": "Files from the former \"Signed team documents\" folder: the order and the regulation."
+      },
+      "hazardViews": {
+        "noHazards": "No hazards yet",
+        "noHazardsHint": "Fill in the hazard analysis — significant hazards and the matrix are calculated automatically.",
+        "toAnalysis": "Hazard analysis",
+        "significantRule": "A hazard is significant if probability × severity ≥ {threshold}. CCPs and OPRP points are determined for significant hazards.",
+        "significantCount": "Significant: {count} of {total}",
+        "toCcp": "CCP determination",
+        "noSignificant": "No significant hazards",
+        "probabilityScale": "Probability of occurrence, points",
+        "severityScale": "Severity of consequences, points",
+        "matrixHint": "Each cell shows the number of hazards; red cells are significant (from {threshold}).",
+        "axes": "Vertical — probability, horizontal — severity.",
+        "byHazard": "Assessment by hazard"
+      },
+      "worksheets": {
+        "title": "Hazard control plan worksheets",
+        "hint": "One sheet per CCP and OPRP point: limits, monitoring, responsible person, corrective actions.",
+        "all": "All worksheets",
+        "empty": "No worksheets yet",
+        "emptyHint": "They appear when \"CCP determination\" has CCPs or OPRPs.",
+        "toCcp": "CCP determination",
+        "noHazard": "No linked hazard",
+        "noResponsible": "No responsible person",
+        "print": "Print",
+        "methodHint": "Decide on each significant hazard using the method in item 2.9.",
+        "toMethod": "Method"
+      },
+      "prp": {
+        "notes": {
+          "prp-infections": "Measures under guidelines MR 2.3.6.0233-21 and the HACCP plan: what we do, how often, who is responsible and where it is recorded. Typical rows — check them against the guidelines and your production.",
+          "prp-disinfection": "What we disinfect and with what, the method, frequency and responsible person. Agents — per their state registration certificate and instructions. Typical rows — check them against your agents' instructions.",
+          "prp-emergencies": "Until you add your own rows, the typical list goes into the program. \"Take as a basis\" turns it into your rows, which you can edit.",
+          "prp-medical": "Typical rows follow Order No. 29n of the Russian Ministry of Health and the vaccination calendar; check them for your type of activity."
+        },
+        "openPestPlan": "Pest control plan",
+        "columns": {
+          "prp-infections": {
+            "measure": "Measure",
+            "frequency": "Frequency",
+            "responsible": "Responsible",
+            "record": "Record form"
+          },
+          "prp-disinfection": {
+            "object": "Object treated",
+            "agent": "Agent and concentration",
+            "method": "Treatment method",
+            "frequency": "Frequency",
+            "responsible": "Responsible"
+          },
+          "prp-emergencies": {
+            "situation": "Situation (violation)",
+            "actions": "Measures to eliminate"
+          },
+          "prp-medical": {
+            "kind": "Examination, test, vaccination",
+            "frequency": "Frequency",
+            "who": "Who takes it",
+            "basis": "Basis"
+          }
+        },
+        "fillFailed": "Could not fill in the table",
+        "filled": "Rows added: {count}",
+        "addRow": "Add row",
+        "editRow": "Table row",
+        "takeTemplate": "Take as a basis",
+        "fillTypical": "Fill with typical rows ({count})",
+        "templatePreview": "The typical list that currently goes into the program:",
+        "emptyTitle": "No rows yet",
+        "emptyHint": "Add your own rows or fill the table with typical ones, then adjust them.",
+        "edit": "Edit",
+        "remove": "Delete",
+        "removeTitle": "Delete the row?",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "staff": {
+        "empty": "No staff yet",
+        "emptyHint": "Add the site's staff — their positions appear here automatically.",
+        "openStaff": "Staff",
+        "openMedBooks": "Medical records",
+        "noPosition": "No position",
+        "note": "Food production staff take medical examinations and hygiene training when hired and periodically.",
+        "colPosition": "Position",
+        "colPeople": "Staff",
+        "colMedical": "Medical examination",
+        "colHygiene": "Hygiene training and certification",
+        "yes": "Yes"
+      },
+      "acquaintance": {
+        "roles": {
+          "leader": "HACCP team leader",
+          "deputy": "Deputy HACCP team leader",
+          "member": "HACCP team member",
+          "secretary": "HACCP team secretary"
+        },
+        "journalsDuty": "Responsible for journals: {journals}",
+        "officialsTitle": "Officials",
+        "editTeam": "HACCP team",
+        "editResponsibles": "Journal responsibles",
+        "noOfficials": "No officials yet",
+        "noOfficialsHint": "Set up the HACCP team and assign people responsible for journals.",
+        "colName": "Full name",
+        "colPosition": "Position",
+        "colDuty": "Duties",
+        "sheetTitle": "Acknowledgement sheet",
+        "sheetHint": "Staff mark \"Read and agreed\" in their account or with a PIN on this device.",
+        "needApproval": "The acknowledgement sheet opens once the program is approved as a version or uploaded as your own file.",
+        "toProgram": "Program and versions",
+        "colMark": "Mark",
+        "colDate": "Date",
+        "agreed": "Read and agreed",
+        "allSigned": "All staff have read the current version.",
+        "pinFailed": "Could not add the mark",
+        "signed": "{name}: \"Read and agreed\"",
+        "pendingTitle": "Not yet acknowledged: {count}",
+        "signWithPin": "With PIN",
+        "pinHint": "The employee enters their PIN — the same as for QR forms. It signs \"Read and agreed\" for the current program version.",
+        "pinLabel": "PIN",
+        "cancel": "Cancel",
+        "agreeButton": "Read and agreed"
+      },
+      "equipment": {
+        "empty": "No equipment yet",
+        "emptyHint": "Add the site's equipment — the list appears here automatically.",
+        "open": "Equipment",
+        "colName": "Name",
+        "colType": "Type",
+        "colArea": "Area / room",
+        "colSerial": "Serial number",
+        "colRange": "Mode"
+      },
+      "journals": {
+        "empty": "No enabled journals",
+        "emptyHint": "Enable the site's journals — the list appears here automatically.",
+        "open": "Journal settings",
+        "note": "Enabled journals: {count}. The list changes with the site's journal settings."
+      },
+      "procedures": {
+        "note": "Upload procedures as text with a header and numbering (Word, PDF) or as scans: receiving, storage, washing, cleaning and others."
+      },
+      "instructions": {
+        "empty": "No work instructions yet",
+        "emptyHint": "Upload instructions in \"Work instructions\" — they will appear here.",
+        "open": "Work instructions"
+      }
+    },
+    "orgCharts": {
+      "lead": "Organizational structure: positions and reporting lines.",
+      "new": "New diagram",
+      "name": "Name",
+      "namePlaceholder": "For example, Organizational structure",
+      "create": "Create",
+      "cancel": "Cancel",
+      "stats": "Blocks: {blocks}",
+      "updated": "Changed {date}",
+      "open": "Open",
+      "emptyTitle": "No organizational chart yet",
+      "emptyHint": "Build a draft from staff positions or draw a diagram from scratch.",
+      "remove": "Delete",
+      "removeTitle": "Delete the diagram \"{name}\"?",
+      "removeBody": "The diagram will be deleted permanently.",
+      "createFailed": "Could not create the diagram",
+      "fromPositions": "Build from positions",
+      "editorHint": "The diagram is drawn on a separate page: blocks are positions, arrows are reporting lines. Check the draft built from positions: the system has no reporting lines."
     }
   },
   "inspectionDay": {
@@ -19625,7 +20085,11 @@
     "roleLeader": "Group leader",
     "roleDeputy": "Deputy leader",
     "roleMember": "Group member",
-    "roleSecretary": "Secretary"
+    "roleSecretary": "Secretary",
+    "ppkLead": "Production control program, version {version}. Open the program, read it and confirm that you have read and agree with it.",
+    "ppkOfficials": "Officials",
+    "ppkLeadFile": "Production control program. Open the program, read it and confirm that you have read and agree with it.",
+    "ppkOpen": "Open the program"
   },
   "staffPages": {
     "positions": {
@@ -27801,7 +28265,9 @@
       "scan": "Scan {index, number}: {name}",
       "noScan": "No scan of the basis attached",
       "addAnother": "Add another record",
-      "addVisitRecord": "Add a visit record"
+      "addVisitRecord": "Add a visit record",
+      "contractsTitle": "Main contracts",
+      "contractNumber": "No. {number}"
     },
     "visitForm": {
       "sizeMb": "{value} MB",

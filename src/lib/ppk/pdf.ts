@@ -355,7 +355,9 @@ export function buildPpkProgramPdf(bundle: PpkBundle): Buffer {
   else empty(ctx);
 
   section(ctx, "8. Перечень возможных аварийных ситуаций и действий персонала");
-  EMERGENCIES.forEach((item, index) => text(ctx, `${index + 1}. ${item.title}. ${item.actions}`, { gap: 1.5 }));
+  (bundle.emergencies ?? EMERGENCIES).forEach((item, index) =>
+    text(ctx, `${index + 1}. ${item.title}.${item.actions ? ` ${item.actions}` : ""}`, { gap: 1.5 }),
+  );
 
   section(ctx, "9. Лист ознакомления");
   const people = (bundle.roster ?? []).slice(0, ACQUAINTANCE_MAX);

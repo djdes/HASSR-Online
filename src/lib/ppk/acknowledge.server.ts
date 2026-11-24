@@ -4,13 +4,41 @@ import { db } from "@/lib/db";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { ackKnowledgeId, ackKnowledgeKey, formatAckMoment, isAckDocKey, type AckDocKey } from "./acknowledge";
 import { parsePpkRecords } from "./records";
-import { ppkWhere, type PpkScope } from "./scope";
+import { latestDocVersion } from "./review";
+import { ppkDocKindKey, ppkWhere, type PpkScope } from "./scope";
 
 export type AckAudience = "staff" | "team";
 export type AckDoc = { docKey: AckDocKey; title: string; version: string; audience: AckAudience };
 
 export const POLICY_ACK_TITLE = "Политика в области качества и безопасности пищевой продукции";
 export const TEAM_REGULATION_ACK_TITLE = "Положение о группе ХАССП";
+export const PPK_ACK_TITLE = "Программа производственного контроля";
+
+/**
+ * Версия Программы для ознакомления: номер последней утверждённой версии
+ * (`v3`), без утверждения — дата загруженного файла ППК; ни того ни другого —
+ * null: знакомиться не с чем, сотрудникам документ не показывается.
+ */
+export async function ppkAckVersion(scope: PpkScope): Promise<string | null> {
+  const [rows, file] = await Promise.all([
+    db.ppkRecord.findMany({
+      where: { ...ppkWhere(scope), block: "doc-versions" },
+      select: { id: true, data: true, sortOrder: true, updatedAt: true },
+    }),
+    db.knowledgeDocument.findFirst({
+      where: { organizationId: scope.organizationId, kind: ppkDocKindKey("ppk", scope.buildingId) },
+      select: { updatedAt: true },
+    }),
+  ]);
+  const latest = latestDocVersion(parsePpkRecords("doc-versions", rows).map((row) => row.data), "ppk");
+  if (latest) return `v${latest.version}`;
+  return file ? `file:${file.updatedAt.toISOString()}` : null;
+}
+
+/** Есть ли у области Программа, с которой можно знакомить сотрудников. */
+export async function ppkAckAvailable(scope: PpkScope): Promise<boolean> {
+  return (await ppkAckVersion(scope)) !== null;
+}
 
 /**
  * Описание документа для ознакомления или null: документа нет в организации
@@ -34,6 +62,10 @@ export async function ackDocument(scope: PpkScope, docKey: string): Promise<AckD
   }
   if (docKey === "team-regulation") {
     return { docKey, title: TEAM_REGULATION_ACK_TITLE, version: "1", audience: "team" };
+  }
+  if (docKey === "ppk") {
+    const version = await ppkAckVersion(scope);
+    return version ? { docKey, title: PPK_ACK_TITLE, version, audience: "staff" } : null;
   }
   const id = ackKnowledgeId(docKey);
   if (!id) return null;
@@ -89,9 +121,10 @@ export async function listAckDocsForUser(scope: PpkScope, userId: string): Promi
   });
   if (!me) return [];
 
-  const [policy, regulation, knowledge, teamIds] = await Promise.all([
+  const [policy, regulation, program, knowledge, teamIds] = await Promise.all([
     ackDocument(scope, "policy"),
     ackDocument(scope, "team-regulation"),
+    ackDocument(scope, "ppk"),
     db.knowledgeDocument.findMany({
       where: { organizationId, kind: null, folder: null },
       select: { id: true, title: true, updatedAt: true },
@@ -107,6 +140,7 @@ export async function listAckDocsForUser(scope: PpkScope, userId: string): Promi
     audience: "staff",
   }));
   const docs = [
+    program,
     policy,
     ...(regulation && teamIds.includes(userId) ? [regulation] : []),
     ...knowledgeDocs,

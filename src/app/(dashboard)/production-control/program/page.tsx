@@ -186,8 +186,8 @@ export default async function ProgramPage() {
 
       <PpkDocSection title={u("programPage.s8")}>
         <ol className="list-decimal space-y-2 pl-6">
-          {EMERGENCIES.map((item) => (
-            <li key={item.title}>
+          {(bundle.emergencies ?? EMERGENCIES).map((item, index) => (
+            <li key={`${index}:${item.title}`}>
               <span className="font-semibold">{item.title}.</span> {item.actions}
             </li>
           ))}

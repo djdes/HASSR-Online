@@ -5,6 +5,7 @@ import { ackKnowledgeId, ackKnowledgeKey, isAckDocKey, ackDocPath, formatAckMome
 test("isAckDocKey принимает только известные ключи", () => {
   assert.equal(isAckDocKey("policy"), true);
   assert.equal(isAckDocKey("team-regulation"), true);
+  assert.equal(isAckDocKey("ppk"), true);
   assert.equal(isAckDocKey("knowledge:cm1abc"), true);
   assert.equal(isAckDocKey("knowledge:"), false);
   assert.equal(isAckDocKey("knowledge:a b"), false);

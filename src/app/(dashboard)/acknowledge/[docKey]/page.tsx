@@ -114,6 +114,45 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
         ) : null}
       </div>
     );
+  } else if (doc.docKey === "ppk") {
+    // Программа производственного контроля (лист ознакомления, пункт 3.7
+    // структуры ППК): версия и должностные лица — группа ХАССП.
+    const [rows, staff] = await Promise.all([
+      db.ppkRecord.findMany({
+        where: { ...ppkWhere(scope), block: "team" },
+        select: { id: true, data: true, sortOrder: true, updatedAt: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      }),
+      loadPpkStaff(scope),
+    ]);
+    const staffById = new Map(staff.map((person) => [person.id, person]));
+    const members = parsePpkRecords("team", rows)
+      .map((row) => row.data)
+      .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
+    // Версия — номер утверждённой версии («v3»); программа без утверждения — загруженный файл.
+    const version = doc.version.startsWith("v") ? doc.version.slice(1) : null;
+    body = (
+      <div className="space-y-4 text-[15px] leading-[1.65] text-[#0b1024]">
+        <p>{version ? t("ppkLead", { version }) : t("ppkLeadFile")}</p>
+        {/* В той же вкладке: в Mini App Telegram новая вкладка открылась бы без входа. */}
+        <a href="/api/acknowledgements/ppk/file" className={PPK_BUTTON_OUTLINE_CLASS}>
+          <ExternalLink className="size-4" aria-hidden />
+          {t("ppkOpen")}
+        </a>
+        {members.length ? (
+          <section>
+            <h2 className="mb-1.5 text-[16px] font-semibold">{t("ppkOfficials")}</h2>
+            <ul className="space-y-1">
+              {members.map((member) => (
+                <li key={member.userId}>
+                  {staffById.get(member.userId)?.name ?? "—"} — {roleLabel(member.role)}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+      </div>
+    );
   } else if (ackKnowledgeId(doc.docKey)) {
     body = (
       <div className="space-y-4">

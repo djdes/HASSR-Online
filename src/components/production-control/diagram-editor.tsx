@@ -141,12 +141,15 @@ export function DiagramEditor({
   onChange,
   areas = [],
   controlNumbers = [],
+  variant = "default",
 }: {
   kind: "flowchart" | "floor-plan";
   value: DiagramData;
   onChange: (data: DiagramData) => void;
   areas?: { id: string; name: string }[];
   controlNumbers?: string[];
+  /** «org-chart» — оргструктура (пункт 1.2): блоки — должности, без выбора ККТ. */
+  variant?: "default" | "org-chart";
 }) {
   const t = useTranslations("productionControl.diagram");
   const svgRef = useRef<SVGSVGElement>(null);
@@ -649,7 +652,7 @@ export function DiagramEditor({
               <>
                 <Chip active={tool === "step"} onClick={() => chooseTool("step")} title="S">
                   <Square className="size-4" />
-                  {t("step")}
+                  {variant === "org-chart" ? t("position") : t("step")}
                 </Chip>
                 <Chip active={tool === "connect"} onClick={() => chooseTool("connect")} title="C">
                   <ArrowRight className="size-4" />
@@ -828,7 +831,7 @@ export function DiagramEditor({
                     className={PPK_FIELD_CLASS}
                   />
                 </label>
-                {selectedNode.kind === "step" ? (
+                {selectedNode.kind === "step" && variant === "org-chart" ? null : selectedNode.kind === "step" ? (
                   <div>
                     <span className={PPK_LABEL_CLASS}>{t("isCcp")}</span>
                     {controlNumbers.length === 0 && !selectedNode.ccp ? (

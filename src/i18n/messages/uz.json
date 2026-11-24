@@ -298,7 +298,8 @@
       "limitNodes": "Chegaraga yetildi: sxemada {count} tadan ortiq element bo'lmaydi",
       "limitEdges": "Chegaraga yetildi: sxemada {count} tadan ortiq bog'lanish bo'lmaydi",
       "limitPoints": "Chegaraga yetildi: bitta chiziqda {count} tadan ortiq nuqta bo'lmaydi. Chiziqni yakunlang (Enter)",
-      "limitDoors": "Chegara: rejada {count} tadan ortiq eshik va eshik o‘rni bo‘lmaydi"
+      "limitDoors": "Chegara: rejada {count} tadan ortiq eshik va eshik o‘rni bo‘lmaydi",
+      "position": "Lavozim"
     },
     "flowcharts": {
       "lead": "Texnologik jarayon bosqichlari: qabul qilishdan tarqatishgacha. KBN turgan bosqichlarni belgilang.",
@@ -833,6 +834,465 @@
       "title": "Obyektingiz uchun nazorat dasturi — individual",
       "text": "Mutaxassis ishlab chiqarishingiz uchun nazorat dasturi va hujjatlar to‘plamini ishlab chiqadi: nazorat nuqtalari, laboratoriya tekshiruvlari, mas’ullar. Har qanday tarifda.",
       "cta": "Individual buyurtma berish"
+    },
+    "structure": {
+      "title": "Dastur tuzilmasi",
+      "lead": "HACCP tamoyillariga asoslangan. Bandni bosing — uning maʼlumotlarini yuklang, toʻldiring yoki tekshiring.",
+      "progress": "{total} ta banddan {done} tasi toʻldirilgan",
+      "documentsTitle": "Dastur hujjatlari",
+      "sections": {
+        "primary": "Xavfli omillar tahlili oʻtkazilgan dastlabki maʼlumotlar",
+        "plan": "HACCP rejasi",
+        "prp": "Majburiy dastlabki tadbirlar dasturlari (MDTD)",
+        "appendix": "Ilovalar"
+      },
+      "appendixNumber": "{n}-ilova",
+      "openSection": "Boʻlimni ochish",
+      "backToProgram": "Ishlab chiqarish nazorati dasturi",
+      "nextItem": "Keyingi band: {item}",
+      "fill": "Toʻldirish",
+      "items": {
+        "1-1": {
+          "title": "Tashkilot haqida umumiy maʼlumot",
+          "source": "Tashkilot maʼlumotlaridan olinadi. Dastur uchun majburiy bandlar yulduzcha bilan belgilangan; ogohlantirish bilan oʻtkazib yuborish mumkin."
+        },
+        "1-2": {
+          "title": "Korxonaning tashkiliy tuzilmasi",
+          "source": "Sxema konstruktori: lavozimlar va boʻysunish. Xodimlar lavozimlaridan qoralama yigʻish mumkin."
+        },
+        "1-3": {
+          "title": "Asosiy shartnomalar roʻyxati",
+          "source": "Shartnoma nomi, kontragent, raqam va sana — bizning shablon boʻyicha, shartnoma va dalolatnoma fayllari, nazoratchilarga koʻrinishi."
+        },
+        "1-4": {
+          "title": "Ishlab chiqarish haqida umumiy maʼlumot",
+          "source": "Obyekt maʼlumotlaridan olinadi. Dastur uchun majburiy bandlar yulduzcha bilan belgilangan; ogohlantirish bilan oʻtkazib yuborish mumkin."
+        },
+        "1-5": {
+          "title": "Ishlab chiqariladigan mahsulotlar roʻyxati",
+          "source": "Mahsulot tavsifi; tayyor mahsulot va yarim tayyor mahsulotlarni mahsulotlar maʼlumotnomasidan yuklash mumkin."
+        },
+        "1-6": {
+          "title": "Ishlab chiqarish xonalari rejasi va oqimlarni tashkil etish",
+          "source": "Xonalar va oqimlar rejasi konstruktori (xomashyo, tayyor mahsulot, chiqindilar, xodimlar)."
+        },
+        "1-7": {
+          "title": "Asosiy meʼyoriy hujjatlar roʻyxati",
+          "source": "Belgilangan meʼyoriy hujjatlardan olinadi."
+        },
+        "1-8": {
+          "title": "HACCP asosiy tamoyillari",
+          "source": "Tayyor shablon: tuzatish, toʻldirish yoki oʻz matningizni yozish mumkin."
+        },
+        "1-9": {
+          "title": "Asosiy tushunchalar va taʼriflar",
+          "source": "Oʻz matningiz: shablon yoʻq, tayyor boʻlganda toʻldiring."
+        },
+        "2-1": {
+          "title": "Oziq-ovqat mahsulotlari xavfsizligi sohasidagi siyosat",
+          "source": "Tahrirlash va tasdiqlash bilan tayyor shablon yoki oʻz hujjatingiz skani."
+        },
+        "2-2": {
+          "title": "HACCP guruhi toʻgʻrisidagi nizom",
+          "source": "Guruh tarkibi bilan tayyor shablon: tuzatish, toʻldirish, oʻz matningizni yozish yoki skan yuklash mumkin."
+        },
+        "2-3": {
+          "title": "HACCP guruhi rahbari toʻgʻrisidagi nizom",
+          "source": "Tayyor shablon: tuzatish, toʻldirish, oʻz matningizni yozish yoki skan yuklash mumkin."
+        },
+        "2-4": {
+          "title": "HACCP guruhi toʻgʻrisidagi buyruq",
+          "source": "«Buyruqlar»dagi guruh tarkibi bilan buyruq shabloni yoki oʻz buyrugʻingiz skani."
+        },
+        "2-5": {
+          "title": "Ishlab chiqarish jarayonlarining texnologik blok-sxemalari (taomlar tayyorlash)",
+          "source": "Blok-sxemalar konstruktori: qabul qilishdan tarqatishgacha bosqichlar, KNN belgilari."
+        },
+        "2-6": {
+          "title": "Xavflar tahlili va xavfli omillarni aniqlash",
+          "source": "Bosqichlar boʻyicha xavfli omillar jadvali: turi, ehtimoli, ogʻirligi va boshqaruv choralari."
+        },
+        "2-7": {
+          "title": "Muhim xavfli omillarni aniqlash",
+          "source": "Xavflar tahlilidan hisoblanadi: ehtimol × ogʻirlik chegaradan past boʻlmasa — muhim."
+        },
+        "2-8": {
+          "title": "Xavfli omilning yuzaga kelish ehtimoli",
+          "source": "Xavflar tahlili boʻyicha ball shkalalari va «ehtimol × ogʻirlik» matritsasi."
+        },
+        "2-9": {
+          "title": "KNN va OAD qoʻllash nuqtalarini aniqlash usuli",
+          "source": "Standart shablon: toʻrt savoldan iborat qarorlar daraxti."
+        },
+        "2-10": {
+          "title": "KNN va OAD qoʻllash nuqtalarini aniqlash",
+          "source": "Muhim xavflar uchun qarorlar daraxti, chegaralar, masʼullar va xavflarni boshqarish rejasining ish varaqlari."
+        },
+        "3-1": {
+          "title": "Oʻtkir ichak infeksiyalari va ovqatdan zaharlanishlarning oldini olish tadbirlari",
+          "source": "Uslubiy tavsiyalar yoki HACCP boʻyicha jadval; namunaviy qatorlar bilan toʻldirish mumkin."
+        },
+        "3-2": {
+          "title": "Ishlab chiqarishda dezinfeksiyaning sanitariya-gigiyena dasturi",
+          "source": "Uslubiy tavsiyalar yoki HACCP boʻyicha jadval; namunaviy qatorlar bilan toʻldirish mumkin."
+        },
+        "3-3": {
+          "title": "Sanitariya-epidemiologik osoyishtalikka tahdid soluvchi avariya holatlari, buzilishlar roʻyxati va ularni bartaraf etish choralari",
+          "source": "Asos qilib olish va oʻzgartirish mumkin boʻlgan namunaviy roʻyxat."
+        },
+        "3-4": {
+          "title": "Xodimlarning zarur tibbiy koʻriklari, tekshiruvlari va emlashlari",
+          "source": "Rossiya Sogʻliqni saqlash vazirligining 29n-buyrugʻi boʻyicha; namunaviy qatorlar bilan toʻldirish mumkin."
+        },
+        "3-5": {
+          "title": "Tibbiy koʻrik, kasbiy gigiyena tayyorgarligi va attestatsiyadan oʻtishi kerak boʻlgan xodimlar lavozimlar boʻyicha",
+          "source": "Obyektning «Xodimlar» boʻlimidan olinadi."
+        },
+        "3-6": {
+          "title": "Ishlab chiqarish nazorati dasturi doirasidagi laboratoriya-instrumental tekshiruvlar",
+          "source": "«Laboratoriya tekshiruvlari» blokidan: reja va jadval, shartnoma, bayonnomalar va dalolatnomalar."
+        },
+        "3-7": {
+          "title": "Ishlab chiqarish nazorati dasturini amalga oshirish vazifasi yuklatilgan mansabdor shaxslar roʻyxati (tanishuv varaqasi)",
+          "source": "Obyekt xodimlarining «Tanishdim va roziman» belgilari: kabinetda yoki PIN-kod bilan."
+        },
+        "app-1": {
+          "title": "Ishlab chiqarishning texnologik uskunalari roʻyxati",
+          "source": "Obyektning «Uskunalar» boʻlimidan olinadi."
+        },
+        "app-2": {
+          "title": "Xavflarni boshqarish rejasining ish varaqlari",
+          "source": "Aniqlangan KNN va OAD qoʻllash nuqtalari boʻyicha shakllanadi."
+        },
+        "app-3": {
+          "title": "Oqimlarni ajratish jadvali",
+          "source": "Alohida yuklanadi: matn yoki skan koʻrinishida."
+        },
+        "app-4": {
+          "title": "HACCP tizimi boʻyicha jurnallar roʻyxati",
+          "source": "Obyektning yoqilgan jurnallaridan olinadi."
+        },
+        "app-5": {
+          "title": "Hujjatlashtirilgan tartiblar",
+          "source": "Alohida yuklanadi: sarlavha va raqamlash bilan matn yoki skan."
+        },
+        "app-6": {
+          "title": "Ish yoʻriqnomalari",
+          "source": "«Ish yoʻriqnomalari»ga alohida yuklanadi: matn yoki skan."
+        }
+      },
+      "orgInfo": {
+        "allRequisites": "Hujjatlar uchun barcha maʼlumotlar",
+        "fromRegistry": "Davlat reyestridan: {value}",
+        "sameAsLegal": "Yuridik manzil bilan bir xil",
+        "saveFailed": "Maʼlumotlarni saqlab boʻlmadi",
+        "saved": "Tashkilot maʼlumotlari saqlandi",
+        "incomplete": "Hujjatlaringiz toʻliq toʻldirilmagan boʻlishi mumkin: maʼlumotlar yetishmaydi",
+        "missingList": "Yetishmaydi: {fields}",
+        "save": "Saqlash",
+        "noChanges": "Oʻzgarishlar yoʻq",
+        "readOnly": "Tashkilot maʼlumotlarini toʻliq ruxsatli rahbar tahrirlay oladi.",
+        "skipAndSave": "Oʻtkazib yuborish va saqlash",
+        "keepFilling": "Toʻldirish",
+        "fields": {
+          "legalFullName": "Toʻliq nomi",
+          "inn": "STIR (INN)",
+          "kpp": "KPP",
+          "ogrn": "OGRN / OGRNIP",
+          "legalAddress": "Yuridik manzil",
+          "address": "Haqiqiy manzil",
+          "phone": "Telefon",
+          "directorName": "Rahbar (F. I. Sh.)",
+          "directorPost": "Rahbar lavozimi"
+        }
+      },
+      "production": {
+        "saveFailed": "Maʼlumotlarni saqlab boʻlmadi",
+        "saved": "Ishlab chiqarish maʼlumotlari saqlandi",
+        "incomplete": "Hujjatlaringiz toʻliq toʻldirilmagan boʻlishi mumkin: maʼlumotlar yetishmaydi",
+        "missingList": "Yetishmaydi: {fields}",
+        "pulledTitle": "Obyekt maʼlumotlaridan",
+        "editObject": "Obyekt maʼlumotlarini oʻzgartirish",
+        "notSet": "Koʻrsatilmagan",
+        "save": "Saqlash",
+        "noChanges": "Oʻzgarishlar yoʻq",
+        "skipAndSave": "Oʻtkazib yuborish va saqlash",
+        "keepFilling": "Toʻldirish",
+        "fields": {
+          "objectName": "Obyekt nomi",
+          "objectAddress": "Obyekt manzili",
+          "staffCount": "Xodimlar soni",
+          "activity": "Faoliyat turi",
+          "workingHours": "Ish tartibi",
+          "seats": "Oʻrindiqlar soni",
+          "capacity": "Ishlab chiqarish quvvati",
+          "area": "Xonalar maydoni, m²",
+          "waterSupply": "Suv taʼminoti",
+          "sewage": "Kanalizatsiya",
+          "ventilation": "Ventilyatsiya",
+          "heating": "Isitish",
+          "serviceForm": "Xizmat koʻrsatish shakli",
+          "extra": "Qoʻshimcha"
+        },
+        "placeholders": {
+          "activity": "Masalan, toʻliq ishlab chiqarish sikliga ega restoran",
+          "workingHours": "Masalan, har kuni 10:00–23:00",
+          "seats": "Masalan, 60",
+          "capacity": "Masalan, smenada 400 ta taom",
+          "area": "Masalan, 250",
+          "waterSupply": "Masalan, markazlashgan, issiq va sovuq",
+          "sewage": "Masalan, markazlashgan kanalizatsiya",
+          "ventilation": "Masalan, mexanik kirish-chiqish",
+          "heating": "Masalan, markaziy suvli",
+          "serviceForm": "Masalan, ofitsiantlar xizmati, yetkazib berish",
+          "extra": "Ishlab chiqarish xususiyatlari"
+        }
+      },
+      "contracts": {
+        "listTitle": "Shartnomalar roʻyxati",
+        "add": "Shartnoma qoʻshish",
+        "emptyTitle": "Hozircha shartnomalar yoʻq",
+        "emptyHint": "Chiqindilarni olib chiqish, dezinseksiya, laboratoriya nazorati, suv yetkazib berish, maxsus kiyimni yuvish va boshqa shartnomalarni qoʻshing.",
+        "fields": {
+          "title": "Shartnoma nomi",
+          "counterparty": "Kontragent",
+          "number": "Raqami",
+          "date": "Tuzilgan sana",
+          "validUntil": "Amal qilish muddati",
+          "visibleToInspector": "Nazoratchiga koʻrinadi"
+        },
+        "visibleShort": "Nazoratchiga koʻrinadi",
+        "visibleHint": "Nomi, kontragent, raqam va sana nazoratchi portalida koʻrinadi (fayllarsiz).",
+        "titlePlaceholder": "Masalan, Chiqindilarni olib chiqish shartnomasi",
+        "edit": "Oʻzgartirish",
+        "remove": "Oʻchirish",
+        "removeTitle": "«{name}» shartnomasi oʻchirilsinmi?",
+        "removeBody": "Yozuv roʻyxatdan yoʻqoladi. Shartnoma fayllari papkada qoladi.",
+        "cancel": "Bekor qilish",
+        "save": "Saqlash",
+        "addTitle": "Yangi shartnoma",
+        "editTitle": "Shartnoma",
+        "filesTitle": "Shartnoma va dalolatnoma fayllari",
+        "filesHint": "Shartnoma skanlari, bajarilgan ishlar dalolatnomalari va boshqa hujjatlar.",
+        "labContract": "Laboratoriya bilan shartnoma",
+        "pestContract": "Dezinfeksiya xizmati bilan shartnoma",
+        "openLab": "Laboratoriya tekshiruvlari",
+        "openPest": "Dezinseksiya va deratizatsiya"
+      },
+      "products": {
+        "emptyDirectory": "Mahsulotlar maʼlumotnomasi boʻsh — toʻldirish",
+        "importFailed": "Maʼlumotnomadan yuklab boʻlmadi",
+        "importNothing": "Maʼlumotnomadagi barcha mahsulotlar allaqachon roʻyxatda",
+        "imported": "Maʼlumotnomadan qoʻshildi: {count}",
+        "importFromDirectory": "Maʼlumotnomadan yuklash ({count})"
+      },
+      "text": {
+        "flowScheduleHint": "Oqimlar sxemalari xonalar rejasida chiziladi; bu yerda — jadval matni yoki skan.",
+        "openFloorPlans": "Xonalar va oqimlar rejasi",
+        "scanTitle": "Oʻz hujjatingiz skani",
+        "scanHint": "Skan yuklangan boʻlsa, dasturga sahifa sarlavhasi va uzluksiz raqamlash bilan u kiradi.",
+        "legacyTitle": "Avval yuklangan guruhning imzolangan hujjatlari",
+        "legacyHint": "Avvalgi «Guruhning imzolangan hujjatlari» papkasidagi fayllar — buyruq va nizom.",
+        "teamTitle": "HACCP guruhi tarkibi",
+        "editTeam": "Tarkibni oʻzgartirish",
+        "printRegulation": "Nizomni chop etish",
+        "teamEmpty": "HACCP guruhi hali tuzilmagan — tarkib paydo boʻlganda nizom shablonida koʻrinadi.",
+        "roles": {
+          "leader": "guruh rahbari",
+          "deputy": "oʻrinbosar",
+          "member": "guruh aʼzosi",
+          "secretary": "kotib"
+        },
+        "saveFailed": "Matnni saqlab boʻlmadi",
+        "saved": "Matn saqlandi",
+        "statusTemplate": "Shablon — tekshiring va saqlang",
+        "statusEmpty": "Toʻldirilmagan",
+        "statusSaved": "Saqlangan: {date}",
+        "textTitle": "Hujjat matni",
+        "ownTextTitle": "Oʻz matningiz",
+        "placeholder": "Matnni kiriting yoki oʻz hujjatingizdan qoʻying",
+        "save": "Saqlash",
+        "resetTemplate": "Shablonni qaytarish",
+        "scanOrText": "Matn oʻrniga quyida oʻz hujjatingiz skanini yuklash mumkin — unda dasturga skan kiradi."
+      },
+      "order": {
+        "ordersTitle": "HACCP guruhini tuzish toʻgʻrisidagi buyruq",
+        "prefillHint": "Rahbar va guruh tarkibi «HACCP guruhi»dan olinadi, buyruq matnini tuzatish mumkin.",
+        "create": "Buyruqni rasmiylashtirish",
+        "pointNoOrders": "Kompaniya buyruqlarini tashkilot rahbariyati rasmiylashtiradi.",
+        "noOrders": "Buyruq hali rasmiylashtirilmagan.",
+        "noTeam": "Avval HACCP guruhini tuzing — uning tarkibi buyruqqa kiradi.",
+        "orderLine": "{date} dagi {number}-son buyruq",
+        "toTeam": "HACCP guruhi",
+        "scanTitle": "Oʻz buyrugʻingiz skani",
+        "scanHint": "Imzolangan buyruq skani yuklangan boʻlsa, dasturga u kiradi.",
+        "legacyTitle": "Avval yuklangan guruhning imzolangan hujjatlari",
+        "legacyHint": "Avvalgi «Guruhning imzolangan hujjatlari» papkasidagi fayllar — buyruq va nizom."
+      },
+      "hazardViews": {
+        "noHazards": "Hozircha xavflar yoʻq",
+        "noHazardsHint": "Xavflar tahlilini toʻldiring — muhim omillar va matritsa oʻzi hisoblanadi.",
+        "toAnalysis": "Xavflar tahlili",
+        "significantRule": "Ehtimol × ogʻirlik ≥ {threshold} boʻlsa, xavfli omil muhim hisoblanadi. Muhimlari uchun KNN va OAD qoʻllash nuqtalari aniqlanadi.",
+        "significantCount": "Muhim: {total} tadan {count} tasi",
+        "toCcp": "KNNni aniqlash",
+        "noSignificant": "Muhim xavfli omillar yoʻq",
+        "probabilityScale": "Yuzaga kelish ehtimoli, ball",
+        "severityScale": "Oqibatlar ogʻirligi, ball",
+        "matrixHint": "Katakda — xavfli omillar soni; qizil kataklar — muhim ({threshold} dan).",
+        "axes": "Vertikal boʻyicha — ehtimol, gorizontal boʻyicha — ogʻirlik.",
+        "byHazard": "Xavfli omillar boʻyicha baho"
+      },
+      "worksheets": {
+        "title": "Xavflarni boshqarish rejasining ish varaqlari",
+        "hint": "Har bir KNN va OAD qoʻllash nuqtasiga bitta varaq: chegaralar, monitoring, masʼul, tuzatish choralari.",
+        "all": "Barcha ish varaqlari",
+        "empty": "Hozircha ish varaqlari yoʻq",
+        "emptyHint": "«KNNni aniqlash»da KNN yoki OAD paydo boʻlganda ular koʻrinadi.",
+        "toCcp": "KNNni aniqlash",
+        "noHazard": "Bogʻlangan xavf yoʻq",
+        "noResponsible": "Masʼul tayinlanmagan",
+        "print": "Chop etish",
+        "methodHint": "Har bir muhim xavf boʻyicha qaror — 2.9-banddagi usul boʻyicha.",
+        "toMethod": "Usul"
+      },
+      "prp": {
+        "notes": {
+          "prp-infections": "MR 2.3.6.0233-21 va HACCP rejasi boʻyicha tadbirlar: nima qilamiz, qanchalik tez-tez, kim javob beradi va qayerda qayd etiladi. Namunaviy qatorlarni uslubiy tavsiyalar va oʻz ishlab chiqarishingiz boʻyicha tekshiring.",
+          "prp-disinfection": "Nimani va nima bilan dezinfeksiya qilamiz, usul, davriylik va masʼul. Vositalar — davlat roʻyxatidan oʻtganlik guvohnomasi va yoʻriqnoma boʻyicha. Namunaviy qatorlarni vositalaringiz yoʻriqnomalari boʻyicha tekshiring.",
+          "prp-emergencies": "Oʻz qatorlaringiz boʻlmaguncha dasturga namunaviy roʻyxat kiradi. «Asos qilib olish» uni sizning qatorlaringizga aylantiradi — ularni tahrirlash mumkin.",
+          "prp-medical": "Namunaviy qatorlar — Rossiya Sogʻliqni saqlash vazirligining 29n-buyrugʻi va emlash kalendari boʻyicha; faoliyat turingiz boʻyicha tekshiring."
+        },
+        "openPestPlan": "Dezinfeksiya tadbirlari rejasi",
+        "columns": {
+          "prp-infections": {
+            "measure": "Tadbir",
+            "frequency": "Davriylik",
+            "responsible": "Masʼul",
+            "record": "Hisob shakli"
+          },
+          "prp-disinfection": {
+            "object": "Ishlov beriladigan obyekt",
+            "agent": "Vosita va konsentratsiya",
+            "method": "Ishlov berish usuli",
+            "frequency": "Davriylik",
+            "responsible": "Masʼul"
+          },
+          "prp-emergencies": {
+            "situation": "Holat (buzilish)",
+            "actions": "Bartaraf etish choralari"
+          },
+          "prp-medical": {
+            "kind": "Koʻrik, tekshiruv, emlash",
+            "frequency": "Davriylik",
+            "who": "Kim oʻtadi",
+            "basis": "Asos"
+          }
+        },
+        "fillFailed": "Jadvalni toʻldirib boʻlmadi",
+        "filled": "Qoʻshilgan qatorlar: {count}",
+        "addRow": "Qator qoʻshish",
+        "editRow": "Jadval qatori",
+        "takeTemplate": "Asos qilib olish",
+        "fillTypical": "Namunaviy qatorlar bilan toʻldirish ({count})",
+        "templatePreview": "Hozir dasturga kiradigan namunaviy roʻyxat:",
+        "emptyTitle": "Hozircha qatorlar yoʻq",
+        "emptyHint": "Oʻz qatorlaringizni qoʻshing yoki jadvalni namunaviy qatorlar bilan toʻldiring, keyin moslashtiring.",
+        "edit": "Oʻzgartirish",
+        "remove": "Oʻchirish",
+        "removeTitle": "Qator oʻchirilsinmi?",
+        "cancel": "Bekor qilish",
+        "save": "Saqlash"
+      },
+      "staff": {
+        "empty": "Hozircha xodimlar yoʻq",
+        "emptyHint": "Obyekt xodimlarini qoʻshing — lavozimlar bu yerda oʻzi paydo boʻladi.",
+        "openStaff": "Xodimlar",
+        "openMedBooks": "Tibbiy daftarchalar",
+        "noPosition": "Lavozimsiz",
+        "note": "Oziq-ovqat ishlab chiqarish xodimlari ishga qabul qilinganda va davriy ravishda tibbiy koʻrik va gigiyena tayyorgarligidan oʻtadi.",
+        "colPosition": "Lavozim",
+        "colPeople": "Xodimlar",
+        "colMedical": "Tibbiy koʻrik",
+        "colHygiene": "Gigiyena tayyorgarligi va attestatsiya",
+        "yes": "Ha"
+      },
+      "acquaintance": {
+        "roles": {
+          "leader": "HACCP guruhi rahbari",
+          "deputy": "HACCP guruhi rahbari oʻrinbosari",
+          "member": "HACCP guruhi aʼzosi",
+          "secretary": "HACCP guruhi kotibi"
+        },
+        "journalsDuty": "Jurnallar uchun masʼul: {journals}",
+        "officialsTitle": "Mansabdor shaxslar",
+        "editTeam": "HACCP guruhi",
+        "editResponsibles": "Jurnallar uchun masʼullar",
+        "noOfficials": "Hozircha mansabdor shaxslar yoʻq",
+        "noOfficialsHint": "HACCP guruhini tuzing va jurnallar uchun masʼullarni tayinlang.",
+        "colName": "F. I. Sh.",
+        "colPosition": "Lavozim",
+        "colDuty": "Vazifalar",
+        "sheetTitle": "Tanishuv varaqasi",
+        "sheetHint": "Xodim «Tanishdim va roziman» belgisini oʻz kabinetida yoki shu qurilmada PIN-kod bilan qoʻyadi.",
+        "needApproval": "Tanishuv varaqasi dastur versiya sifatida tasdiqlanganda yoki oʻz faylingiz yuklanganda ochiladi.",
+        "toProgram": "Dastur va versiyalar",
+        "colMark": "Belgi",
+        "colDate": "Sana",
+        "agreed": "Tanishdim va roziman",
+        "allSigned": "Barcha xodimlar joriy versiya bilan tanishgan.",
+        "pinFailed": "Belgi qoʻyib boʻlmadi",
+        "signed": "{name}: «Tanishdim va roziman»",
+        "pendingTitle": "Hali tanishmaganlar: {count}",
+        "signWithPin": "PIN-kod bilan",
+        "pinHint": "Xodim oʻz PIN-kodini kiritadi — QR-shakllar uchun ishlatiladigan kod. Bu dasturning joriy versiyasi uchun «Tanishdim va roziman» imzosi.",
+        "pinLabel": "PIN-kod",
+        "cancel": "Bekor qilish",
+        "agreeButton": "Tanishdim va roziman"
+      },
+      "equipment": {
+        "empty": "Hozircha uskunalar yoʻq",
+        "emptyHint": "Obyekt uskunalarini qoʻshing — roʻyxat bu yerda oʻzi paydo boʻladi.",
+        "open": "Uskunalar",
+        "colName": "Nomi",
+        "colType": "Turi",
+        "colArea": "Sex / xona",
+        "colSerial": "Zavod raqami",
+        "colRange": "Rejim"
+      },
+      "journals": {
+        "empty": "Yoqilgan jurnallar yoʻq",
+        "emptyHint": "Obyekt jurnallarini yoqing — roʻyxat bu yerda oʻzi paydo boʻladi.",
+        "open": "Jurnallarni sozlash",
+        "note": "Yoqilgan jurnallar: {count}. Roʻyxat obyekt jurnallarini sozlash bilan birga oʻzgaradi."
+      },
+      "procedures": {
+        "note": "Tartiblarni sarlavha va raqamlash bilan matn (Word, PDF) yoki skan koʻrinishida yuklang: qabul qilish, saqlash, yuvish, tozalash va boshqalar."
+      },
+      "instructions": {
+        "empty": "Hozircha ish yoʻriqnomalari yoʻq",
+        "emptyHint": "Yoʻriqnomalarni «Ish yoʻriqnomalari»ga yuklang — ular bu yerda paydo boʻladi.",
+        "open": "Ish yoʻriqnomalari"
+      }
+    },
+    "orgCharts": {
+      "lead": "Tashkiliy tuzilma: lavozimlar va boʻysunish.",
+      "new": "Yangi sxema",
+      "name": "Nomi",
+      "namePlaceholder": "Masalan, Tashkiliy tuzilma",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "stats": "Bloklar: {blocks}",
+      "updated": "Oʻzgartirilgan: {date}",
+      "open": "Ochish",
+      "emptyTitle": "Tashkiliy tuzilma hali yoʻq",
+      "emptyHint": "Xodimlar lavozimlaridan qoralama yigʻing yoki sxemani noldan chizing.",
+      "remove": "Oʻchirish",
+      "removeTitle": "«{name}» sxemasi oʻchirilsinmi?",
+      "removeBody": "Sxema qayta tiklab boʻlmaydigan tarzda oʻchiriladi.",
+      "createFailed": "Sxemani yaratib boʻlmadi",
+      "fromPositions": "Lavozimlardan yigʻish",
+      "editorHint": "Sxema alohida sahifada chiziladi: bloklar — lavozimlar, strelkalar — boʻysunish. Lavozimlardan yigʻilgan qoralamani tekshiring: tizimda boʻysunish aloqalari yoʻq."
     }
   },
   "inspectionDay": {
@@ -19625,7 +20085,11 @@
     "roleLeader": "Guruh rahbari",
     "roleDeputy": "Rahbar o‘rinbosari",
     "roleMember": "Guruh a’zosi",
-    "roleSecretary": "Kotib"
+    "roleSecretary": "Kotib",
+    "ppkLead": "Ishlab chiqarish nazorati dasturi, {version}-versiya. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
+    "ppkOfficials": "Mansabdor shaxslar",
+    "ppkLeadFile": "Ishlab chiqarish nazorati dasturi. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
+    "ppkOpen": "Dasturni ochish"
   },
   "staffPages": {
     "positions": {
@@ -27801,7 +28265,9 @@
       "scan": "Skan {index, number}: {name}",
       "noScan": "Asosning skani ilova qilinmagan",
       "addAnother": "Yana bir yozuv kiritish",
-      "addVisitRecord": "Tashrif yozuvini kiritish"
+      "addVisitRecord": "Tashrif yozuvini kiritish",
+      "contractsTitle": "Asosiy shartnomalar",
+      "contractNumber": "№ {number}"
     },
     "visitForm": {
       "sizeMb": "{value} MB",

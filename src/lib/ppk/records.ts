@@ -5,6 +5,7 @@
 import { z } from "zod";
 import type { ControlKind, DecisionAnswers, HazardType, TeamRole } from "./haccp";
 import { NORM_CATALOG } from "./norm-catalog";
+import { PRP_TABLES, PRP_TABLE_LIMIT, type PrpRow, type PrpTableBlock } from "./prp-tables";
 
 export const PPK_RECORD_BLOCKS = [
   "team",
@@ -19,8 +20,34 @@ export const PPK_RECORD_BLOCKS = [
   "norms",
   "doc-versions",
   "team-meetings",
+  // Структура ППК по документу владельца (2026-11-24): оргструктура, договоры,
+  // сведения о производстве, тексты пунктов и таблицы программ ПОПМ.
+  "org-chart",
+  "contracts",
+  "production-info",
+  "text-haccp-principles",
+  "text-terms",
+  "text-team-regulation",
+  "text-team-leader",
+  "text-ccp-method",
+  "text-flow-schedule",
+  "prp-infections",
+  "prp-disinfection",
+  "prp-emergencies",
+  "prp-medical",
 ] as const;
 export type PpkRecordBlock = (typeof PPK_RECORD_BLOCKS)[number];
+
+/** Блоки-тексты пунктов структуры: одна запись `{ text }` на область. */
+export const PPK_TEXT_BLOCKS = [
+  "text-haccp-principles",
+  "text-terms",
+  "text-team-regulation",
+  "text-team-leader",
+  "text-ccp-method",
+  "text-flow-schedule",
+] as const satisfies readonly PpkRecordBlock[];
+export type PpkTextBlock = (typeof PPK_TEXT_BLOCKS)[number];
 
 export function isPpkRecordBlock(v: unknown): v is PpkRecordBlock {
   return typeof v === "string" && (PPK_RECORD_BLOCKS as readonly string[]).includes(v);
@@ -39,10 +66,28 @@ export const PPK_RECORD_LIMITS: Record<PpkRecordBlock, number> = {
   norms: 1,
   "doc-versions": 200,
   "team-meetings": 200,
+  "org-chart": 20,
+  contracts: 200,
+  "production-info": 1,
+  "text-haccp-principles": 1,
+  "text-terms": 1,
+  "text-team-regulation": 1,
+  "text-team-leader": 1,
+  "text-ccp-method": 1,
+  "text-flow-schedule": 1,
+  "prp-infections": PRP_TABLE_LIMIT,
+  "prp-disinfection": PRP_TABLE_LIMIT,
+  "prp-emergencies": PRP_TABLE_LIMIT,
+  "prp-medical": PRP_TABLE_LIMIT,
 };
 
 /** Блоки, где в организации может быть одна запись (лимит 1). БД не даст второй: см. `PpkRecord.singleton`. */
-export const PPK_SINGLETON_BLOCKS = ["policy", "norms"] as const satisfies readonly PpkRecordBlock[];
+export const PPK_SINGLETON_BLOCKS = [
+  "policy",
+  "norms",
+  "production-info",
+  ...PPK_TEXT_BLOCKS,
+] as const satisfies readonly PpkRecordBlock[];
 
 export const PPK_PRODUCT_CATEGORIES = [
   "ready-meals",
@@ -109,6 +154,34 @@ export type DocVersion = {
 };
 /** Протокол заседания группы ХАССП. */
 export type TeamMeeting = { date: string; topic: string; decisions: string; attendeeIds: string[] };
+/** Договор из перечня основных договоров (пункт 1.3 структуры). */
+export type ContractData = {
+  title: string;
+  counterparty: string;
+  number: string;
+  /** Дата заключения YYYY-MM-DD. */
+  date: string | null;
+  /** Действует до YYYY-MM-DD. */
+  validUntil: string | null;
+  /** Показывать на портале проверяющего (без файлов). */
+  visibleToInspector: boolean;
+};
+/** Сведения о производстве по шаблону (пункт 1.4): то, чего нет в сведениях об объекте. */
+export type ProductionInfoData = {
+  activity: string;
+  workingHours: string;
+  seats: string;
+  capacity: string;
+  area: string;
+  waterSupply: string;
+  sewage: string;
+  ventilation: string;
+  heating: string;
+  serviceForm: string;
+  extra: string;
+};
+/** Текст пункта структуры (принципы ХАССП, положения, методика…). */
+export type PpkTextData = { text: string };
 export type DiagramNode = {
   id: string;
   x: number;
@@ -291,6 +364,44 @@ const teamMeetingSchema = z.object({
   attendeeIds: z.array(id()).max(30),
 });
 
+const contractSchema = z.object({
+  title: short(300).min(1),
+  counterparty: short(300),
+  number: short(100),
+  date: dateOnly,
+  validUntil: dateOnly,
+  visibleToInspector: z.boolean(),
+});
+
+const productionInfoSchema = z.object({
+  activity: short(300),
+  workingHours: short(200),
+  seats: short(100),
+  capacity: short(200),
+  area: short(100),
+  waterSupply: short(300),
+  sewage: short(300),
+  ventilation: short(300),
+  heating: short(300),
+  serviceForm: short(300),
+  extra: long(),
+});
+
+/** Текст пункта: до 30 000 символов (положение целиком). */
+const textSchema = z.object({ text: z.string().trim().max(30000) });
+
+/** Строка таблицы ПОПМ: колонки из `PRP_TABLES`, первая обязательна. */
+function prpRowSchema(block: PrpTableBlock) {
+  return z.object(
+    Object.fromEntries(
+      PRP_TABLES[block].map((column) => {
+        const base = z.string().trim().max(column.max);
+        return [column.key, column.required ? base.min(1) : base];
+      }),
+    ),
+  );
+}
+
 const coord = z.number().min(0).max(4000);
 const size = z.number().min(40).max(2000);
 
@@ -383,6 +494,20 @@ export const PPK_RECORD_SCHEMAS: Record<PpkRecordBlock, z.ZodTypeAny> = {
   norms: normsSchema,
   "doc-versions": docVersionSchema,
   "team-meetings": teamMeetingSchema,
+  // Оргструктура рисуется тем же конструктором, что блок-схема: блоки и связи.
+  "org-chart": flowchartSchema,
+  contracts: contractSchema,
+  "production-info": productionInfoSchema,
+  "text-haccp-principles": textSchema,
+  "text-terms": textSchema,
+  "text-team-regulation": textSchema,
+  "text-team-leader": textSchema,
+  "text-ccp-method": textSchema,
+  "text-flow-schedule": textSchema,
+  "prp-infections": prpRowSchema("prp-infections"),
+  "prp-disinfection": prpRowSchema("prp-disinfection"),
+  "prp-emergencies": prpRowSchema("prp-emergencies"),
+  "prp-medical": prpRowSchema("prp-medical"),
 };
 
 /** Тип данных записи по блоку. */
@@ -399,6 +524,19 @@ export type PpkRecordDataMap = {
   norms: NormsData;
   "doc-versions": DocVersion;
   "team-meetings": TeamMeeting;
+  "org-chart": DiagramData;
+  contracts: ContractData;
+  "production-info": ProductionInfoData;
+  "text-haccp-principles": PpkTextData;
+  "text-terms": PpkTextData;
+  "text-team-regulation": PpkTextData;
+  "text-team-leader": PpkTextData;
+  "text-ccp-method": PpkTextData;
+  "text-flow-schedule": PpkTextData;
+  "prp-infections": PrpRow;
+  "prp-disinfection": PrpRow;
+  "prp-emergencies": PrpRow;
+  "prp-medical": PrpRow;
 };
 
 export type ParsedPpkRecord<B extends PpkRecordBlock> = {

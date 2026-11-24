@@ -4,6 +4,8 @@ import type { PdfLogo } from "@/lib/pdf-logo";
 import { loadPdfOrgLogo } from "@/lib/pdf-logo.server";
 import { NORM_CATALOG } from "./norm-catalog";
 import { labNextDate } from "./sanitation";
+import { journalResponsibles } from "./officials";
+import { EMERGENCIES, type Emergency } from "./program-content";
 import { loadPpkStaff } from "./staff.server";
 import { loadEnabledJournals } from "./journals.server";
 import { loadDocVersions } from "./review.server";
@@ -63,6 +65,11 @@ export type PpkBundle = {
   roster: { name: string; title: string }[];
   /** Последняя утверждённая версия документа (для «УТВЕРЖДАЮ» и подзаголовка) или null. */
   approvals: Record<"ppk" | "haccp-plan", BundleApproval | null>;
+  /**
+   * Аварийные ситуации и действия (раздел «Аварийные ситуации»): свои строки
+   * пункта 3.3 структуры ППК; своих нет — типовой перечень `EMERGENCIES`.
+   */
+  emergencies?: readonly Emergency[];
 };
 
 export type BundleApproval = NonNullable<ReturnType<typeof approvalOf>>;
@@ -141,19 +148,14 @@ export async function loadPpkBundle(scope: PpkScope): Promise<PpkBundle> {
     : [];
 
   // Ответственные за журналы: пользователь → названия включённых журналов.
-  const assigned = (orgSettings?.journalResponsibleUsersJson ?? {}) as Record<string, Record<string, string | null>>;
-  const byUser = new Map<string, string[]>();
-  for (const journal of journals) {
-    const slots = assigned[journal.code];
-    if (!slots || typeof slots !== "object") continue;
-    for (const userId of new Set(Object.values(slots))) {
-      if (typeof userId !== "string" || !people.has(userId)) continue;
-      byUser.set(userId, [...(byUser.get(userId) ?? []), journal.name]);
-    }
-  }
-  const responsibles = [...byUser.entries()]
-    .map(([userId, names]) => ({ name: people.get(userId)!.name, title: people.get(userId)!.title, journals: names }))
-    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  const responsibles = journalResponsibles(journals, orgSettings?.journalResponsibleUsersJson, people).map(
+    ({ name, title, journals: names }) => ({ name, title, journals: names }),
+  );
+
+  const ownEmergencies = valid<Record<string, string>>("prp-emergencies").map(({ data }) => ({
+    title: data.situation ?? "",
+    actions: data.actions ?? "",
+  }));
 
   const logo = await loadPdfOrgLogo(organizationId, org.logoUrl);
 
@@ -178,5 +180,6 @@ export async function loadPpkBundle(scope: PpkScope): Promise<PpkBundle> {
       ppk: approvalOf(versionRows.map((row) => row.data), "ppk", staff),
       "haccp-plan": approvalOf(versionRows.map((row) => row.data), "haccp-plan", staff),
     },
+    emergencies: ownEmergencies.length > 0 ? ownEmergencies : EMERGENCIES,
   };
 }

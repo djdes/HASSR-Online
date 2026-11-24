@@ -51,6 +51,16 @@ export function usePpkRecords<T>(block: PpkRecordBlock, initial?: PpkRecordRow<T
     if (!hasInitial.current) void reload();
   }, [reload]);
 
+  // Записи блока изменили не этим списком (например, «Загрузить из справочника»
+  // в окне пункта структуры ППК): событие `ppk:reload` с блоком — перечитать.
+  useEffect(() => {
+    const onReload = (event: Event) => {
+      if ((event as CustomEvent<{ block?: string }>).detail?.block === block) void reload();
+    };
+    window.addEventListener("ppk:reload", onReload);
+    return () => window.removeEventListener("ppk:reload", onReload);
+  }, [block, reload]);
+
   /** Отправить изменение и перечитать список; true — сервер принял. */
   const send = useCallback(
     async (request: Promise<Response>): Promise<boolean> => {

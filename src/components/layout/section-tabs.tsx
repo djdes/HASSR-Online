@@ -8,6 +8,7 @@ import { sectionForPath } from "@/lib/app-nav";
 import { cn } from "@/lib/utils";
 import { useAppNav } from "@/components/layout/app-nav-context";
 import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-switch";
+import { routeOverlayBase } from "@/lib/route-overlay";
 
 /**
  * Вкладки раздела над основным окном: «Сегодня · Все журналы · Проверка ·
@@ -28,7 +29,10 @@ import { useNewNavLayout, useNewNavPlace } from "@/components/layout/nav-layout-
  */
 export function useSectionPlace() {
   const { sections } = useAppNav();
-  const pathname = usePathname() || "/";
+  // Окно поверх страницы (`route-overlay.ts`) — место как у страницы под ним:
+  // вкладки и «‹ назад» не прыгают, пока окно пункта открыто.
+  const rawPathname = usePathname() || "/";
+  const pathname = routeOverlayBase(rawPathname) ?? rawPathname;
   const owner = sectionForPath(pathname);
   const section = owner ? sections.find((item) => item.key === owner.section) : undefined;
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
