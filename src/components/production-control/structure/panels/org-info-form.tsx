@@ -153,7 +153,11 @@ export function OrgInfoForm({
             disabled: !canManage,
             maxLength: MAX[key],
             "aria-invalid": missing.includes(key) || undefined,
-            placeholder: key in registry ? (registry[key as LegalOverrideKey] ?? "") : "",
+            // Пустое поле — в документы идёт значение из ЕГРЮЛ (полное наименование — название организации).
+            placeholder:
+              key in registry
+                ? (registry[key as LegalOverrideKey] ?? (key === "legalFullName" ? own.name : ""))
+                : "",
           };
           return (
             <label key={key} className={multiline || key === "legalFullName" ? "block sm:col-span-2" : "block"}>

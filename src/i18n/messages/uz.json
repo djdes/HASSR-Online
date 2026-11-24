@@ -837,7 +837,7 @@
     },
     "structure": {
       "title": "Dastur tuzilmasi",
-      "lead": "HACCP tamoyillariga asoslangan ishlab chiqarish nazoratining elektron dasturi. Bandni bosing — uning maʼlumotlarini yuklang, toʻldiring yoki tekshiring.",
+      "lead": "HACCP tamoyillariga asoslangan. Bandni bosing — uning maʼlumotlarini yuklang, toʻldiring yoki tekshiring.",
       "progress": "{total} ta banddan {done} tasi toʻldirilgan",
       "documentsTitle": "Dastur hujjatlari",
       "sections": {

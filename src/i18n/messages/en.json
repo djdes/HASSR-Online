@@ -837,7 +837,7 @@
     },
     "structure": {
       "title": "Program structure",
-      "lead": "Electronic production control program based on HACCP principles. Tap an item to upload, fill in or check its data.",
+      "lead": "Based on HACCP principles. Tap an item to upload, fill in or check its data.",
       "progress": "{done} of {total} items filled",
       "documentsTitle": "Program documents",
       "sections": {

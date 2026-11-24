@@ -1,0 +1,7 @@
+PASS повар: страница пункта закрыта — 200 → http://localhost:3000/mini/today
+PASS повар: GET /api/production-control/records → 403
+PASS повар: POST /api/production-control/records → 403
+PASS повар: POST /api/production-control/prp/fill → 403
+PASS повар: POST /api/production-control/products/import → 403
+PASS повар: POST /api/production-control/org-chart → 403
+PASS повар: POST /api/production-control/acknowledgements/pin → 403

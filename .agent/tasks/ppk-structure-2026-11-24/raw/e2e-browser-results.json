@@ -1,0 +1,235 @@
+{
+  "results": [
+    {
+      "name": "overview: 32 пункта-ссылки",
+      "ok": true,
+      "detail": "items=32"
+    },
+    {
+      "name": "overview: 4 раздела",
+      "ok": true,
+      "detail": "sections=4"
+    },
+    {
+      "name": "ссылки ведут на /production-control/item/<id>",
+      "ok": true,
+      "detail": "/production-control/item/1-1, /production-control/item/1-2, /production-control/item/1-3"
+    },
+    {
+      "name": "клик по 1.1: адрес окна",
+      "ok": true,
+      "detail": "http://localhost:3000/production-control/item/1-1"
+    },
+    {
+      "name": "клик по 1.1: обзор остаётся под окном",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ПК: окно по центру, не во всю ширину",
+      "ok": true,
+      "detail": "{\"x\":264.1718444824219,\"y\":19.93603515625,\"width\":911.6562805175781,\"height\":860.1279296875}"
+    },
+    {
+      "name": "Esc закрывает окно и возвращает адрес обзора",
+      "ok": true,
+      "detail": "http://localhost:3000/production-control"
+    },
+    {
+      "name": "окно 1-1",
+      "ok": true,
+      "detail": "577 символов"
+    },
+    {
+      "name": "окно 1-2",
+      "ok": true,
+      "detail": "432 символов"
+    },
+    {
+      "name": "окно 1-3",
+      "ok": true,
+      "detail": "777 символов"
+    },
+    {
+      "name": "окно 1-4",
+      "ok": true,
+      "detail": "711 символов"
+    },
+    {
+      "name": "окно 1-5",
+      "ok": true,
+      "detail": "293 символов"
+    },
+    {
+      "name": "окно 1-6",
+      "ok": true,
+      "detail": "299 символов"
+    },
+    {
+      "name": "окно 1-7",
+      "ok": true,
+      "detail": "1893 символов"
+    },
+    {
+      "name": "окно 1-8",
+      "ok": true,
+      "detail": "183 символов"
+    },
+    {
+      "name": "окно 1-9",
+      "ok": true,
+      "detail": "145 символов"
+    },
+    {
+      "name": "окно 2-1",
+      "ok": true,
+      "detail": "403 символов"
+    },
+    {
+      "name": "окно 2-2",
+      "ok": true,
+      "detail": "850 символов"
+    },
+    {
+      "name": "окно 2-3",
+      "ok": true,
+      "detail": "488 символов"
+    },
+    {
+      "name": "окно 2-4",
+      "ok": true,
+      "detail": "606 символов"
+    },
+    {
+      "name": "окно 2-5",
+      "ok": true,
+      "detail": "293 символов"
+    },
+    {
+      "name": "окно 2-6",
+      "ok": true,
+      "detail": "430 символов"
+    },
+    {
+      "name": "окно 2-7",
+      "ok": true,
+      "detail": "269 символов"
+    },
+    {
+      "name": "окно 2-8",
+      "ok": true,
+      "detail": "578 символов"
+    },
+    {
+      "name": "окно 2-9",
+      "ok": true,
+      "detail": "200 символов"
+    },
+    {
+      "name": "окно 2-10",
+      "ok": true,
+      "detail": "674 символов"
+    },
+    {
+      "name": "окно 3-1",
+      "ok": true,
+      "detail": "432 символов"
+    },
+    {
+      "name": "окно 3-2",
+      "ok": true,
+      "detail": "428 символов"
+    },
+    {
+      "name": "окно 3-3",
+      "ok": true,
+      "detail": "2040 символов"
+    },
+    {
+      "name": "окно 3-4",
+      "ok": true,
+      "detail": "403 символов"
+    },
+    {
+      "name": "окно 3-5",
+      "ok": true,
+      "detail": "1460 символов"
+    },
+    {
+      "name": "окно 3-6",
+      "ok": true,
+      "detail": "655 символов"
+    },
+    {
+      "name": "окно 3-7",
+      "ok": true,
+      "detail": "596 символов"
+    },
+    {
+      "name": "окно app-1",
+      "ok": true,
+      "detail": "831 символов"
+    },
+    {
+      "name": "окно app-2",
+      "ok": true,
+      "detail": "414 символов"
+    },
+    {
+      "name": "окно app-3",
+      "ok": true,
+      "detail": "510 символов"
+    },
+    {
+      "name": "окно app-4",
+      "ok": true,
+      "detail": "2193 символов"
+    },
+    {
+      "name": "окно app-5",
+      "ok": true,
+      "detail": "324 символов"
+    },
+    {
+      "name": "окно app-6",
+      "ok": true,
+      "detail": "239 символов"
+    },
+    {
+      "name": "1.9: текст сохраняется и виден при повторном открытии",
+      "ok": true,
+      "detail": "ХАССП — система анализа опасностей и кри"
+    },
+    {
+      "name": "прямой заход: страница пункта, не окно",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3.1: типовые строки добавлены",
+      "ok": true,
+      "detail": "rows=13"
+    },
+    {
+      "name": "обзор: 1.9 и 3.1 заполнены",
+      "ok": true,
+      "detail": "Заполнен / Заполнен"
+    },
+    {
+      "name": "телефон: нет горизонтальной прокрутки обзора",
+      "ok": true,
+      "detail": "overflow=0"
+    },
+    {
+      "name": "телефон: окно — шторка снизу во всю ширину",
+      "ok": true,
+      "detail": "{\"x\":0,\"y\":24,\"width\":390,\"height\":820}"
+    },
+    {
+      "name": "нет ошибок страницы в консоли",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "errors": []
+}
