@@ -13,7 +13,7 @@ import { OBJECT_CATEGORIES, type ObjectCategory } from "@/lib/object-categories"
  * объекта).
  */
 
-const ICONS: Record<ObjectCategory, LucideIcon> = {
+export const OBJECT_CATEGORY_ICONS: Record<ObjectCategory, LucideIcon> = {
   food: UtensilsCrossed,
   medical: Stethoscope,
   consumer: Scissors,
@@ -28,6 +28,7 @@ export function ObjectCategoryPicker({
   disabled = false,
   id,
   className,
+  examples = false,
 }: {
   value: ObjectCategory | null;
   onChange: (value: ObjectCategory) => void;
@@ -36,10 +37,12 @@ export function ObjectCategoryPicker({
   disabled?: boolean;
   id?: string;
   className?: string;
+  /** Список: под ним — примеры выбранной сферы (правка объекта, владелец 2026-11-24). */
+  examples?: boolean;
 }) {
   const t = useTranslations("common");
   if (variant === "select") {
-    return (
+    const select = (
       <select
         id={id}
         value={value ?? ""}
@@ -70,6 +73,15 @@ export function ObjectCategoryPicker({
         ))}
       </select>
     );
+    if (!examples || !value) return select;
+    return (
+      <div className="space-y-1">
+        {select}
+        <p className="px-1 text-[12px] leading-[1.45] text-[#6f7282]" data-object-category-examples={value}>
+          {t(`objectCategoryHints.${value}`)}
+        </p>
+      </div>
+    );
   }
   return (
     <div
@@ -80,7 +92,7 @@ export function ObjectCategoryPicker({
       className={cn("grid gap-2 sm:grid-cols-2", className)}
     >
       {OBJECT_CATEGORIES.map((item) => {
-        const Icon = ICONS[item.value];
+        const Icon = OBJECT_CATEGORY_ICONS[item.value];
         const selected = item.value === value;
         return (
           <button

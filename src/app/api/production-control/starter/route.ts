@@ -7,28 +7,41 @@ import { requirePpkAccess } from "@/lib/ppk/access.server";
 import { ppkSingletonKey, ppkWhere } from "@/lib/ppk/scope";
 import { flowchartTemplate } from "@/lib/ppk/diagram";
 import { policyTemplate } from "@/lib/ppk/haccp";
-import { STARTER_BLOCKS, isStarterKind, starterPack, type StarterBlock } from "@/lib/ppk/starter-packs";
+import {
+  isStarterKind,
+  isStarterSphere,
+  sphereStarterPack,
+  starterBlocksFor,
+  type StarterBlock,
+} from "@/lib/ppk/starter-packs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * POST { kind } — заполняет типовыми данными только пустые блоки ППК: продукция,
- * опасности, блок-схемы, планы лаборатории и дезинсекции, нормативы, текст политики
- * (без утверждения). Блоки с данными пропускаются. Всё — одной транзакцией.
+ * POST { sphere, kind? } — заполняет типовыми данными только пустые блоки ППК.
+ * Общепит (`food`, вид заведения `kind`): продукция, опасности, блок-схемы,
+ * планы лаборатории и дезинсекции, нормативы, текст политики (без утверждения).
+ * Медицина, услуги, спорт: планы лаборатории и дезинсекции, нормативы сферы.
+ * Прежний запрос `{ kind }` — общепит. Блоки с данными пропускаются; одной транзакцией.
  */
 export async function POST(request: Request) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
   const body = await request.json().catch(() => null);
-  const kind = body?.kind;
+  const sphere = body?.sphere ?? "food";
+  // С указанной сферой вид необязателен (общепит — «кафе»); прежний запрос без сферы — только с видом.
+  const kind = body?.kind ?? (body?.sphere !== undefined ? "cafe" : undefined);
+  if (!isStarterSphere(sphere)) {
+    return NextResponse.json({ error: "Неизвестная сфера" }, { status: 400 });
+  }
   if (!isStarterKind(kind)) {
     return NextResponse.json({ error: "Неизвестный тип заведения" }, { status: 400 });
   }
 
   const organizationId = auth.organizationId;
   const createdById = auth.session.user.id ?? null;
-  const pack = starterPack(kind);
+  const pack = sphereStarterPack(sphere, kind);
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
     select: { name: true },
@@ -56,7 +69,7 @@ export async function POST(request: Request) {
     const result = await db.$transaction(async (tx) => {
       const created: Partial<Record<StarterBlock, number>> = {};
       const skipped: StarterBlock[] = [];
-      for (const block of STARTER_BLOCKS) {
+      for (const block of starterBlocksFor(sphere)) {
         const existing = await tx.ppkRecord.count({ where: { ...ppkWhere(auth.scope), block } });
         if (existing > 0) {
           skipped.push(block);
@@ -86,7 +99,7 @@ export async function POST(request: Request) {
       action: "production-control.starter",
       entity: "PpkRecord",
       entityId: organizationId,
-      details: { kind, created: result.created, skipped: result.skipped },
+      details: { sphere, kind, created: result.created, skipped: result.skipped },
     });
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

@@ -3,6 +3,7 @@
  * продукция, опасности, блок-схемы, планы лаборатории и дезинсекции, нормативы.
  * Чистый модуль без БД и React; каждый вызов отдаёт свежую копию.
  */
+import { OBJECT_CATEGORY_VALUES, type ObjectCategory } from "@/lib/object-categories";
 import { productIndicatorPreset, TYPICAL_HAZARDS } from "./haccp-presets";
 import { NORM_CATALOG } from "./norm-catalog";
 import type {
@@ -239,6 +240,89 @@ export type StarterSummary = {
 /** Сколько чего добавит пакет — для подписи в окне мастера. */
 export function starterSummary(kind: StarterKind): StarterSummary {
   const pack = starterPack(kind);
+  return {
+    products: pack.products.length,
+    hazards: pack.hazards.length,
+    flowcharts: pack.flowcharts.length,
+    labPlan: pack.labPlan.length,
+    pestPlan: pack.pestPlan.length,
+    norms: pack.norms.length,
+  };
+}
+
+/**
+ * Мастер по сферам объекта (владелец, 2026-11-24: «по сферам как в объекте —
+ * 4 шт»): общепит — прежние 4 вида заведения; медицина, услуги и спорт — свои
+ * план лаборатории и нормативы, без продукции, опасностей, блок-схем и политики
+ * пищевой безопасности (это ХАССП только общепита).
+ */
+export const STARTER_SPHERES = OBJECT_CATEGORY_VALUES;
+export type StarterSphere = ObjectCategory;
+
+export function isStarterSphere(value: unknown): value is StarterSphere {
+  return typeof value === "string" && (STARTER_SPHERES as readonly string[]).includes(value);
+}
+
+const OTHER_SPHERE_BLOCKS = ["lab-plan", "pest-plan", "norms"] as const satisfies readonly StarterBlock[];
+
+/** Блоки, которые мастер заполняет для сферы. */
+export function starterBlocksFor(sphere: StarterSphere): readonly StarterBlock[] {
+  return sphere === "food" ? STARTER_BLOCKS : OTHER_SPHERE_BLOCKS;
+}
+
+const lab = (object: LabPlanItem["object"], subject: string, indicator: string, everyMonths: number): LabPlanItem => ({
+  object,
+  subject,
+  indicator,
+  everyMonths,
+  laboratory: "",
+  lastDate: null,
+});
+
+/** Типовые строки плана лаборатории сфер без пищевой продукции — заготовка, правится под объект. */
+const SPHERE_LAB_PLAN: Record<Exclude<StarterSphere, "food">, LabPlanItem[]> = {
+  medical: [
+    lab("swabs", "Смывы с поверхностей и оборудования кабинетов", "БГКП, S. aureus", 3),
+    lab("other", "Стерильность медицинских изделий после стерилизации", "Стерильность", 3),
+    lab("air", "Воздух процедурных, операционных и стерилизационной", "Общая микробная обсеменённость, S. aureus", 6),
+    lab("water", "Питьевая вода", "Микробиологические и органолептические показатели", 6),
+  ],
+  consumer: [
+    lab("swabs", "Смывы с инструментов и рабочих поверхностей", "БГКП, S. aureus", 3),
+    lab("other", "Качество стерилизации инструментов (биологические индикаторы)", "Эффективность стерилизации", 3),
+    lab("water", "Питьевая вода", "Микробиологические и органолептические показатели", 6),
+  ],
+  sport: [
+    lab("water", "Вода бассейна", "Микробиологические, паразитологические и физико-химические показатели", 1),
+    lab("swabs", "Смывы в раздевалках, душевых и на инвентаре", "БГКП", 3),
+    lab("air", "Параметры микроклимата залов", "Температура, влажность, скорость движения воздуха", 6),
+    lab("water", "Питьевая вода", "Микробиологические и органолептические показатели", 6),
+  ],
+};
+
+/** Нормативы сферы: основа производственного контроля и требования к условиям деятельности. */
+const SPHERE_NORMS: Record<Exclude<StarterSphere, "food">, string[]> = {
+  medical: ["fz-52", "sp-1058", "sanpin-3686", "sanpin-3685", "sanpin-3678", "sanpin-3684", "order-29n"],
+  consumer: ["fz-52", "sp-1058", "sanpin-3686", "sanpin-3685", "sanpin-3678", "order-29n"],
+  sport: ["fz-52", "sp-1058", "sanpin-3686", "sanpin-3685", "sanpin-3678", "sanpin-3684", "sp-3648", "order-29n"],
+};
+
+/** Пакет сферы: общепит — по виду заведения, остальные — свои планы и нормативы. Новая копия. */
+export function sphereStarterPack(sphere: StarterSphere, kind: StarterKind = "cafe"): StarterPack {
+  if (sphere === "food") return starterPack(kind);
+  return {
+    products: [],
+    hazards: [],
+    flowcharts: [],
+    labPlan: SPHERE_LAB_PLAN[sphere].map((row) => ({ ...row })),
+    pestPlan: TYPICAL_PEST_PLAN.map((row) => ({ ...row })),
+    norms: [...SPHERE_NORMS[sphere]],
+  };
+}
+
+/** Сколько чего добавит пакет сферы — для строки «что добавится». */
+export function sphereStarterSummary(sphere: StarterSphere, kind: StarterKind = "cafe"): StarterSummary {
+  const pack = sphereStarterPack(sphere, kind);
   return {
     products: pack.products.length,
     hazards: pack.hazards.length,

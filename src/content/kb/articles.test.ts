@@ -73,7 +73,7 @@ test("база знаний — для любой сферы, объекты о�
     assert.doesNotMatch(authored, /повар|«К Вам пришла проверка»/i, article.slug);
   }
   const objects = text("torgovye-tochki");
-  for (const sphere of ["Общепит ХАССП", "Медицинские услуги", "Услуги потребителям", "Спорт и рекреация"]) {
+  for (const sphere of ["Общественное питание и производство пищевой продукции", "Медицинские услуги", "Услуги потребителям", "Спорт и рекреация"]) {
     assert.ok(objects.includes(sphere), `«Объекты»: ${sphere}`);
   }
   assert.match(objects, /Добавить объект/);

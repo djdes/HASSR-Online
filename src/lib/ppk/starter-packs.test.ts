@@ -67,3 +67,24 @@ test("isStarterKind", () => {
   assert.equal(isStarterKind("zoo"), false);
   assert.equal(isStarterKind(undefined), false);
 });
+
+test("мастер по сферам: 4 сферы объекта; общепит — прежние пакеты, остальные — свои планы и нормативы", async () => {
+  const { STARTER_SPHERES, sphereStarterPack, starterBlocksFor, isStarterSphere } = await import("./starter-packs");
+  const { NORM_CATALOG } = await import("./norm-catalog");
+  const { PPK_RECORD_SCHEMAS } = await import("./records");
+  assert.deepEqual([...STARTER_SPHERES], ["food", "medical", "consumer", "sport"]);
+  assert.equal(isStarterSphere("medical"), true);
+  assert.equal(isStarterSphere("cafe"), false);
+  assert.deepEqual(sphereStarterPack("food", "bakery"), starterPack("bakery"));
+  for (const sphere of ["medical", "consumer", "sport"] as const) {
+    const pack = sphereStarterPack(sphere);
+    assert.equal(pack.products.length + pack.hazards.length + pack.flowcharts.length, 0, `${sphere}: без ХАССП общепита`);
+    assert.ok(pack.labPlan.length >= 3, `${sphere}: план лаборатории`);
+    assert.ok(pack.pestPlan.length >= 3, `${sphere}: план дезинсекции`);
+    for (const id of pack.norms) assert.ok(NORM_CATALOG.some((doc) => doc.id === id), `${sphere}: норматив ${id} в каталоге`);
+    for (const row of pack.labPlan) assert.ok(PPK_RECORD_SCHEMAS["lab-plan"].safeParse(row).success, `${sphere}: ${row.subject}`);
+    assert.deepEqual([...starterBlocksFor(sphere)], ["lab-plan", "pest-plan", "norms"]);
+  }
+  assert.ok(sphereStarterPack("sport").labPlan.some((row) => /бассейн/i.test(row.subject)));
+  assert.ok(sphereStarterPack("medical").norms.includes("order-29n"));
+});

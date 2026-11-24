@@ -622,7 +622,7 @@ function BuildingCard({
             </div>
             {isOffice ? null : (
               <div className="space-y-1" data-building-sphere-edit>
-                <ObjectCategoryPicker variant="select" value={draftSphere} onChange={setDraftSphere} disabled={savingHead} />
+                <ObjectCategoryPicker variant="select" examples value={draftSphere} onChange={setDraftSphere} disabled={savingHead} />
                 <p className="px-1 text-[12px] leading-[1.45] text-[#6f7282]">{t("sphereHint")}</p>
               </div>
             )}
@@ -655,9 +655,12 @@ function BuildingCard({
           </div>
         ) : (
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            {/* Переносится: длинная сфера («Общественное питание и производство
+                пищевой продукции») на телефоне уходит под название, а не
+                сжимает его в столбик. */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <Building2 className="size-4 text-[#5566f6]" />
-              <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
+              <h2 className="min-w-0 break-words text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
                 {building.name}
               </h2>
               {building.kind === "office" ? (
@@ -667,10 +670,11 @@ function BuildingCard({
               ) : (
                 <span
                   data-building-sphere={sphere ?? ""}
+                  // На телефоне сфера — последней: скрепка остаётся в строке с названием.
                   className={
                     sphere
-                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
-                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00]"
+                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7] max-sm:order-last"
+                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00] max-sm:order-last"
                   }
                   title={t("sphereHint")}
                 >

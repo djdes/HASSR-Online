@@ -22,7 +22,7 @@ import { ORG_SPHERES } from "@/lib/org-profile";
 import { defaultDisabledCodesFor, requiredCodesFor, rulesFor } from "@/lib/sphere-journal-rules";
 
 /**
- * Сферы объектов (владелец, 2026-11-23): «только 4 сферы: Общепит ХАССП,
+ * Сферы объектов (владелец, 2026-11-23): «только 4 сферы: Общественное питание и производство пищевой продукции,
  * Медицинские услуги, Услуги потребителям, Спорт и рекреация», «объекты
  * завязываем на категориях, у организации».
  */
@@ -36,7 +36,7 @@ test("ровно четыре сферы объекта, подписи на т�
   assert.deepEqual(OBJECT_CATEGORY_VALUES, ["food", "medical", "consumer", "sport"]);
   assert.deepEqual(
     OBJECT_CATEGORY_VALUES.map((value) => messages("ru").common.objectCategories[value]),
-    ["Общепит ХАССП", "Медицинские услуги", "Услуги потребителям", "Спорт и рекреация"],
+    ["Общественное питание и производство пищевой продукции", "Медицинские услуги", "Услуги потребителям", "Спорт и рекреация"],
   );
   for (const locale of ["en", "uz"]) {
     for (const value of OBJECT_CATEGORY_VALUES) {

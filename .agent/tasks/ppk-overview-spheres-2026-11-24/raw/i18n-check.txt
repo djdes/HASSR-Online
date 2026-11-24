@@ -1,0 +1,9 @@
+> haccp-online@0.1.0 i18n:check
+> node scripts/i18n-types.mjs --check && node --import tsx --test src/i18n/*.test.ts
+# tests 103
+# suites 1
+# pass 103
+# fail 0
+# cancelled 0
+# skipped 0
+exit 0

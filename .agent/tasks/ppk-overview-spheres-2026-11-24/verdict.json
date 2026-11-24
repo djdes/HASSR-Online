@@ -1,0 +1,83 @@
+{
+  "round": 3,
+  "verdict": "PASS",
+  "round3": "Scoped re-check of the only src change since 4b619539a: buildings-client.tsx sphere chip gets max-sm:order-last (+ a JSX comment). ESLint on the file exit 0; npm run typecheck exit 0; tests that scan the file (climate-room-membership, room-kinds) + borderless/neutral-palette/one-accent 24/24. Stand rebuilt after the edit (edit 23:24:45, build started 23:25:26, server 23:28:29; compiled CSS has max-sm:order-last); raw/e2e-tz2.mjs 58/58 incl. the V10 check. iPhone 13 /settings/buildings: names on one line (food 146x27), no pin under a chip (food: pin on the name row; medical: pin next to the chip). Desktop unchanged: 768/1024/1280 px name -> chip -> pin on one row, chip order 0. Cosmetic remnants (V10, minor, not blocking): the food card's pin sits alone on a middle row (above the chip) at 320-375 px, and alone under the name+chip row around 700 px. Per-AC statuses unchanged from round 2.",
+  "judged": "Commit 4b619539a on claude/fervent-brown-ed5apv (clean working tree; a8d3695f4 = the round-1 tree, same 33 source files), 2026-11-24. Stand :3000: next build started 23:06:01 UTC, after the last source edit (23:01:05); server started 23:09:19. Only borderless.css / neutral-palette.css were rewritten afterwards, with identical content (no diff).",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS"
+  },
+  "criteria_notes": {
+    "AC1": "4 spheres, default = object sphere (medical object -> medical, cafe -> food), food = 4 kinds and the previous packs, the other spheres = own lab plan, pest plan and norms; medical fill created only lab-plan/pest-plan/norms; legacy { kind: canteen } 200 and skips filled blocks; { sphere: space } 400. New for V5 on a fresh object: { sphere: medical } and { sphere: food } without kind -> 200; legacy {} and { sphere: food, kind: zoo } -> 400. starter-packs/norm-catalog tests pass.",
+    "AC2": "Card 57/57/57/56 px at 1280/1366/1440/1920. Dialog: no inner scroll for all 4 spheres (food 589 px, others 463 px). iPhone 13 sheet spans 0..390 with no sideways scroll. Phone card after V3: 159 px (previously 245), text 298 px wide.",
+    "AC3": "New name and A4 examples in the object edit, the new-object wizard and the first-entry wizard, ru/en/uz; KB and live-guide renamed; the old name is gone from the repo. After V2, on iPhone 13 /settings/buildings shows the name on one line (146x27) and the food chip below it (240x47, 2 lines).",
+    "AC4": "e2e: item click in the new and classic views, «Следующий пункт», window to window 2.7 -> 2.6, and close all keep scrollY. Fresh-session jump probe 0/4.",
+    "AC5": "At scrollY 1400 with the point menu open, the header has top 0 and the menu sits at 64..463 px. With an item window open on a scrolled page, the header has top 0.",
+    "AC6": "Readiness (22%, docs -> register, ack 1 of 23, review До 24.11.2027), filter counts match the dots, section nav, revision badge 1.9 = «ППК 002», PDF 200 application/pdf, «Пришла проверка». «Прежний вид» persists and «Новый вид» returns. PPK_OVERVIEW_CLASSIC=1 re-checked on a temporary :3001 server, since stopped: classic=1, toggle=0. V1 fixed: with the «Частично» filter, the «2. План ХАССП» chip resets the filter and scrolls to the section (top 96), with no '#' and history.state not null; item 1.1 closes back to /production-control and opens again.",
+    "AC7": "Re-run here: typecheck exit 0; eslint --max-warnings=0 on the 26 changed .ts/.tsx files exit 0; targeted tests 31/31; the 81 files test:changed selects for c73c13e69..HEAD plus 10 design/PPK test files 462/462; i18n:check 103/103 with the contract up to date; e2e raw/e2e-tz2.mjs 57/57 with no page errors. next build not re-run (instructed); the stand build is of these sources. Deploy follows the merge and cannot be checked yet."
+  },
+  "round1_issues": {
+    "V1": "resolved — verified on the stand (my repro and the e2e V1 checks)",
+    "V2": "resolved — name on one line, chip wraps below it (iPhone 13)",
+    "V3": "resolved — phone card 159 vs 245 px (iPhone 13), 179 vs 314 px (320 px), 159 vs 222 px (Pixel 7); desktop unchanged",
+    "V4": "resolved — on a fresh medical object filled only with its 3 sphere blocks (readiness 25%) the card is hidden; dialog uses starter.nothingToAdd (ru/en/uz)",
+    "V5": "resolved — see AC1 note",
+    "V6": "accepted deviation from the Р5 wording (reason in problems.md); no regression",
+    "V7": "resolved by reading: the .catch returns null, which renders the classic branch, and the toggle offers «Новый вид». Not reproduced (would need a forced failure)",
+    "V8": "resolved — the toast uses summary.norms",
+    "V9": "partly resolved (chip titles, ack tile not green at 0 of 0); date format and arrow keys accepted as polish"
+  },
+  "issues": [
+    {
+      "id": "V10",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 661,
+      "summary": "Round 3: partly resolved by max-sm:order-last. At 390-430 px no pin sits alone (food: pin on the name row; medical: pin next to the chip). Still cosmetic: a food card's pin is alone on a middle row, between the name and the chip, at 320-375 px (and on any phone when the name leaves no room for the pin). Around 700 px it is alone under the name+chip row. Measured on the stand at 320/360/375/390/412/430/600/639/640/700/744/767/768/800/820/900/1024/1100/1280 px.",
+      "fix": "Optional: keep the icon, name and pin in one non-wrapping group (e.g. <span class=\"flex min-w-0 items-center gap-2\">), with the chip as a separate wrapping item, so the pin always stays with the name."
+    },
+    {
+      "id": "V6",
+      "severity": "minor",
+      "file": "src/app/globals.css",
+      "line": 1151,
+      "summary": "Accepted deviation: scroll is not locked on <html> as the Р5 text says. Wheel and touch are blocked by react-remove-scroll; keyboard and scrollbar behave as before the task.",
+      "fix": "None required; documented in problems.md."
+    },
+    {
+      "id": "V9",
+      "severity": "minor",
+      "file": "src/lib/ppk/overview.server.ts",
+      "line": 41,
+      "summary": "Accepted polish: the review date is always dd.mm.yyyy in en/uz, and the radiogroups have no arrow-key navigation (an existing cabinet pattern).",
+      "fix": "None required."
+    }
+  ],
+  "checks": {
+    "typecheck": "npm run typecheck -> exit 0",
+    "eslint": "npx eslint --max-warnings=0 <26 changed .ts/.tsx since c73c13e69> -> exit 0",
+    "unit_targeted": "overview-view, starter-packs, norm-catalog, route-overlay, object-categories, kb/articles -> 31/31",
+    "unit_related": "test-changed --list --range c73c13e69..HEAD (TEST_CHANGED_MAX_TESTS=300): 81 files, same selection as round 1, + one-accent, motion, public-dark-theme, switch-toast, ppk scope/structure-status/revisions/review, setup-wizard, home-compact -> 462/462",
+    "i18n_check": "npm run i18n:check -> 103/103",
+    "build": "not re-run (instructed); stand build is of 4b619539a sources",
+    "stand_e2e": "raw/e2e-tz2.mjs -> 57/57 PASS, no page errors",
+    "jump_probe": "raw/jump-probe.mjs -> 0/4 jumps",
+    "kill_switch": "raw/e2e-killswitch.mjs on a temporary PPK_OVERVIEW_CLASSIC=1 server on :3001 -> PASS; temp server stopped, :3000 untouched",
+    "v1_repro": "filter «Частично» -> chip «plan» -> url /production-control, state not null, history length unchanged -> open 1.1 -> Escape -> /production-control -> 1.1 reopens",
+    "v2_phone": "food: name 146x27, chip 240x47 (previously name 40x135, chip 124x106)",
+    "v3_phone": "card/text: iPhone 13 159/298, 320 px 179/228, Pixel 7 159/320 px",
+    "desktop_sizes": "card 57/57/57/56 px, dialog extra 0 px at 1280x800, 1366x768, 1440x900, 1920x1080",
+    "v4_v5_probe": "fresh object «Клиника verify 23:22:42»: card shown while empty; { sphere: medical } -> 200 lab-plan/pest-plan/norms; card hidden at readiness 25%; { sphere: food } -> 200; {} -> 400; bad kind -> 400",
+    "stand_side_effects": "e2e created «Клиника e2e 23:19:34»; the V4/V5 probe created and filled «Клиника verify 23:22:42»; admin's active object was restored to «Кафе «Ромашка»»",
+    "round3_eslint": "npx eslint --max-warnings=0 src/app/(dashboard)/settings/buildings/buildings-client.tsx -> exit 0",
+    "round3_typecheck": "npm run typecheck -> exit 0",
+    "round3_tests": "climate-room-membership, room-kinds, borderless, neutral-palette, one-accent -> 24/24",
+    "round3_stand_e2e": "raw/e2e-tz2.mjs -> 58/58 PASS (V10: pin never alone under a chip at 390 px), no page errors; created one more test object",
+    "round3_v10_widths": "food card pin alone: 320/360/375 px (middle row, above chip) and 700 px (below name+chip row); none at 390/412/430/600/639/640/744-1280 px. Medical cards: pin alone only at 320 px. Desktop 768/1024/1280: name -> chip -> pin, one row, chip order 0"
+  }
+}

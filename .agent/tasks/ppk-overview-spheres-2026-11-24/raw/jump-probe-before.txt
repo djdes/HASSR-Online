@@ -1,0 +1,13 @@
+Проба jump-probe.mjs на сборке ДО границы загрузки окна (production-control/layout.tsx без <Suspense> вокруг слота modal),
+но уже с правкой ScrollToTop (isOverlayTransition). Свежая сессия на каждый прогон, первый клик по пункту 2.6:
+
+run 0: before=1377 after=0 JUMP
+  frames: 1377:3032:-:contents:-:ontrol  1377:3032:-:contents:-:ontrol  0:900:-:contents:-:em/2-6  0:900:-:contents:-:em/2-6 ...
+run 1: before=1377 after=1377 ok
+run 2: before=1377 after=0 JUMP
+run 3: before=1377 after=0 JUMP
+jumps: 3 / 4
+
+Кадры: адрес уже /item/2-6, обзор ([data-ppk-overview]) в DOM, но высота документа падает до высоты экрана (900):
+React прячет содержимое границы загрузки всего кабинета, пока макет окна пункта приходит с сервера, — прокрутка
+обнуляется. Повторный прогон с отметкой «OV» (обзор в DOM): 0:900:OV:pulse0:contents:-:em/2-6.
