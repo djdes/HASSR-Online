@@ -7,7 +7,7 @@ import { sendComplianceReminderEmail } from "@/lib/email";
 import { getDbRoleValuesWithLegacy, MANAGEMENT_ROLES } from "@/lib/user-roles";
 import { getTemplatesFilledToday } from "@/lib/today-compliance";
 import { getDisabledJournalCodes, parseDisabledCodes } from "@/lib/disabled-journals";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { worksAtBuilding } from "@/lib/building-settings";
 import { isOfficeBuilding, receivesPlaceEvent } from "@/lib/building-scope";
 import { loadPlaceContext } from "@/lib/place-recipients";
@@ -104,7 +104,8 @@ async function handle(request: Request) {
       // Точки: напоминание по каждой точке отдельно — её набор журналов,
       // её документы и её руководители (слитая организация, 2026-10-26).
       // Без точек — одно напоминание на организацию, как раньше.
-      const targets = await buildingTargets(org.id);
+      // Офис — не объект (2026-11-23): своих журналов у него нет, напоминать нечего.
+      const targets = await documentBuildingTargets(org.id);
       const pointIds = targets.filter((id): id is string => Boolean(id));
       const pointNames = new Map(
         (pointIds.length > 0

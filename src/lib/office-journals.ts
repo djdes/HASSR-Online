@@ -38,6 +38,46 @@ export function documentTargetIds(
   return points.length > 0 ? points : [null];
 }
 
+/** Документ журнала для плана переноса: вид журнала и период (null — без даты, открытый край). */
+export type MovableDocument = { id: string; key: string; dateFrom: Date | null; dateTo: Date | null };
+
+/** Периоды пересекаются; null — открытый край (бумажный бланк без дат — на всё время). */
+function periodsOverlap(
+  a: { dateFrom: Date | null; dateTo: Date | null },
+  b: { dateFrom: Date | null; dateTo: Date | null },
+): boolean {
+  const aFrom = a.dateFrom?.getTime() ?? -Infinity;
+  const aTo = a.dateTo?.getTime() ?? Infinity;
+  const bFrom = b.dateFrom?.getTime() ?? -Infinity;
+  const bTo = b.dateTo?.getTime() ?? Infinity;
+  return aFrom <= bTo && bFrom <= aTo;
+}
+
+/**
+ * Какие документы офиса переносить на объект (ревью 2026-11-24): автоматика
+ * до этой поставки заводила копию журнала и на офис, и на объекты — перенос
+ * такой копии дал бы на объекте два документа одного журнала за один период.
+ * Поэтому:
+ *   • `overlap` — у объекта уже есть документ того же журнала за
+ *     пересекающийся период (любой статус) — не трогаем;
+ *   • `disabled` — журнал выключен на объекте: там документ не было бы видно;
+ *   • `move` — остальное: журнал, заведённый в офисе руками, без пары на объекте.
+ * `key` — код шаблона (электронные) или id бумажного журнала.
+ */
+export function planOfficeJournalMoves(
+  officeDocuments: readonly MovableDocument[],
+  targetDocuments: ReadonlyArray<Omit<MovableDocument, "id">>,
+  disabledKeys: ReadonlySet<string>,
+): { move: string[]; overlap: string[]; disabled: string[] } {
+  const plan = { move: [] as string[], overlap: [] as string[], disabled: [] as string[] };
+  for (const document of officeDocuments) {
+    if (disabledKeys.has(document.key)) plan.disabled.push(document.id);
+    else if (targetDocuments.some((other) => other.key === document.key && periodsOverlap(document, other))) plan.overlap.push(document.id);
+    else plan.move.push(document.id);
+  }
+  return plan;
+}
+
 /** Код ответа API, когда документ создают без объекта (`point_required`). */
 export const POINT_REQUIRED_CODE = "point_required";
 

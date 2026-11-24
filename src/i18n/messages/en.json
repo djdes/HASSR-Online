@@ -2927,7 +2927,6 @@
         "list": "Sites",
         "switch": "Change site",
         "manage": "Manage sites",
-        "switched": "Site: {name}",
         "failed": "Couldn't switch site",
         "caption": "Site",
         "captionMany": "Sites",
@@ -2937,8 +2936,6 @@
         "add": "Add site",
         "addHint": "Opens the wizard: name and address, rooms, equipment",
         "open": "Open site",
-        "organization": "Whole company",
-        "returnTo": "Back to {name}",
         "search": "Find a site",
         "nothingFound": "Nothing found",
         "choose": "Choose a site",
@@ -5772,7 +5769,7 @@
       }
     },
     "pointNotice": {
-      "body": "The office is not a site. Choose a site — new journal documents will belong to it.",
+      "body": "The office is not a site. Choose a site — new journal documents will be kept there.",
       "create": "Create a site",
       "empty": "No sites yet — create the first one.",
       "title": "A journal document is created for a site"
@@ -8438,7 +8435,7 @@
       "collapse": "Show less",
       "more": "More {count, number}",
       "office": "Office",
-      "officeTitle": "Office: sees all company sites, journals and tasks are office-only",
+      "officeTitle": "Office: management, sees all company sites; journals are kept at the sites",
       "officeHint": "Office — sees all sites, works in the office",
       "primaryHint": "★ — main location: location-based notifications use it",
       "primaryOn": "“{name}” is the main location. Click to unset",
@@ -11314,7 +11311,7 @@
       },
       "disabled": {
         "title": "Add a site first",
-        "body": "The office can be set up once the company has at least one site. Add it, and office staff and journals will appear here.",
+        "body": "The office can be set up once the company has at least one site. Add it, and the management and company sites will appear here.",
         "link": "Open sites"
       },
       "create": {

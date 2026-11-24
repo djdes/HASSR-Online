@@ -14,6 +14,8 @@ const SILENT_FILES = [
   "src/components/layout/point-section-sync.tsx",
   "src/components/journals/point-mode-unavailable.tsx",
   "src/components/layout/point-mismatch-notice.tsx",
+  // Мини-приложение и приложение на телефоне — так же (ревью 2026-11-24).
+  "src/app/mini/_components/mini-location-switcher.tsx",
 ];
 
 test("переключатель объектов, автосмена и плашки смены не показывают тост смены", () => {
@@ -29,4 +31,12 @@ test("в шапке офиса нет: подписи «Организация»
   assert.doesNotMatch(source, /captionOffice|ORGANIZATION_VIEW_ID/);
   assert.match(source, /t\("choose"\)/);
   assert.match(source, /t\("create"\)/);
+});
+
+test("мини-приложение: в списке только объекты — без «Офис» и «Вся организация»", () => {
+  const source = readFileSync("src/app/mini/_components/mini-location-switcher.tsx", "utf8");
+  assert.doesNotMatch(source, /ORGANIZATION_VIEW_ID|tPoint\("organization"\)/);
+  assert.match(source, /filter\(\(building\) => !isOfficeBuilding\(building\)\)/);
+  const shell = readFileSync("src/app/mini/_components/mini-shell-data.ts", "utf8");
+  assert.match(shell, /\("choose"\)/);
 });

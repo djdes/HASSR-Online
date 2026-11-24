@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { authOptions } from "@/lib/auth";
 import { getActiveOrgId } from "@/lib/auth-helpers";
-import { buildingTargets, getViewedPointId } from "@/lib/active-building";
+import { documentBuildingTargets, getViewedPointId } from "@/lib/active-building";
 import { withBuildingSuffix } from "@/lib/building-scope";
 import { rowsPointFromTargets } from "@/lib/document-point-rows";
 import { makeDocumentPointFilter } from "@/lib/worker-point-scope";
@@ -300,8 +300,9 @@ export async function POST(request: Request) {
     );
   }
 
-  // Точки организации и точки этого запуска: с точкой из шапки — только она.
-  const bulkTargets = await buildingTargets(organizationId);
+  // Объекты организации и объекты этого запуска: с объектом из шапки — только он.
+  // Офис — не объект (2026-11-23): документы на него не заводятся.
+  const bulkTargets = await documentBuildingTargets(organizationId);
   const runTargets =
     sessionPointId && bulkTargets.includes(sessionPointId) ? [sessionPointId] : bulkTargets;
   const runPointId = runTargets.length === 1 ? runTargets[0] : null;

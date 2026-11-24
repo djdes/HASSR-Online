@@ -175,16 +175,16 @@ export function headerPointChoosing(pathname: string | null | undefined, point: 
 }
 
 /**
- * Подпись точки в верхней панели Mini App — то же, что в центре шапки сайта
- * (П-3): выбрана «Вся организация» без офиса — так и пишем (раньше там
- * стояла первая точка списка), иначе название выбранной точки или офиса.
- * Точки выключены — подписи нет.
+ * Подпись в верхней панели Mini App — то же, что в центре шапки сайта (П-3):
+ * выбран объект — его название; уровень организации (офис или «вся
+ * организация») — «Выберите объект» (`chooseLabel`): офис — не объект
+ * (владелец, 2026-11-23). Объекты выключены — подписи нет.
  */
 export function miniLocationLabel(
   context: Pick<BuildingContext, "enabled" | "organizationView" | "activeBuilding"> | null,
-  organizationLabel: string,
+  chooseLabel: string,
 ): string | null {
   if (!context?.enabled) return null;
-  if (context.organizationView && !isOfficeBuilding(context.activeBuilding)) return organizationLabel;
+  if (context.organizationView || isOfficeBuilding(context.activeBuilding)) return chooseLabel;
   return context.activeBuilding?.name ?? null;
 }

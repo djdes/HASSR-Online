@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { buildingTargets } from "@/lib/active-building";
+import { documentBuildingTargets } from "@/lib/active-building";
 import { buildingWhere } from "@/lib/building-scope";
 import { closeEventBuildingKey } from "@/lib/journal-close-events";
 import { checkCronSecret } from "@/lib/cron-auth";
@@ -81,7 +81,8 @@ async function handle(request: Request) {
     let skipped = 0;
     // Точки: день закрывается на каждой точке отдельно (или один раз для
     // организации без точек).
-    const targets = await buildingTargets(org.id);
+    // Офис — не объект (2026-11-23): его день не закрываем.
+    const targets = await documentBuildingTargets(org.id);
 
     for (const tplId of sharedTemplateIds) for (const buildingId of targets) {
       // Skip if уже есть closure (включая reopened — мы НЕ авто-закрываем

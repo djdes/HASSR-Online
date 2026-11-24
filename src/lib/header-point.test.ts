@@ -259,18 +259,18 @@ test("«Выберите объект»: нет объектов, уровень
   assert.ok(!headerPointChoosing("/dashboard", single));
 });
 
-test("Mini App: в верхней панели «Вся организация», а не первая точка списка", () => {
+test("Mini App: на уровне организации — «Выберите объект», офис не подписываем объектом", () => {
   const pointA = { id: "a", name: "Точка А", address: null };
   const office = { id: "o", name: "Офис", address: null, kind: "office" };
-  // «Вся организация» без офиса: активной считается первая точка, но подпись — организация.
-  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: pointA }, "Вся организация"), "Вся организация");
-  // Выбрана точка — её название.
-  assert.equal(miniLocationLabel({ enabled: true, organizationView: false, activeBuilding: pointA }, "Вся организация"), "Точка А");
-  // Офис играет роль всей организации — пишем офис, как в шапке сайта.
-  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: office }, "Вся организация"), "Офис");
-  // Точки выключены или контекста нет — подписи нет.
-  assert.equal(miniLocationLabel({ enabled: false, organizationView: true, activeBuilding: null }, "Вся организация"), null);
-  assert.equal(miniLocationLabel(null, "Вся организация"), null);
+  // «Вся организация» без офиса: активной считается первая точка, но объект не выбран.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: pointA }, "Выберите объект"), "Выберите объект");
+  // Выбран объект — его название.
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: false, activeBuilding: pointA }, "Выберите объект"), "Точка А");
+  // Офис — не объект (2026-11-23): тоже «Выберите объект», а не «Офис».
+  assert.equal(miniLocationLabel({ enabled: true, organizationView: true, activeBuilding: office }, "Выберите объект"), "Выберите объект");
+  // Объекты выключены или контекста нет — подписи нет.
+  assert.equal(miniLocationLabel({ enabled: false, organizationView: true, activeBuilding: null }, "Выберите объект"), null);
+  assert.equal(miniLocationLabel(null, "Выберите объект"), null);
 });
 
 test("переключатель (kind: switch) виден и в разделах всей компании, и на главной", () => {

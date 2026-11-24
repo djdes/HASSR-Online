@@ -930,9 +930,8 @@ jobs:
                 timeout 180 npx tsx prisma/seed-platform-roles-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-platform-roles-2026-11 failed — deploy continues"
                 echo "=== Фирменный стиль: снять у организаций «как текущая» логотип и цвет донора (one-shot, PlatformSetting-guard; запрос владельца 2026-11-21) ==="
                 timeout 180 npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts 2>&1 | tail -40 || echo "[warn] seed-repair-inherited-org-brand-2026-11 failed — deploy continues"
-                echo "=== Журналы офиса — на объект: офис не объект (one-shot, PlatformSetting-guard; запрос владельца 2026-11-23) ==="
-                timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts --dry-run 2>&1 | tail -20 || echo "[warn] seed-office-journals-to-points dry-run failed"
-                timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-office-journals-to-points-2026-11 failed — deploy continues"
+                echo "=== Журналы офиса — на объект: только подсчёт (dry-run); перенос — проверенным запуском с RUN_LEGACY_DATA_SEEDS=1 (запрос владельца 2026-11-23) ==="
+                timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts --dry-run 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points dry-run failed"
                 # Legacy business-data backfills require a separate reviewed run.
                 # A normal code release must not rewrite customer journal records.
                 if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
@@ -967,6 +966,8 @@ jobs:
                 echo "=== Шапка «УТВЕРЖДАЮ»: должность и ФИО одного человека + помещения в пустых графиках ген. уборок (one-shot, PlatformSetting-guard) ==="
                 npx tsx prisma/seed-fix-approver-mismatch.ts --dry-run 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch dry-run failed"
                 npx tsx prisma/seed-fix-approver-mismatch.ts 2>&1 | tail -40 || echo "[warn] seed-fix-approver-mismatch failed — deploy continues"
+                echo "=== Журналы офиса — на объект (one-shot, PlatformSetting-guard): без дублей на объекте, id — в журнал действий ==="
+                timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points-2026-11 failed — deploy continues"
                 else
                   echo "Legacy customer-data backfills skipped (explicit opt-in required)"
                 fi

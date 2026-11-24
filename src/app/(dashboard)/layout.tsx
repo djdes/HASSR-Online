@@ -958,6 +958,11 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
     return null;
   });
 
+  // «Избранное» главной: список из аккаунта для общего провайдера.
+  const favoritesRow = await db.user
+    .findUnique({ where: { id: session.user.id }, select: { homeFavorites: true } })
+    .catch(() => null);
+
   return (
     // Сообщения пространства miniHome нужны навигации мини-приложения
     // (mini-nav); без них next-intl пишет MISSING_MESSAGE в консоль.
@@ -984,6 +989,8 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
       <SiteThemeProvider initialTheme={shell.initialTheme} controlled>
         <MiniAppShell {...shell}>
             <AppNavProvider model={navModel}>
+            {/* «Избранное» главной — тот же общий список, что на сайте (2026-11-24). */}
+            <FavoritesProvider enabled={canSeeHomePage(session.user)} initial={favoritesRow?.homeFavorites ?? []}>
             <ContentTransitionProvider>
             {/* Другая организация (выход из демо) — всё ниже заново, как на
                 сайте; переход и тост — выше границы. */}
@@ -1058,6 +1065,7 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
             </PageNavProvider>
             </ScopeBoundary>
             </ContentTransitionProvider>
+            </FavoritesProvider>
             </AppNavProvider>
         </MiniAppShell>
       </SiteThemeProvider>

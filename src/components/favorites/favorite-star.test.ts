@@ -24,3 +24,11 @@ test("звёздочка видна при наведении и с клавиа
   // Без главной звёздочек нет — их читает только тот, у кого есть «Избранное».
   assert.match(star, /if \(!favorites\.enabled \|\| !favorites\.canStar\(href\)\) return null;/);
 });
+
+test("«Избранное» на главной сохраняется и в мини-приложении: оболочка тоже держит общий список", () => {
+  const layout = read("src/app/(dashboard)/layout.tsx");
+  const mini = layout.slice(layout.indexOf("async function MiniShellDashboard("));
+  // Главная в оболочке мини-приложения сохраняет через тот же FavoritesProvider (ревью 2026-11-24).
+  assert.match(mini, /<FavoritesProvider enabled=\{canSeeHomePage\(session\.user\)\}/);
+  assert.match(mini, /<\/FavoritesProvider>/);
+});
