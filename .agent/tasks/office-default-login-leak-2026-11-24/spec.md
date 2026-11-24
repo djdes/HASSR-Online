@@ -72,6 +72,16 @@ Status: FROZEN (2026-11-24)
 - **AC9 — Checks.** `npm run typecheck`, `npm run test:gate`, `npm run i18n:check`, eslint on changed files (no new
   findings vs master), stand UI (desktop light and dark, phone), deploy log with the open-office totals after merge.
 
+## Addendum (during build, before any office code; found while checking the impact of the deploy step)
+
+- **AC10 — Staff without a place work on the objects, not in the office.** Today a person without a place
+  (`User.buildingIds` empty) and without «вся организация» gets the first building as the active place — the office,
+  which is first — so their «Сегодня» is gathered for the office (empty), and their daily tasks are made for every
+  building including the office (a duplicate «в офисе» task next to the object one). The deploy step would spread
+  this to most companies (their staff have no place). Rule: such a person's default place is the first object (a stale
+  office cookie is ignored); the office stays the place of office staff and of «вся организация»; «без места —
+  везде» means every object (and the same for a list of only deleted places). Proof: `building-scope.test.ts`.
+
 ## Out of scope
 
 - Changing who works where (no staff is moved to the office by the deploy step).

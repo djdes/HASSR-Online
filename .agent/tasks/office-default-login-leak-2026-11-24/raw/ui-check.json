@@ -1,0 +1,157 @@
+{
+  "AC1_noscript/login": {
+    "formMethod": "post",
+    "submitDisabledBeforeHydration": true,
+    "urlAfter": "http://localhost:3000/login",
+    "credentialsInAnyUrl": false
+  },
+  "AC1_noscript/register": {
+    "formMethod": "post",
+    "submitDisabledBeforeHydration": true,
+    "urlAfter": "http://localhost:3000/register",
+    "credentialsInAnyUrl": false
+  },
+  "AC1_noscript/mini/login": {
+    "formMethod": "post",
+    "submitDisabledBeforeHydration": true,
+    "urlAfter": "http://localhost:3000/mini/login",
+    "credentialsInAnyUrl": false
+  },
+  "AC1_login": {
+    "ok": true,
+    "landed": "/home",
+    "credentialsInAnyUrl": false
+  },
+  "AC3_open_office": {
+    "allocateCard": false,
+    "addObjectFirst": false,
+    "blocks": [
+      "office-staff",
+      "office-journals",
+      "office-points",
+      "office-equipment"
+    ],
+    "addToOffice": true,
+    "unplacedWarning": true,
+    "createObject": true,
+    "journalButtons": [
+      "Цех пищевых продуктов",
+      "Кафе на Мира",
+      "Склад"
+    ],
+    "officePage": "cmwtln1r000011a7dt372otba",
+    "header": "Выберите объект"
+  },
+  "AC8_toggle": {
+    "switches": 0,
+    "patchOff": {
+      "status": 400,
+      "body": {
+        "error": "У компании есть офис: журналы ведутся по объектам"
+      }
+    }
+  },
+  "AC6_noobj_login": true,
+  "AC6_noobj": {
+    "allocateCard": false,
+    "addObjectFirst": false,
+    "blocks": [
+      "office-staff",
+      "office-journals",
+      "office-points",
+      "office-equipment"
+    ],
+    "addToOffice": false,
+    "unplacedWarning": false,
+    "createObject": true,
+    "journalButtons": [],
+    "officePage": "none",
+    "header": "Выберите объект"
+  },
+  "AC4_first_object": 200,
+  "AC4_after_first_object": {
+    "allocateCard": false,
+    "addObjectFirst": false,
+    "blocks": [
+      "office-staff",
+      "office-journals",
+      "office-points",
+      "office-equipment"
+    ],
+    "addToOffice": true,
+    "unplacedWarning": true,
+    "createObject": true,
+    "journalButtons": [
+      "Первый объект"
+    ],
+    "officePage": "cmwutwzq0001li27drbmtoczk",
+    "header": "Выберите объект"
+  },
+  "AC6_straggler_login": true,
+  "AC6_straggler": {
+    "allocateCard": false,
+    "addObjectFirst": false,
+    "blocks": [
+      "office-staff",
+      "office-journals",
+      "office-points",
+      "office-equipment"
+    ],
+    "addToOffice": true,
+    "unplacedWarning": true,
+    "createObject": true,
+    "journalButtons": [
+      "Кафе у моря"
+    ],
+    "officePage": "cmwutx51e001oi27dv9ce9fop",
+    "header": "Выберите объект"
+  },
+  "AC7_new_area": 201,
+  "AC10_waiter_login": true,
+  "AC10_waiter": {
+    "header": "W WESETUP · ЦЕХ ПИЩЕВЫХ ПРОДУКТОВ Сегодня",
+    "path": "/mini/today",
+    "tasksFree": "Свободно: 44"
+  },
+  "phone_office": {
+    "allocateCard": false,
+    "addObjectFirst": false,
+    "blocks": [
+      "office-staff",
+      "office-journals",
+      "office-points",
+      "office-equipment"
+    ],
+    "addToOffice": true,
+    "unplacedWarning": true,
+    "createObject": true,
+    "journalButtons": [
+      "Цех пищевых продуктов",
+      "Кафе на Мира",
+      "Склад"
+    ],
+    "officePage": "cmwtln1r000011a7dt372otba",
+    "header": "Выберите объект"
+  },
+  "dark_office": {
+    "allocateCard": false,
+    "addObjectFirst": false,
+    "blocks": [
+      "office-staff",
+      "office-journals",
+      "office-points",
+      "office-equipment"
+    ],
+    "addToOffice": true,
+    "unplacedWarning": true,
+    "createObject": true,
+    "journalButtons": [
+      "Цех пищевых продуктов",
+      "Кафе на Мира",
+      "Склад"
+    ],
+    "officePage": "cmwtln1r000011a7dt372otba",
+    "header": "Выберите объект",
+    "theme": "dark"
+  }
+}

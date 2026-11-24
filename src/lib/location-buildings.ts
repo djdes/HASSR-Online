@@ -1,4 +1,6 @@
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { db } from "@/lib/db";
+import { openOrganizationOffice } from "@/lib/organization-office.server";
 
 /**
  * Точки (2026-09-05): завести точки по числу из анкеты после регистрации.
@@ -6,7 +8,7 @@ import { db } from "@/lib/db";
  * «Точек» = N ≥ 2 → в организации должно быть не меньше N зданий-точек:
  * недостающие создаются как «Точка k» (нумерация продолжает уже
  * существующие здания), первая созданная с нуля получает адрес
- * организации, и включается `perLocationJournals`. При N = 1 ничего не
+ * организации, и открывается офис (журналы по объектам). При N = 1 ничего не
  * происходит: одна точка — это обычная организация без переключателя.
  *
  * Идемпотентно: повторное сохранение анкеты с тем же числом ничего не
@@ -23,8 +25,9 @@ export async function ensureLocationBuildings(
   const target = Math.min(Math.max(Math.floor(locationsCount), 0), MAX_AUTO_LOCATIONS);
   if (target < 2) return { created: 0, enabled: false };
 
+  // Точки — объекты: офис (с 2026-11-24 он у всех) точкой не считается.
   const existing = await db.building.findMany({
-    where: { organizationId },
+    where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: { id: true, name: true, sortOrder: true },
   });
@@ -54,9 +57,8 @@ export async function ensureLocationBuildings(
     created += 1;
   }
 
-  await db.organization.update({
-    where: { id: organizationId },
-    data: { perLocationJournals: true },
-  });
+  // Точек ≥ 2 — открывается офис: журналы по объектам (как раньше) и офис
+  // компании (2026-11-24, офис у всех по умолчанию).
+  await openOrganizationOffice(organizationId, { source: "registration-locations" });
   return { created, enabled: true };
 }

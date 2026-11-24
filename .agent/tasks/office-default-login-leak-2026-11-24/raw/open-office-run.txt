@@ -1,0 +1,114 @@
+## setup
+{"setup":"ok"}
+## state before
+{"name":"Стенд: Кафе «Берёзка»","kind":"regular","split":true,"objects":3,"offices":1}
+{"name":"Смоук-кафе mwuanwlr","kind":"regular","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-1obj","kind":"regular","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-officeoff","kind":"regular","split":false,"objects":1,"offices":1}
+{"name":"open-office-check-noobj","kind":"regular","split":false,"objects":0,"offices":0}
+{"name":"open-office-check-directory","kind":"directory","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-2obj","kind":"regular","split":true,"objects":2,"offices":0}
+## dry-run
+[open-office:dry-run] organizations to open 4; offices to create 3; journals by objects to enable 3
+## state after dry-run (unchanged)
+{"name":"Стенд: Кафе «Берёзка»","kind":"regular","split":true,"objects":3,"offices":1}
+{"name":"Смоук-кафе mwuanwlr","kind":"regular","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-1obj","kind":"regular","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-officeoff","kind":"regular","split":false,"objects":1,"offices":1}
+{"name":"open-office-check-noobj","kind":"regular","split":false,"objects":0,"offices":0}
+{"name":"open-office-check-directory","kind":"directory","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-2obj","kind":"regular","split":true,"objects":2,"offices":0}
+## real
+[open-office] organizations opened 4; offices created 3; journals by objects enabled 3; manager sessions closed 1
+## repeat
+[open-office] once:open-office:v1: already done
+## state after
+{"name":"Стенд: Кафе «Берёзка»","kind":"regular","split":true,"objects":3,"offices":1}
+{"name":"Смоук-кафе mwuanwlr","kind":"regular","split":true,"objects":1,"offices":1}
+{"name":"open-office-check-1obj","kind":"regular","split":true,"objects":1,"offices":1}
+{"name":"open-office-check-officeoff","kind":"regular","split":true,"objects":1,"offices":1}
+{"name":"open-office-check-noobj","kind":"regular","split":false,"objects":0,"offices":0}
+{"name":"open-office-check-directory","kind":"directory","split":false,"objects":1,"offices":0}
+{"name":"open-office-check-2obj","kind":"regular","split":true,"objects":2,"offices":1}
+## check
+{
+  "1obj": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис@-1",
+      "point:Кафе@0"
+    ],
+    "audit": [
+      {
+        "userName": "WeSetup",
+        "details": {
+          "source": "deploy-2026-11-24",
+          "created": true,
+          "perLocationJournalsBefore": false
+        }
+      }
+    ],
+    "users": [
+      {
+        "who": "cook@stand.local",
+        "sessionVersion": 0
+      },
+      {
+        "who": "manager@stand.local",
+        "sessionVersion": 1
+      }
+    ]
+  },
+  "2obj": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис организации@2",
+      "point:Офис@3",
+      "point:Офис компании@5"
+    ],
+    "audit": [
+      {
+        "userName": "WeSetup",
+        "details": {
+          "source": "deploy-2026-11-24",
+          "created": true,
+          "perLocationJournalsBefore": true
+        }
+      }
+    ],
+    "users": []
+  },
+  "directory": {
+    "journalsByObjects": false,
+    "buildings": [
+      "point:Справочник@0"
+    ],
+    "audit": [],
+    "users": []
+  },
+  "noobj": {
+    "journalsByObjects": false,
+    "buildings": [],
+    "audit": [],
+    "users": []
+  },
+  "officeoff": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис@-1",
+      "point:Склад@0"
+    ],
+    "audit": [
+      {
+        "userName": "WeSetup",
+        "details": {
+          "source": "deploy-2026-11-24",
+          "created": false,
+          "perLocationJournalsBefore": false
+        }
+      }
+    ],
+    "users": []
+  },
+  "onceKey": true
+}
