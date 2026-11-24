@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 import { MAILING_CHANNELS, overallRecipientStatus, type ChannelStatus, type MailingChannel } from "./labels";
+import { emailDomain } from "./rate-limit";
 import type { MailingQueueStore, QueueCampaign, QueueRecipient, RecipientPatch } from "./queue";
 
 /**
@@ -17,6 +18,7 @@ const STATUS_COLUMN = {
   inApp: "inAppStatus",
   push: "pushStatus",
   telegram: "telegramStatus",
+  max: "maxStatus",
 } as const satisfies Record<MailingChannel, string>;
 
 const ERROR_COLUMN = {
@@ -24,6 +26,7 @@ const ERROR_COLUMN = {
   inApp: "inAppError",
   push: "pushError",
   telegram: "telegramError",
+  max: "maxError",
 } as const satisfies Record<MailingChannel, string>;
 
 export const STALE_SENDING_ERROR =
@@ -59,10 +62,12 @@ const recipientSelect = {
   inAppStatus: true,
   pushStatus: true,
   telegramStatus: true,
+  maxStatus: true,
   attempts: true,
   nextAttemptAt: true,
   links: true,
   payload: true,
+  waitReason: true,
 } satisfies Prisma.MailingRecipientSelect;
 
 type RecipientRow = Prisma.MailingRecipientGetPayload<{ select: typeof recipientSelect }>;
@@ -74,6 +79,7 @@ export function toQueueRecipient(row: RecipientRow): QueueRecipient {
     inAppStatus: row.inAppStatus as ChannelStatus | null,
     pushStatus: row.pushStatus as ChannelStatus | null,
     telegramStatus: row.telegramStatus as ChannelStatus | null,
+    maxStatus: row.maxStatus as ChannelStatus | null,
     links: Array.isArray(row.links) ? row.links.filter((l): l is string => typeof l === "string") : [],
     payload:
       row.payload && typeof row.payload === "object" && !Array.isArray(row.payload)
@@ -100,7 +106,7 @@ async function recomputeStatuses(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   const rows = await db.mailingRecipient.findMany({
     where: { id: { in: ids } },
-    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true },
+    select: { id: true, emailStatus: true, inAppStatus: true, pushStatus: true, telegramStatus: true, maxStatus: true },
   });
   for (const row of rows) {
     const status = overallRecipientStatus([
@@ -108,6 +114,7 @@ async function recomputeStatuses(ids: string[]): Promise<void> {
       row.inAppStatus as ChannelStatus | null,
       row.pushStatus as ChannelStatus | null,
       row.telegramStatus as ChannelStatus | null,
+      row.maxStatus as ChannelStatus | null,
     ]);
     await db.mailingRecipient.update({ where: { id: row.id }, data: { status } });
   }
@@ -234,7 +241,7 @@ export function createPrismaQueueStore(): MailingQueueStore {
     async getCampaign(id): Promise<QueueCampaign | null> {
       return db.mailingCampaign.findUnique({
         where: { id },
-        select: { id: true, title: true, kind: true, payload: true, status: true },
+        select: { id: true, title: true, kind: true, payload: true, status: true, windowStart: true, windowEnd: true },
       });
     },
 
@@ -309,5 +316,39 @@ export function createPrismaQueueStore(): MailingQueueStore {
     },
 
     refreshCounters: refreshCampaignCounters,
+
+    async deferRecipient(recipientId, until, reason) {
+      await db.mailingRecipient.updateMany({
+        where: { id: recipientId, status: "queued" },
+        data: { waitReason: reason, ...(until ? { nextAttemptAt: until } : {}) },
+      });
+    },
+
+    async lastEmailSentAt(emails, since) {
+      if (emails.length === 0) return new Map();
+      const rows = await db.mailingRecipient.groupBy({
+        by: ["email"],
+        where: { email: { in: emails }, isTest: false, emailSentAt: { gte: since } },
+        _max: { emailSentAt: true },
+      });
+      const out = new Map<string, Date>();
+      for (const row of rows) {
+        if (row.email && row._max.emailSentAt) out.set(row.email.toLowerCase(), row._max.emailSentAt);
+      }
+      return out;
+    },
+
+    async emailDomainCountsSince(since) {
+      const rows = await db.mailingRecipient.findMany({
+        where: { isTest: false, emailSentAt: { gte: since }, email: { not: null } },
+        select: { email: true },
+      });
+      const out = new Map<string, number>();
+      for (const row of rows) {
+        const domain = emailDomain(row.email ?? "");
+        if (domain) out.set(domain, (out.get(domain) ?? 0) + 1);
+      }
+      return out;
+    },
   };
 }

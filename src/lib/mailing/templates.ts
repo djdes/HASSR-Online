@@ -64,6 +64,12 @@ export type RenderedMailing = {
   push?: { title: string; body: string; url?: string | null };
   telegram?: { text: string; url?: string | null };
   /**
+   * Бот MAX — обычный текст без разметки (MAX её не понимает) и кнопка со
+   * ссылкой. Не задан — очередь сделает его из `telegram` (см.
+   * `maxFromTelegram`), так что старым типам ничего менять не нужно.
+   */
+  max?: { text: string; url?: string | null; buttonText?: string | null };
+  /**
    * Пометки для ROOT («промокод — пример, настоящий создастся при
    * отправке»): видны в предпросмотре, в результате теста себе и плашкой
    * в тестовом письме. Настоящим получателям не уходят.

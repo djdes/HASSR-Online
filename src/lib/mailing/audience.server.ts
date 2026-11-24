@@ -7,7 +7,7 @@ import { normalizeSphere } from "@/lib/org-profile";
 import { isManagementRole } from "@/lib/user-roles";
 
 import { userMarketingEmail, type AudienceUserRow } from "./audience";
-import { pushAvailability, pushSkipReason, telegramBotConfigured } from "./channels.server";
+import { maxBotConfigured, pushAvailability, pushSkipReason, telegramBotConfigured } from "./channels.server";
 import { overallRecipientStatus, type ChannelStatus, type MailingChannels } from "./labels";
 import { newRecipientId, signRecipientToken } from "./tokens";
 
@@ -73,6 +73,7 @@ export async function loadAudienceUsers(now: Date = new Date()): Promise<Audienc
         canManageSettings: true,
         organizationId: true,
         telegramChatId: true,
+        maxIdentity: { select: { id: true } },
         marketingOptOut: true,
         createdAt: true,
         organization: { select: { name: true, type: true } },
@@ -103,6 +104,7 @@ export async function loadAudienceUsers(now: Date = new Date()): Promise<Audienc
       sphere: normalizeSphere(u.organization.type),
       billing: billing.get(u.organizationId) ?? "exempt",
       hasTelegram: Boolean(u.telegramChatId),
+      hasMax: Boolean(u.maxIdentity),
       webPushCount: u._count.webPushSubscriptions,
       appDeviceCount: u._count.mobileDevices,
       createdAt: u.createdAt.toISOString(),
@@ -131,6 +133,8 @@ export type RecipientDraft = {
   pushError: string | null;
   telegramStatus: ChannelStatus | null;
   telegramError: string | null;
+  maxStatus: ChannelStatus | null;
+  maxError: string | null;
 };
 
 export type PlanStats = {
@@ -161,6 +165,7 @@ export type PlanStats = {
       appConfigured: boolean;
     };
     telegram: { queued: number; skipped: number; optedOut: number; botConfigured: boolean };
+    max: { queued: number; skipped: number; optedOut: number; botConfigured: boolean };
   };
 };
 
@@ -184,6 +189,8 @@ function emptyDraft(): Omit<RecipientDraft, "id" | "token"> {
     pushError: null,
     telegramStatus: null,
     telegramError: null,
+    maxStatus: null,
+    maxError: null,
   };
 }
 
@@ -204,6 +211,7 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
             contactEmail: true,
             organizationId: true,
             telegramChatId: true,
+            maxIdentity: { select: { privateChatId: true } },
             marketingOptOut: true,
             createdAt: true,
             organization: { select: { name: true, type: true } },
@@ -234,6 +242,7 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
   );
   const avail = pushAvailability();
   const bot = telegramBotConfigured();
+  const maxBot = maxBotConfigured();
   const stats: PlanStats = {
     selectedUsers: selection.userIds.length,
     selectedContacts: selection.contactIds.length,
@@ -256,6 +265,7 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
         appConfigured: avail.appConfigured,
       },
       telegram: { queued: 0, skipped: 0, optedOut: 0, botConfigured: bot },
+      max: { queued: 0, skipped: 0, optedOut: 0, botConfigured: maxBot },
     },
   };
 
@@ -263,7 +273,7 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
   const seenEmails = new Set<string>();
   const push = (draft: Omit<RecipientDraft, "id" | "token" | "status">) => {
     const id = newRecipientId();
-    const status = overallRecipientStatus([draft.emailStatus, draft.inAppStatus, draft.pushStatus, draft.telegramStatus]);
+    const status = overallRecipientStatus([draft.emailStatus, draft.inAppStatus, draft.pushStatus, draft.telegramStatus, draft.maxStatus]);
     drafts.push({ ...draft, id, token: signRecipientToken(id), status });
   };
 
@@ -319,6 +329,14 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
       if (reason) stats.channels.telegram.skipped += 1;
       else stats.channels.telegram.queued += 1;
     }
+    if (channels.max) {
+      const reason = optOut ?? (!u.maxIdentity?.privateChatId ? "MAX не привязан" : !maxBot ? "Бот MAX не настроен" : null);
+      d.maxStatus = reason ? "skipped" : "queued";
+      d.maxError = reason;
+      if (optOut) stats.channels.max.optedOut += 1;
+      if (reason) stats.channels.max.skipped += 1;
+      else stats.channels.max.queued += 1;
+    }
     push(d);
   }
 
@@ -354,7 +372,7 @@ export async function planRecipients(selection: AudienceSelection, channels: Mai
   return { drafts, stats };
 }
 
-const ALL_CHANNELS: MailingChannels = { email: true, inApp: true, push: true, telegram: true };
+const ALL_CHANNELS: MailingChannels = { email: true, inApp: true, push: true, telegram: true, max: true };
 
 /** Охват по каждому каналу — для галочек формы (считается по всем каналам сразу). */
 export async function reachForSelection(selection: AudienceSelection): Promise<PlanStats> {

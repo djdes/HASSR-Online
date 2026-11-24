@@ -26,6 +26,7 @@ function row(over: Partial<AudienceUserRow>): AudienceUserRow {
     sphere: "cafe",
     billing: "free",
     hasTelegram: false,
+    hasMax: false,
     webPushCount: 0,
     appDeviceCount: 0,
     createdAt: "2026-01-10T10:00:00.000Z",

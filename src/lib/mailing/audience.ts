@@ -83,6 +83,8 @@ export type AudienceUserRow = {
   sphere: OrgSphere;
   billing: AccountBillingKind;
   hasTelegram: boolean;
+  /** Привязан бот MAX. */
+  hasMax: boolean;
   webPushCount: number;
   appDeviceCount: number;
   /** ISO-время регистрации. */

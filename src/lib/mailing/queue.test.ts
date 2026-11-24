@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { overallRecipientStatus, type ChannelStatus, type MailingChannel, type RecipientStatus } from "@/lib/mailing/labels";
+import {
+  overallRecipientStatus,
+  type ChannelStatus,
+  type MailingChannel,
+  type RecipientStatus,
+  type WaitReason,
+} from "@/lib/mailing/labels";
+import { DEFAULT_MAILING_SETTINGS } from "@/lib/mailing/rate-limit";
 import {
   MAX_ATTEMPTS,
   deliverRecipient,
@@ -26,11 +33,12 @@ type StoredRecipient = QueueRecipient & {
 };
 type StoredCampaign = QueueCampaign & { scheduledAt: Date | null; preparedAt: Date | null; prepareError: string | null };
 
-const FIELD: Record<MailingChannel, "emailStatus" | "inAppStatus" | "pushStatus" | "telegramStatus"> = {
+const FIELD: Record<MailingChannel, "emailStatus" | "inAppStatus" | "pushStatus" | "telegramStatus" | "maxStatus"> = {
   email: "emailStatus",
   inApp: "inAppStatus",
   push: "pushStatus",
   telegram: "telegramStatus",
+  max: "maxStatus",
 };
 
 class MemoryStore implements MailingQueueStore {
@@ -72,6 +80,7 @@ class MemoryStore implements MailingQueueStore {
       inAppStatus: null,
       pushStatus: null,
       telegramStatus: null,
+      maxStatus: null,
       attempts: 0,
       nextAttemptAt: null,
       links: [],
@@ -143,7 +152,7 @@ class MemoryStore implements MailingQueueStore {
       }
       if (touched) {
         count += 1;
-        r.status = overallRecipientStatus([r.emailStatus, r.inAppStatus, r.pushStatus, r.telegramStatus]);
+        r.status = overallRecipientStatus([r.emailStatus, r.inAppStatus, r.pushStatus, r.telegramStatus, r.maxStatus]);
       }
     }
     return count;
@@ -154,7 +163,7 @@ class MemoryStore implements MailingQueueStore {
         const c = this.campaigns.get(r.campaignId);
         if (!c || c.status !== "sending" || !c.preparedAt || r.isTest || r.status !== "queued") return false;
         if (r.nextAttemptAt && r.nextAttemptAt > now) return false;
-        const other = r.inAppStatus === "queued" || r.pushStatus === "queued" || r.telegramStatus === "queued";
+        const other = r.inAppStatus === "queued" || r.pushStatus === "queued" || r.telegramStatus === "queued" || r.maxStatus === "queued";
         return other || (emailAllowed && r.emailStatus === "queued");
       })
       .slice(0, limit)
@@ -200,6 +209,7 @@ class MemoryStore implements MailingQueueStore {
     if (patch.emailSentAt) r.emailSentAt = patch.emailSentAt;
     if (patch.links) r.links = patch.links;
     if (patch.dryRun) r.dryRun = true;
+    if (patch.waitReason !== undefined) r.waitReason = patch.waitReason;
   }
   async markBounced(email: string) {
     this.bounced.push(email);
@@ -220,7 +230,7 @@ class MemoryStore implements MailingQueueStore {
 type Script = Partial<Record<MailingChannel, (msg: unknown, call: number) => SendOutcome>>;
 
 function fakeSenders(script: Script = {}) {
-  const calls: Record<MailingChannel, unknown[]> = { email: [], inApp: [], push: [], telegram: [] };
+  const calls: Record<MailingChannel, unknown[]> = { email: [], inApp: [], push: [], telegram: [], max: [] };
   const run = (channel: MailingChannel) => async (msg: unknown): Promise<SendOutcome> => {
     calls[channel].push(msg);
     const fn = script[channel];
@@ -231,6 +241,7 @@ function fakeSenders(script: Script = {}) {
     inApp: run("inApp"),
     push: run("push"),
     telegram: run("telegram"),
+    max: run("max"),
   };
   return { senders, calls };
 }
@@ -257,7 +268,7 @@ function deps(store: MemoryStore, senders: ChannelSenders, now: Date, over: Part
   return {
     store,
     senders,
-    settings: { perMinute: 100, perDay: 1000 },
+    settings: { ...DEFAULT_MAILING_SETTINGS, perMinute: 100, perDay: 1000 },
     appUrl: "https://wesetup.ru",
     now: () => now,
     template: (kind) => (kind === "test" ? template : null),
@@ -468,7 +479,7 @@ describe("ограничение скорости и суточный лимит
     store.addCampaign({ id: "c1" });
     for (let i = 1; i <= 5; i += 1) store.add({ id: `r${i}`, email: `r${i}@a.ru`, emailStatus: "queued" });
     const { senders, calls } = fakeSenders();
-    const settings = { perMinute: 2, perDay: 3 };
+    const settings = { ...DEFAULT_MAILING_SETTINGS, perMinute: 2, perDay: 3 };
 
     const p1 = await runQueuePass(deps(store, senders, T0, { settings }));
     assert.equal(p1.sent.email, 2);
@@ -501,7 +512,7 @@ describe("ограничение скорости и суточный лимит
     store.add({ id: "r1", userId: "u1", email: "a@a.ru", emailStatus: "queued", inAppStatus: "queued" });
     store.add({ id: "r2", userId: "u2", email: "b@a.ru", emailStatus: "queued", inAppStatus: "queued" });
     const { senders, calls } = fakeSenders();
-    await runQueuePass(deps(store, senders, T0, { settings: { perMinute: 1, perDay: 10 } }));
+    await runQueuePass(deps(store, senders, T0, { settings: { ...DEFAULT_MAILING_SETTINGS, perMinute: 1, perDay: 10 } }));
     assert.equal(calls.email.length, 1);
     assert.equal(calls.inApp.length, 2);
     assert.equal(store.get("r2").emailStatus, "queued");
@@ -660,5 +671,142 @@ describe("тестовая отправка", () => {
     assert.equal(result.channels.push?.status, "skipped");
     assert.equal(calls.email.length, 1);
     assert.equal((calls.email[0] as OutgoingEmail).isTest, true);
+  });
+});
+
+// ------------------------------------------------------------------ правила YesBeat
+
+/** Хранилище с правилами окна, перерыва и домена (как боевое). */
+class RulesStore extends MemoryStore {
+  deferred: Array<{ id: string; until: Date | null; reason: string }> = [];
+  windows = new Map<string, { windowStart: number; windowEnd: number }>();
+
+  async getCampaign(id: string) {
+    const base = await super.getCampaign(id);
+    return base ? { ...base, ...(this.windows.get(id) ?? {}) } : null;
+  }
+  async deferRecipient(id: string, until: Date | null, reason: WaitReason) {
+    const r = this.get(id);
+    r.waitReason = reason;
+    if (until) r.nextAttemptAt = until;
+    this.deferred.push({ id, until, reason });
+  }
+  async lastEmailSentAt(emails: string[], since: Date) {
+    const out = new Map<string, Date>();
+    for (const r of this.recipients) {
+      if (r.isTest || !r.email || !r.emailSentAt || r.emailSentAt < since || !emails.includes(r.email)) continue;
+      const prev = out.get(r.email);
+      if (!prev || prev < r.emailSentAt) out.set(r.email, r.emailSentAt);
+    }
+    return out;
+  }
+  async emailDomainCountsSince(since: Date) {
+    const out = new Map<string, number>();
+    for (const r of this.recipients) {
+      if (r.isTest || !r.email || !r.emailSentAt || r.emailSentAt < since) continue;
+      const domain = r.email.split("@")[1];
+      out.set(domain, (out.get(domain) ?? 0) + 1);
+    }
+    return out;
+  }
+}
+
+describe("правила очереди YesBeat: окно, перерыв, домен, выключатель", () => {
+  it("вне часов отправки — ждёт начала окна по Москве, в окне — уходит", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "c1" });
+    store.windows.set("c1", { windowStart: 9, windowEnd: 21 });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    // 22:30 МСК — окно закрыто до 09:00 следующего дня.
+    const night = new Date("2026-09-29T19:30:00Z");
+    const p1 = await runQueuePass(deps(store, senders, night));
+    assert.equal(p1.deferredByWindow, 1);
+    assert.equal(calls.email.length, 0);
+    assert.equal(store.get("r1").waitReason, "quiet_hours");
+    assert.equal(store.get("r1").nextAttemptAt?.toISOString(), "2026-09-30T06:00:00.000Z");
+    // 09:00 МСК — уходит, причина ожидания снята.
+    const p2 = await runQueuePass(deps(store, senders, new Date("2026-09-30T06:00:30Z")));
+    assert.equal(p2.sent.email, 1);
+    assert.equal(store.get("r1").waitReason, null);
+    assert.equal(store.campaigns.get("c1")?.status, "done");
+  });
+
+  it("перерыв между рассылками одному адресу откладывает до его конца", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "old", status: "done" });
+    store.addCampaign({ id: "c1" });
+    store.add({ id: "prev", campaignId: "old", email: "a@a.ru", emailStatus: "sent", status: "sent", emailSentAt: at(-2 * 3600_000) });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued", inAppStatus: "queued", userId: "u1" });
+    store.add({ id: "r2", email: "b@a.ru", emailStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    const settings = { ...DEFAULT_MAILING_SETTINGS, gapHours: 24 };
+    const report = await runQueuePass(deps(store, senders, T0, { settings }));
+    assert.equal(report.deferredByGap, 1);
+    assert.deepEqual(calls.email.map((m) => (m as OutgoingEmail).to), ["b@a.ru"]);
+    // Остальные каналы того же получателя ждут вместе с письмом.
+    assert.equal(calls.inApp.length, 0);
+    assert.equal(store.get("r1").waitReason, "frequency_limit");
+    assert.equal(store.get("r1").nextAttemptAt?.toISOString(), at(22 * 3600_000).toISOString());
+  });
+
+  it("лимит на домен держит только этот домен, остальные идут дальше", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "c1" });
+    store.add({ id: "m1", email: "1@mail.ru", emailStatus: "queued" });
+    store.add({ id: "m2", email: "2@mail.ru", emailStatus: "queued" });
+    store.add({ id: "y1", email: "1@ya.ru", emailStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    const settings = { ...DEFAULT_MAILING_SETTINGS, perDomainHour: 1 };
+    const report = await runQueuePass(deps(store, senders, T0, { settings }));
+    assert.deepEqual(calls.email.map((m) => (m as OutgoingEmail).to).sort(), ["1@mail.ru", "1@ya.ru"]);
+    assert.equal(report.deferredByDomain, 1);
+    assert.equal(store.get("m2").waitReason, "domain_limit");
+    assert.equal(store.get("m2").nextAttemptAt?.toISOString(), "2026-09-29T10:00:00.000Z");
+  });
+
+  it("общий лимит писем помечает ждущих причиной global_limit", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "c1" });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued", userId: "u1", inAppStatus: "queued" });
+    store.add({ id: "r2", email: "b@a.ru", emailStatus: "queued", userId: "u2", inAppStatus: "queued" });
+    const { senders } = fakeSenders();
+    const settings = { ...DEFAULT_MAILING_SETTINGS, perMinute: 1, perHour: 1 };
+    const report = await runQueuePass(deps(store, senders, T0, { settings }));
+    assert.equal(report.deferredByLimit, 1);
+    assert.equal(report.limitedBy, "hour");
+    assert.equal(store.get("r2").waitReason, "global_limit");
+  });
+
+  it("выключенная очередь ничего не отправляет", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "c1" });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    const report = await runQueuePass(deps(store, senders, T0, { settings: { ...DEFAULT_MAILING_SETTINGS, enabled: false } }));
+    assert.equal(report.disabled, true);
+    assert.equal(calls.email.length, 0);
+    assert.equal(store.get("r1").emailStatus, "queued");
+    assert.equal(store.campaigns.get("c1")?.status, "sending");
+  });
+
+  it("рассылка на паузе не отправляет", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "c1", status: "paused" });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued" });
+    const { senders, calls } = fakeSenders();
+    await runQueuePass(deps(store, senders, T0));
+    assert.equal(calls.email.length, 0);
+    assert.equal(store.get("r1").status, "queued");
+  });
+
+  it("временный сбой помечается причиной retry", async () => {
+    const store = new RulesStore();
+    store.addCampaign({ id: "c1" });
+    store.add({ id: "r1", email: "a@a.ru", emailStatus: "queued", waitReason: null });
+    const { senders } = fakeSenders({ email: () => ({ kind: "failed", error: "timeout", transient: true }) });
+    await runQueuePass(deps(store, senders, T0));
+    assert.equal(store.get("r1").waitReason, "retry");
+    assert.equal(store.get("r1").emailStatus, "queued");
   });
 });

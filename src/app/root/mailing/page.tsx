@@ -6,7 +6,12 @@ import { getDraft, listCampaigns } from "@/lib/mailing/campaigns.server";
 import { pushAvailability, telegramBotConfigured } from "@/lib/mailing/channels.server";
 import { mailingKindOptionsWithData } from "@/lib/mailing/kinds";
 import { listMailingBases } from "@/lib/mailing/quick.server";
-import { emailSendStats, readMailingSettings } from "@/lib/mailing/settings.server";
+import {
+  emailSendStats,
+  emailsSentThisHour,
+  readMailingSettings,
+  readWorkerHeartbeat,
+} from "@/lib/mailing/settings.server";
 import { marketingSenderInfo } from "@/lib/mailing/transport.server";
 import { canAccessPlatformPath } from "@/lib/platform-access";
 import { platformViewerForSession } from "@/lib/platform-access.server";
@@ -33,7 +38,7 @@ export async function generateMetadata() {
 export default async function RootMailingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; draft?: string }>;
+  searchParams: Promise<{ tab?: string; draft?: string; campaign?: string }>;
 }) {
   const session = await requireRoot();
   const params = await searchParams;
@@ -42,10 +47,12 @@ export default async function RootMailingPage({
   const canSendSampleLetters = canAccessPlatformPath(viewer, "/api/root/directory-exchange/test-letters", "POST");
   // ИИ-сводка (выручка платформы) — только владельцу: остальным вкладку не показываем.
   const canAiDigest = canAccessPlatformPath(viewer, "/api/root/mailing/ai-digest", "GET");
-  const [campaigns, settings, stats, draftRaw, kinds, bases] = await Promise.all([
+  const [campaigns, settings, stats, sentThisHour, heartbeat, draftRaw, kinds, bases] = await Promise.all([
     listCampaigns(),
     readMailingSettings(),
     emailSendStats(),
+    emailsSentThisHour(),
+    readWorkerHeartbeat(),
     params.draft ? getDraft(params.draft) : Promise.resolve(null),
     mailingKindOptionsWithData(),
     listMailingBases().catch((error) => {
@@ -75,11 +82,14 @@ export default async function RootMailingPage({
     telegramConfigured: telegramBotConfigured(),
     settings,
     sentToday: stats.today,
+    sentThisHour,
+    heartbeat,
     campaigns,
     bases,
     draft,
     initialTab,
     canAiDigest,
+    journalCampaign: typeof params.campaign === "string" && /^[a-z0-9]{1,40}$/i.test(params.campaign) ? params.campaign : "",
   };
 
   const t = await getTranslations("rootMailingShellAudience");

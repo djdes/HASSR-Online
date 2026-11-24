@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { captureMailingDisplay, mailingDiagnosticFromResponse, withMailingDiagnostic } from "@/lib/mailing/diagnostic-presentation";
 import { formatMailingDate, type MailingLocale } from "./mailing-presentation";
-import { Bell, Mail, Send, Smartphone } from "lucide-react";
+import { Bell, Mail, MessageCircle, Send, Smartphone } from "lucide-react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -37,6 +37,7 @@ export const CHANNEL_ICONS: Record<MailingChannel, typeof Mail> = {
   inApp: Bell,
   push: Smartphone,
   telegram: Send,
+  max: MessageCircle,
 };
 
 export function ChannelIcons({ channels, className }: { channels: MailingChannels; className?: string }) {
@@ -65,6 +66,7 @@ const STATUS_TONE: Record<string, string> = {
   draft: "bg-[#f5f6ff] text-[#6f7282]",
   scheduled: "bg-[#eef1ff] text-[#3848c7]",
   sending: "bg-[#fff8eb] text-[#a16d32]",
+  paused: "bg-[#fff4e0] text-[#8a5a12]",
   done: "bg-[#ecfdf5] text-[#116b2a]",
   cancelled: "bg-[#f5f6ff] text-[#6f7282]",
   queued: "bg-[#eef1ff] text-[#3848c7]",

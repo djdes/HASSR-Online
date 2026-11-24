@@ -20,6 +20,7 @@ import { useComposeFeedback } from "./compose-feedback";
 
 import { MailingKindFields } from "@/components/mailing/kind-fields";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DEFAULT_SEND_WINDOW, SendWindowField, type SendWindow } from "./send-window";
 import type { PlanStats } from "@/lib/mailing/audience.server";
 import type { TestSendResult } from "@/lib/mailing/campaigns.server";
 import {
@@ -89,6 +90,7 @@ export function ComposeTab({
   const [testResult, setTestResult] = useState<TestSendResult | null>(null);
   const [confirm, setConfirm] = useState<"now" | "schedule" | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
+  const [sendWindow, setSendWindow] = useState<SendWindow>(DEFAULT_SEND_WINDOW);
 
   const selectionKey = `${[...userIds].sort().join(",")}|${[...contactIds].sort().join(",")}`;
   const selectedTotal = userIds.size + contactIds.size;
@@ -178,7 +180,7 @@ export function ComposeTab({
     try {
       const r = await api<{ stats: PlanStats }>(`/api/root/mailing/campaigns/${id}/launch`, {
         method: "POST",
-        json: { mode, scheduledAt: mode === "schedule" ? scheduledAt : null },
+        json: { mode, scheduledAt: mode === "schedule" ? scheduledAt : null, ...sendWindow },
       });
       feedback.success(
         mode === "now"
@@ -469,7 +471,10 @@ export function ComposeTab({
             : []),
         ]}
         confirmLabel={confirm === "schedule" ? t("send.schedule") : t("confirm.send")}
-      />
+        confirmDisabled={sendWindow.windowEnd <= sendWindow.windowStart}
+      >
+        <SendWindowField value={sendWindow} onChange={setSendWindow} />
+      </ConfirmDialog>
     </div>
   );
 }
@@ -507,12 +512,16 @@ function ChannelRow({
     const p = reach.channels.push;
     line = t("channels.reachPush", { queued: String(p.queued), users: String(reach.users), webSubs: String(p.webSubs), appDevices: String(p.appDevices), optedOut: p.optedOut ? "yes" : "no", optedOutCount: String(p.optedOut) });
     if (!p.appConfigured || !p.webConfigured) warn = t("channels.pushWarning", { app: p.appConfigured ? "ready" : "missing", web: p.webConfigured ? "ready" : "missing" });
+  } else if (channel === "max") {
+    const max = reach.channels.max;
+    line = t("channels.reachMax", { queued: String(max.queued), users: String(reach.users), optedOut: max.optedOut ? "yes" : "no", optedOutCount: String(max.optedOut) });
+    if (!max.botConfigured) warn = t("channels.maxWarning");
   } else {
     const telegram = reach.channels.telegram;
     line = t("channels.reachTelegram", { queued: String(telegram.queued), users: String(reach.users), optedOut: telegram.optedOut ? "yes" : "no", optedOutCount: String(telegram.optedOut) });
     if (!telegram.botConfigured) warn = t("channels.telegramWarning");
   }
-  const ok = !reach || (channel === "email" ? reach.channels.email.queued : channel === "inApp" ? reach.channels.inApp.queued : channel === "push" ? reach.channels.push.queued : reach.channels.telegram.queued) > 0;
+  const ok = !reach || reach.channels[channel].queued > 0;
   return (
     <label
       className={cn(
@@ -621,6 +630,21 @@ export function PreviewPane({ preview, channel }: { preview: PreviewState; chann
           </div>
         ) : (
           <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyPush")}</p>
+        )
+      ) : channel === "max" ? (
+        r.max ? (
+          <div className="rounded-2xl bg-[#eef0ff] p-3" data-testid="preview-max">
+            <div className="max-w-[92%] whitespace-pre-wrap rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[14px] leading-[1.5] text-[#0b1024] [overflow-wrap:anywhere]">
+              {r.max.text}
+            </div>
+            {r.max.url ? (
+              <div className="mt-1.5 max-w-[92%] rounded-xl bg-white px-3 py-2 text-center text-[14px] font-medium text-[#3848c7]">
+                {r.max.buttonText || t("preview.maxButton")}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-[13px] text-[#9b9fb3]">{t("preview.emptyMax")}</p>
         )
       ) : r.telegram ? (
         <div className="rounded-2xl bg-[#e7ebf0] p-3">

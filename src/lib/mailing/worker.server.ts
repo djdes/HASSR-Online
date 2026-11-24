@@ -3,7 +3,7 @@ import { withAdvisoryTryLock } from "@/lib/advisory-lock";
 import "./kinds";
 import { createChannelSenders } from "./channels.server";
 import { runQueuePass, type QueueDeps, type QueueReport } from "./queue";
-import { readMailingSettings } from "./settings.server";
+import { readMailingSettings, writeWorkerHeartbeat } from "./settings.server";
 import { createPrismaQueueStore } from "./store.server";
 
 /**
@@ -40,6 +40,12 @@ export async function processMailingQueue(source: "cron" | "launch" | "retry" | 
     return { busy: true };
   }
   console.info(`[mailing] queue pass (${source}) in ${Date.now() - startedAt}ms`);
+  await writeWorkerHeartbeat({
+    lastRunAt: new Date().toISOString(),
+    source,
+    processed: outcome.value.processed,
+    disabled: outcome.value.disabled,
+  });
   return { busy: false, ...outcome.value };
 }
 
