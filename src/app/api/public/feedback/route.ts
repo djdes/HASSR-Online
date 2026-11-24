@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import { alertSupportStaffAboutReport } from "@/lib/support-staff-alerts.server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { sendFeedbackAdminEmail } from "@/lib/email";
@@ -129,6 +130,15 @@ export async function POST(request: Request) {
   });
 
   after(async () => {
+    // Всплывашка и колокольчик команде поддержки (2026-11-23).
+    await alertSupportStaffAboutReport({
+      id: report.id,
+      type: parsed.type,
+      message: parsed.message,
+      userEmail: contact.email,
+      phone: contact.phone,
+      attachments,
+    }).catch((error) => console.error("[public-feedback] staff alert failed", error));
     const lines = [
       `<b>${TYPE_LABELS[parsed.type] ?? parsed.type}</b> · с лендинга`,
       "",

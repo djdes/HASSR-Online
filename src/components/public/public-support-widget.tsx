@@ -27,10 +27,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { findQuotedMessage, quotePreview } from "@/lib/support-reply-quote";
 import {
   AttachButton,
   AttachmentChips,
   MessageAttachments,
+  ReplyQuote,
+  useGlobalImagePaste,
   useAttachmentUploads,
 } from "@/components/support/attachment-composer";
 import {
@@ -86,6 +89,8 @@ type ChatMessage = {
   body: string;
   operatorName: string | null;
   attachments?: SupportAttachmentMeta[];
+  /** Ответ оператора на сообщение ветки — цитата над ответом (2026-11-23). */
+  replyToId?: string | null;
   createdAt: string;
 };
 
@@ -291,6 +296,23 @@ function SupportWidgetBody({ launcher }: { launcher: boolean }) {
     setOpen(true);
     return known;
   }
+
+  // Ctrl+V скриншота в любом месте сайта (вне полей ввода) — чат открывается
+  // с картинкой во вложениях (владелец, 2026-11-23). Загрузке нужен id гостя:
+  // он появляется после открытия, поэтому файлы ждут следующей отрисовки.
+  const pendingPaste = useRef<File[] | null>(null);
+  const [pasteTick, setPasteTick] = useState(0);
+  useGlobalImagePaste((files) => {
+    openWidget();
+    pendingPaste.current = files;
+    setPasteTick((tick) => tick + 1);
+  });
+  useEffect(() => {
+    if (!pendingPaste.current || !guestIdState) return;
+    const files = pendingPaste.current;
+    pendingPaste.current = null;
+    chatFiles.addFiles(files);
+  }, [pasteTick, guestIdState, chatFiles]);
 
   /** Всплывашка «новое сообщение» ведёт сразу в переписку. */
   const openChatRef = useRef<() => void>(() => {});
@@ -855,6 +877,15 @@ function SupportWidgetBody({ launcher }: { launcher: boolean }) {
                     <div className="mb-0.5 text-[11px] font-medium text-[#3848c7]">
                       {item.operatorName}
                     </div>
+                  ) : null}
+                  {item.replyToId ? (
+                    <ReplyQuote
+                      text={(() => {
+                        const quoted = findQuotedMessage(messages, item.replyToId);
+                        return quoted ? quotePreview({ body: quoted.body, attachments: quoted.attachments ?? [] }) : null;
+                      })()}
+                      light={item.author === "client"}
+                    />
                   ) : null}
                   {item.body ? (
                     <div className="whitespace-pre-wrap break-words">

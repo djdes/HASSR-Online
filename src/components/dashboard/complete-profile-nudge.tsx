@@ -24,7 +24,6 @@ import { TasksFlowPromoHint } from "@/components/tasksflow/tasksflow-promo-hint"
 import {
   MAX_LOCATIONS,
   ORG_OWNERSHIP,
-  ORG_SPHERES,
   normalizeSphere,
 } from "@/lib/org-profile";
 import { innDigits, isValidInn } from "@/lib/inn";
@@ -32,6 +31,7 @@ import { suggestPassword } from "@/lib/password-suggest";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { SheetGrabber } from "@/components/ui/sheet-grabber";
 import { nextSetupStep, type SetupStep } from "@/lib/setup-wizard";
+import { categoryForSphere } from "@/lib/object-categories";
 import {
   SetupEquipmentStep,
   SetupPointsStep,
@@ -96,27 +96,6 @@ export type CompleteProfileMode = "registration" | "organization";
  * это единственный авто-показ, дальше только баннер.
  */
 type Translate = ReturnType<typeof useTranslations<"dashboardUi.completeProfileNudge">>;
-
-function sphereLabel(value: string, tn: Translate): string {
-  switch (value) {
-    case "restaurant": return tn("sphereRestaurant");
-    case "cafe": return tn("sphereCafe");
-    case "bar": return tn("sphereBar");
-    case "canteen": return tn("sphereCanteen");
-    case "fastfood": return tn("sphereFastfood");
-    case "bakery": return tn("sphereBakery");
-    case "catering": return tn("sphereCatering");
-    case "hotel": return tn("sphereHotel");
-    case "retail": return tn("sphereRetail");
-    case "gas_station": return tn("sphereGasStation");
-    case "education": return tn("sphereEducation");
-    case "medical": return tn("sphereMedical");
-    case "production": return tn("sphereProduction");
-    case "fitness": return tn("sphereFitness");
-    case "beauty": return tn("sphereBeauty");
-    default: return tn("sphereOther");
-  }
-}
 
 function ownershipLabel(value: string, tn: Translate): string {
   switch (value) {
@@ -418,10 +397,13 @@ function CompleteProfileModal({
     initial?.organizationName ?? "",
   );
   const [phone, setPhone] = useState("");
-  // Тип расширяем до string намеренно: сюда же кладут значение из
-  // ЕГРЮЛ (`found.sphere`), которое приходит с сервера обычной строкой.
+  // Сферу анкета больше не спрашивает (владелец, 2026-11-23: «сферу — при
+  // создании объектов»). Известная сфера организации или подсказка ЕГРЮЛ по
+  // ОКВЭД остаются подсказкой: предлагаются как сфера новых объектов и для
+  // подбора должностей, в организацию не пишутся. Тип — string: значение
+  // ЕГРЮЛ приходит с сервера обычной строкой.
   const [sphere, setSphere] = useState<string>(
-    initial?.sphere ? normalizeSphere(initial.sphere) : "restaurant",
+    initial?.sphere ? normalizeSphere(initial.sphere) : "other",
   );
   const [ownershipKind, setOwnershipKind] = useState<string>(
     initial?.ownershipKind ?? "private",
@@ -555,7 +537,6 @@ function CompleteProfileModal({
         body: JSON.stringify({
           organizationName: organizationName.trim(),
           phone: organizationMode ? (initial?.phone ?? "").trim() : phone.trim(),
-          sphere,
           ownershipKind,
           locationsCount,
           inn: inn.trim(),
@@ -759,7 +740,7 @@ function CompleteProfileModal({
         <SetupStepper step={step} onSelect={(next) => void selectStep(next)} />
 
         {step === "points" ? (
-          <SetupPointsStep defaultAddress={address.trim()} onDone={advance} />
+          <SetupPointsStep defaultAddress={address.trim()} defaultCategory={categoryForSphere(sphere)} onDone={advance} />
         ) : step === "staff" ? (
           <SetupStaffStep sphere={sphere} onDone={advance} />
         ) : step === "equipment" ? (
@@ -881,28 +862,10 @@ function CompleteProfileModal({
           )}
 
           {/* Остальное необязательно и стоит парами по смыслу, чтобы анкета
-              помещалась в первый экран телефона. */}
-          <div className="grid grid-cols-2 gap-2" data-guide="profile-sphere">
-            <Field label={tn("sphere")}>
-              <SelectShell>
-                <select
-                  value={sphere}
-                  onChange={(e) => {
-                    sphereTouchedRef.current = true;
-                    setSphere(e.target.value);
-                  }}
-                  className={SELECT_CLASS}
-                >
-                  {ORG_SPHERES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {sphereLabel(s.value, tn)}
-                    </option>
-                  ))}
-                </select>
-              </SelectShell>
-            </Field>
-
-            <Field label={tn("ownership")}>
+              помещалась в первый экран телефона. Сферы здесь нет (владелец,
+              2026-11-23): её выбирают у каждого объекта — на следующем шаге. */}
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={tn("ownership")} guide="profile-ownership">
               <SelectShell>
                 <select
                   value={ownershipKind}
@@ -920,9 +883,7 @@ function CompleteProfileModal({
                 </select>
               </SelectShell>
             </Field>
-          </div>
 
-          <div className="grid grid-cols-2 gap-2">
             <Field label={tn("locations")} plain guide="profile-locations">
               {/* -my-1: кнопки счётчика 32px, а строка значения в соседних
                   полях 24px — вытягиваем поле до общей высоты, зона нажатия
@@ -937,48 +898,48 @@ function CompleteProfileModal({
                 />
               </span>
             </Field>
-
-            <Field label={tn("inn")} guide="profile-inn">
-              {/* Иконка справа обещает автозаполнение: лупа до ввода, спиннер,
-                  галочка или предупреждение после. */}
-              <span className="flex items-center gap-1">
-                <input
-                  value={inn}
-                  onChange={(e) => {
-                    setInn(e.target.value.replace(/\D/g, ""));
-                    setInnState("idle");
-                  }}
-                  inputMode="numeric"
-                  placeholder="7701234567"
-                  maxLength={12}
-                  className={CONTROL_CLASS}
-                />
-                {innState === "loading" ? (
-                  <Loader2
-                    className="size-4 shrink-0 animate-spin text-[#5566f6]"
-                    aria-label={tn("egrulSearching")}
-                  />
-                ) : innState === "found" ? (
-                  <Check
-                    className="size-4 shrink-0 text-[#116b2a]"
-                    aria-label={tn("egrulFound")}
-                  />
-                ) : innState === "missing" ? (
-                  <CircleAlert
-                    className="size-4 shrink-0 text-[#a13a32]"
-                    aria-label={tn("egrulMissing")}
-                  />
-                ) : (
-                  <span
-                    title={tn("innHint")}
-                    className="flex shrink-0 text-[#9b9fb3]"
-                  >
-                    <Search className="size-4" aria-label={tn("innAutofill")} />
-                  </span>
-                )}
-              </span>
-            </Field>
           </div>
+
+          <Field label={tn("inn")} guide="profile-inn">
+            {/* Иконка справа обещает автозаполнение: лупа до ввода, спиннер,
+                галочка или предупреждение после. */}
+            <span className="flex items-center gap-1">
+              <input
+                value={inn}
+                onChange={(e) => {
+                  setInn(e.target.value.replace(/\D/g, ""));
+                  setInnState("idle");
+                }}
+                inputMode="numeric"
+                placeholder="7701234567"
+                maxLength={12}
+                className={CONTROL_CLASS}
+              />
+              {innState === "loading" ? (
+                <Loader2
+                  className="size-4 shrink-0 animate-spin text-[#5566f6]"
+                  aria-label={tn("egrulSearching")}
+                />
+              ) : innState === "found" ? (
+                <Check
+                  className="size-4 shrink-0 text-[#116b2a]"
+                  aria-label={tn("egrulFound")}
+                />
+              ) : innState === "missing" ? (
+                <CircleAlert
+                  className="size-4 shrink-0 text-[#a13a32]"
+                  aria-label={tn("egrulMissing")}
+                />
+              ) : (
+                <span
+                  title={tn("innHint")}
+                  className="flex shrink-0 text-[#9b9fb3]"
+                >
+                  <Search className="size-4" aria-label={tn("innAutofill")} />
+                </span>
+              )}
+            </span>
+          </Field>
 
           {/* Имя и пароль у владельца уже есть — новой организации их не задают. */}
           {organizationMode ? null : (

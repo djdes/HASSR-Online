@@ -9,6 +9,8 @@ export type RootChatMessage = {
   operatorName: string | null;
   authorName: string | null;
   attachments: SupportAttachmentMeta[];
+  /** Ответ оператора на это сообщение ветки (цитата, 2026-11-23). */
+  replyToId?: string | null;
   createdAt: string;
 };
 
@@ -24,6 +26,10 @@ export type RootChatThread = {
   unreadForClient: number;
   lastMessageAt: string;
   partner: { partnerId: string; brandName: string } | null;
+  /** Карточка клиента в админке; null — клиент не найден. */
+  clientHref?: string | null;
+  /** Организация, в кабинет которой можно войти (кому разрешено); null — кнопки нет. */
+  cabinetOrganizationId?: string | null;
   messages: RootChatMessage[];
 };
 

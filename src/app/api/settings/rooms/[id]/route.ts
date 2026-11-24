@@ -11,6 +11,8 @@ import { syncRoomChecklistItems } from "@/lib/cleaning-room-checklist-sync";
 import { parseScopeSteps, type ScopeStep } from "@/lib/cleaning-document";
 import { ROOM_KINDS } from "@/lib/room-kinds";
 import { deleteRoomMirrorArea, renameRoomMirrorArea } from "@/lib/area-building-sync";
+import { normalizeClimateRoomNorms } from "@/lib/climate-document";
+import { syncRoomClimateDocuments } from "@/lib/climate-room-membership.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -144,7 +146,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const previous = await db.room.findFirst({
     where: { id, building: { organizationId: orgId } },
-    select: { id: true, name: true, buildingId: true },
+    select: { id: true, name: true, buildingId: true, climateNorms: true },
   });
   if (!previous) {
     return NextResponse.json({ error: "Не найдено" }, { status: 404 });
@@ -260,6 +262,20 @@ export async function PATCH(request: Request, ctx: Ctx) {
         : {}),
     },
   });
+
+  // «Контролировать климат» включили или выключили — помещение появляется
+  // в действующем журнале климата своего объекта (или уходит из него, если
+  // замеров нет). Раньше тумблер писал только нормы, и помещение в журнал не
+  // попадало (владелец, 2026-11-23). Сбой синхронизации не ломает сохранение.
+  if (body.climateNorms !== undefined) {
+    const wasControlled = normalizeClimateRoomNorms(previous.climateNorms) !== null;
+    const nowControlled = body.climateNorms !== null;
+    if (wasControlled !== nowControlled) {
+      await syncRoomClimateDocuments({ organizationId: orgId, roomId: id }).catch((error) => {
+        console.error("[rooms] climate journal sync failed", error);
+      });
+    }
+  }
 
   // Зеркальная Area (legacy split: Area — оборудование/записи, Room —
   // журналы). Переименование помещения раньше не доходило до Area, и

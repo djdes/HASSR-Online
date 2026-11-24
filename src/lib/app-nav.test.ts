@@ -557,10 +557,12 @@ test("у каждого раздела, кроме «Остального» и �
   ]);
   // Лист 3: Сотрудники офиса; Права, доступ.
   assert.deepEqual(menuShape("office"), [[null, ["office", "access"]]]);
-  // Лист 4: Сотрудники Т.Т. ›, Журналы ›, ППК ›, Цеха и помещения, Оборудование, QR-плакат.
+  // Порядок владельца 2026-11-23 (скриншот): Сотрудники ›, Помещения, Оборудование,
+  // Журналы ›, ППК ›, QR-плакаты, Справочник продукции/услуг, Онлайн-принтер, Общий планшет.
   assert.deepEqual(menuShape("points"), [
-    [null, ["staff", "journals", "productionControl", "areas", "equipment", "qr"]],
-    ["more", ["printer", "kiosk", "products"]],
+    [null, ["staff", "areas", "equipment"]],
+    [null, ["journals", "productionControl", "qr", "products"]],
+    ["more", ["printer", "kiosk"]],
   ]);
   assert.deepEqual(menuShape("staff"), [
     ["directories", ["users", "positions"]],

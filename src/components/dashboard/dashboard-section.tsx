@@ -46,6 +46,14 @@ type Props = {
    * её содержимом, чтобы свёрнутая секция была одной строкой.
    */
   flat?: boolean;
+  /**
+   * `false` (плоская секция, `flat`) — всегда раскрыта: ни стрелки, ни сворачивания, ни
+   * запоминания (владелец, 2026-11-23: «обязательные журналы — всегда
+   * раскрыты, закрыть их нельзя»). Сохранённое раньше «свёрнуто» не
+   * действует: без `<details data-storage-key>` скрипт запоминания её не
+   * находит.
+   */
+  collapsible?: boolean;
   children: React.ReactNode;
 };
 
@@ -80,6 +88,7 @@ export function DashboardSection({
   defaultOpen = false,
   actions,
   flat = false,
+  collapsible = true,
   children,
 }: Props) {
   // «Обязательные журналы» → head «Обязательные », tail «журналы».
@@ -110,6 +119,21 @@ export function DashboardSection({
   ) : (
     title
   );
+
+  if (flat && !collapsible) {
+    // Всегда раскрыта: обычный блок, строка заголовка без стрелки.
+    return (
+      <section data-section-layout="flat" data-section-fixed="" className="group/section">
+        <div className="flex items-center gap-2 py-1">
+          <h2 className="min-w-0 flex-1 text-[18px] font-semibold leading-tight tracking-[-0.02em] text-[#0b1024] sm:text-[22px]">
+            {titleWithBadge}
+          </h2>
+          {titleAside ? <div className="flex shrink-0 items-center">{titleAside}</div> : null}
+        </div>
+        <div className="pt-3 sm:pt-4">{children}</div>
+      </section>
+    );
+  }
 
   if (flat) {
     return (

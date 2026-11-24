@@ -42,13 +42,31 @@ import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { FillMode } from "@/lib/journal-routing";
-import { ORG_SPHERES, sphereLabel, type OrgSphere } from "@/lib/org-profile";
+import type { OrgSphere } from "@/lib/org-profile";
+import { type ElectronicRule, type PaperJournal } from "@/lib/sphere-journal-rules";
 import {
-  requiredCodesFor,
-  rulesFor,
-  type ElectronicRule,
-  type PaperJournal,
-} from "@/lib/sphere-journal-rules";
+  OBJECT_CATEGORIES,
+  categoryForSphere,
+  normalizeObjectCategory,
+  organizationRuleSpheres,
+  resolveSphereForCategory,
+} from "@/lib/object-categories";
+import { mergedRulesFor, requiredCodesForSpheres } from "@/lib/object-category-journals";
+
+/**
+ * Чьи правила журналов на странице (владелец, 2026-11-23: «объекты
+ * завязываем на категориях»): вся организация — основная сфера и сферы её
+ * объектов; объект из шапки — сфера этого объекта.
+ */
+export type JournalRulesScope =
+  | { kind: "organization"; objectCategories: string[] }
+  | { kind: "point"; category: string | null };
+
+function ruleSpheresFor(main: OrgSphere, scope: JournalRulesScope): OrgSphere[] {
+  if (scope.kind === "organization") return organizationRuleSpheres(main, scope.objectCategories);
+  const category = normalizeObjectCategory(scope.category);
+  return [category ? resolveSphereForCategory(main, category) : main];
+}
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 import { SectionJump } from "@/components/shared/section-jump";
 
@@ -107,6 +125,7 @@ export function JournalsSettingsClient({
   users,
   canEditDistribution = true,
   sphere,
+  rulesScope = { kind: "organization", objectCategories: [] },
   sampleCodes,
 }: {
   items: Item[];
@@ -116,11 +135,18 @@ export function JournalsSettingsClient({
   /** «Кто» (распределение) — на всю организацию: руководителю точки — нет. */
   canEditDistribution?: boolean;
   sphere: OrgSphere;
+  /** Сферы объектов для обязательных журналов (см. `JournalRulesScope`). */
+  rulesScope?: JournalRulesScope;
   /** Коды журналов, у которых на диске есть PNG-превью бланка. */
   sampleCodes: string[];
 }) {
   const t = useTranslations("settingsUi.journalsSettingsClient");
   const tc = useTranslations("common");
+  // Подпись сферы — одной из четырёх (владелец, 2026-11-23).
+  const sphereLabel = (value: OrgSphere) => {
+    const category = categoryForSphere(value);
+    return category ? tc(`objectCategories.${category}`) : tc("objectCategoryNone");
+  };
   const FILL_MODE_LABELS = useFillModeLabels();
   const basisNote = useBasisNote();
   const router = useRouter();
@@ -699,7 +725,7 @@ export function JournalsSettingsClient({
   // Группы: обязательные по сфере, рекомендованные, всё остальное.
   // Порядок внутри группы — как в каталоге, чтобы список не «прыгал»
   // при переключении тумблеров.
-  const rules = rulesFor(sphere);
+  const rules = mergedRulesFor(ruleSpheresFor(sphere, rulesScope));
   const requiredMap = useMemo(
     () => new Map(rules.electronicRequired.map((rule) => [rule.code, rule])),
     [rules],
@@ -738,7 +764,7 @@ export function JournalsSettingsClient({
 
   /** Сколько журналов включим/выключим, если применить набор сферы. */
   function diffFor(nextSphere: OrgSphere) {
-    const nextRequired = new Set(requiredCodesFor(nextSphere));
+    const nextRequired = new Set(requiredCodesForSpheres(ruleSpheresFor(nextSphere, rulesScope)));
     let willEnable = 0;
     let willDisable = 0;
     let manual = 0;
@@ -759,7 +785,7 @@ export function JournalsSettingsClient({
   }
 
   function applyRequired(nextSphere: OrgSphere) {
-    const nextRequired = new Set(requiredCodesFor(nextSphere));
+    const nextRequired = new Set(requiredCodesForSpheres(ruleSpheresFor(nextSphere, rulesScope)));
     setState((prev) => {
       const next = { ...prev };
       for (const code of nextRequired) next[code] = true;
@@ -879,14 +905,24 @@ export function JournalsSettingsClient({
               {t("sphereLabel")}
             </label>
             <span className="relative block">
+              {/* Только четыре сферы; выбор той же категории оставляет точную
+                  сферу организации (например, «Школа»). */}
               <select
-                value={sphereDraft}
-                onChange={(e) => setSphereDraft(e.target.value as OrgSphere)}
+                value={categoryForSphere(sphereDraft) ?? ""}
+                onChange={(e) => {
+                  const category = normalizeObjectCategory(e.target.value);
+                  if (category) setSphereDraft(resolveSphereForCategory(sphere, category));
+                }}
                 className="h-11 w-full appearance-none rounded-2xl border border-[#dcdfed] bg-white pl-4 pr-10 text-[15px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               >
-                {ORG_SPHERES.map((option) => (
+                {categoryForSphere(sphereDraft) ? null : (
+                  <option value="" disabled>
+                    {tc("objectCategoryNone")}
+                  </option>
+                )}
+                {OBJECT_CATEGORIES.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {tc(`objectCategories.${option.value}`)}
                   </option>
                 ))}
               </select>

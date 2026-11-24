@@ -26,6 +26,7 @@ import {
 import {
   CLIMATE_DOCUMENT_TEMPLATE_CODE,
   buildClimateConfigFromRooms,
+  climateSeedRooms,
   getDefaultClimateDocumentConfig,
 } from "@/lib/climate-document";
 import {
@@ -683,7 +684,8 @@ export async function POST(request: Request) {
       : resolvedTemplateCode === EQUIPMENT_MAINTENANCE_TEMPLATE_CODE
       ? equipmentMaintenanceConfig
       : resolvedTemplateCode === CLIMATE_DOCUMENT_TEMPLATE_CODE
-      ? buildClimateConfigFromRooms(directoryRooms)
+      ? // Помещения с включённым «Контролировать климат», если такие есть.
+        buildClimateConfigFromRooms(climateSeedRooms(directoryRooms))
       : resolvedTemplateCode === CLEANING_DOCUMENT_TEMPLATE_CODE
       ? // «Как прошлый журнал»: если есть предыдущий документ —
         // используем его rooms/schedule/планы как структурную основу,

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PointWizard } from "@/components/settings/point-wizard-client";
+import { categoryForSphere } from "@/lib/object-categories";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function NewPointPage() {
   if (session.user.partnerAccess?.level === "view") redirect("/settings/buildings");
   const orgId = getActiveOrgId(session);
 
-  const [buildings, equipment] = await Promise.all([
+  const [buildings, equipment, organization] = await Promise.all([
     db.building.findMany({
       where: { organizationId: orgId },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
@@ -33,6 +34,8 @@ export default async function NewPointPage() {
       },
     }),
     db.equipment.findMany({ where: { area: { organizationId: orgId } }, select: { name: true } }),
+    // Сфера организации — заранее выбранная сфера нового объекта.
+    db.organization.findUnique({ where: { id: orgId }, select: { type: true } }),
   ]);
   const t = await getTranslations("settingsManagement.points.wizard");
 
@@ -42,6 +45,7 @@ export default async function NewPointPage() {
         <SectionPageHeader description={t("description")} />
         <div className="max-w-[860px]">
         <PointWizard
+          defaultCategory={categoryForSphere(organization?.type)}
           takenNames={buildings.map((building) => building.name)}
           // Новая точка — последней в меню и переключателе (порядок — sortOrder, затем имя).
           sortOrder={buildings.reduce((max, building) => Math.max(max, building.sortOrder + 1), 0)}

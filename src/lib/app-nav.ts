@@ -391,14 +391,28 @@ const STAFF_MENU: NavMenuGroup[] = [
  * «Объекты» (лист 4): корень — список всех точек и «Добавить точку»;
  * сотрудники, журналы и ППК — вложенные разделы, справочники — по всем точкам.
  */
+/**
+ * Порядок строки «Объектов» (владелец, 2026-11-23, скриншот): Сотрудники,
+ * Помещения, Оборудование, Журналы, Программа производственного контроля,
+ * QR-плакаты, Справочник продукции/услуг, Онлайн-принтер, Общий планшет.
+ * Вложенные разделы группы идут перед её пунктами, поэтому порядок задан
+ * группами подряд.
+ */
 const POINTS_MENU: NavMenuGroup[] = [
   {
     label: null,
-    sections: ["staff", "journals", "productionControl"],
+    sections: ["staff"],
     items: [
       { id: "areas", icon: "DoorOpen", href: "/settings/areas", access: STAFF_PATH },
       { id: "equipment", icon: "Refrigerator", href: "/settings/equipment", access: STAFF_PATH },
+    ],
+  },
+  {
+    label: null,
+    sections: ["journals", "productionControl"],
+    items: [
       { id: "qr", icon: "QrCode", href: "/settings/qr-posters", access: FULL_ACCESS },
+      { id: "products", icon: "Package", href: "/settings/products", access: FULL_ACCESS },
     ],
   },
   {
@@ -406,7 +420,6 @@ const POINTS_MENU: NavMenuGroup[] = [
     items: [
       { id: "printer", icon: "Printer", href: "/settings/print-agent", access: FULL_ACCESS },
       { id: "kiosk", icon: "TabletSmartphone", href: "/settings/kiosk", access: FULL_ACCESS },
-      { id: "products", icon: "Package", href: "/settings/products", access: FULL_ACCESS },
     ],
   },
 ];

@@ -135,6 +135,44 @@ export function useAttachmentUploads(options?: { guestId?: string | null; getUpl
   };
 }
 
+/** Поле ввода, где Ctrl+V — обычная вставка текста, а не вложение. */
+export function isEditablePasteTarget(target: EventTarget | null): boolean {
+  if (!target || typeof (target as Element).closest !== "function") return false;
+  const element = target as HTMLElement;
+  if (element.isContentEditable) return true;
+  return Boolean(element.closest("input, textarea, select, [contenteditable=''], [contenteditable='true']"));
+}
+
+/** Картинки из буфера обмена (скриншот, фото). */
+export function pastedImageFiles(data: Pick<DataTransfer, "files"> | null | undefined): File[] {
+  return [...(data?.files ?? [])].filter((file) => file.type.startsWith("image/"));
+}
+
+/**
+ * Ctrl+V скриншота или фото «по всему сайту» (владелец, 2026-11-23): вставка
+ * картинки вне полей ввода отдаётся `onFiles` — виджет поддержки открывает чат
+ * с этой картинкой во вложениях. Вставку в поля, таблицы журналов и чужие
+ * обработчики (`defaultPrevented`) не трогаем.
+ */
+export function useGlobalImagePaste(onFiles: (files: File[]) => void, enabled = true) {
+  const handler = useRef(onFiles);
+  useEffect(() => {
+    handler.current = onFiles;
+  }, [onFiles]);
+  useEffect(() => {
+    if (!enabled) return;
+    const onPaste = (event: ClipboardEvent) => {
+      if (event.defaultPrevented || isEditablePasteTarget(event.target)) return;
+      const files = pastedImageFiles(event.clipboardData);
+      if (files.length === 0) return;
+      event.preventDefault();
+      handler.current(files);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [enabled]);
+}
+
 /** Кнопка-скрепка со скрытым file-input. */
 export function AttachButton({
   onFiles,
@@ -271,6 +309,26 @@ export function MessageAttachments({
           </a>
         )
       )}
+    </div>
+  );
+}
+
+/**
+ * Цитата сообщения, на которое ответил оператор (2026-11-23): клиент видит, к
+ * чему ответ. Сообщение ищется в загруженной переписке; нет — цитаты нет.
+ */
+export function ReplyQuote({ text, light }: { text: string | null; light?: boolean }) {
+  if (!text) return null;
+  return (
+    <div
+      className={
+        light
+          ? "mb-1 border-l-2 border-white/60 pl-2 text-[12px] leading-[1.45] text-white/80"
+          : "mb-1 border-l-2 border-[#5566f6]/50 pl-2 text-[12px] leading-[1.45] text-[#6f7282]"
+      }
+      data-reply-quote
+    >
+      {text}
     </div>
   );
 }

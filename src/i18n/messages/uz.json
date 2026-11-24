@@ -1222,7 +1222,24 @@
         "urgent": "Shoshilinch jurnal",
         "help": "Ushbu yordam"
       }
-    }
+    },
+    "objectCategories": {
+      "food": "Umumiy ovqatlanish (XASSP)",
+      "medical": "Tibbiy xizmatlar",
+      "consumer": "Iste'molchilarga xizmatlar",
+      "sport": "Sport va rekreatsiya"
+    },
+    "objectCategoryHints": {
+      "food": "Kafelar, oshxonalar, maktab va bolalar ovqatlanishi, oziq-ovqat ishlab chiqarish va do'konlari — SanPiN va XASSP jurnallari",
+      "medical": "Klinikalar, tibbiy xonalar, sanatoriylar — dezinfeksiya, sterilizatsiya, bemorlar ovqatlanishi",
+      "consumer": "Go'zallik salonlari, sartaroshxonalar, mehmonxonalar va boshqa maishiy xizmatlar — dezinfeksiya va tozalash",
+      "sport": "Fitnes-klublar, basseynlar, sport va dam olish obyektlari — tozalash, dezinfeksiya, suv"
+    },
+    "objectCategoryLabel": "Obyekt sohasi",
+    "objectCategoryRequired": "Obyekt sohasini tanlang",
+    "objectCategoryNone": "Soha tanlanmagan",
+    "objectCategoryChangeHint": "Obyekt jurnallari to'plami uning sohasiga bog'liq: o'zgartirilganda yangi sohaning majburiy jurnallari yoqiladi, ortiqchalari o'chirilmaydi.",
+    "objectCategoryJournalsLimited": "Soha saqlandi, lekin uning jurnallari tarif limitiga sig'madi — keraklilarini «Jurnallarni sozlash»da yoqing."
   },
   "language": {
     "label": "Interfeys tili",
@@ -2987,20 +3004,16 @@
             "staff": "Nuqtalar xodimlari",
             "journals": "Jurnallar",
             "productionControl": "Ishlab chiqarish nazorati dasturi",
-            "areas": "Sexlar va xonalar",
+            "areas": "Xonalar",
             "equipment": "Uskunalar",
             "qr": "QR-stikerlar va plakatlar",
             "printer": "Onlayn printer",
             "kiosk": "Umumiy planshet",
-            "products": "Mahsulotlar katalogi"
+            "products": "Mahsulot va xizmatlar katalogi"
           },
           "short": {
             "staff": "Xodimlar",
-            "productionControl": "IChN",
-            "qr": "QR va plakatlar",
-            "printer": "Printer",
-            "kiosk": "Planshet",
-            "products": "Mahsulotlar"
+            "qr": "QR-plakatlar"
           }
         },
         "journals": {
@@ -4214,7 +4227,18 @@
       "orgTrialEnding": "{stage, select, tomorrow {«{name}» tashkilotining bepul kunlari ertaga tugaydi} other {«{name}» tashkilotining bepul kunlari tugamoqda}}",
       "orgTrialLastDay": "Oxirgi bepul kun — {date}",
       "addPoint": "Nuqta qo‘shish",
-      "orgTrialAccountCovers": "Akkaunt tashkilotlari balanslarida pul yetarli — nuqtani balansdan bir qadamda to‘lash mumkin."
+      "orgTrialAccountCovers": "Akkaunt tashkilotlari balanslarida pul yetarli — nuqtani balansdan bir qadamda to‘lash mumkin.",
+      "supportReport": "Qo'llab-quvvatlashga yangi murojaat",
+      "supportChat": "Onlayn-chatda yangi xabar"
+    },
+    "supportAlerts": {
+      "report": "Yangi murojaat",
+      "reportBug": "Yangi murojaat · xato",
+      "reportSuggestion": "Yangi murojaat · taklif",
+      "reportPartnership": "Yangi murojaat · hamkorlik",
+      "chat": "Onlayn-chatdagi xabar",
+      "open": "Ochish",
+      "client": "Mijoz"
     }
   },
   "journalControls": {
@@ -9699,7 +9723,7 @@
         "description": "To‘rt qadam — va nuqta jurnallarga tayyor. Keyin hammasini nuqta sahifasida tuzatish mumkin.",
         "progress": "{step}-qadam, jami {total}",
         "steps": {
-          "head": "Nomi va manzil",
+          "head": "Nomi, manzil, soha",
           "rooms": "Xonalar",
           "equipment": "Uskunalar",
           "summary": "Yakun"
@@ -9709,14 +9733,16 @@
         "create": "Nuqta yaratish",
         "creating": "Yaratilmoqda… {done} / {total}",
         "head": {
-          "title": "Nuqta qanday nomlanadi va qayerda joylashgan?",
-          "hint": "Nomi menyuda va kabinet sarlavhasida ko‘rinadi. Manzil jurnallar va PDF sarlavhasida chop etiladi.",
+          "title": "Obyekt qanday nomlanadi, qayerda va nima bilan shug'ullanadi?",
+          "hint": "Nomi menyuda va kabinet sarlavhasida ko‘rinadi. Manzil jurnallar va PDF sarlavhasida chop etiladi. Soha obyekt jurnallari to'plamini belgilaydi.",
           "name": "Nomi",
           "namePlaceholder": "Masalan, «Mira ko‘chasidagi kafe»",
           "address": "Manzil",
           "addressPlaceholder": "Shahar, ko‘cha, uy",
           "nameRequired": "Nuqta nomini kiriting",
-          "nameTaken": "Bunday nomli nuqta allaqachon bor — boshqacha nomlang"
+          "nameTaken": "Bunday nomli nuqta allaqachon bor — boshqacha nomlang",
+          "categoryHint": "Obyekt jurnallari uning sohasiga bog'liq: majburiylari o'zi yoqiladi, qolganlarini keyinroq yoqish mumkin. Sohani «Obyektlar» sahifasida o'zgartirish mumkin.",
+          "categoryJournalsLimited": "Obyekt yaratildi, lekin uning sohasi jurnallari tarif limitiga sig'madi — keraklilarini «Jurnallarni sozlash»da yoqing yoki tarifni o'zgartiring."
         },
         "rooms": {
           "title": "Nuqtada qanday xonalar bor?",
@@ -10698,8 +10724,8 @@
         "journalShortNameHint": "Har bir jurnal sarlavhasi va PDFda chop etiladi. Menyu va ro‘yxatlarda tashkilot nomi qoladi. Bo‘sh qoldirilsa, reyestrdagi qisqa yoki to‘liq nom ishlatiladi.",
         "journalHeaderPreview": "Jurnal sarlavhasida: {name}",
         "useFromRegistry": "Reyestrdagi nomni ishlatish: {name}",
-        "sphere": "Faoliyat sohasi",
-        "sphereHint": "Jurnallar to‘plamini belgilaydi",
+        "sphere": "Asosiy soha",
+        "sphereHint": "Yangi obyektlarga taklif qilinadi. Har bir obyektning o'z sohasi bor — uni «Obyektlar»da o'zgartiring",
         "ownership": "Tashkilot turi",
         "ownershipHint": "Xususiy, tarmoqli yoki davlat tashkiloti",
         "locations": "Manzillar",
@@ -22417,7 +22443,14 @@
       "source": {
         "site": "Sayt",
         "telegram": "Telegram"
-      }
+      },
+      "requestsTitle": "Murojaatlar",
+      "clientCard": "Mijoz kartasi",
+      "enterCabinet": "Kabinetga kirish",
+      "enterCabinetFailed": "Mijoz kabinetiga kirib bo'lmadi",
+      "call": "Qo'ng'iroq qilish",
+      "writeEmail": "Pochtaga yozish",
+      "openPage": "Murojaat sahifasi"
     },
     "reply": {
       "button": "Javob berish",
@@ -22447,7 +22480,13 @@
         "invalid": "So‘rov ma’lumotlari noto‘g‘ri",
         "notFound": "Murojaat topilmadi",
         "failed": "Javobni yuborib bo‘lmadi"
-      }
+      },
+      "to": "Kimga",
+      "requestHeading": "Murojaat {ticket} · {type} · {date}",
+      "noContact": "kontaktlar yo'q",
+      "attachHint": "Skrinshot yoki foto — qisqich tugmasi, sudrab olib kelish yoki Ctrl+V.",
+      "waitForUploads": "Fayllar yuklanishini kuting",
+      "attachmentsHeading": "Javob ilovalari"
     },
     "test": {
       "button": "Bildirishnomalarni tekshirish",
@@ -22585,7 +22624,18 @@
     "invalidMessage": "Xabar noto‘g‘ri",
     "broadcastTooShort": "Kamida bir-ikki jumla yozing",
     "invalidBroadcastId": "Ommaviy yuborish ID si noto‘g‘ri",
-    "broadcastRateLimited": "Yaqinda ommaviy yuborish boshlangan — 10 daqiqa kuting"
+    "broadcastRateLimited": "Yaqinda ommaviy yuborish boshlangan — 10 daqiqa kuting",
+    "to": "Kimga",
+    "replyingTo": "Javob",
+    "replyToMessage": "Javob berish",
+    "clearQuote": "Iqtibosni olib tashlash",
+    "quoteMissing": "xabar mavjud emas",
+    "clientCard": "Mijoz kartasi",
+    "enterCabinet": "Kabinetga kirish",
+    "call": "Qo'ng'iroq qilish",
+    "writeEmail": "Pochtaga yozish",
+    "dropHint": "Faylni biriktirish uchun qo'yib yuboring",
+    "attachHint": "Skrinshot — Ctrl+V yoki faylni oynaga sudrab olib keling"
   },
   "rootAudit": {
     "title": "Amallar jurnali",
@@ -26587,7 +26637,9 @@
       "describeHumidity": "namlik {value}",
       "normsNone": "me’yorlar tanlanmagan",
       "minAria": "{label}: minimum",
-      "maxAria": "{label}: maksimum"
+      "maxAria": "{label}: maksimum",
+      "verifiersToggle": "O'z tekshiruvchilarini tayinlash",
+      "climateOnHint": "Saqlangandan so'ng xona ushbu obyektning harorat va namlik jurnalida paydo bo'ladi, xodimlar esa quyidagi QR-kod orqali o'lchovlarni kiritishi mumkin."
     },
     "roomDirectoryPickerDialog": {
       "areaNoEquipment": "sex · uskunasiz",
@@ -27064,7 +27116,7 @@
           "equipment": "Qanday uskunalar bor"
         },
         "subtitles": {
-          "points": "Kafe, sex, filial — nomi va manzili jurnallarda chop etiladi",
+          "points": "Har bir obyektning nomi, manzili va sohasi: manzil jurnallarda chop etiladi, soha esa jurnallar to'plamini belgilaydi",
           "staff": "Xodimlarni qo‘shing — ularga vazifalar keladi, familiyalari jurnallarga tushadi",
           "equipment": "Muzlatkichlar va muzlatish kameralari harorat jurnaliga tushadi"
         },
@@ -27079,7 +27131,7 @@
         "pointAddressLabel": "Obyekt {index} manzili",
         "addPoint": "Yana obyekt",
         "removePoint": "Obyekt {index} ni olib tashlash",
-        "pointsNote": "O‘tkazib yuborish mumkin — obyektlarni keyin «Mening kompaniyam → Obyektlar» bo‘limida qo‘shasiz.",
+        "pointsNote": "O‘tkazib yuborish mumkin — obyektlarni keyin «Mening kompaniyam → Obyektlar» bo‘limida qo‘shasiz. Obyekt sohasini ham o'sha yerda o'zgartirish mumkin.",
         "pointsSaved": "Obyektlar saqlandi",
         "pointExists": "«{name}» obyekti allaqachon bor",
         "pointsFailed": "Obyektlarni saqlab bo‘lmadi",
@@ -28903,7 +28955,9 @@
       "roomNamePlaceholder": "Xona nomi",
       "add": "Qo‘shish",
       "addRoom": "Xona qo‘shish",
-      "officeBadge": "Ofis"
+      "officeBadge": "Ofis",
+      "sphereHint": "Obyekt sohasi uning jurnallar to'plamini belgilaydi: o'zgartirilganda yangi sohaning majburiy jurnallari yoqiladi, ortiqchalari o'chirilmaydi.",
+      "sphereJournalsLimited": "Soha saqlandi, lekin uning jurnallari tarif limitiga sig'madi — keraklilarini «Jurnallarni sozlash»da yoqing."
     },
     "calendarPage": {
       "kindMedbook": "Tibbiy daftarchalar",

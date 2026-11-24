@@ -415,6 +415,15 @@ function isFullSectionSet(sections: readonly string[]): boolean {
 }
 
 /**
+ * Команда поддержки (2026-11-23): владелец, администратор платформы или
+ * человек с разделом «Обратная связь» — им всплывашка и колокольчик о каждом
+ * обращении и сообщении чата. Та же аудитория, что `support` у уведомлений.
+ */
+export function isSupportStaff(isRoot: boolean, sections: readonly string[]): boolean {
+  return isPlatformAdministrator({ isRoot, platformSections: sections }) || sections.includes("support");
+}
+
+/**
  * Кнопка «Войти» в кабинет клиента: владелец или администратор платформы
  * (все разделы и охват «все клиенты» — с охватом «свои» в чужой кабинет не пускаем).
  */

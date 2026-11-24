@@ -85,13 +85,36 @@ test("секция без карточки, во всю ширину, развё
   assert.doesNotMatch(/<details([^>]*)>/.exec(closed)?.[1] ?? "", /\bopen=/);
 });
 
-test("главная: «Обязательные журналы» — плоская секция, открыта, кнопки в панели списка", () => {
+test("всегда раскрытая секция: без <details>, стрелки и запоминания", () => {
+  const sectionProps = {
+    storageKey: "compliance-grid",
+    title: "Обязательные журналы",
+    flat: true,
+    defaultOpen: true,
+    collapsible: false,
+    badge: { text: "1/3", tone: "warn" },
+    titleAside: createElement("a", { href: "/settings/journals" }, "настройка"),
+  } as ComponentProps<typeof DashboardSection>;
+  const markup = html(createElement(DashboardSection, sectionProps, createElement("p", null, "список")));
+  assert.doesNotMatch(markup, /<details|<summary/, "сворачивать нечего");
+  assert.doesNotMatch(markup, /lucide-chevron-down/, "стрелки нет");
+  // Без data-storage-key скрипт запоминания секцию не находит: старое «свёрнуто» не действует.
+  assert.doesNotMatch(markup, /data-storage-key/);
+  assert.match(markup, /^<section[^>]*data-section-layout="flat"[^>]*data-section-fixed=""/);
+  assert.match(markup, /<h2[^>]*>Обязательные <span[^>]*>журналы<span[^>]*>1\/3<\/span>/);
+  assert.match(markup, /href="\/settings\/journals"/, "настройка в строке заголовка");
+  assert.match(markup, /список/);
+});
+
+test("главная: «Обязательные журналы» — плоская секция, всегда раскрыта, кнопки в панели списка", () => {
   const page = read("src/app/(dashboard)/dashboard/page.tsx");
   const start = page.indexOf('storageKey="compliance-grid"');
   assert.ok(start > 0, "секция compliance-grid не найдена");
   const section = page.slice(start, page.indexOf("</DashboardSection>", start));
   assert.match(section, /\bflat\b/);
   assert.match(section, /defaultOpen=\{true\}/);
+  // Владелец, 2026-11-23: «всегда раскрыты, закрыть их нельзя».
+  assert.match(section, /collapsible=\{false\}/);
   assert.doesNotMatch(section, /\bcentered\b/);
   // «Автозаполнить» / «QR-коды» — в панели с поиском, не в <summary>.
   assert.match(section, /<DashboardJournalsGrid[\s\S]*actions=\{<CloseDayCard pointRequired=\{closeDayPointRequired\} \/>\}/);

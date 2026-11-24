@@ -24,6 +24,7 @@ import { getDefaultCleaningVentilationConfig } from "./cleaning-ventilation-chec
 import {
   buildClimateConfigFromAreas,
   buildClimateConfigFromRooms,
+  climateSeedRooms,
   getDefaultClimateDocumentConfig,
 } from "./climate-document";
 import {
@@ -171,7 +172,7 @@ const PROVIDERS: Record<string, Provider> = {
   // ═══ ТЕМПЕРАТУРА ═══
   climate_control: (orgData) => {
     if (orgData?.rooms && orgData.rooms.length > 0) {
-      return buildClimateConfigFromRooms(orgData.rooms) as unknown as Record<
+      return buildClimateConfigFromRooms(climateSeedRooms(orgData.rooms)) as unknown as Record<
         string,
         unknown
       >;

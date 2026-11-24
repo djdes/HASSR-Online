@@ -55,6 +55,9 @@ export default async function BuildingsPage() {
           currentMonthDays: true,
           generalMonthDays: true,
           requirePhoto: true,
+          // Климат помещения: без норм окно помещения показывало «не контролируется»
+          // и при сохранении стирало нормы из журнала климата (2026-11-23).
+          climateNorms: true,
         },
       },
     },
