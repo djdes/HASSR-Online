@@ -15,8 +15,11 @@ import { ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { looksLikePhoneInput, phoneQueryValue } from "@/lib/login-identifier";
 import { JOURNALS_TOTAL } from "@/lib/journal-catalog";
 import { HOME_HREF } from "@/lib/home-page";
+import { useHydrated } from "@/lib/use-hydrated";
 
 function LoginForm() {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const t = useTranslations("auth");
   const commonForm = useTranslations("common.form");
   const authError = useAuthError();
@@ -363,7 +366,7 @@ function LoginForm() {
           )}
 
           {challengeId ? (
-            <form onSubmit={handleCode} className="mt-8 space-y-5">
+            <form method="post" onSubmit={handleCode} className="mt-8 space-y-5">
               <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4 text-[13.5px] leading-relaxed text-[#3c4053]">
                 {t("login.codeStep.sentNotice")}</div>
               <input
@@ -378,7 +381,7 @@ function LoginForm() {
               />
               <button
                 type="submit"
-                disabled={loading || code.length !== 6}
+                disabled={loading || code.length !== 6 || !hydrated}
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-60"
               >
                 {loading ? t("login.codeStep.verifying") : t("login.codeStep.confirm")}
@@ -394,7 +397,7 @@ function LoginForm() {
                 {t("login.codeStep.resend")}</button>
             </form>
           ) : null}
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5" hidden={Boolean(challengeId)}>
+          <form method="post" onSubmit={handleSubmit} className="mt-8 space-y-5" hidden={Boolean(challengeId)}>
             {/* type="text": со встроенной проверкой браузер показывал
                 английское «Please include an '@'…», когда сотрудник
                 вводил телефон. Проверяем сами и объясняем по-русски. */}
@@ -454,7 +457,7 @@ function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !hydrated}
               className="group relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[#5566f6] text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-all hover:bg-[#4a5bf0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-70"
             >
               <span className="relative z-10">

@@ -142,7 +142,7 @@ function QrPinStepFor(props: QrPinStepProps) {
   if (view === "change-sent") return <QrPinRequestSent requestKind="change" onDone={() => setView("pin")} />;
 
   return (
-    <form onSubmit={submit} className="qp-card" data-testid="qr-pin-step">
+    <form method="post" onSubmit={submit} className="qp-card" data-testid="qr-pin-step">
       {info.approvedNote ? (
         <div className="qp-ok-note" role="status">
           {info.approvedMessageCode ? feedback(qrResponseFeedback({ errorCode: info.approvedMessageCode }, "pin.approved")) : scoped ? t("pin.approved") : info.approvedNote}

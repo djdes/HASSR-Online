@@ -121,7 +121,7 @@ export function QrPinRequestForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate className="qp-card" data-testid="qr-pin-request" data-kind={requestKind}>
+    <form method="post" onSubmit={submit} noValidate className="qp-card" data-testid="qr-pin-request" data-kind={requestKind}>
       {change ? (
         <p className="qp-hint" style={{ margin: "4px 2px 14px", color: "#3c4053" }}>
           {t("pin.changeHint")}</p>

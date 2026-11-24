@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 
 /**
  * Задание пароля при привязке.
@@ -12,6 +13,8 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
  * экран нередко видит не только владелец.
  */
 export function PairForm({ token }: { token: string }) {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
@@ -53,7 +56,7 @@ export function PairForm({ token }: { token: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-5 space-y-3">
+    <form method="post" onSubmit={submit} className="mt-5 space-y-3">
       <div>
         <label htmlFor="password" className="mb-1.5 block text-[13px] text-[#6f7282]">
           Пароль
@@ -105,7 +108,7 @@ export function PairForm({ token }: { token: string }) {
 
       <button
         type="submit"
-        disabled={busy || password.length < 6 || password !== confirm}
+        disabled={busy || password.length < 6 || password !== confirm || !hydrated}
         className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#5566f6] text-[16px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0] disabled:opacity-50"
       >
         {busy ? <Loader2 className="size-5 animate-spin" /> : null}
