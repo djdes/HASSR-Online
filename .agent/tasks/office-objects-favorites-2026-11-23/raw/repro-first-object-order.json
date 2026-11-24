@@ -1,0 +1,12 @@
+{
+  "objectsListOrder": [
+    "Cafe Mira",
+    "Кафе",
+    "ОФИС"
+  ],
+  "transferTarget": "Cafe Mira",
+  "documentBuildingFor": "Cafe Mira",
+  "ensureActiveDocumentWithOffice": "Cafe Mira",
+  "sameObject": true,
+  "leftoverTempOrgs": 0
+}

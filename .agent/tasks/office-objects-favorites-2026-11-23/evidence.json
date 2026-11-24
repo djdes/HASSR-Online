@@ -1,32 +1,35 @@
 {
   "task": "office-objects-favorites-2026-11-23",
-  "builderStatus": "ALL_AC_PASS_PENDING_FINAL_VERIFIER",
-  "checkedAt": "2026-11-24T12:30:00Z",
+  "builderStatus": "ALL_AC_PASS_PENDING_DELTA_VERIFIER",
+  "checkedAt": "2026-11-24T14:30:00Z",
   "branch": "claude/amazing-bohr-s3zvbx",
-  "head": "e53f912d2",
-  "base": "e5533a387",
+  "head": "568c80207",
+  "base": "58740e3ed",
   "stand": "next dev on localhost:3000, PostgreSQL 16 (stand-seed.ts + stand-reset.ts), Chromium 1440x900, iPhone 13, mini shell (ws-shell=mini), dark theme cookie",
   "commands": {
     "typecheck": {
       "command": "npm run typecheck",
       "result": "PASS",
       "exit": 0,
-      "file": "raw/typecheck.txt"
+      "file": "raw/typecheck.txt",
+      "on": "568c80207"
     },
     "testGate": {
       "command": "npm run test:gate",
       "mode": "full (prisma/schema.prisma changed)",
-      "pass": 7393,
+      "pass": 7394,
       "fail": 0,
       "exit": 0,
-      "file": "raw/test-gate.txt"
+      "file": "raw/test-gate.txt",
+      "on": "568c80207"
     },
     "i18nCheck": {
       "command": "npm run i18n:check",
       "pass": 103,
       "fail": 0,
       "exit": 0,
-      "file": "raw/i18n-check.txt"
+      "file": "raw/i18n-check.txt",
+      "on": "568c80207"
     },
     "eslint": {
       "command": "npx eslint <74 changed code files>",
@@ -70,6 +73,16 @@
     "officePathsRepro": {
       "command": "npx tsx <verifier2>/repro-ac5.ts + ensureActiveDocument probe (temp orgs, deleted)",
       "result": "QR rollover 0 office docs; external API -> first object; EDO office not offered, office acceptance point_forbidden; ensureActiveDocument(office) -> first object"
+    },
+    "uiThirdFixes": {
+      "command": "npx tsx raw/stand-calibration-doc.ts create && node raw/ui-check-third-fixes.cjs && npx tsx raw/stand-calibration-doc.ts delete",
+      "file": "raw/ui-check-third-fixes.json",
+      "result": "cleaning_ventilation_checklist window: «Создание документа» / «Создать», no raw cleaningGrid keys; equipment_calibration «Сделать копию» at «Выберите объект»: toast «Выберите объект: документ журнала создаётся для объекта» (was «Проверьте введённые данные»), no copy created; temp document deleted"
+    },
+    "firstObjectOrder": {
+      "command": "npx tsx raw/repro-first-object-order.ts (temp org office + «Cafe Mira» + «Кафе», sortOrder 0, deleted)",
+      "file": "raw/repro-first-object-order.json",
+      "result": "objects list order, transfer target, documentBuildingFor and ensureActiveDocument(office) all give «Cafe Mira»"
     }
   },
   "criteria": {
@@ -98,12 +111,15 @@
       "status": "PASS",
       "fixedIn": [
         "f778c8aa4",
-        "fcff0fc7a"
+        "fcff0fc7a",
+        "37016fed3"
       ],
       "evidence": [
         "ui-check-final.json: AC4_*",
         "raw/ui-check-point-windows.json",
-        "src/components/journals/read-created-document.test.ts"
+        "src/components/journals/read-created-document.test.ts",
+        "raw/ui-check-third-fixes.json (calibration copy toast)",
+        "src/components/journals/equipment-calibration-localization.test.ts"
       ]
     },
     "AC5": {
@@ -112,13 +128,15 @@
       "fixedIn": [
         "f778c8aa4",
         "2cc6b7b0b",
-        "fcff0fc7a"
+        "fcff0fc7a",
+        "37016fed3"
       ],
       "evidence": [
         "src/lib/office-journals.test.ts (documentBuildingFor, auto-create guard, deploy wiring after post-deploy-check)",
         "src/lib/journal-qr-rollover.test.ts",
         "src/lib/supply/supply-points.test.ts",
-        "raw/office-journals-migration.txt"
+        "raw/office-journals-migration.txt",
+        "raw/repro-first-object-order.json (first object in DB order, same as the transfer)"
       ]
     },
     "AC6": {
@@ -179,7 +197,8 @@
         "raw/test-gate.txt",
         "raw/i18n-check.txt",
         "raw/eslint.txt",
-        "ui-check-final.json: dark_theme"
+        "ui-check-final.json: dark_theme",
+        "src/i18n/journal-namespace-localization.test.ts (cleaningGrid for cleaning_ventilation_checklist, master bug)"
       ]
     }
   },
@@ -192,7 +211,7 @@
       "favorites cap counts pages that left the menu",
       "fast second pin can be lost",
       "complaint dialog shows a generic error on point_required",
-      "copy document (calibration, maintenance, glass) at «Выберите объект» is refused",
+      "copy document at «Выберите объект» does not create a copy — the object must be chosen; every copy action now says «Выберите объект…»",
       "QR hint for a manager of another object",
       "«Без объекта» vs «Все объекты» wording in the edit dialog",
       "context menu opens on long press on phones",
@@ -202,7 +221,7 @@
   "deployNotes": [
     "new column User.pinnedBuildingIds String[] default [] (additive, scripts/apply-safe-schema.cjs)",
     "office journals transfer runs once on this deploy after post-deploy-check: dry-run totals, then the move; duplicates and journals disabled on the object stay on the office; ids in AuditLog journals.office_to_point",
-    "master-side fixes ported in the merge: StatusBadgeMeta type alias (seo), theme token for link colour in two seo-links components, inputMode on the Avito number field"
+    "master-side fixes ported in the merges: StatusBadgeMeta type alias (seo), theme token for link colour in two seo-links components, inputMode on the Avito number field; cleaningGrid messages for the cleaning/ventilation checklist window"
   ],
   "verifier": {
     "rounds": [
@@ -217,7 +236,13 @@
         "fixedIn": "fcff0fc7a"
       },
       {
-        "on": "e53f912d2",
+        "on": "e53f912d2 (head 45023ff6e)",
+        "verdict": "PASS",
+        "notes": "3 non-blocking notes fixed in 37016fed3: first object in DB order, calibration copy toast, cleaningGrid namespace for the checklist window"
+      },
+      {
+        "on": "568c80207",
+        "scope": "delta 45023ff6e..568c80207 (37016fed3 + merge #325)",
         "verdict": "pending"
       }
     ],
