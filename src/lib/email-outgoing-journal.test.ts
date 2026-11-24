@@ -60,6 +60,13 @@ test("автоматическое письмо: в журнале с текст
   assert.equal(journal[0].text, "Заполните журнал: https://wesetup.ru/r/…");
 });
 
+test("письмо сотрудника через общую почту — с отправителем, не «автоматически»", async () => {
+  const { sendRawEmail } = await import("@/lib/email");
+  await sendRawEmail("owner@kafe.ru", "КП WeSetup", "<p>КП во вложении</p>", { senderUserId: "staff-1" });
+  assert.equal(journal[0].senderUserId, "staff-1");
+  assert.equal(journal[0].via, "system");
+});
+
 test("письмо со ссылкой сброса пароля: адрес и тема в журнале, текста нет", async () => {
   const { sendPasswordResetEmail } = await import("@/lib/email");
   await sendPasswordResetEmail({ to: "stranger@mail.ru", resetUrl: "https://wesetup.ru/reset/SECRET-TOKEN-123456789" });

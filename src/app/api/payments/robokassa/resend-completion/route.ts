@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
           ttlDays: INVITE_TTL_DAYS,
         });
         try {
-          await sendRawEmail(order.email, mail.subject, renderEmailLayout(mail.title, mail.html));
+          // Ссылка завершения регистрации — секрет: в журнал писем без текста.
+          await sendRawEmail(order.email, mail.subject, renderEmailLayout(mail.title, mail.html), { sensitive: true });
         } catch (error) {
           console.error("[resend-completion] email failed", { order: order.id, error });
         }

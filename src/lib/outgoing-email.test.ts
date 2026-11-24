@@ -73,4 +73,10 @@ test("письма с кодом, паролем или ссылкой вход�
   }
   assert.match(read("src/lib/magic-link.ts"), /sendRawEmail\(email, "Вход в WeSetup по ссылке", html, \{ sensitive: true \}\)/);
   assert.match(read("src/app/api/staff/[id]/personal-qr/route.ts"), /\{ sensitive: true \}/);
+  // Ссылки установки пароля и завершения регистрации.
+  const partners = read("src/lib/partners/emails.ts");
+  assert.match(partners, /renderEmailLayout\("Кабинет готов", body\), \{ sensitive: true \}\)/);
+  assert.match(partners, /renderEmailLayout\("Команда партнёра", body\), \{ sensitive: true \}\)/);
+  assert.match(read("src/app/api/payments/robokassa/resend-completion/route.ts"), /renderEmailLayout\(mail\.title, mail\.html\), \{ sensitive: true \}\)/);
+  assert.match(email, /attachments, \{ sensitive: isNewClient \}\)/, "чек новому клиенту — со ссылкой завершения регистрации");
 });

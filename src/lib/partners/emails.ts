@@ -195,7 +195,8 @@ export async function sendPartnerClientOwnerInviteEmail(params: {
     </div>
     ${button(params.inviteUrl, "Установить пароль и войти")}
     <p ${MUTED}>Ссылка действительна 7 дней. После входа вы станете владельцем организации: сможете управлять доступом ${params.hidden ? "службы сопровождения" : "консультанта"} и подпиской в разделе «Настройки».</p>`;
-  return sendRawEmail(params.to, subject, renderEmailLayout("Кабинет готов", body));
+  // Ссылка установки пароля — секрет: в журнал исходящих писем без текста.
+  return sendRawEmail(params.to, subject, renderEmailLayout("Кабинет готов", body), { sensitive: true });
 }
 
 /**
@@ -275,7 +276,7 @@ export async function sendPartnerTeamInviteEmail(params: {
     <p ${P}>Вас добавили в команду партнёра <strong>${escapeHtml(params.companyName)}</strong>. После входа в шапке сайта появится переключатель «Партнёрский кабинет».</p>
     ${button(params.inviteUrl, "Установить пароль и войти")}
     <p ${MUTED}>Ссылка действительна 7 дней.</p>`;
-  return sendRawEmail(params.to, subject, renderEmailLayout("Команда партнёра", body));
+  return sendRawEmail(params.to, subject, renderEmailLayout("Команда партнёра", body), { sensitive: true });
 }
 
 /** Клиент написал в онлайн-чат — партнёру, который его сопровождает. */

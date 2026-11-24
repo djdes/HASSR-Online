@@ -45,6 +45,7 @@ test("переписки: письма сайта и рассылки по по�
       { id: "o2", to: "anna@kafe.ru", via: "system", fromEmail: "noreply@wesetup.ru", senderUserId: null, subject: "Код подтверждения", text: null, attachmentsJson: null, status: "sent", error: null, messageId: null, createdAt: at(4) },
       { id: "o3", to: "anna@kafe.ru", via: "personal", fromEmail: "oleg@wesetup.ru", senderUserId: "u1", subject: "Из карточки", text: "Текст", attachmentsJson: null, status: "failed", error: "SMTP", messageId: clientEmailMessageId("e1"), createdAt: at(2) },
       { id: "o4", to: "anna@kafe.ru", via: "personal", fromEmail: "oleg@wesetup.ru", senderUserId: "u1", subject: "Из CRM", text: "Ответ", attachmentsJson: null, status: "sent", error: null, messageId: "<crm-1@wesetup.ru>", createdAt: at(1) },
+      { id: "o6", to: "anna@kafe.ru", via: "system", fromEmail: "noreply@wesetup.ru", senderUserId: "u1", subject: "Счёт через общую почту", text: "Счёт во вложении", attachmentsJson: null, status: "sent", error: null, messageId: "<fallback-1@wesetup.ru>", createdAt: at(4) },
       { id: "o5", to: "anna@kafe.ru", via: "personal", fromEmail: "oleg@wesetup.ru", senderUserId: "u1", subject: "Договор", text: "Договор во вложении", attachmentsJson: [{ filename: "Договор.pdf", size: 1, contentType: "application/pdf" }], status: "sent", error: null, messageId: "<doc-1@wesetup.ru>", createdAt: at(5) },
     ];
   }) as unknown as typeof original.outgoing;
@@ -55,7 +56,10 @@ test("переписки: письма сайта и рассылки по по�
   try {
     const contacts = { owner: null, requisites: null, company: { phones: [], emails: [], accountantEmail: null, website: null, address: null }, people: [{ isRoot: false, email: "Anna@Kafe.ru", loginEmail: null, phone: null }] } as unknown as ClientContacts;
     const data = await loadClientConversations("org-1", contacts);
-    assert.deepEqual(data.items.map((item) => item.id), ["mailing:m1", "outgoing-email:o5", "outgoing-email:o2", "outgoing-email:o1", "client-email:e1", "i1"]);
+    assert.deepEqual(data.items.map((item) => item.id), ["mailing:m1", "outgoing-email:o5", "outgoing-email:o2", "outgoing-email:o6", "outgoing-email:o1", "client-email:e1", "i1"]);
+    const fallback = data.items.find((item) => item.id === "outgoing-email:o6");
+    assert.equal(fallback?.automatic, false, "письмо сотрудника через общую почту — не «Письма сайта»");
+    assert.equal(fallback?.authorName, "Олег");
     assert.deepEqual(seen.outgoing, { OR: [{ organizationId: "org-1" }, { to: { in: ["anna@kafe.ru"] } }] }, "журнал — по организации и по почтам людей");
     assert.deepEqual(seen.clientEmail, { OR: [{ organizationId: "org-1" }, { to: { in: ["anna@kafe.ru"] } }] });
     const auto = data.items.find((item) => item.id === "outgoing-email:o1");

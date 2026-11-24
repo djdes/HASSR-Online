@@ -479,10 +479,11 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
             {payments.length === 0 ? (
               <p className="text-[14px] text-[#9b9fb3]">{t("payments.empty")}</p>
             ) : (
-              // Длинная история оплат прокручивается внутри карточки, шапка таблицы на месте.
-              <div className="-mx-5 max-h-[min(60vh,560px)] overflow-auto overscroll-contain px-5 md:-mx-6 md:px-6" data-client-payments-scroll>
+              // Длинная история оплат прокручивается внутри карточки с видимой полосой.
+              <ScrollList maxHeightClassName="max-h-[min(60vh,560px)]" className="-mx-5 md:-mx-6">
+              <div className="overflow-x-auto px-5 md:px-6" data-client-payments-scroll>
                 <table className="w-full min-w-[640px] text-[14px]">
-                  <thead className="sticky top-0 z-10 bg-white">
+                  <thead>
                     <tr className="text-left text-[12px] uppercase tracking-[0.14em] text-[#8a8ea4]">
                       <th className="pb-2 font-medium">{t("payments.date")}</th>
                       <th className="pb-2 font-medium">{t("subscription.plan")}</th>
@@ -565,6 +566,7 @@ export default async function OrganizationDetailPage({ params }: PageProps) {
                   </tbody>
                 </table>
               </div>
+              </ScrollList>
             )}
           </div>
         </section>

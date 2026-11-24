@@ -312,7 +312,7 @@ export async function sendRawEmail(
   to: string,
   subject: string,
   html: string,
-  options?: { replyTo?: string | null; attachments?: EmailAttachment[]; text?: string | null; sensitive?: boolean; messageId?: string | null }
+  options?: { replyTo?: string | null; attachments?: EmailAttachment[]; text?: string | null; sensitive?: boolean; messageId?: string | null; senderUserId?: string | null }
 ): Promise<boolean> {
   return sendEmail(to, subject, html, options?.attachments, options);
 }
@@ -380,6 +380,8 @@ type SendEmailOptions = {
   sensitive?: boolean;
   /** Свой Message-ID: по нему «Переписки» узнают письмо, уже записанное в CRM. */
   messageId?: string | null;
+  /** Письмо сотрудника через общую почту (запасной путь личной): в «Переписках» — не «автоматически». */
+  senderUserId?: string | null;
 };
 
 /**
@@ -405,6 +407,7 @@ async function logOutgoingEmail(
       sensitive: options?.sensitive,
       via: "system",
       fromEmail: FROM,
+      senderUserId: options?.senderUserId ?? null,
       attachments,
       status: result.ok ? "sent" : "failed",
       error: result.ok ? null : result.error,
@@ -882,7 +885,8 @@ export async function sendPaymentReceiptEmail(params: {
         },
       ]
     : undefined;
-  return sendEmail(to, subject, localizedLayout(t, locale, subject, body, brand), attachments);
+  // Новому клиенту в письме ссылка завершения регистрации — в журнал без текста.
+  return sendEmail(to, subject, localizedLayout(t, locale, subject, body, brand), attachments, { sensitive: isNewClient });
 }
 
 export type FeedbackType =
