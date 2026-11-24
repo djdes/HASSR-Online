@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     });
     if (!mgmt) {
       return NextResponse.json(
-        { error: "Нет management-юзера в org для server-side trigger" },
+        { error: "В организации нет руководителя — автоматическая отправка задач невозможна" },
         { status: 400 }
       );
     }
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
       const matches = await getMatchingTasksFlowIntegrations(presentedKey);
       if (matches.length === 0) {
         return NextResponse.json(
-          { error: "Invalid TasksFlow API key" },
+          { error: "Неверный API-ключ программного модуля" },
           { status: 401 },
         );
       }
@@ -241,7 +241,7 @@ export async function POST(request: Request) {
       });
       if (!mgmt) {
         return NextResponse.json(
-          { error: "Нет management-юзера в org для tfk-trigger" },
+          { error: "В организации нет руководителя — отправка задач из программного модуля невозможна" },
           { status: 400 },
         );
       }
@@ -294,7 +294,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Интеграция с TasksFlow не настроена. Подключите её на странице настроек.",
+          "Программный модуль не подключён. Подключите его в «Настройки → Программный модуль».",
       },
       { status: 400 }
     );
@@ -471,7 +471,7 @@ export async function POST(request: Request) {
     }
     // Если совсем никого — возвращаем generic совет.
     if (candidates.length === 0) {
-      return `${reason}. Совет: заведи должность вроде «Заведующий производством» или «Старший повар» в Сотрудниках, и привяжи телефон сотрудника к TasksFlow.`;
+      return `${reason}. Совет: заведите должность вроде «Заведующий производством» или «Старший повар» в «Сотрудниках» и привяжите телефон сотрудника к программному модулю.`;
     }
 
     // Предпочитаем привязанных к TF.
@@ -488,9 +488,9 @@ export async function POST(request: Request) {
     const top = pool[0];
     const positionLabel = top.jobPosition?.name ?? "сотрудник";
     const tfNote = earlyTfUserIds.has(top.id)
-      ? "(привязан к TasksFlow — задача дойдёт сразу)"
-      : "(нет привязки к TasksFlow — добавь телефон в карточке сотрудника)";
-    return `${reason}. Совет: назначь ${top.name} (${positionLabel}) ${tfNote}.`;
+      ? "(привязан к программному модулю — задача дойдёт сразу)"
+      : "(не привязан к программному модулю — добавьте телефон в карточке сотрудника)";
+    return `${reason}. Совет: назначьте ${top.name} (${positionLabel}) ${tfNote}.`;
   }
 
   const reports: JournalReport[] = hierarchySkipped.map(({ template, reason }) => ({
@@ -534,7 +534,7 @@ export async function POST(request: Request) {
         organizationId,
         kind: "tasksflow.bulk_assign.skipped",
         dedupeKey: `tasksflow.bulk_assign.skipped:${runPointId ? `${runPointId}:` : ""}${dayKey(now)}`,
-        title: "TasksFlow: часть журналов не отправлена",
+        title: "Часть журналов не отправлена в программный модуль",
         linkHref: "/settings/staff-hierarchy",
         linkLabel: "Проверить иерархию",
         items: [...notificationItems.values()],
@@ -573,10 +573,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: isCryptoIssue
-          ? "API-ключ TasksFlow повреждён или зашифрован старым секретом. Переподключите интеграцию: Настройки → Интеграции → TasksFlow → введите ключ заново."
+          ? "API-ключ программного модуля повреждён или устарел. Подключите модуль заново: «Настройки → Программный модуль» → введите ключ ещё раз."
           : message,
         code: isCryptoIssue ? "tasksflow_apikey_decrypt_failed" : "tasksflow_client_error",
-        action: { href: "/settings/integrations/tasksflow", label: "Переподключить TasksFlow" },
+        action: { href: "/settings/integrations/tasksflow", label: "Переподключить программный модуль" },
       },
       { status: 400 },
     );
@@ -742,7 +742,7 @@ export async function POST(request: Request) {
 
     const adapter = adapterByCode.get(tpl.code);
     if (!adapter) {
-      report.skipReason = "Адаптер не зарегистрирован";
+      report.skipReason = "Этот журнал пока нельзя отправить в программный модуль";
       report.skipped += 1;
       if (report.skipReason) {
         pushSkippedItem(report.code, report.label, report.skipReason);
@@ -839,7 +839,7 @@ export async function POST(request: Request) {
         `[bulk-assign-today] ${tpl.code} listDocumentsForOrg failed`,
         err
       );
-      report.skipReason = "Ошибка адаптера";
+      report.skipReason = "Не удалось прочитать документы журнала";
       report.skipped += 1;
       if (report.skipReason) {
         pushSkippedItem(report.code, report.label, report.skipReason);
@@ -905,7 +905,7 @@ export async function POST(request: Request) {
         }
         if (plan.skippedNoLink.length > 0) {
           report.skipped += plan.skippedNoLink.length;
-          report.skipReason = "Исполнитель генеральной уборки не привязан к TasksFlow";
+          report.skipReason = "Исполнитель генеральной уборки не привязан к программному модулю";
           pushSkippedItem(report.code, report.label, report.skipReason);
         } else if (plan.create.length === 0 && report.alreadyLinked === 0) {
           report.skipReason = "Сегодня генеральных уборок по плану нет";
@@ -1154,7 +1154,7 @@ export async function POST(request: Request) {
           position: u.jobPosition?.name ?? null,
           rowKey: row.rowKey,
           status: linked ? "ready" : "blocked",
-          blockedReason: linked ? undefined : "Нет привязки к TasksFlow (добавь телефон)",
+          blockedReason: linked ? undefined : "Не привязан к программному модулю (добавьте телефон)",
         });
       }
 
@@ -1425,7 +1425,7 @@ export async function POST(request: Request) {
       organizationId,
       kind: "tasksflow.bulk_assign.skipped",
       dedupeKey: `tasksflow.bulk_assign.skipped:${runPointId ? `${runPointId}:` : ""}${dayKey(now)}`,
-      title: "TasksFlow: часть журналов не отправлена",
+      title: "Часть журналов не отправлена в программный модуль",
       linkHref: "/settings/staff-hierarchy",
       linkLabel: "Проверить иерархию",
       items: [...notificationItems.values()],

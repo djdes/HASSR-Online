@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Блокировка прокрутки страницы под всплывашкой.
@@ -12,9 +13,18 @@ import { useEffect } from "react";
  * чтобы контент на десктопе не дёргался.
  *
  * Счётчик — для вложенных окон (подтверждение поверх анкеты): блокировка
- * снимается, когда закрылось последнее. Radix-диалоги (`Dialog`, `Sheet`)
- * делают то же сами через react-remove-scroll; хук — для самописных
- * оверлеев (`ConfirmDialog`, «Что нового», анкета, гайды).
+ * снимается, когда закрылось последнее. Хук — для самописных оверлеев
+ * (`ConfirmDialog`, «Что нового», анкета, гайды).
+ *
+ * Radix-слои (`Dialog`, лист `BottomSheet` на vaul) страницу держат через
+ * react-remove-scroll: `body { overflow: hidden; position: relative }` с
+ * `!important`. На iPhone этого мало (владелец, 2026-11-23: «в меню при
+ * скролле вниз скролится фон»): прокрутка окна берётся с `html` — у него
+ * `overflow-x: clip`, — а не с `body`, и палец двигает страницу под листом.
+ * Свои защиты vaul для iOS у нас не включаются: они ждут открытия через
+ * `Drawer.Trigger`, а листы открываются из кода. Поэтому `position: fixed`
+ * ставим с `!important` (иначе его перебивает правило Radix), а Radix-слои
+ * на сенсорных устройствах зовут `TouchBodyScrollLock`.
  */
 type SavedBodyStyle = {
   scrollY: number;
@@ -44,7 +54,9 @@ export function lockBodyScroll(): void {
     overflow: body.style.overflow,
     paddingRight: body.style.paddingRight,
   };
-  body.style.position = "fixed";
+  // С `!important`: под Radix-слоем на body действует
+  // `position: relative !important` от react-remove-scroll.
+  body.style.setProperty("position", "fixed", "important");
   body.style.top = `-${scrollY}px`;
   body.style.left = "0";
   body.style.right = "0";
@@ -99,6 +111,19 @@ export function unlockBodyScroll(): void {
   html.style.scrollBehavior = prevBehavior;
 }
 
+/**
+ * Под замком сменилась страница (слой остался открыт, а ссылка в нём увела на
+ * другой адрес — так ведёт себя раздел меню, который и раскрывается, и
+ * открывает свою страницу). Запомненная прокрутка относилась к прежней
+ * странице: новая начинается сверху, и после закрытия слоя тоже.
+ */
+export function rebaseBodyScrollLock(): void {
+  if (typeof document === "undefined" || locks === 0 || !saved) return;
+  saved.scrollY = 0;
+  document.body.style.top = "0px";
+  document.documentElement.style.setProperty("--body-lock-y", "0px");
+}
+
 /** Держит прокрутку заблокированной, пока `active === true`. */
 export function useBodyScrollLock(active: boolean): void {
   useEffect(() => {
@@ -106,6 +131,43 @@ export function useBodyScrollLock(active: boolean): void {
     lockBodyScroll();
     return () => unlockBodyScroll();
   }, [active]);
+}
+
+/** Сенсорное устройство: палец — основной указатель (телефон, планшет). */
+function isTouchDevice(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+}
+
+/**
+ * Замок для Radix-слоёв (`Dialog`, `BottomSheet`), только на сенсорных
+ * устройствах: там он нужен (см. выше), а на компьютере страницу держит сам
+ * Radix и лишний сдвиг на ширину полосы прокрутки ни к чему.
+ */
+export function useTouchBodyScrollLock(active: boolean): void {
+  const locked = useRef(false);
+  useEffect(() => {
+    if (!active || !isTouchDevice()) return;
+    lockBodyScroll();
+    locked.current = true;
+    return () => {
+      locked.current = false;
+      unlockBodyScroll();
+    };
+  }, [active]);
+  // Переход на другую страницу при открытом слое — см. `rebaseBodyScrollLock`.
+  const pathname = usePathname();
+  const lastPathname = useRef(pathname);
+  useEffect(() => {
+    if (lastPathname.current === pathname) return;
+    lastPathname.current = pathname;
+    if (locked.current) rebaseBodyScrollLock();
+  }, [pathname]);
+}
+
+/** То же элементом — живёт, пока смонтировано содержимое слоя. */
+export function TouchBodyScrollLock(): null {
+  useTouchBodyScrollLock(true);
+  return null;
 }
 
 /**

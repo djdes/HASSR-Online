@@ -1,0 +1,638 @@
+{
+ "base": "http://localhost:3005",
+ "at": "2026-11-22T21:15:39.673Z",
+ "passed": 46,
+ "failed": 0,
+ "results": [
+  {
+   "id": "AC2.press.icon",
+   "ok": true,
+   "detail": {
+    "held": 0.918872,
+    "press": 0.92,
+    "peakBack": 1.00121,
+    "end": 1
+   }
+  },
+  {
+   "id": "AC2.press.row",
+   "ok": true,
+   "detail": {
+    "held": 0.984777,
+    "press": 0.985,
+    "peakBack": 1.00022,
+    "end": 1
+   }
+  },
+  {
+   "id": "AC2.press.default",
+   "ok": true,
+   "detail": {
+    "held": 0.969553,
+    "press": 0.97,
+    "peakBack": 1.00045,
+    "end": 1
+   }
+  },
+  {
+   "id": "AC2.press.disabled",
+   "ok": true,
+   "detail": {
+    "held": "none"
+   }
+  },
+  {
+   "id": "AC2.press.nested",
+   "ok": true,
+   "detail": {
+    "whileInnerHeld": {
+     "card": "none",
+     "inner": "0.96956",
+     "drag": "none"
+    },
+    "cardHeldAlone": "0.984777"
+   }
+  },
+  {
+   "id": "AC2.press.drag-handle",
+   "ok": true,
+   "detail": {
+    "held": "none"
+   }
+  },
+  {
+   "id": "AC2.tap-highlight",
+   "ok": true,
+   "detail": {
+    "tap": "rgba(0, 0, 0, 0)"
+   }
+  },
+  {
+   "id": "AC2.hover-still",
+   "ok": true,
+   "detail": {
+    "scale": "none",
+    "translate": "none",
+    "rotate": "none"
+   }
+  },
+  {
+   "id": "AC4.toggle",
+   "ok": true,
+   "detail": {
+    "before": "false",
+    "after": "true",
+    "held": "1.18105 1",
+    "stretch": 1.31711,
+    "insideTrackPx": 2.5,
+    "transition": "translate, transform, left, scale, background-color, box-shadow",
+    "durations": "0.46s, 0.46s, 0.46s, 0.3s, 0.18s, 0.18s"
+   }
+  },
+  {
+   "id": "AC6.liquid.topmenu",
+   "ok": true,
+   "detail": {
+    "shape": {
+     "dir": "right",
+     "frames": 43,
+     "ms": 690,
+     "leadShareAt110ms": 0.86,
+     "trailShareAt110ms": 0.3,
+     "from": [
+      22,
+      0,
+      1073,
+      0
+     ],
+     "to": [
+      111,
+      0,
+      878,
+      0
+     ],
+     "minInset": 0,
+     "bg": "rgba(0, 0, 0, 0)",
+     "border": "2px rgb(85, 102, 246)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC6.liquid.sidebar",
+   "ok": true,
+   "detail": {
+    "shape": {
+     "dir": "up",
+     "frames": 44,
+     "ms": 689,
+     "leadShareAt110ms": 0.86,
+     "trailShareAt110ms": 0.3,
+     "from": [
+      0,
+      126,
+      0,
+      0
+     ],
+     "to": [
+      0,
+      42,
+      0,
+      84
+     ],
+     "minInset": 0,
+     "bg": "rgb(238, 241, 255)",
+     "border": "0px rgba(0, 0, 0, 0)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC8.page-fade",
+   "ok": true,
+   "detail": {
+    "frames": 6,
+    "first": {
+     "t": 160,
+     "opacity": "0.00",
+     "duration": 220,
+     "props": [
+      "opacity"
+     ]
+    },
+    "last": {
+     "t": 226,
+     "opacity": "0.45",
+     "duration": 220,
+     "props": [
+      "opacity"
+     ]
+    }
+   }
+  },
+  {
+   "id": "AC8.first-load-still",
+   "ok": true,
+   "detail": {
+    "animationsOnPageArea": 0
+   }
+  },
+  {
+   "id": "AC7.menu",
+   "ok": true,
+   "detail": {
+    "opening": {
+     "name": "enter",
+     "duration": "0.3s",
+     "easing": "linear(0 0%, 0.0515 4.16",
+     "opacity": "0.64",
+     "filter": "blur(1.09184px)"
+    },
+    "closing": {
+     "name": "exit",
+     "duration": "0.1s",
+     "easing": "cubic-bezier(0.4, 0, 1, "
+    }
+   }
+  },
+  {
+   "id": "AC7.window.desktop",
+   "ok": true,
+   "detail": {
+    "first": {
+     "name": "motion-window-in",
+     "opacity": "0.09",
+     "scale": "0.963654",
+     "wrapper": "motion-fade-in"
+    },
+    "last": {
+     "name": "motion-window-in",
+     "opacity": "1.00",
+     "scale": "none",
+     "wrapper": "motion-fade-in"
+    }
+   }
+  },
+  {
+   "id": "AC3.field.ring",
+   "ok": true,
+   "detail": {
+    "spreadPx": [
+     1.17988,
+     2.71572,
+     3.61744,
+     3.97554,
+     4.05945,
+     4.03916,
+     4.01673,
+     4,
+     4
+    ]
+   }
+  },
+  {
+   "id": "AC3.field.caret",
+   "ok": true,
+   "detail": {
+    "caret": "rgb(85, 102, 246)",
+    "transition": "color, background-color, border-color, outline-color, box-shadow, scale",
+    "durations": "0.18s, 0.18s, 0.18s, 0.18s, 0.42s, 0.5s",
+    "placeholderOpacity": "0.6"
+   }
+  },
+  {
+   "id": "AC3.field.default-ring",
+   "ok": true,
+   "detail": {
+    "shadow": "color(srgb 0.333333 0.4 0.964706 / 0.15) 0px 0px 0px 4px",
+    "border": "rgb(85, 102, 246)",
+    "placeholder": "0.6",
+    "inTable": "none"
+   }
+  },
+  {
+   "id": "AC5.check",
+   "ok": true,
+   "detail": {
+    "tickedOnLoad": 0,
+    "firstOffset": 24,
+    "lastOffset": 0,
+    "drawFrames": 32,
+    "attributeRemoved": true,
+    "heldScale": 0.918808
+   }
+  },
+  {
+   "id": "AC6.liquid.segments",
+   "ok": true,
+   "detail": {
+    "shape": {
+     "dir": "right",
+     "frames": 43,
+     "ms": 691,
+     "leadShareAt110ms": 0.8,
+     "trailShareAt110ms": 0.3,
+     "from": [
+      2,
+      2,
+      178,
+      2
+     ],
+     "to": [
+      178,
+      2,
+      2,
+      2
+     ],
+     "minInset": 1.736,
+     "bg": "rgb(255, 255, 255)",
+     "border": "0px rgba(0, 0, 0, 0)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC6.liquid.aria-pressed",
+   "ok": true,
+   "detail": {
+    "shown": true,
+    "masked": true
+   }
+  },
+  {
+   "id": "AC6.liquid.retarget",
+   "ok": true,
+   "detail": {
+    "stillOne": true,
+    "midLeft": 51.32,
+    "afterLeft": 52.1429
+   }
+  },
+  {
+   "id": "AC6.liquid.skips",
+   "ok": true,
+   "detail": {
+    "grid": {
+     "shown": false,
+     "masked": false
+    },
+    "opaqueChips": {
+     "shown": false,
+     "masked": false
+    },
+    "optOut": {
+     "shown": false,
+     "masked": false
+    }
+   }
+  },
+  {
+   "id": "AC6.liquid.cleanup",
+   "ok": true,
+   "detail": {
+    "hosts": 0,
+    "masks": 0,
+    "position": ""
+   }
+  },
+  {
+   "id": "AC8.tab-panel",
+   "ok": true,
+   "detail": {
+    "props": [
+     "filter",
+     "opacity",
+     "translate"
+    ],
+    "duration": 420
+   }
+  },
+  {
+   "id": "errors.desktop",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC6.liquid.new-light",
+   "ok": true,
+   "detail": {
+    "design": "new",
+    "theme": "light",
+    "shape": {
+     "dir": "down",
+     "frames": 43,
+     "ms": 678,
+     "leadShareAt110ms": 0.77,
+     "trailShareAt110ms": 0.21,
+     "from": [
+      0,
+      0,
+      0,
+      126
+     ],
+     "to": [
+      0,
+      46,
+      0,
+      63
+     ],
+     "minInset": 0,
+     "bg": "rgb(236, 236, 239)",
+     "border": "0px rgba(0, 0, 0, 0)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC2.press.new-light",
+   "ok": true,
+   "detail": {
+    "held": 0.918808,
+    "press": 0.92,
+    "peakBack": 1.00119,
+    "end": 1
+   }
+  },
+  {
+   "id": "errors.new-light",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC6.liquid.new-dark",
+   "ok": true,
+   "detail": {
+    "design": "new",
+    "theme": "dark",
+    "shape": {
+     "dir": "down",
+     "frames": 44,
+     "ms": 691,
+     "leadShareAt110ms": 0.86,
+     "trailShareAt110ms": 0.3,
+     "from": [
+      0,
+      0,
+      0,
+      126
+     ],
+     "to": [
+      0,
+      46,
+      0,
+      63
+     ],
+     "minInset": 0,
+     "bg": "rgba(126, 140, 255, 0.26)",
+     "border": "0px rgba(0, 0, 0, 0)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC2.press.new-dark",
+   "ok": true,
+   "detail": {
+    "held": 0.918808,
+    "press": 0.92,
+    "peakBack": 1.00121,
+    "end": 1
+   }
+  },
+  {
+   "id": "errors.new-dark",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC6.liquid.classic-dark",
+   "ok": true,
+   "detail": {
+    "design": "classic",
+    "theme": "dark",
+    "shape": {
+     "dir": "right",
+     "frames": 43,
+     "ms": 680,
+     "leadShareAt110ms": 0.86,
+     "trailShareAt110ms": 0.3,
+     "from": [
+      22,
+      0,
+      1073,
+      0
+     ],
+     "to": [
+      111,
+      0,
+      878,
+      0
+     ],
+     "minInset": 0,
+     "bg": "rgba(0, 0, 0, 0)",
+     "border": "2px rgb(85, 102, 246)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC2.press.classic-dark",
+   "ok": true,
+   "detail": {
+    "held": 0.918826,
+    "press": 0.92,
+    "peakBack": 1.00121,
+    "end": 1
+   }
+  },
+  {
+   "id": "errors.classic-dark",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC7.window.phone-sheet",
+   "ok": true,
+   "detail": {
+    "tops": [
+     632,
+     297,
+     40,
+     40,
+     40,
+     40
+    ]
+   }
+  },
+  {
+   "id": "AC9.mini.nav-rule",
+   "ok": true,
+   "detail": {
+    "transition": "background-color, color, box-shadow, scale",
+    "durations": "0.18s, 0.18s, 0.18s, 0.5s",
+    "shell": true
+   }
+  },
+  {
+   "id": "AC9.mini.nav-liquid",
+   "ok": true,
+   "detail": {
+    "shape": {
+     "dir": "left",
+     "frames": 36,
+     "ms": 677,
+     "leadShareAt110ms": 0.77,
+     "trailShareAt110ms": 0.21,
+     "from": [
+      96,
+      6,
+      186,
+      6
+     ],
+     "to": [
+      6,
+      6,
+      276,
+      6
+     ],
+     "minInset": 4.6758,
+     "bg": "rgb(85, 102, 246)",
+     "border": "0px rgba(0, 0, 0, 0)"
+    },
+    "hostsLeftAfter": 0
+   }
+  },
+  {
+   "id": "AC9.mini.press",
+   "ok": true,
+   "detail": {
+    "held": 0.96956,
+    "press": 0,
+    "peakBack": 1.00045,
+    "end": 1
+   }
+  },
+  {
+   "id": "AC9.mini.input",
+   "ok": true,
+   "detail": {
+    "spreads": [
+     1.17994,
+     2.71577,
+     3.61749,
+     3.97588,
+     4.0584,
+     4.04754,
+     4.0232,
+     4.00775
+    ],
+    "transition": "0.18s, 0.18s, 0.42s"
+   }
+  },
+  {
+   "id": "errors.mini",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC9.qr.press",
+   "ok": true,
+   "detail": {
+    "held": 0.984777,
+    "press": 0,
+    "peakBack": 1.00022,
+    "end": 1,
+    "transition": "scale, background-color, border-color, color, box-shadow, opacity",
+    "durations": "0.5s, 0.18s, 0.18s, 0.18s, 0.3s, 0.18s",
+    "spring": "linear(0, 0.0515"
+   }
+  },
+  {
+   "id": "AC1.login",
+   "ok": true,
+   "detail": {
+    "ringSpreadPx": [
+     1.18157,
+     3.09373,
+     3.89953,
+     4.0478,
+     4.05492,
+     4.02317,
+     4.00776,
+     4
+    ],
+    "press": {
+     "held": 0.984864,
+     "press": 0.985,
+     "peakBack": 1.00023,
+     "end": 1
+    }
+   }
+  },
+  {
+   "id": "AC1.landing-keeps-own-motion",
+   "ok": true,
+   "detail": {
+    "submit": "background-color, color, box-shadow, opacity, scale, translate, border-radius, padding, max-width",
+    "liquid": "left, right",
+    "fab": "background-color, scale"
+   }
+  },
+  {
+   "id": "errors.public",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "id": "AC11.still",
+   "ok": true,
+   "detail": {
+    "flag": true,
+    "heldScale": "none",
+    "hosts": 0,
+    "pageAnimations": 0,
+    "url": "/settings/organization/documents"
+   }
+  }
+ ]
+}

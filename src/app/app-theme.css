@@ -37,6 +37,8 @@
   --app-soft-surface: #fafbff;
   --app-tint-indigo: #f5f6ff;
   --app-tint-indigo-2: #eef1ff;
+  /* Плашка выбранного сегмента (`ui/segment-styles.ts`) на мягкой подложке. */
+  --app-segment-pill: #ffffff;
   --app-border: #ececf4;
   --app-border-strong: #dcdfed;
   --app-text: #0b1024;
@@ -128,6 +130,8 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) {
   --app-soft-surface: #2f2c47;
   --app-tint-indigo: rgba(126, 140, 255, 0.16);
   --app-tint-indigo-2: rgba(126, 140, 255, 0.26);
+  /* В тёмной плашка светлее подложки, а не «дырка» в ней. */
+  --app-segment-pill: rgba(255, 255, 255, 0.14);
   /* Рамки на светлом фоне теряются — подняли непрозрачность. */
   --app-border: rgba(255, 255, 255, 0.12);
   --app-border-strong: rgba(255, 255, 255, 0.2);
@@ -921,9 +925,13 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .hygie
   background-color: var(--app-surface);
 }
 
-/* --- Dashboard smooth transition between themes ----------------------- */
+/* --- Dashboard smooth transition between themes -----------------------
+   Elements with their own motion class (landing: button → loader → check,
+   the liquid tab indicator, the toggle knob) keep their transition lists —
+   public pages carry `.app-shell` on <body> too. `:where()` keeps the
+   specificity at 0-1-0; `motion.css` relies on it. */
 .app-shell,
-.app-shell * {
+.app-shell :where(:not(.motion-submit, .motion-submit-label, .motion-fab, .motion-liquid, .motion-knob, .motion-card-arrow)) {
   transition-property: background-color, border-color, color, box-shadow;
   transition-duration: 0.18s;
   transition-timing-function: ease-out;
@@ -1958,4 +1966,182 @@ body.app-shell[data-app-theme="dark"] .landing-light-chip,
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .landing-light-chip {
   background-color: #ffffff !important;
   color: #0b1024 !important;
+}
+
+/* ====================================================================
+ * Строка меню над страницей — вкладки (владелец, 2026-11-23: «как вкладку
+ * с фоном полукруглым, переход меню в фон»; `section-top-menu.tsx`).
+ *
+ * Выбранная вкладка — скруглённый верх и заливка холстом страницы, внизу
+ * вогнутые «ножки»: вкладка переходит в страницу. Наведение — «призрак»
+ * вкладки (мягкая вуаль). Пока заливка перетекает к новой вкладке
+ * (`MotionRuntime`: `data-liquid-host` на строке), ножки спрятаны и
+ * проявляются, когда она приехала.
+ * ================================================================== */
+[data-top-menu-row] {
+  --tab-fill: var(--app-canvas);
+  --tab-foot: 12px;
+}
+/* Холст кабинета в тёмной — `bg-gray-50` оболочки, перекрашенный в мягкую поверхность. */
+.app-shell[data-app-theme="dark"] [data-top-menu-row] {
+  --tab-fill: var(--app-soft-surface);
+}
+[data-top-tab] {
+  border-radius: 12px 12px 0 0;
+  transition: background-color 0.18s ease;
+}
+/* Наведение на невыбранную — плашка со скруглением со всех сторон, над низом
+   строки: не путается с выбранной вкладкой, которая уходит в страницу. */
+[data-top-tab]:not([data-active])::before {
+  content: "";
+  position: absolute;
+  inset: 3px 0 5px;
+  border-radius: 10px;
+  background-color: var(--app-veil);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+[data-top-tab]:not([data-active]):hover::before,
+[data-top-tab]:not([data-active]):has([data-state="open"], [data-open])::before {
+  opacity: 1;
+}
+[data-top-tab][data-active] {
+  background-color: var(--tab-fill);
+}
+[data-top-tab][data-active]::before,
+[data-top-tab][data-active]::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: var(--tab-foot);
+  height: var(--tab-foot);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+[data-top-tab][data-active]::before {
+  left: calc(var(--tab-foot) * -1);
+  background: radial-gradient(circle at 0 0, transparent calc(var(--tab-foot) - 0.5px), var(--tab-fill) var(--tab-foot));
+}
+[data-top-tab][data-active]::after {
+  right: calc(var(--tab-foot) * -1);
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--tab-foot) - 0.5px), var(--tab-fill) var(--tab-foot));
+}
+[data-top-menu-row][data-liquid-host] [data-top-tab][data-active]::before,
+[data-top-menu-row][data-liquid-host] [data-top-tab][data-active]::after {
+  opacity: 0;
+  transition: none;
+}
+/* Ожидание перехода (вкладка строки, крошка): содержимое гаснет, на его месте
+   крутилка — ширина та же, соседи не сдвигаются (владелец, 2026-11-23: «текст
+   исчезает и идёт загрузка, как у кнопки»). Задержка 0.15 с: быстрый переход
+   ничего не показывает. Родителю крутилки нужен `position: relative`. */
+[data-pending-swap] {
+  transition: opacity 0.15s ease;
+}
+[data-pending-swap][data-pending] {
+  opacity: 0;
+  transition-delay: 0.15s;
+}
+[data-pending-spinner] {
+  animation:
+    pending-spinner-in 0.2s ease-out 0.15s both,
+    motion-spin 0.8s linear infinite;
+}
+@keyframes pending-spinner-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+html[data-view-still] [data-pending-spinner] {
+  animation: pending-spinner-in 0.01s linear 0.15s both;
+}
+
+/* ====================================================================
+ * Низ экрана на телефоне и планшете (<1024px, владелец 2026-11-23):
+ * плавающее нижнее меню (`mobile-tab-bar.tsx`) и полоса действий страницы
+ * (`page-actions.tsx`). `--app-tabbar-space` — сколько места снизу занимает
+ * меню с отступом над ним, `--app-dock-space` — полоса действий, пока она
+ * видна. По ним поднимаются «Наверх», «Дальше» на «Сегодня», всплывающее
+ * сообщение поддержки и полоса выбора строк журнала; на компьютере — 0.
+ * ================================================================== */
+:root {
+  --app-tabbar-h: 62px;
+  --app-tabbar-gap: max(10px, env(safe-area-inset-bottom, 0px));
+  --app-tabbar-space: 0px;
+  --app-dock-space: 0px;
+}
+@media (max-width: 1023.98px) {
+  :root:has([data-mobile-tabbar]) {
+    --app-tabbar-space: calc(var(--app-tabbar-h) + var(--app-tabbar-gap) + 8px);
+  }
+  /* Печатают (меню уехало, форма журнала ставит `data-keyboard-open`) — места
+     под меню не нужно: кнопки формы встают у клавиатуры. */
+  :root:is([data-keyboard-open], :has([data-mobile-tabbar][data-typing])) {
+    --app-tabbar-space: 0px;
+  }
+  :root:has([data-page-dock][data-open]) {
+    --app-dock-space: 64px;
+  }
+  /* Липкие панели страниц у нижнего края («Сохранить запись» формы журнала,
+     «Сохранить» редакторов настроек, кнопки карточек журнала) останавливаются
+     над нижним меню, а не под ним — как в мини-приложении (`mini-theme.css`). */
+  :root:has([data-mobile-tabbar]) .app-shell:not(.mini-root) main .sticky[class*="bottom-"]:not([class*="top-"]) {
+    bottom: var(--app-tabbar-space);
+  }
+}
+html[data-keyboard-open] [data-mobile-tabbar] {
+  visibility: hidden;
+}
+
+/* Полоса действий страницы: выезжает снизу, когда кнопки шапки ушли вверх. */
+[data-page-dock] {
+  bottom: max(var(--app-tabbar-space), calc(env(safe-area-inset-bottom, 0px) + 12px));
+  transform: translateY(calc(100% + 24px));
+  opacity: 0;
+  transition:
+    transform 0.32s var(--spring-soft),
+    opacity 0.2s ease;
+}
+[data-page-dock][data-open] {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 0.5s var(--spring),
+    opacity 0.2s ease;
+}
+html[data-view-still] [data-page-dock] {
+  transition: none;
+}
+/* Мини-приложение показывает те же страницы со своим нижним меню: полоса
+   действий встаёт над ним (`--mini-nav-h`, `--mini-safe-b` — mini-theme.css). */
+body:has(.mini-root) [data-page-dock] {
+  bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 8px);
+}
+
+/* Нижнее меню телефона (`mobile-tab-bar.tsx`): плавает над краем экрана,
+   уезжает вниз, пока в поле вводят текст. Подложка выбранной вкладки
+   переезжает на пружине (растяжка в пути и «прыжок» иконки — в компоненте). */
+[data-mobile-tabbar] {
+  bottom: var(--app-tabbar-gap);
+  transition:
+    transform 0.35s var(--spring-soft),
+    opacity 0.2s ease;
+}
+[data-mobile-tabbar][data-typing] {
+  transform: translateY(calc(100% + var(--app-tabbar-gap) + 8px));
+  opacity: 0;
+  pointer-events: none;
+}
+[data-tabbar-pill] {
+  transition: transform 0.5s var(--spring);
+}
+html[data-view-still] :is([data-mobile-tabbar], [data-tabbar-pill]) {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is([data-mobile-tabbar], [data-tabbar-pill]) {
+    transition: none;
+  }
 }

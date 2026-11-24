@@ -1,0 +1,119 @@
+{
+ "AC1_AC2_1280": {
+  "first": "points",
+  "firstHref": "/settings/buildings",
+  "active": [
+   "points"
+  ],
+  "tabsWithIcon": 10,
+  "tabs": 10,
+  "denseAttr": false,
+  "churn": 0,
+  "errors": []
+ },
+ "AC1_AC2_1440": {
+  "first": "points",
+  "firstHref": "/settings/buildings",
+  "active": [
+   "points"
+  ],
+  "tabsWithIcon": 10,
+  "tabs": 10,
+  "denseAttr": false,
+  "churn": 0,
+  "errors": []
+ },
+ "AC1_AC2_1600": {
+  "first": "points",
+  "firstHref": "/settings/buildings",
+  "active": [
+   "points"
+  ],
+  "tabsWithIcon": 10,
+  "tabs": 10,
+  "denseAttr": false,
+  "churn": 0,
+  "errors": []
+ },
+ "AC2_ssr": {
+  "tabs": 10,
+  "withSvg": 10,
+  "first": "points",
+  "active": [
+   "points"
+  ]
+ },
+ "AC1_other": {
+  "/settings/areas": {
+   "first": "points",
+   "active": [
+    "areas"
+   ]
+  },
+  "/settings/equipment": {
+   "first": "points",
+   "active": [
+    "equipment"
+   ]
+  },
+  "/journals": {
+   "first": "points",
+   "active": [
+    "journals"
+   ]
+  },
+  "/settings/buildings/new": {
+   "first": "points",
+   "active": [
+    "points"
+   ]
+  }
+ },
+ "AC3": {
+  "before": {
+   "scrollbar": 15,
+   "bodyMarginRight": "0px",
+   "locked": null,
+   "h1Left": 288,
+   "brandRight": 1357,
+   "libGap": null
+  },
+  "topMenu": {
+   "scrollbar": 15,
+   "bodyMarginRight": "0px",
+   "locked": null,
+   "h1Left": 288,
+   "brandRight": 1357,
+   "libGap": null
+  },
+  "panel": {
+   "panelLeft": 508,
+   "tabLeft": 508
+  },
+  "modalMenu": {
+   "scrollbar": 15,
+   "bodyMarginRight": "0px",
+   "locked": "1",
+   "h1Left": 288,
+   "brandRight": 1357,
+   "libGap": "15"
+  }
+ },
+ "AC4": {
+  "same": true,
+  "pending": {
+   "faded": [
+    "0"
+   ],
+   "spinners": 1
+  },
+  "after": [
+   "equipment"
+  ]
+ },
+ "AC5_dark": {
+  "tabBg": "rgb(47, 44, 71)",
+  "canvas": "rgb(47, 44, 71)",
+  "theme": "dark"
+ }
+}

@@ -339,7 +339,7 @@ export const JOURNAL_DIALOG_LABEL_CLASS = "text-[13px] font-medium text-[#3c4053
 
 /** Рамка поля. Всегда full-width — одна колонка на весь диалог. */
 export const JOURNAL_DIALOG_FIELD_CLASS =
-  "w-full rounded-[14px] border border-[#dfe1ec] bg-white px-3.5 pt-1.5 pb-2 transition-colors duration-150 focus-within:border-[#5566f6] focus-within:ring-4 focus-within:ring-[#5566f6]/15";
+  "w-full rounded-[14px] border border-[#dfe1ec] bg-white px-3.5 pt-1.5 pb-2 transition-colors duration-150 focus-within:border-[#5566f6] focus-within:ring-4 focus-within:ring-[#5566f6]/15 has-[>[data-slot=select-trigger]]:relative";
 
 /** Та же рамка в состоянии ошибки — как на hygiene-create-fail.png. */
 export const JOURNAL_DIALOG_FIELD_INVALID_CLASS =
@@ -368,7 +368,7 @@ export const JOURNAL_DIALOG_FIELD_TEXTAREA_CLASS =
  * пилюлю ~50px, когда предзаполненного значения не было в списке опций.
  */
 export const JOURNAL_DIALOG_FIELD_TRIGGER_CLASS =
-  "h-7 w-full justify-between rounded-none border-0 bg-transparent p-0 text-[15px] text-[#0b1024] shadow-none focus-visible:ring-0 data-[size=default]:h-7 data-[size=sm]:h-7 data-[placeholder]:text-[#9b9fb3] [&>span]:truncate touch:min-h-0";
+  "h-7 w-full justify-between rounded-none border-0 bg-transparent p-0 text-[15px] text-[#0b1024] shadow-none focus-visible:ring-0 data-[size=default]:h-7 data-[size=sm]:h-7 data-[placeholder]:text-[#9b9fb3] [&>span]:truncate touch:min-h-0 after:absolute after:inset-0 after:rounded-[14px] after:content-['']";
 
 /** Заметный (amber) хинт под полем — «сотрудников на должности нет». */
 export const JOURNAL_DIALOG_HINT_CLASS =

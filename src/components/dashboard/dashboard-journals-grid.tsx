@@ -376,7 +376,7 @@ export function DashboardJournalsGrid({
       {nextItem ? (
         <div
           className="fixed left-4 right-[92px] z-30 md:hidden print:hidden newd:hidden"
-          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+          style={{ bottom: "max(var(--app-tabbar-space, 0px), calc(env(safe-area-inset-bottom, 0px) + 16px))" }}
           data-testid="today-next-sticky"
         >
           <Link

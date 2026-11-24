@@ -61,6 +61,7 @@ export function FloatingLabelField({
   return (
     <div className={className}>
       <div
+        data-field-frame
         className={cn(
           JOURNAL_DIALOG_FIELD_CLASS,
           (invalid || error) && JOURNAL_DIALOG_FIELD_INVALID_CLASS

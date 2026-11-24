@@ -19,6 +19,7 @@ import {
   Receipt,
   Send,
   Sparkles,
+  Store,
   UserPlus,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ const TABS = [
   { href: "/root/crm/contacts", label: "Контакты и переписка", icon: Inbox },
   { href: "/root/crm/tasks", label: "Задачи", icon: ListChecks },
   { href: "/root/crm/mail", label: "Почта и фильтры", icon: Mail },
+  { href: "/root/crm/avito", label: "Авито", icon: Store },
 ];
 
 export function CrmHeader({ active, title, description, actions }: { active: string; title: string; description: string; actions?: React.ReactNode }) {
@@ -86,6 +88,7 @@ const CHANNEL_ICONS: Record<string, LucideIcon> = {
   whatsapp: MessageCircle,
   vk: AtSign,
   max: MessageCircle,
+  avito: Store,
   phone: Phone,
   call: Phone,
   note: NotebookPen,

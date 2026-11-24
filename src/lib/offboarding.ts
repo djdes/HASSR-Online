@@ -154,7 +154,7 @@ export async function performOffboarding({
       }
     } else if (!successorTfWorkerId) {
       errors.push(
-        "Преемник не привязан к TasksFlow — задачи не переведены автоматически"
+        "Преемник не привязан к программному модулю — задачи не переведены автоматически"
       );
     }
   }
@@ -187,7 +187,7 @@ export async function performOffboarding({
     `🔚 <b>Сотрудник деактивирован</b>\n\n` +
     `${esc(departing.name)} (${esc(departing.role)})\n` +
     `${successorLine}\n` +
-    `Задач перевешено в TasksFlow: <b>${reassignedCount}</b>` +
+    `Задач передано преемнику в программном модуле: <b>${reassignedCount}</b>` +
     (errors.length > 0
       ? `\n\nОшибки: ${esc(errors.slice(0, 3).join("; "))}`
       : "");

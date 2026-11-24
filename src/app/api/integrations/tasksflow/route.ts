@@ -25,7 +25,7 @@ function jsonUnexpectedError(operation: string, error: unknown) {
     error instanceof Error &&
     error.message.includes("Integration encryption secret")
       ? "На сервере не настроено шифрование ключей интеграций. Укажите INTEGRATION_KEY_SECRET или NEXTAUTH_SECRET."
-      : "Внутренняя ошибка WeSetup при подключении TasksFlow. Попробуйте ещё раз или проверьте логи сервера.";
+      : "Внутренняя ошибка WeSetup при подключении программного модуля. Попробуйте ещё раз или напишите в поддержку.";
 
   return NextResponse.json({ error: message }, { status: 500 });
 }
@@ -89,10 +89,10 @@ async function getIntegrationStatus() {
 const connectSchema = z.object({
   baseUrl: z
     .string()
-    .url("Введите валидный URL TasksFlow")
+    .url("Введите правильный адрес программного модуля")
     .refine(
       isPublicHttpsUrl,
-      "URL должен быть публичным http(s) — internal/localhost адреса запрещены"
+      "Нужен адрес в интернете (http:// или https://) — внутренние адреса и localhost не подходят"
     ),
   apiKey: z
     .string()
@@ -158,14 +158,14 @@ async function connectIntegration(request: Request) {
         {
           error:
             err.status === 401 || err.status === 403
-              ? "TasksFlow отклонил ключ. Проверьте, что ключ активен."
-              : `TasksFlow вернул ошибку (${err.status}). ${err.message}`,
+              ? "Программный модуль отклонил ключ. Проверьте, что ключ активен."
+              : `Программный модуль ответил ошибкой (${err.status}). ${err.message}`,
         },
         { status }
       );
     }
     return NextResponse.json(
-      { error: "Не удалось связаться с TasksFlow" },
+      { error: "Не удалось связаться с программным модулем" },
       { status: 502 }
     );
   }
@@ -173,7 +173,7 @@ async function connectIntegration(request: Request) {
     return NextResponse.json(
       {
         error:
-          "TasksFlow вернул неожиданный формат ответа для /api/users. Проверьте URL: он должен вести именно на TasksFlow API.",
+          "Программный модуль ответил в неожиданном формате. Проверьте адрес: он должен вести именно на программный модуль.",
       },
       { status: 502 }
     );
@@ -206,7 +206,7 @@ async function connectIntegration(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Не удалось сохранить ключ — round-trip шифрования сломан. Обратитесь к администратору сервера: проверьте INTEGRATION_KEY_SECRET / NEXTAUTH_SECRET в env.",
+          "Не удалось сохранить ключ — проверка шифрования на сервере не прошла. Обратитесь к администратору сервера: проверьте INTEGRATION_KEY_SECRET / NEXTAUTH_SECRET.",
       },
       { status: 500 },
     );

@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  memo,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -8,7 +10,13 @@ import {
   useSyncExternalStore,
   useTransition,
 } from "react";
+import { flushSync } from "react-dom";
 import { PageHeader, PageHeaderStat } from "@/components/ui/page-header";
+import { DetachedValue } from "@/components/shared/detached-value";
+import { OffscreenSection } from "@/components/shared/offscreen-section";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { useDetachedState } from "@/lib/detached-state";
+import { useStableCallback } from "@/lib/use-stable-callback";
 import { ContactSupportButton } from "@/components/support/contact-support-button";
 import { useCustomNames } from "@/components/shared/custom-names-provider";
 import { customSectionName } from "@/lib/custom-names";
@@ -76,6 +84,7 @@ import { useSubstituteBadgeText } from "@/components/staff/point-assignment";
 import {
   dayOffOverrideKey,
   isStaffDayOff,
+  normalizeWeeklyDaysOff,
   weekdayIndex,
   type StaffDayOffKind,
   type WorkOffBulkItem,
@@ -99,16 +108,36 @@ type TabKey = "work-off" | "vacations" | "sick-leaves" | "dismissals";
 /** Ключ sessionStorage для «какая должность раскрыта в рубрике». */
 const OPEN_POSITIONS_STORAGE_KEY = "staff.openPositions";
 
-function formatDayCell(iso: string, locale: string) {
-  const d = new Date(iso + "T00:00:00Z");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dayNum = d.getUTCDay();
-  return {
-    top: `${dd}.${mm}`,
-    bottom: `${new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(d)}.`,
-    isWeekend: dayNum === 0 || dayNum === 6,
-  };
+/** Колонка дня в графике выходных. */
+type WorkOffDay = {
+  iso: string;
+  /** «05.11» */
+  top: string;
+  /** «чт.» */
+  bottom: string;
+  isWeekend: boolean;
+  /** 0=Пн … 6=Вс, как в `weeklyDaysOff`. */
+  weekday: number;
+};
+
+/**
+ * Колонки дней месяца — один раз на месяц и один форматтер на всех. Раньше
+ * каждая из ~3 600 клеток создавала свой `Intl.DateTimeFormat` ради одного
+ * признака «выходной».
+ */
+function workOffDayColumns(dates: string[], locale: string): WorkOffDay[] {
+  const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
+  return dates.map((iso) => {
+    const d = new Date(iso + "T00:00:00Z");
+    const dayNum = d.getUTCDay();
+    return {
+      iso,
+      top: `${String(d.getUTCDate()).padStart(2, "0")}.${String(d.getUTCMonth() + 1).padStart(2, "0")}`,
+      bottom: `${weekdayFormat.format(d)}.`,
+      isWeekend: dayNum === 0 || dayNum === 6,
+      weekday: weekdayIndex(iso),
+    };
+  });
 }
 
 
@@ -150,6 +179,39 @@ type SortOrder = "asc" | "desc";
 type StaffSortField = "name" | "position";
 type StaffSort = { field: StaffSortField; order: SortOrder } | null;
 
+/** Какое окно открыто на странице сотрудников. */
+type StaffDialogState =
+  | {
+      kind: "add-flow";
+      initialStep: 1 | 2;
+      categoryKey: PositionCategory;
+      positionId: string | null;
+      /** Место работы нового сотрудника (офис или точка), если задано заранее. */
+      buildingIds?: string[];
+    }
+  | { kind: "edit-position"; position: StaffPosition }
+  | { kind: "edit-employee"; employee: StaffEmployee; pending: boolean }
+  | { kind: "access"; employee: StaffEmployee }
+  | {
+      kind: "tg-invite";
+      employee: StaffEmployee;
+      mode: "invite" | "rebind";
+      pending: boolean;
+      error: string | null;
+      invite: StaffTelegramInvitePayload | null;
+    }
+  | { kind: "tg-unlink"; employee: StaffEmployee; pending: boolean }
+  | { kind: "archive"; employee: StaffEmployee }
+  | { kind: "delete-blocked"; employee: StaffEmployee; references: number }
+  | { kind: "iiko" }
+  | { kind: "instruction" }
+  | { kind: "qr-invite" }
+  | {
+      kind: "add-period";
+      periodKind: "vacation" | "sick_leave" | "dismissal";
+    }
+  | null;
+
 export function StaffPageClient(props: StaffPageProps) {
   const { toastCaughtError } = useBillingError();
   const t = useTranslations("staffManagement.page");
@@ -165,7 +227,19 @@ export function StaffPageClient(props: StaffPageProps) {
   // Своё название раздела «Сотрудники» у организации, если его задали.
   const staffTitle = customSectionName(useCustomNames(), "staff") ?? t("title");
   const [isPending, startTransition] = useTransition();
-  const [bulkAddOpen, setBulkAddOpen] = useState(false);
+  // Окна живут вне состояния страницы (2026-11-23): открытие и закрытие
+  // любого окна перерисовывает только его хост (`DetachedValue` внизу), а не
+  // всю страницу с табелем на 117 × 31 клетку — раньше «Изменить» и
+  // «Отмена» стоили секунды. Сеттеры стабильные, вызываются как useState.
+  const bulkAdd = useDetachedState(false);
+  const setBulkAddOpen = bulkAdd.set;
+  const dialog = useDetachedState<StaffDialogState>(null);
+  const setDlg = dialog.set;
+  // Привязка входа без Telegram живёт отдельным состоянием: общий `dlg`
+  // и так несёт десяток вариантов, и вплетать туда одиннадцатый ради
+  // одной кнопки — лишний риск задеть существующие ветки.
+  const pair = useDetachedState<StaffEmployee | null>(null);
+  const setPairEmployee = pair.set;
 
   // Accordion: all open by default.
   const [categoryOpen, setCategoryOpen] = useState<
@@ -198,18 +272,6 @@ export function StaffPageClient(props: StaffPageProps) {
       /* приватный режим / повреждённое значение — просто игнорируем */
     }
   }, []);
-
-  // Быстрый поиск по ФИО: находит человека без раскрытия должностей.
-  const [staffQuery, setStaffQuery] = useState("");
-  const staffMatches = useMemo(() => {
-    const q = staffQuery.trim().toLowerCase();
-    if (!q) return [];
-    const posNameById = new Map(props.positions.map((p) => [p.id, p.name]));
-    return [...props.employees]
-      .filter((e) => e.name.toLowerCase().includes(q) || (e.positionTitle ?? "").toLowerCase().includes(q))
-      .sort((a, b) => a.name.localeCompare(b.name, "ru"))
-      .map((e) => ({ employee: e, position: (e.jobPositionId ? posNameById.get(e.jobPositionId) : null) ?? e.positionTitle ?? "" }));
-  }, [staffQuery, props.employees, props.positions]);
 
   // Подсветка строки только что добавленного сотрудника.
   const [highlightPositionId, setHighlightPositionId] = useState<string | null>(
@@ -284,53 +346,19 @@ export function StaffPageClient(props: StaffPageProps) {
     const url = new URL(window.location.href);
     url.searchParams.delete("add");
     router.replace(`${url.pathname}${url.search}`, { scroll: false });
-  }, [props.initialAdd, props.positions, router]);
-
-  // Modal state.
-  const [dlg, setDlg] = useState<
-    | {
-        kind: "add-flow";
-        initialStep: 1 | 2;
-        categoryKey: PositionCategory;
-        positionId: string | null;
-        /** Место работы нового сотрудника (офис или точка), если задано заранее. */
-        buildingIds?: string[];
-      }
-    | { kind: "edit-position"; position: StaffPosition }
-    | { kind: "edit-employee"; employee: StaffEmployee; pending: boolean }
-    | { kind: "access"; employee: StaffEmployee }
-    | {
-        kind: "tg-invite";
-        employee: StaffEmployee;
-        mode: "invite" | "rebind";
-        pending: boolean;
-        error: string | null;
-        invite: StaffTelegramInvitePayload | null;
-      }
-    | { kind: "tg-unlink"; employee: StaffEmployee; pending: boolean }
-    | { kind: "archive"; employee: StaffEmployee }
-    | { kind: "delete-blocked"; employee: StaffEmployee; references: number }
-    | { kind: "iiko" }
-    | { kind: "instruction" }
-    | { kind: "qr-invite" }
-    | {
-        kind: "add-period";
-        periodKind: "vacation" | "sick_leave" | "dismissal";
-      }
-    | null
-  >(null);
+  }, [props.initialAdd, props.positions, router, setDlg]);
 
   // Tab state.
   const [tab, setTab] = useState<TabKey>("work-off");
   const [staffSort, setStaffSort] = useState<StaffSort>(null);
-  /** Клик по заголовку: ↑ → ↓ → исходный порядок. */
-  const cycleStaffSort = (field: StaffSortField) => {
+  /** Клик по заголовку: ↑ → ↓ → исходный порядок. Стабильный — табель в `memo`. */
+  const cycleStaffSort = useCallback((field: StaffSortField) => {
     setStaffSort((current) => {
       if (!current || current.field !== field) return { field, order: "asc" };
       if (current.order === "asc") return { field, order: "desc" };
       return null;
     });
-  };
+  }, []);
 
   // Helper data shapes.
   const positionsByCategory = useMemo(() => {
@@ -625,9 +653,10 @@ export function StaffPageClient(props: StaffPageProps) {
     }
   }
 
-  async function openEditEmployee(employee: StaffEmployee) {
-    setDlg({ kind: "edit-employee", employee, pending: false });
-  }
+  const openEditEmployee = useCallback(
+    (employee: StaffEmployee) => setDlg({ kind: "edit-employee", employee, pending: false }),
+    [setDlg]
+  );
 
   async function saveEmployeeEdit(
     id: string,
@@ -673,11 +702,6 @@ export function StaffPageClient(props: StaffPageProps) {
       );
     }
   }
-
-  // Привязка входа без Telegram живёт отдельным состоянием: общий `dlg`
-  // и так несёт десяток вариантов, и вплетать туда одиннадцатый ради
-  // одной кнопки — лишний риск задеть существующие ветки.
-  const [pairEmployee, setPairEmployee] = useState<StaffEmployee | null>(null);
 
   async function openTelegramInvite(employee: StaffEmployee, mode: "invite" | "rebind") {
     setDlg({
@@ -729,6 +753,21 @@ export function StaffPageClient(props: StaffPageProps) {
       toast.error((error as Error).message);
       setDlg({ kind: "tg-unlink", employee, pending: false });
     }
+  }
+
+  // Табель — в `memo`: ему нужны колбэки с постоянной идентичностью, иначе
+  // любой клик на странице перерисовывал все его клетки.
+  const openIikoDialog = useCallback(() => setDlg({ kind: "iiko" }), [setDlg]);
+  const onWorkOffPaint = useStableCallback(handleWorkOffPaint);
+  const onWeeklyDaysOffChange = useStableCallback(handleWeeklyDaysOffChange);
+
+  // Табель рисуется, когда к нему подходят прокруткой (`OffscreenSection`).
+  // Печать кнопкой страницы (в приложении — нативная, без `beforeprint`)
+  // сначала дорисовывает его, чтобы лист не вышел пустым.
+  const [printRequested, setPrintRequested] = useState(false);
+  function handlePrint() {
+    flushSync(() => setPrintRequested(true));
+    void printPage();
   }
 
   const firstSelected = anySelected
@@ -947,46 +986,13 @@ export function StaffPageClient(props: StaffPageProps) {
         </div>
       ) : null}
 
-      {/* Быстрый поиск по ФИО — результаты сразу, без раскрытия должностей. */}
-      <div className="rounded-2xl border border-[#ececf4] bg-white p-3 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
-          <input
-            type="search"
-            value={staffQuery}
-            onChange={(event) => setStaffQuery(event.target.value)}
-            placeholder={t("searchPlaceholder")}
-            aria-label={t("searchLabel")}
-            className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          />
-        </div>
-        {staffQuery.trim() ? (
-          <div className="mt-3" data-testid="staff-search-results">
-            {staffMatches.length === 0 ? (
-              <p className="px-1 py-2 text-[13px] text-[#9b9fb3]">{t("searchNoResults", { query: staffQuery.trim() })}</p>
-            ) : (
-              <ul className="divide-y divide-[#ececf4] rounded-2xl border border-[#ececf4]">
-                {staffMatches.map(({ employee, position }) => (
-                  <li key={employee.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                    <span className="min-w-0">
-                      <span className="block truncate text-[14px] font-medium text-[#0b1024]">{employee.name}</span>
-                      {position ? <span className="block text-[12px] text-[#6f7282]">{position}</span> : null}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => void openEditEmployee(employee)}
-                      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
-                    >
-                      <Pencil className="size-3.5" />
-                      {t("change")}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : null}
-      </div>
+      {/* Быстрый поиск по ФИО — результаты сразу, без раскрытия должностей.
+          Своё состояние: набор букв не перерисовывает страницу. */}
+      <StaffSearch
+        employees={props.employees}
+        positions={props.positions}
+        onEdit={openEditEmployee}
+      />
 
       {/* Список по должностям, вкладки и таблица — область фильтра «Где
           работает»: пока данные места не пришли, вместо неё скелет. */}
@@ -1030,7 +1036,7 @@ export function StaffPageClient(props: StaffPageProps) {
                 onUnlinkTelegram={(employee) =>
                   setDlg({ kind: "tg-unlink", employee, pending: false })
                 }
-                onEditEmployee={(employee) => void openEditEmployee(employee)}
+                onEditEmployee={openEditEmployee}
                 onAddPosition={() =>
                   setDlg({
                     kind: "add-flow",
@@ -1156,7 +1162,7 @@ export function StaffPageClient(props: StaffPageProps) {
 
           <button
             type="button"
-            onClick={() => void printPage()}
+            onClick={handlePrint}
             className="inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[13.5px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
             title={t("printTitle")}
           >
@@ -1192,17 +1198,26 @@ export function StaffPageClient(props: StaffPageProps) {
         </div>
 
         {tab === "work-off" ? (
-          <WorkOffGrid
-            employees={employeesDisplay}
-            positions={props.positions}
-            dates={workOffDates}
-            overrides={workOffOverrides}
-            sort={staffSort}
-            onSort={cycleStaffSort}
-            onIikoClick={() => setDlg({ kind: "iiko" })}
-            onPaint={handleWorkOffPaint}
-            onChangeWeekly={handleWeeklyDaysOffChange}
-          />
+          // Табель — 95% DOM страницы. Пока до него не долистали, его нет;
+          // когда он далеко от экрана, браузер не считает его стили (окна и
+          // всплывашки в `<body>` пересчитывают стили всего документа).
+          <OffscreenSection
+            estimatedHeight={WORK_OFF_GRID_CHROME_PX + employeesDisplay.length * WORK_OFF_ROW_ESTIMATE_PX}
+            forceMount={printRequested}
+            placeholder={<SkeletonList rows={6} height={48} />}
+          >
+            <WorkOffGrid
+              employees={employeesDisplay}
+              positions={props.positions}
+              dates={workOffDates}
+              overrides={workOffOverrides}
+              sort={staffSort}
+              onSort={cycleStaffSort}
+              onIikoClick={openIikoDialog}
+              onPaint={onWorkOffPaint}
+              onChangeWeekly={onWeeklyDaysOffChange}
+            />
+          </OffscreenSection>
         ) : tab === "dismissals" ? (
           <PeriodsTable
             rows={sortRows(props.dismissals)}
@@ -1236,156 +1251,235 @@ export function StaffPageClient(props: StaffPageProps) {
       </section>
       </PlaceFilterResults>
 
-      {/* Modals */}
-      {dlg?.kind === "add-flow" ? (
-        <StaffAddFlowDialog
-          initialStep={dlg.initialStep}
-          categoryKey={dlg.categoryKey}
-          initialPositionId={dlg.positionId}
-          positions={props.positions}
-          positionSuggestions={props.positionSuggestions[dlg.categoryKey]}
-          hasTasksflowIntegration={props.hasTasksflowIntegration}
-          buildings={props.buildings ?? []}
-          perLocationJournals={props.perLocationJournals === true}
-          defaultBuildingIds={
-            dlg.buildingIds ??
-            (props.perLocationJournals && props.activeBuildingId
-              ? [props.activeBuildingId]
-              : [])
-          }
-          open
-          onClose={() => setDlg(null)}
-          // Должность создана — список обновляем, но диалог остаётся
-          // открытым: он сам уводит менеджера на шаг «сотрудник».
-          onPositionCreated={() => startTransition(() => router.refresh())}
-          onCreated={(result) => {
-            // Раскрываем должность, в которую только что добавили
-            // человека, и подсвечиваем её — иначе новая фамилия
-            // теряется в свёрнутом аккордеоне.
-            if (result?.positionId) {
-              revealPosition(dlg.categoryKey, result.positionId);
-            }
-            startTransition(() => router.refresh());
-          }}
+      {/* Окна — каждое в своём хосте: открытие и закрытие перерисовывает
+          только хост, а не страницу с табелем. */}
+      <DetachedValue state={dialog}>
+        {(dlg) => (
+          <>
+            {dlg?.kind === "add-flow" ? (
+              <StaffAddFlowDialog
+                initialStep={dlg.initialStep}
+                categoryKey={dlg.categoryKey}
+                initialPositionId={dlg.positionId}
+                positions={props.positions}
+                positionSuggestions={props.positionSuggestions[dlg.categoryKey]}
+                hasTasksflowIntegration={props.hasTasksflowIntegration}
+                buildings={props.buildings ?? []}
+                perLocationJournals={props.perLocationJournals === true}
+                defaultBuildingIds={
+                  dlg.buildingIds ??
+                  (props.perLocationJournals && props.activeBuildingId
+                    ? [props.activeBuildingId]
+                    : [])
+                }
+                open
+                onClose={() => setDlg(null)}
+                // Должность создана — список обновляем, но диалог остаётся
+                // открытым: он сам уводит менеджера на шаг «сотрудник».
+                onPositionCreated={() => startTransition(() => router.refresh())}
+                onCreated={(result) => {
+                  // Раскрываем должность, в которую только что добавили
+                  // человека, и подсвечиваем её — иначе новая фамилия
+                  // теряется в свёрнутом аккордеоне.
+                  if (result?.positionId) {
+                    revealPosition(dlg.categoryKey, result.positionId);
+                  }
+                  startTransition(() => router.refresh());
+                }}
+              />
+            ) : null}
+            {dlg?.kind === "edit-position" ? (
+              <StaffEditPositionDialog
+                position={dlg.position}
+                open
+                onClose={() => setDlg(null)}
+                onUpdated={() => {
+                  setDlg(null);
+                  clearSelection();
+                  startTransition(() => router.refresh());
+                }}
+              />
+            ) : null}
+            {dlg?.kind === "qr-invite" ? (
+              <StaffQrInviteDialog
+                positions={props.positions}
+                open
+                onClose={() => setDlg(null)}
+              />
+            ) : null}
+            {dlg?.kind === "edit-employee" ? (
+              <StaffEditEmployeeDialog
+                employee={dlg.employee}
+                pending={dlg.pending}
+                buildings={props.buildings ?? []}
+                perLocationJournals={props.perLocationJournals === true}
+                todayKey={props.todayKey}
+                onAssignmentChanged={() => {
+                  setDlg(null);
+                  startTransition(() => router.refresh());
+                }}
+                open
+                onClose={() => setDlg(null)}
+                onSave={(patch) => void saveEmployeeEdit(dlg.employee.id, patch)}
+                // Диалоги не стекуем: редактирование закрывается, окно доступа
+                // открывается на его месте — два Radix-диалога друг над другом
+                // ловят фокус и закрываются одним Esc не в том порядке.
+                onOpenAccess={() => setDlg({ kind: "access", employee: dlg.employee })}
+              />
+            ) : null}
+            {dlg?.kind === "access" ? (
+              <StaffAccessDialog
+                open
+                userId={dlg.employee.id}
+                onClose={() => setDlg(null)}
+                onSaved={() => router.refresh()}
+              />
+            ) : null}
+            {dlg?.kind === "tg-invite" ? (
+              <StaffTelegramInviteDialog
+                employee={dlg.employee}
+                mode={dlg.mode}
+                botUrl={props.telegramBotUrl}
+                pending={dlg.pending}
+                error={dlg.error}
+                invite={dlg.invite}
+                open
+                onClose={() => setDlg(null)}
+              />
+            ) : null}
+            {dlg?.kind === "tg-unlink" ? (
+              <StaffUnlinkTelegramDialog
+                employee={dlg.employee}
+                pending={dlg.pending}
+                open
+                onClose={() => setDlg(null)}
+                onConfirm={() => void handleTelegramUnlink(dlg.employee)}
+              />
+            ) : null}
+            {dlg?.kind === "archive" ? (
+              <StaffArchiveDialog
+                employee={dlg.employee}
+                open
+                onClose={() => setDlg(null)}
+                onConfirm={() => handleArchive(dlg.employee.id)}
+              />
+            ) : null}
+            {dlg?.kind === "delete-blocked" ? (
+              <StaffDeleteBlockedDialog
+                employee={dlg.employee}
+                references={dlg.references}
+                open
+                onClose={() => setDlg(null)}
+              />
+            ) : null}
+            {dlg?.kind === "iiko" ? (
+              <StaffIikoDialog open onClose={() => setDlg(null)} />
+            ) : null}
+            {dlg?.kind === "instruction" ? (
+              <StaffInstructionDialog open onClose={() => setDlg(null)} />
+            ) : null}
+            {dlg?.kind === "add-period" ? (
+              <StaffAddPeriodDialog
+                kind={dlg.periodKind}
+                positions={props.positions}
+                employees={props.employees}
+                open
+                onClose={() => setDlg(null)}
+                onConfirm={handlePeriodAdd}
+              />
+            ) : null}
+          </>
+        )}
+      </DetachedValue>
+      <DetachedValue state={pair}>
+        {(pairEmployee) => (
+          // Своё состояние — рендерим безусловно, рядом с остальными окнами.
+          <StaffPairDialog
+            open={Boolean(pairEmployee)}
+            employeeId={pairEmployee?.id ?? null}
+            employeeName={pairEmployee?.name ?? null}
+            onClose={() => setPairEmployee(null)}
+          />
+        )}
+      </DetachedValue>
+      <DetachedValue state={bulkAdd}>
+        {(bulkAddOpen) =>
+          bulkAddOpen ? (
+            <StaffBulkAddDialog
+              positions={props.positions.map((position) => ({
+                id: position.id,
+                name: position.name,
+                categoryKey: position.categoryKey,
+              }))}
+              onClose={() => setBulkAddOpen(false)}
+              onDone={() => router.refresh()}
+            />
+          ) : null
+        }
+      </DetachedValue>
+    </div>
+  );
+}
+
+/**
+ * Быстрый поиск по ФИО: находит человека без раскрытия должностей. Запрос —
+ * собственное состояние: каждая буква перерисовывает только этот блок.
+ */
+function StaffSearch(props: {
+  employees: StaffEmployee[];
+  positions: StaffPosition[];
+  onEdit: (employee: StaffEmployee) => void;
+}) {
+  const t = useTranslations("staffManagement.page");
+  const [staffQuery, setStaffQuery] = useState("");
+  const staffMatches = useMemo(() => {
+    const q = staffQuery.trim().toLowerCase();
+    if (!q) return [];
+    const posNameById = new Map(props.positions.map((p) => [p.id, p.name]));
+    return [...props.employees]
+      .filter((e) => e.name.toLowerCase().includes(q) || (e.positionTitle ?? "").toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+      .map((e) => ({ employee: e, position: (e.jobPositionId ? posNameById.get(e.jobPositionId) : null) ?? e.positionTitle ?? "" }));
+  }, [staffQuery, props.employees, props.positions]);
+
+  return (
+    <div className="rounded-2xl border border-[#ececf4] bg-white p-3 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#9b9fb3]" />
+        <input
+          type="search"
+          value={staffQuery}
+          onChange={(event) => setStaffQuery(event.target.value)}
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("searchLabel")}
+          className="h-12 w-full rounded-2xl border border-[#dcdfed] bg-white pl-11 pr-4 text-[15px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
         />
-      ) : null}
-      {dlg?.kind === "edit-position" ? (
-        <StaffEditPositionDialog
-          position={dlg.position}
-          open
-          onClose={() => setDlg(null)}
-          onUpdated={() => {
-            setDlg(null);
-            clearSelection();
-            startTransition(() => router.refresh());
-          }}
-        />
-      ) : null}
-      {/* Своё состояние — рендерим безусловно, рядом с остальными окнами. */}
-      <StaffPairDialog
-        open={Boolean(pairEmployee)}
-        employeeId={pairEmployee?.id ?? null}
-        employeeName={pairEmployee?.name ?? null}
-        onClose={() => setPairEmployee(null)}
-      />
-      {dlg?.kind === "qr-invite" ? (
-        <StaffQrInviteDialog
-          positions={props.positions}
-          open
-          onClose={() => setDlg(null)}
-        />
-      ) : null}
-      {dlg?.kind === "edit-employee" ? (
-        <StaffEditEmployeeDialog
-          employee={dlg.employee}
-          pending={dlg.pending}
-          buildings={props.buildings ?? []}
-          perLocationJournals={props.perLocationJournals === true}
-          todayKey={props.todayKey}
-          onAssignmentChanged={() => {
-            setDlg(null);
-            startTransition(() => router.refresh());
-          }}
-          open
-          onClose={() => setDlg(null)}
-          onSave={(patch) => void saveEmployeeEdit(dlg.employee.id, patch)}
-          // Диалоги не стекуем: редактирование закрывается, окно доступа
-          // открывается на его месте — два Radix-диалога друг над другом
-          // ловят фокус и закрываются одним Esc не в том порядке.
-          onOpenAccess={() => setDlg({ kind: "access", employee: dlg.employee })}
-        />
-      ) : null}
-      {dlg?.kind === "access" ? (
-        <StaffAccessDialog
-          open
-          userId={dlg.employee.id}
-          onClose={() => setDlg(null)}
-          onSaved={() => router.refresh()}
-        />
-      ) : null}
-      {bulkAddOpen ? (
-        <StaffBulkAddDialog
-          positions={props.positions.map((position) => ({
-            id: position.id,
-            name: position.name,
-            categoryKey: position.categoryKey,
-          }))}
-          onClose={() => setBulkAddOpen(false)}
-          onDone={() => router.refresh()}
-        />
-      ) : null}
-      {dlg?.kind === "tg-invite" ? (
-        <StaffTelegramInviteDialog
-          employee={dlg.employee}
-          mode={dlg.mode}
-          botUrl={props.telegramBotUrl}
-          pending={dlg.pending}
-          error={dlg.error}
-          invite={dlg.invite}
-          open
-          onClose={() => setDlg(null)}
-        />
-      ) : null}
-      {dlg?.kind === "tg-unlink" ? (
-        <StaffUnlinkTelegramDialog
-          employee={dlg.employee}
-          pending={dlg.pending}
-          open
-          onClose={() => setDlg(null)}
-          onConfirm={() => void handleTelegramUnlink(dlg.employee)}
-        />
-      ) : null}
-      {dlg?.kind === "archive" ? (
-        <StaffArchiveDialog
-          employee={dlg.employee}
-          open
-          onClose={() => setDlg(null)}
-          onConfirm={() => handleArchive(dlg.employee.id)}
-        />
-      ) : null}
-      {dlg?.kind === "delete-blocked" ? (
-        <StaffDeleteBlockedDialog
-          employee={dlg.employee}
-          references={dlg.references}
-          open
-          onClose={() => setDlg(null)}
-        />
-      ) : null}
-      {dlg?.kind === "iiko" ? (
-        <StaffIikoDialog open onClose={() => setDlg(null)} />
-      ) : null}
-      {dlg?.kind === "instruction" ? (
-        <StaffInstructionDialog open onClose={() => setDlg(null)} />
-      ) : null}
-      {dlg?.kind === "add-period" ? (
-        <StaffAddPeriodDialog
-          kind={dlg.periodKind}
-          positions={props.positions}
-          employees={props.employees}
-          open
-          onClose={() => setDlg(null)}
-          onConfirm={handlePeriodAdd}
-        />
+      </div>
+      {staffQuery.trim() ? (
+        <div className="mt-3" data-testid="staff-search-results">
+          {staffMatches.length === 0 ? (
+            <p className="px-1 py-2 text-[13px] text-[#9b9fb3]">{t("searchNoResults", { query: staffQuery.trim() })}</p>
+          ) : (
+            <ul className="divide-y divide-[#ececf4] rounded-2xl border border-[#ececf4]">
+              {staffMatches.map(({ employee, position }) => (
+                <li key={employee.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14px] font-medium text-[#0b1024]">{employee.name}</span>
+                    {position ? <span className="block text-[12px] text-[#6f7282]">{position}</span> : null}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => props.onEdit(employee)}
+                    className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-[#dcdfed] bg-white px-3 text-[13px] font-medium text-[#3848c7] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff]"
+                  >
+                    <Pencil className="size-3.5" />
+                    {t("change")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       ) : null}
     </div>
   );
@@ -1839,7 +1933,42 @@ function useCoarsePointer(): boolean {
   );
 }
 
-function WorkOffGrid(props: {
+/** Высота шапки, кнопки iiko и легенды графика — для заглушки до первой отрисовки. */
+const WORK_OFF_GRID_CHROME_PX = 220;
+/** Примерная высота строки графика (чипы выходных переносятся в 2–4 ряда). */
+const WORK_OFF_ROW_ESTIMATE_PX = 96;
+
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
+// Классы клетки — один раз на модуль: `cn()` (tailwind-merge) на каждую из
+// ~3 600 клеток стоил заметную долю перерисовки.
+const WORK_OFF_CELL_CLASS = "border-l border-[#f0f1f8] p-0 text-center";
+const WORK_OFF_CELL_WEEKEND_CLASS = cn(WORK_OFF_CELL_CLASS, "bg-[#fff5d9]/40");
+// На бумаге отметка — буква (`data-print-mark` через ::after): заливку
+// браузер при печати гасит, и синий квадрат с белой галочкой вышел бы пустой
+// клеткой. Раньше для этого в каждой клетке был отдельный span.
+const WORK_OFF_CELL_BUTTON_CLASS =
+  "flex h-8 w-full items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 print:after:content-[attr(data-print-mark)]";
+const WORK_OFF_BOX_BASE_CLASS =
+  "inline-flex size-4 items-center justify-center rounded border transition-colors print:hidden";
+const WORK_OFF_BOX_OFF_CLASS = cn(WORK_OFF_BOX_BASE_CLASS, "border-[#d0d4e6] bg-white text-transparent");
+const WORK_OFF_BOX_ON_CLASS = cn(WORK_OFF_BOX_BASE_CLASS, "border-[#5566f6] bg-[#5566f6] text-white");
+const WORK_OFF_BOX_RULE_CLASS = cn(WORK_OFF_BOX_ON_CLASS, "opacity-50");
+// Один элемент на все клетки: React не сравнивает его заново. Галочка только
+// в отмеченных клетках — в пустых она была прозрачной, но стоила два узла DOM.
+const WORK_OFF_CHECK_ICON = <Check className="size-3" strokeWidth={3} />;
+
+/** Строка состояния дней: "0" — рабочий, "1" — выходной, "2" — выходной по недельному правилу. */
+const DAY_WORKING = 48; // "0"
+const DAY_BY_RULE = 50; // "2"
+
+function workOffCellFromTarget(target: EventTarget | null) {
+  const cell = target instanceof Element ? target.closest<HTMLElement>("[data-workoff-cell]") : null;
+  if (!cell?.dataset.userId || !cell.dataset.date) return null;
+  return { userId: cell.dataset.userId, date: cell.dataset.date };
+}
+
+const WorkOffGrid = memo(function WorkOffGrid(props: {
   employees: StaffEmployee[];
   positions: StaffPosition[];
   dates: string[];
@@ -1853,12 +1982,14 @@ function WorkOffGrid(props: {
 }) {
   const t = useTranslations("staffManagement.page");
   const locale = useLocale();
-  const weekdayKeys = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-  const weeklyDaysOffText = (days: number[]) => days.length > 0
-    ? days.map((day) => t(`weekday.${weekdayKeys[day]}`)).join(", ")
-    : t("notSet");
-  const posNameById = new Map<string, string>(
-    props.positions.map((p) => [p.id, p.name])
+  const days = useMemo(() => workOffDayColumns(props.dates, locale), [props.dates, locale]);
+  const posNameById = useMemo(
+    () => new Map<string, string>(props.positions.map((p) => [p.id, p.name])),
+    [props.positions]
+  );
+  const employeeById = useMemo(
+    () => new Map(props.employees.map((employee) => [employee.id, employee])),
+    [props.employees]
   );
 
   const coarsePointer = useCoarsePointer();
@@ -1908,11 +2039,30 @@ function WorkOffGrid(props: {
     );
   }
 
-  /** Отметка стоит по правилу, а не руками — рисуем полупрозрачной. */
-  function isByRule(employee: StaffEmployee, iso: string): boolean {
-    const key = dayOffOverrideKey(employee.id, iso);
-    if (draft.cells.has(key) || props.overrides.has(key)) return false;
-    return weeklyOf(employee).includes(weekdayIndex(iso));
+  /**
+   * Состояние дней строки одной строкой — по символу на день. Строки
+   * сравнивают её по значению, поэтому покраска и `router.refresh()`
+   * перерисовывают только те строки, где что-то изменилось. Те же правила,
+   * что у `isChecked`: черновик, затем явное исключение, затем недельное
+   * правило; «по правилу» — отметка без исключения (рисуется бледнее).
+   */
+  function rowStateOf(employee: StaffEmployee, weekly: number[]): string {
+    const rule = normalizeWeeklyDaysOff(weekly);
+    let state = "";
+    for (const day of days) {
+      const key = dayOffOverrideKey(employee.id, day.iso);
+      const local = draft.cells.get(key);
+      if (local !== undefined) {
+        state += local ? "1" : "0";
+        continue;
+      }
+      const override = props.overrides.get(key);
+      if (override === "off") state += "1";
+      else if (override === "work") state += "0";
+      else if (rule.includes(day.weekday)) state += weekly.includes(day.weekday) ? "2" : "1";
+      else state += "0";
+    }
+    return state;
   }
 
   function applyPaint(userId: string, iso: string, value: boolean) {
@@ -1945,13 +2095,7 @@ function WorkOffGrid(props: {
   }
 
   function cellFromPoint(x: number, y: number) {
-    const el = document.elementFromPoint(x, y);
-    const cell =
-      el instanceof HTMLElement
-        ? el.closest<HTMLElement>("[data-workoff-cell]")
-        : null;
-    if (!cell?.dataset.userId || !cell.dataset.date) return null;
-    return { userId: cell.dataset.userId, date: cell.dataset.date };
+    return workOffCellFromTarget(document.elementFromPoint(x, y));
   }
 
   async function flushPaint() {
@@ -1967,6 +2111,15 @@ function WorkOffGrid(props: {
     await props.onPaint(items);
   }
 
+  /** Недельные чипы строки: черновик сразу, сохранение — следом. */
+  const changeWeekly = useStableCallback((userId: string, next: number[]) => {
+    updateDraft((base) => ({
+      ...base,
+      weekly: new Map(base.weekly).set(userId, next),
+    }));
+    void props.onChangeWeekly(userId, next);
+  });
+
   return (
     <div className="space-y-4">
       <Button
@@ -1981,10 +2134,52 @@ function WorkOffGrid(props: {
 
       <div
         ref={gridRef}
+        // Клетки без своих обработчиков: один на всю сетку (по
+        // `data-workoff-cell`) — тысячи замыканий на каждую перерисовку
+        // были заметной частью задержки страницы.
+        onPointerDown={(event) => {
+          const cell = workOffCellFromTarget(event.target);
+          if (!cell) return;
+          // preventDefault, иначе браузер начнёт выделять текст таблицы
+          // вместо покраски.
+          event.preventDefault();
+          const employee = employeeById.get(cell.userId);
+          if (!employee) return;
+          const value = !isChecked(employee, cell.date);
+          if (event.shiftKey && anchorRef.current) {
+            applyRect(anchorRef.current, cell, value);
+          } else {
+            applyPaint(cell.userId, cell.date, value);
+          }
+          paintValueRef.current = value;
+          anchorRef.current = cell;
+          gridRef.current?.setPointerCapture(event.pointerId);
+        }}
+        onKeyDown={(event) => {
+          // Клавиатура: pointer-события до неё не доходят, поэтому один
+          // день отправляем тем же bulk-эндпоинтом с одним элементом.
+          if (event.key !== "Enter" && event.key !== " ") return;
+          const cell = workOffCellFromTarget(event.target);
+          if (!cell) return;
+          event.preventDefault();
+          const employee = employeeById.get(cell.userId);
+          if (!employee) return;
+          const value = !isChecked(employee, cell.date);
+          applyPaint(cell.userId, cell.date, value);
+          void props.onPaint([{ userId: cell.userId, date: cell.date, enabled: value }]);
+        }}
         onPointerMove={(event) => {
           if (paintValueRef.current === null) return;
           const cell = cellFromPoint(event.clientX, event.clientY);
           if (!cell) return;
+          // Прицел и запрет выделения — только когда штрих ушёл с первой
+          // клетки: смена курсора у сетки пересчитывает стили всех её
+          // клеток, а одиночному клику это не нужно (выделение текста и так
+          // гасит preventDefault на нажатии).
+          const anchor = anchorRef.current;
+          if (!painting && (cell.userId !== anchor?.userId || cell.date !== anchor?.date)) {
+            setPainting(true);
+          }
           applyPaint(cell.userId, cell.date, paintValueRef.current);
           anchorRef.current = cell;
         }}
@@ -2030,138 +2225,45 @@ function WorkOffGrid(props: {
                   />
                 </th>
                 <th className="px-3 py-2 text-left font-medium">{t("daysOff")}</th>
-                {props.dates.map((iso) => {
-                  const { top, bottom, isWeekend } = formatDayCell(iso, locale);
-                  return (
-                    <th
-                      key={iso}
+                {days.map((day) => (
+                  <th
+                    key={day.iso}
+                    className={cn(
+                      "min-w-[44px] px-1 py-2 text-center font-normal leading-tight",
+                      day.isWeekend && "bg-[#fff5d9]/70 text-[#b25f00]"
+                    )}
+                  >
+                    <div className="text-[11px]">{day.top}</div>
+                    <div
                       className={cn(
-                        "min-w-[44px] px-1 py-2 text-center font-normal leading-tight",
-                        isWeekend && "bg-[#fff5d9]/70 text-[#b25f00]"
+                        "text-[10px]",
+                        day.isWeekend ? "font-medium text-[#b25f00]" : "text-[#9b9fb3]"
                       )}
                     >
-                      <div className="text-[11px]">{top}</div>
-                      <div
-                        className={cn(
-                          "text-[10px]",
-                          isWeekend ? "font-medium text-[#b25f00]" : "text-[#9b9fb3]"
-                        )}
-                      >
-                        {bottom}
-                      </div>
-                    </th>
-                  );
-                })}
+                      {day.bottom}
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {props.employees.map((e) => {
-                const positionName = e.jobPositionId
-                  ? posNameById.get(e.jobPositionId) ?? e.positionTitle ?? "—"
-                  : e.positionTitle || "—";
+                const weekly = weeklyOf(e);
                 return (
-                  <tr key={e.id} className="border-t border-[#ececf4]">
-                    <td className="sticky left-0 z-10 bg-white px-3 py-2 text-[#0b1024]">
-                      {e.name}
-                    </td>
-                    <td className="px-3 py-2 text-[#6f7282]">{positionName}</td>
-                    <td className="px-2 py-2">
-                      <WeekdayChips
-                        size="sm"
-                        value={weeklyOf(e)}
-                        ariaLabel={t("employeeDaysOff", { name: e.name })}
-                        onChange={(next) => {
-                          updateDraft((base) => ({
-                            ...base,
-                            weekly: new Map(base.weekly).set(e.id, next),
-                          }));
-                          void props.onChangeWeekly(e.id, next);
-                        }}
-                      />
-                    </td>
-                    {props.dates.map((iso) => {
-                      const checked = isChecked(e, iso);
-                      const byRule = isByRule(e, iso);
-                      const { isWeekend } = formatDayCell(iso, locale);
-                      return (
-                        <td
-                          key={iso}
-                          className={cn(
-                            "border-l border-[#f0f1f8] p-0 text-center",
-                            isWeekend && "bg-[#fff5d9]/40"
-                          )}
-                        >
-                          <button
-                            type="button"
-                            data-workoff-cell=""
-                            data-user-id={e.id}
-                            data-date={iso}
-                            aria-pressed={checked}
-                            aria-label={`${e.name}, ${iso}`}
-                            title={
-                              byRule
-                                ? t("ruleDayOff", { days: weeklyDaysOffText(weeklyOf(e)) })
-                                : checked
-                                  ? t("dayOff")
-                                  : t("workingDay")
-                            }
-                            onPointerDown={(event) => {
-                              // preventDefault, иначе браузер начнёт
-                              // выделять текст таблицы вместо покраски.
-                              event.preventDefault();
-                              const value = !checked;
-                              if (event.shiftKey && anchorRef.current) {
-                                applyRect(
-                                  anchorRef.current,
-                                  { userId: e.id, date: iso },
-                                  value
-                                );
-                              } else {
-                                applyPaint(e.id, iso, value);
-                              }
-                              paintValueRef.current = value;
-                              anchorRef.current = { userId: e.id, date: iso };
-                              setPainting(true);
-                              gridRef.current?.setPointerCapture(event.pointerId);
-                            }}
-                            onKeyDown={(event) => {
-                              // Клавиатура: pointer-события до неё не
-                              // доходят, поэтому один день отправляем
-                              // тем же bulk-эндпоинтом с одним элементом.
-                              if (event.key !== "Enter" && event.key !== " ") {
-                                return;
-                              }
-                              event.preventDefault();
-                              const value = !checked;
-                              applyPaint(e.id, iso, value);
-                              void props.onPaint([
-                                { userId: e.id, date: iso, enabled: value },
-                              ]);
-                            }}
-                            className="flex h-8 w-full items-center justify-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-                          >
-                            <span
-                              className={cn(
-                                "inline-flex size-4 items-center justify-center rounded border transition-colors print:hidden",
-                                checked
-                                  ? "border-[#5566f6] bg-[#5566f6] text-white"
-                                  : "border-[#d0d4e6] bg-white text-transparent",
-                                byRule && "opacity-50"
-                              )}
-                            >
-                              <Check className="size-3" strokeWidth={3} />
-                            </span>
-                            {/* На бумаге отметка — буква: заливку браузер
-                                при печати гасит, и синий квадрат с белой
-                                галочкой вышел бы пустой клеткой. */}
-                            <span aria-hidden className="hidden print:inline">
-                              {checked ? t("checkedDay") : ""}
-                            </span>
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
+                  <WorkOffRow
+                    key={e.id}
+                    employeeId={e.id}
+                    name={e.name}
+                    positionName={
+                      e.jobPositionId
+                        ? posNameById.get(e.jobPositionId) ?? e.positionTitle ?? "—"
+                        : e.positionTitle || "—"
+                    }
+                    weeklyKey={weekly.join(",")}
+                    rowState={rowStateOf(e, weekly)}
+                    days={days}
+                    onWeeklyChange={changeWeekly}
+                  />
                 );
               })}
             </tbody>
@@ -2188,7 +2290,90 @@ function WorkOffGrid(props: {
       </div>
     </div>
   );
-}
+});
+
+/**
+ * Строка графика. Пропсы — строки и стабильные ссылки, поэтому `memo`
+ * пропускает строку, если у неё ничего не изменилось: покраска одной клетки
+ * не перерисовывает остальные 116 строк.
+ */
+const WorkOffRow = memo(function WorkOffRow(props: {
+  employeeId: string;
+  name: string;
+  positionName: string;
+  /** Недельные выходные строкой («5,6») — сравнение по значению. */
+  weeklyKey: string;
+  /** По символу на день, см. `rowStateOf`. */
+  rowState: string;
+  days: WorkOffDay[];
+  onWeeklyChange: (userId: string, weeklyDaysOff: number[]) => void;
+}) {
+  const t = useTranslations("staffManagement.page");
+  const weekly = useMemo(
+    () => (props.weeklyKey ? props.weeklyKey.split(",").map(Number) : []),
+    [props.weeklyKey]
+  );
+  const dayOffTitle = t("dayOff");
+  const workingDayTitle = t("workingDay");
+  const printMark = t("checkedDay");
+  // Подсказка «выходной по правилу» нужна, только если такие дни есть.
+  const ruleTitle = props.rowState.includes("2")
+    ? t("ruleDayOff", {
+        days:
+          weekly.length > 0
+            ? weekly.map((day) => t(`weekday.${WEEKDAY_KEYS[day]}`)).join(", ")
+            : t("notSet"),
+      })
+    : "";
+
+  return (
+    <tr className="border-t border-[#ececf4]">
+      <td className="sticky left-0 z-10 bg-white px-3 py-2 text-[#0b1024]">
+        {props.name}
+      </td>
+      <td className="px-3 py-2 text-[#6f7282]">{props.positionName}</td>
+      <td className="px-2 py-2">
+        <WeekdayChips
+          size="sm"
+          value={weekly}
+          ariaLabel={t("employeeDaysOff", { name: props.name })}
+          onChange={(next) => props.onWeeklyChange(props.employeeId, next)}
+        />
+      </td>
+      {props.days.map((day, index) => {
+        const code = props.rowState.charCodeAt(index);
+        const checked = code !== DAY_WORKING;
+        const byRule = code === DAY_BY_RULE;
+        return (
+          <td
+            key={day.iso}
+            className={day.isWeekend ? WORK_OFF_CELL_WEEKEND_CLASS : WORK_OFF_CELL_CLASS}
+          >
+            <button
+              type="button"
+              data-workoff-cell=""
+              data-user-id={props.employeeId}
+              data-date={day.iso}
+              data-print-mark={checked ? printMark : undefined}
+              aria-pressed={checked}
+              aria-label={`${props.name}, ${day.iso}`}
+              title={byRule ? ruleTitle : checked ? dayOffTitle : workingDayTitle}
+              className={WORK_OFF_CELL_BUTTON_CLASS}
+            >
+              <span
+                className={
+                  byRule ? WORK_OFF_BOX_RULE_CLASS : checked ? WORK_OFF_BOX_ON_CLASS : WORK_OFF_BOX_OFF_CLASS
+                }
+              >
+                {checked ? WORK_OFF_CHECK_ICON : null}
+              </span>
+            </button>
+          </td>
+        );
+      })}
+    </tr>
+  );
+});
 
 function SortHead({
   label,

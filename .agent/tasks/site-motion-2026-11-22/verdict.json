@@ -1,0 +1,17 @@
+{
+  "task": "site-motion-2026-11-22",
+  "verifier": "Separate in-thread pass on commit 3be53c18a, every check rerun from the tree (no delegation: the owner did not ask for it)",
+  "verdict": "PASS",
+  "reran": [
+    "npm run typecheck: exit 0 (raw/typecheck.txt)",
+    "npm run test:gate: 10 files, pass 95, fail 0 (raw/test-gate.txt)",
+    "new tests: 31 / 31 (raw/unit-tests.txt); design guards and every test that reads the touched files: 289 / 289",
+    "eslint on the 12 changed .ts / .tsx files: exit 0 (raw/eslint.txt)",
+    "browser: raw/measure.cjs against next dev on this commit — 46 / 46 (raw/verify-measure.json)",
+    "crawl of 24 cabinet pages on desktop and on a phone, clicking tabs and segments: no page or console errors, no leftover shapes or masks (raw/verify-crawl.txt)",
+    "production minifier on motion.css: 49 rules, 92 declarations, 5 keyframes in and out (raw/prod-minify.json)",
+    "next build --webpack (commit 12b6525e6): exit 0; the layer's rules are in the built CSS, its chunk loads after the app-theme chunk — the same chunk order as on the live site"
+  ],
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS", "AC8": "PASS", "AC9": "PASS", "AC10": "PASS", "AC11": "PASS", "AC12": "PASS" },
+  "notes": "Touch is emulated (iPhone 13 profile, mouse events); a real finger and a real Safari below 17.2 were not available — for the latter the spring tokens fall back to cubic-bezier under @supports, checked in the compiled CSS. The Radix Tabs panel swap was measured on a synthetic tab group with aria-controls."
+}

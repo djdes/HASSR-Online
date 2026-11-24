@@ -20,6 +20,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PointBlock, PointBlockEmpty } from "@/components/settings/point-block";
 import { BuildingIconPicker } from "@/components/settings/building-icon-picker";
+import { ObjectCategoryPicker, useObjectCategoryLabel } from "@/components/settings/object-category-picker";
+import { normalizeObjectCategory, type ObjectCategory } from "@/lib/object-categories";
 
 const OUTLINE_BUTTON =
   "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-4 text-[14px] font-medium text-[#0b1024] transition-colors duration-150 hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15 disabled:opacity-60";
@@ -33,6 +35,8 @@ export type PointHead = {
   journalName: string | null;
   /** Значок объекта (`lib/building-icons.ts`). */
   icon: string | null;
+  /** Сфера объекта (2026-11-23): food | medical | consumer | sport; null — не выбрана. */
+  sphere?: string | null;
 };
 
 /** Блок 1 — «Название и адрес»: сведения для документов точки, правка окном. */
@@ -43,6 +47,10 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState(() => draftOf(point));
+  const tc = useTranslations("common");
+  const categoryLabel = useObjectCategoryLabel();
+  const sphere = normalizeObjectCategory(point.sphere);
+  const [draftSphere, setDraftSphere] = useState<ObjectCategory | null>(sphere);
 
   function draftOf(value: PointHead) {
     return {
@@ -71,11 +79,13 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
           kpp: draft.kpp.trim() || null,
           phone: draft.phone.trim() || null,
           journalName: draft.journalName.trim() || null,
+          ...(draftSphere && draftSphere !== sphere ? { sphere: draftSphere } : {}),
         }),
       });
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as { error?: string; journalsLimited?: boolean };
       if (!response.ok) throw new Error(data.error ?? t("failed"));
       toast.success(t("saved"));
+      if (data.journalsLimited) toast.message(tc("objectCategoryJournalsLimited"));
       setOpen(false);
       // Название точки — ещё и пункт меню: обновляем всю разметку.
       startTransition(() => router.refresh());
@@ -88,6 +98,7 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
 
   const rows: Array<{ key: string; label: string; value: string | null }> = [
     { key: "name", label: t("name"), value: point.name },
+    { key: "sphere", label: tc("objectCategoryLabel"), value: sphere ? categoryLabel(sphere) : null },
     { key: "journalName", label: t("journalName"), value: point.journalName },
     { key: "address", label: t("address"), value: point.address },
     { key: "kpp", label: t("kpp"), value: point.kpp },
@@ -115,6 +126,7 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
             className={OUTLINE_BUTTON}
             onClick={() => {
               setDraft(draftOf(point));
+              setDraftSphere(sphere);
               setOpen(true);
             }}
           >
@@ -175,6 +187,11 @@ export function PointHeadBlock({ point, readOnly }: { point: PointHead; readOnly
                 {field.hint ? <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">{field.hint}</p> : null}
               </div>
             ))}
+            <div className="space-y-1.5" data-point-sphere-edit>
+              <Label htmlFor="point-sphere">{tc("objectCategoryLabel")}</Label>
+              <ObjectCategoryPicker id="point-sphere" variant="select" value={draftSphere} onChange={setDraftSphere} disabled={saving} />
+              <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">{tc("objectCategoryChangeHint")}</p>
+            </div>
             <div className="flex flex-wrap justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
                 {t("cancel")}

@@ -23,6 +23,7 @@ import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { ORG_ROSTER_WHERE } from "@/lib/journal-roster";
 import { BuildingGroupHeader } from "@/components/settings/building-group-header";
 import { EquipmentQrButtons } from "@/components/settings/equipment-qr-buttons";
+import { PageActions } from "@/components/layout/page-actions";
 import { PlaceFilterResults, PlaceFilterScope } from "@/components/layout/place-filter-scope";
 import { loadBuildingContext, listOrganizationBuildings } from "@/lib/active-building";
 import { viewedPointId } from "@/lib/building-scope";
@@ -167,7 +168,13 @@ export default async function EquipmentSettingsPage({
     name: user.name,
     position: getUserDisplayTitle(user) || null,
     management: isManagementRole(user.role) || user.canManageSettings,
+    // Объекты человека: окно показывает в «Кто заполняет» людей выбранного объекта.
+    buildingIds: user.buildingIds,
   }));
+
+  // «Кто заполняет по QR» фильтруется по объекту по тому же правилу, что и
+  // QR-страница (`loadQrPointScope`): точки включены и их хотя бы две.
+  const fillerScopeBuildingIds = showPlaceFilter && buildings.length >= 2 ? orgBuildingIds : [];
 
   // IoT readings — только оборудование на экране своих точек.
   const iotIds = scope.items.filter((e) => e.tuyaDeviceId).map((e) => e.id);
@@ -206,6 +213,7 @@ export default async function EquipmentSettingsPage({
     places,
     existingNames: equipmentNames,
     fillerOptions,
+    orgBuildingIds: fillerScopeBuildingIds,
   };
 
   // Датчики температуры (раньше — на главной, меню 2026-10-16) — своих точек.
@@ -262,22 +270,25 @@ export default async function EquipmentSettingsPage({
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* QR и «Добавить» — одной строкой на телефоне; уехали вверх при
+            прокрутке — закрепляются снизу (`PageActions`, владелец 2026-11-23). */}
+        {canManage ? (
+        <PageActions dock>
           {/* QR — оборудование из списка (скан 98: раньше печаталось всё оборудование организации). */}
-          {canManage && visibleCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
-          {canManage && (
-            <EquipmentDialog
-              // Новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия).
-              key={defaultBuildingId ?? "none"}
-              areas={dialogAreas}
-              buildings={buildingOptions}
-              places={places}
-              defaultBuildingId={defaultBuildingId}
-              existingNames={equipmentNames}
-              fillerOptions={fillerOptions}
-            />
-          )}
-        </div>
+          {visibleCount > 0 ? <EquipmentQrButtons point={qrPoint} /> : null}
+          <EquipmentDialog
+            // Новая точка по умолчанию после смены фильтра (окно помнит выбор до закрытия).
+            key={defaultBuildingId ?? "none"}
+            areas={dialogAreas}
+            buildings={buildingOptions}
+            places={places}
+            defaultBuildingId={defaultBuildingId}
+            existingNames={equipmentNames}
+            fillerOptions={fillerOptions}
+            orgBuildingIds={fillerScopeBuildingIds}
+          />
+        </PageActions>
+        ) : null}
       </div>
 
       {/* Чипы мест и список — одна область: нажатие на чип показывает
@@ -346,7 +357,7 @@ export default async function EquipmentSettingsPage({
 
 type EquipmentDialogShared = Pick<
   ComponentProps<typeof EquipmentDialog>,
-  "areas" | "buildings" | "places" | "existingNames" | "fillerOptions"
+  "areas" | "buildings" | "places" | "existingNames" | "fillerOptions" | "orgBuildingIds"
 >;
 
 type EquipmentRow = Prisma.EquipmentGetPayload<{

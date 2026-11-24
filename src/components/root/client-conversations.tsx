@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * звонки с записью и расшифровкой, чат, Telegram, MAX, заметки.
  * Фильтр по виду — чипами сверху; новые записи сверху.
  */
-type Filter = "all" | "email" | "call" | "chat" | "messengers" | "note";
+type Filter = "all" | "email" | "call" | "chat" | "messengers" | "avito" | "note";
 
 const FILTERS: { id: Filter; label: string; match: (item: ConversationItem) => boolean }[] = [
   { id: "all", label: "Все", match: () => true },
@@ -22,6 +22,7 @@ const FILTERS: { id: Filter; label: string; match: (item: ConversationItem) => b
   { id: "call", label: "Звонки", match: (item) => item.channel === "call" || item.channel === "phone" || Boolean(item.call) },
   { id: "chat", label: "Чат на сайте", match: (item) => item.channel === "chat" || item.channel === "feedback" },
   { id: "messengers", label: "Telegram и MAX", match: (item) => ["telegram", "max", "whatsapp", "vk"].includes(item.channel) },
+  { id: "avito", label: "Авито", match: (item) => item.channel === "avito" },
   { id: "note", label: "Заметки и события", match: (item) => item.direction === "note" || item.direction === "event" },
 ];
 
@@ -120,7 +121,7 @@ export function ClientConversations({ data }: { data: Data }) {
           </span>
           <div>
             <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#0b1024]">Переписки</h2>
-            <p className="text-[12.5px] text-[#6f7282]">Почта, звонки с записью и расшифровкой, чат, Telegram и MAX — по времени</p>
+            <p className="text-[12.5px] text-[#6f7282]">Почта, звонки с записью и расшифровкой, чат, Telegram, MAX и Авито — по времени</p>
           </div>
         </div>
         {data.contacts.length ? (

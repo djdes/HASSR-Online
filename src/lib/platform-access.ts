@@ -157,6 +157,10 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/crm/tasks/settings", gate: "crm", allScope: true },
   // Автоворонка (настройки и прогноз на неделю по всем клиентам) — тем, кто видит всех.
   { pattern: "/root/crm/automation", gate: "crm", allScope: true },
+  // Авито: объявления, баланс и кому слать уведомления — команде целиком; менять получателей — владелец.
+  { pattern: "/root/crm/avito", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/avito", gate: "crm", allScope: true },
+  { pattern: "/api/root/crm/avito", gate: "superadmin", methods: ["PUT"] },
 
   // Sales.
   { pattern: "/root/proposals", gate: "sales" },
@@ -168,6 +172,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/root/promo-codes", gate: "sales" },
   { pattern: "/api/root/proposals", gate: "sales" },
   { pattern: "/api/root/mailing", gate: "sales" },
+  // ИИ-сводка администратору: выручка всей платформы, уходит пользователям root — только владельцу.
+  { pattern: "/api/root/mailing/ai-digest", gate: "superadmin" },
   { pattern: "/api/root/services", gate: "sales" },
   { pattern: "/api/root/service-requests", gate: "sales" },
   { pattern: "/api/root/promotions", gate: "sales" },
@@ -410,6 +416,15 @@ export function isPlatformAdministrator(user: { isRoot: boolean; platformSection
 
 function isFullSectionSet(sections: readonly string[]): boolean {
   return PLATFORM_SECTION_KEYS.every((key) => sections.includes(key));
+}
+
+/**
+ * Команда поддержки (2026-11-23): владелец, администратор платформы или
+ * человек с разделом «Обратная связь» — им всплывашка и колокольчик о каждом
+ * обращении и сообщении чата. Та же аудитория, что `support` у уведомлений.
+ */
+export function isSupportStaff(isRoot: boolean, sections: readonly string[]): boolean {
+  return isPlatformAdministrator({ isRoot, platformSections: sections }) || sections.includes("support");
 }
 
 /**

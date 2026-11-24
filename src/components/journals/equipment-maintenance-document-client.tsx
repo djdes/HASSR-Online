@@ -66,6 +66,7 @@ import {
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { formatPositionWithName } from "@/lib/position-name-label";
 import { resolveApprover } from "@/lib/approver-display";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 
 type Props = {
   documentId: string;
@@ -794,7 +795,7 @@ export function EquipmentMaintenanceDocumentClient({
                   colSpan={4 + MONTH_KEYS.length}
                   className={`${GRID_CELL_CLASS} px-2 py-4 text-center text-gray-400 leading-tight`}
                 >
-                  {t("emptyRows")}
+                  <JournalEmpty variant="cell">{t("emptyRows")}</JournalEmpty>
                 </td>
               </tr>
             )}

@@ -1,6 +1,6 @@
 import type { ReactNode, Ref, SVGProps } from "react";
-import { FLOW_KINDS, FLOW_STYLES, edgeAnchors } from "@/lib/ppk/diagram";
-import type { DiagramData, DiagramEdge, DiagramNode, FlowKind } from "@/lib/ppk/records";
+import { FLOW_KINDS, FLOW_STYLES, doorSwingVector, edgeAnchors } from "@/lib/ppk/diagram";
+import type { DiagramData, DiagramDoor, DiagramEdge, DiagramNode, DoorKind, FlowKind } from "@/lib/ppk/records";
 
 /*
  * Отрисовка схемы чистым SVG без интерактива: ею пользуются редактор (поверх
@@ -10,6 +10,7 @@ import type { DiagramData, DiagramEdge, DiagramNode, FlowKind } from "@/lib/ppk/
 const STEP_STROKE = "#dcdfed";
 const ROOM_STROKE = "#3c4053";
 const ARROW_COLOR = "#6f7282";
+const DOOR_STROKE = "#3c4053";
 
 /** Точки ломаной связи: у блок-схемы — по границам узлов, у плана — свои. */
 export function edgePoints(edge: DiagramEdge, nodes: DiagramNode[]): { x: number; y: number }[] {
@@ -150,6 +151,67 @@ function RoomNode({ node, selected }: { node: DiagramNode; selected: boolean }) 
 }
 
 /**
+ * Значок двери в своих координатах: проём вдоль оси X от −w/2 до w/2 на y = 0,
+ * петли — у левого края, полотно открывается вверх (−y). Поворот и зеркало —
+ * `transform` группы. Проём (без двери) — только разрыв стены и откосы.
+ */
+function DoorGlyph({ kind, w, stroke = DOOR_STROKE }: { kind: DoorKind; w: number; stroke?: string }) {
+  const half = w / 2;
+  return (
+    <>
+      {/* Разрыв стены: белая полоса поверх линии стены (стена 2.5px). */}
+      <rect x={-half} y={-4.5} width={w} height={9} fill="#fff" />
+      <line x1={-half} y1={-6} x2={-half} y2={6} stroke={stroke} strokeWidth={2.5} strokeLinecap="round" />
+      <line x1={half} y1={-6} x2={half} y2={6} stroke={stroke} strokeWidth={2.5} strokeLinecap="round" />
+      {kind === "door" ? (
+        <>
+          <line x1={-half} y1={0} x2={-half} y2={-w} stroke={stroke} strokeWidth={2} strokeLinecap="round" />
+          <path d={`M ${-half} ${-w} A ${w} ${w} 0 0 1 ${half} 0`} fill="none" stroke={stroke} strokeWidth={1.25} strokeDasharray="4 3" />
+        </>
+      ) : (
+        <line x1={-half} y1={0} x2={half} y2={0} stroke={stroke} strokeWidth={1} strokeDasharray="3 3" />
+      )}
+    </>
+  );
+}
+
+function DoorNode({ door, selected }: { door: DiagramDoor; selected: boolean }) {
+  const transform = `translate(${door.x} ${door.y}) rotate(${door.angle})${door.flip ? " scale(-1 1)" : ""}`;
+  const half = door.w / 2;
+  const depth = door.kind === "door" ? door.w : 0;
+  // Подпись — с другой стороны от полотна, всегда горизонтально.
+  const swing = doorSwingVector(door.angle);
+  const labelGap = 16;
+  return (
+    <g data-door={door.id}>
+      <g transform={transform}>
+        {/* Зона нажатия: проём и полотно с запасом. */}
+        <rect x={-half - 6} y={-depth - 6} width={door.w + 12} height={depth + 12} fill="transparent" />
+        {selected ? (
+          <rect x={-half - 6} y={-depth - 6} width={door.w + 12} height={depth + 12} rx={6} fill="#5566f6" fillOpacity={0.08} stroke="#5566f6" strokeWidth={2} />
+        ) : null}
+        <DoorGlyph kind={door.kind} w={door.w} stroke={selected ? "#5566f6" : DOOR_STROKE} />
+      </g>
+      {door.label ? (
+        <text
+          x={door.x - swing.x * labelGap}
+          y={door.y - swing.y * labelGap}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={12}
+          fill="#3c4053"
+          paintOrder="stroke"
+          stroke="#fff"
+          strokeWidth={4}
+        >
+          {door.label}
+        </text>
+      ) : null}
+    </g>
+  );
+}
+
+/**
  * Схема целиком: помещения/этапы и связи/потоки. `onlyFlow` оставляет на плане
  * один вид потока (печать по потокам); `selected` подсвечивает элемент.
  */
@@ -162,6 +224,7 @@ export function DiagramSvg({
   onlyFlow,
   selectedNodeId,
   selectedEdgeId,
+  selectedDoorId,
   className,
   svgRef,
   svgProps,
@@ -175,6 +238,7 @@ export function DiagramSvg({
   onlyFlow?: FlowKind;
   selectedNodeId?: string | null;
   selectedEdgeId?: string | null;
+  selectedDoorId?: string | null;
   className?: string;
   /** Для редактора: ссылка на элемент и обработчики указателя. */
   svgRef?: Ref<SVGSVGElement>;
@@ -188,6 +252,10 @@ export function DiagramSvg({
       {grid ? <DiagramGrid idPrefix={idPrefix} /> : null}
 
       {kind === "floor-plan" ? data.nodes.map((n) => <RoomNode key={n.id} node={n} selected={n.id === selectedNodeId} />) : null}
+      {/* Двери — поверх стен помещений, под линиями потоков. */}
+      {kind === "floor-plan"
+        ? (data.doors ?? []).map((d) => <DoorNode key={d.id} door={d} selected={d.id === selectedDoorId} />)
+        : null}
 
       {edges.map((edge) => {
         const points = edgePoints(edge, data.nodes);
@@ -237,16 +305,33 @@ export function DiagramSvg({
   );
 }
 
-/** Легенда потоков: цветная линия с нужным штрихом и подпись. */
+/** Значок двери или проёма для легенды и кнопок: стена с разрывом. */
+export function DoorIcon({ kind, className }: { kind: DoorKind; className?: string }) {
+  return (
+    <svg width="34" height="22" viewBox="-17 -20 34 24" aria-hidden="true" className={className}>
+      <line x1={-17} y1={0} x2={-10} y2={0} stroke={ROOM_STROKE} strokeWidth={2.5} />
+      <line x1={10} y1={0} x2={17} y2={0} stroke={ROOM_STROKE} strokeWidth={2.5} />
+      <g transform="scale(0.85)">
+        <DoorGlyph kind={kind} w={20} />
+      </g>
+    </svg>
+  );
+}
+
+/** Легенда потоков: цветная линия с нужным штрихом и подпись; ниже — двери и проёмы, если есть. */
 export function FlowLegend({
   title,
   labels,
   kinds = FLOW_KINDS,
+  doorKinds = [],
+  doorLabels,
   className,
 }: {
   title: string;
   labels: Record<FlowKind, string>;
   kinds?: FlowKind[];
+  doorKinds?: DoorKind[];
+  doorLabels?: Record<DoorKind, string>;
   className?: string;
 }) {
   return (
@@ -270,6 +355,14 @@ export function FlowLegend({
             {labels[kind]}
           </li>
         ))}
+        {doorLabels
+          ? doorKinds.map((kind) => (
+              <li key={`door-${kind}`} className="flex items-center gap-2 text-[13px] text-[#3c4053]">
+                <DoorIcon kind={kind} />
+                {doorLabels[kind]}
+              </li>
+            ))
+          : null}
       </ul>
     </div>
   );

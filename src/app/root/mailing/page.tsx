@@ -38,11 +38,10 @@ export default async function RootMailingPage({
   const session = await requireRoot();
   const params = await searchParams;
   // Образцы писем обмена справочниками — тем, кому открыт их маршрут (только владелец платформы).
-  const canSendSampleLetters = canAccessPlatformPath(
-    await platformViewerForSession(session),
-    "/api/root/directory-exchange/test-letters",
-    "POST"
-  );
+  const viewer = await platformViewerForSession(session);
+  const canSendSampleLetters = canAccessPlatformPath(viewer, "/api/root/directory-exchange/test-letters", "POST");
+  // ИИ-сводка (выручка платформы) — только владельцу: остальным вкладку не показываем.
+  const canAiDigest = canAccessPlatformPath(viewer, "/api/root/mailing/ai-digest", "GET");
   const [campaigns, settings, stats, draftRaw, kinds, bases] = await Promise.all([
     listCampaigns(),
     readMailingSettings(),
@@ -56,7 +55,8 @@ export default async function RootMailingPage({
   ]);
   const draft = draftRaw && draftRaw.status === "draft" ? draftRaw : null;
   const sender = marketingSenderInfo();
-  const initialTab: MailingTab = MAILING_TABS.includes(params.tab as MailingTab)
+  const initialTab: MailingTab =
+    MAILING_TABS.includes(params.tab as MailingTab) && (params.tab !== "aiDigest" || canAiDigest)
     ? (params.tab as MailingTab)
     : draft
       ? "compose"
@@ -79,6 +79,7 @@ export default async function RootMailingPage({
     bases,
     draft,
     initialTab,
+    canAiDigest,
   };
 
   const t = await getTranslations("rootMailingShellAudience");

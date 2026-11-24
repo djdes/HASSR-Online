@@ -19,6 +19,9 @@ import {
   toUserIdList,
 } from "@/lib/cleaning-room-responsibles";
 import type { RoomResponsibleUser } from "@/lib/room-responsible-candidates";
+import { normalizeClimateRoomNorms } from "@/lib/climate-document";
+import { normalizeObjectCategory, type ObjectCategory } from "@/lib/object-categories";
+import { ObjectCategoryPicker, useObjectCategoryLabel } from "@/components/settings/object-category-picker";
 
 // Cleaning unification 2026-05-08: Room теперь хранит scope/days/detergent.
 // RoomEditorDialog позволяет редактировать всё это в /settings/buildings.
@@ -41,6 +44,8 @@ type Room = {
   currentMonthDays?: unknown;
   generalMonthDays?: unknown;
   requirePhoto?: boolean;
+  /** Нормы климата (`Room.climateNorms`); не загружено — климат в окне не показываем. */
+  climateNorms?: unknown;
 };
 type Building = {
   id: string;
@@ -53,6 +58,8 @@ type Building = {
   journalName?: string | null;
   /** "office" — офис организации (2026-10-26), иначе объект. */
   kind?: string;
+  /** Сфера объекта (2026-11-23): food | medical | consumer | sport; null — не выбрана. */
+  sphere?: string | null;
   sortOrder: number;
   rooms: Room[];
 };
@@ -106,6 +113,9 @@ export function roomEditorInitial(room: Room): RoomEditorInitial {
         )
       : [],
     requirePhoto: room.requirePhoto === true,
+    // Нормы климата — только если страница их загрузила: иначе окно не
+    // должно ни показывать «не контролируется», ни слать null на сервер.
+    ...(room.climateNorms !== undefined ? { climateNorms: normalizeClimateRoomNorms(room.climateNorms) } : {}),
   };
 }
 
@@ -326,12 +336,15 @@ export function BuildingsClient({
         roomsPerVerifier={roomsPerVerifier}
       />
 
-      {/* Новая точка — мастером (название и адрес, помещения, оборудование). */}
+      {/* Новая точка — мастером (название и адрес, помещения, оборудование).
+          На телефоне и планшете второй «Добавить объект» не нужен (владелец,
+          2026-11-23: «дублируется сверху и снизу»): кнопка шапки, уехав при
+          прокрутке, закрепляется снизу экрана (`PageActions dock`). */}
       {readOnly || pointManager ? null : (
         <Link
           href="/settings/buildings/new"
           data-add-point
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+          className="max-lg:hidden inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dcdfed] bg-white px-5 text-[14px] font-medium text-[#3c4053] transition-colors duration-150 hover:border-[#5566f6]/50 hover:bg-[#f5f6ff] hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
         >
           <Plus className="size-4" />
           {tPoint("add")}
@@ -391,6 +404,11 @@ function BuildingCard({
   const [draftKpp, setDraftKpp] = useState(building.kpp ?? "");
   const [draftPhone, setDraftPhone] = useState(building.phone ?? "");
   const [draftJournalName, setDraftJournalName] = useState(building.journalName ?? "");
+  // Сфера объекта (владелец, 2026-11-23): у офиса её нет.
+  const isOffice = building.kind === "office";
+  const sphere = normalizeObjectCategory(building.sphere);
+  const [draftSphere, setDraftSphere] = useState<ObjectCategory | null>(sphere);
+  const categoryLabel = useObjectCategoryLabel();
   // Сотрудники точки: кто работает здесь (User.buildingIds содержит точку).
   const staffHere = users.filter((u) => (userBuildingIds[u.id] ?? []).includes(building.id));
   const staffEverywhere = users.filter((u) => (userBuildingIds[u.id] ?? []).length === 0);
@@ -438,11 +456,13 @@ function BuildingCard({
           kpp: draftKpp.trim() || null,
           phone: draftPhone.trim() || null,
           journalName: draftJournalName.trim() || null,
+          ...(!isOffice && draftSphere && draftSphere !== sphere ? { sphere: draftSphere } : {}),
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d?.error ?? t("saveFailed"));
       toast.success(t("pointUpdated"));
+      if (d?.journalsLimited) toast.message(t("sphereJournalsLimited"));
       setEditing(false);
       onRefresh();
     } catch (error) {
@@ -587,6 +607,12 @@ function BuildingCard({
                 className="h-10 w-full rounded-xl border border-[#dcdfed] px-3 text-[14px] text-[#0b1024] placeholder:text-[#9b9fb3] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
               />
             </div>
+            {isOffice ? null : (
+              <div className="space-y-1" data-building-sphere-edit>
+                <ObjectCategoryPicker variant="select" value={draftSphere} onChange={setDraftSphere} disabled={savingHead} />
+                <p className="px-1 text-[12px] leading-[1.45] text-[#6f7282]">{t("sphereHint")}</p>
+              </div>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -606,6 +632,7 @@ function BuildingCard({
                   setDraftKpp(building.kpp ?? "");
                   setDraftPhone(building.phone ?? "");
                   setDraftJournalName(building.journalName ?? "");
+                  setDraftSphere(sphere);
                 }}
                 className="inline-flex h-9 items-center rounded-xl px-3 text-[13px] text-[#6f7282] hover:bg-[#f5f6ff] hover:text-[#0b1024]"
               >
@@ -624,7 +651,19 @@ function BuildingCard({
                 <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]" data-building-office>
                   {t("officeBadge")}
                 </span>
-              ) : null}
+              ) : (
+                <span
+                  data-building-sphere={sphere ?? ""}
+                  className={
+                    sphere
+                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
+                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00]"
+                  }
+                  title={t("sphereHint")}
+                >
+                  {categoryLabel(sphere)}
+                </span>
+              )}
             </div>
             {building.address ? (
               <div className="mt-0.5 text-[13px] text-[#6f7282]">{building.address}</div>

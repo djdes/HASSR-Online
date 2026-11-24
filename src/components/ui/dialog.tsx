@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { SheetGrabber } from "@/components/ui/sheet-grabber"
+import { TouchBodyScrollLock } from "@/lib/use-body-scroll-lock"
 import { Button } from "@/components/ui/button"
 
 function Dialog({
@@ -42,7 +44,7 @@ function DialogOverlay({
       className={cn(
         // Подложка эталона lk.haccp-online.ru: лёгкое затемнение + размытие
         // страницы под окном (S6 аудита), а не глухие 50% чёрного.
-        "fixed inset-0 z-50 bg-[#0b1024]/30 backdrop-blur-[6px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-[#0b1024]/30 backdrop-blur-[6px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200",
         className
       )}
       {...props}
@@ -80,6 +82,8 @@ function DialogContent({
   // Смещение и в ref: touchend может прийти раньше, чем React перерисует state.
   const dragOffsetRef = React.useRef(0)
   const [dragOffset, setDragOffset] = React.useState(0)
+  // Палец в верхней зоне — ручка складывается в стрелку (`SheetGrabber`).
+  const [pulling, setPulling] = React.useState(false)
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     onTouchStart?.(event)
@@ -87,7 +91,10 @@ function DialogContent({
     const touch = event.touches[0]
     const rect = event.currentTarget.getBoundingClientRect()
     if (!touch || touch.clientY - rect.top > SHEET_DRAG_ZONE_PX) return
+    // Окно прокручено вниз — палец листает содержимое, а не тянет лист.
+    if (event.currentTarget.scrollTop > 0) return
     dragStartY.current = touch.clientY
+    setPulling(true)
   }
   const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     onTouchMove?.(event)
@@ -104,6 +111,7 @@ function DialogContent({
     dragStartY.current = null
     dragOffsetRef.current = 0
     setDragOffset(0)
+    setPulling(false)
     if (shouldClose) closeRef.current?.click()
   }
 
@@ -125,8 +133,12 @@ function DialogContent({
         // как меню профиля и подтверждения. Один жест на весь сайт:
         // окно приходит снизу, закрывается крестиком в правом верхнем
         // углу или тапом по фону.
+        // Движение (спека site-motion-2026-11-22): на компьютере окно
+        // появляется на пружине `--spring`, на телефоне лист поднимается на
+        // `--spring-soft` — без перелёта, иначе под листом мелькнул бы зазор.
+        // Закрывается быстрее, чем открылось.
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] supports-[height:100dvh]:max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overscroll-contain max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-3xl rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 max-sm:duration-300 max-sm:data-[state=open]:slide-in-from-bottom-full max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:slide-out-to-bottom-full max-sm:data-[state=closed]:zoom-out-100 sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 grid w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] supports-[height:100dvh]:max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overscroll-contain max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-3xl rounded-lg border bg-background p-6 shadow-lg outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-97 data-[state=closed]:duration-150 data-[state=closed]:ease-in data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-96 data-[state=open]:duration-300 data-[state=open]:ease-(--spring) max-sm:data-[state=open]:duration-500 max-sm:data-[state=open]:ease-(--spring-soft) max-sm:data-[state=open]:slide-in-from-bottom-full max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:duration-200 max-sm:data-[state=closed]:slide-out-to-bottom-full max-sm:data-[state=closed]:zoom-out-100 sm:max-w-lg",
           className
         )}
         {...props}
@@ -135,9 +147,12 @@ function DialogContent({
             карточка скроллится целиком, и абсолютный крестик уезжал
             вверх вместе с текстом. Sticky держит его на виду и не
             занимает места в потоке. */}
-        {/* Ручка шторки на телефоне — подсказка «потяни вниз». Абсолютная,
-            чтобы не сдвигать шапки окон с `p-0`. */}
-        <div aria-hidden className="pointer-events-none absolute left-1/2 top-1.5 z-40 h-1 w-10 -translate-x-1/2 rounded-full bg-[#dcdfed] sm:hidden" />
+        {/* Ручка шторки на телефоне — подсказка «потяни вниз»: полоска, под
+            пальцем — стрелка вниз (владелец, 2026-11-23). Абсолютная, чтобы
+            не сдвигать шапки окон с `p-0`. */}
+        <SheetGrabber float pulled={pulling ? (dragOffset > SHEET_DISMISS_PX ? "armed" : true) : false} />
+        {/* Страница под окном на телефоне прибита (см. `use-body-scroll-lock`). */}
+        <TouchBodyScrollLock />
         <DialogPrimitive.Close ref={closeRef} tabIndex={-1} aria-hidden className="hidden" />
         {showCloseButton && (
           <div className="sticky top-0 z-30 h-0">

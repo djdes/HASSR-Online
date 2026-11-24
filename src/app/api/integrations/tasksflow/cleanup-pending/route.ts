@@ -54,7 +54,7 @@ export async function POST() {
   });
   if (!integration) {
     return NextResponse.json(
-      { error: "Интеграция с TasksFlow не настроена" },
+      { error: "Программный модуль не подключён" },
       { status: 400 }
     );
   }
@@ -68,7 +68,7 @@ export async function POST() {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown";
     return NextResponse.json(
-      { error: `TasksFlow listTasks failed: ${msg}` },
+      { error: `Не удалось получить задачи из программного модуля: ${msg}` },
       { status: 502 }
     );
   }
@@ -82,10 +82,10 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          "Интеграция не привязана к конкретной компании в TasksFlow " +
-          "(tasksflowCompanyId=null). Удалить безопасно невозможно — " +
-          "выполните «Синхронизация с TasksFlow» в настройках, чтобы " +
-          "проставить компанию.",
+          "Подключение не привязано к вашей компании в программном модуле, " +
+          "поэтому безопасно удалить задачи нельзя — нажмите " +
+          "«Синхронизировать сотрудников» на странице «Программный модуль», " +
+          "чтобы указать компанию.",
       },
       { status: 400 }
     );
@@ -103,7 +103,7 @@ export async function POST() {
       deletedTfTasks: 0,
       removedLocalLinks: 0,
       totalScanned: allTasks.length,
-      message: "Нет невыполненных задач — TasksFlow уже чистый",
+      message: "Нет невыполненных задач — в программном модуле удалять нечего",
     });
   }
 

@@ -67,6 +67,7 @@ import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 import { attachLifecycleErrorMetadata, presentLifecycleError, useLifecycleFeedbackRef, type LifecycleFeedbackRef } from "@/components/journals/document-lifecycle-error";
 import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 
 // Должность из карточки (как в UserLike) — её пишем в строку и показываем.
 type PersonItem = {
@@ -1302,7 +1303,7 @@ export function TraceabilityDocumentClient(props: Props) {
                   <td className={`${GRID_CELL_CLASS} px-2 py-1 text-center leading-tight`}>{responsibleName(row) || "—"}</td>
                 </tr>
               );
-            }) : <tr><td colSpan={isClosed ? 8 : config.showShockTempField ? 9 : 8} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6f7282]`}>{ui("noRows")}</td></tr>}
+            }) : <tr><td colSpan={isClosed ? 8 : config.showShockTempField ? 9 : 8} className={`${GRID_CELL_CLASS} px-2 py-6 text-center text-[#6f7282]`}><JournalEmpty variant="cell">{ui("noRows")}</JournalEmpty></td></tr>}
             {!isClosed ? (
               <JournalAddRow
                 // Галочка — leading, подпись растянута на «Дата» +

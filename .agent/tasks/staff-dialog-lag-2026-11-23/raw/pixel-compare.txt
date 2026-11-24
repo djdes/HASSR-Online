@@ -1,0 +1,6 @@
+Baseline build (origin/master fe4cce90) vs fixed build, same database, 1920x1080, DPR 1, animations off
+grid.png: size (1500, 700), different pixels 0
+grid-print.png: size (1500, 500), different pixels 0
+dialog.png: size (460, 952), different pixels 0
+cells.json: identical (62 cells: title, aria-label, aria-pressed / print mark)
+print-marks.json: identical (62 cells: title, aria-label, aria-pressed / print mark)

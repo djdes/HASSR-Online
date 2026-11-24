@@ -133,6 +133,7 @@ import {
 import { useTodayKey } from "@/lib/use-today-key";
 import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 /**
  * Screen ↔ print duality tokens (тот же приём, что в
  * `cleaning-document-client.tsx` / `hygiene-document-client.tsx`).
@@ -2948,7 +2949,7 @@ export function ClimateDocumentClient({
                     colSpan={3 + totalMeasurementColumns}
                     className={`${GRID_CELL_CLASS} px-4 py-10 text-center text-[13px] text-[#6f7282] leading-tight`}
                   >
-                    {t("emptyRows")}
+                    <JournalEmpty variant="cell">{t("emptyRows")}</JournalEmpty>
                   </td>
                 </tr>
               )}
@@ -3039,8 +3040,12 @@ export function ClimateDocumentClient({
         users={employees}
         onSaved={async (snapshot) => {
           // Имя и нормы строки — из карточки (snapshot), без ожидания
-          // router.refresh(); ключ строки не меняется.
-          const row = config.rooms.find((r) => r.roomId === snapshot.id);
+          // router.refresh(); ключ строки не меняется. Климат выключили —
+          // строку убрал (или оставил из-за замеров) сервер: свою копию
+          // конфига поверх не пишем, иначе вернули бы строку обратно.
+          const row = snapshot.climateNorms
+            ? config.rooms.find((r) => r.roomId === snapshot.id)
+            : undefined;
           if (row) {
             const next: ClimateRoomConfig = {
               ...row,

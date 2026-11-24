@@ -1,0 +1,4 @@
+task 86ms: UpdateLayoutTree=73ms, FunctionCall=7ms, PrePaint=2ms, Layout=2ms, RunTask=1ms, EventDispatch=1ms, HitTest=0ms, V8.HandleInterrupts=0ms
+   style recalcs: [{"style_ms":23,"elements":1210},{"style_ms":33,"elements":1212}]
+task 55ms: UpdateLayoutTree=50ms, FunctionCall=2ms, PrePaint=1ms, RunTask=1ms, EventDispatch=0ms, Layout=0ms, HitTest=0ms, RunMicrotasks=0ms
+   style recalcs: [{"style_ms":19,"elements":1215},{"style_ms":25,"elements":1096}]

@@ -66,7 +66,7 @@ async function sendPointDigests(organizationId: string, now: Date, baseUrl: stri
       renderWeeklyDigestTelegram(data),
       ["owner", "manager"],
       "compliance",
-      { label: "📊 Открыть дашборд", miniAppUrl: `${baseUrl}/dashboard` },
+      { label: "📊 Открыть «Сегодня»", miniAppUrl: `${baseUrl}/dashboard` },
       { buildingId: point.id, onlyPlace: true }
     );
   }
@@ -128,7 +128,7 @@ async function handle(request: Request) {
           renderWeeklyDigestTelegram(data),
           ["owner", "manager"],
           "compliance",
-          { label: "📊 Открыть дашборд", miniAppUrl: `${baseUrl}/dashboard` },
+          { label: "📊 Открыть «Сегодня»", miniAppUrl: `${baseUrl}/dashboard` },
           // Сводка компании — тем, кто работает на всю компанию (офис, без места).
           { onlyPlace: true }
         );

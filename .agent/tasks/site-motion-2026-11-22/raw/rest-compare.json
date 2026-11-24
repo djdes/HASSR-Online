@@ -1,0 +1,119 @@
+[
+ {
+  "screen": "classic-dark_home.png",
+  "changedPixels": 1,
+  "percent": 0.0001,
+  "bbox": [
+   308,
+   517,
+   309,
+   518
+  ]
+ },
+ {
+  "screen": "classic-dark_journals.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "classic-dark_settings_organization.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "classic-light_.png",
+  "changedPixels": 1439,
+  "percent": 0.111,
+  "bbox": [
+   453,
+   699,
+   539,
+   797
+  ]
+ },
+ {
+  "screen": "classic-light_home.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "classic-light_journals.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "classic-light_settings_notifications.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "classic-light_settings_organization.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "classic-light_staff.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "login.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "new-dark_settings_organization.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "new-light_home.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "new-light_journals.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "new-light_settings_organization.png",
+  "changedPixels": 3,
+  "percent": 0.0002,
+  "bbox": [
+   1340,
+   69,
+   1378,
+   81
+  ]
+ },
+ {
+  "screen": "phone-light_home.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "phone-light_journals.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ },
+ {
+  "screen": "phone-light_settings_organization.png",
+  "changedPixels": 0,
+  "percent": 0.0,
+  "bbox": null
+ }
+]

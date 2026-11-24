@@ -24,13 +24,14 @@ import { TasksFlowPromoHint } from "@/components/tasksflow/tasksflow-promo-hint"
 import {
   MAX_LOCATIONS,
   ORG_OWNERSHIP,
-  ORG_SPHERES,
   normalizeSphere,
 } from "@/lib/org-profile";
 import { innDigits, isValidInn } from "@/lib/inn";
 import { suggestPassword } from "@/lib/password-suggest";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { SheetGrabber } from "@/components/ui/sheet-grabber";
 import { nextSetupStep, type SetupStep } from "@/lib/setup-wizard";
+import { categoryForSphere } from "@/lib/object-categories";
 import {
   SetupEquipmentStep,
   SetupPointsStep,
@@ -95,27 +96,6 @@ export type CompleteProfileMode = "registration" | "organization";
  * это единственный авто-показ, дальше только баннер.
  */
 type Translate = ReturnType<typeof useTranslations<"dashboardUi.completeProfileNudge">>;
-
-function sphereLabel(value: string, tn: Translate): string {
-  switch (value) {
-    case "restaurant": return tn("sphereRestaurant");
-    case "cafe": return tn("sphereCafe");
-    case "bar": return tn("sphereBar");
-    case "canteen": return tn("sphereCanteen");
-    case "fastfood": return tn("sphereFastfood");
-    case "bakery": return tn("sphereBakery");
-    case "catering": return tn("sphereCatering");
-    case "hotel": return tn("sphereHotel");
-    case "retail": return tn("sphereRetail");
-    case "gas_station": return tn("sphereGasStation");
-    case "education": return tn("sphereEducation");
-    case "medical": return tn("sphereMedical");
-    case "production": return tn("sphereProduction");
-    case "fitness": return tn("sphereFitness");
-    case "beauty": return tn("sphereBeauty");
-    default: return tn("sphereOther");
-  }
-}
 
 function ownershipLabel(value: string, tn: Translate): string {
   switch (value) {
@@ -417,10 +397,13 @@ function CompleteProfileModal({
     initial?.organizationName ?? "",
   );
   const [phone, setPhone] = useState("");
-  // Тип расширяем до string намеренно: сюда же кладут значение из
-  // ЕГРЮЛ (`found.sphere`), которое приходит с сервера обычной строкой.
+  // Сферу анкета больше не спрашивает (владелец, 2026-11-23: «сферу — при
+  // создании объектов»). Известная сфера организации или подсказка ЕГРЮЛ по
+  // ОКВЭД остаются подсказкой: предлагаются как сфера новых объектов и для
+  // подбора должностей, в организацию не пишутся. Тип — string: значение
+  // ЕГРЮЛ приходит с сервера обычной строкой.
   const [sphere, setSphere] = useState<string>(
-    initial?.sphere ? normalizeSphere(initial.sphere) : "restaurant",
+    initial?.sphere ? normalizeSphere(initial.sphere) : "other",
   );
   const [ownershipKind, setOwnershipKind] = useState<string>(
     initial?.ownershipKind ?? "private",
@@ -554,7 +537,6 @@ function CompleteProfileModal({
         body: JSON.stringify({
           organizationName: organizationName.trim(),
           phone: organizationMode ? (initial?.phone ?? "").trim() : phone.trim(),
-          sphere,
           ownershipKind,
           locationsCount,
           inn: inn.trim(),
@@ -601,6 +583,36 @@ function CompleteProfileModal({
   const savedMessage = !organizationMode && newPassword.trim()
     ? tn("savedWithPassword")
     : tn("saved");
+
+  /**
+   * Тап по шагу в полоске шагов (владелец, 2026-11-23: «переключение шагов не
+   * работает» — до сохранения анкеты кнопки были выключены и молчали).
+   * Анкета сохранена — просто переходим. Не сохранена — тап по следующему
+   * шагу значит «сохранить и перейти туда»; если анкета заполнена неверно,
+   * остаёмся на ней, подсвечиваем обязательные поля и говорим почему.
+   */
+  async function selectStep(next: SetupStep) {
+    if (next === step || busy) return;
+    if (profileSaved || next === "profile") {
+      setStep(next);
+      return;
+    }
+    if (!canSubmit) {
+      setTouched((t) => ({ ...t, org: true, phone: true, password: true }));
+      toast.error(tn("setup.fillProfileFirst"));
+      return;
+    }
+    setSaving(true);
+    try {
+      const saved = await saveProfile();
+      if (!saved) return;
+      setProfileSaved(true);
+      toast.success(savedMessage);
+      setStep(next);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -683,9 +695,10 @@ function CompleteProfileModal({
         data-mobile-sheet
         className="relative flex max-h-[94dvh] w-full max-w-[520px] flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_40px_100px_-40px_rgba(11,16,36,0.6)] max-sm:animate-in max-sm:slide-in-from-bottom max-sm:duration-300 sm:rounded-3xl sm:pb-0"
       >
-        {/* Ручка — признак листа снизу (как у `ui/dialog` на телефоне). */}
-        <div aria-hidden className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[#dcdfed] sm:hidden" />
-        <div className="flex shrink-0 items-start gap-3 px-4 pb-1 pt-3.5 sm:px-5 sm:pt-5">
+        {/* Ручка — признак листа снизу: полоска, под пальцем — стрелка вниз
+            (общая `SheetGrabber`; жест ведёт `motion-presence.ts`). */}
+        <SheetGrabber />
+        <div className="flex shrink-0 items-start gap-3 px-4 pb-1 pt-0.5 sm:px-5 sm:pt-5">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
             <UserRoundPen className="size-[18px]" />
           </span>
@@ -724,14 +737,10 @@ function CompleteProfileModal({
           </button>
         </div>
 
-        <SetupStepper
-          step={step}
-          onSelect={setStep}
-          canSelect={(key) => key === "profile" || profileSaved}
-        />
+        <SetupStepper step={step} onSelect={(next) => void selectStep(next)} />
 
         {step === "points" ? (
-          <SetupPointsStep defaultAddress={address.trim()} onDone={advance} />
+          <SetupPointsStep defaultAddress={address.trim()} defaultCategory={categoryForSphere(sphere)} onDone={advance} />
         ) : step === "staff" ? (
           <SetupStaffStep sphere={sphere} onDone={advance} />
         ) : step === "equipment" ? (
@@ -853,28 +862,10 @@ function CompleteProfileModal({
           )}
 
           {/* Остальное необязательно и стоит парами по смыслу, чтобы анкета
-              помещалась в первый экран телефона. */}
-          <div className="grid grid-cols-2 gap-2" data-guide="profile-sphere">
-            <Field label={tn("sphere")}>
-              <SelectShell>
-                <select
-                  value={sphere}
-                  onChange={(e) => {
-                    sphereTouchedRef.current = true;
-                    setSphere(e.target.value);
-                  }}
-                  className={SELECT_CLASS}
-                >
-                  {ORG_SPHERES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {sphereLabel(s.value, tn)}
-                    </option>
-                  ))}
-                </select>
-              </SelectShell>
-            </Field>
-
-            <Field label={tn("ownership")}>
+              помещалась в первый экран телефона. Сферы здесь нет (владелец,
+              2026-11-23): её выбирают у каждого объекта — на следующем шаге. */}
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={tn("ownership")} guide="profile-ownership">
               <SelectShell>
                 <select
                   value={ownershipKind}
@@ -892,9 +883,7 @@ function CompleteProfileModal({
                 </select>
               </SelectShell>
             </Field>
-          </div>
 
-          <div className="grid grid-cols-2 gap-2">
             <Field label={tn("locations")} plain guide="profile-locations">
               {/* -my-1: кнопки счётчика 32px, а строка значения в соседних
                   полях 24px — вытягиваем поле до общей высоты, зона нажатия
@@ -909,48 +898,48 @@ function CompleteProfileModal({
                 />
               </span>
             </Field>
-
-            <Field label={tn("inn")} guide="profile-inn">
-              {/* Иконка справа обещает автозаполнение: лупа до ввода, спиннер,
-                  галочка или предупреждение после. */}
-              <span className="flex items-center gap-1">
-                <input
-                  value={inn}
-                  onChange={(e) => {
-                    setInn(e.target.value.replace(/\D/g, ""));
-                    setInnState("idle");
-                  }}
-                  inputMode="numeric"
-                  placeholder="7701234567"
-                  maxLength={12}
-                  className={CONTROL_CLASS}
-                />
-                {innState === "loading" ? (
-                  <Loader2
-                    className="size-4 shrink-0 animate-spin text-[#5566f6]"
-                    aria-label={tn("egrulSearching")}
-                  />
-                ) : innState === "found" ? (
-                  <Check
-                    className="size-4 shrink-0 text-[#116b2a]"
-                    aria-label={tn("egrulFound")}
-                  />
-                ) : innState === "missing" ? (
-                  <CircleAlert
-                    className="size-4 shrink-0 text-[#a13a32]"
-                    aria-label={tn("egrulMissing")}
-                  />
-                ) : (
-                  <span
-                    title={tn("innHint")}
-                    className="flex shrink-0 text-[#9b9fb3]"
-                  >
-                    <Search className="size-4" aria-label={tn("innAutofill")} />
-                  </span>
-                )}
-              </span>
-            </Field>
           </div>
+
+          <Field label={tn("inn")} guide="profile-inn">
+            {/* Иконка справа обещает автозаполнение: лупа до ввода, спиннер,
+                галочка или предупреждение после. */}
+            <span className="flex items-center gap-1">
+              <input
+                value={inn}
+                onChange={(e) => {
+                  setInn(e.target.value.replace(/\D/g, ""));
+                  setInnState("idle");
+                }}
+                inputMode="numeric"
+                placeholder="7701234567"
+                maxLength={12}
+                className={CONTROL_CLASS}
+              />
+              {innState === "loading" ? (
+                <Loader2
+                  className="size-4 shrink-0 animate-spin text-[#5566f6]"
+                  aria-label={tn("egrulSearching")}
+                />
+              ) : innState === "found" ? (
+                <Check
+                  className="size-4 shrink-0 text-[#116b2a]"
+                  aria-label={tn("egrulFound")}
+                />
+              ) : innState === "missing" ? (
+                <CircleAlert
+                  className="size-4 shrink-0 text-[#a13a32]"
+                  aria-label={tn("egrulMissing")}
+                />
+              ) : (
+                <span
+                  title={tn("innHint")}
+                  className="flex shrink-0 text-[#9b9fb3]"
+                >
+                  <Search className="size-4" aria-label={tn("innAutofill")} />
+                </span>
+              )}
+            </span>
+          </Field>
 
           {/* Имя и пароль у владельца уже есть — новой организации их не задают. */}
           {organizationMode ? null : (
@@ -1116,6 +1105,8 @@ function Field({
   return (
     <Tag className={`block ${className}`} data-guide={guide}>
       <span
+        // Поле с ошибкой один раз вздрагивает (`motion.css`, раздел 2b).
+        data-field-invalid={error || invalid ? "" : undefined}
         className={`flex flex-col gap-0.5 rounded-2xl border bg-white px-3.5 py-2 transition-[border-color,box-shadow] focus-within:ring-4 ${
           error || invalid
             ? "border-[#ff8d7d] focus-within:border-[#d2453d] focus-within:ring-[#d2453d]/15"

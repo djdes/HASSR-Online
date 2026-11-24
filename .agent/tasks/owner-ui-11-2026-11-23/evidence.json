@@ -1,0 +1,26 @@
+{
+  "task": "owner-ui-11-2026-11-23",
+  "branch": "claude/gallant-lamport-ye778b",
+  "base": "6f95d7c6a",
+  "checkedAt": "2026-11-23",
+  "pr": "djdes/HASSR-Online#313",
+  "mergedAs": "42b4fac1d580baddb40041b96d9388f62c93b4ea",
+  "deployRun": "45232477846",
+  "prodCheckedAt": "2026-11-23T18:19:02Z",
+  "acceptance": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/ppk/records.ts", "src/lib/ppk/diagram.ts", "src/lib/ppk/diagram.test.ts", "src/components/production-control/diagram-editor.tsx", "src/components/production-control/diagram-svg.tsx", "raw/ui-check.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/ppk/diagram.ts", "src/lib/ppk/diagram.test.ts", "src/app/(dashboard)/production-control/sanitation/floor-plans/[id]/print/page.tsx", "raw/ui-check.txt"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/equipment-type-fields.ts", "src/lib/equipment-type-fields.test.ts", "src/components/settings/equipment-dialog.tsx", "raw/ui-check.txt"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/equipment-type-fields.ts", "src/lib/equipment-type-fields.test.ts", "src/components/settings/filler-picker.tsx", "raw/ui-check.txt"] },
+    "AC5": { "status": "PASS", "evidence": ["src/components/ui/select.tsx", "src/app/select-polish.css", "src/components/ui/select-frame.test.ts", "raw/ui-check.txt"] },
+    "AC6": { "status": "PASS", "evidence": ["src/app/select-polish.css", "src/components/settings/organization-info-form.tsx", "raw/ui-check.txt"] },
+    "AC7": { "status": "PASS", "evidence": ["src/components/layout/header.tsx", "src/components/layout/header-profile-footer.test.ts", "raw/ui-check.txt"] },
+    "AC8": { "status": "PASS", "evidence": ["src/components/layout/header.tsx", "src/components/layout/header-profile-footer.test.ts", "raw/ui-check.txt"] },
+    "AC9": { "status": "PASS", "evidence": ["src/components/layout/header.tsx", "src/components/layout/new-profile-menu.tsx", "src/components/i18n/personal-language-select.tsx", "raw/ui-check.txt"] },
+    "AC10": { "status": "PASS", "evidence": ["src/components/settings/organization-info-form.tsx", "src/components/settings/organization-page-kit.tsx", "raw/ui-check.txt"] },
+    "AC11": { "status": "PASS", "evidence": ["src/components/settings/journal-responsibles-client.tsx", "src/lib/app-nav.ts", "src/lib/settings-cards.ts", "src/lib/route-titles.ts", "raw/ui-check.txt"] },
+    "AC12": { "status": "PASS", "evidence": ["src/i18n/plain-language.test.ts", "src/app/(dashboard)/settings/phone/phone-binding-client.tsx", "src/components/tasksflow/tasksflow-promo-hint.tsx", "raw/ui-check.txt"] },
+    "AC13": { "status": "PASS", "evidence": ["src/i18n/plain-language.test.ts", "src/i18n/messages/ru.json", "src/i18n/messages/en.json", "src/i18n/messages/uz.json"] },
+    "AC14": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt", "raw/eslint.txt", "raw/next-build.txt", "raw/ui-check.txt", "raw/before-prod-checks.txt", "raw/after-prod-checks.txt", "e2e/post-deploy-check.sh"] }
+  }
+}

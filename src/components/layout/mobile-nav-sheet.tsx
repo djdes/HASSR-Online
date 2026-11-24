@@ -10,6 +10,18 @@ import { BrandHeaderAction, OrganizationBrand } from "@/components/layout/organi
 import type { SidebarOrgIdentity } from "@/lib/sidebar-org-identity";
 
 /**
+ * Открыть лист меню (`menu`) или профиля (`profile`) не кнопкой шапки:
+ * «Настройки» нижнего меню телефона (`mobile-tab-bar.tsx`, владелец
+ * 2026-11-23). Слушает шапка (`Header`): состояние листов живёт там.
+ */
+export const MOBILE_SHEET_EVENT = "wesetup:mobile-sheet-open";
+export type MobileSheetKind = "menu" | "profile";
+
+export function openMobileSheet(kind: MobileSheetKind) {
+  window.dispatchEvent(new CustomEvent<MobileSheetKind>(MOBILE_SHEET_EVENT, { detail: kind }));
+}
+
+/**
  * Меню на телефоне и планшете (<1024px) — листом снизу, в шаблоне «Новый»
  * (владелец, 2026-11-11): то же дерево меню, что в сайдбаре (`NavAccordion`),
  * все уровни раскрываются прямо в листе. Сверху, на месте слова «Меню», —

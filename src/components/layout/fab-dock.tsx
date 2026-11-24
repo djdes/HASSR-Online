@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { BottomSheet, SHEET_ROW_CLASS } from "@/components/ui/bottom-sheet";
 import { useIsNarrowViewport } from "@/components/ui/spotlight-tour";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 /**
  * Док плавающих кнопок.
@@ -56,6 +57,23 @@ type Registry = {
 };
 
 const FabDockContext = createContext<Registry | null>(null);
+
+/**
+ * Открыть док не своей кнопкой: «Контакты» нижнего меню телефона
+ * (`mobile-tab-bar.tsx`, владелец 2026-11-23) — то же, что нажатие на круглую
+ * кнопку, которой на телефоне и планшете при нижнем меню нет.
+ */
+export const FAB_DOCK_OPEN_EVENT = "wesetup:fab-dock-open";
+
+/** Непрочитанные во всех действиях дока — для значка «Контакты» в нижнем меню. */
+const FabDockUnreadContext = createContext(0);
+
+export function useFabDockUnread(): number {
+  return useContext(FabDockUnreadContext);
+}
+
+/** Телефон и планшет — где вместо круглой кнопки нижнее меню. */
+const TAB_BAR_QUERY = "(max-width: 1023.98px)";
 
 /**
  * Регистрирует кнопку в доке, пока компонент смонтирован.
@@ -97,6 +115,7 @@ export function useHasFabDock(): boolean {
 export function FabDockProvider({
   children,
   slotId,
+  withTabBar = false,
 }: {
   children: ReactNode;
   /**
@@ -106,6 +125,12 @@ export function FabDockProvider({
    * удавалось только после прокрутки.
    */
   slotId?: string;
+  /**
+   * На телефоне и планшете (<1024px) есть нижнее меню с «Контактами»
+   * (`MobileTabBar`): круглой кнопки там нет, док открывается из меню —
+   * листом снизу.
+   */
+  withTabBar?: boolean;
 }) {
   const [actions, setActions] = useState<FabAction[]>([]);
 
@@ -123,18 +148,24 @@ export function FabDockProvider({
   }, []);
 
   const registry = useMemo(() => ({ register, unregister }), [register, unregister]);
+  const unread = actions.reduce((sum, item) => sum + (item.badge ?? 0), 0);
 
   return (
     <FabDockContext.Provider value={registry}>
-      {children}
-      <FabDock actions={actions} slotId={slotId} />
+      <FabDockUnreadContext.Provider value={unread}>
+        {children}
+        <FabDock actions={actions} slotId={slotId} withTabBar={withTabBar} />
+      </FabDockUnreadContext.Provider>
     </FabDockContext.Provider>
   );
 }
 
-function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string }) {
+function FabDock({ actions, slotId, withTabBar }: { actions: FabAction[]; slotId?: string; withTabBar: boolean }) {
   const t = useTranslations("layoutUi.fabDock");
-  const narrow = useIsNarrowViewport();
+  // С нижним меню (<1024px) док открывается из «Контактов» и всегда листом:
+  // круглой кнопки, над которой встала бы карточка, там нет.
+  const tabBarScreen = useMediaQuery(TAB_BAR_QUERY);
+  const narrow = useIsNarrowViewport() || (withTabBar && tabBarScreen);
   const [sheetRequested, setSheetRequested] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const newDesign = useNewDesign();
@@ -152,6 +183,32 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
   // размонтировался) — тогда листу нечего показывать, считаем закрытым.
   const sheetOpen = sheetRequested && actions.length > 1;
 
+  // Одна кнопка справа снизу в обоих дизайнах. Одно действие — сразу оно;
+  // несколько — на компьютере карточка над кнопкой, на телефоне — лист снизу.
+  //   • «Новая» тема (владелец, 2026-11-11): чёрная кнопка сразу открывает
+  //     «Контакты»; нет их — одно действие или карточка со списком.
+  //   • Прежний дизайн (владелец, 2026-11-19: «одна кнопка, как в новой»):
+  //     вместо ряда из трёх кнопок — одна; по ней список всех действий
+  //     (контакты, поддержка, помощник, «Как заполнять») — ни одно не пропадает.
+  const contacts = actions.find((action) => action.id === "contacts");
+  const single = newDesign
+    ? (contacts ?? (actions.length === 1 ? actions[0] : null))
+    : actions.length === 1
+      ? actions[0]
+      : null;
+
+  // «Контакты» нижнего меню — то же, что нажатие на круглую кнопку.
+  useEffect(() => {
+    if (slotId) return;
+    const open = () => {
+      if (single) single.onSelect();
+      else if (narrow) setSheetRequested(true);
+      else setPanelOpen((value) => !value);
+    };
+    window.addEventListener(FAB_DOCK_OPEN_EVENT, open);
+    return () => window.removeEventListener(FAB_DOCK_OPEN_EVENT, open);
+  }, [single, narrow, slotId]);
+
   if (typeof document === "undefined" || actions.length === 0) return null;
 
   const unread = actions.reduce((sum, item) => sum + (item.badge ?? 0), 0);
@@ -160,18 +217,18 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
   // несколько — тот же лист снизу, что и у плавающей кнопки.
   if (slotId) {
     if (!slot) return null;
-    const single = actions.length === 1 ? actions[0] : null;
+    const only = actions.length === 1 ? actions[0] : null;
     return (
       <>
         {createPortal(
           <button
             type="button"
-            onClick={() => (single ? single.onSelect() : setSheetRequested(true))}
+            onClick={() => (only ? only.onSelect() : setSheetRequested(true))}
             aria-label={
               unread > 0
                 ? t("helpAriaUnread", { count: unread })
-                : single
-                  ? single.label
+                : only
+                  ? only.label
                   : t("helpAria")
             }
             style={{
@@ -198,19 +255,6 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
     );
   }
 
-  // Одна кнопка справа снизу в обоих дизайнах. Одно действие — сразу оно;
-  // несколько — на компьютере карточка над кнопкой, на телефоне — лист снизу.
-  //   • «Новая» тема (владелец, 2026-11-11): чёрная кнопка сразу открывает
-  //     «Контакты»; нет их — одно действие или карточка со списком.
-  //   • Прежний дизайн (владелец, 2026-11-19: «одна кнопка, как в новой»):
-  //     вместо ряда из трёх кнопок — одна; по ней список всех действий
-  //     (контакты, поддержка, помощник, «Как заполнять») — ни одно не пропадает.
-  const contacts = actions.find((action) => action.id === "contacts");
-  const single = newDesign
-    ? (contacts ?? (actions.length === 1 ? actions[0] : null))
-    : actions.length === 1
-      ? actions[0]
-      : null;
   const title = newDesign ? t("contacts") : single ? single.label : t("dockTitle");
   // Прежний дизайн: кнопка — «Контакты и помощь», контакты в списке первыми.
   const listed = newDesign
@@ -223,6 +267,8 @@ function FabDock({ actions, slotId }: { actions: FabAction[]; slotId?: string })
           data-fab-dock
           className={cn(
             "fixed z-30 print:hidden",
+            // Телефон и планшет с нижним меню: вместо кнопки — «Контакты» в меню.
+            withTabBar && "max-lg:hidden",
             // Прежний дизайн, компьютер: кнопка по центру полосы подвала
             // (72px) и по правому полю страницы — как «Пришла проверка» слева.
             newDesign ? "right-5 bottom-5" : "right-5 bottom-5 lg:right-8 lg:bottom-3",

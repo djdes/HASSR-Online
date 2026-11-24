@@ -19,6 +19,7 @@ import {
   Phone,
   Receipt,
   Send,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,7 +34,7 @@ import { DIRECTION_LABEL, STAGE_TONE, channelLabel, displayName, formatAgo, form
 import { CARD, INPUT, PRIMARY_BUTTON, SECONDARY_BUTTON, TEXTAREA } from "../../crm-ui";
 
 type Links = { feedback: boolean; proposals: boolean; invoices: boolean; organization: boolean; mailSettings: boolean };
-type ComposerKind = "email" | "telegram" | "call" | "note";
+type ComposerKind = "email" | "telegram" | "avito" | "call" | "note";
 
 const DIRECTION_TONE: Record<string, string> = {
   in: "border-[#dfe3ff] bg-[#f7f8ff]",
@@ -69,7 +70,7 @@ export function ContactCardClient({
   const [editOpen, setEditOpen] = useState(false);
   const [spamOpen, setSpamOpen] = useState(false);
   const [details, setDetails] = useState({ name: contact.name ?? "", company: contact.company ?? "", email: contact.email ?? "", phone: contact.phone ?? "", note: contact.note ?? "" });
-  const defaultKind: ComposerKind = contact.email ? "email" : contact.telegramChatId ? "telegram" : "call";
+  const defaultKind: ComposerKind = contact.email ? "email" : contact.telegramChatId ? "telegram" : contact.avitoUserId ? "avito" : "call";
   const [kind, setKind] = useState<ComposerKind>(defaultKind);
   const lastSubject = interactions.find((item) => item.subject && item.channel === "email")?.subject ?? "";
   const [subject, setSubject] = useState(lastSubject ? (lastSubject.startsWith("Re:") ? lastSubject : `Re: ${lastSubject}`) : "WeSetup — электронные журналы ХАССП");
@@ -110,7 +111,7 @@ export function ContactCardClient({
       });
       const result = (await response.json().catch(() => null)) as { error?: string; note?: string } | null;
       if (!response.ok) throw new Error(result?.error ?? "Не получилось");
-      const done: Record<string, string> = { email: "Письмо отправлено", telegram: "Сообщение ушло в Telegram", call: "Звонок записан", note: "Заметка сохранена", resolved: "Отмечено: ответ не нужен" };
+      const done: Record<string, string> = { email: "Письмо отправлено", telegram: "Сообщение ушло в Telegram", avito: "Сообщение ушло в чат Авито", call: "Звонок записан", note: "Заметка сохранена", resolved: "Отмечено: ответ не нужен" };
       toast.success(done[kindToSend], result?.note ? { description: result.note } : undefined);
       if (kindToSend !== "resolved") setBody("");
       router.refresh();
@@ -130,6 +131,7 @@ export function ContactCardClient({
   const composerTabs: { key: ComposerKind; label: string; icon: typeof Mail; disabled?: string }[] = [
     { key: "email", label: "Письмо", icon: Mail, disabled: contact.email ? undefined : "нет почты" },
     { key: "telegram", label: "Telegram", icon: Send, disabled: contact.telegramChatId ? undefined : "не писал боту" },
+    ...(contact.avitoUserId ? [{ key: "avito" as const, label: "Авито", icon: Store }] : []),
     { key: "call", label: "Звонок", icon: Phone },
     { key: "note", label: "Заметка", icon: NotebookPen },
   ];
@@ -225,6 +227,8 @@ export function ContactCardClient({
                   ? `Письмо на ${contact.email ?? ""}. Подпись из «Моей почты» добавится сама.`
                   : kind === "telegram"
                     ? "Сообщение придёт клиенту от бота WeSetup."
+                    : kind === "avito"
+                      ? "Сообщение уйдёт в чат Авито от имени компании."
                     : kind === "call"
                       ? "Позвонил: о чём договорились, что дальше."
                       : "Заметка для команды — клиент её не увидит."
@@ -243,7 +247,7 @@ export function ContactCardClient({
               </span>
               <button type="button" onClick={() => send(kind)} disabled={saving !== null || !body.trim() || (kind === "email" && (!subject.trim() || !emailReady))} className={PRIMARY_BUTTON} data-crm-send>
                 {saving?.startsWith("send:") ? <Loader2 className="size-4 animate-spin" /> : null}
-                {kind === "email" ? "Отправить письмо" : kind === "telegram" ? "Отправить в Telegram" : kind === "call" ? "Записать звонок" : "Сохранить заметку"}
+                {kind === "email" ? "Отправить письмо" : kind === "telegram" ? "Отправить в Telegram" : kind === "avito" ? "Отправить в Авито" : kind === "call" ? "Записать звонок" : "Сохранить заметку"}
               </button>
             </div>
           </div>

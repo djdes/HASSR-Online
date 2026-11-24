@@ -16,6 +16,13 @@ import { sendFeedbackReplyEmail } from "@/lib/email";
 import { resolveLocale } from "@/i18n/locales";
 import { upsertNotification } from "@/lib/notifications";
 import { escapeTelegramHtml, sendTelegramMessage } from "@/lib/telegram";
+import type { SupportAttachmentMeta } from "@/lib/support-attachments-shared";
+
+/** Абсолютная ссылка на вложение — как `absoluteAttachmentUrl` (без fs-модуля вложений). */
+function absoluteUrl(meta: SupportAttachmentMeta): string {
+  const base = (process.env.NEXTAUTH_URL ?? "https://wesetup.ru").replace(/\/+$/, "");
+  return `${base}${meta.url}`;
+}
 
 export type FeedbackReplyChannels = {
   inApp: boolean;
@@ -47,6 +54,8 @@ export type FeedbackReplyDeps = {
     respondedAt: Date;
     respondedById: string;
     respondedByName: string;
+    /** Скриншоты ответа (2026-11-23); пусто — без вложений. */
+    attachments?: SupportAttachmentMeta[];
   }) => Promise<void>;
   findRecipient: (args: {
     userId: string;
@@ -57,6 +66,7 @@ export type FeedbackReplyDeps = {
     userId: string;
     reportId: string;
     responseMessage: string;
+    attachments?: SupportAttachmentMeta[];
   }) => Promise<void>;
   sendTelegram: (chatId: string, text: string) => Promise<boolean>;
   sendEmail: (args: {
@@ -99,6 +109,7 @@ function defaultDeps(): FeedbackReplyDeps {
       respondedAt,
       respondedById,
       respondedByName,
+      attachments,
     }) {
       await db.feedbackReport.update({
         where: { id: reportId },
@@ -107,6 +118,7 @@ function defaultDeps(): FeedbackReplyDeps {
           respondedAt,
           respondedById,
           respondedByName,
+          ...(attachments && attachments.length > 0 ? { replyAttachments: attachments } : {}),
         },
       });
     },
@@ -131,6 +143,7 @@ function defaultDeps(): FeedbackReplyDeps {
       userId,
       reportId,
       responseMessage,
+      attachments,
     }) {
       await upsertNotification({
         organizationId,
@@ -139,7 +152,15 @@ function defaultDeps(): FeedbackReplyDeps {
         dedupeKey: `feedback.reply:${reportId}`,
         title: "Получен ответ на ваше обращение",
         messageKey: "feedbackReply",
-        items: [{ id: reportId, label: responseMessage }],
+        items: [
+          { id: reportId, label: responseMessage },
+          // Скриншоты ответа — строками со ссылкой на файл.
+          ...(attachments ?? []).map((attachment, index) => ({
+            id: `${reportId}:attachment:${index}`,
+            label: `📎 ${attachment.filename}`,
+            href: attachment.url,
+          })),
+        ],
       });
     },
     async sendTelegram(chatId, text) {
@@ -169,14 +190,27 @@ export function quoteOriginalMessage(message: string, limit = 100): string {
 export function buildFeedbackReplyTelegramText(args: {
   replyMessage: string;
   originalMessage: string;
+  /** Скриншоты ответа — ссылками (2026-11-23). */
+  attachments?: SupportAttachmentMeta[];
 }): string {
+  const files = (args.attachments ?? []).map(
+    (attachment) => `📎 <a href="${escapeTelegramHtml(absoluteUrl(attachment))}">${escapeTelegramHtml(attachment.filename)}</a>`,
+  );
   return [
     "📮 <b>Ответ поддержки WeSetup</b>",
     "",
     escapeTelegramHtml(args.replyMessage),
+    ...(files.length > 0 ? ["", ...files] : []),
     "",
     `<i>На ваше сообщение: «${escapeTelegramHtml(quoteOriginalMessage(args.originalMessage))}»</i>`,
   ].join("\n");
+}
+
+/** Текст ответа для письма: вложения — ссылками в конце. */
+export function feedbackReplyEmailText(replyMessage: string, attachments: SupportAttachmentMeta[] = []): string {
+  if (attachments.length === 0) return replyMessage;
+  const files = attachments.map((attachment) => `📎 ${attachment.filename} — ${absoluteUrl(attachment)}`);
+  return [replyMessage, "", ...files].join("\n");
 }
 
 export async function applyFeedbackReply(
@@ -185,6 +219,8 @@ export async function applyFeedbackReply(
     message: string;
     respondedById: string;
     respondedByName: string;
+    /** Скриншоты и файлы ответа (2026-11-23), уже проверенные подписью. */
+    attachments?: SupportAttachmentMeta[];
   },
   overrides?: Partial<FeedbackReplyDeps>
 ): Promise<{
@@ -200,7 +236,10 @@ export async function applyFeedbackReply(
     throw new FeedbackReplyError("Обращение не найдено", 404);
   }
 
-  const responseMessage = args.message.trim();
+  const attachments = args.attachments ?? [];
+  // Ответ одним скриншотом тоже ответ: текст тогда — имена файлов.
+  const responseMessage =
+    args.message.trim() || (attachments.length > 0 ? `📎 ${attachments.map((a) => a.filename).join(", ")}` : "");
   if (!responseMessage) {
     throw new FeedbackReplyError("Введите текст ответа", 400);
   }
@@ -212,6 +251,7 @@ export async function applyFeedbackReply(
     respondedAt,
     respondedById: args.respondedById,
     respondedByName: args.respondedByName,
+    ...(attachments.length > 0 ? { attachments } : {}),
   });
 
   const channels: FeedbackReplyChannels = {
@@ -241,6 +281,7 @@ export async function applyFeedbackReply(
         userId: recipient.id,
         reportId: report.id,
         responseMessage,
+        ...(attachments.length > 0 ? { attachments } : {}),
       });
       channels.inApp = true;
     } catch (error) {
@@ -258,6 +299,7 @@ export async function applyFeedbackReply(
         buildFeedbackReplyTelegramText({
           replyMessage: responseMessage,
           originalMessage: report.message,
+          attachments,
         })
       );
     } catch (error) {
@@ -269,7 +311,7 @@ export async function applyFeedbackReply(
     try {
       channels.email = await deps.sendEmail({
         to: report.userEmail,
-        replyMessage: responseMessage,
+        replyMessage: feedbackReplyEmailText(responseMessage, attachments),
         originalMessage: report.message,
         respondedByName: args.respondedByName,
         locale: resolveLocale({ authenticated: true, userLocale: recipient?.locale, organizationLocale: recipient?.organizationLocale }),

@@ -17,6 +17,8 @@ export default async function TaskVisibilityPage() {
   const organizationId = getActiveOrgId(session);
   const locale = await getSiteLocale();
   const t = await getTranslations({ locale, namespace: "settingsTaskVisibility" });
+  // В тексте — названия страниц, а не их адреса (владелец, 2026-11-23: без жаргона).
+  const tNav = await getTranslations({ locale, namespace: "navigation" });
 
   const positions = await db.jobPosition.findMany({
     where: { organizationId },
@@ -60,11 +62,11 @@ export default async function TaskVisibilityPage() {
           },
           {
             title: t("guide.managers.title"),
-            body: t("guide.managers.body", { hierarchyPath: "/settings/staff-hierarchy" }),
+            body: t("guide.managers.body", { hierarchyPath: tNav("shell.menus.staff.items.hierarchy") }),
           },
           {
             title: t("guide.sync.title"),
-            body: t("guide.sync.body", { integrationPath: "/settings/integrations/tasksflow" }),
+            body: t("guide.sync.body", { integrationPath: tNav("routes.settings_integrations_tasksflow") }),
           },
         ]}
         qa={[

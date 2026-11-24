@@ -2,7 +2,7 @@ import { formatDate, type Locale } from "./locales";
 import { translatorFor } from "./translator";
 import { IDEA_STATUSES, IDEA_STATUS_LABEL, describeIdeaStatusChange, isIdeaStatus } from "@/lib/ideas/rules";
 
-const MESSAGE_KEYS = ["staffJournal", "trainingPlan", "openJournal", "openTrainingPlan", "feedbackReply", "pinRequests", "reviewPinRequests", "pinRequestItem", "fromQrPage", "hygieneAdmission", "hygieneSigned", "hygieneComplaints", "ideaStatus", "ideaStatusLabel", "openIdeas", "open", "orgTrialEnding", "orgTrialLastDay", "addPoint", "orgTrialAccountCovers"] as const;
+const MESSAGE_KEYS = ["staffJournal", "trainingPlan", "openJournal", "openTrainingPlan", "feedbackReply", "pinRequests", "reviewPinRequests", "pinRequestItem", "fromQrPage", "hygieneAdmission", "hygieneSigned", "hygieneComplaints", "ideaStatus", "ideaStatusLabel", "openIdeas", "open", "orgTrialEnding", "orgTrialLastDay", "addPoint", "orgTrialAccountCovers", "supportReport", "supportChat"] as const;
 export type NotificationMessageKey = typeof MESSAGE_KEYS[number];
 export type NotificationMessageParams = Record<string, string | number>;
 

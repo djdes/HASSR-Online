@@ -88,8 +88,11 @@ export function SectionFrame({
           доступа» она тоже остаётся (скрытой): если сервер уводит со
           страницы редиректом, он сработает. Новая область данных — новый
           `key`: страница собирается заново из данных новой организации/точки. */}
+      {/* `data-page-area` (сайт): страницы под ним плавно проявляются при смене адреса
+          (`MotionRuntime`). В Mini App вход экрана — свой (`mini/template.tsx`). */}
       <div
         key={scopeKey}
+        data-page-area={shell === "site" ? "" : undefined}
         className={pending || denied ? "hidden" : "contents"}
         aria-hidden={pending || denied || undefined}
       >

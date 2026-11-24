@@ -1,0 +1,9 @@
+build-info: 
+FAIL прод не на 42b4fac
+PASS / — 200
+PASS /login — 200
+PASS /features — 200
+FAIL CSS: нет листа списков
+FAIL CSS: нет base-select
+FAIL API сложности журналов отвечает 401
+pass=3 fail=4

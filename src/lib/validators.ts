@@ -133,7 +133,9 @@ export const completeProfileSchema = z.object({
     .min(2, "Название организации — минимум 2 символа")
     .max(200),
   phone: z.string().trim().min(1, "Укажите телефон").max(40),
-  sphere: z.enum(ORG_SPHERE_VALUES).default("restaurant"),
+  // Сферу анкета больше не присылает (2026-11-23: сфера — у объектов). Без
+  // неё сфера и набор журналов организации не меняются.
+  sphere: z.enum(ORG_SPHERE_VALUES).optional(),
   ownershipKind: z.enum(ORG_OWNERSHIP_VALUES).default("private"),
   locationsCount: z.coerce.number().int().min(1).max(MAX_LOCATIONS).default(1),
   inn: z.string().trim().max(20).optional().or(z.literal("")),

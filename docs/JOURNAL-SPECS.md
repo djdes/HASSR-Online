@@ -8,7 +8,7 @@
 - Реестр спецификаций — `src/lib/journal-specs.ts`
 - Task modes (distribution / verification) — `src/lib/journal-task-modes.ts`
 - Schemas (slot ответственных) — `src/lib/journal-responsible-schemas.ts`
-- Workload model — `src/lib/journal-workload.ts`
+- Workload model — убран 2026-11-23 (владелец убрал «Нагрузку сотрудников»)
 
 ---
 

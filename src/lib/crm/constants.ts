@@ -37,6 +37,7 @@ export const CRM_CHANNEL_LABELS: Record<string, string> = {
   whatsapp: "WhatsApp",
   vk: "ВКонтакте",
   max: "MAX",
+  avito: "Авито",
   phone: "Телефон",
   call: "Звонок",
   missed_call: "Пропущенный звонок",

@@ -9,7 +9,6 @@ import { CalendarClock, Loader2, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { BILLING_PAY_HREF, lastDayBefore } from "@/lib/billing-period";
 import { isInsideMobileApp } from "@/lib/mobile-app";
-import { ORG_SPHERES } from "@/lib/org-profile";
 import { useTariffLimitToast } from "@/lib/billing-limit-toast";
 import { postActiveOrganization } from "@/lib/switch-organization";
 import { useContentTransition } from "@/components/layout/content-transition";
@@ -79,7 +78,9 @@ export function CreateOrganizationDialog({
   });
   const tariffLimit = useTariffLimitToast();
   const [name, setName] = useState("");
-  const [sphere, setSphere] = useState(currentSphere);
+  // Сферу здесь не спрашиваем (владелец, 2026-11-23: сфера — у объектов):
+  // новая организация берёт сферу текущей как подсказку для своих объектов.
+  const sphere = currentSphere;
   const [copy, setCopy] = useState(true);
   const [saving, setSaving] = useState(false);
   const locale = useLocale();
@@ -207,22 +208,6 @@ export function CreateOrganizationDialog({
           />
         </label>
 
-        <label className="mt-3 block">
-          <span className="mb-1.5 block text-[13px] font-medium text-[#3c4053]">
-            {t("sphereLabel")}
-          </span>
-          <select
-            value={sphere}
-            onChange={(event) => setSphere(event.target.value)}
-            className="h-11 w-full rounded-2xl border border-[#dcdfed] bg-white px-4 text-[15px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-          >
-            {ORG_SPHERES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
 
         {currentName ? (
           <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-2xl bg-[#f5f6ff] p-3">

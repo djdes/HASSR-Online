@@ -1,7 +1,7 @@
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
-import { buildingWhere } from "@/lib/building-scope";
+import { OFFICE_BUILDING_KIND, buildingWhere } from "@/lib/building-scope";
 import { journalSettingsPointId } from "@/lib/journal-settings-target";
 import { db } from "@/lib/db";
 import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
@@ -13,7 +13,10 @@ import { getFillMode } from "@/lib/journal-routing";
 import { JournalsSettingsClient } from "./journals-settings-client";
 import { PageGuide } from "@/components/ui/page-guide";
 import { normalizeSphere } from "@/lib/org-profile";
-import { paperJournalsFor } from "@/lib/sphere-journal-rules";
+import { PAPER_JOURNALS } from "@/lib/sphere-journal-rules";
+import { organizationRuleSpheres, normalizeObjectCategory, resolveSphereForCategory } from "@/lib/object-categories";
+import { mergedRulesFor } from "@/lib/object-category-journals";
+import type { JournalRulesScope } from "./journals-settings-client";
 import { SAMPLE_JOURNAL_CODES } from "@/lib/journal-sample-fixtures";
 import { getJournalPreviewMap } from "@/lib/journal-preview/service";
 
@@ -99,6 +102,21 @@ export default async function JournalsSettingsPage() {
     ? await getDisabledPaperJournalIds(organizationId, pointId)
     : parseDisabledCodes(organization?.disabledPaperJournalIds);
   const sphere = normalizeSphere(organization?.type);
+  // Сферы объектов (2026-11-23): обязательные журналы всей организации —
+  // по основной сфере и сферам объектов; объект из шапки — по своей сфере.
+  const objects = await db.building.findMany({
+    where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } },
+    select: { id: true, sphere: true },
+  });
+  const rulesScope: JournalRulesScope = pointId
+    ? { kind: "point", category: objects.find((object) => object.id === pointId)?.sphere ?? null }
+    : { kind: "organization", objectCategories: objects.map((object) => object.sphere).filter((value): value is string => Boolean(value)) };
+  const pointCategory = rulesScope.kind === "point" ? normalizeObjectCategory(rulesScope.category) : null;
+  const ruleSpheres =
+    rulesScope.kind === "point"
+      ? [pointCategory ? resolveSphereForCategory(sphere, pointCategory) : sphere]
+      : organizationRuleSpheres(sphere, rulesScope.objectCategories);
+  const paperRequired = mergedRulesFor(ruleSpheres).paperRequired;
   const accessByTemplate = new Map<string, string[]>();
   for (const row of positionAccess) {
     const list = accessByTemplate.get(row.templateId) ?? [];
@@ -130,7 +148,10 @@ export default async function JournalsSettingsPage() {
   // Бумажные бланки сферы с тем же признаком enabled, что у
   // электронных: хранение негативное, поэтому новый бланк в каталоге
   // сразу включён.
-  const paperItems = sortJournalsByName(paperJournalsFor(sphere), (j) => j.name).map((journal) => ({
+  const paperJournals = paperRequired
+    .map((id) => PAPER_JOURNALS.find((journal) => journal.id === id))
+    .filter((journal): journal is (typeof PAPER_JOURNALS)[number] => Boolean(journal));
+  const paperItems = sortJournalsByName(paperJournals, (j) => j.name).map((journal) => ({
     ...journal,
     enabled: !disabledPaper.has(journal.id),
   }));
@@ -160,6 +181,7 @@ export default async function JournalsSettingsPage() {
         users={users}
         canEditDistribution={canEditDistribution}
         sphere={sphere}
+        rulesScope={rulesScope}
       />
     </div>
   );

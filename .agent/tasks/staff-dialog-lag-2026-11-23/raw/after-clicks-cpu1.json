@@ -1,0 +1,20 @@
+{
+  "base": "http://localhost:3001",
+  "cpuThrottle": 1,
+  "staffCheckbox": {
+    "ms": 64,
+    "maxStyleElements": 1125
+  },
+  "searchKey": {
+    "ms": 48,
+    "maxStyleElements": 1097
+  },
+  "timesheetCell": {
+    "ms": 256,
+    "maxStyleElements": 15342
+  },
+  "weekdayChip": {
+    "ms": 240,
+    "maxStyleElements": 15332
+  }
+}

@@ -114,6 +114,7 @@ import { OrgDirectoryDialog } from "@/components/journals/org-directory-dialog";
 import { mergeIntoList, type OrgDirectoryKind } from "@/lib/org-directory";
 import { RecognizeFromPhoto, type RecognizeResult } from "@/components/ai/recognize-from-photo";
 import type { VisionRawItem } from "@/lib/ai-vision/shared";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 
 type User = { id: string; name: string; role: string };
 
@@ -2952,7 +2953,7 @@ function AcceptanceDocumentEditor(props: Props) {
                     <td
                       colSpan={incomingControlColumns.length + 1}
                       className={`${GRID_CELL_CLASS} p-8 text-center leading-tight text-[#80849a]`}
-                    >{t("journalAcceptance.screen.tableEmpty")}</td>
+                    ><JournalEmpty variant="cell">{t("journalAcceptance.screen.tableEmpty")}</JournalEmpty></td>
                   </tr>
                 )}
                 {/* R5-13: пустая строка-хвост с ОТКЛЮЧЁННЫМ чекбоксом была
@@ -3051,7 +3052,7 @@ function AcceptanceDocumentEditor(props: Props) {
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={11} className={`${GRID_CELL_CLASS} p-8 text-center text-[#80849a] leading-tight`}>{t("journalAcceptance.screen.tableEmpty")}</td></tr>
+                <tr><td colSpan={11} className={`${GRID_CELL_CLASS} p-8 text-center text-[#80849a] leading-tight`}><JournalEmpty variant="cell">{t("journalAcceptance.screen.tableEmpty")}</JournalEmpty></td></tr>
               )}
               {/* leading=1 (чекбокс), labelSpan=2 — подпись растянута на
                   «Дата, время поступления» + «Наименование продукции»:

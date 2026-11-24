@@ -68,7 +68,7 @@ const DEFAULT_SLOTS: readonly ResponsibleSlot[] = [
   {
     id: "main",
     label: "Главный ответственный",
-    hint: "Идёт в шапку документа и в TasksFlow-задачи",
+    hint: "Попадает в шапку документа и в задачи в программном модуле",
     primary: true,
   },
 ];
@@ -384,7 +384,7 @@ function makeVerifierSlot(code: string): ResponsibleSlot {
   return {
     id: VERIFIER_SLOT_ID,
     label: "Кто проверяет",
-    hint: "Получает в TasksFlow задачу «Проверить журнал X» и одобряет/отклоняет результат",
+    hint: "Получает в программном модуле задачу «Проверить журнал X» и принимает или отклоняет результат",
     kind: "verifier",
     positionKeywords: VERIFIER_OVERRIDES[code] ?? DEFAULT_VERIFIER_KEYWORDS,
   };

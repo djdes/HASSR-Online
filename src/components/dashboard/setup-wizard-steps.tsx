@@ -19,6 +19,8 @@ import {
 import { LAMP_PRESETS, UV_LAMP_TYPE } from "@/lib/uv-lamp";
 import { SETUP_STEPS, setupStepIndex, type SetupStep } from "@/lib/setup-wizard";
 import { ExchangeOfferLine } from "@/components/directory-exchange/exchange-offer-line";
+import { ObjectCategoryPicker } from "@/components/settings/object-category-picker";
+import { normalizeObjectCategory, type ObjectCategory } from "@/lib/object-categories";
 
 /**
  * Шаги 2–4 мастера первого входа (владелец, 2026-11-18): после анкеты —
@@ -36,7 +38,7 @@ const PRIMARY =
 const SMALL_OUTLINE =
   "inline-flex h-10 items-center gap-2 rounded-2xl border border-[#dcdfed] bg-white px-3.5 text-[13.5px] font-medium text-[#3848c7] transition-colors hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-60";
 
-type ApiBuilding = { id: string; name: string; address: string | null; kind?: string | null };
+type ApiBuilding = { id: string; name: string; address: string | null; kind?: string | null; sphere?: string | null };
 
 /** Объекты организации без офиса — офис не точка (`OFFICE_BUILDING_KIND`). */
 async function loadPoints(): Promise<ApiBuilding[]> {
@@ -49,8 +51,11 @@ async function loadPoints(): Promise<ApiBuilding[]> {
 /** «Шаг 2 из 4» и полоска из четырёх отрезков с подписями. */
 /**
  * Шаги мастера (владелец, 2026-11-22: «шаги можно переключать туда-сюда»):
- * с `onSelect` подпись шага — кнопка; `canSelect` решает, куда уже можно
- * (до сохранения анкеты — только «Анкета»).
+ * с `onSelect` подпись шага — кнопка, и она отвечает на тап всегда
+ * (владелец, 2026-11-23: выключенные до сохранения анкеты кнопки молчали —
+ * «переключение шагов не работает»). Что делать с тапом до сохранения
+ * анкеты, решает мастер (`selectStep`): сохранить и перейти либо объяснить,
+ * что заполнить. `canSelect` — для шага, на который перейти нельзя вовсе.
  */
 export function SetupStepper({
   step,
@@ -149,11 +154,28 @@ type PointRow = {
   address: string;
   initialName: string;
   initialAddress: string;
+  /** Сфера объекта (2026-11-23): у нового объекта обязательна. */
+  sphere: ObjectCategory | null;
+  initialSphere: ObjectCategory | null;
 };
 
 function savedPointRow(point: ApiBuilding): PointRow {
   const address = point.address ?? "";
-  return { key: point.id, id: point.id, name: point.name, address, initialName: point.name, initialAddress: address };
+  const sphere = normalizeObjectCategory(point.sphere);
+  return {
+    key: point.id,
+    id: point.id,
+    name: point.name,
+    address,
+    initialName: point.name,
+    initialAddress: address,
+    sphere,
+    initialSphere: sphere,
+  };
+}
+
+function newPointRow(key: string, address: string, sphere: ObjectCategory | null): PointRow {
+  return { key, id: null, name: "", address, initialName: "", initialAddress: "", sphere, initialSphere: null };
 }
 
 /**
@@ -166,7 +188,9 @@ function mergePointRows(current: PointRow[], points: ApiBuilding[]): PointRow[] 
   if (points.length === 0) return current;
   const edited = new Map<string, PointRow>();
   for (const row of current) {
-    if (row.id && (row.name !== row.initialName || row.address !== row.initialAddress)) edited.set(row.id, row);
+    if (row.id && (row.name !== row.initialName || row.address !== row.initialAddress || row.sphere !== row.initialSphere)) {
+      edited.set(row.id, row);
+    }
   }
   const drafts = current.filter((row) => row.id === null && row.name.trim() !== "");
   return [...points.map((point) => edited.get(point.id) ?? savedPointRow(point)), ...drafts];
@@ -175,31 +199,36 @@ function mergePointRows(current: PointRow[], points: ApiBuilding[]): PointRow[] 
 /** Шаг 2 «Объекты»: названия и адреса точек, можно добавить ещё. */
 export function SetupPointsStep({
   defaultAddress,
+  defaultCategory = null,
   onDone,
 }: {
   /** Адрес из анкеты (ЕГРЮЛ) — первой новой точке. */
   defaultAddress: string;
+  /**
+   * Сфера организации — заранее выбранная сфера новых объектов; null — человек
+   * выбирает сам (владелец, 2026-11-23: «сфера — при создании объектов»).
+   */
+  defaultCategory?: ObjectCategory | null;
   onDone: () => void;
 }) {
   const tn = useTranslations("dashboardUi.completeProfileNudge.setup");
+  const tc = useTranslations("common");
   const tariffLimit = useTariffLimitToast();
   const [rows, setRows] = useState<PointRow[] | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Строки, где сферу забыли выбрать, — подсветка. */
+  const [missingSphere, setMissingSphere] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let alive = true;
     void loadPoints().then((points) => {
       if (!alive) return;
-      setRows(
-        points.length > 0
-          ? points.map(savedPointRow)
-          : [{ key: "new-0", id: null, name: "", address: defaultAddress, initialName: "", initialAddress: "" }],
-      );
+      setRows(points.length > 0 ? points.map(savedPointRow) : [newPointRow("new-0", defaultAddress, defaultCategory)]);
     });
     return () => {
       alive = false;
     };
-  }, [defaultAddress]);
+  }, [defaultAddress, defaultCategory]);
 
   /** Связали справочники или перенесли объекты из другой организации — список мог вырасти. */
   async function reloadPoints() {
@@ -212,6 +241,13 @@ export function SetupPointsStep({
 
   async function save() {
     if (!rows) return;
+    // Сфера обязательна у каждого нового объекта с названием.
+    const missing = new Set(rows.filter((row) => row.id === null && row.name.trim() && !row.sphere).map((row) => row.key));
+    setMissingSphere(missing);
+    if (missing.size > 0) {
+      toast.error(tc("objectCategoryRequired"));
+      return;
+    }
     setBusy(true);
     try {
       let created = 0;
@@ -219,24 +255,25 @@ export function SetupPointsStep({
         const name = row.name.trim();
         const address = row.address.trim();
         if (row.id) {
-          if (!name || (name === row.initialName && address === row.initialAddress)) continue;
+          const sphereChanged = row.sphere !== null && row.sphere !== row.initialSphere;
+          if (!name || (name === row.initialName && address === row.initialAddress && !sphereChanged)) continue;
           const response = await fetch(`/api/settings/buildings/${row.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, address: address || null }),
+            body: JSON.stringify({ name, address: address || null, ...(sphereChanged ? { sphere: row.sphere } : {}) }),
           });
           if (!response.ok) {
             const data = await response.json().catch(() => null);
             throw new Error(data?.error || tn("pointsFailed"));
           }
-          update(row.key, { initialName: name, initialAddress: address });
+          update(row.key, { initialName: name, initialAddress: address, initialSphere: row.sphere });
           continue;
         }
         if (!name) continue;
         const response = await fetch("/api/settings/buildings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, address: address || null }),
+          body: JSON.stringify({ name, address: address || null, ...(row.sphere ? { sphere: row.sphere } : {}) }),
         });
         const data = (await response.json().catch(() => null)) as { building?: { id: string }; error?: string } | null;
         if (!response.ok || !data?.building) {
@@ -245,7 +282,7 @@ export function SetupPointsStep({
           throw new Error(response.status === 409 ? tn("pointExists", { name }) : data?.error || tn("pointsFailed"));
         }
         // Сохранённая строка становится существующей: повторное «Далее» её не задвоит.
-        update(row.key, { id: data.building.id, initialName: name, initialAddress: address });
+        update(row.key, { id: data.building.id, initialName: name, initialAddress: address, initialSphere: row.sphere });
         created += 1;
       }
       // Два объекта и больше — журналы ведутся по каждому (как «Объектов: 2» в анкете).
@@ -308,6 +345,22 @@ export function SetupPointsStep({
               ) : (
                 <span className="size-10" aria-hidden />
               )}
+              <div className="col-span-2">
+                <ObjectCategoryPicker
+                  variant="select"
+                  value={row.sphere}
+                  invalid={missingSphere.has(row.key)}
+                  disabled={busy}
+                  onChange={(sphere) => {
+                    update(row.key, { sphere });
+                    setMissingSphere((current) => {
+                      const next = new Set(current);
+                      next.delete(row.key);
+                      return next;
+                    });
+                  }}
+                />
+              </div>
             </div>
           ))
         )}
@@ -315,10 +368,7 @@ export function SetupPointsStep({
           <button
             type="button"
             onClick={() =>
-              setRows((current) => [
-                ...(current ?? []),
-                { key: `new-${Date.now()}`, id: null, name: "", address: "", initialName: "", initialAddress: "" },
-              ])
+              setRows((current) => [...(current ?? []), newPointRow(`new-${Date.now()}`, "", defaultCategory)])
             }
             className={SMALL_OUTLINE}
             data-setup-add-point

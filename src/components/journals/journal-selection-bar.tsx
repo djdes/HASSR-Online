@@ -75,6 +75,8 @@ export function JournalSelectionBar({
     // включает на телефоне правила «крупнее» кабинета (app-theme.css).
     <div
       className={bottom ? "fixed bottom-0 left-[var(--app-sidebar-w,0px)] right-0 z-40 print:hidden" : JOURNAL_DOCUMENT_SELECTION_BAR_CLASS}
+      // Над нижним меню телефона (`--app-tabbar-space`, на компьютере 0).
+      style={bottom ? { bottom: "var(--app-tabbar-space, 0px)" } : undefined}
       data-selection-bar={placement}
       data-touch-zone=""
     >

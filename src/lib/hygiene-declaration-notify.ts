@@ -21,6 +21,8 @@ export async function notifyHygieneDeclaration(params: {
   medExpired?: boolean;
 }): Promise<void> {
   const { organizationId, hygieneDocumentId, employee, todayKey, at, decision, via } = params;
+  // В тексте — название, которое видит клиент: сервис задач — «программный модуль».
+  const viaLabel = via === "TasksFlow" ? "программный модуль" : via;
   const recipients = await listCoreJournalRecipients(organizationId, hygieneDocumentId).catch(() => []);
   const linkHref = hygieneDocumentId ? `/journals/hygiene/documents/${hygieneDocumentId}` : "/journals";
 
@@ -65,9 +67,9 @@ export async function notifyHygieneDeclaration(params: {
     items: [{ id: employee.id, label: `${employee.name} — ${reason}`, hint: at }],
     linkHref,
     linkLabel: "Открыть журнал",
-    telegramText: `⚠️ ${title}\nПричина: ${reason} (отметка через ${via} в ${at}).`,
+    telegramText: `⚠️ ${title}\nПричина: ${reason} (отметка через ${viaLabel} в ${at}).`,
     emailSubject: title,
-    emailBodyHtml: `<p>Сотрудник <strong>${escapeHtml(employee.name)}</strong> отметился через ${via} в ${at}.</p><p>Причина: ${escapeHtml(reason)}.</p><p>В гигиеническом журнале стоит «${decision.admitted ? "Здоров" : "Отстранён"}». Примите решение о допуске и при необходимости поправьте запись.</p>`,
+    emailBodyHtml: `<p>Сотрудник <strong>${escapeHtml(employee.name)}</strong> отметился через ${viaLabel} в ${at}.</p><p>Причина: ${escapeHtml(reason)}.</p><p>В гигиеническом журнале стоит «${decision.admitted ? "Здоров" : "Отстранён"}». Примите решение о допуске и при необходимости поправьте запись.</p>`,
   }).catch(() => null);
 }
 

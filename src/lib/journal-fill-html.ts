@@ -13,6 +13,7 @@ import { TIME_OFFSET_CHIPS } from "@/lib/journal-fill-hints";
 import { suggestionKey, type NameSuggestionMeta } from "@/lib/name-suggestions";
 import type { TaskFormField, TaskFormSchema } from "@/lib/tasksflow-adapters/task-form";
 import { QR_PIN_OK_HTML, QR_PIN_UI_CSS, QR_REMEMBER_LABEL, qrCheckHtml } from "@/lib/qr-pin-ui";
+import { QR_MOTION_CSS } from "@/lib/qr-motion-css";
 
 /**
  * QR-форма журнала как обычный серверный HTML: без React-загрузчика,
@@ -213,7 +214,8 @@ h2{font-size:21px;letter-spacing:-.02em;margin:0;font-weight:600}
 .os-foot{font-size:14.5px}
 .os-empty h2{margin-bottom:8px}
 .os-empty .muted{margin-bottom:14px}
-${QR_PIN_UI_CSS}`;
+${QR_PIN_UI_CSS}
+${QR_MOTION_CSS}`;
 
 /** Подпись под полем с отметкой «Обслуживание»/«Ремонт» — одна для сервера и инлайн-скрипта. */
 export function statusMarkNote(status: ColdEquipmentStatus): string {
@@ -329,6 +331,14 @@ export const QR_FILL_JS = `
     var opener=document.querySelector("[data-emp-open]"); if(opener) opener.addEventListener("click",function(e){ e.preventDefault(); openSheet(); });
     sheet.addEventListener("click",function(e){ if(e.target===sheet) closeSheet(); });
     var xb=sheet.querySelector(".sh-x"); if(xb) xb.addEventListener("click",closeSheet);
+    /* Свайп вниз закрывает шторку. Обработчик touchmove не пассивный и отменяет действие браузера: иначе на iPhone жест забирает страница (прокрутка, «резинка»). Ручка под пальцем — стрелка вниз. */
+    var sh=sheet.querySelector(".sh"), sg=sheet.querySelector(".sh-g"), dg=null;
+    if(sh){
+      sh.addEventListener("touchstart",function(e){ dg=null; if(e.touches.length!==1) return; var t=e.touches[0]; if(t.clientY-sh.getBoundingClientRect().top>72) return; dg={x:t.clientX,y:t.clientY,o:0,p:!!(sg&&sg.contains(e.target)),v:0,ly:t.clientY,lt:e.timeStamp}; if(dg.p) sg.classList.add("on"); },{passive:true});
+      sh.addEventListener("touchmove",function(e){ if(!dg) return; var t=e.touches[0],dx=t.clientX-dg.x,dy=t.clientY-dg.y; if(!dg.p){ if(Math.abs(dx)>=2||Math.abs(dy)>=2){ if(dy>0&&dy>=Math.abs(dx)) dg.p=true; else { dg=null; return; } } } if(e.cancelable) e.preventDefault(); if(!dg.p) return; var dt=e.timeStamp-dg.lt; if(dt>0){ var sp=(t.clientY-dg.ly)/dt; dg.v=dg.o>0?dg.v*.4+sp*.6:sp; } dg.ly=t.clientY; dg.lt=e.timeStamp; dg.o=dy>0?dy:0; sh.style.transition="none"; sh.style.translate="0 "+dg.o+"px"; if(sg){ sg.classList.add("on"); sg.classList.toggle("armed",dg.o>90); } },{passive:false});
+      var endDrag=function(e){ var c=dg; dg=null; if(!c) return; if(sg){ sg.classList.remove("on"); sg.classList.remove("armed"); } sh.style.transition=""; sh.style.translate=""; if(e.type==="touchend"&&c.p&&(c.o>90||(c.v>=.6&&c.o>=30))) closeSheet(); };
+      sh.addEventListener("touchend",endDrag); sh.addEventListener("touchcancel",endDrag);
+    }
     document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
     var ss=document.getElementById("emp-sheet-search"); if(ss){ ss.addEventListener("input",function(){ var s=key(ss.value); var it=sheet.querySelectorAll("[data-emp]"); for(var i=0;i<it.length;i++){ it[i].hidden=s!==""&&key(it[i].getAttribute("data-emp")).indexOf(s)<0; } }); }
   }
@@ -633,7 +643,7 @@ export function renderWho(params: {
   const current = params.employees?.find((item) => item.current)?.id ?? null;
   const sheet =
     params.changeHref && params.pick && params.employees && params.employees.length > 0
-      ? `<div class="sheet" id="emp-sheet" hidden role="dialog" aria-modal="true" aria-label="Кто заполняет"><div class="sh"><div class="sh-h"><span>Кто заполняет</span><button type="button" class="sh-x" aria-label="Закрыть">×</button></div><div class="sh-s"><input id="emp-sheet-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off" aria-label="Поиск сотрудника"></div><form method="get" action="${esc(params.pick.action)}" class="sh-l">${renderPickHidden(params.pick)}<div class="list">${renderPickItems(
+      ? `<div class="sheet" id="emp-sheet" hidden role="dialog" aria-modal="true" aria-label="Кто заполняет"><div class="sh"><div class="sh-g" aria-hidden="true"></div><div class="sh-h"><span>Кто заполняет</span><button type="button" class="sh-x" aria-label="Закрыть">×</button></div><div class="sh-s"><input id="emp-sheet-search" class="in" type="search" placeholder="Найти по фамилии" autocomplete="off" aria-label="Поиск сотрудника"></div><form method="get" action="${esc(params.pick.action)}" class="sh-l">${renderPickHidden(params.pick)}<div class="list">${renderPickItems(
           params.employees,
           current
         )}</div>${renderRememberCheck(params.pick)}</form></div></div>`

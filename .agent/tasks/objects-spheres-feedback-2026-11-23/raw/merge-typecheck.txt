@@ -1,0 +1,2 @@
+npm run typecheck (после слияния с master 42b4fac1d)
+EXIT=0, ошибок нет

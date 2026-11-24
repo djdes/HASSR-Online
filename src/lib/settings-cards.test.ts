@@ -39,8 +39,6 @@ const FORMER_HUB_HREFS = [
   "/settings/journal-task-mode",
   "/settings/onboarding-template",
   "/settings/journal-checklists",
-  "/settings/journal-difficulty",
-  "/settings/workload-balance",
   "/settings/task-visibility",
   "/settings/journals-by-position",
   "/settings/journal-bonuses",
@@ -98,8 +96,9 @@ function menuEditorHrefs(): string[] {
   );
 }
 
-test("все 51 карточка бывшего хаба на месте — вкладкой, пунктом меню, редактором пункта или карточкой", () => {
-  assert.equal(FORMER_HUB_HREFS.length, 51);
+// «Сложность журналов» и «Нагрузка сотрудников» убраны (владелец, 2026-11-23): было 51.
+test("все 49 карточек бывшего хаба на месте — вкладкой, пунктом меню, редактором пункта или карточкой", () => {
+  assert.equal(FORMER_HUB_HREFS.length, 49);
   const tabHrefs = navMenuHrefs();
   const editorHrefs = menuEditorHrefs();
   const cardHrefs = SETTINGS_CARDS.map((card) => card.href);
@@ -139,7 +138,6 @@ test("карточки раздаются по страницам раздело
       "/settings/journal-task-mode",
       "/settings/journal-flow",
       "/settings/task-visibility",
-      "/settings/journal-difficulty",
       "/settings/journal-bonuses",
     ],
   );
@@ -154,7 +152,6 @@ test("карточки сотрудников и точек стали пунк�
   for (const href of [
     "/settings/staff-hierarchy",
     "/settings/position-staff-visibility",
-    "/settings/workload-balance",
     "/settings/phone",
     "/settings/journal-responsibles",
   ]) {

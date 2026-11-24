@@ -1,0 +1,18 @@
+{
+  "task": "site-motion-round3-2026-11-23",
+  "verifier": "Separate in-thread pass on commit 508b557a3, every check rerun from the tree (no delegation: the owner did not ask for it)",
+  "verdict": "PASS",
+  "reran": [
+    "browser, round 3: raw/measure-round3.cjs against next dev on this commit — 42 / 42 (raw/verify-measure.json)",
+    "browser, round 1 regression: 46 / 46 (raw/verify-round1.json)",
+    "browser, round 2 regression: 19 / 19 (raw/verify-round2.json; one probe updated, see evidence.md)",
+    "crawl of 24 cabinet pages on desktop, on a phone and on a phone in the «Новая» design: no errors, no leftovers (raw/crawl.txt)",
+    "npm run typecheck: exit 0 (raw/typecheck.txt)",
+    "npm run test:gate: 79 files, pass 410, fail 0 (raw/test-gate.txt); the same set passed again in the pre-commit hook",
+    "motion, scroll-lock and wizard tests: 67 / 67 (raw/unit-tests.txt)",
+    "ESLint on the changed files: exit 0 (raw/eslint.txt)",
+    "production minifier on motion.css: 97 rules, 190 declarations, 12 keyframes in and out, colour fallbacks kept (raw/prod-minify.json)"
+  ],
+  "criteria": { "AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS", "AC6": "PASS", "AC7": "PASS" },
+  "notes": "Not verifiable here: iOS Safari itself. Chromium has no rubber band and no pull-to-refresh, so AC1–AC2 are proven through their preconditions (body pinned with position: fixed, touch-action: none on the handle, the sheet's touchmove cancelled), not by watching Safari. Touch is debugger touch events; the field squeeze is checked with a pointer press under the coarse-pointer media query because Chromium does not set :active from a bare debugger touch. The first verification run, made seconds after the dev server was restarted, logged one React hydration warning: useId values of header controls (a Radix menu trigger, an SVG gradient id) differed on the very first load of a route; the same code reloaded gives none (the second run is clean), the controls are untouched by this task, and the crawl script has filtered this dev-only message since round 1."
+}

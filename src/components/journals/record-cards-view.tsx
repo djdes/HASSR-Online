@@ -3,6 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { JournalEmpty } from "@/components/journals/journal-empty";
 
 /**
  * Generic «Карточки» mode for list-style journals (one record per row,
@@ -66,14 +67,13 @@ export function RecordCardsView({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-5 text-center text-[13px] text-[#6f7282]">
-        {emptyLabel ?? t("empty")}
-      </div>
+      <JournalEmpty>{emptyLabel ?? t("empty")}</JournalEmpty>
     );
   }
 
   return (
-    <div className="space-y-2 sm:hidden print:hidden">
+    // `data-motion-list`: карточка, добавленная одна, приходит с подсветкой (`MotionRuntime`).
+    <div className="space-y-2 sm:hidden print:hidden" data-motion-list>
       {items.map((item) => {
         const isExpanded = expanded === item.id;
         const headerFields = item.fields.filter((f) => f.header);
