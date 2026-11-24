@@ -1,35 +1,11 @@
 ## setup
 {"setup":"ok"}
-## state before
-{"name":"Стенд: Кафе «Берёзка»","kind":"regular","split":true,"objects":3,"offices":1}
-{"name":"Смоук-кафе mwuanwlr","kind":"regular","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-1obj","kind":"regular","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-officeoff","kind":"regular","split":false,"objects":1,"offices":1}
-{"name":"open-office-check-noobj","kind":"regular","split":false,"objects":0,"offices":0}
-{"name":"open-office-check-directory","kind":"directory","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-2obj","kind":"regular","split":true,"objects":2,"offices":0}
 ## dry-run
-[open-office:dry-run] organizations to open 4; offices to create 3; journals by objects to enable 3
-## state after dry-run (unchanged)
-{"name":"Стенд: Кафе «Берёзка»","kind":"regular","split":true,"objects":3,"offices":1}
-{"name":"Смоук-кафе mwuanwlr","kind":"regular","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-1obj","kind":"regular","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-officeoff","kind":"regular","split":false,"objects":1,"offices":1}
-{"name":"open-office-check-noobj","kind":"regular","split":false,"objects":0,"offices":0}
-{"name":"open-office-check-directory","kind":"directory","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-2obj","kind":"regular","split":true,"objects":2,"offices":0}
+[open-office:dry-run] organizations to open 3; offices to create 2; journals by objects to enable 2; failed 0
 ## real
-[open-office] organizations opened 4; offices created 3; journals by objects enabled 3; manager sessions closed 1
+[open-office] organizations opened 3; offices created 2; journals by objects enabled 2; managers kept company-wide 2; manager sessions closed 1; failed 0
 ## repeat
 [open-office] once:open-office:v1: already done
-## state after
-{"name":"Стенд: Кафе «Берёзка»","kind":"regular","split":true,"objects":3,"offices":1}
-{"name":"Смоук-кафе mwuanwlr","kind":"regular","split":true,"objects":1,"offices":1}
-{"name":"open-office-check-1obj","kind":"regular","split":true,"objects":1,"offices":1}
-{"name":"open-office-check-officeoff","kind":"regular","split":true,"objects":1,"offices":1}
-{"name":"open-office-check-noobj","kind":"regular","split":false,"objects":0,"offices":0}
-{"name":"open-office-check-directory","kind":"directory","split":false,"objects":1,"offices":0}
-{"name":"open-office-check-2obj","kind":"regular","split":true,"objects":2,"offices":1}
 ## check
 {
   "1obj": {
@@ -44,6 +20,14 @@
         "details": {
           "source": "deploy-2026-11-24",
           "created": true,
+          "keptCompanyWide": [
+            {
+              "userId": "cmwuvmfyz0002ms7dh6ozikcb",
+              "buildingIdsBefore": [
+                "cmwuvmfyr0001ms7dufl5epx6"
+              ]
+            }
+          ],
           "perLocationJournalsBefore": false
         }
       }
@@ -51,11 +35,13 @@
     "users": [
       {
         "who": "cook@stand.local",
-        "sessionVersion": 0
+        "sessionVersion": 0,
+        "places": []
       },
       {
         "who": "manager@stand.local",
-        "sessionVersion": 1
+        "sessionVersion": 0,
+        "places": []
       }
     ]
   },
@@ -72,11 +58,33 @@
         "details": {
           "source": "deploy-2026-11-24",
           "created": true,
+          "keptCompanyWide": [
+            {
+              "userId": "cmwuvmg05000dms7din8jl00v",
+              "buildingIdsBefore": [
+                "cmwuvmfzz000bms7dzpuh1xns",
+                "cmwuvmg01000cms7dljrbd4v0"
+              ]
+            }
+          ],
           "perLocationJournalsBefore": true
         }
       }
     ],
-    "users": []
+    "users": [
+      {
+        "who": "owner2@stand.local",
+        "sessionVersion": 0,
+        "places": []
+      },
+      {
+        "who": "head2@stand.local",
+        "sessionVersion": 1,
+        "places": [
+          "Офис"
+        ]
+      }
+    ]
   },
   "directory": {
     "journalsByObjects": false,
@@ -104,6 +112,7 @@
         "details": {
           "source": "deploy-2026-11-24",
           "created": false,
+          "keptCompanyWide": [],
           "perLocationJournalsBefore": false
         }
       }

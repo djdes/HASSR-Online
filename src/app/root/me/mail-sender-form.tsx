@@ -131,7 +131,7 @@ export function MailSenderForm({
   );
 
   return (
-    <form onSubmit={save} className="space-y-5" data-mail-sender-form>
+    <form method="post" onSubmit={save} className="space-y-5" data-mail-sender-form>
       <div
         className={cn(
           "flex items-start gap-3 rounded-2xl border px-4 py-3 text-[14px]",

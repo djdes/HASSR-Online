@@ -122,7 +122,9 @@ export default async function OrganizationOfficePage() {
                   {t("staff.count", { count: officeStaff.length })}
                 </span>
               ) : null}
-              {readOnly || !office ? null : (
+              {/* Без объектов «в офис» добавлять некого и незачем: все и так работают
+                  на всю компанию (в том числе после удаления последнего объекта). */}
+              {readOnly || !office || points.length === 0 ? null : (
                 <Link
                   href={`/settings/users?place=${encodeURIComponent(office.id)}&add=${encodeURIComponent(office.id)}`}
                   className={PRIMARY_LINK}

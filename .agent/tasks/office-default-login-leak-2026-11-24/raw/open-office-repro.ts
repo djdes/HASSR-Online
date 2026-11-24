@@ -35,8 +35,12 @@ async function setup() {
   await db.building.create({ data: { organizationId: directory.id, name: "Справочник", sortOrder: 0 } });
   // 5) Два объекта, журналы по объектам, офиса нет; названия «Офис» и «Офис компании» заняты объектами.
   const two = await org("2obj", { perLocationJournals: true });
-  await db.building.create({ data: { organizationId: two.id, name: "Офис", sortOrder: 3 } });
-  await db.building.create({ data: { organizationId: two.id, name: "Офис компании", sortOrder: 5 } });
+  const twoA = await db.building.create({ data: { organizationId: two.id, name: "Офис", sortOrder: 3 } });
+  const twoB = await db.building.create({ data: { organizationId: two.id, name: "Офис компании", sortOrder: 5 } });
+  // Владелец за обоими объектами — без офиса это «вся компания»: должен ею остаться («без места»).
+  await db.user.create({ data: { email: `${PREFIX}-owner2@stand.local`, name: "Владелец за всеми", passwordHash: "x", organizationId: two.id, role: "owner", buildingIds: [twoA.id, twoB.id] } });
+  // Руководитель одного объекта — становится руководителем объекта (новый вход).
+  await db.user.create({ data: { email: `${PREFIX}-head2@stand.local`, name: "Руководитель одного", passwordHash: "x", organizationId: two.id, role: "manager", buildingIds: [twoA.id] } });
   console.log(JSON.stringify({ setup: "ok" }));
 }
 
@@ -48,7 +52,7 @@ async function check() {
       id: true,
       name: true,
       perLocationJournals: true,
-      buildings: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { name: true, kind: true, sortOrder: true, address: true } },
+      buildings: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, kind: true, sortOrder: true, address: true } },
       users: { select: { email: true, sessionVersion: true, buildingIds: true } },
     },
   });
@@ -62,7 +66,11 @@ async function check() {
       journalsByObjects: item.perLocationJournals,
       buildings: item.buildings.map((building) => `${building.kind}:${building.name}@${building.sortOrder}`),
       audit,
-      users: item.users.map((user) => ({ who: user.email.replace(`${PREFIX}-`, ""), sessionVersion: user.sessionVersion })),
+      users: item.users.map((user) => ({
+        who: user.email.replace(`${PREFIX}-`, ""),
+        sessionVersion: user.sessionVersion,
+        places: user.buildingIds.map((id) => item.buildings.find((building) => building.id === id)?.name ?? id),
+      })),
     };
   }
   out.onceKey = Boolean(await db.platformSetting.findUnique({ where: { key: "once:open-office:v1" } }));

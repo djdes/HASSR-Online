@@ -72,10 +72,44 @@ export function planOfficeOpening(input: OfficeOpeningInput): OfficeOpening | nu
   };
 }
 
+/**
+ * Кто из руководства сохраняет права на всю компанию, когда открывается офис
+ * (проверка 2026-11-24). Без офиса закреплённый за всеми объектами работает
+ * на всю компанию (`pointScopeForUser`), а при офисе он стал бы руководителем
+ * объектов и потерял «Мою компанию» — как владелец, закреплённый за своим
+ * единственным объектом. Такие становятся «без места»: вся компания и работа
+ * на всех объектах, как было. Закреплённые за частью объектов — руководители
+ * своих объектов (так делала и кнопка «Выделить офис»); того, кто открыл офис,
+ * кнопка переводила в офис — так и остаётся.
+ */
+export function managersKeepingCompanyAccess(input: {
+  buildings: ReadonlyArray<{ id: string; kind?: string | null }>;
+  managers: ReadonlyArray<{ id: string; buildingIds: readonly string[] }>;
+  actorId?: string | null;
+}): { free: string[]; toOffice: string[] } {
+  const known = new Set(input.buildings.map((building) => building.id));
+  const office = input.buildings.find(isOfficeBuilding) ?? null;
+  const objects = input.buildings.filter((building) => !isOfficeBuilding(building)).map((building) => building.id);
+  const free: string[] = [];
+  const toOffice: string[] = [];
+  for (const manager of input.managers) {
+    const places = manager.buildingIds.filter((id) => known.has(id));
+    // Без места или только удалённые места — и так вся компания; в офисе — тоже.
+    if (places.length === 0 || (office !== null && places.includes(office.id))) continue;
+    if (objects.length > 0 && objects.every((id) => places.includes(id))) free.push(manager.id);
+    else if (input.actorId && manager.id === input.actorId) toOffice.push(manager.id);
+  }
+  return { free, toOffice };
+}
+
 /** Итоги открытия офисов (разовый шаг выкладки): в лог — только числа. */
 export type OfficeOpeningTotals = {
   organizations: number;
   officesCreated: number;
   splitEnabled: number;
   sessionsClosed: number;
+  /** Руководство, оставшееся на всю компанию («без места» или в офисе). */
+  managersKeptCompanyWide: number;
+  /** Компании, где открыть офис не удалось: повтор — на следующей выкладке. */
+  failed: number;
 };

@@ -3,8 +3,9 @@
  * умолчанию всем с офисом, организации у которых не выделено открой».
  * Каждой обычной организации с объектами открывается офис — то, что делала
  * кнопка «Выделить офис»: здание офиса (если его нет) и журналы по объектам;
- * руководители, закреплённые за объектами, входят заново (их доступ сужается
- * до своих объектов). Платформа, мастер-кабинеты справочников и организации
+ * руководство, работавшее на всю компанию, ею и остаётся (закреплённые за всеми
+ * объектами — «без места»), закреплённые за частью объектов становятся
+ * руководителями своих объектов. Платформа, мастер-кабинеты справочников и организации
  * без объектов не трогаются: у них офис откроется вместе с первым объектом.
  * Каждое открытие — в журнал действий организации (`building.office_opened`:
  * id офиса, создан ли, какими были журналы до открытия) — его можно вернуть.
@@ -37,9 +38,13 @@ async function main() {
     `${TAG} organizations ${DRY_RUN ? "to open" : "opened"} ${totals.organizations}; ` +
       `offices ${DRY_RUN ? "to create" : "created"} ${totals.officesCreated}; ` +
       `journals by objects ${DRY_RUN ? "to enable" : "enabled"} ${totals.splitEnabled}` +
-      (DRY_RUN ? "" : `; manager sessions closed ${totals.sessionsClosed}`),
+      (DRY_RUN
+        ? ""
+        : `; managers kept company-wide ${totals.managersKeptCompanyWide}; manager sessions closed ${totals.sessionsClosed}`) +
+      `; failed ${totals.failed}`,
   );
-  if (!DRY_RUN) {
+  // Ключ — только когда открылось у всех: сбойные компании повторит следующая выкладка.
+  if (!DRY_RUN && totals.failed === 0) {
     await db.platformSetting.create({
       data: { key: ONCE_KEY, value: JSON.stringify({ at: new Date().toISOString(), ...totals }) },
     });

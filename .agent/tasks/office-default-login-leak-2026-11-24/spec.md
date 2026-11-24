@@ -89,6 +89,22 @@ Status: FROZEN (2026-11-24)
   own first object. The guard test requires the exchange NOT to open the office; the other four paths (the «Объекты»
   page, the onboarding template, the questionnaire, the demo company) do.
 
+## Fixes after the fresh verifier (round 1: FAIL on AC2, AC6)
+
+- **AC2:** the guard also matches password fields described as object props (`type: "password"`,
+  `autoComplete: "new-password"`); `src/app/root/me/mail-sender-form.tsx` (SMTP password) gets `method="post"`.
+- **AC6:** with no objects — also after the last object is deleted (the office stays) — the office page shows no
+  «Добавить в офис» and no «не распределены» warning.
+- **AC5 (from the verifier's notes):** opening the office must not take company-wide access from management.
+  Without an office, a manager bound to every object works for the whole company; with an office they would become
+  an object manager (an owner bound to the only object would lose «Моя компания» at once — point scope is recomputed
+  on every request). Such managers become «без места» (company-wide, working on every object, as before); the person
+  who opens the office from a page and is bound to some objects moves to the office (as the removed button did);
+  managers bound to some objects become object managers (re-login), as designed. Each change is in the audit entry
+  (`keptCompanyWide` with the previous places). The deploy loop goes on when one company fails, counts failures,
+  writes the once-key only when none failed, and logs only the error kind/code.
+- Also: ROOT metrics no longer count the office as a location; the «не распределены» strip is readable in dark theme.
+
 ## Out of scope
 
 - Changing who works where (no staff is moved to the office by the deploy step).

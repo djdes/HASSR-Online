@@ -22,8 +22,9 @@ function listTsx(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+// И атрибуты JSX, и свойства объекта (`type: "password"` у полей, собранных из описаний).
 const PASSWORD_INPUT =
-  /type=["']password["']|type=\{[^}]*["']password["'][^}]*\}|autoComplete=["'](?:current|new)-password["']/;
+  /type=["']password["']|type=\{[^}]*["']password["'][^}]*\}|autoComplete=["'](?:current|new)-password["']|\btype:\s*["']password["']|\bautoComplete:\s*["'](?:current|new)-password["']/;
 
 /** Открывающие теги `<form …>` целиком: атрибуты с `{…}` (в том числе `=>`) не обрывают тег. */
 function formTags(source: string): string[] {
@@ -94,6 +95,8 @@ test("страж видит формы входа, PIN по личному QR и
     "src/app/join/[token]/join-form.tsx",
     "src/app/pair/[token]/pair-form.tsx",
     "src/app/q/[token]/personal-qr-login.tsx",
+    // Пароль SMTP в свойствах поля (`type: "password"`) — проверка 2026-11-24.
+    "src/app/root/me/mail-sender-form.tsx",
   ]) {
     assert.ok(found.has(file), file);
   }

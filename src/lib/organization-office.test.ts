@@ -3,7 +3,12 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import { DIRECTORY_ORGANIZATION_KIND, planOfficeOpening, type OfficeOpeningInput } from "@/lib/organization-office";
+import {
+  DIRECTORY_ORGANIZATION_KIND,
+  managersKeepingCompanyAccess,
+  planOfficeOpening,
+  type OfficeOpeningInput,
+} from "@/lib/organization-office";
 
 const base = (patch: Partial<OfficeOpeningInput> = {}): OfficeOpeningInput => ({
   organizationId: "org",
@@ -120,6 +125,9 @@ test("«Выделить офис» больше нет: ни кнопки, ни
   const page = readFileSync("src/app/(dashboard)/settings/organization/office/page.tsx", "utf8");
   assert.doesNotMatch(page, /OfficeCreateButton|officeSetupState|create\.title|disabled\.title/);
   assert.match(page, /openOrganizationOffice\(/, "страница открывает офис компании с объектами");
+  // Без объектов (и после удаления последнего) — ни «Добавить в офис», ни предупреждения «не распределены».
+  assert.match(page, /readOnly \|\| !office \|\| points\.length === 0 \? null/);
+  assert.match(page, /unplaced > 0 && points\.length > 0/);
   const { existsSync } = await import("node:fs");
   assert.equal(existsSync("src/app/api/settings/office/route.ts"), false);
   assert.equal(existsSync("src/components/settings/office-create-button.tsx"), false);
@@ -136,4 +144,32 @@ test("при офисе журналы по объектам не выключа
   assert.match(patch, /!body\.perLocationJournals && \(await db\.building\.count\(\{ where: \{ organizationId: orgId, kind: OFFICE_BUILDING_KIND \} \}\)\)/);
   const page = readFileSync("src/app/(dashboard)/settings/buildings/page.tsx", "utf8");
   assert.match(page, /canSplitJournals=\{allBuildings\.length >= 2 && !allBuildings\.some\(isOfficeBuilding\)\}/);
+});
+
+test("руководство на всю компанию не теряет её с открытием офиса (проверка 2026-11-24)", () => {
+  const office = { id: "o", kind: "office" };
+  const a = { id: "a", kind: "point" };
+  const b = { id: "b", kind: "point" };
+  const keep = managersKeepingCompanyAccess({
+    buildings: [office, a, b],
+    managers: [
+      // Закреплён за всеми объектами: без офиса это «вся компания» — становится «без места».
+      { id: "owner-all", buildingIds: ["a", "b"] },
+      // За частью объектов — руководитель своих объектов, как у кнопки «Выделить офис».
+      { id: "chef-a", buildingIds: ["a"] },
+      // Уже в офисе, без места, только удалённые места — права не меняются.
+      { id: "in-office", buildingIds: ["o"] },
+      { id: "nowhere", buildingIds: [] },
+      { id: "stale", buildingIds: ["gone"] },
+      // Тот, кто открыл офис, закреплён за частью объектов — в офис, как раньше у кнопки.
+      { id: "actor", buildingIds: ["b"] },
+    ],
+    actorId: "actor",
+  });
+  assert.deepEqual(keep, { free: ["owner-all"], toOffice: ["actor"] });
+  // Один объект: закреплённый за ним владелец — «без места» (иначе стал бы руководителем объекта).
+  assert.deepEqual(
+    managersKeepingCompanyAccess({ buildings: [office, a], managers: [{ id: "owner", buildingIds: ["a"] }] }),
+    { free: ["owner"], toOffice: [] },
+  );
 });
