@@ -1,0 +1,16 @@
+{
+  "task": "client-mail-templates-2026-11-24",
+  "base": "origin/master 362b3ebf2",
+  "criteria": {
+    "AC1": "PASS — multipart in /api/root/organizations/[id]/emails, client-email-routes.test.ts, live send with Тарифы.pdf",
+    "AC2": "PASS — 17 templates ru/en/uz, client-email-templates.test.ts (4/4), live template with DB prices",
+    "AC3": "PASS — preview dialog with envelope, desktop/phone, edit/send; screenshots preview-desktop.png, preview-phone.png",
+    "AC4": "PASS — ScrollList on conversations, email history, people; payments overflow with sticky head",
+    "AC5": "PASS — OutgoingEmail journal; outgoing-email.test.ts 5/5, email-outgoing-journal.test.ts 3/3, client-email.server.test.ts 24/24; real Postgres org lookup",
+    "AC6": "PASS — client-conversations.test.ts 2/2, live dedupe on local DB (1 item for card letter)",
+    "AC7": "PASS — presentation-extended-ru.mp4 115.5 s 14.85 MB 1080p, narrated-video.test.ts 9/9",
+    "AC8": "PASS — typecheck clean, i18n:types --check, catalog-validation, borderless/one-accent/neutral-palette green"
+  },
+  "full_suite": "pass=7411 fail=1 (platform-access: /api/root/seo/queries from master #329) → fixed, platform-access.test.ts 12/12",
+  "verdict": "PENDING_FRESH_VERIFICATION"
+}

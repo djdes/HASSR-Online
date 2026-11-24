@@ -17649,6 +17649,132 @@
       "statusFailed": "Yuborishda xato",
       "statusPending": "Tasdiq kutilmoqda",
       "showLetter": "Xatni bezak bilan ko‘rsatish",
+      "templates": {
+        "label": "Shablon",
+        "choose": "Shablonni tanlash",
+        "hint": "Shablon mavzu va matnni to‘ldiradi — yuborishdan oldin ularni tahrirlash mumkin. Tarif va xizmat narxlari — joriy.",
+        "replace": "Xat mavzusi va matni «{title}» shabloni bilan almashtirilsinmi?",
+        "applied": "«{title}» shabloni qo‘yildi — yuborishdan oldin matnni tekshiring",
+        "greeting": "Assalomu alaykum!",
+        "greetingNamed": "Assalomu alaykum, {name}!",
+        "tiers": {
+          "standard": "Standart",
+          "premium": "Premium",
+          "vip": "VIP"
+        },
+        "tariffLine": "• {tier} — oyiga {month} ₽, yillik to‘lovda — oyiga {year} ₽",
+        "tariffLineMonth": "• {tier} — oyiga {month} ₽",
+        "tariffLineYear": "• {tier} — yillik to‘lovda oyiga {year} ₽",
+        "serviceLine": "• {title} — {price}",
+        "servicePrice": "{amount} ₽",
+        "servicePriceFrom": "{amount} ₽ dan",
+        "serviceOnRequest": "so‘rov bo‘yicha",
+        "groups": {
+          "followup": "Suhbatdan keyin",
+          "billing": "Tariflar va to‘lov",
+          "services": "Xizmatlar",
+          "support": "Yordam"
+        },
+        "items": {
+          "presentation": {
+            "title": "Videotaqdimot va PDF",
+            "subject": "WeSetup: videotaqdimot va PDF taqdimot",
+            "body": "{greeting}\n\nSuhbatimiz davomi sifatida WeSetup videotaqdimoti va PDF taqdimotini yuboryapman. Ularni istalgan vaqtda ko‘rib, hamkasblaringizga yuborishingiz mumkin.\n\nVideotaqdimot: {videoUrl}\nPDF taqdimot: {pdfUrl}\n\nQisqacha: SanPiN va HACCP elektron jurnallari telefon orqali QR-kod bilan, parolsiz va ilova o‘rnatmasdan to‘ldiriladi; xodimlarga Telegram va MAX orqali eslatmalar; tekshiruvlar uchun tayyor PDF va Excel hisobotlar.\n\nBepul sinab ko‘ring: {registerUrl}\n\nSavollar bo‘lsa, ushbu xatga javob yozing yoki qo‘ng‘iroq qiling — yordam berishdan mamnunmiz."
+          },
+          "noAnswer": {
+            "title": "Bog‘lana olmadik",
+            "subject": "Siz bilan telefon orqali bog‘lana olmadik",
+            "body": "{greeting}\n\nSizga qo‘ng‘iroq qildik, lekin bog‘lana olmadik. WeSetup SanPiN va HACCP jurnallarini qanday elektron ko‘rinishga o‘tkazishini aytib bermoqchi edik: xodimlar ularni telefon orqali QR-kod bilan to‘ldiradi, rahbar esa nima bajarilganini ko‘radi va o‘tkazib yuborilganlar haqida eslatma oladi.\n\nVaqtingizni olmaslik uchun videotaqdimot va PDF qoldiraman:\nVideo: {videoUrl}\nPDF: {pdfUrl}\n\nQachon gaplashish qulay ekanini yozing — yoki shunchaki ushbu xatga javob bering."
+          },
+          "afterDemo": {
+            "title": "Namoyishdan keyin",
+            "subject": "WeSetup namoyishi: keyingi qadamlar",
+            "body": "{greeting}\n\nNamoyishga vaqt ajratganingiz uchun rahmat! {company} uchun keyingi qadamlar:\n\n1. Kabinetni ro‘yxatdan o‘tkazing: {registerUrl}\n2. Xodimlar va nuqtalarni qo‘shing — jurnallar va to‘ldirish jadvali avtomatik sozlanadi.\n3. QR-kodlarni chop etib, uskunalar yoniga va ish joylariga joylashtiring.\n4. Eslatmalar va kunlik hisobotni olish uchun Telegram-botni ulang: {botUrl}\n\nHamkasblarga ko‘rsatish uchun videotaqdimot: {videoUrl}\nPDF taqdimot: {pdfUrl}\n\nSozlashda yordam beramiz — shunchaki ushbu xatga javob yozing."
+          },
+          "reminder": {
+            "title": "Eslatib qo‘yish",
+            "subject": "WeSetup taqdimotini ko‘rishga ulgurdingizmi?",
+            "body": "{greeting}\n\nYaqinda sizga WeSetup taqdimotini yuborgan edik. Ko‘rishga ulgurdingizmi?\n\nAgar jurnallar hali qog‘ozda yuritilsa, kichikdan boshlash mumkin: eng ko‘p yuritiladigan ikki-uchta jurnalni — muzlatgichlar harorati, xodimlar gigiyenasi, tozalash — elektron ko‘rinishga o‘tkazib, qancha vaqt tejalishini ko‘ring. Sinov muddati — {trialDays, plural, other {# kun}}, bepul.\n\nVideo: {videoUrl}\nPDF: {pdfUrl}\n\nSavollaringizga mamnuniyat bilan javob beraman."
+          },
+          "tariffs": {
+            "title": "Tariflar",
+            "subject": "WeSetup tariflari",
+            "body": "{greeting}\n\nWeSetup’ning amaldagi tariflarini yuboryapman:\n\n{tariffList}\n\nYillik to‘lov arzonroq, bir nechta nuqta uchun chegirma bor. Tariflarni solishtirish va kalkulyator: {pricingUrl}\n\nDastlabki {trialDays, plural, other {# kun}} — bepul, jamoa bilan xotirjam sinab ko‘rishingiz uchun.\n\n{company} uchun tarif tanlashda yordam beraman — ushbu xatga javob yozing yoki qo‘ng‘iroq qiling."
+          },
+          "invoice": {
+            "title": "To‘lov uchun hisob",
+            "subject": "WeSetup to‘lovi uchun hisob",
+            "body": "{greeting}\n\nIlovada — {company} uchun WeSetup to‘lovi hisobi. Hisobdagi rekvizitlar bo‘yicha to‘lashingiz mumkin.\n\nTo‘lovdan keyin kirish avtomatik uzaytiriladi, yakuniy hujjatlar esa EDO orqali yoki pochtaga keladi — qaysi biri qulay bo‘lsa.\n\nRekvizitlar, muddat yoki nuqtalar sonini o‘zgartirish kerak bo‘lsa, yozing — yangi hisob tayyorlaymiz."
+          },
+          "trialEnding": {
+            "title": "Sinov muddati tugayapti",
+            "subject": "WeSetup sinov muddati tez orada tugaydi",
+            "body": "{greeting}\n\n{company} uchun WeSetup sinov muddati tez orada tugaydi. Jurnallar, eslatmalar va QR-kodlar uzilishsiz ishlashi uchun tarif tanlang: {pricingUrl}\n\nBarcha yozuvlar, xodimlar va sozlamalar saqlanadi.\n\nYuridik shaxs nomidan to‘lov uchun hisob kerak bo‘lsa yoki hammasini tekshirish uchun yana biroz vaqt kerak bo‘lsa — ushbu xatga javob yozing."
+          },
+          "paymentThanks": {
+            "title": "To‘lov uchun rahmat",
+            "subject": "To‘lov qabul qilindi — rahmat!",
+            "body": "{greeting}\n\nTo‘lovni oldik, WeSetup’ni tanlaganingiz uchun rahmat! {company} uchun kirish uzaytirildi.\n\nYakuniy hujjatlarni EDO orqali yoki pochtaga yuboramiz. Solishtirma dalolatnoma yoki boshqa yuridik shaxs uchun hujjatlar kerak bo‘lsa — yozing.\n\nHar qanday savol bo‘yicha: {supportPhone}, Telegram {supportTelegram} yoki ushbu xatga javob."
+          },
+          "services": {
+            "title": "Xizmatlar",
+            "subject": "WeSetup xizmatlari",
+            "body": "{greeting}\n\nElektron jurnallardan tashqari hujjatlar va korxonani tayyorlashda yordam beramiz. Amaldagi xizmatlar va narxlar:\n\n{serviceList}\n\nXizmatlar haqida batafsil: {servicesUrl}\n\n{company} uchun nima dolzarb ekanini yozing — taklif va muddatlarni tayyorlaymiz."
+          },
+          "setup": {
+            "title": "To‘liq sozlash",
+            "subject": "WeSetup’ni korxonangizga moslab sozlaymiz",
+            "body": "{greeting}\n\n{company} jamoasi shu haftadayoq elektron jurnallarda ishlashni boshlashi uchun WeSetup sozlashini o‘z zimmamizga olishimiz mumkin:\n\n• faoliyat turingizga mos jurnallarni tanlab sozlaymiz;\n• xodimlar, lavozimlar va to‘ldirish jadvalini kiritamiz;\n• uskunalar va ish joylari uchun QR-kodlar tayyorlaymiz;\n• Telegram va MAX’da eslatmalarni ulaymiz va jamoa uchun qisqa o‘quv o‘tkazamiz.\n\nNarxi va ishlar tarkibi: {servicesUrl}\n\nTelefonda gaplashish qulaymi? Vaqtni yozing — qo‘ng‘iroq qilaman."
+          },
+          "documents": {
+            "title": "Ishlab chiqarish nazorati va HACCP hujjatlari",
+            "subject": "Ishlab chiqarish nazorati dasturi va HACCP hujjatlari",
+            "body": "{greeting}\n\n{company} uchun faoliyat turi, assortiment va binolarni hisobga olgan holda ishlab chiqarish nazorati dasturi va HACCP hujjatlarini tayyorlaymiz. Hujjatlar WeSetup elektron jurnallari bilan bog‘lanadi — xodimlar darhol kerakli yozuvlarni yuritadi.\n\nSizdan kerak bo‘ladi: faoliyat turi va assortiment, binolar rejasi yoki ro‘yxati, uskunalar ro‘yxati va xodimlar soni.\n\nBatafsil va narxlar: {servicesUrl}\n\nUshbu xatga javob yozing — savollar ro‘yxati va muddatlarni yuboramiz."
+          },
+          "inspection": {
+            "title": "Tekshiruvga tayyorgarlik",
+            "subject": "Rospotrebnadzor tekshiruviga tayyorgarlik",
+            "body": "{greeting}\n\n{company} jamoasiga Rospotrebnadzor tekshiruvi yoki tarmoq auditiga tayyorlanishda yordam beramiz:\n\n• jurnallar va hujjatlarni to‘liqligi va SanPiN talablariga mosligi bo‘yicha tekshiramiz;\n• tekshiruvchilar kelishidan oldin nimani tuzatish kerakligini aytamiz;\n• WeSetup’da «Tekshiruv keldi» rejimini sozlaymiz — inspektor istalgan davr jurnallarini QR-kod orqali ochadi, qog‘oz qidirish shart emas.\n\nBatafsil: {servicesUrl}\n\nTekshiruv qachon kutilmoqda? Ushbu xatga javob yozing — reja taklif qilamiz."
+          },
+          "issueReceived": {
+            "title": "Murojaat qabul qilindi",
+            "subject": "Murojaatingizni oldik",
+            "body": "{greeting}\n\nYozganingiz uchun rahmat! Murojaatingizni oldik va ko‘rib chiqyapmiz. Natija bo‘lishi bilan javob beramiz — odatda bir ish kuni ichida.\n\nShoshilinch bo‘lsa, qo‘ng‘iroq qiling: {supportPhone} yoki Telegram’da yozing: {supportTelegram}."
+          },
+          "issueFixed": {
+            "title": "Muammo tuzatildi",
+            "subject": "Muammo tuzatildi",
+            "body": "{greeting}\n\nSiz yozgan muammo tuzatildi. Iltimos, sahifani yangilang (kompyuterda Ctrl+F5 yoki telefonda ilovani yopib, qayta oching) va yana tekshirib ko‘ring.\n\nAgar biror narsa hamon to‘g‘ri ishlamasa — ushbu xatga ekran surati bilan javob yozing, darhol ko‘rib chiqamiz.\n\nWeSetup’ni yaxshilashga yordam berayotganingiz uchun rahmat!"
+          },
+          "needDetails": {
+            "title": "Tafsilotlar kerak",
+            "subject": "Iltimos, tafsilotlarni aniqlashtiring",
+            "body": "{greeting}\n\nTezroq hal qilish uchun, iltimos, yuboring:\n\n1. Xato aks etgan ekran surati yoki qisqa video.\n2. Bu qaysi jurnal yoki bo‘limda sodir bo‘lyapti.\n3. Qachon sezganingiz: sana va taxminiy vaqt.\n4. Qaysi qurilmadan ishlagansiz (telefon yoki kompyuter, brauzer) va qaysi xodim nomidan.\n\nJavobingizni olishimiz bilan darhol ishga kirishamiz."
+          },
+          "login": {
+            "title": "Qanday kirish",
+            "subject": "WeSetup’ga qanday kirish mumkin",
+            "body": "{greeting}\n\nKabinetga bu yerdan kirishingiz mumkin: {loginUrl}\n\n• Login — ro‘yxatdan o‘tishda ko‘rsatilgan pochta.\n• Parolni unutdingizmi — kirish sahifasida «Parolni unutdingizmi?» tugmasini bosing, yangi parol uchun havola pochtaga keladi. Parolsiz ham kirish mumkin — pochtaga yuboriladigan bir martalik havola orqali.\n• Xodimlarga parol kerak emas: ular jurnallarni o‘z telefonidan QR-kod orqali to‘ldiradi.\n\nKira olmasangiz, ushbu xatga javob yozing — yordam beramiz."
+          },
+          "staff": {
+            "title": "Xodimlarni ulash",
+            "subject": "Xodimlarni WeSetup’ga qanday ulash mumkin",
+            "body": "{greeting}\n\n{company} xodimlarini ulash oson:\n\n1. Kabinetda «Xodimlar» bo‘limini oching va odamlarni lavozimlari bilan qo‘shing.\n2. Har biriga shaxsiy QR-kod berish mumkin: xodim uni telefon bilan skanerlaydi va jurnallarni parolsiz, ilova o‘rnatmasdan to‘ldiradi.\n3. To‘ldirilmagan jurnallar haqida eslatmalar kelishi uchun xodim Telegram-botni ulaydi: {botUrl}\n\nEkran suratlari bilan yo‘riqnomalar — bilimlar bazasida: {knowledgeUrl}\n\nQulayroq bo‘lsa, xodimlar ro‘yxatini (F.I.Sh. va lavozimlar) yuboring — o‘zimiz qo‘shamiz."
+          }
+        }
+      },
+      "previewDialog": {
+        "title": "Mijoz xatni shunday ko‘radi",
+        "description": "Manzil, mavzu, matn va ilovalarni tekshiring. Imzo va WeSetup uslubi allaqachon qo‘shilgan.",
+        "from": "Kimdan",
+        "to": "Kimga",
+        "subject": "Mavzu",
+        "attachments": "Ilovalar",
+        "desktop": "Kompyuter",
+        "phone": "Telefon",
+        "width": "Xat kengligi",
+        "edit": "Tahrirlash"
+      },
       "workspace": {
         "title": "Xatlar",
         "description": "Mijozlar va yangi kontaktlarga ishchi manzildan yozing. Xatlar tarixda, tanlangan mijozlar uchun esa ularning kartalarida ham saqlanadi.",
@@ -17691,6 +17817,13 @@
         "removeFile": "{name} faylini olib tashlash",
         "kb": "KB"
       }
+    },
+    "conversationFeed": {
+      "siteFilter": "Sayt xatlari",
+      "automatic": "Sayt · avtomatik",
+      "mailing": "Tarqatma",
+      "hiddenBody": "Matn saqlanmadi: xatda kod, parol yoki kirish havolasi bor edi.",
+      "attachments": "Ilovalar: {names}"
     },
     "page": {
       "back": "Barcha tashkilotlar",

@@ -5,9 +5,11 @@ import { readMailSender, sendStaffEmail } from "@/lib/platform-mail.server";
 import { formatFromAddress } from "@/lib/platform-mail";
 import { mailAttachmentInfo } from "@/lib/mail-attachments";
 import type { PreparedMailAttachment } from "@/lib/mail-attachments.server";
-import { clientEmailContent, type ClientEmailInput, type ClientEmailView, type ClientEmailHistory } from "@/lib/client-email";
+import { clientEmailContent, clientEmailMessageId, type ClientEmailInput, type ClientEmailView, type ClientEmailHistory } from "@/lib/client-email";
 
 type EmailRow = NonNullable<Awaited<ReturnType<typeof db.clientEmail.findFirst>>>;
+
+export { clientEmailMessageId };
 
 export function clientEmailView(row: EmailRow): ClientEmailView {
   return {
@@ -66,6 +68,8 @@ export async function sendClientEmail(organizationId: string, userId: string, in
       senderUserId: preview.mailboxUserId, to: input.to, subject: input.subject,
       html: preview.html, text: preview.text, personalOnly: true,
       expectedFrom: formatFromAddress(preview.sender.fromName, preview.sender.fromEmail),
+      // Свой Message-ID: по нему «Переписки» не покажут письмо дважды (из истории и журнала писем).
+      messageId: clientEmailMessageId(row.id),
       attachments: attachments.map(({ filename, content, contentType }) => ({ filename, content, contentType })),
     });
   } catch {

@@ -164,6 +164,11 @@ test("кнопка видео — только на русской главно�
     assert.deepEqual(narratedVideoFor("ru", dir, "medical"), { src: "/landing/video/presentation-medical-ru.mp4" });
     assert.deepEqual(narratedVideoFor("ru", dir), { src: "/landing/video/presentation-ru.mp4", captions: "/landing/video/presentation-ru.vtt" });
     assert.equal(narratedVideoFor("en", dir, "medical"), null);
+    // Расширенная презентация (правки 24.11.2026) — первой, если лежит.
+    writeFileSync(path.join(video, "presentation-extended-ru.mp4"), "x");
+    writeFileSync(path.join(video, "presentation-extended-ru.jpg"), "x");
+    assert.deepEqual(narratedVideoFor("ru", dir), { src: "/landing/video/presentation-extended-ru.mp4", poster: "/landing/video/presentation-extended-ru.jpg" });
+    assert.deepEqual(narratedVideoFor("ru", dir, "medical"), { src: "/landing/video/presentation-medical-ru.mp4" }, "у медцентра — своё");
     // PDF — тоже свой у каждого вида и только на русской главной.
     assert.equal(presentationPdfFor("ru", "food", dir), null, "без файла PDF нет");
     writeFileSync(path.join(dir, "landing/wesetup-presentation.pdf"), "x");
@@ -175,8 +180,13 @@ test("кнопка видео — только на русской главно�
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
-  // Настоящая главная: у общепита и видео, и PDF лежат.
-  assert.ok(narratedVideoFor("ru"), "видео общепита на месте");
+  // Настоящая главная: у общепита расширенная видеопрезентация с постером и субтитрами, и PDF.
+  assert.deepEqual(narratedVideoFor("ru"), {
+    src: "/landing/video/presentation-extended-ru.mp4",
+    poster: "/landing/video/presentation-extended-ru.jpg",
+    captions: "/landing/video/presentation-extended-ru.vtt",
+  });
+  assert.ok(statSync(path.join(ROOT, "public/landing/video/presentation-extended-ru.mp4")).size < 20 * 1024 * 1024, "ролик главной — до 20 МБ");
   assert.equal(presentationPdfFor("ru", "food"), "/landing/wesetup-presentation.pdf");
   const page = read("src/app/page.tsx");
   assert.match(page, /narratedVideoFor\(locale, undefined, industry\)/);

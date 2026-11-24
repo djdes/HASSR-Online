@@ -656,6 +656,7 @@ model Organization {
   auditLogs                      AuditLog[]
   clientContracts                ClientContract[]
   clientEmails                   ClientEmail[]
+  outgoingEmails                 OutgoingEmail[]
   journalChecklistItems          JournalChecklistItem[]
   journalChecklistChecks         JournalChecklistCheck[]
   managerScopes                  ManagerScope[]
@@ -4092,6 +4093,42 @@ model ClientEmail {
 
   @@unique([organizationId, requestId])
   @@index([organizationId, createdAt, id])
+}
+
+/// Журнал исходящих писем платформы (спека client-mail-templates-2026-11-24):
+/// каждое письмо через общую почту сервера (`sendEmail` в src/lib/email.ts) и
+/// через личную почту сотрудника панели (`sendStaffEmail`) — автоматические
+/// напоминания, приветствие, пробный период, счета, письма из карточки.
+/// Одна строка — один получатель. HTML не храним, только текст; письма с
+/// кодом, паролем или ссылкой входа — без текста (`text` = null), у
+/// остальных ссылки без query и токенов. «Переписки» карточки клиента ищут
+/// строки по организации и по почтам людей клиента. Старше 365 дней удаляет
+/// /api/cron/purge-audit-log.
+model OutgoingEmail {
+  id              String        @id @default(cuid())
+  /// Получатель в нижнем регистре.
+  to              String
+  /// Организация получателя, если узнали при отправке.
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// system — общая почта сервера; personal — личная почта сотрудника.
+  via             String
+  fromEmail       String?
+  senderUserId    String?
+  subject         String
+  /// Текст письма без HTML, до 20 000 знаков; null — содержимое скрыто.
+  text            String?       @db.Text
+  /// Метаданные вложений [{ filename, size, contentType }], байты не храним.
+  attachmentsJson Json?
+  /// sent | failed
+  status          String
+  error           String?
+  messageId       String?
+  createdAt       DateTime      @default(now())
+
+  @@index([to, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([createdAt])
 }
 
 /// Ограничитель переходов (src/lib/page-navigation-guard.ts): суточные

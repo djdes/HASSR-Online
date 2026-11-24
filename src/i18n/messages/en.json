@@ -17649,6 +17649,132 @@
       "statusFailed": "Sending failed",
       "statusPending": "Awaiting confirmation",
       "showLetter": "Show branded email",
+      "templates": {
+        "label": "Template",
+        "choose": "Choose a template",
+        "hint": "A template fills in the subject and text — you can edit them before sending. Plan and service prices are current.",
+        "replace": "Replace the subject and text with the “{title}” template?",
+        "applied": "Template “{title}” inserted — check the text before sending",
+        "greeting": "Hello!",
+        "greetingNamed": "Hello, {name}!",
+        "tiers": {
+          "standard": "Standard",
+          "premium": "Premium",
+          "vip": "VIP"
+        },
+        "tariffLine": "• {tier} — {month} ₽ per month, or {year} ₽ per month when paid yearly",
+        "tariffLineMonth": "• {tier} — {month} ₽ per month",
+        "tariffLineYear": "• {tier} — {year} ₽ per month when paid yearly",
+        "serviceLine": "• {title} — {price}",
+        "servicePrice": "{amount} ₽",
+        "servicePriceFrom": "from {amount} ₽",
+        "serviceOnRequest": "on request",
+        "groups": {
+          "followup": "After a call",
+          "billing": "Plans and payment",
+          "services": "Services",
+          "support": "Support"
+        },
+        "items": {
+          "presentation": {
+            "title": "Video presentation and PDF",
+            "subject": "WeSetup: video presentation and PDF",
+            "body": "{greeting}\n\nFollowing up on our conversation, here are the WeSetup video presentation and the PDF presentation. You can watch them any time and share them with colleagues.\n\nVideo presentation: {videoUrl}\nPDF presentation: {pdfUrl}\n\nIn short: electronic SanPiN and HACCP logs filled in from a phone via QR code, with no passwords or apps to install; reminders for staff in Telegram and MAX; ready PDF and Excel reports for inspections.\n\nTry it for free: {registerUrl}\n\nIf you have any questions, reply to this email or give us a call — happy to help."
+          },
+          "noAnswer": {
+            "title": "Could not reach",
+            "subject": "We could not reach you by phone",
+            "body": "{greeting}\n\nWe tried to call you but could not get through. We wanted to show how WeSetup moves SanPiN and HACCP logs online: staff fill them in from a phone via QR code, and the manager sees what is done and gets reminders about gaps.\n\nTo save your time, here are the video presentation and the PDF:\nVideo: {videoUrl}\nPDF: {pdfUrl}\n\nLet us know when it is convenient to talk — or just reply to this email."
+          },
+          "afterDemo": {
+            "title": "After a demo",
+            "subject": "WeSetup demo: next steps",
+            "body": "{greeting}\n\nThank you for your time at the demo! Next steps for {company}:\n\n1. Create your account: {registerUrl}\n2. Add staff and locations — logs and the filling schedule are set up automatically.\n3. Print the QR codes and place them next to equipment and workstations.\n4. Connect the Telegram bot to get reminders and the daily summary: {botUrl}\n\nVideo presentation to share with colleagues: {videoUrl}\nPDF presentation: {pdfUrl}\n\nWe can help with the setup — just reply to this email."
+          },
+          "reminder": {
+            "title": "Follow up",
+            "subject": "Did you get a chance to see the WeSetup presentation?",
+            "body": "{greeting}\n\nWe recently sent you the WeSetup presentation. Did you get a chance to look at it?\n\nIf your logs are still on paper, you can start small: move the two or three most frequent logs — fridge temperatures, staff hygiene, cleaning — and see how much time it saves. The trial lasts {trialDays, plural, one {# day} other {# days}} and is free.\n\nVideo: {videoUrl}\nPDF: {pdfUrl}\n\nHappy to answer any questions."
+          },
+          "tariffs": {
+            "title": "Plans",
+            "subject": "WeSetup plans",
+            "body": "{greeting}\n\nHere are the current WeSetup plans:\n\n{tariffList}\n\nYearly payment is cheaper, and there is a discount for several locations. Plan comparison and calculator: {pricingUrl}\n\nThe first {trialDays, plural, one {# day} other {# days}} are free, so your team can try the service calmly.\n\nI will help choose a plan for {company} — reply to this email or give us a call."
+          },
+          "invoice": {
+            "title": "Invoice",
+            "subject": "WeSetup invoice",
+            "body": "{greeting}\n\nPlease find attached the WeSetup invoice for {company}. You can pay using the bank details in the invoice.\n\nAccess is extended automatically after payment, and closing documents will come via EDI or by email — whichever you prefer.\n\nIf you need to change the details, the period or the number of locations, let us know and we will issue a new invoice."
+          },
+          "trialEnding": {
+            "title": "Trial ending",
+            "subject": "Your WeSetup trial ends soon",
+            "body": "{greeting}\n\nThe WeSetup trial for {company} ends soon. To keep logs, reminders and QR codes working without a break, choose a plan: {pricingUrl}\n\nAll records, staff and settings will be kept.\n\nIf you need an invoice for a company payment or a little more time to check everything, reply to this email."
+          },
+          "paymentThanks": {
+            "title": "Thanks for the payment",
+            "subject": "Payment received — thank you!",
+            "body": "{greeting}\n\nWe have received your payment — thank you for choosing WeSetup! Access for {company} has been extended.\n\nWe will send the closing documents via EDI or by email. If you need a reconciliation statement or documents for another legal entity, let us know.\n\nAny questions: {supportPhone}, Telegram {supportTelegram}, or just reply to this email."
+          },
+          "services": {
+            "title": "Services",
+            "subject": "WeSetup services",
+            "body": "{greeting}\n\nBesides electronic logs, we help with documentation and getting your business ready. Current services and prices:\n\n{serviceList}\n\nMore about the services: {servicesUrl}\n\nLet us know what {company} needs, and we will prepare an offer and timeline."
+          },
+          "setup": {
+            "title": "Turnkey setup",
+            "subject": "We will set up WeSetup for your business",
+            "body": "{greeting}\n\nWe can take care of the WeSetup setup so that {company} starts working with electronic logs this week:\n\n• choose and configure logs for your type of business;\n• add staff, positions and the filling schedule;\n• prepare QR codes for equipment and workstations;\n• connect reminders in Telegram and MAX and run a short training for the team.\n\nPrice and scope: {servicesUrl}\n\nWould a phone call be convenient? Send a time and I will call."
+          },
+          "documents": {
+            "title": "Production control and HACCP documents",
+            "subject": "Production control program and HACCP documents",
+            "body": "{greeting}\n\nWe will prepare a production control program and HACCP documentation for {company}, based on your type of business, product range and premises. The documents are linked to WeSetup electronic logs, so staff keep the right records from day one.\n\nWhat we need from you: type of business and product range, a floor plan or list of rooms, the equipment list and the number of staff.\n\nDetails and prices: {servicesUrl}\n\nReply to this email and we will send a list of questions and the timeline."
+          },
+          "inspection": {
+            "title": "Inspection preparation",
+            "subject": "Preparing for a Rospotrebnadzor inspection",
+            "body": "{greeting}\n\nWe will help {company} prepare for a Rospotrebnadzor inspection or a chain audit:\n\n• check logs and documents for completeness and SanPiN compliance;\n• point out what to fix before the inspectors arrive;\n• set up the “Inspection” mode in WeSetup — the inspector opens logs for any period via QR code, with no paper to search for.\n\nDetails: {servicesUrl}\n\nWhen is the inspection expected? Reply to this email and we will suggest a plan."
+          },
+          "issueReceived": {
+            "title": "Request received",
+            "subject": "We have received your request",
+            "body": "{greeting}\n\nThank you for writing! We have received your request and are already looking into it. We will reply as soon as we have a result — usually within a business day.\n\nIf it is urgent, call {supportPhone} or write to Telegram {supportTelegram}."
+          },
+          "issueFixed": {
+            "title": "Issue fixed",
+            "subject": "The issue has been fixed",
+            "body": "{greeting}\n\nThe issue you reported has been fixed. Please refresh the page (Ctrl+F5 on a computer, or close and reopen the app on a phone) and check again.\n\nIf something still does not work as expected, reply to this email with a screenshot and we will look right away.\n\nThank you for helping us make WeSetup better!"
+          },
+          "needDetails": {
+            "title": "Need details",
+            "subject": "Could you share a few details?",
+            "body": "{greeting}\n\nTo sort this out faster, please send us:\n\n1. A screenshot or a short video of the error.\n2. Which log or section it happens in.\n3. The date and approximate time you noticed it.\n4. Which device you used (phone or computer, browser) and which staff account.\n\nAs soon as we hear back, we will get on it."
+          },
+          "login": {
+            "title": "How to sign in",
+            "subject": "How to sign in to WeSetup",
+            "body": "{greeting}\n\nYou can sign in here: {loginUrl}\n\n• Your login is the email you registered with.\n• Forgot your password? Click “Forgot password?” on the sign-in page and a link to set a new one will come by email. You can also sign in without a password using a one-time link sent by email.\n• Staff do not need a password: they fill in logs via QR code from their own phone.\n\nIf you still cannot sign in, reply to this email and we will help."
+          },
+          "staff": {
+            "title": "Adding staff",
+            "subject": "How to add your staff to WeSetup",
+            "body": "{greeting}\n\nAdding the staff of {company} is easy:\n\n1. Open the “Staff” section in your account and add people with their positions.\n2. Each person can get a personal QR code: they scan it with a phone and fill in logs with no password and no app to install.\n3. To get reminders about unfilled logs, a staff member connects the Telegram bot: {botUrl}\n\nStep-by-step guides with screenshots are in the knowledge base: {knowledgeUrl}\n\nIf it is easier, send us the staff list (full names and positions) and we will add them for you."
+          }
+        }
+      },
+      "previewDialog": {
+        "title": "This is how the client will see the email",
+        "description": "Check the address, subject, text and attachments. The signature and branded layout are already added.",
+        "from": "From",
+        "to": "To",
+        "subject": "Subject",
+        "attachments": "Attachments",
+        "desktop": "Computer",
+        "phone": "Phone",
+        "width": "Email width",
+        "edit": "Edit"
+      },
       "workspace": {
         "title": "Letters",
         "description": "Write to customers and new contacts from your work address. Messages stay in history and, for selected customers, in their customer cards.",
@@ -17691,6 +17817,13 @@
         "removeFile": "Remove file {name}",
         "kb": "KB"
       }
+    },
+    "conversationFeed": {
+      "siteFilter": "Site emails",
+      "automatic": "Site · automatic",
+      "mailing": "Mailing",
+      "hiddenBody": "Text not stored: the email contained a code, password or sign-in link.",
+      "attachments": "Attachments: {names}"
     },
     "page": {
       "back": "All organizations",

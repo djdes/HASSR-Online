@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizeEmail, phoneKey } from "@/lib/crm/identity";
 import type { ClientContacts } from "@/lib/root-client-card.server";
+import { clientEmailMessageId } from "@/lib/client-email";
 
 /**
  * «Переписки» в карточке клиента панели: вся лента общения с клиентом по
@@ -12,12 +13,16 @@ import type { ClientContacts } from "@/lib/root-client-card.server";
  *
  * Источник — лента CRM (`CrmInteraction`) по всем контактам CRM этого
  * клиента: привязанным к организации и найденным по почтам и телефонам
- * её людей и компании. Плюс `ClientEmail` (письма из карточки), если
- * такого письма ещё нет в ленте CRM.
+ * её людей и компании. Плюс `ClientEmail` (письма из карточки и раздела
+ * «Письма»), журнал исходящих писем `OutgoingEmail` (автоматические письма
+ * сайта и письма сотрудников) и рассылки (`MailingRecipient`) — по
+ * организации и по почтам людей клиента. Одно письмо (один Message-ID)
+ * показывается один раз.
  */
 export type ConversationItem = {
   id: string;
-  source: "crm" | "client-email";
+  /** crm — лента CRM; client-email — «Письма клиенту»; outgoing-email — журнал писем сайта и сотрудников; mailing — рассылка. */
+  source: "crm" | "client-email" | "outgoing-email" | "mailing";
   /** Контакт CRM — для плеера записи и ссылки в CRM. */
   contactId: string | null;
   contactName: string | null;
@@ -41,6 +46,12 @@ export type ConversationItem = {
     employeeName: string | null;
   } | null;
   status?: string | null;
+  /** Письмо отправил сайт сам (напоминание, приветствие, счёт), а не сотрудник. */
+  automatic?: boolean;
+  /** Текст письма не сохранён: в нём был код, пароль или ссылка входа. */
+  hiddenBody?: boolean;
+  /** Имена вложений. */
+  attachments?: string[];
 };
 
 export type ClientConversations = {
@@ -50,6 +61,9 @@ export type ClientConversations = {
 };
 
 const LIMIT = 400;
+/** Сколько писем журнала (`OutgoingEmail`) и рассылок показываем. */
+const OUTGOING_LIMIT = 300;
+const MAILING_LIMIT = 100;
 
 /** Почты и телефоны клиента, по которым ищем контакты CRM (без технических логинов). */
 export function clientIdentityKeys(contacts: ClientContacts | null): { emails: string[]; phoneKeys: string[] } {
@@ -80,6 +94,26 @@ function messageIdKey(value: string | null | undefined): string | null {
   return id || null;
 }
 
+function attachmentNames(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const names = value.flatMap((item) => (item && typeof item === "object" && typeof (item as { filename?: unknown }).filename === "string" ? [(item as { filename: string }).filename] : []));
+  return names.length ? names : undefined;
+}
+
+function failedStatus(status: string, error: string | null | undefined): string | null {
+  if (status === "failed") return `не отправлено${error ? `: ${error}` : ""}`;
+  if (status === "sending") return "отправляется";
+  return null;
+}
+
+/** Тема и текст рассылки из `payload` кампании (у шаблонов они называются одинаково). */
+function mailingContent(payload: unknown, title: string): { subject: string; body: string } {
+  const data = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+  const subject = typeof data.subject === "string" && data.subject.trim() ? data.subject.trim() : title;
+  const body = typeof data.body === "string" ? data.body.trim() : typeof data.text === "string" ? data.text.trim() : "";
+  return { subject, body };
+}
+
 export async function loadClientConversations(organizationId: string, contacts: ClientContacts | null): Promise<ClientConversations> {
   const { emails, phoneKeys } = clientIdentityKeys(contacts);
   const or: Prisma.CrmContactWhereInput[] = [{ organizationId }];
@@ -94,7 +128,12 @@ export async function loadClientConversations(organizationId: string, contacts: 
   const contactIds = crmContacts.map((contact) => contact.id);
   const nameOf = new Map(crmContacts.map((contact) => [contact.id, contact.name || contact.company || contact.email || contact.phone]));
 
-  const [interactions, clientEmails] = await Promise.all([
+  // Письма ищем и по организации, и по почтам людей клиента: письмо с
+  // раздела «Письма» на введённый вручную адрес лежит под платформой.
+  const byOrgOrEmail = <K extends string>(emailField: K) =>
+    emails.length ? [{ organizationId }, { [emailField]: { in: emails } } as Record<K, { in: string[] }>] : [{ organizationId }];
+
+  const [interactions, clientEmails, outgoing, mailings] = await Promise.all([
     contactIds.length
       ? db.crmInteraction.findMany({
           where: { contactId: { in: contactIds }, filteredReason: null },
@@ -108,12 +147,28 @@ export async function loadClientConversations(organizationId: string, contacts: 
         })
       : Promise.resolve([]),
     db.clientEmail.findMany({
-      where: { organizationId },
+      where: { OR: byOrgOrEmail("to") },
       orderBy: { createdAt: "desc" },
       take: 200,
-      select: { id: true, to: true, subject: true, message: true, senderName: true, fromEmail: true, status: true, error: true, messageId: true, createdAt: true, sentAt: true },
+      select: { id: true, to: true, subject: true, message: true, senderName: true, fromEmail: true, status: true, error: true, messageId: true, attachmentsJson: true, createdAt: true, sentAt: true },
+    }),
+    db.outgoingEmail.findMany({
+      where: { OR: byOrgOrEmail("to") },
+      orderBy: { createdAt: "desc" },
+      take: OUTGOING_LIMIT + 1,
+      select: { id: true, to: true, via: true, fromEmail: true, senderUserId: true, subject: true, text: true, attachmentsJson: true, status: true, error: true, messageId: true, createdAt: true },
+    }),
+    db.mailingRecipient.findMany({
+      where: { isTest: false, emailStatus: { in: ["sent", "failed"] }, OR: byOrgOrEmail("email") },
+      orderBy: { createdAt: "desc" },
+      take: MAILING_LIMIT,
+      select: { id: true, email: true, emailStatus: true, emailError: true, emailSentAt: true, createdAt: true, campaign: { select: { id: true, title: true, payload: true } } },
     }),
   ]);
+  const senderIds = [...new Set(outgoing.flatMap((row) => (row.senderUserId ? [row.senderUserId] : [])))];
+  const senders = senderIds.length
+    ? new Map((await db.user.findMany({ where: { id: { in: senderIds } }, select: { id: true, name: true } })).map((user) => [user.id, user.name]))
+    : new Map<string, string>();
 
   // Письмо из карточки клиента уже могло попасть в ленту CRM (копия из
   // «Отправленных» ящика) — тогда показываем один раз.
@@ -148,8 +203,12 @@ export async function loadClientConversations(organizationId: string, contacts: 
       : null,
   }));
 
+  // Письма из карточки уже есть в истории — их копии в журнале не повторяем.
+  const shownMessageIds = new Set(crmMessageIds);
   for (const mail of clientEmails) {
     const key = messageIdKey(mail.messageId);
+    shownMessageIds.add(messageIdKey(clientEmailMessageId(mail.id)));
+    if (key) shownMessageIds.add(key);
     if (key && crmMessageIds.has(key)) continue;
     items.push({
       id: `client-email:${mail.id}`,
@@ -165,7 +224,53 @@ export async function loadClientConversations(organizationId: string, contacts: 
       href: null,
       occurredAt: (mail.sentAt ?? mail.createdAt).toISOString(),
       call: null,
-      status: mail.status === "failed" ? `не отправлено${mail.error ? `: ${mail.error}` : ""}` : mail.status === "sending" ? "отправляется" : null,
+      status: failedStatus(mail.status, mail.error),
+      attachments: attachmentNames(mail.attachmentsJson),
+    });
+  }
+
+  for (const row of outgoing.slice(0, OUTGOING_LIMIT)) {
+    const key = messageIdKey(row.messageId);
+    if (key && shownMessageIds.has(key)) continue;
+    items.push({
+      id: `outgoing-email:${row.id}`,
+      source: "outgoing-email",
+      contactId: null,
+      contactName: row.to,
+      channel: "email",
+      direction: "out",
+      subject: row.subject,
+      body: row.text ?? "",
+      authorName: row.senderUserId ? (senders.get(row.senderUserId) ?? null) : null,
+      fromAddress: row.fromEmail,
+      href: null,
+      occurredAt: row.createdAt.toISOString(),
+      call: null,
+      status: failedStatus(row.status, row.error),
+      automatic: row.via === "system" && !row.senderUserId,
+      hiddenBody: row.text === null,
+      attachments: attachmentNames(row.attachmentsJson),
+    });
+  }
+
+  for (const row of mailings) {
+    const { subject, body } = mailingContent(row.campaign.payload, row.campaign.title);
+    items.push({
+      id: `mailing:${row.id}`,
+      source: "mailing",
+      contactId: null,
+      contactName: row.email,
+      channel: "email",
+      direction: "out",
+      subject,
+      body,
+      authorName: null,
+      fromAddress: null,
+      href: `/root/mailing/${encodeURIComponent(row.campaign.id)}`,
+      occurredAt: (row.emailSentAt ?? row.createdAt).toISOString(),
+      call: null,
+      status: failedStatus(row.emailStatus ?? "", row.emailError),
+      automatic: true,
     });
   }
 
@@ -173,6 +278,6 @@ export async function loadClientConversations(organizationId: string, contacts: 
   return {
     items,
     contacts: crmContacts.map((contact) => ({ id: contact.id, name: contact.name || contact.company, email: contact.email, phone: contact.phone })),
-    truncated: interactions.length > LIMIT,
+    truncated: interactions.length > LIMIT || outgoing.length > OUTGOING_LIMIT,
   };
 }

@@ -1,0 +1,5 @@
+→ [test:changed] Эскалация до полного прогона: Затронут ядровый файл (prisma/schema.prisma)
+=== Test stats: pass=7411, fail=1 ===
+✗ НОВЫЕ регрессии (нет в baseline):
+  - every /root page and /api/root route is classified explicitly
+after fix: src/lib/platform-access.test.ts pass=12 fail=0 (rule /api/root/seo added; failure came from master #329)

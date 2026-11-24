@@ -208,6 +208,8 @@ export const PLATFORM_RULES: readonly Rule[] = [
   { pattern: "/api/root/max-channel", gate: "content" },
   { pattern: "/root/seo", gate: "seo" },
   { pattern: "/root/yandex-direct", gate: "seo" },
+  // Вкладка «Запросы» в /root/seo: выгрузка поисковых запросов.
+  { pattern: "/api/root/seo", gate: "seo" },
   { pattern: "/api/root/seo-health", gate: "seo" },
   { pattern: "/api/root/topvisor", gate: "seo" },
   { pattern: "/api/root/yandex-direct", gate: "seo" },

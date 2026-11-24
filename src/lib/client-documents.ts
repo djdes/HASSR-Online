@@ -94,12 +94,30 @@ export function defaultProposalMessage(params: { companyName: string | null; sen
   ].join("\n\n");
 }
 
+/** Ссылка в тексте письма: http(s) до пробела, без знака препинания в конце. */
+const TEXT_URL = /https?:\/\/[^\s<>"«»]*[^\s<>"«».,;:!?)]/g;
+
+/**
+ * Текст письма → абзацы HTML. Ссылки из текста кликабельны (шаблоны «Писем
+ * клиенту» состоят из ссылок на презентацию, PDF, тарифы), а длинный адрес
+ * переносится — иначе на телефоне письмо шире экрана.
+ */
 export function messageHtml(message: string): string {
   const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const linkify = (text: string) => {
+    let out = "";
+    let last = 0;
+    for (const match of text.matchAll(TEXT_URL)) {
+      const url = match[0];
+      out += escape(text.slice(last, match.index)) + `<a href="${escape(url)}" style="color:#3848c7;text-decoration:underline">${escape(url)}</a>`;
+      last = (match.index ?? 0) + url.length;
+    }
+    return out + escape(text.slice(last));
+  };
   return message
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)
-    .map((paragraph) => `<p style="margin:0 0 14px;color:#3c4053;line-height:1.6">${escape(paragraph).replace(/\n/g, "<br>")}</p>`)
+    .map((paragraph) => `<p style="margin:0 0 14px;color:#3c4053;line-height:1.6;overflow-wrap:anywhere;word-break:break-word">${linkify(paragraph).replace(/\n/g, "<br>")}</p>`)
     .join("");
 }

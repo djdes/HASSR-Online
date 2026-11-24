@@ -51,7 +51,8 @@ export async function issueMagicLink(email: string): Promise<{ sent: boolean }> 
      <p style="margin:0 0 20px"><a href="${url}" style="display:inline-block;background:#5566f6;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-size:15px;font-weight:600">Войти в WeSetup</a></p>
      <p style="margin:0;font-size:12px;line-height:1.6;color:#a1a1aa">Если вы не запрашивали вход — просто не открывайте ссылку. Ссылка: ${url}</p>`
   );
-  const sent = await sendRawEmail(email, "Вход в WeSetup по ссылке", html);
+  // Ссылка входа — секрет: в журнал исходящих писем только адрес и тема.
+  const sent = await sendRawEmail(email, "Вход в WeSetup по ссылке", html, { sensitive: true });
   return { sent };
 }
 

@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 import { simpleParser } from "mailparser";
 import { db } from "@/lib/db";
 import { encryptSecret } from "@/lib/integration-crypto";
-import { clientEmailHistory, clientEmailPreview, sendClientEmail } from "./client-email.server";
+import { clientEmailHistory, clientEmailMessageId, clientEmailPreview, sendClientEmail } from "./client-email.server";
 import { TRUSTED_SMTP_HOSTS_SETTING } from "./smtp-host-policy";
 
 type Row = NonNullable<Awaited<ReturnType<typeof db.clientEmail.findFirst>>>;
@@ -13,8 +13,9 @@ const original = {
   unique: db.clientEmail.findUnique, first: db.clientEmail.findFirst, many: db.clientEmail.findMany,
   create: db.clientEmail.create, update: db.clientEmail.update,
   sender: db.platformMailSender.findUnique, senderUpdate: db.platformMailSender.update, user: db.user.findUnique,
-  setting: db.platformSetting.findUnique, sharedUser: db.user.findFirst,
+  setting: db.platformSetting.findUnique, sharedUser: db.user.findFirst, journal: db.outgoingEmail.createMany,
 };
+let journal: Record<string, unknown>[];
 const oldSecret = process.env.INTEGRATION_KEY_SECRET;
 const createRealTransport = nodemailer.createTransport;
 let rows: Row[];
@@ -28,7 +29,11 @@ const input = { to: "client@example.com", subject: "Проверка", message: 
 
 beforeEach(() => {
   process.env.INTEGRATION_KEY_SECRET = "client-email-test-only-secret";
-  rows = []; smtpCalls = 0; smtpError = null; verified = true; rejectRecipient = false;
+  rows = []; smtpCalls = 0; smtpError = null; verified = true; rejectRecipient = false; journal = [];
+  db.outgoingEmail.createMany = (async (args) => {
+    const data = Array.isArray(args?.data) ? args.data : [args?.data];
+    journal.push(...(data as Record<string, unknown>[])); return { count: data.length };
+  }) as typeof original.journal;
   db.clientEmail.findUnique = (async (args) => rows.find((row) => row.organizationId === args.where.organizationId_requestId?.organizationId && row.requestId === args.where.organizationId_requestId?.requestId) ?? null) as typeof original.unique;
   db.clientEmail.findFirst = (async (args) => rows.find((row) => row.id === args?.where?.id && row.organizationId === args?.where?.organizationId) ?? null) as typeof original.first;
   db.clientEmail.create = (async (args) => {
@@ -70,7 +75,7 @@ afterEach(() => {
   db.clientEmail.findUnique = original.unique; db.clientEmail.findFirst = original.first;
   db.clientEmail.findMany = original.many; db.clientEmail.create = original.create; db.clientEmail.update = original.update;
   db.platformMailSender.findUnique = original.sender; db.platformMailSender.update = original.senderUpdate; db.user.findUnique = original.user;
-  db.platformSetting.findUnique = original.setting; db.user.findFirst = original.sharedUser;
+  db.platformSetting.findUnique = original.setting; db.user.findFirst = original.sharedUser; db.outgoingEmail.createMany = original.journal;
   if (oldSecret === undefined) delete process.env.INTEGRATION_KEY_SECRET; else process.env.INTEGRATION_KEY_SECRET = oldSecret;
 });
 
@@ -83,6 +88,20 @@ test("personal SMTP sends the exact branded preview, snapshots identity/content 
   assert.equal(smtpMessage.replyTo, "reply@example.com");
   assert.equal(rows[0].senderUserId, "staff-id"); assert.equal(rows[0].fromEmail, "staff@example.com");
   assert.equal(rows[0].messageId, "<smtp-test@example.com>"); assert.ok(rows[0].sentAt);
+  assert.equal(smtpMessage.messageId, clientEmailMessageId(rows[0].id), "свой Message-ID — для склейки в «Переписках»");
+  assert.equal(journal.length, 1, "письмо записано в журнал исходящих");
+  assert.equal(journal[0].to, "client@example.com"); assert.equal(journal[0].via, "personal");
+  assert.equal(journal[0].status, "sent"); assert.equal(journal[0].senderUserId, "staff-id");
+  assert.equal(journal[0].fromEmail, "staff@example.com"); assert.match(String(journal[0].text), /Текст письма/);
+});
+
+test("personal-only failure is journaled as failed with the card Message-ID", async () => {
+  smtpError = new Error("boom");
+  const result = await sendClientEmail("org-a", "staff-id", input);
+  assert.equal(result?.item.status, "failed");
+  assert.equal(journal.length, 1);
+  assert.equal(journal[0].status, "failed");
+  assert.equal(journal[0].messageId, clientEmailMessageId(rows[0].id));
 });
 
 test("external mail carries real binary MIME attachments, stores metadata only and replays without a second SMTP send", async () => {
