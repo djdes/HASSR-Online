@@ -80,7 +80,8 @@ export function PpkDocsList({
     }
   }, [source, t, canManage]);
 
-  const keys = useMemo(() => (canManage ? (docs ?? []).map((doc) => `knowledge:${doc.id}`) : []), [docs, canManage]);
+  // Номера редакций видят все, кто открыл пункт; утверждают — только с правом правки (R2-2).
+  const keys = useMemo(() => (docs ?? []).map((doc) => `knowledge:${doc.id}`), [docs]);
   const { states, prompt, setPrompt } = useRevisionStates(keys);
 
   async function upload(files: File[]) {

@@ -7,7 +7,6 @@ import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/page-header";
 import { ackKnowledgeId, formatAckMoment } from "@/lib/ppk/acknowledge";
 import { isTextDoc } from "@/lib/ppk/text-docs";
-import { revisionDocKey } from "@/lib/ppk/revisions";
 import { loadRevisionStates } from "@/lib/ppk/revisions.server";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
@@ -184,13 +183,9 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
   }
 
   // Номер утверждённой редакции документа (spec, Р5: сотрудник видит номер), если текст с тех пор не менялся.
-  const revisionKey = ackKnowledgeId(doc.docKey)
-    ? doc.docKey
-    : doc.docKey === "policy"
-      ? revisionDocKey({ kind: "policy" }, scope.buildingId)
-      : doc.docKey === "team-regulation"
-        ? revisionDocKey({ kind: "text", block: "text-team-regulation" }, scope.buildingId)
-        : null;
+  // Только у документа базы знаний страница показывает ровно утверждённое содержимое
+  // (у политики и положения отпечаток может быть по скану или тексту пункта — R2-4).
+  const revisionKey = ackKnowledgeId(doc.docKey) ? doc.docKey : null;
   const revision = revisionKey ? (await loadRevisionStates(scope, [revisionKey])).get(revisionKey) : undefined;
   const revisionLine =
     revision?.status === "approved" && revision.latest

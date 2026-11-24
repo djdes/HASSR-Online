@@ -26,7 +26,7 @@ import { revisionDocKey, revisionLabel, type RevisionTextBlock } from "./revisio
 import { journalResponsibles } from "./officials";
 import { loadEnabledJournals } from "./journals.server";
 import type { PpkFolderKey } from "./folders";
-import { SCAN_MAX_BYTES } from "./structure-pdf";
+import { SCAN_MAX_BYTES, printableFile } from "./structure-pdf";
 
 const STRUCTURE = ru.productionControl.structure;
 
@@ -97,6 +97,9 @@ async function attachBytes(files: PrintFile[]): Promise<void> {
     if (wanted.includes(file.id)) continue;
     if (isTextDoc(file.mimeType)) {
       wanted.push(file.id);
+    } else if (!printableFile(file)) {
+      // Архив, таблица, DOC — печатается строкой, байты не читаем (R2-6).
+      continue;
     } else if (file.sizeBytes <= budget) {
       wanted.push(file.id);
       budget -= file.sizeBytes;

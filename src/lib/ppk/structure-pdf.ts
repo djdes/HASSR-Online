@@ -10,11 +10,10 @@
  * Текст рисует jsPDF (кириллический шрифт), страницы сканов — pdf-lib поверх
  * заготовленных страниц-рамок.
  */
-import JSZip from "jszip";
 import type { CellHookData } from "jspdf-autotable";
 import autoTable from "jspdf-autotable";
 import { PDFDocument } from "pdf-lib";
-import { officeZipWithinLimits } from "@/lib/knowledge-documents";
+import { docxPlainText } from "@/lib/office-text";
 import { hazardRisk, isSignificantHazard } from "./haccp";
 import { MEDICAL_PHRASE } from "./program-content";
 import { PPK_STRUCTURE, type PpkItemId, type PpkStructureItem } from "./structure";
@@ -71,25 +70,16 @@ function extensionOf(file: PrintFile): string {
   return file.fileName.split(".").pop()?.toLowerCase() ?? "";
 }
 
-/**
- * Текст из DOCX без разметки (как в предпросмотре базы знаний). Сначала —
- * предел распаковки: маленький файл не должен раздуться в сотни мегабайт.
- */
-async function docxText(bytes: Uint8Array): Promise<string | null> {
-  if (!officeZipWithinLimits(bytes)) return null;
-  const zip = await JSZip.loadAsync(bytes);
-  const xml = await zip.file("word/document.xml")?.async("string");
-  if (!xml) return null;
-  return xml
-    .replace(/<w:tab\/>/g, "\t")
-    .replace(/<\/w:p>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .slice(0, 200_000);
+/** Файл, который печатается содержимым: PDF, JPG/PNG, DOCX и документ текстом. Остальное — строкой. */
+export function printableFile(file: Pick<PrintFile, "fileName" | "mimeType">): boolean {
+  const ext = file.fileName.split(".").pop()?.toLowerCase() ?? "";
+  return (
+    file.mimeType === "application/pdf" ||
+    file.mimeType === "image/png" ||
+    file.mimeType === "image/jpeg" ||
+    file.mimeType.startsWith("text/plain") ||
+    ["pdf", "png", "jpg", "jpeg", "docx"].includes(ext)
+  );
 }
 
 /**
@@ -107,6 +97,11 @@ export async function planPrintFiles(files: PrintFile[]): Promise<Map<string, Fi
     const ext = extensionOf(file);
     const isPdf = file.mimeType === "application/pdf" || ext === "pdf";
     const isImage = file.mimeType === "image/png" || file.mimeType === "image/jpeg" || ["png", "jpg", "jpeg"].includes(ext);
+    // Архивы, таблицы, DOC — строкой «приложен в электронном виде»: байты не нужны.
+    if (!printableFile(file)) {
+      plans.set(file.id, { kind: "skip", reason: "format" });
+      continue;
+    }
     // Байты не прочитаны: файл сверх объёма сканов программы.
     if (file.bytes.byteLength === 0) {
       plans.set(file.id, { kind: "skip", reason: file.sizeBytes > 0 ? "limit" : "broken" });
@@ -116,7 +111,8 @@ export async function planPrintFiles(files: PrintFile[]): Promise<Map<string, Fi
       if (file.mimeType.startsWith("text/plain")) {
         plans.set(file.id, { kind: "text", text: Buffer.from(file.bytes).toString("utf8") });
       } else if (ext === "docx") {
-        const extracted = await docxText(file.bytes);
+        // Распаковка с жёстким пределом выхода (R2-1): ложные размеры в заголовках ZIP не помогают «бомбе».
+        const extracted = docxPlainText(file.bytes);
         plans.set(file.id, extracted ? { kind: "text", text: extracted } : { kind: "skip", reason: "broken" });
       } else if (isPdf || isImage) {
         if (bytes + file.bytes.byteLength > SCAN_MAX_BYTES) {
@@ -344,7 +340,8 @@ function acquaintanceSheet(ctx: PCtx, data: PpkPrintData) {
       const height = width / 3;
       const dataUrl = `data:image/png;base64,${Buffer.from(ack.signature).toString("base64")}`;
       try {
-        ctx.doc.addImage(dataUrl, "PNG", hook.cell.x + pad + (boxW - width) / 2, hook.cell.y + pad + (boxH - height) / 2, width, height);
+        // «FAST» — сжатие картинки: без него каждая подпись добавляет к PDF ~350 КБ (R2-3).
+        ctx.doc.addImage(dataUrl, "PNG", hook.cell.x + pad + (boxW - width) / 2, hook.cell.y + pad + (boxH - height) / 2, width, height, undefined, "FAST");
       } catch {
         /* битая подпись — пустая ячейка */
       }

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import JSZip from "jszip";
 import * as XLSX from "xlsx";
 import { db } from "@/lib/db";
 import { requireKnowledgeAccess } from "@/lib/knowledge-documents.server";
 import { officeZipWithinLimits } from "@/lib/knowledge-documents";
+import { docxPlainText } from "@/lib/office-text";
 
 export const dynamic = "force-dynamic";
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -21,11 +21,10 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   try {
     if (["docx", "xlsx"].includes(extension ?? "") && !officeZipWithinLimits(bytes)) throw new Error("Превью слишком велико");
     if (extension === "docx") {
-      const zip = await JSZip.loadAsync(bytes);
-      const xml = await zip.file("word/document.xml")?.async("string");
-      if (!xml) throw new Error("Нет текста");
-      const text = xml.replace(/<\/w:p>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').slice(0, 100000);
-      return NextResponse.json({ kind: "text", text }, { headers: { "Cache-Control": "private, no-store" } });
+      // Распаковка с жёстким пределом выхода: размеры из заголовков ZIP не проверяют «бомбу» (2026-11-24).
+      const text = docxPlainText(bytes);
+      if (text === null) throw new Error("Нет текста");
+      return NextResponse.json({ kind: "text", text: text.slice(0, 100000) }, { headers: { "Cache-Control": "private, no-store" } });
     }
     if (extension === "xlsx" || extension === "xls") {
       const book = XLSX.read(bytes, { type: "array", sheetRows: 40, cellFormula: false, cellHTML: false, bookVBA: false });

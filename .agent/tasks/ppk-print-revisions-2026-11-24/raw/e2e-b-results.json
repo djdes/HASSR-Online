@@ -22,7 +22,7 @@
   {
     "name": "повтор без изменений — та же редакция",
     "ok": true,
-    "detail": "{\"created\":false,\"revision\":{\"number\":1,\"code\":\"ППК 001\",\"approvedAt\":\"2026-11-24T21:05:29.322Z\",\"approvedByName\":\"Крылов Денис Сергеевич\"},\"docKey\":\"text:text-terms\"}"
+    "detail": "{\"created\":false,\"revision\":{\"number\":1,\"code\":\"ППК 001\",\"approvedAt\":\"2026-11-24T21:32:56.460Z\",\"approvedByName\":\"Крылов Денис Сергеевич\"},\"docKey\":\"text:text-terms\"}"
   },
   {
     "name": "пробелы и переносы не меняют редакцию",

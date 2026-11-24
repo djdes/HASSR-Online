@@ -58,16 +58,65 @@ function itemOf(ref: RevisionDocRef): PpkItemId | null {
 }
 
 type FileRow = { id: string; title: string; mimeType: string; h: string };
+type FileMeta = { id: string; title: string; mimeType: string; sizeBytes: number; updatedAt: Date };
 
-/** Файлы папки области с отпечатками (sha256 считает Postgres — байты не едут в приложение). */
+/**
+ * Отпечатки содержимого по (id, время изменения, размер) (R2-5): Postgres
+ * хеширует файл один раз, а не на каждый просмотр плашек. Документ текстом —
+ * sha256 текста без лишних пробелов. Изменение файла меняет `updatedAt`.
+ */
+const FINGERPRINTS = new Map<string, string>();
+const FINGERPRINTS_MAX = 5000;
+
+function fingerprintKey(row: Pick<FileMeta, "id" | "updatedAt" | "sizeBytes">): string {
+  return `${row.id}:${row.updatedAt.getTime()}:${row.sizeBytes}`;
+}
+
+async function fingerprints(rows: FileMeta[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const missingFiles: string[] = [];
+  const missingTexts: string[] = [];
+  for (const row of rows) {
+    const cached = FINGERPRINTS.get(fingerprintKey(row));
+    if (cached) out.set(row.id, cached);
+    else if (row.mimeType.startsWith("text/plain")) missingTexts.push(row.id);
+    else missingFiles.push(row.id);
+  }
+  const [files, texts] = await Promise.all([
+    missingFiles.length
+      ? db.$queryRaw<{ id: string; h: string }[]>`
+          SELECT id, encode(sha256(content), 'hex') AS h FROM "KnowledgeDocument" WHERE id IN (${Prisma.join(missingFiles)})`
+      : Promise.resolve([]),
+    missingTexts.length
+      ? db.knowledgeDocument.findMany({ where: { id: { in: missingTexts } }, select: { id: true, content: true } })
+      : Promise.resolve([]),
+  ]);
+  const fresh = new Map<string, string>([
+    ...files.map((row) => [row.id, row.h] as const),
+    ...texts.map((row) => [row.id, sha256(normalizeRevisionText(Buffer.from(row.content).toString("utf8")))] as const),
+  ]);
+  for (const row of rows) {
+    const value = fresh.get(row.id);
+    if (!value) continue;
+    out.set(row.id, value);
+    if (FINGERPRINTS.size >= FINGERPRINTS_MAX) FINGERPRINTS.delete(FINGERPRINTS.keys().next().value as string);
+    FINGERPRINTS.set(fingerprintKey(row), value);
+  }
+  return out;
+}
+
+/** Файлы папки области с отпечатками. */
 async function folderFiles(scope: PpkScope, folder: PpkFolderKey): Promise<FileRow[]> {
-  return db.$queryRaw<FileRow[]>`
-    SELECT id, title, "mimeType", encode(sha256(content), 'hex') AS h
-    FROM "KnowledgeDocument"
-    WHERE "organizationId" = ${scope.organizationId}
-      AND folder = ${folder}
-      AND "buildingId" IS NOT DISTINCT FROM ${scope.buildingId}
-    ORDER BY "createdAt" ASC, id ASC`;
+  const rows = await db.knowledgeDocument.findMany({
+    where: { organizationId: scope.organizationId, folder, buildingId: scope.buildingId },
+    select: { id: true, title: true, mimeType: true, sizeBytes: true, updatedAt: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+  const prints = await fingerprints(rows);
+  return rows.flatMap((row) => {
+    const h = prints.get(row.id);
+    return h ? [{ id: row.id, title: row.title, mimeType: row.mimeType, h }] : [];
+  });
 }
 
 /** Текст или скан пункта структуры: скан заменяет текст (правило документа владельца). */
@@ -97,39 +146,31 @@ async function structureDoc(scope: PpkScope, ref: Exclude<RevisionDocRef, { kind
   return { docKey, title, hash: sha256(`text\n${title}\n${normalized}`), empty: normalized.length === 0, knowledgeBase: false };
 }
 
-type KnowledgeRow = { id: string; title: string; mimeType: string; folder: string | null; buildingId: string | null; h: string };
-
-/** Документы базы знаний и папок с редакциями (одним запросом). Чужие и не те — пропускаются. */
+/** Документы базы знаний и папок с редакциями. Чужие и не те — пропускаются. */
 async function knowledgeDocs(scope: PpkScope, ids: string[]): Promise<Map<string, RevisionDoc>> {
   const out = new Map<string, RevisionDoc>();
   if (ids.length === 0) return out;
-  const rows = await db.$queryRaw<KnowledgeRow[]>`
-    SELECT id, title, "mimeType", folder, "buildingId", encode(sha256(content), 'hex') AS h
-    FROM "KnowledgeDocument"
-    WHERE "organizationId" = ${scope.organizationId}
-      AND kind IS NULL
-      AND id IN (${Prisma.join(ids)})`;
-  const textIds = rows.filter((row) => row.mimeType.startsWith("text/plain")).map((row) => row.id);
-  // Текстовый документ: отпечаток по тексту без лишних пробелов, как у пунктов.
-  const texts = textIds.length
-    ? await db.knowledgeDocument.findMany({ where: { id: { in: textIds } }, select: { id: true, content: true } })
-    : [];
-  const textById = new Map(texts.map((row) => [row.id, Buffer.from(row.content).toString("utf8")]));
-  for (const row of rows) {
+  const rows = await db.knowledgeDocument.findMany({
+    where: { organizationId: scope.organizationId, kind: null, id: { in: ids } },
+    select: { id: true, title: true, mimeType: true, folder: true, buildingId: true, sizeBytes: true, updatedAt: true },
+  });
+  const allowed = rows.filter((row) => {
     const inBase = row.folder === null;
     const inFolder = (REVISION_FOLDERS as readonly string[]).includes(row.folder ?? "") && row.buildingId === scope.buildingId;
-    if (!inBase && !inFolder) continue;
-    const text = textById.get(row.id);
-    const hash =
-      text !== undefined
-        ? sha256(`text\n${row.title.trim()}\n${normalizeRevisionText(text)}`)
-        : sha256(`file\n${row.title.trim()}\n${row.h}`);
+    return inBase || inFolder;
+  });
+  const prints = await fingerprints(allowed);
+  for (const row of allowed) {
+    const h = prints.get(row.id);
+    if (!h) continue;
+    const text = row.mimeType.startsWith("text/plain");
     out.set(row.id, {
       docKey: revisionDocKey({ kind: "knowledge", id: row.id }, null),
       title: row.title,
-      hash,
-      empty: text !== undefined && normalizeRevisionText(text).length === 0,
-      knowledgeBase: inBase,
+      hash: sha256(`${text ? "text" : "file"}\n${row.title.trim()}\n${h}`),
+      // Пустой документ текстом не создать (API требует текст) — пустых здесь нет.
+      empty: false,
+      knowledgeBase: row.folder === null,
     });
   }
   return out;
@@ -273,9 +314,10 @@ export async function loadRevisionRegister(organizationId: string, pointId: stri
   const folders = knowledgeIds.length
     ? await db.knowledgeDocument.findMany({ where: { organizationId, id: { in: knowledgeIds } }, select: { id: true, folder: true, buildingId: true } })
     : [];
-  const otherPointDocs = new Set(folders.filter((doc) => doc.folder !== null && doc.buildingId !== pointId).map((doc) => `knowledge:${doc.id}`));
+  // Свои и общие документы; удалённый документ (точку уже не узнать) руководителю точки не показываем (R2-8).
+  const visibleDocs = new Set(folders.filter((doc) => doc.folder === null || doc.buildingId === pointId).map((doc) => `knowledge:${doc.id}`));
   return all.filter((row) => {
-    if (row.docKey.startsWith("knowledge:")) return !otherPointDocs.has(row.docKey);
+    if (row.docKey.startsWith("knowledge:")) return visibleDocs.has(row.docKey);
     const at = row.docKey.indexOf("@");
     return at < 0 || row.docKey.slice(at + 1) === pointId;
   });
