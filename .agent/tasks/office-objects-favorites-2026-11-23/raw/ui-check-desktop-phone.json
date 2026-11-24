@@ -19,7 +19,7 @@
     "pinned": 1
   },
   "AC2_manual_switch": {
-    "url": "/settings/buildings/cmwtln1r600031a7d1oku1c57",
+    "url": "/settings/organization/office",
     "header": "ОБЪЕКТ Кафе на Мира",
     "toasts": 0
   },
@@ -64,14 +64,14 @@
   },
   "AC7_office_blocks": {
     "leaders": [
-      "ДДДмитрий ДиректорУправляющий",
-      "ОВОльга ВладелецУправляющий"
+      "ДДДмитрий ДиректорДиректор",
+      "ОВОльга ВладелецДиректор"
     ],
     "journalsButtons": 3,
     "createPoint": 1,
     "pointsAll": 1,
     "equipment": [
-      "Цех пищевых продуктов2 единицы",
+      "Цех пищевых продуктов3 единицы",
       "Кафе на Мира1 единица",
       "Склад1 единица"
     ]
@@ -82,8 +82,20 @@
     "toasts": 0
   },
   "AC8_place_pills": {
-    "expanded": 0,
-    "pills": []
+    "expanded": 4,
+    "pills": [
+      {
+        "text": "Цех пищевых продуктов",
+        "none": false
+      },
+      {
+        "text": "Без объекта",
+        "none": true
+      }
+    ]
+  },
+  "AC8_pill_opens_edit": {
+    "dialog": 1
   },
   "AC4_notice": {
     "header": "Выберите объект",
@@ -110,5 +122,22 @@
     "notice": 0,
     "toasts": 0
   },
-  "error": "TimeoutError: locator.click: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href*=\"/journals/cold_equipment_control/documents/\"]').first()\u001b[22m\n\u001b[2m    - locator resolved to <a href=\"/journals/cold_equipment_control/documents/cmwtln1sp000i1a7d0v8qrsbi\" class=\"text-[16px] font-bold leading-[1.35] tracking-[-0.02em] text-black [overflow-wrap:anywhere]\">Журнал холодильников (создан в офисе)</a>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <li class=\"flex gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5\">…</li> from <div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fill-guide-title\" class=\"fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <li class=\"flex gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5\">…</li> from <div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fill-guide-title\" class=\"fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    222 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m        - element is visible, enabled and stable\u001b[22m\n\u001b[2m        - scrolling into view if needed\u001b[22m\n\u001b[2m        - done scrolling\u001b[22m\n\u001b[2m        - <li class=\"flex gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5\">…</li> from <div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fill-guide-title\" class=\"fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m      - retrying click action\u001b[22m\n\u001b[2m        - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n"
+  "AC11_qr_missing": {
+    "missing": 1,
+    "text": "QR-КОД ДЛЯ ЗАПОЛНЕНИЯ С ТЕЛЕФОНА Этого оборудования больше нет в справочнике. Нажмите «Сохранить» — строка снова попадёт в справочник и получит QR-код.",
+    "retry": 0
+  },
+  "phone_bar": {
+    "text": "Выберите объект"
+  },
+  "phone_sheet": {
+    "options": [
+      "Склад\nул. Складская, 3",
+      "Цех пищевых продуктов\nАпрелевка, ул. Августовская, 1/19",
+      "Кафе на Мира\nпр. Мира, 5"
+    ],
+    "pins": 3,
+    "create": 1,
+    "stars": 0
+  }
 }
