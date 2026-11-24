@@ -26,5 +26,33 @@
   "acceptedLimitations": [
     "Acknowledgement marks are stored per organization (PpkAcknowledgement has no point); a point manager's sheet hides staff without a point while the point status counts them.",
     "Assembled print/PDF by the new structure (scans with header and continuous numbering) and finger signature are the agreed next step (spec «Не делаем сейчас»)."
-  ]
+  ],
+  "postMerge": {
+    "deployRun": "https://github.com/djdes/HASSR-Online/actions/runs/45454447419",
+    "deploy": "PASS — steps 1/3, 2/3, 3/3 green, production serves e87555e40",
+    "failedJob": "Full Tests 4/4: 'borderless.css собран из текущих цветов рамок в src/ (npm run borderless)' (1 of 1918); 2/4 cancelled by the matrix",
+    "rootCause": "the header of the generated src/app/borderless.css counts scanned src files; it was regenerated at b8a61234c (3979 files), later commits (merge of master #332, ppk/file route, source-link.tsx) changed the count to 3981 and ran only targeted tests, which do not select borderless.test.ts",
+    "fix": "npm run borderless (header 3979 -> 3981, CSS rules unchanged)",
+    "checks": {
+      "borderlessAndPalette": {
+        "command": "node --import tsx --test src/app/borderless.test.ts src/app/neutral-palette.test.ts",
+        "pass": 6,
+        "fail": 0
+      },
+      "shard2of4": {
+        "command": "TEST_FULL=1 TEST_SHARD=2/4 bash scripts/test-with-baseline.sh",
+        "pass": 1930,
+        "fail": 0,
+        "file": "raw/shard-2-4.txt"
+      }
+    },
+    "productionProbes": {
+      "/": 200,
+      "/login": 200,
+      "/production-control": "307 -> /login",
+      "/production-control/item/1-1": "307 -> /login",
+      "/production-control/item/3-7": "307 -> /login",
+      "/api/acknowledgements/ppk/file": 401
+    }
+  }
 }
