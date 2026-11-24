@@ -1,0 +1,49 @@
+{
+  "task": "office-default-login-leak-2026-11-24",
+  "builderStatus": "ALL_AC_PASS_VERIFIED",
+  "checkedAt": "2026-11-24T16:20:00Z",
+  "branch": "claude/amazing-bohr-s3zvbx",
+  "head": "60ec0ef07",
+  "base": "4f93950aa",
+  "branchDeletion": "git push --delete refused by the session git proxy (HTTP 403, policy); the owner deletes the branch on the PR page after the merge",
+  "stand": "next dev on localhost:3000, PostgreSQL 16 (stand-seed.ts + ui-stand.ts + open-office-repro.ts), Chromium Playwright",
+  "commands": {
+    "typecheck": { "command": "npm run typecheck", "result": "PASS", "exit": 0, "file": "raw/typecheck.txt", "on": "60ec0ef07" },
+    "testGate": { "command": "npm run test:gate", "mode": "full (44 code files)", "pass": 7424, "fail": 0, "exit": 0, "file": "raw/test-gate.txt", "on": "60ec0ef07" },
+    "i18nCheck": { "command": "npm run i18n:check", "pass": 103, "fail": 0, "exit": 0, "file": "raw/i18n-check.txt" },
+    "eslint": { "errors": 0, "warnings": 1, "note": "react-hooks/purity in settings/equipment/page.tsx — the same warning exists on master", "file": "raw/eslint.txt" },
+    "ci": { "on": "60ec0ef07", "typecheckAndTests": "success", "e2eDbLevel": "success (20 scenarios)", "browserSmoke": "success" },
+    "deployStep": {
+      "command": "npx tsx prisma/seed-open-office-2026-11.ts [--dry-run] on temp companies (raw/open-office-repro.ts)",
+      "dryRun": "organizations to open 3; offices to create 2; journals by objects to enable 2; failed 0",
+      "real": "organizations opened 3; offices created 2; journals by objects enabled 2; managers kept company-wide 2; manager sessions closed 1; failed 0",
+      "repeat": "already done",
+      "file": "raw/open-office-run.txt"
+    },
+    "ui": { "command": "node raw/ui-check.cjs (+ ui-stand.ts setup/check)", "file": "raw/ui-check.json", "db": "raw/ui-stand-check.json" },
+    "uiDeleteLastObject": { "command": "node raw/ui-check-delete-last.cjs", "file": "raw/ui-check-delete-last.json" }
+  },
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["raw/ui-check.json: AC1_noscript/login, /register, /mini/login, AC1_login", "src/app/password-forms-post.test.ts"] },
+    "AC2": { "status": "PASS", "fixedIn": "60ec0ef07", "evidence": ["src/app/password-forms-post.test.ts (JSX attributes and object props; 23 forms)"] },
+    "AC3": { "status": "PASS", "evidence": ["raw/ui-check.json: AC3_open_office, AC6_*", "src/lib/organization-office.test.ts (removal)"] },
+    "AC4": { "status": "PASS", "amendment": "directory exchange does not open the receiving company's office (CI E2E, bd26f8fcc)", "evidence": ["raw/ui-check.json: AC4_after_first_object", "raw/ui-stand-check.json", "src/lib/organization-office.test.ts (creation guard)"] },
+    "AC5": { "status": "PASS", "fixedIn": "60ec0ef07", "evidence": ["raw/open-office-run.txt", "src/lib/organization-office.test.ts (planner, managers, deploy wiring)"] },
+    "AC6": { "status": "PASS", "fixedIn": "60ec0ef07", "evidence": ["raw/ui-check.json: AC6_noobj, AC6_straggler, phone_office, dark_office", "raw/ui-check-delete-last.json"] },
+    "AC7": { "status": "PASS", "evidence": ["raw/ui-check.json: AC7_new_area", "raw/ui-stand-check.json", "src/lib/building-scope.test.ts (objectsFirst, soleObjectId)"] },
+    "AC8": { "status": "PASS", "evidence": ["raw/ui-check.json: AC8_toggle", "src/lib/organization-office.test.ts (toggle/PATCH)"] },
+    "AC9": { "status": "PASS", "evidence": ["commands above"] },
+    "AC10": { "status": "PASS", "evidence": ["raw/ui-check.json: AC10_waiter", "src/lib/building-scope.test.ts"] }
+  },
+  "deployNotes": [
+    "no schema change, no env change",
+    "one-shot step after post-deploy-check: open the office of every regular company with objects (office building + journals by objects); management that worked for the whole company keeps it; managers bound to some objects become object managers; audit building.office_opened; once-key once:open-office:v1 only when no company failed"
+  ],
+  "verifier": {
+    "rounds": [
+      { "on": "bd26f8fcc", "verdict": "FAIL (AC2, AC6)", "fixedIn": "60ec0ef07" },
+      { "on": "60ec0ef07", "verdict": "PASS" }
+    ],
+    "files": ["verdict.json", "problems.md"]
+  }
+}
