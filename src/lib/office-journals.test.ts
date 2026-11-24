@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { documentPointProblem, documentTargetIds, officeJournalTarget, planOfficeJournalMoves } from "@/lib/office-journals";
+import { documentBuildingFor, documentPointProblem, documentTargetIds, officeJournalTarget, planOfficeJournalMoves } from "@/lib/office-journals";
 
 const office = { id: "o", kind: "office", sortOrder: 0, name: "Офис" };
 
@@ -65,8 +65,13 @@ test("перенос журналов офиса: на выкладке — по
   // Владелец 2026-11-24: «Переносить при выкладке, дубли оставить на офисе» —
   // разовый перенос, как починка фирменного стиля: сначала подсчёт, затем
   // перенос, оба — на обычной выкладке, не за флагом legacy-досевов.
-  assert.ok(dryRun > 0 && dryRun < legacyGate, "подсчёт — на обычной выкладке");
-  assert.ok(realRun > dryRun && realRun < legacyGate, "перенос — сразу за подсчётом, на обычной выкладке");
+  const checked = deploy.indexOf("bash scripts/post-deploy-check.sh");
+  const complete = deploy.indexOf('echo "=== Deploy complete ==="');
+  // После проверки новой сборки: она уже не заводит документы на офис, и перенос
+  // забирает то, что старая сборка успела завести во время выката (проверка 2026-11-24).
+  assert.ok(checked > 0 && dryRun > checked && dryRun < complete, "подсчёт — после проверки новой сборки");
+  assert.ok(realRun > dryRun && realRun < complete, "перенос — сразу за подсчётом");
+  assert.ok(legacyGate < checked, "не внутри блока legacy-досевов");
   assert.equal(deploy.split("seed-office-journals-to-points-2026-11.ts").length - 1, 2, "ровно два запуска: подсчёт и перенос");
   const seed = readFileSync("prisma/seed-office-journals-to-points-2026-11.ts", "utf8");
   assert.match(seed, /once:office-journals-to-points:v1/);
@@ -88,6 +93,9 @@ test("журналы на объекты: напоминания, задачи T
     // отправка по QR) и приёмка по ВСД заводили документы и на офис.
     "src/lib/journal-qr-rollover.ts",
     "src/lib/mercury/process-incoming.ts",
+    // Финальная проверка 2026-11-24: внешний API и привязка накладной ЭДО по КПП.
+    "src/lib/external/dispatch.ts",
+    "src/lib/supply/documents.server.ts",
   ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /documentBuildingTargets\(/, file);
@@ -119,4 +127,33 @@ test("перенос журналов офиса: без дублей на об�
   assert.deepEqual(plan.move, ["manual", "october", "paper-free"]);
   assert.deepEqual(plan.overlap, ["auto-copy", "paper-dup"]);
   assert.deepEqual(plan.disabled, ["off"]);
+});
+
+test("создание документа: офис из оборудования, помещения, сотрудника или точки приёмки → первый по списку объект", async () => {
+  const client = {
+    building: {
+      findMany: async () => [
+        { id: "O", kind: "office", sortOrder: 0, name: "Офис" },
+        { id: "B", kind: null, sortOrder: 2, name: "Склад" },
+        { id: "A", kind: null, sortOrder: 1, name: "Цех" },
+      ],
+    },
+  };
+  assert.equal(await documentBuildingFor(client, "org", "O"), "A");
+  assert.equal(await documentBuildingFor(client, "org", "B"), "B");
+  assert.equal(await documentBuildingFor(client, "org", null), null);
+  const officeOnly = { building: { findMany: async () => [{ id: "O", kind: "office", sortOrder: 0, name: "Офис" }] } };
+  assert.equal(await documentBuildingFor(officeOnly, "org", "O"), null, "объектов нет — общий документ, не офис");
+});
+
+test("все пути автосоздания документов проходят через documentBuildingFor", async () => {
+  const { readFileSync } = await import("node:fs");
+  const source = readFileSync("src/lib/journal-auto-create.ts", "utf8");
+  for (const name of ["ensureActiveDocument", "ensureNextPeriodDocument", "createFirstDocumentForTemplate", "restoreBrokenChainForTemplate"]) {
+    const start = source.indexOf(`export async function ${name}(`);
+    assert.ok(start >= 0, name);
+    const next = source.indexOf("export async function ", start + 10);
+    const body = source.slice(start, next < 0 ? undefined : next);
+    assert.match(body, /documentBuildingFor\(/, name);
+  }
 });

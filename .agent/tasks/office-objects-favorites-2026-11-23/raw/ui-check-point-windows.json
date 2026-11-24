@@ -1,0 +1,30 @@
+{
+  "audit_report": {
+    "header": "Выберите объект",
+    "plaque": 1,
+    "toasts": [
+      "Выберите объект: документ журнала создаётся для объекта"
+    ],
+    "pointMessageShown": true,
+    "newPageErrors": []
+  },
+  "cleaning": {
+    "header": "Выберите объект",
+    "plaque": 1,
+    "toasts": [],
+    "pointMessageShown": true,
+    "newPageErrors": []
+  },
+  "traceability_test": {
+    "header": "Выберите объект",
+    "plaque": 1,
+    "toasts": [],
+    "pointMessageShown": true,
+    "newPageErrors": []
+  },
+  "audit_plan_scan": {
+    "header": "Выберите объект",
+    "plaque": 0,
+    "error": "create button not found"
+  }
+}

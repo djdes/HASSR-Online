@@ -14,6 +14,7 @@
  * отчёте «уже был».
  */
 import { buildingWhere, worksAtBuilding } from "@/lib/building-scope";
+import { documentBuildingFor } from "@/lib/office-journals";
 import { readBuildingJournalSettings, withBuildingJournalSettings } from "@/lib/building-settings";
 import type { PrismaClient } from "@prisma/client";
 import {
@@ -627,6 +628,9 @@ export async function ensureActiveDocument(
     carryPreviousStructure?: boolean;
   }
 ): Promise<CreateReport> {
+  // Офис — не объект (2026-11-23): документ на офис не заводится — путь, принёсший офис,
+  // получает первый по списку объект (`documentBuildingFor`, финальная проверка 2026-11-24).
+  args = { ...args, buildingId: await documentBuildingFor(db, args.organizationId, args.buildingId ?? null) };
   const now = args.now ?? new Date();
   const template = await db.journalTemplate.findFirst({
     where: { code: args.templateCode, isActive: true },
@@ -903,6 +907,9 @@ export async function ensureNextPeriodDocument(
     buildingId?: string | null;
   }
 ): Promise<CreateReport> {
+  // Офис — не объект (2026-11-23): документ на офис не заводится — путь, принёсший офис,
+  // получает первый по списку объект (`documentBuildingFor`, финальная проверка 2026-11-24).
+  args = { ...args, buildingId: await documentBuildingFor(db, args.organizationId, args.buildingId ?? null) };
   const now = args.now ?? new Date();
   const lookaheadMs = (args.lookaheadDays ?? 7) * 24 * 60 * 60 * 1000;
   const template = await db.journalTemplate.findFirst({
@@ -1259,6 +1266,9 @@ export async function restoreBrokenChainForTemplate(
     groups?: TemplateDocumentGroup[];
   }
 ): Promise<CreateReport> {
+  // Офис — не объект (2026-11-23): документ на офис не заводится — путь, принёсший офис,
+  // получает первый по списку объект (`documentBuildingFor`, финальная проверка 2026-11-24).
+  args = { ...args, buildingId: await documentBuildingFor(db, args.organizationId, args.buildingId ?? null) };
   const now = args.now ?? new Date();
   const todayUtcStart = startOfUtcDay(now);
   const skip = (reason: string): CreateReport => ({
@@ -1344,6 +1354,9 @@ export async function createFirstDocumentForTemplate(
     now?: Date;
   }
 ): Promise<CreateReport> {
+  // Офис — не объект (2026-11-23): документ на офис не заводится — путь, принёсший офис,
+  // получает первый по списку объект (`documentBuildingFor`, финальная проверка 2026-11-24).
+  args = { ...args, buildingId: await documentBuildingFor(db, args.organizationId, args.buildingId ?? null) };
   const locked = await withAdvisoryTryLock(
     advisoryLockKey("journal-period", args.organizationId, args.template.code, args.buildingId),
     () =>

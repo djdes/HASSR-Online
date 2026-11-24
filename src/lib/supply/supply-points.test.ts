@@ -96,3 +96,17 @@ test("входящие по точкам: точка — её и без точк
   assert.equal(off.canSee("B"), true);
   assert.deepEqual(off.points, []);
 });
+
+test("приёмка — только на объект: офиса нет среди точек приёмки, накладные офиса видны (проверка 2026-11-24)", () => {
+  const buildings = [
+    { id: "O", name: "Офис", kind: "office" },
+    { id: "A", name: "Точка 1", kind: null },
+  ];
+  const access = supplyPointAccessFrom({ enabled: true, organizationView: true, activeBuildingId: "O", buildings });
+  assert.deepEqual(access.points.map((point) => point.id), ["A"]);
+  assert.equal(access.canSee("O"), true, "накладная, привязанная к офису, открывается");
+  assert.deepEqual(
+    resolveAcceptancePoint({ pointsEnabled: true, requested: "O", allowedPointIds: access.points.map((point) => point.id) }),
+    { ok: false, error: "point_forbidden" },
+  );
+});

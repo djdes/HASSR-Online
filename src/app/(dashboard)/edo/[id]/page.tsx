@@ -47,7 +47,9 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
   if (mismatch) return <PointMismatchNotice kind="supply" mismatch={mismatch} listHref="/edo" />;
   // Точка по умолчанию: точка накладной, иначе объект из шапки; иначе
   // ничего — человек выбирает сам (раньше молча брался офис или первая точка).
-  const defaultPointId = access.enabled ? (doc.buildingId ?? access.viewedPointId ?? null) : null;
+  // Накладная, привязанная к офису, — точка не из списка приёмки (офис — не объект).
+  const docPoint = doc.buildingId && access.points.some((point) => point.id === doc.buildingId) ? doc.buildingId : null;
+  const defaultPointId = access.enabled ? (docPoint ?? access.viewedPointId ?? null) : null;
   const locale: Locale = isLocale(rawLocale) ? rawLocale : "ru";
   const timeZone = organization?.timezone || "Europe/Moscow";
   const items = readSupplyItems(doc.items);
@@ -107,7 +109,7 @@ export default async function EdoDocumentPage({ params }: { params: Promise<{ id
           documentId={doc.id}
           points={access.points}
           defaultPointId={defaultPointId}
-          pointFromDocument={Boolean(doc.buildingId)}
+          pointFromDocument={Boolean(docPoint)}
           items={items.map((item) => ({ ...item, quantityLabel: quantity(item.quantity, item.unit) }))}
           defaults={{ deliveryDate: orgTodayKey(timeZone, now), deliveryTime: nowTime }}
         />

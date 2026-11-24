@@ -59,3 +59,25 @@ test("плашка «Документ журнала создаётся для �
   const page = readFileSync("src/app/(dashboard)/journals/[code]/page.tsx", "utf8");
   assert.match(page, /pointChoice && hasDocumentFillUi\(resolvedCode\) \? \(\s*<JournalPointNotice/);
 });
+
+test("окна создания отчёта аудита, уборки, прослеживаемости и скан-журналов: «Выберите объект…», а не молчание или общий текст", async () => {
+  const { readFileSync } = await import("node:fs");
+  for (const file of [
+    "src/components/journals/audit-report-documents-client.tsx",
+    "src/components/journals/cleaning-documents-client.tsx",
+    "src/components/journals/traceability-documents-client.tsx",
+    "src/components/journals/scan-journal-documents-client.tsx",
+  ]) {
+    const source = readFileSync(file, "utf8");
+    const start = source.search(/"\/api\/journal-documents"[\s\S]{0,120}method: (documentId \? "PATCH" : )?"POST"/);
+    assert.ok(start >= 0, file);
+    // Путь создания: общий разбор ответа или явный PointRequiredError.
+    assert.match(source.slice(start, start + 2000), /readCreatedDocument\(|new PointRequiredError\(/, file);
+  }
+  // Отчёт аудита и скан-журналы глотали ошибку: у кнопки не было catch.
+  const report = readFileSync("src/components/journals/audit-report-documents-client.tsx", "utf8");
+  assert.match(report, /await onSubmit\(state\);\s*onOpenChange\(false\);\s*\} catch/);
+  const scan = readFileSync("src/components/journals/scan-journal-documents-client.tsx", "utf8");
+  const handleCreate = scan.slice(scan.indexOf("async function handleCreate"), scan.indexOf("async function handleDelete"));
+  assert.match(handleCreate, /catch \(error\)/);
+});

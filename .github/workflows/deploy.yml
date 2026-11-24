@@ -930,9 +930,6 @@ jobs:
                 timeout 180 npx tsx prisma/seed-platform-roles-2026-11.ts 2>&1 | tail -20 || echo "[warn] seed-platform-roles-2026-11 failed — deploy continues"
                 echo "=== Фирменный стиль: снять у организаций «как текущая» логотип и цвет донора (one-shot, PlatformSetting-guard; запрос владельца 2026-11-21) ==="
                 timeout 180 npx tsx prisma/seed-repair-inherited-org-brand-2026-11.ts 2>&1 | tail -40 || echo "[warn] seed-repair-inherited-org-brand-2026-11 failed — deploy continues"
-                echo "=== Журналы офиса — на объект (one-shot, PlatformSetting-guard; решение владельца 2026-11-24: переносить при выкладке, дубли оставить на офисе): подсчёт, затем перенос, id — в журнал действий ==="
-                timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts --dry-run 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points dry-run failed"
-                timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points-2026-11 failed — deploy continues"
                 # Legacy business-data backfills require a separate reviewed run.
                 # A normal code release must not rewrite customer journal records.
                 if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]; then
@@ -1083,6 +1080,14 @@ jobs:
             # Держали её до этого момента для отката, если проверка выше
             # не пройдёт.
             rm -rf .next-previous .next-failed 2>/dev/null || true
+
+            echo "=== Журналы офиса — на объект (one-shot, PlatformSetting-guard; решение владельца 2026-11-24: переносить при выкладке, дубли оставить на офисе) ==="
+            # После проверки новой сборки: она уже не заводит документы на офис,
+            # и перенос забирает то, что старая сборка успела завести во время
+            # выката. Сначала подсчёт, затем перенос; в лог — только итоги, id —
+            # в журнал действий (journals.office_to_point). Сбой не роняет выкатку.
+            timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts --dry-run 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points dry-run failed"
+            timeout 180 npx tsx prisma/seed-office-journals-to-points-2026-11.ts 2>&1 | tail -5 || echo "[warn] seed-office-journals-to-points-2026-11 failed — deploy continues"
 
             echo "=== CRM: крон /api/cron/crm раз в 5 минут (crontab, идемпотентно) ==="
             # Строку ставит и обновляет сам деплой (docs/crm.md): сбой — не повод

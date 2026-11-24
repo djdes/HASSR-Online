@@ -28,6 +28,7 @@ export type ScanMessageKey = ScanDisplayKey
   | "common.close"
   | "common.delete"
   | "journalControls.documentDialog.createError"
+  | "journalControls.documentDialog.pointRequired"
   | "journalControls.documentActions.deleteTitle"
   | "journalControls.documentLifecycle.deleteDescriptionWithTitle"
   | "journalControls.documentActions.deleteError"

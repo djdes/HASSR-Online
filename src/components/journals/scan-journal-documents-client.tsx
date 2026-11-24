@@ -17,6 +17,7 @@ import { BookOpenText, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { toast } from "sonner";
+import { PointRequiredError, readCreatedDocument } from "@/components/journals/use-document-dialog-submit";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import {
   EmptyDocumentsState,
@@ -94,13 +95,16 @@ export function ScanJournalDocumentsClient({
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(say("journalControls.documentDialog.createError"));
-      }
-
-      const data = await response.json();
-      router.push(`/journals/${templateCode}/documents/${data.document.id}`);
+      // Нет объекта — PointRequiredError («Выберите объект…»), прочее — общий текст.
+      const created = await readCreatedDocument(response, say("journalControls.documentDialog.createError"));
+      router.push(`/journals/${templateCode}/documents/${created.id}`);
       router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof PointRequiredError
+          ? say("journalControls.documentDialog.pointRequired")
+          : say("journalControls.documentDialog.createError"),
+      );
     } finally {
       setIsCreating(false);
     }

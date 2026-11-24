@@ -1,125 +1,120 @@
 # Problems: office-objects-favorites-2026-11-23
 
-Проверено 2026-11-24 на `c88a30e8f` (код совпадает с `1225d2a9b`: `c88a30e8f` меняет только файлы этой задачи). Сравнение с
-`origin/master` `bce1e012b`. Стенд — только локальный (`next dev` :3000, PostgreSQL на localhost). Вердикт — `verdict.json`.
+Вторая свежая проверка, 2026-11-24, `2cc6b7b0b` (master `043c5b7bb` влит). Стенд — только локальный (PostgreSQL на localhost,
+`next dev` :3000). Вердикт — `verdict.json`: **FAIL**, открыты AC4 и AC5. Сценарии и выводы — в
+`/tmp/claude-0/-home-user-HASSR-Online/9db99cea-0bbc-5d62-bbca-aabb50b143e4/scratchpad/verifier2/`.
+
+## Закрыто с прошлой проверки (`c88a30e8f`)
+
+- AC8 — «Все объекты» в ru/en/uz, как в окне правки, пилюля нейтральная — `f778c8aa4`.
+- AC4 — окно жалоб пишет «Выберите объект…», плашка у всех журналов со списком документов, окна протокола аудита,
+  металлопримесей и списка стекла разбирают ответ через `readCreatedDocument` — `f778c8aa4`.
+- AC5 — переход периода по QR и приёмка по ВСД больше не заводят документы на офис — `f778c8aa4`; перенос на обычной
+  выкладке (подсчёт, затем перенос), дубли и журналы, выключенные на объекте, остаются на офисе (решение владельца) —
+  `2cc6b7b0b`.
 
 ## AC5 — FAIL
 
 **Текст.** Журналы офиса — на объекты; на офис больше не создаются. Разовый скрипт
 `prisma/seed-office-journals-to-points-2026-11.ts` (`--dry-run`, ключ `once:office-journals-to-points:v1`) переводит
-`JournalDocument` и `PaperJournalDocument` с `buildingId` офиса на единственный объект организации, при нескольких — на первый
-(`sortOrder`, название); без объектов — не трогает; пишет журнал действий; подключён в деплое с `|| warn`. `buildingTargets` при
-делении по объектам не возвращает офис (автосоздание и раздача — только объекты). Тесты выбора объекта и целей.
+`JournalDocument` и `PaperJournalDocument` с офиса на единственный объект, при нескольких — на первый (`sortOrder`,
+название); без объектов — не трогает; пишет журнал действий; подключён в деплое с `|| warn`. `buildingTargets` при делении
+по объектам не возвращает офис (автосоздание и раздача — только объекты). Решение владельца 2026-11-24: на обычной выкладке
+сначала `--dry-run`, затем перенос; дубли и выключенные на объекте журналы остаются на офисе.
 
-**Почему не доказано.** Три расхождения с текущим кодом:
+**Почему не доказано.** Перенос, выкладка и переход периода по QR проверены и в порядке (см. `verdict.json`). Не выполнено
+«на офис больше не создаются»: два пути по-прежнему заводят **новый** документ журнала на офис.
 
-1. **На офис по-прежнему создаются документы.** `buildingTargets` (`src/lib/building-targets.ts:15-28`) возвращает и офис;
-   исполнитель добавил `documentBuildingTargets`, но переход периода по QR (`src/lib/journal-qr-rollover.ts:84-100`,
-   вызов `buildingTargets` на строке 90) остался на старой функции. `ensureQrPeriodDocuments` зовут бот MAX
-   (`src/lib/max/bot.ts:289`, без якоря), QR журнала (`src/app/journal-fill/[orgId]/[code]/route.ts`, без якоря у плаката
-   журнала), отправка по QR документа (`src/lib/journal-fill-submit.ts`, `src/app/api/journal-fill/[orgId]/[code]/route.ts`),
-   room-fill, equipment-fill, health-qr.
-2. **Перенос не выполняется на выкладке.** `.github/workflows/deploy.yml:934` — только `--dry-run`; настоящий запуск
-   (`deploy.yml:970`) — внутри `if [ "${RUN_LEGACY_DATA_SEEDS:-0}" = "1" ]` (строка 937). Workflow эту переменную нигде не
-   задаёт (`workflow_dispatch: {}` без входов, ssh `envs: GITHUB_SHA`); прийти она может только из окружения сервера (`.env`),
-   и тогда вместе с переносом пойдут ~15 других legacy-досевов. Спека же (решение «разовый скрипт на деплое … как починка
-   фирменного стиля 2026-11-21») требует переноса на выкладке — починка стиля идёт вне флага (`src/lib/inherited-org-brand.test.ts:151`).
-3. **Переносится не всё.** `planOfficeJournalMoves` (`src/lib/office-journals.ts:67`, применяется в
-   `src/lib/office-journals.server.ts:79-84`) оставляет на офисе документы, у которых на объекте есть документ того же журнала
-   за пересекающийся период, и журналы, выключенные на объекте. Разумная защита от дублей, но это отступление от
-   замороженного AC5, решения владельца нет.
+1. Внешний API строк (`POST /api/external/entries` → `dispatchExternalEntries`). Цели — `buildingTargets`
+   (`src/lib/external/dispatch.ts:782`), офис среди них. `resolveExternalEntryPoint` (`src/lib/external/entry-point.ts`)
+   выбирает офис, если все сотрудники строк работают в офисе (`workBuildingsForUser` → [офис]) или в запросе
+   `buildingId` офиса. `findOrCreateDocument` (`dispatch.ts:280`) создаёт документ с `buildingId` офиса.
+2. Приёмка накладной ЭДО (`POST /api/edo/documents/[id]/accept`). Точки приёмки — все здания из контекста, офис тоже
+   (`src/lib/supply/supply-points.ts:135`). Окно приёмки получает этот список (`src/app/(dashboard)/edo/[id]/page.tsx:108`),
+   сервер проверяет выбор по нему же (`accept/route.ts:75`). `acceptSupplyDocument` → `ensureActiveDocument(buildingId: офис)`
+   (`src/lib/supply/documents.server.ts:217-222`) — документ журнала приёмки на офисе. Накладная может попасть на офис и
+   сама: `supplyPointByKpp` берёт `buildingTargets` (`documents.server.ts:88`), и тогда офис в окне выбран заранее
+   (`edo/[id]/page.tsx:50`). Так же привязываются склады iiko (`src/app/api/settings/supply/[provider]/stores/route.ts:92`,
+   `src/lib/supply/sync.server.ts:122,139`).
 
-**Минимальное воспроизведение (п. 1).** Сценарий — `/tmp/claude-0/-home-user-HASSR-Online/9db99cea-0bbc-5d62-bbca-aabb50b143e4/scratchpad/verifier/repro-office-rollover.ts`: временная организация
-(офис + 2 объекта, журналы по объектам), документ гигиены офиса за 1–15.11.2026; затем
-`ensureQrPeriodDocuments({ organizationId, templateCode: "hygiene", todayKey: "2026-11-24" })` — как бот MAX, без якоря — и
-второй вызов с `anchor: { documentId: <документ офиса> }`, `todayKey: "2026-12-02"`. После проверки организация удалена.
+Перенос разовый (ключ `once:…:v1`): такие документы на объект уже не перейдут. На странице журнала с объектом в шапке их не
+видно, задачи их не охватывают.
 
-**Ожидалось / получено.** Ожидалось: документы только на объектах (или ни одного). Получено: `buildingTargets = [OFFICE, p1, p2]`,
-`documentBuildingTargets = [p1, p2]`; первый вызов создал документ гигиены на **офисе** за 16–30.11.2026, второй — на **офисе**
-за 1–15.12.2026. По п. 2: после слияния и обычной выкладки записи журналов не меняются, в логе только итоги подсчёта.
+**Минимальное воспроизведение.** `npx tsx --tsconfig tsconfig.json <scratch>/verifier2/repro-ac5.ts creation` (в подоболочке
+с `.env`, только локальная БД). Сценарий создаёт временную организацию: офис и 2 объекта, журналы по объектам, сотрудник
+офиса и владелец. Потом удаляет её (leftover 0).
+- `dispatchExternalEntries({ journalCode: "health_check", entries: [{ employeeId: <сотрудник офиса> }] })`;
+- `dispatchExternalEntries({ journalCode: "climate_control", buildingId: <офис>, entries: [...] })`;
+- `supplyPointAccessFrom(resolveActiveBuilding(<владелец, «Выберите объект»>))`, затем
+  `acceptSupplyDocument({ buildingId: <офис>, ... })` по новой накладной.
 
-**Что это значит для данных прода.** После слияния и обычной выкладки ни один документ офиса не перенесётся. Документы
-офиса остаются на офисе. На странице журнала, где шапка сама включает объект, их не видно; видно их только при «Выберите
-объект». Задачи, напоминания и автоматика их больше не охватывают. Переход периода по QR продолжает заводить на офисе
-документы следующих периодов. Скрипт разовый (ключ `once:…:v1`), поэтому документы, созданные на офисе после будущего
-запуска, им уже не перенесутся.
+**Ожидалось / получено.** Ожидалось: документ только на объекте или отказ «выберите объект». Получено: `health_check` на
+ОФИСЕ (ok), `climate_control` на ОФИСЕ (ok), точки приёмки `[ОФИС, p1, p2]`, приёмка принята, `incoming_control` на ОФИСЕ.
 
-**Затронутые файлы.** `src/lib/journal-qr-rollover.ts`, `src/lib/building-targets.ts`, `.github/workflows/deploy.yml`,
-`src/lib/office-journals.ts`, `src/lib/office-journals.server.ts`, `src/lib/office-journals.test.ts` (строки 60-75 закрепляют
-запуск только за флагом), `prisma/seed-office-journals-to-points-2026-11.ts`.
+**Затронутые файлы.** `src/lib/external/dispatch.ts`, `src/lib/supply/supply-points.ts`, `src/lib/supply/documents.server.ts`,
+`src/app/api/edo/documents/[id]/accept/route.ts`, `src/app/(dashboard)/edo/[id]/page.tsx`; по желанию — сопоставление
+складов iiko (`stores/route.ts`, `sync.server.ts`); тест-страж `src/lib/office-journals.test.ts:77-96`.
 
 **Наименьшее безопасное исправление.**
-- `journal-qr-rollover.ts:90`: брать цели из `documentBuildingTargets`, а якорь-офис (документ или здание офиса) не
-  принимать за цель — в этом случае брать цели-объекты. Добавить `src/lib/journal-qr-rollover.ts` в список
-  файлов-стражей в `office-journals.test.ts` и юнит-тест на `resolveTargets` или `ensureInner` с офисом.
-- Выкладка — по решению владельца: либо перенести настоящий запуск сразу за `--dry-run`, вне legacy-флага (как
-  `seed-repair-inherited-org-brand-2026-11.ts`), и поправить тест в `office-journals.test.ts`; либо оставить флаг, но
-  получить явное согласие владельца, поправить AC5 в спеке и описать в PR ручной запуск на сервере.
-- Документы-«дубли» на офисе: решение владельца (перенести всё же, закрыть или оставить), затем привести AC5 и
-  скрипт к одному виду.
+- `dispatch.ts:782`: `documentBuildingTargets(organizationId)` вместо `buildingTargets`. Явный `buildingId` офиса → 400
+  «не найден среди точек». Строки сотрудника офиса попадут на единственный объект или вызовут «укажите buildingId», как
+  у сотрудников без закрепления.
+- ЭДО: в `supplyPointAccessFrom` список выбора точки приёмки (`points`, по нему же проверяет `resolveAcceptancePoint`)
+  отдавать без офиса (`!isOfficeBuilding`). Видимость (`seeWhere`/`canSee`) оставить по всем зданиям, иначе пропадут
+  накладные, уже привязанные к офису. `supplyPointByKpp` перевести на `documentBuildingTargets`.
+- Тесты: `dispatch.ts` и `supply/documents.server.ts` добавить в список файлов-стражей «не видят офис». Юнит-тест
+  `supplyPointAccessFrom`/`resolveAcceptancePoint`: офис не предлагается и не принимается.
 
-**Подсказка исправляющему.** Сначала закройте путь создания: переход периода по QR не должен заводить документы на офис
-(одна строка в `resolveTargets` и тест). Порядок переноса на проде (на выкладке или отдельным запуском) и судьбу дублей
-вынесите на решение владельца; без такого решения AC5 в нынешнем тексте не выполнен.
+**Подсказка исправляющему.** Это тот же класс, что приёмка по ВСД, исправленная в `f778c8aa4`: точку документа берут из
+`buildingTargets` или из всех зданий контекста. Хватит убрать офис из выбора точки в этих двух местах и закрепить это
+тестом-стражем.
 
 ## AC4 — FAIL
 
-**Текст (проверяемая часть).** … Над списком документов журнала — плашка «Документ журнала создаётся для объекта» с кнопками
-объектов (тихий выбор в шапке) и «Создать объект». Окна со своим разбором ответа (`readCreatedDocument`) на `point_required`
-пишут «Выберите объект…», а не «Не удалось создать документ».
+**Текст (проверяемая часть).** … Окна со своим разбором ответа (`readCreatedDocument`) на `point_required` пишут «Выберите
+объект…», а не «Не удалось создать документ». Решение в спеке: «сервер без объекта отвечает понятной ошибкой, которую
+показывают и остальные окна создания».
 
-**Почему не доказано.** Окно создания документа «Журнала регистрации жалоб» разбирает ответ через `readCreatedDocument`
-(`src/components/journals/complaint-documents-client.tsx:117`), но в `catch` различает только `DuplicatePeriodError`, а на
-`PointRequiredError` показывает общий текст `complaintRegister.errors.create` («Ошибка создания документа», строки 122-126).
-Плашка выводится только для `isDocumentTemplate(code)` (`src/app/(dashboard)/journals/[code]/page.tsx:1556`). У журналов со
-своим экраном (жалобы, табличные реестры, протокол и отчёт аудита) при «Выберите объект» нет ни плашки, ни поля «Объект»:
-создать документ там нельзя, а подсказки, что делать, нет. Остальное в AC4 доказано: API отвечает 400 `point_required` без
-объекта и с id офиса, 201 на объект; поле «Объект» в общем окне; плашка на гигиене.
+**Почему не доказано.** Плашка, API, общее окно и четыре исправленных окна в порядке. На стенде проверены жалобы (тост),
+протокол аудита (строка в окне), `daily_samples` и отчёт аудита (плашка). Но класс, отмеченный в прошлом вердикте (окна
+разбирают ответ сами, без `readCreatedDocument`), закрыт не полностью.
+1. «Отчёт о внутреннем аудите» (`audit_report`). `createDocument` сам разбирает ответ и бросает текст сервера
+   (`src/components/journals/audit-report-documents-client.tsx:242`). Кнопка окна обёрнута в `try … finally` без `catch`
+   (`:167`). При `point_required` окно молчит: нет ни строки ошибки, ни тоста, исключение на странице не обработано.
+2. «Прослеживаемость» (`traceability_test`). `persistDocument` бросает обычную ошибку
+   (`src/components/journals/traceability-documents-client.tsx:386`). `useDocumentDialogSubmit` показывает общий текст
+   «Не удалось создать документ».
+3. Того же вида кнопка «Создать» у скан-журналов (`src/components/journals/scan-journal-documents-client.tsx:78-107`): нет
+   `catch`, текст общий. На стенде скан-журналов нет, в UI не проверено.
 
-**Минимальное воспроизведение.** Стенд, владелец: открыть `/settings/organization` (шапка → «Выберите объект»), очистить
-`localStorage['wesetup.point-return']`, открыть `/journals/complaint_register` → «Создать документ» → «Создать».
+**Минимальное воспроизведение.** Стенд, владелец (`owner@stand.local`). Открыть `/settings/organization` (в шапке станет
+«Выберите объект»). Очистить `localStorage['wesetup.point-return']`. Открыть `/journals/audit_report` → «Создать документ»
+→ «Создать». Сценарий: `node <scratch>/verifier2/probe-audit-report.cjs`.
 
-**Ожидалось / получено.** Ожидалось: «Выберите объект…» (и плашка с объектами над списком). Получено: `POST /api/journal-documents`
-→ 400 `{ code: "point_required" }`, тост «Ошибка создания документа», плашки нет (`notice: 0`; скриншот
-`/tmp/claude-0/-home-user-HASSR-Online/9db99cea-0bbc-5d62-bbca-aabb50b143e4/scratchpad/verifier/probe-complaint-point-required.png`).
+**Ожидалось / получено.** Ожидалось: «Выберите объект: документ журнала создаётся для объекта». Получено: `POST
+/api/journal-documents` → 400 `point_required`, окно открыто без сообщения, тостов нет, `pageerror: Error: Выберите объект…`
+(скриншот `<scratch>/verifier2/probe-audit-report.png`). У прослеживаемости, по коду, — «Не удалось создать документ».
 
-**Затронутые файлы.** `src/components/journals/complaint-documents-client.tsx`, `src/app/(dashboard)/journals/[code]/page.tsx`
-(условие плашки). Тот же класс у окон, которые разбирают ответ сами, без `readCreatedDocument`
-(`audit-protocol-documents-client.tsx:268-270`, `metal-impurity-documents-client.tsx:468-470`, `glass-list-documents-client.tsx:395-397`):
-внутри `useDocumentDialogSubmit` они показывают общий `fallbackError`.
+**Затронутые файлы.** `src/components/journals/audit-report-documents-client.tsx`,
+`src/components/journals/traceability-documents-client.tsx`, `src/components/journals/scan-journal-documents-client.tsx`,
+`src/components/journals/read-created-document.test.ts`.
 
-**Наименьшее безопасное исправление.** В `complaint-documents-client.tsx` в `catch` добавить ветку
-`error instanceof PointRequiredError` → `journalControls.documentDialog.pointRequired` (ключ уже есть в ru/en/uz). Плашку
-`JournalPointNotice` показывать при `pointChoice` для всех журналов со списком документов, а не только `isDocumentTemplate`
-(например, `isDocumentTemplate(code) || isDocumentUiOnlyTemplate(code)`). Три окна со своим разбором перевести на
-`readCreatedDocument`.
+**Наименьшее безопасное исправление.** Сделать как в `f778c8aa4` для протокола аудита.
+- Создание через `readCreatedDocument(response, …)`: в `createDocument` отчёта аудита и в POST-ветке `persistDocument`
+  прослеживаемости. PATCH-ветку не трогать.
+- Кнопку окна отчёта аудита перевести на `useDocumentDialogSubmit` + `DocumentDialogFeedback`.
+- В `handleCreate` скан-журналов добавить `catch` с тостом `journalControls.documentDialog.pointRequired` для
+  `PointRequiredError`, иначе `createError`.
+- Закрепить тестом. Регулярное выражение в `read-created-document.test.ts` не находит вызов с условным адресом у
+  прослеживаемости, поэтому для неё нужна своя проверка.
 
-**Подсказка исправляющему.** Ключ перевода и класс ошибки уже есть — нужна одна ветка в `catch` окна жалоб и расширенное
-условие плашки. Проверьте на стенде журнал жалоб при «Выберите объект» и нескольких объектах.
+**Подсказка исправляющему.** Найдите все `POST /api/journal-documents` в `src/components/journals` без
+`readCreatedDocument`. Окна создания среди них: отчёт аудита, прослеживаемость, скан-журналы. Входной контроль показывает
+текст сервера и подходит. Переведите их создание на общий разбор ответа, и окно само напишет «Выберите объект…».
 
-## AC8 — FAIL
+## Не блокирует
 
-**Текст.** В организации с делением по объектам в списке сотрудников у каждого — пилюля места работы («Офис», название объекта
-или объектов, «Все объекты» — без закрепления); нажатие открывает правку сотрудника («Где работает»).
-
-**Почему не доказано.** У сотрудника без закрепления пилюля «Без объекта» (`staffManagement.page.placeNone`:
-ru «Без объекта», en «No site», uz «Nuqtasiz»; `src/components/staff/staff-page-client.tsx:801`), а не «Все объекты». В окне
-правки то же состояние названо «Все объекты» (`staffManagement.buildings.all`), предупреждение на странице говорит, что такие
-люди «получают задачи по журналам со всех объектов». Исполнитель отметил это сам («PASS с решением по подписи»), но решения
-владельца, меняющего AC8, нет. Остальное доказано: пилюли есть у всех шести сотрудников стенда (Офис, объект, «Без объекта»),
-нажатие открывает правку с «Где работает».
-
-**Минимальное воспроизведение.** `/settings/users?place=all` → должность «Официант» → Иван Официант (или «Директор» →
-Ольга Владелец).
-
-**Ожидалось / получено.** Ожидалось «Все объекты» (нейтрально). Получено «Без объекта» в янтарной пилюле-предупреждении.
-
-**Затронутые файлы.** `src/i18n/messages/{ru,en,uz}.json` (`staffManagement.page.placeNone`, строка 8815),
-`src/i18n/message-contract.d.ts` (`npm run i18n:types`), при желании — стиль `place.none` в `staff-page-client.tsx`.
-
-**Наименьшее безопасное исправление.** `placeNone` → ru «Все объекты», en «All locations», uz «Barcha manzillar» (как
-`staffManagement.buildings.all`), `npm run i18n:types`. Подсказку `placeNoneTitle` можно оставить. Либо владелец явно
-утверждает «Без объекта», и тогда AC8 правится в спеке.
-
-**Подсказка исправляющему.** Это правка подписи в трёх словарях и пересборка контракта; логика пилюль верна. Проверьте,
-что в пилюле и в окне правки одно и то же состояние называется одинаково.
+- Перенос идёт в шаге 3/3 до переключения на новую сборку. Несколько секунд старая сборка ещё отвечает и может завести
+  документ на офис (окно создания, QR, крон). Разовый перенос его уже не заберёт.
+- Пока проходила проверка, `origin/master` сдвинулся на `60b20ea07` (#322, только файлы seo-links, с веткой не
+  пересекается). Перед слиянием снова влить master и прогнать проверки: сгенерированные CSS могут потребовать пересборки.

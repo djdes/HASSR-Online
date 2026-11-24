@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 
 import { normalizeAcceptanceDocumentConfig } from "@/lib/acceptance-document";
 import { logAudit } from "@/lib/audit";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { ensureActiveDocument } from "@/lib/journal-auto-create";
@@ -85,7 +85,8 @@ export function readSupplyItems(value: unknown): SupplyItem[] {
 async function supplyPointByKpp(organizationId: string, parsed: ParsedUpd): Promise<string | null> {
   const parties = [parsed.consignee, parsed.buyer];
   if (!parties.some((party) => party?.kpp)) return null;
-  const points = (await buildingTargets(organizationId)).filter((id): id is string => id !== null);
+  // Только объекты: накладная по КПП к офису не привязывается (офис — не объект).
+  const points = (await documentBuildingTargets(organizationId)).filter((id): id is string => id !== null);
   if (points.length === 0) return null;
   const buildings = await db.building.findMany({ where: { organizationId, id: { in: points } }, select: { id: true, kpp: true } });
   return pointByKpp(parties, buildings);

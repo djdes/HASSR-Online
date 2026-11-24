@@ -16,6 +16,8 @@ const TEMPLATE = { id: "t-hyg", code: "hygiene", name: "Гигиенически
 function fakeDb(options: { locked?: boolean; groups?: TemplateDocumentGroup[] } = {}) {
   const calls = { lockKeys: [] as string[], templateLookups: 0, groupBy: 0 };
   const db = {
+    // Здания организации для `documentBuildingFor` (офис — не объект): офиса нет — точка как есть.
+    building: { findMany: async () => [] },
     journalDocument: {
       groupBy: async () => {
         calls.groupBy += 1;

@@ -24,6 +24,39 @@ export function officeJournalTarget(buildings: readonly OrderedBuilding[]): stri
   return points[0]?.id ?? null;
 }
 
+/** Клиент базы для `documentBuildingFor`: нужен только список зданий организации. */
+export type OrganizationBuildingsClient = {
+  building: {
+    findMany(args: {
+      where: { organizationId: string };
+      select: { id: true; kind: true; sortOrder: true; name: true };
+    }): Promise<OrderedBuilding[]>;
+  };
+};
+
+/**
+ * Здание нового документа журнала (финальная проверка 2026-11-24): офис — не
+ * объект, документ на офис не заводится. Если путь создания принёс офис
+ * (оборудование, помещение или сотрудник офиса, точка приёмки, запрос внешнего
+ * API), документ получает единственный или первый по списку объект — то же
+ * правило, что для перенесённых журналов офиса. Объектов нет — общий документ
+ * (null). Не офис — как есть.
+ */
+export async function documentBuildingFor(
+  client: OrganizationBuildingsClient,
+  organizationId: string,
+  buildingId: string | null,
+): Promise<string | null> {
+  if (!buildingId) return null;
+  const buildings = await client.building.findMany({
+    where: { organizationId },
+    select: { id: true, kind: true, sortOrder: true, name: true },
+  });
+  const building = buildings.find((item) => item.id === buildingId);
+  if (!building || !isOfficeBuilding(building)) return buildingId;
+  return officeJournalTarget(buildings);
+}
+
 /**
  * На какие здания раздавать документы журналов: только объекты. Журналы по
  * объектам выключены или зданий меньше двух — `[null]`, один общий документ,
