@@ -28,14 +28,28 @@ async function step(key, run) {
 }
 
 async function login(page) {
-  await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
-  await page.fill("#email", "owner@stand.local");
-  await page.fill("#password", "Passw0rd!");
-  await Promise.all([
-    page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 180000, waitUntil: "commit" }),
-    page.click('button[type="submit"]'),
-  ]);
-  await page.waitForLoadState("domcontentloaded", { timeout: 180000 }).catch(() => {});
+  // Вход — только после гидрации формы: иначе браузер отправляет её сам, GET-ом (логин и пароль
+  // попадают в адрес, вход не происходит). На холодном dev-сервере /login компилируется долго.
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    await page.goto(`${BASE}/login`, { waitUntil: "load", timeout: 180000 });
+    await page.waitForLoadState("networkidle", { timeout: 60000 }).catch(() => {});
+    await page.waitForFunction(() => {
+      const button = document.querySelector('button[type="submit"]');
+      return Boolean(button && Object.keys(button).some((key) => key.startsWith("__reactProps")));
+    }, null, { timeout: 120000 }).catch(() => {});
+    await page.fill("#email", "owner@stand.local");
+    await page.fill("#password", "Passw0rd!");
+    await page.click('button[type="submit"]');
+    const ok = await page
+      .waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 180000, waitUntil: "commit" })
+      .then(() => true)
+      .catch(() => false);
+    if (ok) {
+      await page.waitForLoadState("domcontentloaded", { timeout: 180000 }).catch(() => {});
+      return;
+    }
+  }
+  throw new Error("login failed");
 }
 
 async function settle(page, ms = 1500) {
@@ -316,6 +330,36 @@ async function closeFillGuide(page) {
         notice: await page.locator("[data-journal-point-notice]").count(),
         toasts: await toasts(page),
       });
+    }
+  });
+
+  // Журнал со своим экраном (жалобы): плашка с объектами и понятный текст при «Создать» без объекта
+  // (проверка 2026-11-24). В конце — объект из плашки: следующий шаг (QR) идёт на объекте.
+  await step("AC4_custom", async () => {
+    await page.goto(`${BASE}/settings/organization`, { waitUntil: "domcontentloaded" });
+    await settle(page, 3000);
+    await page.evaluate(() => window.localStorage.removeItem("wesetup.point-return"));
+    await page.goto(`${BASE}/journals/complaint_register`, { waitUntil: "domcontentloaded" });
+    await settle(page, 4000);
+    await closeFillGuide(page);
+    const info = {
+      header: await header(page),
+      notice: await page.locator("[data-journal-point-notice]").count(),
+      noticeButtons: await page.locator("[data-journal-point-option]").count(),
+    };
+    await page.getByRole("button", { name: "Создать документ" }).first().click();
+    await page.waitForTimeout(1500);
+    await page.getByRole("dialog").last().getByRole("button", { name: /^Создать$/ }).click();
+    await page.waitForTimeout(3000);
+    info.toast = (await page.locator("[data-sonner-toast]").allInnerTexts()).map(clean);
+    log("AC4_custom_complaint", info);
+    await page.screenshot({ path: `${SHOTS}/desktop-complaint-point-required.png` });
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(600);
+    if ((await page.locator("[data-journal-point-option]").count()) > 0) {
+      await page.locator("[data-journal-point-option]").first().click();
+      await settle(page, 3500);
+      log("AC4_custom_choose", { header: await header(page), notice: await page.locator("[data-journal-point-notice]").count() });
     }
   });
 

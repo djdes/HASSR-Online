@@ -27,3 +27,35 @@ test("409 — развилка «за период уже есть докуме�
     (error: unknown) => error instanceof Error && !(error instanceof PointRequiredError) && error.message === "Не удалось создать документ",
   );
 });
+
+/**
+ * Проверка 2026-11-24 (AC4): журналы со своим экраном (жалобы, реестры,
+ * протокол и отчёт аудита) и окна, которые разбирали ответ сами
+ * (протокол аудита, металлопримеси, список стекла), при «Выберите объект»
+ * писали «Ошибка создания документа» и не показывали плашку с объектами.
+ */
+test("окна журналов со своим экраном: ответ — через readCreatedDocument, «Выберите объект» — понятным текстом", async () => {
+  const { readFileSync } = await import("node:fs");
+  for (const file of [
+    "src/components/journals/audit-protocol-documents-client.tsx",
+    "src/components/journals/metal-impurity-documents-client.tsx",
+    "src/components/journals/glass-list-documents-client.tsx",
+    "src/components/journals/complaint-documents-client.tsx",
+  ]) {
+    const source = readFileSync(file, "utf8");
+    const start = source.search(/fetch\("\/api\/journal-documents", \{\s*method: "POST"/);
+    assert.ok(start >= 0, file);
+    const create = source.slice(start);
+    assert.match(create, /readCreatedDocument\(response/, file);
+    assert.doesNotMatch(create.slice(0, 1500), /throw new Error\(result\?\.error/, file);
+  }
+  const complaint = readFileSync("src/components/journals/complaint-documents-client.tsx", "utf8");
+  assert.match(complaint, /error instanceof PointRequiredError/);
+  assert.match(complaint, /pointRequired/);
+});
+
+test("плашка «Документ журнала создаётся для объекта» — у всех журналов со списком документов", async () => {
+  const { readFileSync } = await import("node:fs");
+  const page = readFileSync("src/app/(dashboard)/journals/[code]/page.tsx", "utf8");
+  assert.match(page, /pointChoice && hasDocumentFillUi\(resolvedCode\) \? \(\s*<JournalPointNotice/);
+});

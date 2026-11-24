@@ -57,6 +57,7 @@ import {
   getJournalDocumentDefaultTitle,
   getJournalDocumentPeriodLabel,
   isDocumentTemplate,
+  hasDocumentFillUi,
 } from "@/lib/journal-document-helpers";
 import {
   buildFinishedProductArchiveSeed,
@@ -1553,7 +1554,9 @@ export default async function JournalDocumentsPage({
             Показываем только там, где это осмысленно: у field-based
             журналов автосоздание плодило документы-сироты, а сотрудник
             без прав на настройки ловил 403 при переключении. */}
-        {pointChoice && isDocumentTemplate(resolvedCode) ? (
+        {/* Плашка — у всех журналов со списком документов, и у тех, что со
+            своим экраном (жалобы, реестры, протокол и отчёт аудита). */}
+        {pointChoice && hasDocumentFillUi(resolvedCode) ? (
           <JournalPointNotice options={pointChoice.options} createHref={pointChoice.createHref} />
         ) : null}
         {canManageAutomation && isDocumentTemplate(resolvedCode) ? (

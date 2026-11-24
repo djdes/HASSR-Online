@@ -1,0 +1,48 @@
+{
+  "status": "FAIL",
+  "checkedAt": "2026-11-24T06:04:00Z",
+  "base": "c88a30e8f468d40846b39fefb9d8783a7a1cbf9d",
+  "codeTree": "1225d2a9b26761050adb7ced09b11d898eea1769 (HEAD moved to c88a30e8f during verification; that commit changes only .agent/tasks/office-objects-favorites-2026-11-23/*, `git diff 1225d2a9b c88a30e8f -- . ':!.agent'` is empty)",
+  "comparedTo": "origin/master bce1e012b7fffbd42568888b430b19e8f155e504",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "FAIL",
+    "AC5": "FAIL",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "FAIL",
+    "AC9": "PASS",
+    "AC10": "PASS",
+    "AC11": "PASS",
+    "AC12": "PASS",
+    "AC13": "PASS"
+  },
+  "commands": [
+    { "command": "npm run typecheck", "result": "PASS", "exit": 0, "note": "incremental, 14 s" },
+    { "command": "npm run test:gate", "result": "PASS", "exit": 0, "note": "escalated to full suite (prisma/schema.prisma changed): pass=7331, fail=0, 4 min 35 s" },
+    { "command": "node --import tsx --test src/lib/{header-point,point-section-sync,office-journals,pinned-buildings,home-page,qr-fill-missing,office-roster,paper-journal-point,building-scope}.test.ts src/components/journals/read-created-document.test.ts src/components/layout/*.test.ts src/components/favorites/*.test.ts", "result": "PASS", "note": "121/121" },
+    { "command": "npm run i18n:check", "result": "PASS", "exit": 0, "note": "i18n-types --check fresh; 103/103 tests" },
+    { "command": "node (key diff of src/i18n/messages/{ru,en,uz}.json vs origin/master)", "result": "PASS", "note": "51 changed/added ru keys, all present in en and uz, no Cyrillic in en/uz; 9 keys removed and unused" },
+    { "command": "npx eslint <75 changed code files> + eslint --stdin on origin/master versions of the 5 files with findings", "result": "PASS", "note": "1 error + 9 warnings, identical to master (0 new)" },
+    { "command": "node --import tsx --test src/app/borderless.test.ts src/app/neutral-palette.test.ts src/app/one-accent.test.ts", "result": "PASS", "note": "12/12" },
+    { "command": "npx tsx .agent/tasks/office-objects-favorites-2026-11-23/raw/stand-reset.ts", "result": "PASS" },
+    { "command": "UI_OUT=<scratch>/ui.json SHOTS_DIR=<scratch>/shots node .agent/tasks/office-objects-favorites-2026-11-23/raw/ui-check-final.cjs", "result": "PASS except phone step", "note": "desktop, mini and dark keys as expected; phone step timed out at login (form submitted natively before hydration - harness timing, not product); phone covered by own probe" },
+    { "command": "node <scratch>/probe.cjs (own Playwright probe)", "result": "see notes", "note": "AC4_api: no object 400 point_required, office id 400 point_required, object id 201 on that object; AC6_api: office 400, unknown 404; AC4_complaint: 400 point_required -> toast 'Ошибка создания документа', no plaque; AC6_buildings_page pins; AC7_links; AC10_tree star on hover (design new); AC1_phone_sheet; AC6_phone_pin; AC9_phone sheet, no navigation; AC2_phone_switch 0 toasts" },
+    { "command": "node <scratch>/probe-directors.cjs", "result": "PASS", "note": "all 6 employees have a place pill (Офис / object / 'Без объекта')" },
+    { "command": "node <scratch>/probe-phone-home.cjs", "result": "PASS", "note": "phone home: favorites 3 per row, 0 visible stars; office bar 'Выберите объект'" },
+    { "command": "npx tsx <scratch>/repro-office-rollover.ts (throw-away local org, deleted afterwards)", "result": "FAIL for AC5", "note": "buildingTargets=[OFFICE,p1,p2]; ensureQrPeriodDocuments without anchor created hygiene 2026-11-16..30 on OFFICE; with anchor = old office document created 2026-12-01..15 on OFFICE" },
+    { "command": "npx tsx <scratch>/probe-cleanup.ts", "result": "PASS", "note": "removed the 1 document the AC4 API probe created (on 'Кафе на Мира')" }
+  ],
+  "notes": [
+    "AC5 production data: after merge + a normal deploy NOTHING is transferred. deploy.yml:934 runs the script only with --dry-run (prints totals); the real run (deploy.yml:970) sits inside `if [ \"${RUN_LEGACY_DATA_SEEDS:-0}\" = \"1\" ]`, which the workflow never sets (workflow_dispatch has no inputs, ssh envs = GITHUB_SHA only; it could only come from the server .env, and that would also rerun ~15 other legacy backfills). Existing office documents stay on the office: hidden whenever a journal page auto-selects an object, visible only at «Выберите объект»; no tasks/reminders cover them any more.",
+    "AC5: the QR period rollover still creates NEW documents on the office (journal-qr-rollover.ts:90 uses buildingTargets, which still returns the office; repro confirmed for the no-anchor path used by the MAX bot / journal hub QR and for an old office document's QR). Because the transfer script is one-shot (once:office-journals-to-points:v1), office documents created after a future run would never be moved.",
+    "AC5: even the gated run moves only office documents without a same-journal overlapping document on the first object and not disabled there; the rest stays on the office (IDs in audit log). Reasonable duplicate guard, but it is a deviation from the frozen AC5 and needs the owner's decision.",
+    "AC4: complaint register window (readCreatedDocument, complaint-documents-client.tsx:117-126) shows 'Ошибка создания документа' on point_required; journals outside isDocumentTemplate (complaint register, register journals, audit protocol/report) get no 'Документ журнала создаётся для объекта' plaque (journals/[code]/page.tsx:1556) and their windows have no object field. Rest of AC4 proven (API, general dialog, plaque on hygiene).",
+    "AC8: unassigned employees get pill «Без объекта» (staffManagement.page.placeNone) instead of the specified «Все объекты»; the edit dialog calls the same state «Все объекты». Pills exist for every employee and open the edit dialog with «Где работает».",
+    "AC7: add button keeps the existing label «Добавить в офис» (spec wording «Добавить сотрудника в офис») - same action, accepted.",
+    "AC11: hint text is a paraphrase of the spec text with the same meaning - accepted. The same 'missing' hint is also shown when the equipment exists but belongs to an object outside a point manager's scope (route returns qrMissingError for out-of-scope too).",
+    "Local stand only; no production or remote system touched. The dev server restarted once during probes (next-server re-spawned at 06:02), unrelated to the change."
+  ]
+}

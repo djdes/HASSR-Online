@@ -1,6 +1,6 @@
 import { recordAuditLog } from "@/lib/audit-log";
 import { resolveJournalDisplayName } from "@/lib/org-custom-names";
-import { buildingTargets } from "@/lib/building-targets";
+import { documentBuildingTargets } from "@/lib/building-targets";
 import { db } from "@/lib/db";
 import { parseDisabledCodes } from "@/lib/disabled-journals";
 import { closeExpiredDocuments, createFirstDocumentForTemplate, restoreBrokenChainForTemplate, type CreateReport } from "@/lib/journal-auto-create";
@@ -81,13 +81,27 @@ function inScope(docs: ActiveDoc[], targets: Array<string | null>): string[] {
   return docs.filter((doc) => targets.some((target) => covers(doc, target))).map((doc) => doc.id);
 }
 
+/**
+ * Куда заводить документ нового периода: якорь (точка плаката или документа
+ * токена), если он среди целей, иначе — все цели. Цели — объекты
+ * (`documentBuildingTargets`): офис — не объект (владелец, 2026-11-23), и
+ * якорь на офисе (старый документ офиса, плакат офиса) документ на офис не
+ * заводит — его получают объекты.
+ */
+export function rolloverTargets(
+  documentTargets: ReadonlyArray<string | null>,
+  anchorBuilding: string | null,
+): Array<string | null> {
+  return anchorBuilding && documentTargets.includes(anchorBuilding) ? [anchorBuilding] : [...documentTargets];
+}
+
 async function resolveTargets(args: {
   organizationId: string;
   templateId: string;
   perLocation: boolean;
   anchor?: QrRolloverAnchor;
 }): Promise<Array<string | null>> {
-  const orgTargets = args.perLocation ? await buildingTargets(args.organizationId) : [null];
+  const orgTargets = args.perLocation ? await documentBuildingTargets(args.organizationId) : [null];
   if (orgTargets.length === 1 && orgTargets[0] === null) return orgTargets;
   let anchorBuilding: string | null = args.anchor?.buildingId ?? null;
   if (args.anchor?.documentId) {
@@ -97,7 +111,7 @@ async function resolveTargets(args: {
     });
     anchorBuilding = anchorDoc?.buildingId ?? anchorBuilding;
   }
-  return anchorBuilding && orgTargets.includes(anchorBuilding) ? [anchorBuilding] : orgTargets;
+  return rolloverTargets(orgTargets, anchorBuilding);
 }
 
 /**
@@ -400,7 +414,7 @@ export function decideQrFirstDocument(args: {
   hub: boolean;
   documentId: string | null;
   buildingId: string | null;
-  /** `buildingTargets(org)`: `[null]` — организация без точек. */
+  /** `documentBuildingTargets(org)` — объекты, офиса нет; `[null]` — организация без точек. */
   orgTargets: Array<string | null>;
 }): boolean {
   if (args.hub || args.documentId) return false;

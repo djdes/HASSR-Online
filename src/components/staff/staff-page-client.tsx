@@ -791,7 +791,8 @@ export function StaffPageClient(props: StaffPageProps) {
   // Точки: сотрудники без точки получают задачи со всех точек — об этом
   // стоит сказать сразу, а не ждать вопросов «почему мне пришло втрое».
   // Место работы у каждого сотрудника (владелец, 2026-11-23: «с указанием,
-  // какой к какому объекту привязан»): офис, объект(ы) или «Без объекта».
+  // какой к какому объекту привязан»): офис, объект(ы) или «Все объекты» —
+  // без закрепления сотрудник работает на всех объектах (как в окне правки).
   const placeOf = (employee: StaffEmployee): StaffPlace | null => {
     const buildings = props.buildings ?? [];
     if (!props.perLocationJournals || buildings.length < 2) return null;
@@ -1710,12 +1711,7 @@ function CategoryColumn(props: {
                                       title={place.title}
                                       data-staff-place={e.id}
                                       data-staff-place-none={place.none ? "" : undefined}
-                                      className={cn(
-                                        "ml-1.5 inline-flex max-w-[220px] items-center gap-1 rounded-full px-2 py-0.5 align-middle text-[11.5px] font-medium transition-colors",
-                                        place.none
-                                          ? "bg-[#fff8eb] text-[#a16d32] hover:bg-[#fff1d6]"
-                                          : "bg-[var(--app-veil)] text-[#3c4053] hover:bg-[var(--app-veil-hover)]",
-                                      )}
+                                      className="ml-1.5 inline-flex max-w-[220px] items-center gap-1 rounded-full bg-[var(--app-veil)] px-2 py-0.5 align-middle text-[11.5px] font-medium text-[#3c4053] transition-colors hover:bg-[var(--app-veil-hover)]"
                                     >
                                       <MapPin className="size-3 shrink-0" aria-hidden />
                                       <span className="truncate">{place.label}</span>

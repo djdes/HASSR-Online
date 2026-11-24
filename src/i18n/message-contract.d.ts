@@ -8813,7 +8813,7 @@ export type MessageContract = {
       "phoneLabel": "Телефон",
       "emailLabel": "Почта",
       "placeEdit": "Где работает: {place}. Нажмите, чтобы изменить.",
-      "placeNone": "Без объекта",
+      "placeNone": "Все объекты",
       "placeNoneTitle": "Не закреплён за объектом — попадает в журналы всех объектов. Нажмите, чтобы выбрать, где работает.",
       "placeOffice": "Офис"
     },

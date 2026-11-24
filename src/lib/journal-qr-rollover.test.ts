@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { qrRolloverMessage, resolveTokenDocuments } from "@/lib/journal-qr-rollover";
+import { qrRolloverMessage, resolveTokenDocuments, rolloverTargets } from "@/lib/journal-qr-rollover";
 
 /**
  * Плакат, напечатанный из документа, несёт в токене id ЭТОГО документа.
@@ -98,5 +98,27 @@ describe("qrRolloverMessage — что увидит сотрудник у пла
   it("остальное — прежняя подсказка «попросите создать документ»", () => {
     assert.match(qrRolloverMessage("no-previous-document"), /Попросите руководителя создать документ/);
     assert.match(qrRolloverMessage(undefined), /Попросите руководителя создать документ/);
+  });
+});
+
+/**
+ * Офис — не объект (владелец, 2026-11-23): переход периода по QR заводит
+ * документы только объектам. Цели — `documentBuildingTargets` (офиса в них
+ * нет); якорь на офисе (старый документ офиса, плакат офиса) целью не
+ * становится — документ получают объекты (проверка 2026-11-24).
+ */
+describe("rolloverTargets", () => {
+  const points = ["p1", "p2"];
+  it("якорь на объекте — только он", () => {
+    assert.deepEqual(rolloverTargets(points, "p2"), ["p2"]);
+  });
+  it("якорь на офисе — не цель: объекты", () => {
+    assert.deepEqual(rolloverTargets(points, "office"), ["p1", "p2"]);
+  });
+  it("без якоря — все объекты", () => {
+    assert.deepEqual(rolloverTargets(points, null), ["p1", "p2"]);
+  });
+  it("без деления по объектам — один общий документ", () => {
+    assert.deepEqual(rolloverTargets([null], "office"), [null]);
   });
 });

@@ -82,6 +82,10 @@ test("журналы на объекты: напоминания, задачи T
     "src/lib/uv-document-points.ts",
     "src/app/api/cron/mini-digest/route.ts",
     "src/app/api/cron/auto-close-shifts/route.ts",
+    // Проверка 2026-11-24: переход периода по QR (бот MAX, плакаты журналов,
+    // отправка по QR) и приёмка по ВСД заводили документы и на офис.
+    "src/lib/journal-qr-rollover.ts",
+    "src/lib/mercury/process-incoming.ts",
   ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /documentBuildingTargets\(/, file);

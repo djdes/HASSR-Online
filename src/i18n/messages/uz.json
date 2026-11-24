@@ -8812,7 +8812,7 @@
       "phoneLabel": "Telefon",
       "emailLabel": "Pochta",
       "placeEdit": "Qayerda ishlaydi: {place}. O‘zgartirish uchun bosing.",
-      "placeNone": "Nuqtasiz",
+      "placeNone": "Barcha manzillar",
       "placeNoneTitle": "Nuqtaga biriktirilmagan — barcha nuqtalar jurnallariga tushadi. Qayerda ishlashini tanlash uchun bosing.",
       "placeOffice": "Ofis"
     },

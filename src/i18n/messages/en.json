@@ -8812,7 +8812,7 @@
       "phoneLabel": "Phone",
       "emailLabel": "Email",
       "placeEdit": "Works at: {place}. Click to change.",
-      "placeNone": "No site",
+      "placeNone": "All locations",
       "placeNoneTitle": "Not assigned to a site — appears in the journals of all sites. Click to choose where they work.",
       "placeOffice": "Office"
     },

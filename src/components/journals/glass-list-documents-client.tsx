@@ -62,6 +62,7 @@ import { localDayKey } from "@/lib/entry-defaults";
 import { isFetchNetworkError } from "@/lib/humanize-fetch-error";
 import {
   DocumentDialogFeedback,
+  readCreatedDocument,
   useDocumentDialogSubmit,
 } from "@/components/journals/use-document-dialog-submit";
 type UserItem = {
@@ -392,13 +393,11 @@ export function GlassListDocumentsClient(props: Props) {
       }),
     });
 
-    const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.document?.id) {
-      throw new Error(result?.error || t("createError"));
-    }
+    // Нет объекта — PointRequiredError, документ за период уже есть — развилка.
+    const created = await readCreatedDocument(response, t("createError"));
 
     router.refresh();
-    router.push(`/journals/${routeCode}/documents/${result.document.id}`);
+    router.push(`/journals/${routeCode}/documents/${created.id}`);
   }
 
   async function saveSettings(state: FormState) {
