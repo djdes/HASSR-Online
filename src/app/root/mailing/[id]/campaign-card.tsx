@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Ban, Info, Loader2, MousePointerClick, RefreshCw, RotateCcw, Search, TriangleAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Ban,
+  Download,
+  Info,
+  Loader2,
+  MousePointerClick,
+  RefreshCw,
+  RotateCcw,
+  ScrollText,
+  Search,
+  TriangleAlert,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -31,6 +44,8 @@ import {
   api,
   formatDateTime,
 } from "../ui";
+import { CampaignActions } from "../campaign-actions";
+import { QueueStateCard } from "../queue-state-card";
 
 const FILTERS: Array<{ key: RecipientFilter; label: string }> = [
   { key: "all", label: "Все" },
@@ -63,6 +78,9 @@ export function CampaignCardClient({
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [confirm, setConfirm] = useState<"cancel" | "retry" | null>(null);
+  // Растёт при каждом обновлении карточки — «Состояние очереди» обновляется вместе с ней.
+  const [version, setVersion] = useState(0);
+  const router = useRouter();
   const c = card.campaign;
 
   useEffect(() => {
@@ -78,6 +96,7 @@ export function CampaignCardClient({
         if (query) q.set("search", query);
         setCard(await api<CampaignCard>(`/api/root/mailing/campaigns/${initial.campaign.id}?${q}`));
         setOffset(nextOffset);
+        setVersion((v) => v + 1);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Не удалось обновить");
       } finally {
@@ -120,8 +139,8 @@ export function CampaignCardClient({
     }
   }
 
-  const canCancel = c.status === "sending" || c.status === "scheduled";
-  const canRetry = (c.status === "sending" || c.status === "done") && c.counts.failed > 0;
+  const canCancel = c.status === "sending" || c.status === "scheduled" || c.status === "paused";
+  const canRetry = (c.status === "sending" || c.status === "done" || c.status === "paused") && c.counts.failed > 0;
   const failedChannels = MAILING_CHANNELS.reduce((sum, ch) => sum + (card.channelBreakdown[ch].failed ?? 0), 0);
 
   return (
@@ -148,6 +167,8 @@ export function CampaignCardClient({
               {c.startedAt ? `Старт ${formatDateTime(c.startedAt)} · ` : ""}
               {c.finishedAt ? `Завершена ${formatDateTime(c.finishedAt)} · ` : ""}
               {c.cancelledAt ? `Отменена ${formatDateTime(c.cancelledAt)} · ` : ""}
+              {c.status === "paused" && c.pausedAt ? `На паузе с ${formatDateTime(c.pausedAt)}${c.pausedBy ? ` (${c.pausedBy})` : ""} · ` : ""}
+              Часы отправки {String(c.windowStart).padStart(2, "0")}:00–{String(c.windowEnd).padStart(2, "0")}:00 МСК ·{" "}
               Создана {formatDateTime(c.createdAt)}
               {c.createdByName ? ` · ${c.createdByName}` : ""}
             </div>
@@ -157,6 +178,17 @@ export function CampaignCardClient({
               {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4 text-[#5566f6]" />}
               Обновить
             </button>
+            <CampaignActions
+              campaign={c}
+              onChanged={() => void load(offset)}
+              onDuplicated={(row) => router.push(`/root/mailing?tab=compose&draft=${row.id}`)}
+            />
+            <Link href={`/root/mailing?tab=journal&campaign=${c.id}`} className={OUTLINE_SM} data-testid="card-journal">
+              <ScrollText className="size-4 text-[#5566f6]" /> Журнал
+            </Link>
+            <a href={`/api/root/mailing/journal/export?campaign=${c.id}`} className={OUTLINE_SM} data-testid="card-export">
+              <Download className="size-4 text-[#5566f6]" /> CSV
+            </a>
             {canRetry ? (
               <button type="button" className={OUTLINE_SM} onClick={() => setConfirm("retry")} data-testid="card-retry">
                 <RotateCcw className="size-4 text-[#5566f6]" /> Повторить неудачные
@@ -180,8 +212,8 @@ export function CampaignCardClient({
         {c.status === "sending" && c.counts.queued > 0 ? (
           <div className="mt-4">
             <Notice tone="info" icon={<Info />} testId="card-queue-note">
-              В очереди {c.counts.queued}. Письма уходят по {settings.perMinute} в минуту, не больше {settings.perDay} в
-              сутки (сегодня уже {sentToday}); очередь разбирается раз в минуту.
+              В очереди {c.counts.queued}. Письма уходят по {settings.perMinute} в минуту, не больше {settings.perHour} в час
+              и {settings.perDay} в сутки (сегодня уже {sentToday}); очередь разбирается раз в минуту.
               {dryRun ? " Сейчас включена сухая отправка — наружу ничего не уходит." : ""}
             </Notice>
           </div>
@@ -199,6 +231,8 @@ export function CampaignCardClient({
           Кликнули по ссылке: <b className="tabular-nums">{c.counts.clicks}</b>
         </div>
       </section>
+
+      {c.status !== "draft" ? <QueueStateCard campaignId={c.id} status={c.status} version={version} /> : null}
 
       <section className={CARD}>
         <div className={cn(SECTION_LABEL, "mb-3")}>По каналам</div>

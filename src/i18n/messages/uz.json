@@ -23011,7 +23011,13 @@
       "ariaLabel": "Xabar tarqatish bo‘limlari",
       "quick": "Yuborish",
       "builder": "Konstruktor",
-      "aiDigest": "AI hisobot"
+      "aiDigest": "AI hisobot",
+      "monitor": "Hozir ketmoqda",
+      "journal": "Jurnal",
+      "limits": "Limitlar",
+      "queueOn": "Navbat yoqilgan",
+      "queueOff": "Navbat o'chirilgan",
+      "newMailing": "Yangi xabar tarqatish"
     },
     "feedback": {
       "saveDraftFailed": "Qoralamani saqlab bo‘lmadi",
@@ -23077,6 +23083,10 @@
       "telegram": {
         "available": "Telegram: bor",
         "missing": "Telegram: yo‘q"
+      },
+      "max": {
+        "available": "MAX: bor",
+        "missing": "MAX: yo‘q"
       }
     },
     "billing": {
@@ -23338,10 +23348,13 @@
       "buttonExample": "Kabinetni ochish",
       "linkExample": "https://wesetup.ru/pricing yoki /dashboard",
       "badUrl": "https://… manzilini yoki /pricing kabi sayt yo‘lini kiriting.",
-      "buttonHint": "Bildirishnomada “Ochish” havolasi, Telegram’da esa matn ostida qator ko‘rsatiladi.",
+      "buttonHint": "Qo‘ng‘iroqchada — «Ochish» havolasi, Telegramda — matn ostidagi qator, MAXda — tugma.",
       "fallbackTitle": "Qabul qiluvchining ma’lumoti bo‘sh bo‘lsa",
       "fallbackUsed": "O‘zgaruvchi o‘rniga shu so‘z qo‘yiladi.",
-      "fallbackUnused": "Matnda hozircha o‘zgaruvchilar ishlatilmagan."
+      "fallbackUnused": "Matnda hozircha o‘zgaruvchilar ishlatilmagan.",
+      "shortTitle": "Telegram va MAX uchun qisqa matn",
+      "shortHint": "Xatga to‘liq matn ketadi, Telegram, MAX, qo‘ng‘iroqcha va push’ga esa shu qisqa matn. Bo‘sh qoldirsangiz, messenjerlarga to‘liq matn ketadi.",
+      "shortExample": "{nameToken}, qisqasi: 30-noyabrgacha bir yillik obunaga 50 % chegirma. Batafsil — tugma orqali."
     },
     "kp": {
       "sphere": "Standart faoliyat sohasi",
@@ -23411,7 +23424,8 @@
         "email": "Email",
         "inApp": "Bildirishnomalar",
         "push": "Push",
-        "telegram": "Telegram"
+        "telegram": "Telegram",
+        "max": "MAX"
       },
       "reachNone": "Avval qabul qiluvchilarni tanlang",
       "reachCounting": "Hisoblanmoqda…",
@@ -23421,12 +23435,14 @@
       "reachTelegram": "{users} tadan {queued} tasiga yetib boradi — botga ulanganlar{optedOut, select, yes{ · obunadan chiqqan {optedOutCount}} other{}}",
       "pushWarning": "{app, select, missing{Firebase sozlanmagan — ilovaga push yuborilmaydi{web, select, missing{; } other{}}} other{}}{web, select, missing{serverda veb-push sozlanmagan} other{}}",
       "telegramWarning": "Serverda Telegram boti sozlanmagan",
-      "dryRun": "Sinov rejimi — tashqariga yuborilmaydi"
+      "dryRun": "Sinov rejimi — tashqariga yuborilmaydi",
+      "reachMax": "{users} tadan {queued} tasiga yetadi — MAX boti ulanganlarga{optedOut, select, yes{ · obunani bekor qilganlar {optedOutCount}} other{}}",
+      "maxWarning": "MAX boti serverda sozlanmagan"
     },
     "send": {
       "heading": "Yuborish",
       "senderWarning": "Reklama xatlari <address></address> manzilidan yuboriladi — ular spam deb belgilansa, xizmat xatlari (kirish kodlari, hisoblar) ham spamga tushishi mumkin. Alohida manzil/domen ishlatgan ma’qul.",
-      "dryRunNotice": "Sinov rejimi: {mode, select, files{xatlar, push va Telegram xabarlari {directory} papkasiga fayl sifatida yoziladi} other{SMTP sozlanmagan — xatlar faqat server jurnalida}}. Tashqariga hech narsa yuborilmaydi.",
+      "dryRunNotice": "Sinov rejimi: {mode, select, files{xatlar, push, Telegram va MAX xabarlari {directory} papkasiga fayl sifatida yoziladi} other{SMTP sozlanmagan — xatlar faqat server jurnalida}}. Tashqariga hech narsa yuborilmaydi.",
       "rateLine": "Tezlik: daqiqasiga <perMinute></perMinute> tagacha, kuniga <perDay></perDay> tagacha xat. Bugun yuborilgan: <sentToday></sentToday>.{queued, select, yes{ Bu tarqatma — {category, select, one{{displayCount} ta xat} other{{displayCount} ta xat}}: taxminan {minutes} daq.{overflow, select, yes{ Kunlik limit sabab ayrimlari ertaga yuboriladi.} other{}}} other{}}",
       "now": "Hozir yuborish",
       "test": "Menga sinov xabarini yuborish",
@@ -23464,7 +23480,9 @@
       "emptyPush": "Bu tur push yubormaydi.",
       "emptyTelegram": "Bu tur Telegramga yubormaydi.",
       "openLink": "Ochish → <url></url>",
-      "pushNow": "WeSetup · hozir"
+      "pushNow": "WeSetup · hozir",
+      "emptyMax": "Bu tur MAXga yubormaydi.",
+      "maxButton": "Ochish"
     },
     "confirm": {
       "nowTitle": "Tarqatma hozir yuborilsinmi?",

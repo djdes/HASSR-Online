@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
+import { maxConfig } from "@/lib/max/config";
 import { isMobilePushConfigured, sendMobilePushToUser } from "@/lib/mobile-push";
 import { toMiniUrl, upsertNotification } from "@/lib/notifications";
 import { isWebPushConfigured } from "@/lib/web-push";
 
-import type { ChannelSenders, OutgoingInApp, OutgoingPush, OutgoingTelegram, SendOutcome } from "./queue";
+import type { ChannelSenders, OutgoingInApp, OutgoingMax, OutgoingPush, OutgoingTelegram, SendOutcome } from "./queue";
 import { mailingDryRunDir, sendMarketingEmail, writeDryRunFile } from "./transport.server";
 
 /**
@@ -14,7 +15,9 @@ import { mailingDryRunDir, sendMarketingEmail, writeDryRunFile } from "./transpo
  *     отдельная галочка, одно событие не должно будить дважды;
  *   • push — веб-push (VAPID) и приложение (Firebase). Честно: не
  *     настроено или нет устройств — «пропущено» с причиной;
- *   • Telegram — `sendTelegramMessage` (тихие часы, ретраи, TelegramLog).
+ *   • Telegram — `sendTelegramMessage` (тихие часы, ретраи, TelegramLog);
+ *   • MAX — личный чат бота (`MaxIdentity.privateChatId`), обычный текст
+ *     и кнопка-ссылка.
  *
  * `MAILING_DRY_RUN_DIR` задан — push и Telegram тоже не уходят наружу:
  * сообщение пишется `.json` в папку сухой отправки. Колокольчик — запись в
@@ -23,6 +26,15 @@ import { mailingDryRunDir, sendMarketingEmail, writeDryRunFile } from "./transpo
 
 export function telegramBotConfigured(): boolean {
   return Boolean((process.env.TELEGRAM_BOT_TOKEN ?? "").trim());
+}
+
+/** Бот MAX настроен: есть токен и допустимый адрес API. */
+export function maxBotConfigured(): boolean {
+  try {
+    return Boolean(maxConfig().token);
+  } catch {
+    return false;
+  }
 }
 
 export type PushAvailability = {
@@ -157,11 +169,47 @@ async function sendTelegram(msg: OutgoingTelegram): Promise<SendOutcome> {
   return { kind: "failed", error, transient: !PERMANENT_TELEGRAM.test(error) };
 }
 
+const PERMANENT_MAX = /MAX API returned (400|403|404)/;
+
+async function sendMax(msg: OutgoingMax): Promise<SendOutcome> {
+  const user = await db.user.findUnique({
+    where: { id: msg.userId },
+    select: { isActive: true, maxIdentity: { select: { privateChatId: true } } },
+  });
+  if (!user) return { kind: "skipped", reason: "Пользователь не найден" };
+  const chatId = user.maxIdentity?.privateChatId;
+  if (!chatId) return { kind: "skipped", reason: "MAX не привязан" };
+  if (!user.isActive) return { kind: "skipped", reason: "Пользователь отключён" };
+  if (!maxBotConfigured()) return { kind: "skipped", reason: "Бот MAX не настроен" };
+
+  if (mailingDryRunDir()) {
+    await writeDryRunFile(
+      msg.campaignId,
+      msg.recipientId,
+      "max.json",
+      JSON.stringify({ userId: msg.userId, chatId, text: msg.text, url: msg.url, buttonText: msg.buttonText }, null, 2)
+    );
+    console.info(`[mailing] dry-run max`, { recipient: msg.recipientId });
+    return { kind: "sent", dryRun: true, note: "Сухая отправка: сообщение записано в папку, в MAX не ушло" };
+  }
+
+  try {
+    const { maxSend } = await import("@/lib/max/client");
+    const buttons = msg.url ? [[{ type: "link" as const, text: (msg.buttonText || "Открыть").slice(0, 60), url: msg.url }]] : [];
+    await maxSend(chatId, msg.text, buttons);
+    return { kind: "sent" };
+  } catch (error) {
+    const text = error instanceof Error ? error.message : String(error);
+    return { kind: "failed", error: text, transient: !PERMANENT_MAX.test(text) };
+  }
+}
+
 export function createChannelSenders(): ChannelSenders {
   return {
     email: sendMarketingEmail,
     inApp: sendInApp,
     push: sendPush,
     telegram: sendTelegram,
+    max: sendMax,
   };
 }

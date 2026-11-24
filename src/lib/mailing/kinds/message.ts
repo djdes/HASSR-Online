@@ -17,8 +17,9 @@ import { defaultMessagePayload, validateMessagePayload, type MessagePayload } fr
 
 /**
  * Тип «Сообщение»: тема/заголовок, текст с простой разметкой и
- * переменными, необязательная кнопка. Один текст — во все каналы:
- * письмо (с подвалом и отпиской), колокольчик, push, Telegram.
+ * переменными, необязательная кнопка. Письмо — полный текст (с подвалом и
+ * отпиской); Telegram, MAX, колокольчик и push — короткий текст, если он
+ * написан, иначе тот же полный.
  * Сделан через ту же точку расширения, что и будущие типы.
  */
 
@@ -44,6 +45,8 @@ export const messageTemplate: MailingTemplate<MessagePayload> = {
     const fallbacks: VariableFallbacks = payload.fallbacks ?? {};
     const subject = substituteVariables(payload.subject, values, fallbacks).replace(/\s+/g, " ").trim();
     const prepared = prepareText(payload.body, values, fallbacks);
+    // Короткий текст — для мессенджеров; ссылки из него считаются после ссылок письма.
+    const short = payload.shortBody?.trim() ? prepareText(payload.shortBody, values, fallbacks) : prepared;
     const hasButton = Boolean(payload.buttonText && payload.buttonUrl && isSafeLinkUrl(payload.buttonUrl));
     const buttonText = hasButton ? substituteVariables(payload.buttonText, values, fallbacks) : "";
     // Сначала ссылки текста, потом кнопка — номера ссылок идут по порядку в письме.
@@ -72,9 +75,9 @@ export const messageTemplate: MailingTemplate<MessagePayload> = {
       .filter(Boolean)
       .join("\n\n");
 
-    let telegram = `<b>${escapeHtml(subject)}</b>\n\n${toTelegramHtml(prepared, { linkHref: ctx.trackUrl })}`;
+    let telegram = `<b>${escapeHtml(subject)}</b>\n\n${toTelegramHtml(short, { linkHref: ctx.trackUrl })}`;
     if (telegram.length > TELEGRAM_MAX) {
-      telegram = `<b>${escapeHtml(subject)}</b>\n\n${escapeHtml(toShortText(prepared, TELEGRAM_MAX - subject.length - 200))}`;
+      telegram = `<b>${escapeHtml(subject)}</b>\n\n${escapeHtml(toShortText(short, TELEGRAM_MAX - subject.length - 200))}`;
     }
     if (trackedButton) telegram += `\n\n<a href="${escapeHtml(trackedButton)}">${escapeHtml(buttonText)}</a>`;
 
@@ -83,10 +86,10 @@ export const messageTemplate: MailingTemplate<MessagePayload> = {
     const inAppUrl = hasButton ? payload.buttonUrl : null;
     return {
       email: { subject, preheader, html, text },
-      inApp: { title: subject, body: toShortText(prepared, 500), url: inAppUrl },
+      inApp: { title: subject, body: toShortText(short, 500), url: inAppUrl },
       push: {
         title: subject.length > 80 ? `${subject.slice(0, 79)}…` : subject,
-        body: toShortText(prepared, 180),
+        body: toShortText(short, 180),
         url: inAppUrl && inAppUrl.startsWith("/") ? inAppUrl : null,
       },
       telegram: { text: telegram, url: trackedButton },

@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   extractLinks,
   isSafeLinkUrl,
+  maxFromTelegram,
   prepareText,
   substituteVariables,
   toEmailHtml,
@@ -115,3 +116,24 @@ describe("разметка", () => {
     assert.equal(isSafeLinkUrl("ftp://x"), false);
   });
 });
+
+describe("MAX из сообщения Telegram", () => {
+  it("снимает HTML, кнопку уносит под сообщение, прочие ссылки оставляет адресом", () => {
+    const r = maxFromTelegram({
+      text: '<b>Тема &amp; «скидка»</b>\n\nСмотрите <a href="https://a.ru/x">тарифы</a>.\n\n\n\n<a href="https://a.ru/btn">Забрать</a>',
+      url: "https://a.ru/btn",
+    });
+    assert.equal(r.text, "Тема & «скидка»\n\nСмотрите тарифы (https://a.ru/x).");
+    assert.equal(r.url, "https://a.ru/btn");
+    assert.equal(r.buttonText, "Забрать");
+  });
+
+  it("без кнопки — без кнопки; длинный текст обрезается", () => {
+    const r = maxFromTelegram({ text: "я".repeat(5000) });
+    assert.equal(r.url, null);
+    assert.equal(r.buttonText, null);
+    assert.ok(r.text.length <= 3800);
+    assert.ok(r.text.endsWith("…"));
+  });
+});
+

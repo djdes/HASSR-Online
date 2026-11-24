@@ -44,8 +44,13 @@ export const PRESET_AUDIENCE_LABELS: Record<PresetAudience, string> = {
 
 const FALLBACKS = { name: "коллеги", company: "ваше заведение", sphere: "общепит" };
 
-const EMAIL_ONLY: MailingChannels = { email: true, inApp: false, push: false, telegram: false };
-const EMAIL_AND_BELL: MailingChannels = { email: true, inApp: true, push: false, telegram: false };
+/**
+ * Каналы готовых писем: почта — полный текст, Telegram и MAX — короткий
+ * (`shortBody`), если у получателя привязан бот. Загруженным базам
+ * (контакты без кабинета) уходит только почта — у них нет ботов.
+ */
+const EMAIL_AND_BOTS: MailingChannels = { email: true, inApp: false, push: false, telegram: true, max: true };
+const EMAIL_BELL_AND_BOTS: MailingChannels = { email: true, inApp: true, push: false, telegram: true, max: true };
 
 export const MAILING_PRESETS: MailingPreset[] = [
   {
@@ -56,7 +61,7 @@ export const MAILING_PRESETS: MailingPreset[] = [
       "Кнопка ведёт на wesetup.ru/promo/YEAR50 — скидка применится сама.",
     audience: "any",
     kind: "message",
-    channels: EMAIL_AND_BELL,
+    channels: EMAIL_BELL_AND_BOTS,
     payload: {
       subject: "Год электронных журналов за полцены — до 30 ноября",
       body: [
@@ -71,6 +76,10 @@ export const MAILING_PRESETS: MailingPreset[] = [
         "Нажмите кнопку ниже — скидка применится сама. Промокод на всякий случай: **YEAR50**.",
         "Акция действует до 30 ноября и только для первых 50 организаций.",
       ].join("\n\n"),
+      shortBody: [
+        "{имя}, скидка 50 % на год «Стандарта»: **995 ₽ в месяц вместо 1 990 ₽**.",
+        "До 30 ноября и только для первых 50 организаций. Скидка применится сама по кнопке, промокод — **YEAR50**.",
+      ].join("\n\n"),
       buttonText: "Забрать скидку",
       buttonUrl: "https://wesetup.ru/promo/YEAR50",
       fallbacks: FALLBACKS,
@@ -84,7 +93,7 @@ export const MAILING_PRESETS: MailingPreset[] = [
       "что начать можно бесплатно. Кнопка — регистрация.",
     audience: "contacts",
     kind: "message",
-    channels: EMAIL_ONLY,
+    channels: EMAIL_AND_BOTS,
     payload: {
       subject: "Электронные журналы СанПиН и ХАССП — без бумаги и пустых граф",
       body: [
@@ -96,6 +105,10 @@ export const MAILING_PRESETS: MailingPreset[] = [
           "— на проверке достаточно показать QR: проверяющий откроет журналы сам.",
         ].join("\n"),
         `Начать можно бесплатно: ${TRIAL_DAYS} дней — все журналы, сотрудники и точки без ограничений, без карты. Регистрация займёт пару минут.`,
+      ].join("\n\n"),
+      shortBody: [
+        "{имя}, WeSetup — журналы СанПиН и ХАССП в телефоне: QR на холодильнике, PIN — и запись уже в журнале.",
+        `Попробуйте бесплатно: ${TRIAL_DAYS} дней без ограничений и без карты.`,
       ].join("\n\n"),
       buttonText: "Попробовать бесплатно",
       buttonUrl: "https://wesetup.ru/register",

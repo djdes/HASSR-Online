@@ -9,9 +9,20 @@ import {
   type ChannelStatus,
   type MailingChannel,
   type RecipientStatus,
+  type WaitReason,
 } from "./labels";
 import { createLinkTracker } from "./links";
-import { emailBudget, minuteWindowStart, mskDayStart, type MailingSettings } from "./rate-limit";
+import { maxFromTelegram } from "./text-format";
+import {
+  PER_HOUR_MAX,
+  emailBudget,
+  emailDomain,
+  minuteWindowStart,
+  mskDayStart,
+  mskHourStart,
+  windowDue,
+  type MailingSettings,
+} from "./rate-limit";
 import {
   getMailingTemplate,
   type MailingRecipientContext,
@@ -36,8 +47,15 @@ import {
  *     `marketingOptOut` и контакту не в статусе «active» — skipped;
  *     отписка (`marketingOptOut`, стоп-лист кроме «не принимает почту»)
  *     останавливает и колокольчик, push, Telegram (`marketingOptOutReason`);
- *   • писем не больше лимита в минуту и в сутки (`rate-limit.ts`),
+ *   • писем не больше лимита в минуту, в час и в сутки (`rate-limit.ts`),
  *     остальные ждут следующего прохода;
+ *   • как в рассылках YesBeat: вне окна отправки рассылки (часы по
+ *     Москве) получатель ждёт начала окна; письмо на адрес, которому
+ *     недавно ушла другая рассылка, ждёт конца перерыва; почтовый домен,
+ *     выбравший свой часовой лимит, ждёт следующего часа, остальные домены
+ *     идут дальше. Причина ожидания — `waitReason`;
+ *   • выключатель очереди в «Лимитах» останавливает отправку целиком;
+ *   • рассылка на паузе не отправляет, пока её не продолжат;
  *   • отменённая рассылка не отправляет ничего: канал берётся в работу
  *     условным обновлением «рассылка ещё идёт».
  *
@@ -56,6 +74,9 @@ export type QueueCampaign = {
   kind: string;
   payload: unknown;
   status: string;
+  /** Окно отправки по Москве [start, end); нет — круглосуточно. */
+  windowStart?: number;
+  windowEnd?: number;
 };
 
 export type QueueRecipient = {
@@ -74,10 +95,12 @@ export type QueueRecipient = {
   inAppStatus: ChannelStatus | null;
   pushStatus: ChannelStatus | null;
   telegramStatus: ChannelStatus | null;
+  maxStatus: ChannelStatus | null;
   attempts: number;
   nextAttemptAt: Date | null;
   links: string[];
   payload: Record<string, unknown> | null;
+  waitReason?: string | null;
 };
 
 export type RecipientPatch = {
@@ -89,6 +112,8 @@ export type RecipientPatch = {
   pushError?: string | null;
   telegramStatus?: ChannelStatus | null;
   telegramError?: string | null;
+  maxStatus?: ChannelStatus | null;
+  maxError?: string | null;
   status?: RecipientStatus;
   attempts?: number;
   nextAttemptAt?: Date | null;
@@ -96,6 +121,7 @@ export type RecipientPatch = {
   emailSentAt?: Date;
   links?: string[];
   dryRun?: boolean;
+  waitReason?: string | null;
 };
 
 export interface MailingQueueStore {
@@ -146,6 +172,16 @@ export interface MailingQueueStore {
   /** Нет получателей в очереди — рассылка завершена. true — завершили сейчас. */
   finishCampaignIfDone(campaignId: string, now: Date): Promise<boolean>;
   refreshCounters(campaignId: string): Promise<void>;
+  /**
+   * Отложить получателя: `until` — новое время попытки (null — не менять),
+   * `reason` — почему ждёт. Нет метода — правила окна, перерыва и домена
+   * не действуют (простые хранилища тестов).
+   */
+  deferRecipient?(recipientId: string, until: Date | null, reason: WaitReason): Promise<void>;
+  /** Когда этим адресам последний раз ушло письмо рассылки (не тест) после `since`. */
+  lastEmailSentAt?(emails: string[], since: Date): Promise<Map<string, Date>>;
+  /** Сколько писем рассылок ушло на каждый почтовый домен после `since`. */
+  emailDomainCountsSince?(since: Date): Promise<Map<string, number>>;
 }
 
 export type SendOutcome =
@@ -194,12 +230,21 @@ export type OutgoingTelegram = {
   text: string;
   url: string | null;
 };
+export type OutgoingMax = {
+  userId: string;
+  campaignId: string;
+  recipientId: string;
+  text: string;
+  url: string | null;
+  buttonText: string | null;
+};
 
 export interface ChannelSenders {
   email(msg: OutgoingEmail): Promise<SendOutcome>;
   inApp(msg: OutgoingInApp): Promise<SendOutcome>;
   push(msg: OutgoingPush): Promise<SendOutcome>;
   telegram(msg: OutgoingTelegram): Promise<SendOutcome>;
+  max(msg: OutgoingMax): Promise<SendOutcome>;
 }
 
 export type QueueLog = (level: "info" | "debug" | "error", message: string, data?: Record<string, unknown>) => void;
@@ -225,9 +270,17 @@ export type QueueReport = {
   skipped: number;
   retried: number;
   deferredByLimit: number;
-  limitedBy: "minute" | "day" | null;
+  /** Отложено до начала окна отправки. */
+  deferredByWindow: number;
+  /** Отложено перерывом между рассылками одному адресу. */
+  deferredByGap: number;
+  /** Отложено лимитом на почтовый домен. */
+  deferredByDomain: number;
+  limitedBy: "minute" | "hour" | "day" | null;
   emailBudget: number;
   finishedCampaigns: string[];
+  /** Очередь выключена в «Лимитах» — ничего не отправляли. */
+  disabled: boolean;
 };
 
 const defaultLog: QueueLog = (level, message, data) => {
@@ -242,12 +295,14 @@ const STATUS_FIELD: Record<MailingChannel, keyof RecipientPatch> = {
   inApp: "inAppStatus",
   push: "pushStatus",
   telegram: "telegramStatus",
+  max: "maxStatus",
 };
 const ERROR_FIELD: Record<MailingChannel, keyof RecipientPatch> = {
   email: "emailError",
   inApp: "inAppError",
   push: "pushError",
   telegram: "telegramError",
+  max: "maxError",
 };
 
 export function channelStatusOf(r: QueueRecipient, channel: MailingChannel): ChannelStatus | null {
@@ -260,6 +315,8 @@ export function channelStatusOf(r: QueueRecipient, channel: MailingChannel): Cha
       return r.pushStatus;
     case "telegram":
       return r.telegramStatus;
+    case "max":
+      return r.maxStatus;
   }
 }
 
@@ -320,6 +377,15 @@ export function buildRecipientContext(
  * письма, первой строкой текстовой версии и строкой в Telegram. Чтобы
  * тестовое письмо, пересланное коллеге, не выдавало пример за настоящее.
  */
+/**
+ * MAX — то же короткое сообщение, что и в Telegram, только без HTML.
+ * Тип, который сам не нарисовал MAX, получает его из Telegram.
+ */
+export function withMaxFallback(rendered: RenderedMailing): RenderedMailing {
+  if (rendered.max || !rendered.telegram) return rendered;
+  return { ...rendered, max: maxFromTelegram(rendered.telegram) };
+}
+
 export function withTestNotes(rendered: RenderedMailing): RenderedMailing {
   const notes = (rendered.notes ?? []).map((n) => n.trim()).filter(Boolean);
   if (notes.length === 0) return rendered;
@@ -336,6 +402,9 @@ export function withTestNotes(rendered: RenderedMailing): RenderedMailing {
   }
   if (rendered.telegram) {
     out.telegram = { ...rendered.telegram, text: `${rendered.telegram.text}\n\n<i>${escapeHtml(line)}</i>` };
+  }
+  if (rendered.max) {
+    out.max = { ...rendered.max, text: `${rendered.max.text}\n\n${line}` };
   }
   return out;
 }
@@ -448,6 +517,7 @@ export async function deliverRecipient(
     inApp: r.inAppStatus,
     push: r.pushStatus,
     telegram: r.telegramStatus,
+    max: r.maxStatus,
   };
   const note = (channel: MailingChannel, status: ChannelStatus, error: string | null, dryRun?: boolean) => {
     statuses[channel] = status;
@@ -502,7 +572,7 @@ export async function deliverRecipient(
     renderError = `Тип рассылки «${campaign.kind}» не найден`;
   } else {
     try {
-      rendered = await template.render(campaign.payload, ctx);
+      rendered = withMaxFallback(await template.render(campaign.payload, ctx));
     } catch (error) {
       renderError = `Ошибка шаблона: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300);
     }
@@ -573,8 +643,11 @@ export async function deliverRecipient(
     patch.attempts = r.attempts + 1;
     patch.nextAttemptAt = new Date(now.getTime() + retryDelay(r.attempts + 1));
     result.retried = true;
-  } else if (r.nextAttemptAt) {
-    patch.nextAttemptAt = null;
+    if (!options.test && r.waitReason !== undefined) patch.waitReason = "retry";
+  } else {
+    if (r.nextAttemptAt) patch.nextAttemptAt = null;
+    // Дошло — ждать больше нечего (письмо, отложенное лимитом, пометит проход).
+    if (r.waitReason) patch.waitReason = null;
   }
   if (anySent) patch.sentAt = now;
   if (dryRun) patch.dryRun = true;
@@ -636,6 +709,18 @@ async function sendChannel(
         url: rendered.push.url ?? null,
       });
     }
+    if (channel === "max") {
+      const max = rendered.max;
+      if (!max) return { kind: "skipped", reason: "Этот тип не отправляет в MAX" };
+      return await senders.max({
+        userId: r.userId as string,
+        campaignId: campaign.id,
+        recipientId: r.id,
+        text: max.text,
+        url: max.url ?? null,
+        buttonText: max.buttonText ?? null,
+      });
+    }
     if (!rendered.telegram) return { kind: "skipped", reason: "Этот тип не отправляет в Telegram" };
     return await senders.telegram({
       userId: r.userId as string,
@@ -661,14 +746,18 @@ function emptyReport(): QueueReport {
     prepared: 0,
     staleFailed: 0,
     processed: 0,
-    sent: { email: 0, inApp: 0, push: 0, telegram: 0 },
+    sent: { email: 0, inApp: 0, push: 0, telegram: 0, max: 0 },
     failed: 0,
     skipped: 0,
     retried: 0,
     deferredByLimit: 0,
+    deferredByWindow: 0,
+    deferredByGap: 0,
+    deferredByDomain: 0,
     limitedBy: null,
     emailBudget: 0,
     finishedCampaigns: [],
+    disabled: false,
   };
 }
 
@@ -713,11 +802,19 @@ export async function runQueuePass(deps: QueueDeps): Promise<QueueReport> {
     log("error", `stale «sending» channels → failed (сервер прерывался)`, { recipients: report.staleFailed });
   }
 
-  const [sentLastMinute, sentToday] = await Promise.all([
+  if (deps.settings.enabled === false) {
+    report.disabled = true;
+    log("info", "queue disabled in ROOT → Рассылка → Лимиты — nothing sent");
+    for (const id of touched) await finishIfDone(id, deps, report, now, log);
+    return report;
+  }
+
+  const [sentLastMinute, sentToday, sentThisHour] = await Promise.all([
     store.countEmailsSentSince(minuteWindowStart(now)),
     store.countEmailsSentSince(mskDayStart(now)),
+    store.countEmailsSentSince(mskHourStart(now)),
   ]);
-  const budget = emailBudget(deps.settings, sentLastMinute, sentToday);
+  const budget = emailBudget(deps.settings, sentLastMinute, sentToday, sentThisHour);
   report.emailBudget = budget.budget;
   report.limitedBy = budget.limitedBy;
   const emailBudgetRef = { remaining: budget.budget };
@@ -739,14 +836,58 @@ export async function runQueuePass(deps: QueueDeps): Promise<QueueReport> {
   ]);
   const gate = { suppressed, optedOut, contactStatus };
 
+  // Правила YesBeat: перерыв между рассылками одному адресу и лимит на домен.
+  const defer = store.deferRecipient?.bind(store);
+  const gapMs = Math.max(0, deps.settings.gapHours ?? 0) * 60 * 60 * 1000;
+  const lastSent =
+    defer && gapMs > 0 && store.lastEmailSentAt && emails.length > 0
+      ? await store.lastEmailSentAt(emails, new Date(now.getTime() - gapMs))
+      : new Map<string, Date>();
+  const perDomainHour = deps.settings.perDomainHour ?? PER_HOUR_MAX;
+  const domainCounts =
+    defer && perDomainHour < PER_HOUR_MAX && store.emailDomainCountsSince
+      ? await store.emailDomainCountsSince(mskHourStart(now))
+      : null;
+  const nextHour = new Date(mskHourStart(now).getTime() + 60 * 60 * 1000);
+
   const campaigns = new Map<string, QueueCampaign | null>();
   for (const r of due) {
     if (!campaigns.has(r.campaignId)) campaigns.set(r.campaignId, await store.getCampaign(r.campaignId));
     const campaign = campaigns.get(r.campaignId);
     if (!campaign || campaign.status !== "sending") continue;
     touched.add(campaign.id);
+
+    if (defer) {
+      const opens = windowDue(now, campaign.windowStart ?? 0, campaign.windowEnd ?? 24);
+      if (opens.getTime() > now.getTime()) {
+        await defer(r.id, opens, "quiet_hours");
+        report.deferredByWindow += 1;
+        continue;
+      }
+      const address = r.emailStatus === "queued" && r.email ? r.email.toLowerCase() : null;
+      if (address && !emailSkipReason(r, gate)) {
+        const last = lastSent.get(address);
+        if (last && last.getTime() + gapMs > now.getTime()) {
+          await defer(r.id, new Date(last.getTime() + gapMs), "frequency_limit");
+          report.deferredByGap += 1;
+          continue;
+        }
+        if (domainCounts && (domainCounts.get(emailDomain(address)) ?? 0) >= perDomainHour) {
+          await defer(r.id, nextHour, "domain_limit");
+          report.deferredByDomain += 1;
+          continue;
+        }
+      }
+    }
+
     const result = await deliverRecipient(r, campaign, deps, { test: false, emailBudget: emailBudgetRef, gate });
     report.processed += 1;
+    if (result.channels.email?.status === "sent" && r.email) {
+      const address = r.email.toLowerCase();
+      if (gapMs > 0) lastSent.set(address, now);
+      if (domainCounts) domainCounts.set(emailDomain(address), (domainCounts.get(emailDomain(address)) ?? 0) + 1);
+    }
+    if (result.deferredEmail && defer && r.waitReason !== "global_limit") await defer(r.id, null, "global_limit");
     if (result.deferredEmail) report.deferredByLimit += 1;
     if (result.retried) report.retried += 1;
     for (const channel of MAILING_CHANNELS) {
@@ -760,7 +901,12 @@ export async function runQueuePass(deps: QueueDeps): Promise<QueueReport> {
   // Лимит кончился посреди прохода: остальные письма ждут.
   if (report.deferredByLimit > 0 && report.limitedBy === null) {
     const used = budget.budget - emailBudgetRef.remaining;
-    report.limitedBy = sentToday + used >= deps.settings.perDay ? "day" : "minute";
+    report.limitedBy =
+      sentToday + used >= deps.settings.perDay
+        ? "day"
+        : deps.settings.perHour !== undefined && sentThisHour + used >= deps.settings.perHour
+          ? "hour"
+          : "minute";
   }
 
   for (const id of touched) await finishIfDone(id, deps, report, now, log);
@@ -771,6 +917,9 @@ export async function runQueuePass(deps: QueueDeps): Promise<QueueReport> {
     skipped: report.skipped,
     retried: report.retried,
     deferredByLimit: report.deferredByLimit,
+    deferredByWindow: report.deferredByWindow,
+    deferredByGap: report.deferredByGap,
+    deferredByDomain: report.deferredByDomain,
     limitedBy: report.limitedBy,
     emailBudget: report.emailBudget,
   });

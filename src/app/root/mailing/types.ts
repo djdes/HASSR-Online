@@ -1,11 +1,33 @@
 import type { MailingBase } from "@/lib/mailing/bases";
 import type { CampaignListRow, DraftDto } from "@/lib/mailing/campaigns.server";
 import type { MailingSettings } from "@/lib/mailing/rate-limit";
+import type { WorkerHeartbeat } from "@/lib/mailing/settings.server";
 import type { MarketingSendMode } from "@/lib/mailing/transport.server";
 
-export type MailingTab = "quick" | "history" | "aiDigest" | "compose" | "users" | "contacts" | "stoplist";
+export type MailingTab =
+  | "quick"
+  | "monitor"
+  | "history"
+  | "journal"
+  | "limits"
+  | "aiDigest"
+  | "compose"
+  | "users"
+  | "contacts"
+  | "stoplist";
 
-export const MAILING_TABS: MailingTab[] = ["quick", "history", "aiDigest", "compose", "users", "contacts", "stoplist"];
+export const MAILING_TABS: MailingTab[] = [
+  "quick",
+  "monitor",
+  "history",
+  "journal",
+  "limits",
+  "aiDigest",
+  "compose",
+  "users",
+  "contacts",
+  "stoplist",
+];
 
 /** Вкладки расширенного режима — конструктор и ручной выбор (для Claude и редких случаев). */
 export const ADVANCED_TABS: ReadonlySet<MailingTab> = new Set(["compose", "users", "contacts", "stoplist"]);
@@ -24,6 +46,9 @@ export type MailingPageData = {
   telegramConfigured: boolean;
   settings: MailingSettings;
   sentToday: number;
+  /** Писем в текущем часе (МСК) и последний проход обработчика — для «Лимитов». */
+  sentThisHour: number;
+  heartbeat: WorkerHeartbeat | null;
   campaigns: CampaignListRow[];
   /** Базы адресов простого режима (сегменты клиентов и загруженные). */
   bases: MailingBase[];
@@ -31,4 +56,6 @@ export type MailingPageData = {
   initialTab: MailingTab;
   /** Вкладка «ИИ-сводка» — только владельцу платформы (`isRoot`). */
   canAiDigest: boolean;
+  /** `?campaign=` — журнал открывается по этой рассылке. */
+  journalCampaign: string;
 };

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DEFAULT_SEND_WINDOW, SendWindowField, type SendWindow } from "./send-window";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { PlanStats } from "@/lib/mailing/audience.server";
 import type { MailingBase } from "@/lib/mailing/bases";
@@ -64,6 +65,7 @@ export function QuickTab({
   const [testResult, setTestResult] = useState<TestSendResult | null>(null);
   const [confirm, setConfirm] = useState<"now" | "schedule" | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
+  const [sendWindow, setSendWindow] = useState<SendWindow>(DEFAULT_SEND_WINDOW);
   const [importOpen, setImportOpen] = useState(false);
 
   const preset = presetId ? (MAILING_PRESETS.find((p) => p.id === presetId) ?? null) : null;
@@ -163,12 +165,19 @@ export function QuickTab({
   }
 
   async function launch(mode: "now" | "schedule") {
+    // Число, которое человек видел в окне: база изменилась — запуск отклонится, окно покажет новое.
+    const seen = stats?.recipients;
     const id = await ensureDraft();
     if (!id) throw new Error("no draft");
     try {
       const r = await api<{ stats: PlanStats }>(`/api/root/mailing/campaigns/${id}/launch`, {
         method: "POST",
-        json: { mode, scheduledAt: mode === "schedule" ? scheduledAt : null },
+        json: {
+          mode,
+          scheduledAt: mode === "schedule" ? scheduledAt : null,
+          ...(typeof seen === "number" ? { expectedRecipients: seen } : {}),
+          ...sendWindow,
+        },
       });
       toast.success(
         mode === "now"
@@ -450,7 +459,10 @@ export function QuickTab({
           { label: "Отписавшиеся и адреса из стоп-листа пропускаются сами", tone: "info" as const },
         ]}
         confirmLabel={confirm === "schedule" ? "Запланировать" : "Отправить"}
-      />
+        confirmDisabled={sendWindow.windowEnd <= sendWindow.windowStart}
+      >
+        <SendWindowField value={sendWindow} onChange={setSendWindow} />
+      </ConfirmDialog>
     </div>
   );
 }
@@ -565,6 +577,7 @@ function Summary({
         ) : null}
         {preset?.channels.inApp ? <li>Колокольчик в кабинете: {stats.channels.inApp.queued}</li> : null}
         {preset?.channels.telegram ? <li>Telegram: {stats.channels.telegram.queued}</li> : null}
+        {preset?.channels.max ? <li>MAX: {stats.channels.max.queued}</li> : null}
         {preset?.channels.push ? <li>Push: {stats.channels.push.queued}</li> : null}
         {stats.duplicates > 0 ? (
           <li className="text-[#6f7282]">Совпали по почте и получат одно письмо: {stats.duplicates}</li>

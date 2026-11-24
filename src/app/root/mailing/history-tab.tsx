@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Gauge, History, Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { History, Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { CampaignListRow } from "@/lib/mailing/campaigns.server";
-import type { MailingSettings } from "@/lib/mailing/rate-limit";
 import { cn } from "@/lib/utils";
 
-import { CARD, ChannelIcons, DANGER_SM, OUTLINE_SM, PRIMARY, SECTION_LABEL, StatusPill, api, formatDateTime } from "./ui";
+import { CampaignActions } from "./campaign-actions";
+import { CARD, ChannelIcons, DANGER_SM, OUTLINE_SM, SECTION_LABEL, StatusPill, api, formatDateTime } from "./ui";
 
 export function HistoryTab({
   campaigns,
@@ -18,18 +18,18 @@ export function HistoryTab({
   refreshing,
   onOpenDraft,
   onDeleted,
-  settings,
-  sentToday,
-  onSettings,
+  onChanged,
+  onDuplicated,
 }: {
   campaigns: CampaignListRow[];
   onRefresh: () => void;
   refreshing: boolean;
   onOpenDraft: (id: string) => void;
   onDeleted: (id: string) => void;
-  settings: MailingSettings;
-  sentToday: number;
-  onSettings: (settings: MailingSettings, sentToday: number) => void;
+  /** Пауза, продолжение, отмена — обновлённая строка. */
+  onChanged: (row: CampaignListRow) => void;
+  /** Копия сохранена черновиком. */
+  onDuplicated: (row: CampaignListRow) => void;
 }) {
   const [deleting, setDeleting] = useState<CampaignListRow | null>(null);
 
@@ -46,8 +46,6 @@ export function HistoryTab({
 
   return (
     <div className="space-y-5" data-testid="mailing-history-tab">
-      <RateCard settings={settings} sentToday={sentToday} onSaved={onSettings} />
-
       <section className={CARD}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className={cn(SECTION_LABEL, "flex items-center gap-2")}>
@@ -98,7 +96,9 @@ export function HistoryTab({
                         ? `Черновик от ${formatDateTime(c.createdAt)} · выбрано: пользователей ${c.selection.users}, контактов ${c.selection.contacts}`
                         : c.status === "scheduled"
                           ? `Запланирована на ${formatDateTime(c.scheduledAt)} МСК`
-                          : `Запуск ${formatDateTime(c.startedAt ?? c.createdAt)}${c.finishedAt ? ` · завершена ${formatDateTime(c.finishedAt)}` : ""}${c.cancelledAt ? ` · отменена ${formatDateTime(c.cancelledAt)}` : ""}`}
+                          : c.status === "paused" && !c.startedAt
+                            ? `На паузе с ${formatDateTime(c.pausedAt)} · старт был назначен на ${formatDateTime(c.scheduledAt)} МСК`
+                            : `Запуск ${formatDateTime(c.startedAt ?? c.createdAt)}${c.finishedAt ? ` · завершена ${formatDateTime(c.finishedAt)}` : ""}${c.cancelledAt ? ` · отменена ${formatDateTime(c.cancelledAt)}` : ""}`}
                       {c.createdByName ? ` · ${c.createdByName}` : ""}
                     </div>
                     {c.lastError ? <div className="mt-1 text-[13px] text-[#a13a32]">{c.lastError}</div> : null}
@@ -114,9 +114,12 @@ export function HistoryTab({
                         </button>
                       </>
                     ) : (
-                      <Link href={`/root/mailing/${c.id}`} className={OUTLINE_SM}>
-                        Получатели и статусы
-                      </Link>
+                      <>
+                        <CampaignActions campaign={c} onChanged={onChanged} onDuplicated={onDuplicated} />
+                        <Link href={`/root/mailing/${c.id}`} className={OUTLINE_SM}>
+                          Получатели и статусы
+                        </Link>
+                      </>
                     )}
                   </div>
                 </div>
@@ -161,82 +164,5 @@ function Counter({ label, value, tone }: { label: string; value: number; tone?: 
         {value}
       </div>
     </div>
-  );
-}
-
-function RateCard({
-  settings,
-  sentToday,
-  onSaved,
-}: {
-  settings: MailingSettings;
-  sentToday: number;
-  onSaved: (settings: MailingSettings, sentToday: number) => void;
-}) {
-  const [perMinute, setPerMinute] = useState(String(settings.perMinute));
-  const [perDay, setPerDay] = useState(String(settings.perDay));
-  const [busy, setBusy] = useState(false);
-
-  async function save() {
-    setBusy(true);
-    try {
-      const r = await api<{ settings: MailingSettings; sentToday: number }>("/api/root/mailing/settings", {
-        method: "PUT",
-        json: { perMinute: Number(perMinute), perDay: Number(perDay) },
-      });
-      onSaved(r.settings, r.sentToday);
-      toast.success("Скорость отправки сохранена");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось сохранить");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const left = Math.max(0, settings.perDay - sentToday);
-  return (
-    <section className={CARD} data-testid="mailing-rate-card">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#3848c7]">
-            <Gauge className="size-5" />
-          </span>
-          <div>
-            <div className="text-[16px] font-semibold text-[#0b1024]">Скорость отправки писем</div>
-            <p className="mt-0.5 text-[13px] text-[#6f7282]" data-testid="sent-today">
-              Сегодня отправлено <b className="tabular-nums text-[#0b1024]">{sentToday}</b> из {settings.perDay}
-              {left === 0 ? " — суточный лимит исчерпан, остальные письма уйдут завтра" : ` · осталось ${left}`}.
-              Колокольчик, push и Telegram лимит не считают.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="block">
-            <span className="mb-1 block text-[12px] font-medium text-[#6f7282]">В минуту</span>
-            <input
-              value={perMinute}
-              onChange={(e) => setPerMinute(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              inputMode="numeric"
-              className="h-11 w-[96px] rounded-2xl border border-[#dcdfed] bg-white px-3 text-[15px] tabular-nums text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-              data-testid="rate-per-minute"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[12px] font-medium text-[#6f7282]">В сутки</span>
-            <input
-              value={perDay}
-              onChange={(e) => setPerDay(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              inputMode="numeric"
-              className="h-11 w-[110px] rounded-2xl border border-[#dcdfed] bg-white px-3 text-[15px] tabular-nums text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
-              data-testid="rate-per-day"
-            />
-          </label>
-          <button type="button" className={PRIMARY} disabled={busy} onClick={() => void save()} data-testid="rate-save">
-            {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-            Сохранить
-          </button>
-        </div>
-      </div>
-    </section>
   );
 }

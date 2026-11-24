@@ -11,6 +11,11 @@ import { isSafeLinkUrl } from "../text-format";
 export type MessagePayload = {
   subject: string;
   body: string;
+  /**
+   * Короткий текст для Telegram и MAX (и колокольчика с push). Пусто — в
+   * мессенджеры уходит полный текст письма. Та же разметка и переменные.
+   */
+  shortBody: string;
   buttonText: string;
   buttonUrl: string;
   /** Запасные значения переменных, если у получателя пусто. */
@@ -19,12 +24,14 @@ export type MessagePayload = {
 
 export const MESSAGE_SUBJECT_MAX = 150;
 export const MESSAGE_BODY_MAX = 5000;
+export const MESSAGE_SHORT_BODY_MAX = 1000;
 export const MESSAGE_BUTTON_TEXT_MAX = 40;
 
 export function defaultMessagePayload(): MessagePayload {
   return {
     subject: "",
     body: "",
+    shortBody: "",
     buttonText: "",
     buttonUrl: "",
     fallbacks: { name: "коллеги", company: "ваше заведение", sphere: "общепит" },
@@ -43,6 +50,7 @@ export function coerceMessagePayload(raw: unknown): MessagePayload {
   return {
     subject: str(r.subject, 1000),
     body: str(r.body, 20000),
+    shortBody: str(r.shortBody, 4000),
     buttonText: str(r.buttonText, 200),
     buttonUrl: str(r.buttonUrl, 2000),
     fallbacks: {
@@ -60,6 +68,7 @@ export function validateMessagePayload(
   const payload: MessagePayload = {
     subject: c.subject.trim(),
     body: c.body.replace(/\r\n?/g, "\n").trim(),
+    shortBody: c.shortBody.replace(/\r\n?/g, "\n").trim(),
     buttonText: c.buttonText.trim(),
     buttonUrl: c.buttonUrl.trim(),
     fallbacks: {
@@ -75,6 +84,9 @@ export function validateMessagePayload(
   if (!payload.body) return withMailingDiagnostic({ ok: false, error: "Напишите текст сообщения" }, { version: 1, code: "message.bodyRequired", params: {  } });
   if (payload.body.length > MESSAGE_BODY_MAX) {
     return withMailingDiagnostic({ ok: false, error: `Текст — не длиннее ${MESSAGE_BODY_MAX} знаков` }, { version: 1, code: "message.bodyMax", params: { max: MESSAGE_BODY_MAX } });
+  }
+  if (payload.shortBody.length > MESSAGE_SHORT_BODY_MAX) {
+    return withMailingDiagnostic({ ok: false, error: `Короткий текст для Telegram и MAX — не длиннее ${MESSAGE_SHORT_BODY_MAX} знаков` }, { version: 1, code: "message.shortBodyMax", params: { max: MESSAGE_SHORT_BODY_MAX } });
   }
   if (payload.buttonText || payload.buttonUrl) {
     if (!payload.buttonText) return withMailingDiagnostic({ ok: false, error: "У кнопки нет текста — напишите его или уберите ссылку" }, { version: 1, code: "message.buttonTextRequired", params: {  } });
