@@ -44,6 +44,7 @@ export function FavoriteStar({
       data-favorite-star={href}
       data-favorite={active ? "" : undefined}
       onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();

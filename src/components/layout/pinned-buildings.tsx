@@ -74,7 +74,10 @@ export function PinButton({
       title={label}
       data-pin-building
       data-pinned={pinned ? "" : undefined}
+      // Пункт меню Radix выбирается по отпусканию кнопки — и его не пускаем:
+      // скрепка не выбирает объект и не закрывает список.
       onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
