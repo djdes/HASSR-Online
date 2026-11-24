@@ -14,6 +14,10 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   if (!file) return NextResponse.json({ error: "Документ не найден" }, { status: 404 });
   const extension = file.fileName.split(".").pop()?.toLowerCase();
   const bytes = new Uint8Array(file.content);
+  // Документ текстом (инструкция, написанная в кабинете) — сам текст.
+  if (extension === "txt") {
+    return NextResponse.json({ kind: "text", text: Buffer.from(bytes).toString("utf8").slice(0, 100000) }, { headers: { "Cache-Control": "private, no-store" } });
+  }
   try {
     if (["docx", "xlsx"].includes(extension ?? "") && !officeZipWithinLimits(bytes)) throw new Error("Превью слишком велико");
     if (extension === "docx") {

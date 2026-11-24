@@ -6,6 +6,7 @@ import { getActiveOrgId, requireAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/page-header";
 import { ackKnowledgeId, formatAckMoment } from "@/lib/ppk/acknowledge";
+import { isTextDoc } from "@/lib/ppk/text-docs";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
@@ -154,9 +155,21 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
       </div>
     );
   } else if (ackKnowledgeId(doc.docKey)) {
+    // Инструкция текстом (написана в кабинете) — текст прямо на странице.
+    const file = await db.knowledgeDocument.findFirst({
+      where: { id: ackKnowledgeId(doc.docKey)!, organizationId },
+      select: { mimeType: true, content: true },
+    });
+    const ownText = file && isTextDoc(file.mimeType) ? Buffer.from(file.content).toString("utf8") : null;
     body = (
       <div className="space-y-4">
-        <p className="text-[14px] text-[#6f7282]">{t("fileHint")}</p>
+        {ownText !== null ? (
+          <div className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed text-[#0b1024]" data-ack-text>
+            {ownText}
+          </div>
+        ) : (
+          <p className="text-[14px] text-[#6f7282]">{t("fileHint")}</p>
+        )}
         <a
           href={`/api/knowledge-documents/${ackKnowledgeId(doc.docKey)}/file`}
           className={PPK_BUTTON_OUTLINE_CLASS}
@@ -180,6 +193,7 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
       <PageHeader title={doc.title} />
       <article className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">{body}</article>
       <AcknowledgeButton
+        withSignature={doc.docKey === "ppk"}
         docKey={doc.docKey}
         doneText={moment ? t("done", { date: moment.date, time: moment.time }) : null}
       />

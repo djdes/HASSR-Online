@@ -1,0 +1,271 @@
+/**
+ * Реестр редакций документов ППК: текущее содержимое документа, его отпечаток,
+ * статус и утверждение новой редакции со следующим номером организации.
+ * Правила — `revisions.ts`, решение владельца — spec `ppk-print-revisions-2026-11-24`.
+ */
+import { createHash } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { db } from "@/lib/db";
+import { parsePpkRecords } from "./records";
+import { ppkWhere, type PpkScope } from "./scope";
+import { PPK_STRUCTURE_ITEMS, type PpkItemId } from "./structure";
+import { ppkItemTitleRu } from "./structure-titles";
+import type { PpkFolderKey } from "./folders";
+import {
+  nextRevisionNumber,
+  normalizeRevisionText,
+  parseRevisionDocKey,
+  revisionCode,
+  revisionDocKey,
+  revisionStatus,
+  type RevisionDocRef,
+  type RevisionInfo,
+  type RevisionState,
+  type RevisionTextBlock,
+} from "./revisions";
+
+/** Пункт структуры текста: название документа и папка скана. */
+const TEXT_ITEM: Record<RevisionTextBlock, PpkItemId> = {
+  "text-haccp-principles": "1-8",
+  "text-terms": "1-9",
+  "text-team-regulation": "2-2",
+  "text-team-leader": "2-3",
+  "text-ccp-method": "2-9",
+  "text-flow-schedule": "app-3",
+};
+
+/** Папки, документы которых ведут свои редакции (приложение № 5). */
+export const REVISION_FOLDERS = ["procedures"] as const satisfies readonly PpkFolderKey[];
+
+export type RevisionDoc = {
+  /** Канонический ключ (с точкой области для текстов). */
+  docKey: string;
+  title: string;
+  /** sha256 содержимого и названия. */
+  hash: string;
+  /** Нечего утверждать: текст не сохранён и скана нет. */
+  empty: boolean;
+};
+
+const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+
+function itemOf(ref: RevisionDocRef): PpkItemId | null {
+  if (ref.kind === "policy") return "2-1";
+  if (ref.kind === "text") return TEXT_ITEM[ref.block];
+  return null;
+}
+
+type FileRow = { id: string; title: string; mimeType: string; h: string };
+
+/** Файлы папки области с отпечатками (sha256 считает Postgres — байты не едут в приложение). */
+async function folderFiles(scope: PpkScope, folder: PpkFolderKey): Promise<FileRow[]> {
+  return db.$queryRaw<FileRow[]>`
+    SELECT id, title, "mimeType", encode(sha256(content), 'hex') AS h
+    FROM "KnowledgeDocument"
+    WHERE "organizationId" = ${scope.organizationId}
+      AND folder = ${folder}
+      AND "buildingId" IS NOT DISTINCT FROM ${scope.buildingId}
+    ORDER BY "createdAt" ASC, id ASC`;
+}
+
+/** Текст или скан пункта структуры: скан заменяет текст (правило документа владельца). */
+async function structureDoc(scope: PpkScope, ref: Exclude<RevisionDocRef, { kind: "knowledge" }>): Promise<RevisionDoc> {
+  const itemId = itemOf(ref)!;
+  const item = PPK_STRUCTURE_ITEMS.find((entry) => entry.id === itemId)!;
+  const block = ref.kind === "policy" ? "policy" : ref.block;
+  const [row, scans] = await Promise.all([
+    db.ppkRecord.findFirst({
+      where: { ...ppkWhere(scope), block },
+      select: { id: true, data: true, sortOrder: true, updatedAt: true },
+    }),
+    item.scanFolder ? folderFiles(scope, item.scanFolder) : Promise.resolve<FileRow[]>([]),
+  ]);
+  const title = ppkItemTitleRu(itemId);
+  const docKey = revisionDocKey(ref, scope.buildingId);
+  if (scans.length > 0) {
+    const print = scans.map((file) => `${file.title}\n${file.h}`).join("\n");
+    return { docKey, title, hash: sha256(`scan\n${title}\n${print}`), empty: false };
+  }
+  const text = row
+    ? ref.kind === "policy"
+      ? (parsePpkRecords("policy", [row])[0]?.data.text ?? "")
+      : (parsePpkRecords(ref.block, [row])[0]?.data.text ?? "")
+    : "";
+  const normalized = normalizeRevisionText(text);
+  return { docKey, title, hash: sha256(`text\n${title}\n${normalized}`), empty: normalized.length === 0 };
+}
+
+type KnowledgeRow = { id: string; title: string; mimeType: string; folder: string | null; buildingId: string | null; h: string };
+
+/** Документы базы знаний и папок с редакциями (одним запросом). Чужие и не те — пропускаются. */
+async function knowledgeDocs(scope: PpkScope, ids: string[]): Promise<Map<string, RevisionDoc>> {
+  const out = new Map<string, RevisionDoc>();
+  if (ids.length === 0) return out;
+  const rows = await db.$queryRaw<KnowledgeRow[]>`
+    SELECT id, title, "mimeType", folder, "buildingId", encode(sha256(content), 'hex') AS h
+    FROM "KnowledgeDocument"
+    WHERE "organizationId" = ${scope.organizationId}
+      AND kind IS NULL
+      AND id IN (${Prisma.join(ids)})`;
+  const textIds = rows.filter((row) => row.mimeType.startsWith("text/plain")).map((row) => row.id);
+  // Текстовый документ: отпечаток по тексту без лишних пробелов, как у пунктов.
+  const texts = textIds.length
+    ? await db.knowledgeDocument.findMany({ where: { id: { in: textIds } }, select: { id: true, content: true } })
+    : [];
+  const textById = new Map(texts.map((row) => [row.id, Buffer.from(row.content).toString("utf8")]));
+  for (const row of rows) {
+    const inBase = row.folder === null;
+    const inFolder = (REVISION_FOLDERS as readonly string[]).includes(row.folder ?? "") && row.buildingId === scope.buildingId;
+    if (!inBase && !inFolder) continue;
+    const text = textById.get(row.id);
+    const hash =
+      text !== undefined
+        ? sha256(`text\n${row.title.trim()}\n${normalizeRevisionText(text)}`)
+        : sha256(`file\n${row.title.trim()}\n${row.h}`);
+    out.set(row.id, {
+      docKey: revisionDocKey({ kind: "knowledge", id: row.id }, null),
+      title: row.title,
+      hash,
+      empty: text !== undefined && normalizeRevisionText(text).length === 0,
+    });
+  }
+  return out;
+}
+
+/**
+ * Документы по ключам. Ключ текста чужой точки, чужой документ базы знаний,
+ * битый ключ — нет в ответе (для API это «не найден»).
+ */
+export async function resolveRevisionDocs(scope: PpkScope, docKeys: readonly string[]): Promise<Map<string, RevisionDoc>> {
+  const out = new Map<string, RevisionDoc>();
+  const knowledge: { key: string; id: string }[] = [];
+  const structure: { key: string; ref: Exclude<RevisionDocRef, { kind: "knowledge" }> }[] = [];
+  for (const key of new Set(docKeys)) {
+    const parsed = parseRevisionDocKey(key);
+    if (!parsed) continue;
+    if (parsed.ref.kind === "knowledge") knowledge.push({ key, id: parsed.ref.id });
+    else if (parsed.buildingId === scope.buildingId) structure.push({ key, ref: parsed.ref });
+  }
+  const [docs, structureDocs] = await Promise.all([
+    knowledgeDocs(scope, knowledge.map((entry) => entry.id)),
+    Promise.all(structure.map(async (entry) => [entry.key, await structureDoc(scope, entry.ref)] as const)),
+  ]);
+  for (const entry of knowledge) {
+    const doc = docs.get(entry.id);
+    if (doc) out.set(entry.key, doc);
+  }
+  for (const [key, doc] of structureDocs) out.set(key, doc);
+  return out;
+}
+
+function info(row: { number: number; approvedAt: Date; approvedByName: string }): RevisionInfo {
+  return { number: row.number, code: revisionCode(row.number), approvedAt: row.approvedAt.toISOString(), approvedByName: row.approvedByName };
+}
+
+async function maxNumber(organizationId: string): Promise<number | null> {
+  const agg = await db.ppkRevision.aggregate({ where: { organizationId }, _max: { number: true } });
+  return agg._max.number ?? null;
+}
+
+/** Последние редакции документов: docKey → строка с наибольшим номером. */
+async function latestRevisions(organizationId: string, docKeys: string[]) {
+  if (docKeys.length === 0) return new Map<string, { number: number; contentHash: string; approvedAt: Date; approvedByName: string }>();
+  const rows = await db.ppkRevision.findMany({
+    where: { organizationId, docKey: { in: docKeys } },
+    orderBy: { number: "desc" },
+    select: { docKey: true, number: true, contentHash: true, approvedAt: true, approvedByName: true },
+  });
+  const latest = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) if (!latest.has(row.docKey)) latest.set(row.docKey, row);
+  return latest;
+}
+
+/** Состояния документов для плашек: статус, последняя редакция, следующий номер. */
+export async function loadRevisionStates(scope: PpkScope, docKeys: readonly string[]): Promise<Map<string, RevisionState & { doc: RevisionDoc }>> {
+  const docs = await resolveRevisionDocs(scope, docKeys.slice(0, 500));
+  const keys = [...new Set([...docs.values()].map((doc) => doc.docKey))];
+  const [latest, max] = await Promise.all([latestRevisions(scope.organizationId, keys), maxNumber(scope.organizationId)]);
+  const out = new Map<string, RevisionState & { doc: RevisionDoc }>();
+  for (const [requested, doc] of docs) {
+    const last = latest.get(doc.docKey) ?? null;
+    out.set(requested, {
+      docKey: doc.docKey,
+      status: revisionStatus(last?.contentHash, doc.hash),
+      latest: last ? info(last) : null,
+      nextNumber: nextRevisionNumber(max),
+      doc,
+    });
+  }
+  return out;
+}
+
+export type ApproveResult =
+  | { ok: true; created: boolean; revision: RevisionInfo; docKey: string; title: string }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Утвердить текущую редакцию документа. Без изменений с прошлой — та же
+ * редакция (`created: false`). Номер — максимум организации + 1; если его
+ * успел занять параллельный запрос (уникальный индекс), берём следующий.
+ */
+export async function approveRevision(
+  scope: PpkScope,
+  actor: { id: string; name: string },
+  docKey: string,
+): Promise<ApproveResult> {
+  const doc = (await resolveRevisionDocs(scope, [docKey])).get(docKey);
+  if (!doc) return { ok: false, status: 404, error: "Документ не найден" };
+  if (doc.empty) return { ok: false, status: 400, error: "Документ пуст: сохраните текст или загрузите скан" };
+  const last = (await latestRevisions(scope.organizationId, [doc.docKey])).get(doc.docKey);
+  if (last && last.contentHash === doc.hash) {
+    return { ok: true, created: false, revision: info(last), docKey: doc.docKey, title: doc.title };
+  }
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const number = nextRevisionNumber(await maxNumber(scope.organizationId));
+    try {
+      const row = await db.ppkRevision.create({
+        data: {
+          organizationId: scope.organizationId,
+          docKey: doc.docKey,
+          title: doc.title.slice(0, 300),
+          number,
+          contentHash: doc.hash,
+          approvedById: actor.id,
+          approvedByName: actor.name.slice(0, 200),
+        },
+        select: { number: true, approvedAt: true, approvedByName: true },
+      });
+      return { ok: true, created: true, revision: info(row), docKey: doc.docKey, title: doc.title };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") continue;
+      throw error;
+    }
+  }
+  return { ok: false, status: 409, error: "Не удалось выдать номер, попробуйте ещё раз" };
+}
+
+export type RegisterRow = RevisionInfo & { docKey: string; title: string; supersededBy: string | null };
+
+/** Реестр редакций организации: новые сверху; у прежних — чем заменены. */
+export async function loadRevisionRegister(organizationId: string): Promise<RegisterRow[]> {
+  const rows = await db.ppkRevision.findMany({
+    where: { organizationId },
+    orderBy: { number: "desc" },
+    take: 1000,
+    select: { docKey: true, title: true, number: true, approvedAt: true, approvedByName: true },
+  });
+  const newer = new Map<string, number>();
+  return rows.map((row) => {
+    const supersededBy = newer.get(row.docKey) ?? null;
+    newer.set(row.docKey, row.number);
+    return { ...info(row), docKey: row.docKey, title: row.title, supersededBy: supersededBy ? revisionCode(supersededBy) : null };
+  });
+}
+
+/** Состояние для клиента: без отпечатка содержимого. */
+export function clientRevisionState(
+  state: RevisionState & { doc: RevisionDoc },
+): RevisionState & { title: string; empty: boolean } {
+  const { doc, ...rest } = state;
+  return { ...rest, title: doc.title, empty: doc.empty };
+}

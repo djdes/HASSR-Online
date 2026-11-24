@@ -12,7 +12,9 @@ import { resolveOrgJournalName } from "@/lib/org-journal-name";
 import { buildingPrintName, buildingWhere } from "@/lib/building-scope";
 import { getViewedPointId } from "@/lib/active-building";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
-import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { buildHaccpPlanPdf } from "@/lib/ppk/pdf";
+import { loadPpkPrintData } from "@/lib/ppk/structure-print.server";
+import { buildPpkStructurePdf } from "@/lib/ppk/structure-pdf";
 import { loadInspectionVisitFileContent, loadInspectionVisitsForBundle } from "@/lib/inspection-visits.server";
 import { buildInspectionVisitsPdf } from "@/lib/inspection-visits-pdf";
 import { inspectionVisitFileName, planBundleAttachments } from "@/lib/inspection-visits";
@@ -241,13 +243,13 @@ export async function GET(request: Request) {
   // проверяющий видит актуальное состояние, даже если файл не загружали.
   try {
     const bundle = await loadPpkBundle(ppkScope);
-    const assembled: Array<[string, () => Buffer]> = [
-      ["ППК (собрано из разделов).pdf", () => buildPpkProgramPdf(bundle)],
+    const assembled: Array<[string, () => Promise<Buffer> | Buffer]> = [
+      ["ППК (собрано из разделов).pdf", async () => buildPpkStructurePdf(await loadPpkPrintData(ppkScope))],
       ["ХАССП-план (собрано из разделов).pdf", () => buildHaccpPlanPdf(bundle)],
     ];
     for (const [name, build] of assembled) {
       try {
-        zip.file(`Производственный контроль/${name}`, build());
+        zip.file(`Производственный контроль/${name}`, await build());
         manifestLines.push(`✓ Производственный контроль / ${name}`);
       } catch (err) {
         manifestLines.push(`✗ Производственный контроль / ${name} — ошибка сборки`);

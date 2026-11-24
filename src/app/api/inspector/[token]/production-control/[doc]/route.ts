@@ -10,7 +10,9 @@ import { isInspectionNormDoc, knowledgeKindOf } from "@/lib/inspection-norms";
 import { db } from "@/lib/db";
 import { knowledgeInline } from "@/lib/knowledge-documents";
 import { loadPpkBundle } from "@/lib/ppk/assemble.server";
-import { buildHaccpPlanPdf, buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { buildHaccpPlanPdf } from "@/lib/ppk/pdf";
+import { loadPpkPrintData } from "@/lib/ppk/structure-print.server";
+import { buildPpkStructurePdf } from "@/lib/ppk/structure-pdf";
 import { ppkScopeForPoint } from "@/lib/ppk/scope.server";
 import { ppkDocKindKey } from "@/lib/ppk/scope";
 
@@ -67,10 +69,13 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
     mimeType = file.mimeType;
     fileName = file.fileName;
   } else {
-    const bundle = await loadPpkBundle(scope);
-    body = new Uint8Array(doc === "ppk" ? buildPpkProgramPdf(bundle) : buildHaccpPlanPdf(bundle));
+    // ППК — по структуре документа владельца со сканами (2026-11-24), ХАССП-план — как раньше.
+    const bundle = doc === "ppk" ? null : await loadPpkBundle(scope);
+    const printData = doc === "ppk" ? await loadPpkPrintData(scope) : null;
+    body = new Uint8Array(printData ? await buildPpkStructurePdf(printData) : buildHaccpPlanPdf(bundle!));
+    const orgName = printData ? printData.bundle.org.orgName : bundle!.org.orgName;
     mimeType = "application/pdf";
-    fileName = `${TITLE[doc]} — ${bundle.org.orgName || "организация"}.pdf`.replace(/[\\/:*?"<>|]+/g, "-");
+    fileName = `${TITLE[doc]} — ${orgName || "организация"}.pdf`.replace(/[\\/:*?"<>|]+/g, "-");
   }
 
   await logInspectorEvent({

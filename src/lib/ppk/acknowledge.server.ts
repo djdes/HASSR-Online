@@ -6,6 +6,7 @@ import { ackKnowledgeId, ackKnowledgeKey, formatAckMoment, isAckDocKey, type Ack
 import { parsePpkRecords } from "./records";
 import { latestDocVersion } from "./review";
 import { ppkDocKindKey, ppkWhere, type PpkScope } from "./scope";
+import { ackMethodOf, type AckMethod } from "./signature";
 
 export type AckAudience = "staff" | "team";
 export type AckDoc = { docKey: AckDocKey; title: string; version: string; audience: AckAudience };
@@ -178,7 +179,7 @@ export async function countPendingAckForUser(scope: PpkScope, userId: string): P
 
 export type AckStats = {
   version: string;
-  acknowledged: { userId: string; name: string; at: string }[];
+  acknowledged: { userId: string; name: string; at: string; method: AckMethod }[];
   pending: { userId: string; name: string }[];
 };
 
@@ -226,20 +227,21 @@ export async function ackStatsMany(
     docs.some((doc) => doc.audience === "team") ? teamMemberIds(scope) : Promise.resolve<string[]>([]),
     db.ppkAcknowledgement.findMany({
       where: { organizationId, docKey: { in: docs.map((doc) => doc.docKey) } },
-      select: { docKey: true, version: true, userId: true, acknowledgedAt: true },
+      select: { docKey: true, version: true, userId: true, acknowledgedAt: true, method: true },
     }),
   ]);
   const out: Record<string, AckStats> = {};
   for (const doc of docs) {
     const users = doc.audience === "team" ? staff.filter((user) => teamIds.includes(user.id)) : staff;
     const byUser = new Map(
-      marks.filter((m) => m.docKey === doc.docKey && m.version === doc.version).map((m) => [m.userId, m.acknowledgedAt]),
+      marks.filter((m) => m.docKey === doc.docKey && m.version === doc.version).map((m) => [m.userId, m]),
     );
     const acknowledged: AckStats["acknowledged"] = [];
     const pending: AckStats["pending"] = [];
     for (const user of users) {
-      const at = byUser.get(user.id);
-      if (at) acknowledged.push({ userId: user.id, name: user.name, at: at.toISOString() });
+      const mark = byUser.get(user.id);
+      // Подпись пальцем всегда пишется с method "finger" — байты подписи здесь не читаются.
+      if (mark) acknowledged.push({ userId: user.id, name: user.name, at: mark.acknowledgedAt.toISOString(), method: ackMethodOf(mark.method, false) });
       else pending.push({ userId: user.id, name: user.name });
     }
     out[doc.docKey] = { version: doc.version, acknowledged, pending };
@@ -261,6 +263,8 @@ export async function ackSummaryFor(
       userId: row.userId,
       name: row.name,
       date: formatAckMoment(row.at, timeZone).date,
+      time: formatAckMoment(row.at, timeZone).time,
+      method: row.method,
     })),
     pending: stats.pending,
   };

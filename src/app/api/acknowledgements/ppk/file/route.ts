@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
-import { loadPpkBundle } from "@/lib/ppk/assemble.server";
-import { buildPpkProgramPdf } from "@/lib/ppk/pdf";
+import { loadPpkPrintData } from "@/lib/ppk/structure-print.server";
+import { buildPpkStructurePdf } from "@/lib/ppk/structure-pdf";
 import { ppkDocKindKey } from "@/lib/ppk/scope";
 import { ppkScopeForSession } from "@/lib/ppk/scope.server";
 
@@ -43,11 +43,11 @@ export async function GET() {
     });
   }
 
-  const bundle = await loadPpkBundle(scope);
-  return new NextResponse(new Uint8Array(buildPpkProgramPdf(bundle)), {
+  const data = await loadPpkPrintData(scope);
+  return new NextResponse(new Uint8Array(await buildPpkStructurePdf(data)), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": contentDisposition("inline", `ППК — ${bundle.org.orgName || "организация"}.pdf`),
+      "Content-Disposition": contentDisposition("inline", `ППК — ${data.bundle.org.orgName || "организация"}.pdf`),
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-store",
     },

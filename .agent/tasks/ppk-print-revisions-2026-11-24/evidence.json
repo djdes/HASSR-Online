@@ -1,0 +1,66 @@
+{
+  "task": "ppk-print-revisions-2026-11-24",
+  "spec": ".agent/tasks/ppk-print-revisions-2026-11-24/spec.md",
+  "branch": "claude/fervent-brown-ed5apv",
+  "base": "origin/master 7250428bc",
+  "stand": "next start (production build) on localhost:3000, PostgreSQL 16 local (fresh DB), prisma/seed.ts + prisma/seed-haccp-demo.ts, Chromium Playwright, pdfinfo/pdftotext",
+  "commands": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "errors": 0,
+      "file": "raw/typecheck.txt",
+      "note": "full rebuild crashed once with 'Map maximum size exceeded' caused by ReturnType<typeof useTranslations> without namespace — removed; 3 Bytes type errors fixed"
+    },
+    "eslint": {
+      "command": "npx eslint <44 changed .ts/.tsx files>",
+      "result": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "file": "raw/eslint.txt"
+    },
+    "unitTests": {
+      "command": "node --import tsx --test src/lib/ppk/*.test.ts src/lib/ppk/pdf.test.ts src/lib/document-logo-pdf.test.ts src/app/route-slug-collisions.test.ts src/app/borderless.test.ts src/app/neutral-palette.test.ts",
+      "pass": 236,
+      "fail": 0,
+      "new": {
+        "revisions.test.ts": 9,
+        "structure-pdf.test.ts": 6,
+        "signature.test.ts": 4
+      }
+    },
+    "i18nCheck": {
+      "command": "npm run i18n:check",
+      "pass": 103,
+      "fail": 0
+    },
+    "build": {
+      "command": "npm run build",
+      "result": "PASS"
+    },
+    "e2e": {
+      "script": "raw/e2e-b.mjs",
+      "first": "41/43 (keys instead of texts on /knowledge and /acknowledge; wrong scan page expectation)",
+      "final": "46/46",
+      "file": "raw/e2e-b-output.txt",
+      "results": "raw/e2e-b-results.json"
+    }
+  },
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "PASS",
+    "AC9": "PASS",
+    "AC10": "PASS (local); deploy after merge"
+  },
+  "acceptedLimitations": [
+    "Acknowledgement marks stay organization-level (as before).",
+    "Finger signature only for the programme acknowledgement sheet (3.7), as in the owner's document.",
+    "Files beyond 80 MB / 300 scan pages are printed as a line 'attached electronically'."
+  ]
+}

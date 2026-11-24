@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Stamp } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
@@ -43,7 +43,7 @@ export default async function ProductionControlPage() {
   const scope = await ppkPageScope(session);
   const canManage = hasCapability(session.user, "admin.full");
 
-  const [rows, statuses, t, s, blockCounts] = await Promise.all([
+  const [rows, statuses, t, s, r, blockCounts] = await Promise.all([
     db.knowledgeDocument
       .findMany({
         where: { organizationId, kind: { in: ppkDocKindKeys(scope.buildingId) } },
@@ -54,6 +54,7 @@ export default async function ProductionControlPage() {
     loadPpkStatuses(scope),
     getTranslations("productionControl"),
     getTranslations("productionControl.structure"),
+    getTranslations("productionControl.revisions"),
     db.ppkRecord.groupBy({
       by: ["block"],
       where: { ...ppkWhere(scope), block: { in: [...STARTER_BLOCKS] } },
@@ -102,7 +103,17 @@ export default async function ProductionControlPage() {
       <PpkStructureOutline statuses={itemStatuses} />
 
       <section className="space-y-3">
-        <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#0b1024]">{s("documentsTitle")}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-[#0b1024]">{s("documentsTitle")}</h2>
+          <Link
+            href="/production-control/revisions"
+            className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6]"
+            data-ppk-revisions-link
+          >
+            <Stamp className="size-4" aria-hidden />
+            {r("registerLink")}
+          </Link>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           {PRODUCTION_DOC_KINDS.map((kind) => {
             const row = rows.find((doc) => doc.kind === kind);

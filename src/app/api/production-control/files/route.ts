@@ -15,6 +15,7 @@ const MAX_FILES_PER_FOLDER = 100;
 
 const SELECT = {
   id: true,
+  title: true,
   fileName: true,
   mimeType: true,
   sizeBytes: true,
