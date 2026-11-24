@@ -1,0 +1,157 @@
+{
+  "task": "ppk-print-revisions-2026-11-24",
+  "verifier": "fresh independent verifier, 2026-11-24",
+  "judged_revision": "HEAD 6d58f5a98 (code = 8f9264e7d; the branch was committed during verification, working tree clean apart from unrelated .agent/tasks/english-version-1375e736/raw/*.pdf)",
+  "verdict": "FAIL",
+  "commands": {
+    "typecheck": "npm run typecheck -> exit 0 (run twice, before and after the commit)",
+    "unit_tests_requested": "node --import tsx --test revisions/structure-pdf/signature/pdf/route-slug-collisions/borderless/neutral-palette -> 31/31 on HEAD (before the commit borderless.test.ts failed: 3998 vs 3999 files; the builder regenerated borderless.css at 20:38, now up to date)",
+    "related_tests": "39 non-i18n test files selected by scripts/test-changed.mjs graph (+ one-accent, motion) -> 216 + 33 pass, only the since-fixed borderless failure",
+    "i18n_check": "npm run i18n:check -> 103/103, exit 0",
+    "eslint": "npx eslint on the 43 changed .ts/.tsx files -> exit 0",
+    "pdf_probe": "built a 30-page sample with scans, landscape scan, encrypted/corrupt PDF, DOCX, XLSX, text docs, 3.7 sheet; pdftotext/pypdf: TOC numbers match the pages, header and 'Стр. N из M' on pages 2-30, none on the title page, scans and the signature image drawn on the expected pages",
+    "not_run": "next build, full 900-file suite, DB/stand, deploy (per instructions). Builder's stand e2e 46/46 and full suite 7474/0 are consistent with the code."
+  },
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "revisions.ts:43-64 code 'ППК 001'/'ППК 1000', next = max+1, whitespace-only normalisation, status none/approved/changed; revisions.server.ts:85-95,121-124 hash = title + normalised text, or title + sha256 of every scan/file; approveRevision (revisions.server.ts:211-245) returns the same revision when the hash is unchanged (created:false), otherwise max+1 with retry on P2002 against @@unique([organizationId, number]) (schema.prisma PpkRevision); old rows are never deleted, so the register keeps history. 9 unit tests pass. Minor: V9."
+    },
+    "AC2": {
+      "status": "FAIL",
+      "evidence": "Present: RevisionBar on 1.8/1.9/2.2/2.3/2.9/app-3 (text-panel.tsx) and 2.1 (policy-panel.tsx); RevisionControl in the app-5/app-6 lists (ppk-docs-list.tsx:211) and on /knowledge; the confirm dialog shows the future code (revision-control.tsx:124,178-185); the automatic re-ask after a save works through ppk:changed -> reload -> approved->changed -> prompt (revision-control.tsx:40-55; dispatched by text-doc-editor.tsx:84, policy-client.tsx:80, text-doc-dialog.tsx:84, file replace, scan folder upload/delete); register page /production-control/revisions with a link from the overview. Gap: the plaque must show 'код, дата, кто утвердил', but in compact mode (app 5, app 6, /knowledge) the approver is never rendered (revision-control.tsx:145 '!compact'). Also renaming a file document on /knowledge does not refresh the plaque or re-ask (V3)."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "POST /api/production-control/text-docs creates a text/plain KnowledgeDocument (base or the point's 'procedures' folder); PATCH edits the title/text, only for text docs (400 for files); PUT replaces the file in the same row (text-docs/[id]/route.ts). Shown in PpkDocsList (app 5/6) and /knowledge; the /acknowledge/knowledge:<id> page renders the text inline (acknowledge/[docKey]/page.tsx:158-172). Stand e2e confirms create/edit/replace/404. Minor: V7 (head_chef/technologist in app 6)."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "structure-pdf.ts builds the title page (start), pre-allocated TOC pages filled after layout (fillToc), sections 1-3 and the appendices in PPK_STRUCTURE order (32 items), header plus 'Стр. N из M' on every page from 2 (stampPages). In the rendered sample all 36 TOC entries matched the page where the heading actually appears (e.g. 1.9->7, 2.1->9, 2.4->13, 3.x->19, app 5->24, app 6->28); footer present on pages 2-30, absent on page 1. Unit test 'все 32 пункта' passes."
+    },
+    "AC5": {
+      "status": "FAIL",
+      "evidence": "Normal cases pass: a 2-page PDF scan, PNG/JPG images and a landscape PDF are placed as framed pages under the header with numbering (pages 9,10,13,22,30 draw the XObjects); encrypted and corrupt PDFs print 'не удалось вставить …' and the PDF still builds; 80 MB/300-page limits print a line. Fails Р7 'без падения' for hostile input: docxText (structure-pdf.ts:74-88, called at :113-115) runs JSZip on word/document.xml with no decompression bound, while the repo already has officeZipWithinLimits (knowledge-documents.ts:31) for exactly this and uploads do not check it. Measured: a 61 KB DOCX inflates 60 MB of XML and adds +254 MB RSS during planPrintFiles; a crafted DOCX (<=25 MB, in procedures, the knowledge base, a scan folder or via PUT replace) can exhaust the heap of the shared Node process on every PPK build (program PDF, inspector link, employee file, compliance bundle)."
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": "structure-print.server.ts:104-106 gives a label only when status === 'approved' (revisionLabel in the org time zone); renderDoc/stampPages put 'Название · ППК NNN от дд.мм.гггг' or 'Редакция не утверждена' into the header and the document header (docHeader). Verified in the rendered sample (pages 4-6 'ППК 001 от 24.11.2026', 7/11/26/27/30 'Редакция не утверждена'); stand e2e checks both."
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": "POST /api/production-control/acknowledgements/sign: requirePpkAccess + visibleStaffWhere + ackDocForUser(scope,userId,'ppk'), the same checks as /pin; stores method 'finger', the PNG and collectedById. The employee's own POST /api/acknowledgements accepts an optional signature (method 'finger'/'self'); /pin now writes method 'pin'. parseSignatureDataUrl rejects non-PNG, '', oversized (>300 KB) and tiny PNGs with 400. The 3.7 panel shows the method; the PDF draws the signature image in the 'Подпись' cell (verified: page 19 draws /I0). Minor: V5, V6."
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": "program/pdf, inspector/[token]/production-control/[doc] (ppk), acknowledgements/ppk/file and reports/compliance-bundle all call loadPpkPrintData + buildPpkStructurePdf; the HACCP plan still uses buildHaccpPlanPdf. Schema: new PpkRevision model plus three nullable PpkAcknowledgement columns and a back-relation; nothing removed."
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": "All new APIs authenticate and are org-scoped: revisions (requirePpkAccess; text/policy keys of another point are dropped at revisions.server.ts:147; knowledge rows filtered by organizationId, kind IS NULL, base or own-point 'procedures'), text-docs (requireKnowledgeAccess(true) or requirePpkAccess plus a building match in requireEditableDoc; other folders, kinds and orgs -> 404), sign (same as PIN). Cook -> 403, unknown or foreign doc -> 404 (stand e2e). Minor: V7 (knowledge-doc approval right differs from Р5), V8 (register not filtered by point)."
+    },
+    "AC10": {
+      "status": "PASS",
+      "evidence": "Local quality on HEAD: typecheck, eslint (43 files), the requested and related unit tests, i18n:check all green; the borderless.css staleness seen at first was fixed by the builder before the commit. next build and the full suite were not re-run here (builder reports build PASS and 7474/0); merge, deploy and production are NOT_VERIFIABLE for this verifier."
+    }
+  },
+  "problems": [
+    {
+      "id": "V1",
+      "severity": "major",
+      "file": "src/lib/ppk/structure-pdf.ts:74-88 (docxText), :113-115 (planPrintFiles)",
+      "detail": "DOCX text extraction has no decompression bound (zip bomb). officeZipWithinLimits() exists for this (src/lib/knowledge-documents.ts:31, used by the preview route) but is not called, and uploads do not check it. Measured: 61 KB DOCX -> 60 MB inflated XML, +254 MB RSS. A crafted DOCX can crash the shared process on every PPK PDF build, and that build runs from employee and inspector endpoints. This breaks the 'без падения' rule of Р7 (AC5).",
+      "suggestion": "In docxText: if (!officeZipWithinLimits(bytes)) return null (or plan skip 'limit'); optionally also refuse when word/document.xml's uncompressed size is over a few MB before async('string')."
+    },
+    {
+      "id": "V2",
+      "severity": "minor",
+      "file": "src/components/production-control/revision-control.tsx:145",
+      "detail": "AC2 requires the plaque to show 'код, дата, кто утвердил'. In compact mode (app 5, app 6, /knowledge) the approver is never shown.",
+      "suggestion": "Render approvedBy in compact mode too (for example a second line, or the same small text after the chip)."
+    },
+    {
+      "id": "V3",
+      "severity": "minor",
+      "file": "src/components/knowledge/knowledge-documents-client.tsx:99-104 (mutate)",
+      "detail": "Renaming a file document on /knowledge changes its revision hash (the title is part of it, Р3), but no ppk:changed is dispatched and useRevisionStates keys do not change. The plaque stays 'approved' until a reload and the program does not ask again (Р4).",
+      "suggestion": "window.dispatchEvent(new Event('ppk:changed')) after a successful PATCH in mutate."
+    },
+    {
+      "id": "V4",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-print.server.ts:88-102 (attachBytes), :200-205 (asDoc)",
+      "detail": "The 80 MB scan byte budget also covers text/plain documents and formats that print only as a line (ZIP/RAR/XLS/DOC). When earlier scans use it up, an approved text instruction gets empty bytes and prints 'Не заполнено' under its 'ППК NNN' header, with no error (silent loss in print).",
+      "suggestion": "Always load text/plain docs (at most 60k chars); count only PDF, image and DOCX against the budget; skip loading bytes for formats printed as a line."
+    },
+    {
+      "id": "V5",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-pdf.ts:297-301 (signatureCell)",
+      "detail": "The 'Подпись' cell dates PIN and in-cabinet marks in Europe/Moscow, while 'Отметка' uses data.timeZone. For organisations outside Moscow the two dates in one row can differ: for Asia/Novosibirsk, a mark at 2026-11-24T18:00Z shows 'Ознакомлен и согласен, 25.11.2026, 01:00' next to 'PIN-код, 24.11.2026'. The cell has the date only, without the time.",
+      "suggestion": "Format with data.timeZone (pass it in) and include the time, or drop the duplicate date."
+    },
+    {
+      "id": "V6",
+      "severity": "minor",
+      "file": "src/lib/ppk/signature.ts:8,22-31",
+      "detail": "A blank canvas is accepted as a signature: a 600x200 all-white PNG (823 bytes) gives ok=true, so 'пустая' is blocked only on the client. Dimensions up to 4000x4000 are also allowed: a 70 KB blank PNG decodes to a 64 MB bitmap in jsPDF when the PDF is built.",
+      "suggestion": "Inflate IDAT and require some non-background pixels; cap the size near the pad (for example 1200x400)."
+    },
+    {
+      "id": "V7",
+      "severity": "minor",
+      "file": "src/app/api/production-control/revisions/route.ts:37-40; src/components/production-control/ppk-docs-list.tsx:21-24,58",
+      "detail": "Р5: knowledge-base documents belong to those who manage the knowledge base, yet 'knowledge:' revisions are approved with requirePpkAccess (head_chef/technologist without admin.full can approve). Head_chef/technologist (management, no journals.view) also get 403 from /api/knowledge-documents in PPK app 6: an error toast, the empty state 'нет инструкций' (the old server-rendered list showed them) and create/edit/replace buttons that return 403.",
+      "suggestion": "Check requireKnowledgeAccess(true) for knowledge: keys on POST; for app 6 list the docs server-side or through a PPK-scoped endpoint, and hide the manage controls without admin.full."
+    },
+    {
+      "id": "V8",
+      "severity": "minor",
+      "file": "src/app/api/production-control/revisions/route.ts:18-21; src/app/(dashboard)/production-control/revisions/page.tsx:32; src/lib/ppk/revisions.server.ts:250-263",
+      "detail": "The register is org-wide even for a point-scoped manager, who sees other points' revisions (procedure titles, approvers). Р1 makes the numbering org-wide, but AC9 asks for point bounds.",
+      "suggestion": "For point-scoped users list only keys '@<own point>', org-wide knowledge docs and their own point's procedures."
+    },
+    {
+      "id": "V9",
+      "severity": "minor",
+      "file": "src/lib/ppk/revisions.server.ts:219-243",
+      "detail": "Two concurrent approvals of the same unchanged content (two tabs or users) both pass the same-hash check, and the P2002 retry then gives the identical content two numbers (ППК N and N+1). Numbers stay unique, as AC1 requires.",
+      "suggestion": "Use pg_advisory_xact_lock on the organisation inside a transaction, re-read the latest revision and the max inside it."
+    },
+    {
+      "id": "V10",
+      "severity": "minor",
+      "file": "src/app/api/acknowledgements/ppk/file/route.ts:45-46",
+      "detail": "Any employee request rebuilds the whole PDF: up to 80 MB of scans read from the DB and parsed twice by pdf-lib. Unlike the inspector route there is no rate limit, so this is easy to use for resource exhaustion.",
+      "suggestion": "Add a per-user limiter like inspectorPdfLimiter, or cache the built PDF by content hash."
+    },
+    {
+      "id": "V11",
+      "severity": "minor",
+      "file": "src/components/knowledge/knowledge-documents-client.tsx:39; src/app/api/production-control/revisions/route.ts:22",
+      "detail": "The GET takes at most 300 keys, so documents after the 300th get no plaque. With about 400 or more knowledge docs the encoded docKeys query passes Node's 16 KB header limit: 431, and no plaques at all.",
+      "suggestion": "Look up states with a POST body, or in chunks."
+    },
+    {
+      "id": "V12",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-print.server.ts:186",
+      "detail": "Without a saved policy record, 2.1 prints 'Не заполнено', while the 2.1 panel offers policyTemplate() and the other text items (1.8, 2.2, 2.3, 2.9) print their template. Р7 asks for the same sources as the item window.",
+      "suggestion": "Fall back to policyTemplate(org name) the way the text items do."
+    },
+    {
+      "id": "V13",
+      "severity": "minor",
+      "file": "src/components/knowledge/knowledge-documents-client.tsx:39; src/app/(dashboard)/acknowledge/[docKey]/page.tsx",
+      "detail": "Р5 says 'Сотрудник видит номер редакции', but employees see no revision code on /knowledge (plaques only for canManage, and the GET needs PPK access) or on the acknowledgement page. They see it only in the printed PPK.",
+      "suggestion": "Show the approved code (read-only) on /knowledge and on /acknowledge/knowledge:<id> from a server-side lookup."
+    },
+    {
+      "id": "V14",
+      "severity": "minor",
+      "file": "src/lib/ppk/structure-print.server.ts:152-155; src/lib/ppk/structure-pdf.ts:399-412; ru.json productionControl.structure.acquaintance.sheetHint",
+      "detail": "Cosmetic. Legacy 'team-signed' scans (legacyFolder of 2.2/2.4) appear in the panels but are neither printed nor part of the 2.2 hash. The first page of the 2.4 scan carries the generic header instead of 'Приказ № N от …'. The 3.7 hints still say 'в кабинете или PIN-кодом' and do not mention finger signatures.",
+      "suggestion": "Include the legacyFolder files after the main scan folder; call setLabel before the heading for 2.4; update sheetHint and the 3.7 lead in ru, en and uz."
+    }
+  ]
+}

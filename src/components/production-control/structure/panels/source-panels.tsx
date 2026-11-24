@@ -2,7 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { loadEnabledJournals } from "@/lib/ppk/journals.server";
 import { ppkEquipmentWhere } from "@/lib/ppk/structure-facts.server";
-import { PpkDocsList } from "@/components/production-control/ppk-docs-list";
+import { PpkDocsList, type DocRow } from "@/components/production-control/ppk-docs-list";
+import { hasCapability } from "@/lib/permission-presets";
+import { ppkWhere } from "@/lib/ppk/scope";
 import type { PpkPanelProps } from "../item-panel";
 import { PanelEmpty, PanelNote, PanelTable, SourceLink } from "./panel-ui";
 
@@ -77,30 +79,50 @@ export async function JournalsPanel({ scope }: PpkPanelProps) {
   );
 }
 
+const DOC_SELECT = { id: true, title: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true } as const;
+const docRow = (row: { id: string; title: string; fileName: string; mimeType: string; sizeBytes: number; createdAt: Date }): DocRow => ({
+  ...row,
+  title: row.title || row.fileName,
+  createdAt: row.createdAt.toISOString(),
+});
+
 /** Приложение № 5 «Документированные процедуры» — текстом с нашей шапкой или файлом, у каждого — редакция. */
 export async function ProceduresPanel({ scope }: PpkPanelProps) {
-  const [t, org] = await Promise.all([
+  const [t, org, docs] = await Promise.all([
     getTranslations("productionControl.structure.procedures"),
     db.organization.findUnique({ where: { id: scope.organizationId }, select: { timezone: true } }),
+    db.knowledgeDocument.findMany({ where: { ...ppkWhere(scope), folder: "procedures" }, select: DOC_SELECT, orderBy: { createdAt: "desc" }, take: 500 }),
   ]);
   return (
     <div className="space-y-4">
       <PanelNote>{t("note")}</PanelNote>
-      <PpkDocsList source="procedures" timeZone={org?.timezone || "Europe/Moscow"} />
+      {/* Окно пункта открывает тот, кто ведёт ППК, — он же правит процедуры. */}
+      <PpkDocsList source="procedures" timeZone={org?.timezone || "Europe/Moscow"} canManage initial={docs.map(docRow)} />
     </div>
   );
 }
 
 /** Приложение № 6 «Рабочие инструкции» — документы базы знаний: текстом или файлом, у каждого — редакция. */
-export async function InstructionsPanel({ scope }: PpkPanelProps) {
-  const [t, org] = await Promise.all([
+export async function InstructionsPanel({ scope, session }: PpkPanelProps) {
+  const [t, org, docs] = await Promise.all([
     getTranslations("productionControl.structure.instructions"),
     db.organization.findUnique({ where: { id: scope.organizationId }, select: { timezone: true } }),
+    db.knowledgeDocument.findMany({
+      where: { organizationId: scope.organizationId, kind: null, folder: null },
+      select: DOC_SELECT,
+      orderBy: { createdAt: "desc" },
+      take: 500,
+    }),
   ]);
   return (
     <div className="space-y-4">
       <PanelNote>{t("note")}</PanelNote>
-      <PpkDocsList source="knowledge" timeZone={org?.timezone || "Europe/Moscow"} />
+      <PpkDocsList
+        source="knowledge"
+        timeZone={org?.timezone || "Europe/Moscow"}
+        canManage={hasCapability(session.user, "admin.full")}
+        initial={docs.map(docRow)}
+      />
       <SourceLink href="/knowledge">{t("open")}</SourceLink>
     </div>
   );

@@ -134,6 +134,11 @@ check("правка инструкции → вопрос о новой реда
 await askInstr2.locator("button", { hasText: "ППК 004" }).click();
 await row.locator('[data-revision-status="approved"]').waitFor({ timeout: 30000 });
 await page.screenshot({ path: path.join(OUT, "03-instructions-app6.png") });
+check("строка списка: «утвердил …» рядом с номером", /утвердил/.test(await row.innerText()));
+await page.goto(`${BASE}/acknowledge/${encodeURIComponent(`knowledge:${instrId}`)}`, { waitUntil: "networkidle" });
+const ackRevision = await page.locator("[data-ack-revision]").innerText().catch(() => "");
+check("страница ознакомления инструкции: номер редакции ППК 004", /ППК 004/.test(ackRevision), ackRevision);
+check("страница ознакомления инструкции: текст на странице", /после перерыва/.test(await page.locator("[data-ack-text]").innerText().catch(() => "")));
 
 // Реестр редакций.
 r = await api.get(`${BASE}/api/production-control/revisions`);

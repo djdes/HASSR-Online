@@ -28,7 +28,8 @@ export function parseSignatureDataUrl(value: unknown): ParsedSignature {
   // IHDR: ширина и высота — байты 16–23.
   const width = bytes.readUInt32BE(16);
   const height = bytes.readUInt32BE(20);
-  if (width < 20 || height < 20 || width > 4000 || height > 4000) return { ok: false, error: "Подпись должна быть картинкой PNG" };
+  // Поле подписи — 600×200; больше 1600×800 не нужно (и раздуло бы картинку при сборке PDF).
+  if (width < 20 || height < 20 || width > 1600 || height > 800) return { ok: false, error: "Подпись должна быть картинкой PNG" };
   // Копия в своём ArrayBuffer: поле Bytes в Prisma принимает именно его.
   return { ok: true, bytes: new Uint8Array(bytes), width, height };
 }

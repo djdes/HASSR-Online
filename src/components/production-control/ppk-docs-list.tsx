@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { FilePlus2, FileText, Loader2, Pencil, RefreshCw, Trash2, Upload } from "lucide-react";
@@ -16,7 +16,7 @@ import {
   PPK_ICON_BUTTON_CLASS,
 } from "@/components/production-control/ppk-ui";
 
-type DocRow = { id: string; title: string; fileName: string; mimeType: string; sizeBytes: number; createdAt: string };
+export type DocRow = { id: string; title: string; fileName: string; mimeType: string; sizeBytes: number; createdAt: string };
 
 const LIST_URL: Record<TextDocSource, string> = {
   knowledge: "/api/knowledge-documents",
@@ -42,11 +42,23 @@ function fileUrl(source: TextDocSource, id: string): string {
  * правится, файл заменяется; после изменения утверждённого документа
  * программа спрашивает про новую редакцию.
  */
-export function PpkDocsList({ source, timeZone }: { source: TextDocSource; timeZone: string }) {
+export function PpkDocsList({
+  source,
+  timeZone,
+  canManage,
+  initial,
+}: {
+  source: TextDocSource;
+  timeZone: string;
+  /** Править и утверждать: процедуры — кто ведёт ППК, база знаний — кто ею управляет. Иначе только список. */
+  canManage: boolean;
+  /** Список с сервера: виден сразу и тем, кому API списка закрыт. */
+  initial: DocRow[];
+}) {
   const t = useTranslations("productionControl.textDocs");
   const locale = useLocale();
   const tariffLimit = useTariffLimitToast();
-  const [docs, setDocs] = useState<DocRow[] | null>(null);
+  const [docs, setDocs] = useState<DocRow[] | null>(initial);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<{ id: string | null } | null>(null);
   const [removing, setRemoving] = useState<DocRow | null>(null);
@@ -63,16 +75,12 @@ export function PpkDocsList({ source, timeZone }: { source: TextDocSource; timeZ
       const rows = (body?.documents ?? body?.files ?? []).map((row) => ({ ...row, title: row.title || row.fileName }));
       setDocs(rows);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("loadFailed"));
-      setDocs([]);
+      // Список с сервера остаётся; ошибка — только у того, кто правит.
+      if (canManage) toast.error(error instanceof Error ? error.message : t("loadFailed"));
     }
-  }, [source, t]);
+  }, [source, t, canManage]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const keys = useMemo(() => (docs ?? []).map((doc) => `knowledge:${doc.id}`), [docs]);
+  const keys = useMemo(() => (canManage ? (docs ?? []).map((doc) => `knowledge:${doc.id}`) : []), [docs, canManage]);
   const { states, prompt, setPrompt } = useRevisionStates(keys);
 
   async function upload(files: File[]) {
@@ -138,6 +146,7 @@ export function PpkDocsList({ source, timeZone }: { source: TextDocSource; timeZ
 
   return (
     <div className="space-y-4" data-ppk-docs={source}>
+      {canManage ? (
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => setEditing({ id: null })} className={PPK_BUTTON_PRIMARY_CLASS} data-ppk-docs-create>
           <FilePlus2 className="size-4" aria-hidden />
@@ -175,6 +184,7 @@ export function PpkDocsList({ source, timeZone }: { source: TextDocSource; timeZ
           }}
         />
       </div>
+      ) : null}
 
       {docs === null ? (
         <div className="flex items-center gap-2 text-[14px] text-[#6f7282]">
@@ -211,12 +221,13 @@ export function PpkDocsList({ source, timeZone }: { source: TextDocSource; timeZ
                     <RevisionControl
                       state={states[key]}
                       timeZone={timeZone}
-                      canApprove
+                      canApprove={canManage}
                       compact
                       askOpen={prompt === key}
                       onAskClose={() => setPrompt(null)}
                     />
                   </div>
+                  {canManage ? (
                   <div className="flex shrink-0 items-center gap-1">
                     {text ? (
                       <button type="button" onClick={() => setEditing({ id: doc.id })} className={PPK_ICON_BUTTON_CLASS} aria-label={t("editAria", { title: doc.title })} title={t("edit")}>
@@ -241,6 +252,7 @@ export function PpkDocsList({ source, timeZone }: { source: TextDocSource; timeZ
                       <Trash2 className="size-4" aria-hidden />
                     </button>
                   </div>
+                  ) : null}
                 </div>
               </li>
             );

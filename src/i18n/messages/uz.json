@@ -1236,7 +1236,7 @@
         "colPosition": "Lavozim",
         "colDuty": "Vazifalar",
         "sheetTitle": "Tanishuv varaqasi",
-        "sheetHint": "Xodim «Tanishdim va roziman» belgisini oʻz kabinetida yoki shu qurilmada PIN-kod bilan qoʻyadi.",
+        "sheetHint": "Xodim «Tanishdim va roziman» belgisini oʻz kabinetida, shu qurilmada PIN-kod yoki barmoq bilan imzo orqali qoʻyadi.",
         "needApproval": "Tanishuv varaqasi dastur versiya sifatida tasdiqlanganda yoki oʻz faylingiz yuklanganda ochiladi.",
         "toProgram": "Dastur va versiyalar",
         "colMark": "Belgi",
@@ -20170,7 +20170,8 @@
     "ppkLeadFile": "Ishlab chiqarish nazorati dasturi. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
     "ppkOpen": "Dasturni ochish",
     "signatureTitle": "Imzo",
-    "signatureHint": "Barmoq bilan imzo qo‘yishingiz mumkin — imzo dastur bilan tanishuv bosma varag‘iga tushadi. Imzosiz ham belgi hisoblanadi."
+    "signatureHint": "Barmoq bilan imzo qo‘yishingiz mumkin — imzo dastur bilan tanishuv bosma varag‘iga tushadi. Imzosiz ham belgi hisoblanadi.",
+    "revision": "{code} tahriri, {date}"
   },
   "staffPages": {
     "positions": {

@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui/page-header";
 import { ackKnowledgeId, formatAckMoment } from "@/lib/ppk/acknowledge";
 import { isTextDoc } from "@/lib/ppk/text-docs";
+import { revisionDocKey } from "@/lib/ppk/revisions";
+import { loadRevisionStates } from "@/lib/ppk/revisions.server";
 import { ackDocForUser } from "@/lib/ppk/acknowledge.server";
 import { parsePpkRecords } from "@/lib/ppk/records";
 import { loadPpkStaff } from "@/lib/ppk/staff.server";
@@ -181,6 +183,20 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
     );
   }
 
+  // Номер утверждённой редакции документа (spec, Р5: сотрудник видит номер), если текст с тех пор не менялся.
+  const revisionKey = ackKnowledgeId(doc.docKey)
+    ? doc.docKey
+    : doc.docKey === "policy"
+      ? revisionDocKey({ kind: "policy" }, scope.buildingId)
+      : doc.docKey === "team-regulation"
+        ? revisionDocKey({ kind: "text", block: "text-team-regulation" }, scope.buildingId)
+        : null;
+  const revision = revisionKey ? (await loadRevisionStates(scope, [revisionKey])).get(revisionKey) : undefined;
+  const revisionLine =
+    revision?.status === "approved" && revision.latest
+      ? t("revision", { code: revision.latest.code, date: formatAckMoment(revision.latest.approvedAt, org?.timezone ?? "Europe/Moscow").date })
+      : null;
+
   return (
     <div className="space-y-5">
       <Link
@@ -191,6 +207,11 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
         {t("back")}
       </Link>
       <PageHeader title={doc.title} />
+      {revisionLine ? (
+        <p className="-mt-3 text-[13.5px] font-medium text-[#116b2a]" data-ack-revision>
+          {revisionLine}
+        </p>
+      ) : null}
       <article className="rounded-3xl border border-[#ececf4] bg-white p-5 sm:p-7">{body}</article>
       <AcknowledgeButton
         withSignature={doc.docKey === "ppk"}

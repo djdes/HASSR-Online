@@ -179,3 +179,12 @@ test("планирование файлов: пределы, битые и не�
   assert.deepEqual(plans.get("d"), { kind: "skip", reason: "broken" });
   assert.deepEqual(plans.get("e"), { kind: "skip", reason: "limit" });
 });
+
+test("DOCX-«бомба» (сжатый текст на десятки МБ) не распаковывается: строка вместо текста", async () => {
+  const zip = new JSZip();
+  zip.file("word/document.xml", `<w:document><w:body><w:p><w:r><w:t>${"А".repeat(12 * 1024 * 1024)}</w:t></w:r></w:p></w:body></w:document>`);
+  const bomb = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 9 } });
+  assert.ok(bomb.byteLength < 1024 * 1024, `сжатый файл маленький: ${bomb.byteLength}`);
+  const plans = await planPrintFiles([file("z", "bomb.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", bomb)]);
+  assert.deepEqual(plans.get("z"), { kind: "skip", reason: "broken" });
+});

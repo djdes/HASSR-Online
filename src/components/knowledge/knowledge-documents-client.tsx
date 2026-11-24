@@ -101,6 +101,8 @@ export function KnowledgeDocumentsClient({ canManage, timeZone = "Europe/Moscow"
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || t("saveFailed"));
     setDeleting(null); setRenaming(null); await load(); toast.success(remove ? t("deleted") : t("titleSaved"));
+    // Новое название — тоже изменение документа: плашка редакции спросит про новую редакцию.
+    window.dispatchEvent(new Event("ppk:changed"));
   }
   return <div className="space-y-5">
     {canManage ? <section className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] p-6">

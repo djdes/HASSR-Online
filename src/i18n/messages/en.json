@@ -1236,7 +1236,7 @@
         "colPosition": "Position",
         "colDuty": "Duties",
         "sheetTitle": "Acknowledgement sheet",
-        "sheetHint": "Staff mark \"Read and agreed\" in their account or with a PIN on this device.",
+        "sheetHint": "Staff mark \"Read and agreed\" in their account, or with a PIN or a finger signature on this device.",
         "needApproval": "The acknowledgement sheet opens once the program is approved as a version or uploaded as your own file.",
         "toProgram": "Program and versions",
         "colMark": "Mark",
@@ -20170,7 +20170,8 @@
     "ppkLeadFile": "Production control program. Open the program, read it and confirm that you have read and agree with it.",
     "ppkOpen": "Open the program",
     "signatureTitle": "Signature",
-    "signatureHint": "You can sign with your finger — the signature goes to the printed acknowledgement sheet of the programme. The mark counts without a signature too."
+    "signatureHint": "You can sign with your finger — the signature goes to the printed acknowledgement sheet of the programme. The mark counts without a signature too.",
+    "revision": "Revision {code} of {date}"
   },
   "staffPages": {
     "positions": {

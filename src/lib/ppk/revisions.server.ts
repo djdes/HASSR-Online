@@ -45,6 +45,8 @@ export type RevisionDoc = {
   hash: string;
   /** Нечего утверждать: текст не сохранён и скана нет. */
   empty: boolean;
+  /** Документ базы знаний (папки нет) — утверждают те, кто управляет базой знаний (spec, Р5). */
+  knowledgeBase: boolean;
 };
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -84,7 +86,7 @@ async function structureDoc(scope: PpkScope, ref: Exclude<RevisionDocRef, { kind
   const docKey = revisionDocKey(ref, scope.buildingId);
   if (scans.length > 0) {
     const print = scans.map((file) => `${file.title}\n${file.h}`).join("\n");
-    return { docKey, title, hash: sha256(`scan\n${title}\n${print}`), empty: false };
+    return { docKey, title, hash: sha256(`scan\n${title}\n${print}`), empty: false, knowledgeBase: false };
   }
   const text = row
     ? ref.kind === "policy"
@@ -92,7 +94,7 @@ async function structureDoc(scope: PpkScope, ref: Exclude<RevisionDocRef, { kind
       : (parsePpkRecords(ref.block, [row])[0]?.data.text ?? "")
     : "";
   const normalized = normalizeRevisionText(text);
-  return { docKey, title, hash: sha256(`text\n${title}\n${normalized}`), empty: normalized.length === 0 };
+  return { docKey, title, hash: sha256(`text\n${title}\n${normalized}`), empty: normalized.length === 0, knowledgeBase: false };
 }
 
 type KnowledgeRow = { id: string; title: string; mimeType: string; folder: string | null; buildingId: string | null; h: string };
@@ -127,6 +129,7 @@ async function knowledgeDocs(scope: PpkScope, ids: string[]): Promise<Map<string
       title: row.title,
       hash,
       empty: text !== undefined && normalizeRevisionText(text).length === 0,
+      knowledgeBase: inBase,
     });
   }
   return out;
@@ -216,38 +219,43 @@ export async function approveRevision(
   const doc = (await resolveRevisionDocs(scope, [docKey])).get(docKey);
   if (!doc) return { ok: false, status: 404, error: "Документ не найден" };
   if (doc.empty) return { ok: false, status: 400, error: "Документ пуст: сохраните текст или загрузите скан" };
-  const last = (await latestRevisions(scope.organizationId, [doc.docKey])).get(doc.docKey);
-  if (last && last.contentHash === doc.hash) {
-    return { ok: true, created: false, revision: info(last), docKey: doc.docKey, title: doc.title };
-  }
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const number = nextRevisionNumber(await maxNumber(scope.organizationId));
-    try {
-      const row = await db.ppkRevision.create({
-        data: {
-          organizationId: scope.organizationId,
-          docKey: doc.docKey,
-          title: doc.title.slice(0, 300),
-          number,
-          contentHash: doc.hash,
-          approvedById: actor.id,
-          approvedByName: actor.name.slice(0, 200),
-        },
-        select: { number: true, approvedAt: true, approvedByName: true },
-      });
-      return { ok: true, created: true, revision: info(row), docKey: doc.docKey, title: doc.title };
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") continue;
-      throw error;
+  // Утверждения одной организации — по очереди (блокировка транзакции): два
+  // одновременных нажатия не дадут одной редакции два номера и не займут один номер дважды.
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`ppk-revision:${scope.organizationId}`}))`;
+    const last = await tx.ppkRevision.findFirst({
+      where: { organizationId: scope.organizationId, docKey: doc.docKey },
+      orderBy: { number: "desc" },
+      select: { number: true, contentHash: true, approvedAt: true, approvedByName: true },
+    });
+    if (last && last.contentHash === doc.hash) {
+      return { ok: true as const, created: false, revision: info(last), docKey: doc.docKey, title: doc.title };
     }
-  }
-  return { ok: false, status: 409, error: "Не удалось выдать номер, попробуйте ещё раз" };
+    const max = await tx.ppkRevision.aggregate({ where: { organizationId: scope.organizationId }, _max: { number: true } });
+    const row = await tx.ppkRevision.create({
+      data: {
+        organizationId: scope.organizationId,
+        docKey: doc.docKey,
+        title: doc.title.slice(0, 300),
+        number: nextRevisionNumber(max._max.number),
+        contentHash: doc.hash,
+        approvedById: actor.id,
+        approvedByName: actor.name.slice(0, 200),
+      },
+      select: { number: true, approvedAt: true, approvedByName: true },
+    });
+    return { ok: true as const, created: true, revision: info(row), docKey: doc.docKey, title: doc.title };
+  });
 }
 
 export type RegisterRow = RevisionInfo & { docKey: string; title: string; supersededBy: string | null };
 
-/** Реестр редакций организации: новые сверху; у прежних — чем заменены. */
-export async function loadRevisionRegister(organizationId: string): Promise<RegisterRow[]> {
+/**
+ * Реестр редакций: новые сверху; у прежних — чем заменены. `pointId` —
+ * руководитель одной точки: документы других точек (их тексты и процедуры)
+ * ему не показываются; общие документы (база знаний, ППК организации) — да.
+ */
+export async function loadRevisionRegister(organizationId: string, pointId: string | null = null): Promise<RegisterRow[]> {
   const rows = await db.ppkRevision.findMany({
     where: { organizationId },
     orderBy: { number: "desc" },
@@ -255,10 +263,21 @@ export async function loadRevisionRegister(organizationId: string): Promise<Regi
     select: { docKey: true, title: true, number: true, approvedAt: true, approvedByName: true },
   });
   const newer = new Map<string, number>();
-  return rows.map((row) => {
+  const all = rows.map((row) => {
     const supersededBy = newer.get(row.docKey) ?? null;
     newer.set(row.docKey, row.number);
     return { ...info(row), docKey: row.docKey, title: row.title, supersededBy: supersededBy ? revisionCode(supersededBy) : null };
+  });
+  if (!pointId) return all;
+  const knowledgeIds = [...new Set(all.flatMap((row) => (row.docKey.startsWith("knowledge:") ? [row.docKey.slice("knowledge:".length)] : [])))];
+  const folders = knowledgeIds.length
+    ? await db.knowledgeDocument.findMany({ where: { organizationId, id: { in: knowledgeIds } }, select: { id: true, folder: true, buildingId: true } })
+    : [];
+  const otherPointDocs = new Set(folders.filter((doc) => doc.folder !== null && doc.buildingId !== pointId).map((doc) => `knowledge:${doc.id}`));
+  return all.filter((row) => {
+    if (row.docKey.startsWith("knowledge:")) return !otherPointDocs.has(row.docKey);
+    const at = row.docKey.indexOf("@");
+    return at < 0 || row.docKey.slice(at + 1) === pointId;
   });
 }
 

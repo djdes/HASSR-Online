@@ -14,6 +14,7 @@ import JSZip from "jszip";
 import type { CellHookData } from "jspdf-autotable";
 import autoTable from "jspdf-autotable";
 import { PDFDocument } from "pdf-lib";
+import { officeZipWithinLimits } from "@/lib/knowledge-documents";
 import { hazardRisk, isSignificantHazard } from "./haccp";
 import { MEDICAL_PHRASE } from "./program-content";
 import { PPK_STRUCTURE, type PpkItemId, type PpkStructureItem } from "./structure";
@@ -70,8 +71,12 @@ function extensionOf(file: PrintFile): string {
   return file.fileName.split(".").pop()?.toLowerCase() ?? "";
 }
 
-/** Текст из DOCX без разметки (как в предпросмотре базы знаний). */
+/**
+ * Текст из DOCX без разметки (как в предпросмотре базы знаний). Сначала —
+ * предел распаковки: маленький файл не должен раздуться в сотни мегабайт.
+ */
 async function docxText(bytes: Uint8Array): Promise<string | null> {
+  if (!officeZipWithinLimits(bytes)) return null;
   const zip = await JSZip.loadAsync(bytes);
   const xml = await zip.file("word/document.xml")?.async("string");
   if (!xml) return null;
@@ -294,8 +299,7 @@ function diagrams(ctx: PCtx, charts: PpkPrintData["orgCharts"]) {
   newPage(ctx);
 }
 
-function signatureCell(ack: PrintAck): string {
-  const when = new Intl.DateTimeFormat("ru-RU", { timeZone: "Europe/Moscow", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ack.at));
+function signatureCell(ack: PrintAck, when: string): string {
   if (ack.method === "finger" && ack.signature) return "";
   return ack.method === "pin" ? `PIN-код, ${when}` : `в кабинете, ${when}`;
 }
@@ -315,7 +319,7 @@ function acquaintanceSheet(ctx: PCtx, data: PpkPrintData) {
     }
   };
   const rows = [
-    ...acks.map((ack, index) => [String(index + 1), ack.name, ack.title || "—", `Ознакомлен и согласен, ${fmt(ack.at)}`, signatureCell(ack)]),
+    ...acks.map((ack, index) => [String(index + 1), ack.name, ack.title || "—", `Ознакомлен и согласен, ${fmt(ack.at)}`, signatureCell(ack, fmt(ack.at))]),
     ...data.pendingNames.map((person, index) => [String(acks.length + index + 1), person.name, person.title || "—", "", ""]),
   ];
   if (rows.length === 0) rows.push(["", "", "", "", ""]);
@@ -404,7 +408,10 @@ function renderItem(ctx: PCtx, item: PpkStructureItem, data: PpkPrintData) {
           text: null,
           files: data.teamOrderScans,
         };
-        setLabel(ctx, `${doc.title}${doc.revision ? ` · ${doc.revision}` : ""}`);
+        const orderLabel = `${doc.title}${doc.revision ? ` · ${doc.revision}` : ""}`;
+        setLabel(ctx, orderLabel);
+        // Заголовок пункта уже на странице: колонтитул этой страницы — тоже приказа.
+        ctx.labels[ctx.doc.getNumberOfPages()] = orderLabel;
         for (const file of doc.files) placeFile(ctx, file);
         ctx.label = PROGRAM_LABEL;
         newPage(ctx);

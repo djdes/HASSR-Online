@@ -53,6 +53,9 @@ test("подпись: не PNG, пусто, слишком большая, ме�
   const huge = `data:image/png;base64,${Buffer.alloc(SIGNATURE_MAX_BYTES + 10, 1).toString("base64")}`;
   assert.equal(parseSignatureDataUrl(huge).ok, false);
   assert.equal(parseSignatureDataUrl(pngDataUrl(10, 10)).ok, false);
+  // Больше 1600×800 подписи не бывает — такая картинка раздула бы сборку PDF.
+  assert.equal(parseSignatureDataUrl(pngDataUrl(2000, 200)).ok, false);
+  assert.equal(parseSignatureDataUrl(pngDataUrl(600, 1200)).ok, false);
 });
 
 test("способ отметки: подпись, PIN, в кабинете (старые отметки — в кабинете)", () => {

@@ -14,6 +14,7 @@ import { PRODUCTION_INFO_FIELDS } from "./structure-fields";
 import { loadProductionPulled, ppkEquipmentWhere } from "./structure-facts.server";
 import { loadPpkStaff } from "./staff.server";
 import { PRP_TEMPLATES, ppkTextTemplate, type RegulationMember } from "./structure-templates";
+import { policyTemplate } from "./haccp";
 import { PPK_STRUCTURE_ITEMS, type PpkItemId } from "./structure";
 import { PRP_TABLE_BLOCKS, PRP_TABLES, type PrpRow, type PrpTableBlock } from "./prp-tables";
 import { ackStats, ppkAckVersion } from "./acknowledge.server";
@@ -84,13 +85,19 @@ async function folderFiles(scope: PpkScope, folder: PpkFolderKey): Promise<Print
   return rows.map((row) => ({ ...row, bytes: EMPTY }));
 }
 
-/** Байты файлов по порядку программы, пока не набран объём сканов; остальные — пустые. */
+/**
+ * Байты файлов по порядку программы, пока не набран объём сканов; остальные —
+ * пустые. Документы текстом (до 60 000 знаков) читаются всегда: утверждённая
+ * инструкция не должна выпасть из программы из-за чужих сканов.
+ */
 async function attachBytes(files: PrintFile[]): Promise<void> {
   let budget = SCAN_MAX_BYTES;
   const wanted: string[] = [];
   for (const file of files) {
     if (wanted.includes(file.id)) continue;
-    if (file.sizeBytes <= budget) {
+    if (isTextDoc(file.mimeType)) {
+      wanted.push(file.id);
+    } else if (file.sizeBytes <= budget) {
       wanted.push(file.id);
       budget -= file.sizeBytes;
     }
@@ -183,7 +190,8 @@ export async function loadPpkPrintData(scope: PpkScope): Promise<PpkPrintData> {
   textItems.forEach((item, index) => {
     const files = scanLists[index];
     let text: string | null = null;
-    if (item.id === "2-1") text = bundle.policy?.text ?? null;
+    // 2.1: своя политика, иначе шаблон — тот же, что предлагает окно пункта.
+    if (item.id === "2-1") text = bundle.policy?.text ?? (policyTemplate(org?.name || orgName) || null);
     else {
       const block = item.text!.block as PpkTextBlock;
       const own = parsePpkRecords(block, rows.filter((row) => row.block === block))[0]?.data.text ?? "";

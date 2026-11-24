@@ -40,10 +40,19 @@ export function useRevisionStates(docKeys: readonly string[], initial?: Record<s
   const reload = useCallback(async () => {
     if (!keysParam) return;
     try {
-      const response = await fetch(`${API}?docKeys=${encodeURIComponent(keysParam)}`, { cache: "no-store" });
-      if (!response.ok) return;
-      const body = (await response.json()) as { states?: Record<string, ClientRevisionState> };
-      const next = body.states ?? {};
+      // Частями по 60 ключей: длинный список документов не упирается в длину адреса.
+      const keys = keysParam.split(",");
+      const chunks: string[][] = [];
+      for (let index = 0; index < keys.length; index += 60) chunks.push(keys.slice(index, index + 60));
+      const parts = await Promise.all(
+        chunks.map(async (chunk) => {
+          const response = await fetch(`${API}?docKeys=${encodeURIComponent(chunk.join(","))}`, { cache: "no-store" });
+          if (!response.ok) return null;
+          return ((await response.json()) as { states?: Record<string, ClientRevisionState> }).states ?? {};
+        }),
+      );
+      if (parts.some((part) => part === null)) return;
+      const next: Record<string, ClientRevisionState> = Object.assign({}, ...parts);
       const before = statusRef.current;
       const changed = Object.keys(next).find((key) => before[key] === "approved" && next[key].status === "changed");
       statusRef.current = Object.fromEntries(Object.entries(next).map(([key, state]) => [key, state.status]));
@@ -142,8 +151,10 @@ export function RevisionControl({
   return (
     <div className={compact ? "flex flex-wrap items-center gap-2" : "flex flex-wrap items-center gap-2.5"} data-revision={state.docKey}>
       {chip}
-      {state.status === "approved" && state.latest && !compact ? (
-        <span className="text-[12.5px] text-[#6f7282]">{t("approvedBy", { name: state.latest.approvedByName || "—" })}</span>
+      {state.status === "approved" && state.latest ? (
+        <span className={compact ? "text-[12px] text-[#6f7282]" : "text-[12.5px] text-[#6f7282]"}>
+          {t("approvedBy", { name: state.latest.approvedByName || "—" })}
+        </span>
       ) : null}
       {canPress ? (
         <button

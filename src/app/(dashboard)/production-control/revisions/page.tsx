@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { db } from "@/lib/db";
 import { ppkPageScope } from "@/lib/ppk/access.server";
+import { isPointScoped } from "@/lib/point-scope";
 import { loadRevisionRegister } from "@/lib/ppk/revisions.server";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -29,7 +30,7 @@ export default async function RevisionsPage() {
   if (!hasFullWorkspaceAccess(session.user)) forbidden();
   const scope = await ppkPageScope(session);
   const [rows, org, t] = await Promise.all([
-    loadRevisionRegister(scope.organizationId),
+    loadRevisionRegister(scope.organizationId, isPointScoped(session.user) ? scope.buildingId : null),
     db.organization.findUnique({ where: { id: scope.organizationId }, select: { timezone: true } }),
     getTranslations("productionControl.revisions"),
   ]);
