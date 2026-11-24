@@ -1,6 +1,7 @@
 {
-  "round": 2,
+  "round": 3,
   "verdict": "PASS",
+  "round3": "Scoped re-check of the only src change since 4b619539a: buildings-client.tsx sphere chip gets max-sm:order-last (+ a JSX comment). ESLint on the file exit 0; npm run typecheck exit 0; tests that scan the file (climate-room-membership, room-kinds) + borderless/neutral-palette/one-accent 24/24. Stand rebuilt after the edit (edit 23:24:45, build started 23:25:26, server 23:28:29; compiled CSS has max-sm:order-last); raw/e2e-tz2.mjs 58/58 incl. the V10 check. iPhone 13 /settings/buildings: names on one line (food 146x27), no pin under a chip (food: pin on the name row; medical: pin next to the chip). Desktop unchanged: 768/1024/1280 px name -> chip -> pin on one row, chip order 0. Cosmetic remnants (V10, minor, not blocking): the food card's pin sits alone on a middle row (above the chip) at 320-375 px, and alone under the name+chip row around 700 px. Per-AC statuses unchanged from round 2.",
   "judged": "Commit 4b619539a on claude/fervent-brown-ed5apv (clean working tree; a8d3695f4 = the round-1 tree, same 33 source files), 2026-11-24. Stand :3000: next build started 23:06:01 UTC, after the last source edit (23:01:05); server started 23:09:19. Only borderless.css / neutral-palette.css were rewritten afterwards, with identical content (no diff).",
   "criteria": {
     "AC1": "PASS",
@@ -37,8 +38,8 @@
       "severity": "minor",
       "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
       "line": 661,
-      "summary": "Cosmetic follow-up to the V2 fix: on phones, a food object's 2-line sphere chip takes the whole second row, so the pin button drops to a row of its own under it.",
-      "fix": "Optional: order the pin before the chip, or give the chip basis-full only below sm, so the pin stays next to the name."
+      "summary": "Round 3: partly resolved by max-sm:order-last. At 390-430 px no pin sits alone (food: pin on the name row; medical: pin next to the chip). Still cosmetic: a food card's pin is alone on a middle row, between the name and the chip, at 320-375 px (and on any phone when the name leaves no room for the pin). Around 700 px it is alone under the name+chip row. Measured on the stand at 320/360/375/390/412/430/600/639/640/700/744/767/768/800/820/900/1024/1100/1280 px.",
+      "fix": "Optional: keep the icon, name and pin in one non-wrapping group (e.g. <span class=\"flex min-w-0 items-center gap-2\">), with the chip as a separate wrapping item, so the pin always stays with the name."
     },
     {
       "id": "V6",
@@ -72,6 +73,11 @@
     "v3_phone": "card/text: iPhone 13 159/298, 320 px 179/228, Pixel 7 159/320 px",
     "desktop_sizes": "card 57/57/57/56 px, dialog extra 0 px at 1280x800, 1366x768, 1440x900, 1920x1080",
     "v4_v5_probe": "fresh object «Клиника verify 23:22:42»: card shown while empty; { sphere: medical } -> 200 lab-plan/pest-plan/norms; card hidden at readiness 25%; { sphere: food } -> 200; {} -> 400; bad kind -> 400",
-    "stand_side_effects": "e2e created «Клиника e2e 23:19:34»; the V4/V5 probe created and filled «Клиника verify 23:22:42»; admin's active object was restored to «Кафе «Ромашка»»"
+    "stand_side_effects": "e2e created «Клиника e2e 23:19:34»; the V4/V5 probe created and filled «Клиника verify 23:22:42»; admin's active object was restored to «Кафе «Ромашка»»",
+    "round3_eslint": "npx eslint --max-warnings=0 src/app/(dashboard)/settings/buildings/buildings-client.tsx -> exit 0",
+    "round3_typecheck": "npm run typecheck -> exit 0",
+    "round3_tests": "climate-room-membership, room-kinds, borderless, neutral-palette, one-accent -> 24/24",
+    "round3_stand_e2e": "raw/e2e-tz2.mjs -> 58/58 PASS (V10: pin never alone under a chip at 390 px), no page errors; created one more test object",
+    "round3_v10_widths": "food card pin alone: 320/360/375 px (middle row, above chip) and 700 px (below name+chip row); none at 390/412/430/600/639/640/744-1280 px. Medical cards: pin alone only at 320 px. Desktop 768/1024/1280: name -> chip -> pin, one row, chip order 0"
   }
 }
