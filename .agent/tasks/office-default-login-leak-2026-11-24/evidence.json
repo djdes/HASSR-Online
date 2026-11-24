@@ -30,6 +30,14 @@
       "local": "SMOKE_ONLY=browser npm run smoke:local: «ждут приёмки» PASS after POST /api/me/active-building; 47 of 48, the remaining failure is the older header hydration error (useId) from master (#321, #330)",
       "checksAfterFix": "npm run typecheck PASS; npm run test:changed (full, 45 code files) 7424/0",
       "file": "raw/ci-smoke-autoswitch.txt"
+    },
+    "ciSmokeDevOverlay": {
+      "on": "afa8bd771",
+      "failure": "step 3 crash: the Next.js dev overlay pill («3 Issues») intercepts the click on [data-ukep-start]",
+      "base": "same crash on a PR from master without this task: t3/mailings-channels, run 45366085009, head 553220994",
+      "fix": "scripts/smoke/new-features.smoke.cjs tap(): remove nextjs-portal before clicking, as screen()/shot() do; page errors are still collected",
+      "local": "raw/overlay-tap-check.cjs: intercepted by nextjs-portal before, clicked after removal; full smoke with both fixes: all 48 checks passed",
+      "file": "raw/ci-smoke-overlay.txt"
     }
   },
   "criteria": {

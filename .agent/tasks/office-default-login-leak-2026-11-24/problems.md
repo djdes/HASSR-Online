@@ -28,6 +28,12 @@ and the «Fixes after the fresh verifier (round 1…)» section of the spec).
   expected text is there (up to 60 s); the check itself is unchanged. Local smoke: the text check passes after
   `POST /api/me/active-building`; `raw/ci-smoke-autoswitch.txt`. The «нет ошибок страницы» hydration error (`useId`
   in the cabinet header) is older and comes from master (#321, #330).
+- **P4 (AC9, CI; base) — hardened in the smoke.** On `afa8bd771` the text check passed, then step 3 crashed: the Next.js
+  dev overlay pill («3 Issues», from console errors of the page load) lay over «Подписать УКЭП» and intercepted the
+  click (`<nextjs-portal> … intercepts pointer events`). A PR from master without this task crashed the same way
+  (`t3/mailings-channels`, run 45366085009). Fix: `tap()` removes the dev overlay node before clicking, as `screen()`
+  and `shot()` already do; page errors are still collected by the console listener. Local check
+  `raw/overlay-tap-check.cjs`: intercepted before, clicked after; `raw/ci-smoke-overlay.txt`.
 
 Round-1 notes that were fixed and re-checked: management bound to every object (or to the only object) stays
 company-wide; the deploy loop survives a failing company; the ROOT metrics no longer count the office; the

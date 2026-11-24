@@ -28,6 +28,9 @@
 | CI PR #332 на `ab835c837` (только `.agent/`) | смоук `04-acceptance: есть «ждут приёмки»` — FAIL (так же на `a071df0a2`, `bd26f8fcc`): страница скрыта скелетом `[data-content-pending]`, в шапке «Выберите объект» — шапка сама включает единственный объект (быстрая настройка теперь открывает офис), а смоук читал текст через фиксированные 1,5 с | `raw/ci-smoke-autoswitch.txt` |
 | Смоук с правкой ожидания (`settle()`), локально `SMOKE_ONLY=browser npm run smoke:local` | «ждут приёмки» — PASS после `POST /api/me/active-building` и обновления страницы; 47 из 48 — упала только «нет ошибок страницы»: давняя ошибка гидрации шапки (`useId`), та же у PR от master | `raw/ci-smoke-autoswitch.txt` |
 | `npm run typecheck`, `npm run test:changed` (полный прогон) с правкой смоука | PASS; 7424 проверки, 0 падений | — |
+| CI PR #332 на `afa8bd771` | «ждут приёмки» и 04/05 — PASS; затем смоук упал на шаге УКЭП: значок dev-сервера Next.js «3 Issues» лёг на «Подписать УКЭП» и перехватил нажатие. Так же падал PR от master без этой задачи (`t3/mailings-channels`, прогон 45366085009) | `raw/ci-smoke-overlay.txt` |
+| Значок dev-сервера, локально (`raw/overlay-tap-check.cjs`) | три ошибки консоли → «3 Issues» поверх окна УКЭП: нажатие `[data-ukep-start]` перехвачено; после удаления `nextjs-portal` (правка `tap()`) — нажато | `raw/ci-smoke-overlay.txt` |
+| Смоук с обеими правками, локально (`next dev` :3005, база смоука) | RESULT: all 48 checks passed | — |
 
 ## Критерии приёмки
 

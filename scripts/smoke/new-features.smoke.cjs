@@ -138,6 +138,10 @@ async function main() {
   async function tap(locator) {
     for (let attempt = 1; ; attempt += 1) {
       try {
+        // Значок dev-сервера Next.js («N Issues») — не часть приложения: на телефоне он ложится на
+        // кнопки внизу окна («Подписать УКЭП») и перехватывает нажатие. Ошибки страницы смоук
+        // ловит сам (`pageErrors`), значок для этого не нужен — убираем, как перед снимками.
+        await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((node) => node.remove()));
         await locator.click({ timeout: 10_000 });
         return;
       } catch (error) {
