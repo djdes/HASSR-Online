@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Activity, Link2, SearchCheck } from "lucide-react";
+import { Activity, Link2, SearchCheck, TextSearch } from "lucide-react";
 
-export type SeoSubnavTab = "health" | "positions" | "links";
+export type SeoSubnavTab = "health" | "positions" | "queries" | "links";
 
 export interface SeoSubnavProps {
   active: SeoSubnavTab;
@@ -51,6 +51,18 @@ export function SeoSubnav({ active, linksBadgeCount = 0 }: SeoSubnavProps) {
         <Link href="/root/seo/positions" className={INACTIVE_PILL_CLASS}>
           <Activity className="size-4 text-[#5566f6]" />
           Позиции
+        </Link>
+      )}
+
+      {active === "queries" ? (
+        <span aria-current="page" className={ACTIVE_PILL_CLASS}>
+          <TextSearch className="size-4" />
+          Запросы
+        </span>
+      ) : (
+        <Link href="/root/seo/queries" className={INACTIVE_PILL_CLASS}>
+          <TextSearch className="size-4 text-[#5566f6]" />
+          Запросы
         </Link>
       )}
 
