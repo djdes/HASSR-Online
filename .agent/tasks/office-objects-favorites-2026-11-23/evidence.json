@@ -21,7 +21,7 @@
       "fail": 0,
       "exit": 0,
       "file": "raw/test-gate.txt",
-      "on": "568c80207 (rerun on d81e7a2da in progress)"
+      "on": "d81e7a2da"
     },
     "i18nCheck": {
       "command": "npm run i18n:check",

@@ -17,7 +17,7 @@ SEO-запросов; `src` и тесты не меняются); master вли�
 | Проверка | Результат | Файл |
 | --- | --- | --- |
 | `npm run typecheck` после правок третьей проверки и слияний #325, #326 | PASS (exit 0) | `raw/typecheck.txt` |
-| `npm run test:gate` (схема меняется → полный прогон) | PASS — 7394 проверки, 0 падений на коде `568c80207`; повтор на `d81e7a2da` идёт | `raw/test-gate.txt` |
+| `npm run test:gate` (схема меняется → полный прогон) | PASS — 7394 проверки, 0 падений на `d81e7a2da` (и раньше на коде `568c80207`) | `raw/test-gate.txt` |
 | `npm run i18n:check` | PASS — 103 из 103 | `raw/i18n-check.txt` |
 | eslint по изменённым файлам кода | новых замечаний нет (сравнение с master по тем же файлам; после проверки ушли два старых предупреждения) | `raw/eslint.txt`, `raw/eslint-baseline.txt` |
 | `borderless.css`, `neutral-palette.css`, `message-contract.d.ts` | свежие (тесты-стражи в полном прогоне, `i18n:types --check`) | — |
