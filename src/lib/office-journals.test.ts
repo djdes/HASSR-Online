@@ -9,16 +9,19 @@ test("журнал офиса — на единственный объект", (
   assert.equal(officeJournalTarget([office, { id: "p1", kind: "point", sortOrder: 5, name: "Кафе" }]), "p1");
 });
 
-test("объектов несколько — на первый по списку: порядок объектов, затем название", () => {
+test("объектов несколько — первый по списку в порядке базы, как на странице «Объекты» и при переносе", () => {
+  // Список приходит из базы уже упорядоченным (порядок объектов, затем название — `orderBy` базы).
+  // Сортировка JS («ru») ставит «Кафе» раньше «Cafe Mira», база — наоборот: берём порядок базы.
   const buildings = [
     office,
-    { id: "p2", kind: "point", sortOrder: 1, name: "Цех" },
-    { id: "p3", kind: "point", sortOrder: 0, name: "Склад" },
-    { id: "p1", kind: "point", sortOrder: 0, name: "Кафе" },
+    { id: "latin", kind: "point", sortOrder: 0, name: "Cafe Mira" },
+    { id: "cyr", kind: "point", sortOrder: 0, name: "Кафе" },
+    { id: "late", kind: "point", sortOrder: 1, name: "Аптека" },
   ];
-  assert.equal(officeJournalTarget(buildings), "p1");
+  assert.equal(officeJournalTarget(buildings), "latin");
   // Вид не задан — объект (как в базе по умолчанию).
-  assert.equal(officeJournalTarget([office, { id: "x", sortOrder: 0, name: "Без вида" }]), "x");
+  const withoutKind = { id: "x", sortOrder: 0, name: "Без вида" };
+  assert.equal(officeJournalTarget([office, withoutKind]), "x");
 });
 
 test("объектов нет — переносить некуда", () => {
@@ -130,16 +133,26 @@ test("перенос журналов офиса: без дублей на об�
 });
 
 test("создание документа: офис из оборудования, помещения, сотрудника или точки приёмки → первый по списку объект", async () => {
+  const calls: unknown[] = [];
   const client = {
     building: {
-      findMany: async () => [
-        { id: "O", kind: "office", sortOrder: 0, name: "Офис" },
-        { id: "B", kind: null, sortOrder: 2, name: "Склад" },
-        { id: "A", kind: null, sortOrder: 1, name: "Цех" },
-      ],
+      // База отдаёт здания в порядке `orderBy`: первый объект — тот же, что при переносе журналов офиса.
+      findMany: async (args: unknown) => {
+        calls.push(args);
+        return [
+          { id: "O", kind: "office", sortOrder: 0, name: "Офис" },
+          { id: "A", kind: null, sortOrder: 0, name: "Cafe Mira" },
+          { id: "B", kind: null, sortOrder: 0, name: "Кафе" },
+        ];
+      },
     },
   };
   assert.equal(await documentBuildingFor(client, "org", "O"), "A");
+  assert.deepEqual(calls[0], {
+    where: { organizationId: "org" },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { id: true, kind: true },
+  }, "порядок базы — как у переноса (office-journals.server.ts) и страницы «Объекты»");
   assert.equal(await documentBuildingFor(client, "org", "B"), "B");
   assert.equal(await documentBuildingFor(client, "org", null), null);
   const officeOnly = { building: { findMany: async () => [{ id: "O", kind: "office", sortOrder: 0, name: "Офис" }] } };

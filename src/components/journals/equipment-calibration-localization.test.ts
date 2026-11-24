@@ -75,3 +75,13 @@ test("calibration HTTP/network errors retain useful meanings without displaying 
   assert.equal(calibrationErrorKey("DOCUMENT_CLOSED", "save"), "closed");
   assert.equal(calibrationErrorKey("Unhandled raw detail", "copy"), "copy");
 });
+
+test("«Сделать копию» на «Выберите объект»: тост «Выберите объект…», а не «Проверьте введённые данные»", async () => {
+  // Офис — не объект (2026-11-23): API создания отвечает 400 с кодом point_required.
+  const body = JSON.stringify({ error: "Выберите объект: документ журнала создаётся для объекта.", code: "point_required" });
+  await assert.rejects(checkCalibrationResponse(new Response(body, { status: 400 }), "copy"), error => calibrationErrorKey(error, "copy") === "pointRequired");
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = await loadMessages(locale);
+    assert.equal(messages.equipmentCalibration.errors.pointRequired, messages.journalControls.documentDialog.pointRequired, locale);
+  }
+});

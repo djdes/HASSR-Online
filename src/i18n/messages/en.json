@@ -11804,7 +11804,8 @@
       "unauthorized": "Please sign in",
       "notFound": "Document not found",
       "closed": "The document is closed. Reopen it to edit.",
-      "invalid": "Check the entered information"
+      "invalid": "Check the entered information",
+      "pointRequired": "Choose a site: a journal document is created for a site"
     },
     "noName": "no name"
   },

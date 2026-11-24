@@ -11804,7 +11804,8 @@
       "unauthorized": "Tizimga kiring",
       "notFound": "Hujjat topilmadi",
       "closed": "Hujjat yopilgan. Tahrirlash uchun uni qayta oching.",
-      "invalid": "Kiritilgan ma’lumotlarni tekshiring"
+      "invalid": "Kiritilgan ma’lumotlarni tekshiring",
+      "pointRequired": "Nuqtani tanlang: jurnal hujjati nuqta uchun yaratiladi"
     },
     "noName": "ismsiz"
   },

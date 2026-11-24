@@ -782,14 +782,14 @@ export async function dispatchExternalEntries(params: {
   // Точки организации: id объектов или `[null]` без точек. Офис — не объект
   // (2026-11-23): документ на офис не заводится. Запрос с id офиса и строки
   // сотрудников офиса идут на объект, куда перенесены журналы офиса
-  // (`officeJournalTarget`, финальная проверка 2026-11-24).
+  // (`officeJournalTarget`: первый объект в порядке базы, финальная проверка 2026-11-24).
   const targets = await documentBuildingTargets(organizationId);
   const pointsEnabled = targets.some(Boolean);
   const buildings = pointsEnabled
     ? await db.building.findMany({
         where: { organizationId },
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-        select: { id: true, name: true, address: true, kind: true, sortOrder: true },
+        select: { id: true, name: true, address: true, kind: true },
       })
     : [];
   const officeTarget = officeJournalTarget(buildings);

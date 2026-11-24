@@ -9,19 +9,19 @@ import { isOfficeBuilding, type BuildingOption } from "@/lib/building-scope";
  * перенос на деплое (`prisma/seed-office-journals-to-points-2026-11.ts`) и тесты.
  */
 
-/** Здание организации для выбора объекта: вид, место в списке, название. */
-export type OrderedBuilding = { id: string; kind?: string | null; sortOrder: number; name: string };
+/** Здание организации в порядке списка: id и вид (офис или объект). */
+export type OrderedBuilding = { id: string; kind?: string | null };
 
 /**
  * Куда перенести документ офиса: единственный объект организации, а если
- * объектов несколько — первый по списку (порядок объектов, затем название,
- * как в шапке и на странице «Объекты»). Объектов нет — null: переносить некуда.
+ * объектов несколько — первый по списку. Список — из базы в порядке
+ * `orderBy: [{ sortOrder: "asc" }, { name: "asc" }]`, как на странице
+ * «Объекты» и при переносе журналов офиса: своей сортировки здесь нет —
+ * сравнение названий в JS («ru») и в базе расходится (финальная проверка
+ * 2026-11-24). Объектов нет — null: переносить некуда.
  */
 export function officeJournalTarget(buildings: readonly OrderedBuilding[]): string | null {
-  const points = buildings
-    .filter((building) => !isOfficeBuilding(building))
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "ru"));
-  return points[0]?.id ?? null;
+  return buildings.find((building) => !isOfficeBuilding(building))?.id ?? null;
 }
 
 /** Клиент базы для `documentBuildingFor`: нужен только список зданий организации. */
@@ -29,7 +29,8 @@ export type OrganizationBuildingsClient = {
   building: {
     findMany(args: {
       where: { organizationId: string };
-      select: { id: true; kind: true; sortOrder: true; name: true };
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }];
+      select: { id: true; kind: true };
     }): Promise<OrderedBuilding[]>;
   };
 };
@@ -50,7 +51,8 @@ export async function documentBuildingFor(
   if (!buildingId) return null;
   const buildings = await client.building.findMany({
     where: { organizationId },
-    select: { id: true, kind: true, sortOrder: true, name: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { id: true, kind: true },
   });
   const building = buildings.find((item) => item.id === buildingId);
   if (!building || !isOfficeBuilding(building)) return buildingId;
