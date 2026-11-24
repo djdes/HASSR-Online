@@ -825,38 +825,38 @@ export function CreateDocumentDialog({
           )}
 
           {pointChoice ? (
-            <FloatingSelectField
-              id="doc-point"
-              label={dialogT("pointLabel")}
-              value={pointId}
-              onChange={(value) => {
-                setPointId(value);
-                setPointError("");
-              }}
-              disabled={pointChoice.options.length === 0}
-              error={pointError || undefined}
-              hint={
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  {pointChoice.options.length === 0 ? <span>{dialogT("pointEmpty")}</span> : null}
-                  {pointChoice.createHref ? (
-                    <Link
-                      href={pointChoice.createHref}
-                      className="font-medium text-[#3848c7] underline-offset-2 hover:underline"
-                      data-create-point-link
-                    >
-                      {dialogT("pointCreate")}
-                    </Link>
-                  ) : null}
-                </span>
-              }
-            >
-              <option value="">{dialogT("pointPlaceholder")}</option>
-              {pointChoice.options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </FloatingSelectField>
+            <div className="space-y-1.5" data-create-point-field>
+              <FloatingSelectField
+                id="doc-point"
+                label={dialogT("pointLabel")}
+                required
+                value={pointId}
+                onChange={(value) => {
+                  setPointId(value);
+                  setPointError("");
+                }}
+                disabled={pointChoice.options.length === 0}
+                error={pointError || undefined}
+                hint={pointChoice.options.length === 0 ? dialogT("pointEmpty") : undefined}
+              >
+                <option value="">{dialogT("pointPlaceholder")}</option>
+                {pointChoice.options.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </FloatingSelectField>
+              {pointChoice.createHref ? (
+                <Link
+                  href={pointChoice.createHref}
+                  className="inline-flex items-center gap-1 rounded-lg px-1 text-[13px] font-medium text-[#3848c7] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+                  data-create-point-link
+                >
+                  <Plus className="size-3.5" aria-hidden />
+                  {dialogT("pointCreate")}
+                </Link>
+              ) : null}
+            </div>
           ) : null}
 
           {isCompactSourceModal ? (

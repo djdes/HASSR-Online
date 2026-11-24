@@ -193,6 +193,7 @@ export function FloatingSelectField({
   className,
   hint,
   error,
+  required,
 }: {
   label: string;
   value: string;
@@ -204,11 +205,13 @@ export function FloatingSelectField({
   className?: string;
   hint?: ReactNode;
   error?: ReactNode;
+  /** Обязательное поле — красная точка у подписи. */
+  required?: boolean;
 }) {
   const generatedId = useId();
   const fieldId = id || generatedId;
   return (
-    <FloatingLabelField label={label} htmlFor={fieldId} className={className} hint={hint} error={error}>
+    <FloatingLabelField label={label} htmlFor={fieldId} className={className} hint={hint} error={error} required={required}>
       <span className="relative block">
         <select
           id={fieldId}
