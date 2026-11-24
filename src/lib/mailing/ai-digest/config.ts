@@ -114,6 +114,7 @@ export const DEFAULT_AI_DIGEST_CONFIG: AiDigestConfig = {
     "💡 {topTip}",
     "Полная сводка — на почте.",
   ].join("\n"),
+  telegramExtra: [],
 };
 
 function str(value: unknown, max: number, fallback: string): string {
