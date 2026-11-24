@@ -149,9 +149,25 @@ async function loadGsc(keyPath: string, siteUrl: string, from: string, to: strin
     console.log(`  GSC: строки ${startRow + 1}…${startRow + page.length}`);
     if (page.length < rowLimit) break;
   }
+  // По страницам без запроса: сюда входят и анонимизированные запросы, поэтому клики по странице полные.
+  const pageRows: GscRow[] = [];
+  for (let startRow = 0; ; startRow += rowLimit) {
+    const page = await gscQuery(token, siteUrl, { ...base, dimensions: ["page"], rowLimit, startRow });
+    pageRows.push(...page);
+    if (page.length < rowLimit) break;
+  }
   // Итог без измерений — совпадает с графиком в интерфейсе GSC (с анонимизированными запросами).
   const [total] = await gscQuery(token, siteUrl, { ...base });
-  return { rows, total: total ?? { clicks: 0, impressions: 0, ctr: 0, position: 0 } };
+  // За какие дни в GSC реально есть данные: ресурс мог появиться позже начала периода,
+  // а последние 2–3 дня Google ещё не обработал.
+  const days = (await gscQuery(token, siteUrl, { ...base, dimensions: ["date"], rowLimit })).map((r) => r.keys![0]).sort();
+  return {
+    rows,
+    pageRows,
+    total: total ?? { clicks: 0, impressions: 0, ctr: 0, position: 0 },
+    firstDay: days[0] ?? null,
+    lastDay: days.at(-1) ?? null,
+  };
 }
 
 // ---------- Яндекс Метрика ----------
@@ -412,9 +428,20 @@ async function main() {
   const googleTotals = behaviorFrom(gPages.totals, goals);
 
   let gsc: Awaited<ReturnType<typeof loadGsc>> | null = null;
+  let gscRangeNote = "";
+  let metrikaInGscRange: number | null = null;
   if (!args.skipGsc) {
     console.log(`Search Console: ${siteUrl}…`);
     gsc = await loadGsc(keyPath!, siteUrl, args.from, args.to);
+    if (gsc.firstDay && gsc.lastDay && (gsc.firstDay > args.from || gsc.lastDay < args.to)) {
+      const m2 = new Metrika(metrikaToken!, counterId!, gsc.firstDay, gsc.lastDay);
+      metrikaInGscRange = (await m2.report([], ["ym:s:visits"], GOOGLE)).totals["ym:s:visits"] ?? 0;
+      gscRangeNote =
+        `В Search Console есть данные только за ${gsc.firstDay} — ${gsc.lastDay} (запрошено ${args.from} — ${args.to}): ` +
+        `ресурс добавлен позже начала периода и/или Google ещё не обработал последние дни. Метрика в выгрузке — за весь запрошенный период ` +
+        `(визитов из Google ${googleTotals.visits}); за те же дни, что и GSC, визитов из Google ${metrikaInGscRange}.`;
+      console.warn(`\n⚠ ${gscRangeNote}\n`);
+    }
   }
 
   // ----- лист «Google — запросы» -----
@@ -466,22 +493,34 @@ async function main() {
   );
 
   // ----- лист «Google — страницы» -----
-  type PageAgg = { clicks: number; impressions: number; posW: number; queries: { q: string; clicks: number; impressions: number }[] };
+  // Клики и показы страницы — из GSC по измерению page (полные, с анонимизированными запросами);
+  // запросы и «клики по известным запросам» — из пар query+page.
+  type PageAgg = { clicks: number; impressions: number; posW: number };
   const pages = new Map<string, PageAgg>();
-  for (const r of gscRows) {
-    const p = pages.get(r.norm) ?? { clicks: 0, impressions: 0, posW: 0, queries: [] };
+  for (const r of gsc?.pageRows ?? []) {
+    const key = normalizeUrl(r.keys![0]);
+    const p = pages.get(key) ?? { clicks: 0, impressions: 0, posW: 0 };
     p.clicks += r.clicks;
     p.impressions += r.impressions;
     p.posW += r.position * r.impressions;
-    p.queries.push({ q: r.query, clicks: r.clicks, impressions: r.impressions });
-    pages.set(r.norm, p);
+    pages.set(key, p);
   }
-  const allPages = new Set([...pages.keys(), ...behaviorByPage.keys()]);
+  const pageQueries = new Map<string, { q: string; clicks: number; impressions: number }[]>();
+  for (const r of gscRows) {
+    const list = pageQueries.get(r.norm) ?? [];
+    list.push({ q: r.query, clicks: r.clicks, impressions: r.impressions });
+    pageQueries.set(r.norm, list);
+  }
+  const pTotClicks = [...pages.values()].reduce((s, p) => s + p.clicks, 0);
+  const pTotImpr = [...pages.values()].reduce((s, p) => s + p.impressions, 0);
+  const pTotPos = pTotImpr ? [...pages.values()].reduce((s, p) => s + p.posW, 0) / pTotImpr : 0;
+  const allPages = new Set([...pages.keys(), ...pageQueries.keys(), ...behaviorByPage.keys()]);
   const pageRows = [...allPages]
     .map((page) => {
       const p = pages.get(page);
+      const qs = pageQueries.get(page) ?? [];
       const b = behaviorByPage.get(page);
-      const top = (p?.queries ?? [])
+      const top = [...qs]
         .sort((a, b2) => b2.clicks - a.clicks || b2.impressions - a.impressions)
         .slice(0, 5)
         .map((q) => q.q)
@@ -492,7 +531,8 @@ async function main() {
         impressions: p?.impressions ?? 0,
         ctr: p?.impressions ? p.clicks / p.impressions : 0,
         position: p?.impressions ? p.posW / p.impressions : null,
-        queriesCount: p?.queries.length ?? 0,
+        knownClicks: qs.reduce((s, q) => s + q.clicks, 0),
+        queriesCount: qs.length,
         ...behaviorValues(b, goals),
         top,
         _visits: b?.visits ?? 0,
@@ -507,16 +547,18 @@ async function main() {
     [
       { header: "Страница входа", key: "page", width: 40 },
       ...gscCols,
+      { header: "Клики по известным запросам", key: "knownClicks", width: 12, fmt: FMT.int },
       { header: "Запросов (GSC)", key: "queriesCount", width: 10, fmt: FMT.int },
       ...behaviorCols(goals, " (Метрика)"),
       { header: "Топ-5 запросов", key: "top", width: 80 },
     ],
     {
       page: "Итого и средние",
-      clicks: sumClicks,
-      impressions: sumImpr,
-      ctr: sumImpr ? sumClicks / sumImpr : 0,
-      position: avgPos,
+      clicks: pTotClicks,
+      impressions: pTotImpr,
+      ctr: pTotImpr ? pTotClicks / pTotImpr : 0,
+      position: pTotPos,
+      knownClicks: sumClicks,
       queriesCount: gscRows.length,
       ...behaviorValues(googleTotals, goals),
       top: "",
@@ -549,13 +591,14 @@ async function main() {
   const yandexAll = yTotalAll.totals["ym:s:visits"] ?? 0;
   const lines: [string, string][] = [
     ["Период", `${args.from} — ${args.to}`],
+    ...(gscRangeNote ? [["Данные Search Console", gscRangeNote] as [string, string]] : []),
     ["Сформировано", new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" }) + " (МСК)"],
     ["Источник запросов Google", gsc ? `Google Search Console, ресурс ${siteUrl}, searchanalytics.query, измерения query+page, тип web` : "Search Console не подключена (запуск с --skip-gsc)"],
     ["Источник поведения", `Яндекс Метрика, счётчик ${counterId}, Reporting API, accuracy=full, атрибуция «последний значимый переход» (ym:s:lastsign…)`],
     ["Почему так", "Google не передаёт поисковую фразу сайту (not provided), поэтому в Метрике фраз из Google нет. Фразы и клики берём из Search Console, а поведение — из Метрики по странице входа для визитов из Google, и склеиваем по URL."],
     ["Важно", "Визиты, посетители, отказы, глубина, время и цели в листе «Google — запросы» относятся к СТРАНИЦЕ ВХОДА, а не к конкретной фразе. Если на страницу ведут несколько запросов, у всех этих строк одинаковые поведенческие цифры: визиты между запросами не делятся, и складывать их по строкам нельзя."],
     ["Строка «Итого и средние»", "Клики и показы — сумма по строкам, CTR = клики / показы, позиция — средневзвешенная по показам. Поведенческие итоги — общие цифры Метрики по всем визитам из Google за период (а не сумма по строкам)."],
-    ["Клики GSC меньше, чем в интерфейсе", gsc ? `В интерфейсе GSC за период: ${gsc.total.clicks} кликов, ${gsc.total.impressions} показов. В выгрузке по запросам: ${sumClicks} кликов, ${sumImpr} показов. Разница — анонимизированные (редкие) запросы, Google их не отдаёт.` : "—"],
+    ["Клики GSC меньше, чем в интерфейсе", gsc ? `В интерфейсе GSC за период: ${gsc.total.clicks} кликов, ${gsc.total.impressions} показов. В выгрузке по запросам: ${sumClicks} кликов, ${sumImpr} показов. Разница — анонимизированные (редкие) запросы, Google их не отдаёт. На листе «Google — страницы» клики и показы взяты по страницам целиком (${pTotClicks} кликов, с анонимизированными запросами; немного расходятся с итогом, потому что Google по-разному агрегирует по ресурсу и по страницам), а клики по известным запросам — отдельной колонкой.` : "—"],
     ["Клики GSC ≠ визиты Метрики", "Клик в выдаче и визит — разные события: часть посетителей блокирует счётчик, уходит до загрузки страницы, Метрика отсекает роботов, а GSC считает клики по своим правилам. Сравнивайте тенденции, а не точные числа."],
     ["Нормализация URL", "Протокол и www убраны, UTM и прочие параметры, #якорь удалены, завершающий слэш убран (корень — «wesetup.ru/»), URL-кодировка раскодирована. Если в Метрике у одной страницы несколько адресов (например, с UTM), визиты сложены, а доли и средние пересчитаны по визитам; посетители в этом случае сложены приблизительно."],
     ["Яндекс — фразы", `Отчёт Метрики «Поисковые фразы»: группировка ym:s:lastsignSearchPhrase + ym:s:lastsignSearchEngine, фильтр ym:s:lastsignSearchEngineRoot=='yandex'. Визитов с известной фразой: ${yandexWithPhrase} из ${yandexAll} из Яндекса — у остальных фраза не определена, как и в интерфейсе.`],
@@ -575,7 +618,10 @@ async function main() {
   console.log("\nСверка:");
   if (gsc) {
     console.log(`  GSC, интерфейс (без измерений): клики ${gsc.total.clicks}, показы ${gsc.total.impressions}`);
+    console.log(`  GSC, по страницам:              клики ${pTotClicks}, показы ${pTotImpr}, страниц ${pages.size}`);
     console.log(`  GSC, по запросам и страницам:   клики ${sumClicks}, показы ${sumImpr}, строк ${gscRows.length}`);
+    console.log(`  GSC, дни с данными:             ${gsc.firstDay ?? "—"} — ${gsc.lastDay ?? "—"}`);
+    if (metrikaInGscRange !== null) console.log(`  Метрика, визиты из Google за дни GSC: ${metrikaInGscRange}`);
   }
   console.log(`  Метрика, визиты из Google:  ${googleTotals.visits} (страниц входа ${behaviorByPage.size})`);
   console.log(`  Метрика, визиты из Яндекса: ${yandexAll}, из них с фразой ${yandexWithPhrase} (${yPhrases.rows.length} строк)`);
