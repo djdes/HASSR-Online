@@ -1,0 +1,13 @@
+
+/home/user/HASSR-Online/src/app/(dashboard)/journals/[code]/page.tsx
+    12:31  warning  'redirect' is defined but never used. Allowed unused vars must match /^_/u                                                                                               @typescript-eslint/no-unused-vars
+  1434:15  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+/home/user/HASSR-Online/src/app/api/journal-documents/route.ts
+   29:3   warning  'getDefaultClimateDocumentConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   72:3   warning  'normalizeSanitationDayConfig' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  126:31  warning  'canWriteJournal' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+
+✖ 5 problems (1 error, 4 warnings)
+
+EXIT 1

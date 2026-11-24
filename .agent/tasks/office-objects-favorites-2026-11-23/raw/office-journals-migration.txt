@@ -1,0 +1,16 @@
+## before
+Гигиена (создан в офисе)|Офис|office
+Журнал холодильников (создан в офисе)|Офис|office
+## dry-run
+[office-journals:dry-run] cmwtln1qc00001a7dy0zzugat: office cmwtln1r000011a7dt372otba → cmwtln1r400021a7d7na25zoj; documents 2, paper 0
+[office-journals:dry-run] organizations 1 (without sites 0); would move documents 2, paper 0
+## apply
+[office-journals] cmwtln1qc00001a7dy0zzugat: office cmwtln1r000011a7dt372otba → cmwtln1r400021a7d7na25zoj; documents 2, paper 0
+[office-journals] organizations 1 (without sites 0); moved documents 2, paper 0
+## second run
+[office-journals] once:office-journals-to-points:v1: already done
+## after
+Гигиена (создан в офисе)|Цех пищевых продуктов|point
+Журнал холодильников (создан в офисе)|Цех пищевых продуктов|point
+## audit
+journals.office_to_point|{"officeId": "cmwtln1r000011a7dt372otba", "targetId": "cmwtln1r400021a7d7na25zoj", "documents": 2, "paperDocuments": 0}

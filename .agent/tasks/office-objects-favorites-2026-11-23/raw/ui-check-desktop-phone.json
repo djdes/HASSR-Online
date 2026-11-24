@@ -1,0 +1,114 @@
+{
+  "AC1_office_trigger": {
+    "state": "choose",
+    "text": "Выберите объект",
+    "hasCaptionOrganization": false
+  },
+  "AC1_menu": {
+    "options": [
+      "Цех пищевых продуктовАпрелевка, ул. Августовская, 1/19",
+      "Кафе на Мирапр. Мира, 5",
+      "Складул. Складская, 3"
+    ],
+    "office": false,
+    "create": 1,
+    "activeChecked": 0
+  },
+  "AC6_after_pin_menu": {
+    "first": "Складул. Складская, 3",
+    "pinned": 1
+  },
+  "AC2_manual_switch": {
+    "url": "/settings/buildings/cmwtln1r600031a7d1oku1c57",
+    "header": "ОБЪЕКТ Кафе на Мира",
+    "toasts": 0
+  },
+  "AC3_company_section": {
+    "header": "Выберите объект",
+    "toasts": 0
+  },
+  "AC3_object_section_restore": {
+    "header": "ОБЪЕКТ Кафе на Мира",
+    "toasts": 0
+  },
+  "AC9_top_menu": {
+    "hasTrigger": true,
+    "panelOpen": 1,
+    "urlUnchanged": true,
+    "panelRows": 6
+  },
+  "AC12_areas_guide": {
+    "guideFound": true,
+    "grouping": false,
+    "tempMaps": false,
+    "workshop": false
+  },
+  "AC10_star": {
+    "found": true,
+    "visible": true,
+    "where": "top-row",
+    "favoriteAfterClick": true
+  },
+  "AC10_context_menu": {
+    "open": 1,
+    "items": [
+      "Добавить в избранное",
+      "Открыть в новой вкладке"
+    ]
+  },
+  "AC10_home": {
+    "cards": [
+      "/settings/equipment"
+    ],
+    "empty": 2
+  },
+  "AC7_office_blocks": {
+    "leaders": [
+      "ДДДмитрий ДиректорУправляющий",
+      "ОВОльга ВладелецУправляющий"
+    ],
+    "journalsButtons": 3,
+    "createPoint": 1,
+    "pointsAll": 1,
+    "equipment": [
+      "Цех пищевых продуктов2 единицы",
+      "Кафе на Мира1 единица",
+      "Склад1 единица"
+    ]
+  },
+  "AC8_users_page": {
+    "url": "/settings/users?place=all",
+    "header": "Выберите объект",
+    "toasts": 0
+  },
+  "AC8_place_pills": {
+    "expanded": 0,
+    "pills": []
+  },
+  "AC4_notice": {
+    "header": "Выберите объект",
+    "notice": 1,
+    "noticeButtons": 3,
+    "create": 1
+  },
+  "AC4_api_without_point": {
+    "status": 400,
+    "code": "point_required"
+  },
+  "AC4_dialog_field": {
+    "pointSelect": 1,
+    "options": [
+      "Выберите объект",
+      "Цех пищевых продуктов",
+      "Кафе на Мира",
+      "Склад"
+    ],
+    "createLink": 1
+  },
+  "AC4_notice_choose": {
+    "header": "ОБЪЕКТ Цех пищевых продуктов",
+    "notice": 0,
+    "toasts": 0
+  },
+  "error": "TimeoutError: locator.click: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href*=\"/journals/cold_equipment_control/documents/\"]').first()\u001b[22m\n\u001b[2m    - locator resolved to <a href=\"/journals/cold_equipment_control/documents/cmwtln1sp000i1a7d0v8qrsbi\" class=\"text-[16px] font-bold leading-[1.35] tracking-[-0.02em] text-black [overflow-wrap:anywhere]\">Журнал холодильников (создан в офисе)</a>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <li class=\"flex gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5\">…</li> from <div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fill-guide-title\" class=\"fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <li class=\"flex gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5\">…</li> from <div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fill-guide-title\" class=\"fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    222 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m        - element is visible, enabled and stable\u001b[22m\n\u001b[2m        - scrolling into view if needed\u001b[22m\n\u001b[2m        - done scrolling\u001b[22m\n\u001b[2m        - <li class=\"flex gap-3 rounded-2xl border border-[#ececf4] bg-white p-3.5\">…</li> from <div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"fill-guide-title\" class=\"fixed inset-0 z-[60] flex items-end justify-center p-0 sm:items-center sm:p-4\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m      - retrying click action\u001b[22m\n\u001b[2m        - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n"
+}
