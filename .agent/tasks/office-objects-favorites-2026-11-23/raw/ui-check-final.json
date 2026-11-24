@@ -1,0 +1,210 @@
+{
+  "startedAt": "2026-11-24T05:31:17.961Z",
+  "AC1_office_trigger": {
+    "state": "choose",
+    "text": "Выберите объект",
+    "captionOrganization": false
+  },
+  "AC1_menu": {
+    "options": [
+      "Цех пищевых продуктов Апрелевка, ул. Августовская, 1/19",
+      "Кафе на Мира пр. Мира, 5",
+      "Склад ул. Складская, 3"
+    ],
+    "office": false,
+    "wholeOrganization": false,
+    "create": 1,
+    "activeChecked": 0
+  },
+  "AC6_pin_in_header": {
+    "first": "Склад ул. Складская, 3",
+    "pinned": 1,
+    "menuStillOpen": 1,
+    "urlUnchanged": true
+  },
+  "AC2_manual_switch": {
+    "url": "/settings/buildings/cmwtln1r600031a7d1oku1c57",
+    "ms": 910,
+    "header": "ОБЪЕКТ Кафе на Мира",
+    "toasts": 0
+  },
+  "AC3_company_section": {
+    "header": "Выберите объект",
+    "toasts": 0
+  },
+  "AC3_object_section_restore": {
+    "header": "ОБЪЕКТ Кафе на Мира",
+    "toasts": 0
+  },
+  "AC9_top_menu": {
+    "hasTrigger": true,
+    "panelOpen": 1,
+    "urlUnchanged": true,
+    "panelRows": [
+      "Сегодня",
+      "Проверка записей",
+      "Настройка журналов",
+      "Стандартный набор",
+      "Набор по ХАССП",
+      "Дополнительные"
+    ]
+  },
+  "AC12_areas_guide": {
+    "guideTitle": true,
+    "workshop": true,
+    "tempMaps": true,
+    "grouping": false
+  },
+  "AC10_star": {
+    "found": true,
+    "where": "top-row",
+    "visibleOnHover": true,
+    "favoriteAfterClick": true,
+    "toastAfterClick": [
+      "Добавлено в избранное на главной"
+    ]
+  },
+  "AC10_context_menu": {
+    "open": 1,
+    "items": [
+      "Добавить в избранное",
+      "Открыть в новой вкладке"
+    ]
+  },
+  "AC10_home": {
+    "cards": [
+      "/settings/equipment"
+    ],
+    "emptySlots": 2,
+    "header": "ОБЪЕКТ Кафе на Мира"
+  },
+  "AC7_office_blocks": {
+    "leaders": [
+      "ДДДмитрий ДиректорДиректор",
+      "ОВОльга ВладелецДиректор"
+    ],
+    "staffAll": 1,
+    "journalsButtons": 3,
+    "createPoint": 1,
+    "pointsAll": 1,
+    "equipment": [
+      "Цех пищевых продуктов4 единицы",
+      "Кафе на Мира1 единица",
+      "Склад1 единица"
+    ]
+  },
+  "AC8_users_page": {
+    "url": "/settings/users?place=all",
+    "header": "Выберите объект",
+    "toasts": 0
+  },
+  "AC8_place_pills": {
+    "expanded": 4,
+    "pills": [
+      {
+        "text": "Цех пищевых продуктов",
+        "none": false,
+        "row": "Зоя ЗаведующаяЦех пищевых продуктов+7 99"
+      },
+      {
+        "text": "Без объекта",
+        "none": true,
+        "row": "Иван ОфициантБез объекта+7 999 000-00-00"
+      }
+    ]
+  },
+  "AC8_pill_opens_edit": {
+    "dialog": 1,
+    "whereWorks": true,
+    "pointNamed": true
+  },
+  "AC4_notice": {
+    "header": "Выберите объект",
+    "notice": 1,
+    "noticeText": "Документ журнала создаётся для объекта Офис — не объект. Выберите объект — новые документы журнала будут вестись на нём. Цех пищевых продуктов Кафе на Мира Склад Создать объект",
+    "noticeButtons": 3,
+    "create": 1,
+    "toasts": 0
+  },
+  "AC4_api_without_point": {
+    "status": 400,
+    "code": "point_required",
+    "error": "Выберите объект: документ журнала создаётся для объекта."
+  },
+  "AC4_dialog_field": {
+    "pointSelect": 1,
+    "requiredMark": 1,
+    "options": [
+      "Выберите объект",
+      "Цех пищевых продуктов",
+      "Кафе на Мира",
+      "Склад"
+    ],
+    "createLink": 1,
+    "submitWithoutObject": {
+      "fieldError": true,
+      "postsSent": 0,
+      "dialogOpen": 1
+    }
+  },
+  "AC4_notice_choose": {
+    "header": "ОБЪЕКТ Цех пищевых продуктов",
+    "notice": 0,
+    "toasts": 0
+  },
+  "AC11_qr_api": {
+    "status": 404,
+    "body": {
+      "error": "Оборудование не найдено в справочнике",
+      "code": "missing"
+    }
+  },
+  "AC11_qr_missing": {
+    "missing": 1,
+    "text": "QR-КОД ДЛЯ ЗАПОЛНЕНИЯ С ТЕЛЕФОНА Этого оборудования больше нет в справочнике. Нажмите «Сохранить» — строка снова попадёт в справочник и получит QR-код.",
+    "retry": 0,
+    "objectNotFound": 0
+  },
+  "AC11_after_save": {
+    "missing": 0,
+    "qrSvg": 7,
+    "dialogOpen": 1
+  },
+  "phone_bar": {
+    "text": "Выберите объект"
+  },
+  "phone_sheet": {
+    "options": [
+      "Склад ул. Складская, 3",
+      "Цех пищевых продуктов Апрелевка, ул. Августовская, 1/19",
+      "Кафе на Мира пр. Мира, 5"
+    ],
+    "pins": 3,
+    "create": 1,
+    "visibleStars": 0
+  },
+  "phone_pin": {
+    "sheetStillOpen": 3,
+    "pinned": 2,
+    "url": "/settings/organization/office"
+  },
+  "mini_switcher": {
+    "options": [
+      "Цех пищевых продуктов Апрелевка, ул. Августовская, 1/19",
+      "Кафе на Мира пр. Мира, 5",
+      "Склад ул. Складская, 3"
+    ],
+    "pressed": 0,
+    "office": false,
+    "wholeOrganization": false,
+    "chooseLabel": true
+  },
+  "mini_switch": {
+    "pressed": 1,
+    "toasts": 0
+  },
+  "dark_theme": {
+    "attr": "dark"
+  },
+  "finishedAt": "2026-11-24T05:35:37.978Z"
+}

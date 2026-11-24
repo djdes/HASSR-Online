@@ -1,13 +1,41 @@
+# eslint on origin/master (bce1e012b) versions of the same files (stdin)
 
-/tmp/claude-0/-home-user-HASSR-Online/9db99cea-0bbc-5d62-bbca-aabb50b143e4/scratchpad/baseline/master/src/app/(dashboard)/journals/[code]/page.tsx
+/home/user/HASSR-Online/src/app/(dashboard)/journals/[code]/page.tsx
     12:31  warning  'redirect' is defined but never used. Allowed unused vars must match /^_/u                                                                                               @typescript-eslint/no-unused-vars
   1433:15  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
 
-/tmp/claude-0/-home-user-HASSR-Online/9db99cea-0bbc-5d62-bbca-aabb50b143e4/scratchpad/baseline/master/src/app/api/journal-documents/route.ts
-   28:3   warning  'getDefaultClimateDocumentConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-   71:3   warning  'normalizeSanitationDayConfig' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
-  125:31  warning  'canWriteJournal' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+✖ 2 problems (1 error, 1 warning)
 
-✖ 5 problems (1 error, 4 warnings)
+EXIT 1 (src/app/(dashboard)/journals/[code]/page.tsx)
 
-EXIT 1
+/home/user/HASSR-Online/src/app/api/journal-documents/route.ts
+   29:3   warning  'getDefaultClimateDocumentConfig' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   72:3   warning  'normalizeSanitationDayConfig' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  126:31  warning  'canWriteJournal' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+
+EXIT 0 (src/app/api/journal-documents/route.ts)
+
+/home/user/HASSR-Online/src/app/api/cron/compliance/route.ts
+  20:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+
+EXIT 0 (src/app/api/cron/compliance/route.ts)
+
+/home/user/HASSR-Online/src/app/api/cron/mini-digest/route.ts
+  20:7  warning  'CRON_SECRET' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+
+EXIT 0 (src/app/api/cron/mini-digest/route.ts)
+
+/home/user/HASSR-Online/src/app/api/integrations/tasksflow/bulk-assign-today/route.ts
+   45:10  warning  'filterSubordinates' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  110:10  warning  'currentMonthBounds' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  119:10  warning  'monthLabel' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+
+EXIT 0 (src/app/api/integrations/tasksflow/bulk-assign-today/route.ts)

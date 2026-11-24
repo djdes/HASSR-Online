@@ -1,0 +1,65 @@
+{
+  "task": "office-objects-favorites-2026-11-23",
+  "builderStatus": "ALL_AC_PASS_PENDING_VERIFIER",
+  "checkedAt": "2026-11-24T05:50:00Z",
+  "branch": "claude/amazing-bohr-s3zvbx",
+  "head": "1225d2a9b26761050adb7ced09b11d898eea1769",
+  "base": "bce1e012b7fffbd42568888b430b19e8f155e504",
+  "stand": "next dev on localhost:3000, PostgreSQL 16 (stand-seed.ts + stand-reset.ts), Chromium 1440x900, iPhone 13, mini shell (ws-shell=mini), dark theme cookie",
+  "commands": {
+    "typecheck": { "command": "npm run typecheck", "result": "PASS", "exit": 0, "file": "raw/typecheck.txt" },
+    "testGate": { "command": "npm run test:gate", "mode": "full (prisma/schema.prisma changed)", "pass": 7331, "fail": 0, "exit": 0, "file": "raw/test-gate.txt" },
+    "i18nCheck": { "command": "npm run i18n:check", "pass": 103, "fail": 0, "exit": 0, "file": "raw/i18n-check.txt" },
+    "eslint": {
+      "command": "npx eslint <74 changed code files>",
+      "errors": 1,
+      "warnings": 9,
+      "newVersusMaster": 0,
+      "note": "same 1 error and 9 warnings as origin/master versions of the same 5 files (eslint --stdin)",
+      "files": ["raw/eslint.txt", "raw/eslint-baseline.txt"]
+    },
+    "officeJournalsMigration": {
+      "command": "npx tsx prisma/seed-office-journals-to-points-2026-11.ts [--dry-run]",
+      "dryRun": "would move 1, kept as duplicates 1",
+      "apply": "moved 1, kept as duplicates 1, audit journals.office_to_point with ids",
+      "secondRun": "already done (once key)",
+      "file": "raw/office-journals-migration.txt"
+    },
+    "ui": { "command": "npx tsx raw/stand-reset.ts && node raw/ui-check-final.cjs", "stepErrors": 0, "file": "raw/ui-check-final.json" }
+  },
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["ui-check-final.json: AC1_office_trigger, AC1_menu, phone_bar, phone_sheet", "src/lib/header-point.test.ts"] },
+    "AC2": { "status": "PASS", "evidence": ["ui-check-final.json: AC2_manual_switch (object page in 910 ms, toasts 0), mini_switch", "src/components/layout/silent-point-switch.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["ui-check-final.json: AC3_company_section, AC3_object_section_restore, AC8_users_page", "src/lib/point-section-sync.test.ts"] },
+    "AC4": { "status": "PASS", "evidence": ["ui-check-final.json: AC4_api_without_point (400 point_required), AC4_dialog_field (submit without object: 0 POST), AC4_notice, AC4_notice_choose", "src/components/journals/read-created-document.test.ts", "src/lib/paper-journal-point.test.ts"] },
+    "AC5": { "status": "PASS", "note": "normal deploy runs --dry-run only; the move itself is a separate reviewed run (deploy.yml rule: a normal release must not rewrite customer journal records)", "evidence": ["raw/office-journals-migration.txt", "src/lib/office-journals.test.ts", "src/lib/building-targets.ts"] },
+    "AC6": { "status": "PASS", "evidence": ["ui-check-final.json: AC6_pin_in_header, phone_pin", "src/components/layout/pinned-buildings.test.ts", "src/lib/pinned-buildings.test.ts"] },
+    "AC7": { "status": "PASS", "evidence": ["ui-check-final.json: AC7_office_blocks", "src/lib/office-roster.test.ts"] },
+    "AC8": { "status": "PASS", "evidence": ["ui-check-final.json: AC8_users_page, AC8_place_pills, AC8_pill_opens_edit"] },
+    "AC9": { "status": "PASS", "evidence": ["ui-check-final.json: AC9_top_menu", "src/components/layout/section-top-menu.test.ts"] },
+    "AC10": { "status": "PASS", "evidence": ["ui-check-final.json: AC10_star, AC10_context_menu, AC10_home, phone_sheet.visibleStars", "src/lib/home-page.test.ts", "src/components/favorites/favorite-star.test.ts"] },
+    "AC11": { "status": "PASS", "evidence": ["ui-check-final.json: AC11_qr_api, AC11_qr_missing, AC11_after_save", "src/lib/qr-fill-missing.test.ts"] },
+    "AC12": { "status": "PASS", "evidence": ["ui-check-final.json: AC12_areas_guide"] },
+    "AC13": { "status": "PASS", "evidence": ["raw/typecheck.txt", "raw/test-gate.txt", "raw/i18n-check.txt", "raw/eslint.txt", "ui-check-final.json: dark_theme"] }
+  },
+  "review": {
+    "reviewer": "fresh read-only code reviewer, range 84711ac24..8e29325f2",
+    "verdict": "ready with fixes",
+    "fixedIn": "1225d2a9b",
+    "deferredMinor": [
+      "single-object manager sees «Выберите объект» on the objects list",
+      "favorites cap counts pages that left the menu",
+      "fast second pin can be lost",
+      "complaint dialog shows a generic error on point_required",
+      "copy document (calibration, maintenance, glass) at «Выберите объект» is refused",
+      "QR hint for a manager of another object",
+      "«Без объекта» vs «Все объекты» wording in the edit dialog",
+      "context menu opens on long press on phones",
+      "journal page flashes before the object is auto-selected"
+    ]
+  },
+  "deployNotes": [
+    "new column User.pinnedBuildingIds String[] default [] (additive, scripts/apply-safe-schema.cjs)",
+    "office journals transfer: deploy prints dry-run totals only; the move runs once with the separate reviewed command"
+  ]
+}
