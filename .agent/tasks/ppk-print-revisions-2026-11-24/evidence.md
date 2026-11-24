@@ -28,6 +28,7 @@
 | Юнит-тесты `src/lib/ppk/*.test.ts` + `pdf`, `route-slug-collisions`, `borderless`, `neutral-palette` | 236/236; новые: `revisions.test.ts` (9), `structure-pdf.test.ts` (6), `signature.test.ts` (4) |
 | `npm run i18n:check` | 103/103 |
 | `npm run build` | успешно (дважды: до и после исправления границ сообщений) |
+| Полный набор тестов `TEST_FULL=1 bash scripts/test-with-baseline.sh` (схема изменилась) | `pass=7474, fail=0` (`raw/full-tests.txt`) |
 | Стенд (next start + Postgres 16, демо-организация, чистая база) | `raw/e2e-b-output.txt`: 46/46 |
 | Снимки (локально, `.agent/**/*.png` в `.gitignore`) | `raw/screens/`: редакция утверждена, повторный вопрос, прил. 6, реестр, `/knowledge`, подпись пальцем, лист 3.7, страница ознакомления |
 

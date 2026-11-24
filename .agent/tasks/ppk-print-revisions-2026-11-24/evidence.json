@@ -44,6 +44,12 @@
       "final": "46/46",
       "file": "raw/e2e-b-output.txt",
       "results": "raw/e2e-b-results.json"
+    },
+    "fullSuite": {
+      "command": "TEST_FULL=1 bash scripts/test-with-baseline.sh",
+      "pass": 7474,
+      "fail": 0,
+      "file": "raw/full-tests.txt"
     }
   },
   "criteria": {
