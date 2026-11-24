@@ -26,6 +26,7 @@ import {
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { db } from "@/lib/db";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { applyOrgJournalOverrides } from "@/lib/org-journal-settings";
 import { OnboardingFinishCta } from "@/components/settings/onboarding-finish-cta";
 import { OnboardingDocHealthCard } from "@/components/settings/onboarding-doc-health-card";
@@ -98,7 +99,8 @@ export default async function OnboardingAdvancedPage() {
         permissionPreset: { not: null },
       },
     }),
-    db.building.count({ where: { organizationId } }),
+    // Объекты: офис (с 2026-11-24 у всех с объектами) шагом «здания» не считается.
+    db.building.count({ where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } } }),
     db.room.count({ where: { building: { organizationId } } }),
     db.equipment.count({ where: { area: { organizationId } } }),
     db.managerScope.count({ where: { organizationId } }),

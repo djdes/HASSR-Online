@@ -7,6 +7,7 @@
  * помещения разных точек больше не делят один цех.
  */
 import { db } from "@/lib/db";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { pickMirrorArea } from "@/lib/area-building";
 
 async function orgAreas(organizationId: string) {
@@ -87,10 +88,10 @@ export async function deleteRoomMirrorArea(params: {
   }
 }
 
-/** Точка по умолчанию для нового цеха: единственная точка организации, иначе нет. */
+/** Точка по умолчанию для нового цеха: единственный объект организации (офис не в счёт, 2026-11-24), иначе нет. */
 export async function soleBuildingId(organizationId: string): Promise<string | null> {
   const buildings = await db.building.findMany({
-    where: { organizationId },
+    where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } },
     select: { id: true },
     take: 2,
   });

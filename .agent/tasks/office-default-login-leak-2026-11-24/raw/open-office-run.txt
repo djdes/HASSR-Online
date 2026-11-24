@@ -1,0 +1,123 @@
+## setup
+{"setup":"ok"}
+## dry-run
+[open-office:dry-run] organizations to open 3; offices to create 2; journals by objects to enable 2; failed 0
+## real
+[open-office] organizations opened 3; offices created 2; journals by objects enabled 2; managers kept company-wide 2; manager sessions closed 1; failed 0
+## repeat
+[open-office] once:open-office:v1: already done
+## check
+{
+  "1obj": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис@-1",
+      "point:Кафе@0"
+    ],
+    "audit": [
+      {
+        "userName": "WeSetup",
+        "details": {
+          "source": "deploy-2026-11-24",
+          "created": true,
+          "keptCompanyWide": [
+            {
+              "userId": "cmwuvmfyz0002ms7dh6ozikcb",
+              "buildingIdsBefore": [
+                "cmwuvmfyr0001ms7dufl5epx6"
+              ]
+            }
+          ],
+          "perLocationJournalsBefore": false
+        }
+      }
+    ],
+    "users": [
+      {
+        "who": "cook@stand.local",
+        "sessionVersion": 0,
+        "places": []
+      },
+      {
+        "who": "manager@stand.local",
+        "sessionVersion": 0,
+        "places": []
+      }
+    ]
+  },
+  "2obj": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис организации@2",
+      "point:Офис@3",
+      "point:Офис компании@5"
+    ],
+    "audit": [
+      {
+        "userName": "WeSetup",
+        "details": {
+          "source": "deploy-2026-11-24",
+          "created": true,
+          "keptCompanyWide": [
+            {
+              "userId": "cmwuvmg05000dms7din8jl00v",
+              "buildingIdsBefore": [
+                "cmwuvmfzz000bms7dzpuh1xns",
+                "cmwuvmg01000cms7dljrbd4v0"
+              ]
+            }
+          ],
+          "perLocationJournalsBefore": true
+        }
+      }
+    ],
+    "users": [
+      {
+        "who": "owner2@stand.local",
+        "sessionVersion": 0,
+        "places": []
+      },
+      {
+        "who": "head2@stand.local",
+        "sessionVersion": 1,
+        "places": [
+          "Офис"
+        ]
+      }
+    ]
+  },
+  "directory": {
+    "journalsByObjects": false,
+    "buildings": [
+      "point:Справочник@0"
+    ],
+    "audit": [],
+    "users": []
+  },
+  "noobj": {
+    "journalsByObjects": false,
+    "buildings": [],
+    "audit": [],
+    "users": []
+  },
+  "officeoff": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис@-1",
+      "point:Склад@0"
+    ],
+    "audit": [
+      {
+        "userName": "WeSetup",
+        "details": {
+          "source": "deploy-2026-11-24",
+          "created": false,
+          "keptCompanyWide": [],
+          "perLocationJournalsBefore": false
+        }
+      }
+    ],
+    "users": []
+  },
+  "onceKey": true
+}

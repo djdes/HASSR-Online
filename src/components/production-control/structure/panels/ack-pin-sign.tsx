@@ -80,7 +80,9 @@ export function AckPinSign({ pending }: { pending: { userId: string; name: strin
               <DialogTitle className="text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">{person.name}</DialogTitle>
               <DialogDescription className="text-[13.5px] text-[#6f7282]">{t("pinHint")}</DialogDescription>
             </DialogHeader>
+            {/* `method="post"`: PIN не должен уйти в адрес, если форму отправят до загрузки скриптов. */}
             <form
+              method="post"
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();

@@ -967,6 +967,9 @@ export async function createEntityRow(
           data: { organizationId, name: name.slice(0, 120), address: text(source.fields.address, 200), sortOrder: 0 },
           select: { id: true },
         });
+        // Офис компании-получателя обмен не открывает (2026-11-24): это синхронизация
+        // с отменой, менять структуру чужой компании ей не положено. Офис откроет
+        // страница «Офис» или первый объект, заведённый самой компанией.
         return { status: "created", id: created.id };
       }
       case "room": {

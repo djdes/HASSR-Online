@@ -15,6 +15,7 @@ import { innDigits, isValidInn } from "@/lib/inn";
 import { checkPointsForCreation } from "@/lib/billing.server";
 import { checkTrialReuse } from "@/lib/org-trial.server";
 import { ensureLocationBuildings, MAX_AUTO_LOCATIONS } from "@/lib/location-buildings";
+import { OFFICE_BUILDING_KIND } from "@/lib/building-scope";
 import { refreshOrganizationLegalProfile } from "@/lib/org-legal-profile";
 import { normalizePhone } from "@/lib/phone";
 import { registrationConfirmRateLimiter } from "@/lib/rate-limit";
@@ -194,7 +195,8 @@ export async function POST(request: Request) {
   // больше, чем оплачено, анкета не заводит (лимит тарифа — как у
   // POST /api/settings/buildings): добавить их можно после смены тарифа.
   if (data.locationsCount >= 2) {
-    const buildingsNow = await db.building.count({ where: { organizationId } });
+    // Офис — не точка тарифа и не объект (2026-11-24).
+    const buildingsNow = await db.building.count({ where: { organizationId, kind: { not: OFFICE_BUILDING_KIND } } });
     const adding = Math.min(data.locationsCount, MAX_AUTO_LOCATIONS) - Math.max(1, buildingsNow);
     const points = await checkPointsForCreation(organizationId, adding, { source: "profile/complete" });
     if (points.ok) {

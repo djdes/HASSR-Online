@@ -457,6 +457,9 @@ body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) [class
    слепили на тёмном (но сохраняем оттенок для distinction) */
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#b25f00\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#7a4a00\],
+/* Полоса «не распределены» на странице «Офис» (2026-11-24: её видят все компании с объектами). */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#6b4a1f\],
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#a16d32\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#92400e\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#9a3412\],
 body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .text-\[\#c2510a\],

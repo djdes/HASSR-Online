@@ -176,7 +176,8 @@ export async function getAllOrgMetrics(
       createdAt: true,
       balanceRub: true,
       phone: true,
-      _count: { select: { journalDocuments: true, buildings: true } },
+      // Точки — объекты: офис (с 2026-11-24 у всех с объектами) точкой не считается.
+      _count: { select: { journalDocuments: true, buildings: { where: { kind: { not: "office" } } } } },
       accountId: true,
       account: { select: { subscriptionPlan: true, subscriptionEnd: true, planCycle: true, planPoints: true, ownerUserId: true } },
     },

@@ -1,0 +1,18 @@
+[BABEL] Note: The code generator has deoptimised the styling of /home/user/HASSR-Online/src/i18n/message-contract.d.ts as it exceeds the max of 500KB.
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/equipment/page.tsx
+  413:20  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/user/HASSR-Online/src/app/(dashboard)/settings/equipment/page.tsx:413:20
+  411 |             const minutesAgo = reading
+  412 |               ? Math.round(
+> 413 |                   (Date.now() - reading.time.getTime()) / 60000
+      |                    ^^^^^^^^^^ Cannot call impure function
+  414 |                 )
+  415 |               : null;
+  416 |             const online =  react-hooks/purity
+
+✖ 1 problem (0 errors, 1 warning)
+

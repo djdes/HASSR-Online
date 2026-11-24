@@ -3,6 +3,7 @@ import { RU_PHONE_PLACEHOLDER, phoneInputProps } from "@/lib/phone-input";
 
 import { useMemo, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 
 type Position = { id: string; name: string; categoryKey: string };
 
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("+7");
   // Должность приглашения — если её указал руководитель. Иначе пусто:
@@ -94,7 +97,7 @@ export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
   }
 
   return (
-    <form
+    <form method="post"
       onSubmit={submit}
       className="space-y-4 rounded-3xl border border-[#ececf4] bg-white p-6 shadow-[0_0_0_1px_rgba(240,240,250,0.45)]"
     >
@@ -182,7 +185,7 @@ export function JoinForm({ token, positions, suggestedJobPositionId }: Props) {
 
       <button
         type="submit"
-        disabled={busy}
+        disabled={busy || !hydrated}
         className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_12px_36px_-12px_rgba(85,102,246,0.65)] transition-colors hover:bg-[#4a5bf0] disabled:cursor-not-allowed disabled:bg-[#c8cbe0] disabled:shadow-none"
       >
         {busy ? "Сохраняем…" : "Зарегистрироваться"}

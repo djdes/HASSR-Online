@@ -123,7 +123,7 @@ function ConnectionCard({ provider, view, timeZone }: { provider: Provider; view
           ) : null}
 
           {editing ? (
-            <form
+            <form method="post"
               className="mt-4 space-y-3"
               onSubmit={(event) => {
                 event.preventDefault();

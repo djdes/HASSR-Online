@@ -11769,21 +11769,6 @@
           "body": "Xodimni oching va «Qayerda ishlaydi»da «Ofis» yoki kerakli nuqtani tanlang. Joyi yo‘q xodimlar pastda ogohlantirish bilan ko‘rsatiladi."
         }
       },
-      "disabled": {
-        "title": "Avval obyektni qo‘shing",
-        "body": "Kompaniyada kamida bitta obyekt bo‘lsa, ofisni ajratish mumkin. Uni qo‘shing — bu yerda rahbariyat va kompaniya nuqtalari paydo bo‘ladi.",
-        "link": "Obyektlarni ochish"
-      },
-      "create": {
-        "title": "Ofisni ajrating",
-        "body": "Ofis — kompaniya rahbarlari joyi: ular barcha nuqtalarni ko‘radi, lekin nuqtalar jurnali va vazifalariga qo‘shilmaydi. Nuqta xodimlariga ta’sir qilmaydi.",
-        "split": "Jurnallar nuqtalarda yuritiladi, ofis — rahbariyat joyi.",
-        "switcher": "Sarlavhada — nuqta tanlash; kompaniya bo‘limlarida u yerda «Nuqtani tanlang».",
-        "existing": "Allaqachon to‘ldirilgan hujjatlar umumiy bo‘lib qoladi va hamma joyda ko‘rinadi.",
-        "button": "Ofisni ajratish",
-        "done": "Ofis ajratildi",
-        "failed": "Ofisni ajratib bo‘lmadi"
-      },
       "staff": {
         "title": "Rahbariyat",
         "hint": "Direktor, boshqaruvchi va butun kompaniya jurnallari hamda sozlamalarini yurituvchilar. Nuqta xodimlari — nuqta sahifalarida.",

@@ -233,7 +233,7 @@ export function MailClient({ data, canManageMailboxes }: { data: Data; canManage
 
         <section className={cn(CARD, "h-fit")} data-crm-rules>
           <div className="border-b border-[#eef0f6] px-4 py-3 text-[15px] font-semibold text-[#0b1024] sm:px-5">Правила отправителей</div>
-          <form
+          <form method="post"
             className="space-y-2 px-4 py-3 sm:px-5"
             onSubmit={(event) => {
               event.preventDefault();

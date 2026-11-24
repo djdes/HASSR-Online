@@ -207,7 +207,7 @@ export function Hr1cSettingsClient({
                 {initial.lastError ? <div className="mt-1 text-[#a13a32]">{initial.lastError}</div> : null}
               </div>
             ) : null}
-            <form
+            <form method="post"
               className="mt-4 space-y-3"
               onSubmit={(event) => {
                 event.preventDefault();

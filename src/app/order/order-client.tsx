@@ -933,7 +933,7 @@ function Checkout({
           org={guest ? null : orgInvoice}
         />
       ) : (
-      <form onSubmit={submit} className="mt-6">
+      <form method="post" onSubmit={submit} className="mt-6">
         <label
           htmlFor="order-email"
           className="block text-[13px] font-medium text-[#0b1024]"
@@ -1434,7 +1434,7 @@ function CompleteForm({
         пароль и назвать организацию.
       </p>
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
+      <form method="post" onSubmit={submit} className="mt-6 space-y-4">
         <Field
           id="org"
           label="Название организации"

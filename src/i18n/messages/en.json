@@ -11769,21 +11769,6 @@
           "body": "Open the employee and choose «Office» or a site under «Works at». Staff without a place are flagged below."
         }
       },
-      "disabled": {
-        "title": "Add a site first",
-        "body": "The office can be set up once the company has at least one site. Add it, and the management and company sites will appear here.",
-        "link": "Open sites"
-      },
-      "create": {
-        "title": "Set up the office",
-        "body": "The office is where company management works: they see every site but are not added to site journals and tasks. Site staff are not affected.",
-        "split": "Journals are kept at the sites; the office is where management sits.",
-        "switcher": "The header shows the site picker; in company sections it reads “Choose a site”.",
-        "existing": "Documents already filled in stay shared and visible everywhere.",
-        "button": "Set up office",
-        "done": "Office set up",
-        "failed": "Could not set up the office"
-      },
       "staff": {
         "title": "Management",
         "hint": "The director, the manager and everyone who runs journals and settings for the whole company. Site staff are on the site pages.",

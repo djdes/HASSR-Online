@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { BILLING_LIMIT_CODE } from "@/lib/billing-period";
 import { BrandLogo } from "@/components/brand/logo";
+import { useHydrated } from "@/lib/use-hydrated";
 
 type Status = "valid" | "expired" | "used" | "not_found";
 type InviteError =
@@ -48,6 +49,8 @@ type Props = {
 };
 
 export function InviteAcceptClient({ status, token, user, isReset = false }: Props) {
+  // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
+  const hydrated = useHydrated();
   const t = useTranslations("authInvite");
   const router = useRouter();
   const [password, setPassword] = useState("");
@@ -225,7 +228,7 @@ export function InviteAcceptClient({ status, token, user, isReset = false }: Pro
           )}
         </div>
 
-        <form onSubmit={submit} className="mt-6 space-y-3.5">
+        <form method="post" onSubmit={submit} className="mt-6 space-y-3.5">
           {error && (
             <div
               role="alert"
@@ -290,7 +293,7 @@ export function InviteAcceptClient({ status, token, user, isReset = false }: Pro
           <div className="pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !hydrated}
               className="group relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-all hover:bg-[#4a5bf0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-70"
             >
               {loading ? (

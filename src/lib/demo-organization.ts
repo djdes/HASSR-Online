@@ -9,6 +9,7 @@ import {
 import { normalizeSphere, sphereToPreset } from "@/lib/org-profile";
 import { paperJournalsFor } from "@/lib/sphere-journal-rules";
 import { createOrganization } from "@/lib/create-organization";
+import { openOrganizationOffice } from "@/lib/organization-office.server";
 import {
   DEMO_HISTORY_DAYS,
   SHARED_DEMO_ORG_ID,
@@ -291,6 +292,8 @@ export async function seedDemoOrganizationData(input: {
     data: { organizationId: orgId, name: "Основное здание", sortOrder: 0 },
     select: { id: true },
   });
+  // Офис у всех по умолчанию (2026-11-24): с первым объектом — и офис.
+  await openOrganizationOffice(orgId, { source: "demo" });
   for (const [index, room] of roster.rooms.entries()) {
     await db.room.create({
       data: {

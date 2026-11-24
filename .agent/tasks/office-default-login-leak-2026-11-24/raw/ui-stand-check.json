@@ -1,0 +1,40 @@
+{
+  "ui-office-noobj": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис",
+      "point:Первый объект"
+    ],
+    "areas": [],
+    "audit": [
+      {
+        "userName": "Нина Без-объектов",
+        "details": {
+          "source": "settings/buildings",
+          "created": true,
+          "perLocationJournalsBefore": false
+        }
+      }
+    ]
+  },
+  "ui-office-straggler": {
+    "journalsByObjects": true,
+    "buildings": [
+      "office:Офис",
+      "point:Кафе у моря"
+    ],
+    "areas": [
+      "Горячий цех теста → Кафе у моря"
+    ],
+    "audit": [
+      {
+        "userName": "Сергей Опоздавший",
+        "details": {
+          "source": "office-page",
+          "created": true,
+          "perLocationJournalsBefore": false
+        }
+      }
+    ]
+  }
+}

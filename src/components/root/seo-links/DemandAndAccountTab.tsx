@@ -321,7 +321,7 @@ export function DemandAndAccountTab({
         </div>
 
         {manualOpen ? (
-          <form
+          <form method="post"
             onSubmit={(e) => void handleManualImport(e)}
             className="mt-4 space-y-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
           >
@@ -911,7 +911,7 @@ function AccountConnectionCard({
       </div>
 
       {viewer.isSuperadmin ? (
-        <form
+        <form method="post"
           onSubmit={(e) => void handleSaveAccount(e)}
           className="mt-4 space-y-4 border-t border-[#ececf4] pt-4"
         >

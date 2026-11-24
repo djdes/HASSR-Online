@@ -9,6 +9,7 @@ import { COMPANY_ONLY_API_ERROR, buildingInScope, isPointScoped } from "@/lib/po
 import { closePointManagerSessions } from "@/lib/point-scope.server";
 import { OBJECT_CATEGORY_VALUES } from "@/lib/object-categories";
 import { applyObjectCategoryJournals } from "@/lib/object-category-journals.server";
+import { openOrganizationOffice } from "@/lib/organization-office.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -121,6 +122,13 @@ export async function POST(request: Request) {
         return null;
       })
     : null;
+  // Офис у всех по умолчанию (2026-11-24): с первым объектом открывается и
+  // офис — журналы ведутся по объектам. Сбой офиса объект не отменяет:
+  // страница «Офис» откроет его при заходе.
+  await openOrganizationOffice(orgId, {
+    source: "settings/buildings",
+    actor: { id: auth.session.user.id, name: auth.session.user.name },
+  }).catch((error) => console.error("[buildings] open office failed", error));
   return NextResponse.json({ building: created, journalsLimited: journals?.limited === true });
 }
 
@@ -159,6 +167,14 @@ export async function PATCH(request: Request) {
     throw err;
   }
 
+  // Офис у всех по умолчанию (2026-11-24): при офисе журналы ведутся по
+  // объектам всегда — выключить нельзя, вернуть кнопкой было бы нечем.
+  if (!body.perLocationJournals && (await db.building.count({ where: { organizationId: orgId, kind: OFFICE_BUILDING_KIND } }))) {
+    return NextResponse.json(
+      { error: "У компании есть офис: журналы ведутся по объектам" },
+      { status: 400 }
+    );
+  }
   if (body.perLocationJournals) {
     const count = await db.building.count({ where: { organizationId: orgId } });
     if (count < 2) {

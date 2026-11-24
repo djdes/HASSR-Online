@@ -747,7 +747,7 @@ function CompleteProfileModal({
           <SetupEquipmentStep onDone={advance} />
         ) : (
           <>
-        <form
+        <form method="post"
           id="complete-profile-form"
           noValidate
           onSubmit={submit}
