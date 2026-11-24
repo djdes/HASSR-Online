@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Check,
   CheckCircle2,
   Code2,
   ExternalLink,
@@ -132,7 +131,6 @@ export function ChatWebmasterPlacementDialog({
   const [editorMode, setEditorMode] = useState<"html" | "preview">("html");
   const [drafting, setDrafting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [approvingSlot, setApprovingSlot] = useState(false);
 
   const matchingApplications = useMemo(
     () =>
@@ -518,47 +516,6 @@ export function ChatWebmasterPlacementDialog({
     }
   }
 
-  async function handleApproveMatchingSlot() {
-    if (!matchingSlot) return;
-    setApprovingSlot(true);
-    try {
-      const response = await fetch(
-        `/api/root/gogetlinks/slots/${encodeURIComponent(matchingSlot.id)}/approve`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idempotencyKey: generateClientIdempotencyKey(
-              `chat-slot-approve-${matchingSlot.id}`,
-            ),
-          }),
-        },
-      );
-      const data = (await response.json().catch(() => null)) as {
-        error?: string;
-      } | null;
-      if (!response.ok) {
-        throw new Error(
-          data?.error ??
-            "Не удалось подтвердить и отправить закупку слота в GoGetLinks",
-        );
-      }
-      invalidateOverviewCache();
-      invalidateApplicationsCache(effectiveGglCampaignId);
-      toast.success(
-        `Слот ${matchingSlot.donorDomain ?? ""} подтверждён и отправлен в GoGetLinks`,
-      );
-      onOpenChange(false);
-      onOrderCreated?.();
-    } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : "Ошибка подтверждения слота",
-      );
-    } finally {
-      setApprovingSlot(false);
-    }
-  }
-
   const titleLabel =
     identity.donorDomain || thread.webmasterLogin || "Вебмастер GoGetLinks";
 
@@ -638,30 +595,13 @@ export function ChatWebmasterPlacementDialog({
 
           {/* Matching planned slot callout if one exists */}
           {matchingSlot ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-[12.5px] text-emerald-950">
-              <div className="space-y-0.5">
-                <div className="font-semibold text-emerald-900">
-                  В планировщике есть слот на {formatRuShortDate(matchingSlot.scheduledDate)} ({matchingSlot.status === "pending_approval" ? "Ждёт подтверждения" : matchingSlot.status})
-                </div>
-                <div className="text-emerald-800">
-                  Посадочная: <strong>{matchingSlot.targetUrl ?? "—"}</strong> · Анкор: «<strong>{matchingSlot.anchor ?? "—"}</strong>» · {formatRub(matchingSlot.estimatedPriceRub ?? matchingSlot.maxPriceRub)}
-                </div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-[12.5px] text-emerald-950">
+              <div className="font-semibold text-emerald-900">
+                Подобран слот планировщика от {formatRuShortDate(matchingSlot.scheduledDate)} — статья, посадочная и анкор уже подставлены в форму ниже
               </div>
-              {matchingSlot.status === "pending_approval" ? (
-                <button
-                  type="button"
-                  disabled={approvingSlot || submitting}
-                  onClick={() => void handleApproveMatchingSlot()}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#116b2a] px-3.5 text-[12.5px] font-medium text-white shadow-sm hover:bg-[#0e5822] disabled:opacity-50"
-                >
-                  {approvingSlot ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Check className="size-3.5" />
-                  )}
-                  Подтвердить готовый слот
-                </button>
-              ) : null}
+              <div className="mt-0.5 text-emerald-800">
+                Посадочная: <strong>{matchingSlot.targetUrl ?? "—"}</strong> · Анкор: «<strong>{matchingSlot.anchor ?? "—"}</strong>» · {formatRub(matchingSlot.estimatedPriceRub ?? matchingSlot.maxPriceRub)}
+              </div>
             </div>
           ) : null}
 
