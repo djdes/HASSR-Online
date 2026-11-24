@@ -54,7 +54,7 @@ export type ProductionInfoField = keyof ProductionInfoData;
 
 /** Поля шаблона 1.4 в порядке окна: обязательные для ППК помечены. */
 export const PRODUCTION_INFO_FIELDS: readonly { key: ProductionInfoField; required: boolean; multiline?: boolean; max: number }[] = [
-  { key: "activity", required: true, max: 300 },
+  { key: "activity", required: false, max: 300 },
   { key: "workingHours", required: true, max: 200 },
   { key: "seats", required: false, max: 100 },
   { key: "capacity", required: true, max: 200 },
@@ -76,10 +76,7 @@ export type ProductionPulled = { objectName: string | null; objectAddress: strin
 
 export type ProductionMissing = ProductionInfoField | "objectName" | "objectAddress";
 
-/**
- * Чего не хватает в сведениях о производстве. Вид деятельности, не указанный
- * в шаблоне, берётся из сферы объекта — тогда он не считается пропуском.
- */
+/** Чего не хватает в сведениях о производстве: подтянутое из объекта и обязательные поля шаблона. */
 export function missingProductionInfo(data: ProductionInfoData | null, pulled: ProductionPulled): ProductionMissing[] {
   const missing: ProductionMissing[] = [];
   if (!filled(pulled.objectName)) missing.push("objectName");
@@ -88,7 +85,6 @@ export function missingProductionInfo(data: ProductionInfoData | null, pulled: P
     if (!field.required) continue;
     const own = data?.[field.key];
     if (filled(own)) continue;
-    if (field.key === "activity" && filled(pulled.activity)) continue;
     missing.push(field.key);
   }
   return missing;

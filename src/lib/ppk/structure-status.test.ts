@@ -147,7 +147,7 @@ test("1.1: обязательные сведения; у ИП КПП не нуж
   assert.equal(requiredOrgInfo(org()).length, 9);
 });
 
-test("1.4: подтянутые название и адрес, обязательные поля шаблона, вид деятельности из сферы", () => {
+test("1.4: подтянутые название и адрес и обязательные поля шаблона; вид деятельности не обязателен", () => {
   const pulled = { objectName: "Кафе на Ленина", objectAddress: "ул. Ленина, 5", activity: "Кафе" };
   assert.deepEqual(missingProductionInfo(null, pulled), ["workingHours", "capacity", "waterSupply", "sewage"]);
   const full = { ...emptyProductionInfo(), workingHours: "10:00–22:00", capacity: "300 порций", waterSupply: "Централизованное", sewage: "Централизованное" };
@@ -155,6 +155,5 @@ test("1.4: подтянутые название и адрес, обязател
   assert.deepEqual(missingProductionInfo(full, { objectName: null, objectAddress: "", activity: null }), [
     "objectName",
     "objectAddress",
-    "activity",
   ]);
 });

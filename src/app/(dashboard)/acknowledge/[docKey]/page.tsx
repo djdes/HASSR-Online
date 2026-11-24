@@ -129,10 +129,15 @@ export default async function AcknowledgeDocPage({ params }: { params: Promise<{
     const members = parsePpkRecords("team", rows)
       .map((row) => row.data)
       .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
-    const version = doc.version.startsWith("v") ? doc.version.slice(1) : "1";
+    // Версия — номер утверждённой версии («v3»); программа без утверждения — загруженный файл.
+    const version = doc.version.startsWith("v") ? doc.version.slice(1) : null;
     body = (
       <div className="space-y-4 text-[15px] leading-[1.65] text-[#0b1024]">
-        <p>{t("ppkLead", { version })}</p>
+        <p>{version ? t("ppkLead", { version }) : t("ppkLeadFile")}</p>
+        <a href="/api/acknowledgements/ppk/file" target="_blank" rel="noopener" className={PPK_BUTTON_OUTLINE_CLASS}>
+          <ExternalLink className="size-4" aria-hidden />
+          {t("ppkOpen")}
+        </a>
         {members.length ? (
           <section>
             <h2 className="mb-1.5 text-[16px] font-semibold">{t("ppkOfficials")}</h2>

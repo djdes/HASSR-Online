@@ -1,3 +1,4 @@
+import { staffAtBuildingWhere } from "@/lib/building-settings";
 import { db } from "@/lib/db";
 import { loadDocumentOrgBlock } from "@/lib/document-org-block.server";
 import { sphereLabel } from "@/lib/org-profile";
@@ -122,7 +123,8 @@ export async function loadPpkItemFacts(
   const prp: PpkItemFacts["prp"] = {};
   for (const block of PRP_TABLE_BLOCKS) prp[block] = valid(block).length;
 
-  const acknowledged = ackReady ? await ackStats(scope, "ppk") : null;
+  // Как на листе 3.7: люди точки (у ППК организации — все).
+  const acknowledged = ackReady ? await ackStats(scope, "ppk", staffAtBuildingWhere(scope.buildingId)) : null;
 
   return {
     blocks,

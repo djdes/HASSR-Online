@@ -1158,8 +1158,8 @@
       },
       "prp": {
         "notes": {
-          "prp-infections": "Measures under guidelines MR 2.3.6.0233-21 and the HACCP plan: what we do, how often, who is responsible and where it is recorded.",
-          "prp-disinfection": "What we disinfect and with what, the method, frequency and responsible person. Agents — per their state registration certificate and instructions.",
+          "prp-infections": "Measures under guidelines MR 2.3.6.0233-21 and the HACCP plan: what we do, how often, who is responsible and where it is recorded. Typical rows — check them against the guidelines and your production.",
+          "prp-disinfection": "What we disinfect and with what, the method, frequency and responsible person. Agents — per their state registration certificate and instructions. Typical rows — check them against your agents' instructions.",
           "prp-emergencies": "Until you add your own rows, the typical list goes into the program. \"Take as a basis\" turns it into your rows, which you can edit.",
           "prp-medical": "Typical rows follow Order No. 29n of the Russian Ministry of Health and the vaccination calendar; check them for your type of activity."
         },
@@ -20086,8 +20086,10 @@
     "roleDeputy": "Deputy leader",
     "roleMember": "Group member",
     "roleSecretary": "Secretary",
-    "ppkLead": "Production control program, version {version}. Read the program and confirm that you have read and agree with it.",
-    "ppkOfficials": "Officials"
+    "ppkLead": "Production control program, version {version}. Open the program, read it and confirm that you have read and agree with it.",
+    "ppkOfficials": "Officials",
+    "ppkLeadFile": "Production control program. Open the program, read it and confirm that you have read and agree with it.",
+    "ppkOpen": "Open the program"
   },
   "staffPages": {
     "positions": {

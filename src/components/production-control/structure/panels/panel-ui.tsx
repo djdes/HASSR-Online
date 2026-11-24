@@ -36,11 +36,18 @@ export function PanelSection({
   );
 }
 
-/** Тихая ссылка «Изменить в …» / «Открыть …» на источник данных. */
+/**
+ * Тихая ссылка «Изменить в …» / «Открыть …» на источник данных. Ссылка на
+ * другой пункт структуры заменяет адрес окна, а не добавляет шаг истории:
+ * крестик окна (`router.back()`) возвращает на обзор, а не в прошлый пункт.
+ */
 export function SourceLink({ href, children }: { href: string; children: ReactNode }) {
+  const toItem = href.startsWith("/production-control/item/");
   return (
     <Link
       href={href}
+      replace={toItem}
+      scroll={toItem ? false : undefined}
       className="inline-flex items-center gap-1 rounded-lg text-[13.5px] font-medium text-[#3848c7] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
     >
       {children}

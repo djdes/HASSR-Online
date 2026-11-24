@@ -1158,8 +1158,8 @@
       },
       "prp": {
         "notes": {
-          "prp-infections": "MR 2.3.6.0233-21 va HACCP rejasi boʻyicha tadbirlar: nima qilamiz, qanchalik tez-tez, kim javob beradi va qayerda qayd etiladi.",
-          "prp-disinfection": "Nimani va nima bilan dezinfeksiya qilamiz, usul, davriylik va masʼul. Vositalar — davlat roʻyxatidan oʻtganlik guvohnomasi va yoʻriqnoma boʻyicha.",
+          "prp-infections": "MR 2.3.6.0233-21 va HACCP rejasi boʻyicha tadbirlar: nima qilamiz, qanchalik tez-tez, kim javob beradi va qayerda qayd etiladi. Namunaviy qatorlarni uslubiy tavsiyalar va oʻz ishlab chiqarishingiz boʻyicha tekshiring.",
+          "prp-disinfection": "Nimani va nima bilan dezinfeksiya qilamiz, usul, davriylik va masʼul. Vositalar — davlat roʻyxatidan oʻtganlik guvohnomasi va yoʻriqnoma boʻyicha. Namunaviy qatorlarni vositalaringiz yoʻriqnomalari boʻyicha tekshiring.",
           "prp-emergencies": "Oʻz qatorlaringiz boʻlmaguncha dasturga namunaviy roʻyxat kiradi. «Asos qilib olish» uni sizning qatorlaringizga aylantiradi — ularni tahrirlash mumkin.",
           "prp-medical": "Namunaviy qatorlar — Rossiya Sogʻliqni saqlash vazirligining 29n-buyrugʻi va emlash kalendari boʻyicha; faoliyat turingiz boʻyicha tekshiring."
         },
@@ -20086,8 +20086,10 @@
     "roleDeputy": "Rahbar o‘rinbosari",
     "roleMember": "Guruh a’zosi",
     "roleSecretary": "Kotib",
-    "ppkLead": "Ishlab chiqarish nazorati dasturi, {version}-versiya. Dastur bilan tanishing va tanishganingiz va rozi ekaningizni tasdiqlang.",
-    "ppkOfficials": "Mansabdor shaxslar"
+    "ppkLead": "Ishlab chiqarish nazorati dasturi, {version}-versiya. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
+    "ppkOfficials": "Mansabdor shaxslar",
+    "ppkLeadFile": "Ishlab chiqarish nazorati dasturi. Dasturni oching, oʻqing va tanishganingiz va rozi ekaningizni tasdiqlang.",
+    "ppkOpen": "Dasturni ochish"
   },
   "staffPages": {
     "positions": {

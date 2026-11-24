@@ -222,3 +222,13 @@ test("у каждого пункта и каждой колонки таблиц
   assert.equal(ru.items["app-4"].title, "Перечень журналов по системе ХАССП");
   assert.equal(ru.sections.prp, "Программы обязательных предварительных мероприятий (ПОПМ)");
 });
+
+test("шаблон положения о группе 2.2 дополняется составом группы", () => {
+  const text = teamRegulationTemplate("Кафе", [
+    { name: "Иванова Анна", title: "Шеф-повар", role: "leader" },
+    { name: "Петров Олег", title: "", role: "member" },
+  ]);
+  assert.match(text, /6\. Состав группы ХАССП\n1\) Иванова Анна, шеф-повар — руководитель группы;\n2\) Петров Олег — член группы\./);
+  assert.ok(!teamRegulationTemplate("Кафе").includes("Состав группы ХАССП"), "без группы — без раздела");
+  assert.equal(PPK_RECORD_SCHEMAS["text-team-regulation"].safeParse({ text }).success, true);
+});

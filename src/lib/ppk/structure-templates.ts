@@ -10,6 +10,7 @@
 import { EMERGENCIES } from "./program-content";
 import type { PrpRow, PrpTableBlock } from "./prp-tables";
 import type { PpkTextTemplate } from "./structure";
+import type { TeamRole } from "./haccp";
 import { teamRegulationSections } from "./team-regulation-document";
 
 const orgOf = (orgName: string) => orgName.trim() || "организации";
@@ -29,11 +30,30 @@ export function haccpPrinciplesTemplate(orgName: string): string {
   ].join("\n\n");
 }
 
-/** 2.2 — текст нынешнего «Положения о группе ХАССП» одним полем. */
-export function teamRegulationTemplate(orgName: string): string {
-  return teamRegulationSections(orgName)
-    .map((section) => [section.title, ...section.paragraphs].join("\n"))
-    .join("\n\n");
+/** Член группы ХАССП для шаблона положения: Ф. И. О., должность, роль в группе. */
+export type RegulationMember = { name: string; title: string; role: TeamRole };
+
+const ROLE_IN_REGULATION: Record<TeamRole, string> = {
+  leader: "руководитель группы",
+  deputy: "заместитель руководителя группы",
+  member: "член группы",
+  secretary: "секретарь группы",
+};
+
+/**
+ * 2.2 — текст нынешнего «Положения о группе ХАССП» одним полем и, если группа
+ * собрана, раздел «Состав группы ХАССП» (как таблица печатного положения).
+ */
+export function teamRegulationTemplate(orgName: string, members: readonly RegulationMember[] = []): string {
+  const sections = teamRegulationSections(orgName).map((section) => [section.title, ...section.paragraphs].join("\n"));
+  if (members.length > 0) {
+    const lines = members.map(
+      (member, index) =>
+        `${index + 1}) ${member.name}${member.title ? `, ${member.title.toLowerCase()}` : ""} — ${ROLE_IN_REGULATION[member.role]}${index === members.length - 1 ? "." : ";"}`,
+    );
+    sections.push([`${sections.length + 1}. Состав группы ХАССП`, ...lines].join("\n"));
+  }
+  return sections.join("\n\n");
 }
 
 /** 2.3 — «Положение о руководителе группы ХАССП». */
@@ -109,13 +129,20 @@ export function ccpMethodTemplate(orgName: string): string {
   ].join("\n\n");
 }
 
-/** Текст шаблона пункта; null — у пункта шаблона нет (пустое поле для своего текста). */
-export function ppkTextTemplate(template: PpkTextTemplate | null, orgName: string): string {
+/**
+ * Текст шаблона пункта; null — у пункта шаблона нет (пустое поле для своего
+ * текста). `members` — состав группы ХАССП для положения о группе (2.2).
+ */
+export function ppkTextTemplate(
+  template: PpkTextTemplate | null,
+  orgName: string,
+  members: readonly RegulationMember[] = [],
+): string {
   switch (template) {
     case "haccp-principles":
       return haccpPrinciplesTemplate(orgName);
     case "team-regulation":
-      return teamRegulationTemplate(orgName);
+      return teamRegulationTemplate(orgName, members);
     case "team-leader":
       return teamLeaderRegulationTemplate(orgName);
     case "ccp-method":

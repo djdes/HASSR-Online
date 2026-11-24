@@ -16,6 +16,20 @@ const API = "/api/production-control/records";
 const MAX = 30000;
 
 /**
+ * Дата «Сохранено …» в поясе организации: так она одинакова на сервере и в
+ * браузере (иначе около полуночи разошлась бы при гидратации). Неизвестный
+ * пояс — Москва.
+ */
+function savedDate(iso: string, locale: string, timeZone: string): string {
+  const options = { day: "numeric", month: "long", year: "numeric" } as const;
+  try {
+    return new Date(iso).toLocaleDateString(locale, { ...options, timeZone });
+  } catch {
+    return new Date(iso).toLocaleDateString(locale, { ...options, timeZone: "Europe/Moscow" });
+  }
+}
+
+/**
  * Текст пункта: пока своего нет — в поле шаблон (если он у пункта есть);
  * «Сохранить» фиксирует текст (правленый шаблон или свой), «Вернуть шаблон»
  * подставляет шаблон заново. Пункт без шаблона — пустое поле.
@@ -25,11 +39,14 @@ export function TextDocEditor({
   record,
   template,
   scanFolder,
+  timeZone,
 }: {
   block: PpkTextBlock;
   record: { id: string; text: string; updatedAt: string } | null;
   template: string;
   scanFolder: PpkFolderKey | null;
+  /** Пояс организации — для даты «Сохранено …». */
+  timeZone: string;
 }) {
   const t = useTranslations("productionControl.structure.text");
   const locale = useLocale();
@@ -77,9 +94,7 @@ export function TextDocEditor({
     : savedText === null
       ? t("statusEmpty")
       : savedAt
-        ? t("statusSaved", {
-            date: new Date(savedAt).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }),
-          })
+        ? t("statusSaved", { date: savedDate(savedAt, locale, timeZone) })
         : null;
 
   return (
