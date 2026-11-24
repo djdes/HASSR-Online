@@ -85,7 +85,15 @@ test("каждое создание объекта открывает офис",
   ]);
   for (const file of creators) {
     if (file.endsWith("organization-office.server.ts")) continue;
-    assert.match(readFileSync(file, "utf8"), /openOrganizationOffice\(/, path.relative(process.cwd(), file));
+    const source = readFileSync(file, "utf8");
+    // Обмен справочниками — синхронизация между компаниями сети с отменой: структуру
+    // компании-получателя (офис, журналы по объектам) он не меняет — отмена её не
+    // вернула бы. Её офис откроет страница «Офис» или свой первый объект.
+    if (file.endsWith(path.join("directory-exchange", "entities.server.ts"))) {
+      assert.doesNotMatch(source, /openOrganizationOffice\(/, "обмен справочниками не открывает офис получателя");
+      continue;
+    }
+    assert.match(source, /openOrganizationOffice\(/, path.relative(process.cwd(), file));
   }
 });
 

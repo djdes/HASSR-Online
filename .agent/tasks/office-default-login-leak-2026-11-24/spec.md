@@ -82,6 +82,13 @@ Status: FROZEN (2026-11-24)
   office cookie is ignored); the office stays the place of office staff and of «вся организация»; «без места —
   везде» means every object (and the same for a list of only deleted places). Proof: `building-scope.test.ts`.
 
+- **AC4 amendment (CI, before merge).** The directory exchange is not an office-opening path. It creates objects in
+  another company of the network as a synchronisation that can be undone; opening that company's office (an office
+  building and journals by objects) is a structural change the undo cannot revert (CI E2E `part2-exchange-check`,
+  `transfer-undo-check`: an «Офис» left behind after undo). That company's office opens through its office page or its
+  own first object. The guard test requires the exchange NOT to open the office; the other four paths (the «Объекты»
+  page, the onboarding template, the questionnaire, the demo company) do.
+
 ## Out of scope
 
 - Changing who works where (no staff is moved to the office by the deploy step).

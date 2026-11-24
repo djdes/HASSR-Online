@@ -42,7 +42,6 @@ import { tryAutolinkTasksflowByPhone } from "@/lib/tasksflow-autolink";
 import { isManagementRole } from "@/lib/user-roles";
 import { syncUvDocumentPoints } from "@/lib/uv-document-points";
 import { isUvLampEquipment } from "@/lib/uv-lamp";
-import { openOrganizationOffice } from "@/lib/organization-office.server";
 
 /**
  * Обмен справочниками — работа с базой по каждой сущности: чтение строк
@@ -968,10 +967,9 @@ export async function createEntityRow(
           data: { organizationId, name: name.slice(0, 120), address: text(source.fields.address, 200), sortOrder: 0 },
           select: { id: true },
         });
-        // С первым объектом открывается и офис (2026-11-24, офис у всех по умолчанию).
-        await openOrganizationOffice(organizationId, { source: EXCHANGE_SOURCE }).catch((error) =>
-          console.error("[directory-exchange] open office failed", error),
-        );
+        // Офис компании-получателя обмен не открывает (2026-11-24): это синхронизация
+        // с отменой, менять структуру чужой компании ей не положено. Офис откроет
+        // страница «Офис» или первый объект, заведённый самой компанией.
         return { status: "created", id: created.id };
       }
       case "room": {
