@@ -247,8 +247,12 @@ export function Header({
           max-w-[1800px] + px-4 md:px-8. */}
       {/* Телефон: края по содержимому, середина сжимается — раньше правый
           край (MAX, колокольчик, профиль) не помещался в свою половину и
-          заезжал на «+ Добавить точку», а с крупным текстом — ещё сильнее. */}
-      <div className="mx-auto grid h-[55px] w-full max-w-[1800px] grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)] items-center gap-2 px-4 max-sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:h-[72px] md:gap-4 md:px-8">
+          заезжал на «+ Добавить точку», а с крупным текстом — ещё сильнее.
+          Компьютер (2026-11-24): с полем «Поиск… Ctrl K» правая группа шире
+          своей трети на 1280–1440px и заезжала на «Выберите объект» — правая
+          колонка не уже своего содержимого: на широком экране центр ровно
+          посередине, на узком сдвигается влево, а не под кнопки. */}
+      <div className="mx-auto grid h-[55px] w-full max-w-[1800px] grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(max-content,1fr)] items-center gap-2 px-4 max-sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:h-[72px] md:gap-4 md:px-8">
         <div className="flex min-w-0 items-center gap-2">
           {hasMenu ? (
             <Button
