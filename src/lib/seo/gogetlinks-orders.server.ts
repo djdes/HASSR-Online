@@ -2154,6 +2154,24 @@ export async function approvePlannedSlot(
           .catch(() => {});
       }
 
+      await (client as typeof db).gglThread
+        ?.updateMany({
+          where: {
+            orderId: null,
+            OR: [
+              {
+                gglThreadKey: `personal:${meta.slot.campaign.gglCampaignId}:${meta.slot.donorSiteId}`,
+              },
+              {
+                campaignId: meta.slot.campaign.id,
+                donorDomain: meta.slot.donorDomain,
+              },
+            ],
+          },
+          data: { orderId: order.id },
+        })
+        .catch(() => {});
+
       return order.id;
     });
 
@@ -2575,6 +2593,24 @@ export async function createManualGglOrder(
       ...(remoteRes.gglReviewId ? { gglReviewId: remoteRes.gglReviewId } : {}),
     },
   });
+
+  await (client as typeof db).gglThread
+    ?.updateMany({
+      where: {
+        orderId: null,
+        OR: [
+          {
+            gglThreadKey: `personal:${campaign.gglCampaignId}:${input.donorSiteId}`,
+          },
+          {
+            campaignId: campaign.id,
+            donorDomain: cleanDonorDomain,
+          },
+        ],
+      },
+      data: { orderId: claimedOrder.id },
+    })
+    .catch(() => {});
 
   await writeAudit({
     action: "ggl.order.manual_create",

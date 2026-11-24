@@ -407,13 +407,14 @@ export function SeoLinksClient({
               focusedThreadId={focusedThreadId}
               campaigns={overview?.campaigns ?? []}
               defaultCampaignId={overview?.account?.defaultCampaignId ?? null}
+              orders={overview?.orders ?? []}
               slots={overview?.slots ?? []}
               accountSyncedAt={overview?.account?.lastSyncedAt ?? null}
               expectedApplicationsCount={webmasterApplicationsCount}
               onSelectThread={setFocusedThreadId}
               onRefreshOverview={() => loadOverview(includeOtherProjects, true)}
               onOrderCreated={() => {
-                setActiveTab("orders");
+                void loadOverview(includeOtherProjects, true);
               }}
             />
           ) : null}

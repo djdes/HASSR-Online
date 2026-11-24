@@ -386,6 +386,70 @@ export function ChatWebmasterPlacementDialog({
     }
     setSubmitting(true);
     try {
+      // If there is a pending_approval slot for this exact donor and format, update its article/anchor if edited and approve the slot so the planner stays in sync!
+      if (
+        matchingSlot &&
+        matchingSlot.status === "pending_approval" &&
+        matchingSlot.donorSiteId === selectedApp.siteId &&
+        selectedFormat !== "context"
+      ) {
+        if (selectedFormat === "article" && draft) {
+          await fetch(
+            `/api/root/gogetlinks/slots/${encodeURIComponent(matchingSlot.id)}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "update_article",
+                articlePatch: {
+                  title: draft.title.trim(),
+                  announcement:
+                    draft.announcement.trim() || draft.title.trim(),
+                  bodyHtml: draft.bodyHtml.trim(),
+                  metaTitle: draft.metaTitle.trim() || undefined,
+                  metaDescription: draft.metaDescription.trim() || undefined,
+                  metaKeywords: draft.metaKeywords.trim() || undefined,
+                  anchor: cleanAnchor,
+                  anchorKind: cleanAnchor.toLowerCase().includes("wesetup")
+                    ? "url_brand"
+                    : "exact",
+                  briefText: draft.briefText.trim() || undefined,
+                },
+              }),
+            },
+          ).catch(() => null);
+        }
+        const approveRes = await fetch(
+          `/api/root/gogetlinks/slots/${encodeURIComponent(matchingSlot.id)}/approve`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              idempotencyKey: generateClientIdempotencyKey(
+                `chat-slot-submit-${matchingSlot.id}`,
+              ),
+            }),
+          },
+        );
+        const approveData = (await approveRes.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        if (!approveRes.ok) {
+          throw new Error(
+            approveData?.error ??
+              `Ошибка отправки заявки по слоту (${approveRes.status})`,
+          );
+        }
+        invalidateOverviewCache();
+        invalidateApplicationsCache(effectiveGglCampaignId);
+        toast.success(
+          `Заявка на ${selectedApp.domain} отправлена вебмастеру в GoGetLinks`,
+        );
+        onOpenChange(false);
+        onOrderCreated?.();
+        return;
+      }
+
       const activeCampaign =
         campaigns.find(
           (c) =>
