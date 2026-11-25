@@ -231,7 +231,7 @@ export async function POST(request: Request) {
   }).catch((err) => console.error("sendWelcomeEmail failed", err));
 
   // Откуда пришёл — cookie первого касания (спека visit-source-2026-11).
-  await rememberOrganizationVisitSource(result.organization.id, requestSignupSource(request, null));
+  await rememberOrganizationVisitSource(result.organization.id, requestSignupSource(request, null, true));
 
   // Регистрации через /register раньше не уведомляли никого: новые
   // организации появлялись молча, и владелец узнавал о них случайно.

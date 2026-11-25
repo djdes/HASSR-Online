@@ -1,4 +1,20 @@
 {
+  "rootAdCampaign": {
+    "title": "Advertising post · SETUP10",
+    "description": "All-time tracked statistics for the existing campaign link. No additional URL tags are required.",
+    "views": "Page visits",
+    "visitors": "Unique browsers",
+    "registrations": "Organization signups",
+    "conversion": "Browser conversion",
+    "since": "First recorded visit: {date}.",
+    "notStarted": "No visits recorded yet.",
+    "limitations": "Tracking starts when enabled; earlier visits have not been recovered. Known bots and link previews are excluded. Signups are linked to visits in the same browser using a cookie for up to 180 days, independently of the first-touch source. Conversion is the share of unique browsers that created an organization. Reposts of the same link are counted together.",
+    "recent": "Latest 50 signups from this link",
+    "organization": "Organization",
+    "registeredAt": "Signup date",
+    "empty": "No signups after visiting this link yet.",
+    "unavailable": "Statistics are temporarily unavailable. Refresh the page later."
+  },
   "rootGglFirstMessage": {
     "generate": "Generate message",
     "replaceDraft": "Replace draft",

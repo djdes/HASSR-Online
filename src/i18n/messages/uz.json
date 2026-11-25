@@ -1,4 +1,20 @@
 {
+  "rootAdCampaign": {
+    "title": "Reklama posti · SETUP10",
+    "description": "Mavjud aksiya havolasi bo‘yicha barcha qayd etilgan statistika. Havolaga qo‘shimcha belgilar kerak emas.",
+    "views": "O‘tishlar",
+    "visitors": "Noyob brauzerlar",
+    "registrations": "Tashkilotlar ro‘yxatdan o‘tishi",
+    "conversion": "Brauzerlar konversiyasi",
+    "since": "Birinchi qayd etilgan o‘tish: {date}.",
+    "notStarted": "Hozircha o‘tishlar qayd etilmagan.",
+    "limitations": "Hisob yoqilgandan boshlanadi; oldingi o‘tishlar tiklanmagan. Ma’lum botlar va havola ko‘rib chiqishlari hisoblanmaydi. Ro‘yxatdan o‘tish birinchi manbadan qat’i nazar, shu brauzerdagi cookie orqali 180 kungacha o‘tish bilan bog‘lanadi. Konversiya — tashkilot yaratgan noyob brauzerlar ulushi. Shu havolaning qayta e’lonlari birga hisoblanadi.",
+    "recent": "Havola orqali oxirgi 50 ta ro‘yxatdan o‘tish",
+    "organization": "Tashkilot",
+    "registeredAt": "Ro‘yxatdan o‘tish sanasi",
+    "empty": "Bu havola orqali o‘tishdan keyin hali ro‘yxatdan o‘tishlar yo‘q.",
+    "unavailable": "Statistika vaqtincha mavjud emas. Sahifani keyinroq yangilang."
+  },
   "rootGglFirstMessage": {
     "generate": "Xabar yaratish",
     "replaceDraft": "Qoralamani almashtirish",

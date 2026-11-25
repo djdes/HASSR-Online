@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   // Снимок формы, а без внешнего referrer/utm — cookie первого касания
   // (спека visit-source-2026-11): человек мог прийти из поиска вчера.
   const formSource = readSignupSnapshot((body as { source?: unknown } | null)?.source);
-  const source = requestSignupSource(request, formSource) ?? formSource;
+  const source = requestSignupSource(request, formSource, true) ?? formSource;
   // Обязательное согласие с документами (2026-09-22): без галки — отказ.
   const consentGiven = (body as { consent?: unknown } | null)?.consent === true;
   const consentPlace = (body as { consentPlace?: unknown } | null)?.consentPlace === "landing" ? "landing" : "register";

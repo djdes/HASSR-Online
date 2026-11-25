@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
+import { AD_VISIT_ENTITY } from "@/lib/ad-campaign";
 
 /**
  * Минимальный helper для записи admin-действий в `AuditLog`. Точка
@@ -59,7 +60,8 @@ export async function recordAuditLog(input: AuditLogInput): Promise<void> {
 export async function pruneOldAuditLogs(): Promise<number> {
   const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
   const result = await db.auditLog.deleteMany({
-    where: { createdAt: { lt: cutoff } },
+    // Campaign facts are the denominator of an all-time admin report.
+    where: { createdAt: { lt: cutoff }, entity: { not: AD_VISIT_ENTITY } },
   });
   return result.count;
 }

@@ -11,6 +11,8 @@ import { db } from "@/lib/db";
 import { normalizeEmail, phoneKey } from "@/lib/crm/identity";
 import { isEmptySnapshot, readSignupSnapshot, signupChannel, type SignupSourceSnapshot } from "@/lib/signup-channel";
 import { VISIT_SOURCE_COOKIE } from "@/lib/signup-source";
+import { AD_CAMPAIGN_COOKIE, type AdAttribution } from "@/lib/ad-campaign";
+import { readAdTouch } from "@/lib/ad-campaign-cookie.server";
 
 /** Значение cookie из заголовка `Cookie` (без зависимостей от next/headers). */
 function cookieValue(header: string | null | undefined, name: string): string | null {
@@ -43,13 +45,21 @@ export function visitSourceFromRequest(request: Request | null | undefined, plac
  * Источник для записи: снимок формы, если он содержательный, иначе cookie.
  * `place` формы сохраняем в любом случае — какая кнопка сработала.
  */
-export function requestSignupSource(request: Request | null | undefined, body: SignupSourceSnapshot | null | undefined): SignupSourceSnapshot | null {
+type AttributedSignupSource = SignupSourceSnapshot & { adCampaign?: AdAttribution };
+
+export function requestSignupSource(request: Request | null | undefined, body: SignupSourceSnapshot | null | undefined, attributeRegistration = false): AttributedSignupSource | null {
   const form = body && !isEmptySnapshot({ ...body, place: "" }) ? body : null;
   // Форма с внешним referrer, utm или меткой клика — содержательна сама;
   // «прямой заход» (свой сайт, пусто) уступает cookie первого касания.
-  if (form && !["direct", "unknown"].includes(signupChannel(form))) return form;
   const cookie = visitSourceFromRequest(request, body?.place ?? "");
-  return cookie ?? form ?? (body && !isEmptySnapshot(body) ? body : null);
+  const source = form && !["direct", "unknown"].includes(signupChannel(form))
+    ? form : cookie ?? form ?? (body && !isEmptySnapshot(body) ? body : null);
+  const touch = attributeRegistration ? readAdTouch(cookieValue(request?.headers.get("cookie"), AD_CAMPAIGN_COOKIE)) : null;
+  // Only the signed server cookie may attach campaign attribution to a signup.
+  const attributed = source as AttributedSignupSource | null;
+  const clean = attributed?.adCampaign ? { ...attributed } : attributed;
+  if (clean?.adCampaign) delete clean.adCampaign;
+  return touch ? { ...(clean ?? readSignupSnapshot(null)), adCampaign: { id: touch.id, visitorId: touch.visitorId } } : clean;
 }
 
 /** Организации без источника — записать первое касание. */
