@@ -1,0 +1,12 @@
+AC8 round 2 — words cut mid-word on the branch but not in origin/master markup (same page, same names):
+  320px: Цех кондитерский (word 123px, line 170px); Цех заготовочный (word 122px, line 170px); Цех производственный (word 168px, line 170px); Кафе «Шоколадница» (word 142px, line 170px); Магазин «Перекрёсток» (word 134px, line 170px); Пекарня «Хлебосольная» (word 145px, line 170px); Кафе «Кофемания» (word 119px, line 170px)
+  360px: Цех производственный (word 168px, line 210px); Склад продовольственный (word 179px, line 210px); Столовая общеобразовательная (word 198px, line 210px)
+  375px: Склад продовольственный (word 179px, line 225px); Столовая общеобразовательная (word 198px, line 225px)
+  390px: Столовая общеобразовательная (word 198px, line 240px)
+  480px: Производственнокондитерский (word 281px, line 330px)
+  639px: Сверхдлинноеназваниеобъектабезединогопробела (word 457px, line 489px)
+  hyphen break only (acceptable, not counted): 320px, 360px, 375px «Цех мясо-рыбный» → «Цех мясо- / рыбный 📎»
+Cut in both layouts (word wider than the whole line): Склад продовольственный; Столовая общеобразовательная; Сверхдлинноеназваниеобъектабезединогопробела; Производственнокондитерский
+Improvements (cut only in master markup): 0
+Pin not on the last character line / pin in the wrong place: 0; overflow past the card or page h-scroll: 0; cards with ≠1 visible pin: 0; order differences ≥640 vs master: 0
+Misc: not on the page: Офис | cleanup: test points left 0 of 33

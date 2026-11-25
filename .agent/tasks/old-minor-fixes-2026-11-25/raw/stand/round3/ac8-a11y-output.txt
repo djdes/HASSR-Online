@@ -1,0 +1,35 @@
+PASS setup: test point — 200
+PASS 320px: exactly one h2 named «Кафе «Проверка» 22:28:47» (accessible name = object name) — 1
+PASS 320px: exactly one pin button in the accessibility tree — 1
+PASS 320px: Tab reaches the pin exactly once, and it is visible when focused — ["button[pin in h2]:Закрепить «Кафе «Проверка» 22:28:47» первым","a:Открыть объект","button:Переименовать объект и адрес","button:Удалить объект","button:Изменить","button:Добавить помещение"]
+PASS 320px: the focused pin is inside the heading — {"tag":"button","label":"Закрепить «Кафе «Проверка» 22:28:47» первым","pin":true,"inH2":true,"visible":true,"opacity":"1"}
+PASS 390px: exactly one h2 named «Кафе «Проверка» 22:28:47» (accessible name = object name) — 1
+PASS 390px: exactly one pin button in the accessibility tree — 1
+PASS 390px: Tab reaches the pin exactly once, and it is visible when focused — ["button[pin in h2]:Закрепить «Кафе «Проверка» 22:28:47» первым","a:Открыть объект","button:Переименовать объект и адрес","button:Удалить объект","button:Изменить","button:Добавить помещение"]
+PASS 390px: the focused pin is inside the heading — {"tag":"button","label":"Закрепить «Кафе «Проверка» 22:28:47» первым","pin":true,"inH2":true,"visible":true,"opacity":"1"}
+PASS 639px: exactly one h2 named «Кафе «Проверка» 22:28:47» (accessible name = object name) — 1
+PASS 639px: exactly one pin button in the accessibility tree — 1
+PASS 639px: Tab reaches the pin exactly once, and it is visible when focused — ["button[pin in h2]:Закрепить «Кафе «Проверка» 22:28:47» первым","a:Открыть объект","button:Переименовать объект и адрес","button:Удалить объект","button:Изменить","button:Добавить помещение"]
+PASS 639px: the focused pin is inside the heading — {"tag":"button","label":"Закрепить «Кафе «Проверка» 22:28:47» первым","pin":true,"inH2":true,"visible":true,"opacity":"1"}
+PASS 640px: exactly one h2 named «Кафе «Проверка» 22:28:47» (accessible name = object name) — 1
+PASS 640px: exactly one pin button in the accessibility tree — 1
+PASS 640px: Tab reaches the pin exactly once, and it is visible when focused — ["button[pin]:Закрепить «Кафе «Проверка» 22:28:47» первым","a:Открыть объект","button:Переименовать объект и адрес","button:Удалить объект","button:Изменить","button:Добавить помещение"]
+PASS 640px: the focused pin is outside the heading — {"tag":"button","label":"Закрепить «Кафе «Проверка» 22:28:47» первым","pin":true,"inH2":false,"visible":true,"opacity":"1"}
+PASS 1024px: exactly one h2 named «Кафе «Проверка» 22:28:47» (accessible name = object name) — 1
+PASS 1024px: exactly one pin button in the accessibility tree — 1
+PASS 1024px: Tab reaches the pin exactly once, and it is visible when focused — ["button[pin]:Закрепить «Кафе «Проверка» 22:28:47» первым","a:Открыть объект","button:Переименовать объект и адрес","button:Удалить объект","button:Изменить","button:Добавить помещение"]
+PASS 1024px: the focused pin is outside the heading — {"tag":"button","label":"Закрепить «Кафе «Проверка» 22:28:47» первым","pin":true,"inH2":false,"visible":true,"opacity":"1"}
+PASS 1280px: exactly one h2 named «Кафе «Проверка» 22:28:47» (accessible name = object name) — 1
+PASS 1280px: exactly one pin button in the accessibility tree — 1
+PASS 1280px: Tab reaches the pin exactly once, and it is visible when focused — ["button[pin]:Закрепить «Кафе «Проверка» 22:28:47» первым","a:Открыть объект","button:Переименовать объект и адрес","button:Удалить объект","button:Изменить","button:Добавить помещение"]
+PASS 1280px: the focused pin is outside the heading — {"tag":"button","label":"Закрепить «Кафе «Проверка» 22:28:47» первым","pin":true,"inH2":false,"visible":true,"opacity":"1"}
+PASS 390px keyboard: focus stays on the pin after Enter — Открепить «Кафе «Проверка» 22:28:47»
+PASS 390px keyboard: Enter on the pin inside the heading pins the object (aria-pressed, saved) — true ["cmwwp3r2u00288o7dt4j1u5vn"]
+PASS 390px: pinned label «Открепить «…»» — Открепить «Кафе «Проверка» 22:28:47»
+PASS 390px mouse: click on the pin inside the heading unpins (saved) — []
+PASS 1280px: unpinned pin invisible until the card is hovered, visible on hover — 0 → 1
+PASS 1280px: the phone pin inside the heading is display:none — none
+PASS 1280px: pinned pin visible without hover — 1
+PASS cleanup: test point deleted, pinned list restored — 200
+
+33/33 PASS

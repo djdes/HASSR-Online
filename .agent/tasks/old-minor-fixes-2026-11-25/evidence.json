@@ -58,11 +58,12 @@
     "AC8": {
       "status": "PASS",
       "evidence": [
-        "buildings-card-layout.test.ts (RED → GREEN 4/4)",
-        "raw/stand/card-pin-after.json (pin with last word at 320–430, no broken words, 700/1280 unchanged)",
-        "raw/stand/card-typical-names-after.txt (verifier's probe: no broken words at 320–430)",
-        "raw/stand/screens/after3-*.png, typical-production-390-after.png"
-      ]
+        "buildings-card-layout.test.ts (GREEN 4/4)",
+        "raw/stand/round3/ac8-names-output.txt (verifier-round2 probe: 0 regressions vs master-sim, 0 overflow, 0 focus, 0 order; pin alone in 7/429 cases where last word + pin is wider than the line)",
+        "raw/stand/round3/ac8-a11y-output.txt (33/33)",
+        "raw/stand/round3/ac8-hit-area-output.txt (28px button, 48x48 hit area)"
+      ],
+      "note": "spec refinement for AC8 added after round 2"
     },
     "AC9": {
       "status": "PASS",
@@ -75,6 +76,6 @@
       "deploy": "after merge to master; no DB schema change"
     }
   },
-  "round": 2,
-  "previous_verdict": "FAIL (verdict-round1.json, problems-round1.md: AC8 names cut mid-word on phones; minor: malformed ids deleted the whole row)"
+  "round": 3,
+  "previous_verdict": "round 1 FAIL (AC8 names cut in flex row), round 2 FAIL (AC8 long last word cut by the glued last-letter pin); see verdict-round1.json, verdict-round2.json"
 }

@@ -363,14 +363,15 @@ export function BuildingsClient({
 }
 
 /**
- * Название без последнего символа и сам символ: на телефоне скрепка неразрывно
- * «приклеена» к последнему символу, поэтому не начинает строку одна, а
- * название переносится по словам на всю ширину карточки. По символам, не по
- * кодовым единицам: эмодзи в конце не разрезается.
+ * Название без последнего слова и само слово: на телефоне скрепка идёт вместе с
+ * последним словом (одним блоком), поэтому не начинает строку одна и не
+ * заставляет рвать слово, а остальное название переносится по словам на всю
+ * ширину карточки.
  */
 export function splitForPin(name: string): [string, string] {
-  const chars = Array.from(name.trimEnd());
-  return [chars.slice(0, -1).join(""), chars.slice(-1).join("")];
+  const trimmed = name.trimEnd();
+  const at = Math.max(trimmed.lastIndexOf(" "), trimmed.lastIndexOf("\u00a0"), trimmed.lastIndexOf("\t"), trimmed.lastIndexOf("\n"));
+  return [trimmed.slice(0, at + 1), trimmed.slice(at + 1)];
 }
 
 function BuildingCard({
@@ -672,11 +673,12 @@ function BuildingCard({
                 сжимает его в столбик. */}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {/* На телефоне значок и название — обычный текст на всю ширину
-                  карточки (слова не рвутся), скрепка — внутри заголовка,
-                  неразрывно «приклеена» к последнему символу: не начинает строку
-                  одна. Отдельный элемент со склейкой Chrome здесь всё равно
-                  переносил. С 640 px группа растворяется (`sm:contents`) и
-                  скрепка — отдельная, в конце: название, сфера, скрепка. */}
+                  карточки (слова не рвутся), скрепка — внутри заголовка вместе
+                  с последним словом в одном inline-block: переходит на новую
+                  строку вместе со словом и не начинает строку одна; шире строки
+                  (max-w-full) — переносится внутри блока, ничего не вылезает.
+                  С 640 px группа растворяется (`sm:contents`) и скрепка —
+                  отдельная, в конце: название, сфера, скрепка. */}
               <div className="min-w-0 sm:contents" data-building-title>
                 <Building2 className="size-4 shrink-0 text-[#5566f6] max-sm:mr-2 max-sm:inline-block max-sm:align-[-0.125em]" />
                 <h2
@@ -686,13 +688,17 @@ function BuildingCard({
                   {onTogglePin ? (
                     <>
                       {nameHead}
-                      <span className="whitespace-nowrap">
+                      {/* В строке скрепка занимает 28 px (data-touch-compact),
+                          зона касания — 48×48: невидимый ::before на 10 px во
+                          все стороны. Иначе «слово + 48 px» чаще не помещалось
+                          и скрепка уходила на свою строку. */}
+                      <span className="inline-block max-w-full" data-touch-compact="">
                         {nameTail}
                         <PinButton
                           pinned={pinned}
                           onToggle={onTogglePin}
                           name={building.name}
-                          className="ml-1 align-middle sm:hidden"
+                          className="relative ml-1 align-middle before:absolute before:-inset-2.5 before:content-[''] sm:hidden"
                         />
                       </span>
                     </>
