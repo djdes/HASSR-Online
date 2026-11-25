@@ -24,25 +24,26 @@ export async function POST(request: Request) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Неверный запрос", code: "bad_request" }, { status: 400 });
   if (!aiHeavyRateLimiter.consume(`ppk-draft:${auth.session.user.id}`)) {
-    return NextResponse.json({ error: "Слишком много запросов, подождите минуту" }, { status: 429 });
+    return NextResponse.json({ error: "Слишком много запросов, подождите минуту", code: "rate_limited" }, { status: 429 });
   }
   const { block } = parsed.data;
   const context = await loadDraftContext(auth.scope, block);
   const result = await enqueueAndWait(buildDraftPrompt(block, context));
   if (!result.ok) {
     const status = result.code === "not_configured" ? 503 : result.code === "timeout" ? 504 : 502;
+    const code = result.code === "not_configured" ? "ai_not_configured" : result.code === "timeout" ? "ai_timeout" : "ai_failed";
     const error =
       result.code === "not_configured"
         ? "ИИ-помощник не подключён: черновик сейчас недоступен"
         : result.code === "timeout"
           ? "ИИ-помощник не ответил вовремя. Попробуйте ещё раз"
           : "ИИ-помощник не смог подготовить черновик. Попробуйте ещё раз";
-    return NextResponse.json({ error }, { status });
+    return NextResponse.json({ error, code }, { status });
   }
   const text = cleanDraftReply(result.text);
-  if (!text) return NextResponse.json({ error: "ИИ-помощник вернул пустой черновик. Попробуйте ещё раз" }, { status: 502 });
+  if (!text) return NextResponse.json({ error: "ИИ-помощник вернул пустой черновик. Попробуйте ещё раз", code: "ai_empty" }, { status: 502 });
   await recordAuditLog({
     request,
     session: auth.session,

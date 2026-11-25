@@ -1,0 +1,177 @@
+[
+  {
+    "name": "setup: own point",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "setup: own health_check document",
+    "ok": true,
+    "detail": "201 {\"document\":{\"id\":\"cmwwo02uv0008y87d1o9v16l2\",\"templateId\":\"cmwv7iu59000aw17d4tg"
+  },
+  {
+    "name": "setup: owner rows -6/-2/-1 and cook rows -6/-1 exist",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "setup: special mode on, past days window 3",
+    "ok": true,
+    "detail": "200 {\"enabled\":true,\"autoFill\":true,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":true,\"pastDaysLimit\":3}"
+  },
+  {
+    "name": "AC1 automation doc, window 3: DELETE {employeeId, date:-1} → 200 deleted 1 (old locked -6 row of the same employee exists)",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 only that row: owner -6 and -2 rows and cook -1 row intact",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 row outside the window: DELETE {employeeId, date:-6} → 403 past_day_locked",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 {ids:[row -6]} → 403, row intact",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 {ids:[locked], employeeId: other, date} → ids win → 403",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 {employeeId} whole row with a locked day → 403, nothing deleted",
+    "ok": true,
+    "detail": "403 rows 29→29"
+  },
+  {
+    "name": "AC1 invalid date → 400 «Некорректная дата»",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректная дата\"}"
+  },
+  {
+    "name": "AC1 {} → 400",
+    "ok": true,
+    "detail": "400 {\"error\":\"Нужно передать ids либо employeeId и date\"}"
+  },
+  {
+    "name": "AC1 {date} only → 400",
+    "ok": true,
+    "detail": "400"
+  },
+  {
+    "name": "round-1 malformed ids {ids:[5], employeeId} → 400 «Некорректный список строк», rows intact",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректный список строк\"} rows 29→29"
+  },
+  {
+    "name": "round-1 malformed ids {ids:[null,\"\"], employeeId} → 400 «Некорректный список строк», rows intact",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректный список строк\"} rows 29→29"
+  },
+  {
+    "name": "round-1 malformed ids {ids:\"abc\", employeeId} → 400 «Некорректный список строк», rows intact",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректный список строк\"} rows 29→29"
+  },
+  {
+    "name": "round-1 malformed ids {ids:{}, employeeId} → 400 «Некорректный список строк», rows intact",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректный список строк\"} rows 29→29"
+  },
+  {
+    "name": "round-1 malformed ids {ids:[5], employeeId, date:-2} → 400 «Некорректный список строк», rows intact",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректный список строк\"} rows 29→29"
+  },
+  {
+    "name": "round-1 malformed ids {ids:[\"x\", 5]} → 400 «Некорректный список строк», rows intact",
+    "ok": true,
+    "detail": "400 {\"error\":\"Некорректный список строк\"} rows 29→29"
+  },
+  {
+    "name": "AC1 {ids:[], employeeId, date:-2} → empty ids ignored → deletes the -2 row (in window) → 200 deleted 1",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 {ids:null, employeeId: cook, date:-1} → like no ids → 200 deleted 1",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 cook (staff) DELETE → 403",
+    "ok": true,
+    "detail": "403 {\"error\":\"Это действие доступно руководителю\"}"
+  },
+  {
+    "name": "AC1 regular doc {ids:[a,b]} → exactly those 2 rows",
+    "ok": true,
+    "detail": "200 {\"deleted\":2}"
+  },
+  {
+    "name": "AC1 regular doc {employeeId} → the employee's whole row",
+    "ok": true,
+    "detail": "200 {\"deleted\":27} (had 27, c=yes)"
+  },
+  {
+    "name": "AC2 manager moves own row +2 → today → 200 (same row now today)",
+    "ok": true,
+    "detail": "200  → 2026-11-26"
+  },
+  {
+    "name": "AC2 moving INTO a future day → 403 future_day_locked",
+    "ok": true,
+    "detail": "403 future_day_locked"
+  },
+  {
+    "name": "AC2 writing a future day → 403 future_day_locked",
+    "ok": true,
+    "detail": "403 future_day_locked"
+  },
+  {
+    "name": "AC2 staff (cook) moves own +2 row → 403",
+    "ok": true,
+    "detail": "403 not_today"
+  },
+  {
+    "name": "AC2 cook's +2 row not moved",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC2 manager moves the cook's +2 row → today → 200",
+    "ok": true,
+    "detail": "200  → 2026-11-26"
+  },
+  {
+    "name": "AC2 automation doc: source on a locked past day (-6) → 403 past_day_locked",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC2 automation doc: source +1 → today → 200",
+    "ok": true,
+    "detail": "200 "
+  },
+  {
+    "name": "cleanup: own point deleted",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "cleanup: special mode restored",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cleanup: no documents left behind",
+    "ok": true,
+    "detail": "28→28"
+  }
+]

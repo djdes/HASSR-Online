@@ -13,13 +13,17 @@ import { ppkWhere, type PpkScope } from "./scope";
 import { PPK_STRUCTURE_ITEMS, type PpkItemId } from "./structure";
 import { ppkItemTitleRu } from "./structure-titles";
 import type { PpkFolderKey } from "./folders";
+import type { PpkCompareErrorCode } from "./api-errors";
 import {
   nextRevisionNumber,
   normalizeRevisionText,
   parseRevisionDocKey,
+  pickCompareSides,
+  readSnapshotWithRetry,
   revisionCode,
   revisionDocKey,
   revisionStatus,
+  type RevisionCompareSide,
   type RevisionDocRef,
   type RevisionInfo,
   type RevisionState,
@@ -247,7 +251,7 @@ export async function loadRevisionStates(scope: PpkScope, docKeys: readonly stri
 
 export type ApproveResult =
   | { ok: true; created: boolean; revision: RevisionInfo; docKey: string; title: string }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; code: "doc_not_found" | "doc_empty" | "doc_changed" };
 
 /** Предел сохранённого содержимого редакции. */
 export const REVISION_CONTENT_MAX = 200_000;
@@ -329,10 +333,20 @@ export async function approveRevision(
   docKey: string,
 ): Promise<ApproveResult> {
   const doc = (await resolveRevisionDocs(scope, [docKey])).get(docKey);
-  if (!doc) return { ok: false, status: 404, error: "Документ не найден" };
-  if (doc.empty) return { ok: false, status: 400, error: "Документ пуст: сохраните текст или загрузите скан" };
+  if (!doc) return { ok: false, status: 404, error: "Документ не найден", code: "doc_not_found" };
+  if (doc.empty) return { ok: false, status: 400, error: "Документ пуст: сохраните текст или загрузите скан", code: "doc_empty" };
   // Содержимое — до транзакции: чтение файла не держит блокировку утверждений.
-  const snapshot = await revisionContent(scope, docKey).catch(() => null);
+  // Сбой чтения — повтор, затем лог: редакция утверждается без текста, но не молча.
+  const snapshot = await readSnapshotWithRetry(
+    () => revisionContent(scope, docKey),
+    (error) => console.error("[ppk] текст редакции не прочитан при утверждении", { docKey, error }),
+  );
+  // Текст и отпечаток — одной версии документа: правка между чтениями дала бы
+  // редакции чужой текст. Документ изменился — утверждение не проходит.
+  const recheck = (await resolveRevisionDocs(scope, [docKey])).get(docKey);
+  if (!recheck || recheck.hash !== doc.hash) {
+    return { ok: false, status: 409, error: "Документ изменился во время утверждения — утвердите ещё раз", code: "doc_changed" };
+  }
   // Утверждения одной организации — по очереди (блокировка транзакции): два
   // одновременных нажатия не дадут одной редакции два номера и не займут один номер дважды.
   return db.$transaction(async (tx) => {
@@ -428,7 +442,7 @@ export function clientRevisionState(
 }
 
 export type RevisionHistoryItem = RevisionInfo & { hasContent: boolean };
-export type CompareSide = { kind: "revision"; number: number } | { kind: "current" };
+export type CompareSide = RevisionCompareSide;
 export type CompareResult =
   | {
       ok: true;
@@ -443,7 +457,7 @@ export type CompareResult =
       unavailable: "from" | "to" | null;
       diff: DiffResult | null;
     }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; code: PpkCompareErrorCode };
 
 /**
  * Документ виден в сравнении так же, как в реестре: руководителю точки — свои
@@ -474,45 +488,46 @@ export async function compareRevisions(
   requested: { from?: number | null; to?: number | "current" | null },
 ): Promise<CompareResult> {
   const parsed = parseRevisionDocKey(docKey);
-  if (!parsed) return { ok: false, status: 404, error: "Документ не найден" };
+  if (!parsed) return { ok: false, status: 404, error: "Документ не найден", code: "doc_not_found" };
   const canonical = parsed.ref.kind === "knowledge" ? docKey : revisionDocKey(parsed.ref, parsed.buildingId);
   if (!(await revisionDocVisible(scope.organizationId, canonical, pointId))) {
-    return { ok: false, status: 404, error: "Документ не найден" };
+    return { ok: false, status: 404, error: "Документ не найден", code: "doc_not_found" };
   }
-  const rows = await db.ppkRevision.findMany({
-    where: { organizationId: scope.organizationId, docKey: canonical },
-    orderBy: { number: "desc" },
-    select: { number: true, title: true, contentHash: true, content: true, approvedAt: true, approvedByName: true },
-  });
-  if (rows.length === 0) return { ok: false, status: 404, error: "У документа нет утверждённых редакций" };
+  const where = { organizationId: scope.organizationId, docKey: canonical };
+  // История — без текстов редакций (до 200 000 знаков каждая): текст читается
+  // только у двух сравниваемых сторон, а «есть ли текст» — лёгким запросом.
+  const [rows, withContent] = await Promise.all([
+    db.ppkRevision.findMany({
+      where,
+      orderBy: { number: "desc" },
+      select: { number: true, title: true, contentHash: true, approvedAt: true, approvedByName: true },
+    }),
+    db.ppkRevision.findMany({ where: { ...where, content: { not: null } }, select: { number: true } }),
+  ]);
+  if (rows.length === 0) return { ok: false, status: 404, error: "У документа нет утверждённых редакций", code: "no_revisions" };
   const current = await revisionContent(scope, canonical);
   const currentDoc = current ? (await resolveRevisionDocs(scope, [canonical])).get(canonical) ?? null : null;
-  const history = rows.map((row) => ({ ...info(row), hasContent: row.content !== null }));
+  const hasContent = new Set(withContent.map((row) => row.number));
+  const history = rows.map((row) => ({ ...info(row), hasContent: hasContent.has(row.number) }));
 
-  const byNumber = new Map(rows.map((row) => [row.number, row]));
-  let fromNumber = requested.from ?? null;
-  let to: CompareSide | null =
-    requested.to === "current" ? { kind: "current" } : typeof requested.to === "number" ? { kind: "revision", number: requested.to } : null;
-  if (fromNumber === null && to === null) {
-    const latest = rows[0];
-    const changed = currentDoc !== null && currentDoc.hash !== latest.contentHash;
-    if (changed || rows.length === 1) {
-      fromNumber = latest.number;
-      to = current ? { kind: "current" } : { kind: "revision", number: latest.number };
-    } else {
-      fromNumber = rows[1].number;
-      to = { kind: "revision", number: latest.number };
-    }
+  const sides = pickCompareSides(rows, requested, { available: current !== null, hash: currentDoc?.hash ?? null });
+  if (!sides.ok) {
+    return sides.code === "no_current_text"
+      ? { ok: false, status: 404, error: "Текущего текста документа нет", code: "no_current_text" }
+      : { ok: false, status: 404, error: "Редакция не найдена", code: "revision_not_found" };
   }
-  if (fromNumber === null) fromNumber = rows[0].number;
-  if (to === null) to = current ? { kind: "current" } : { kind: "revision", number: rows[0].number };
-  const fromRow = byNumber.get(fromNumber);
-  if (!fromRow) return { ok: false, status: 404, error: "Редакция не найдена" };
-  if (to.kind === "revision" && !byNumber.has(to.number)) return { ok: false, status: 404, error: "Редакция не найдена" };
-  if (to.kind === "current" && !current) return { ok: false, status: 404, error: "Текущего текста документа нет" };
-
-  const before = fromRow.content;
-  const after = to.kind === "current" ? current!.content : byNumber.get(to.number)!.content;
+  const to: CompareSide = sides.to;
+  const needed = [sides.from, ...(to.kind === "revision" ? [to.number] : [])];
+  const texts = new Map(
+    (
+      await db.ppkRevision.findMany({
+        where: { ...where, number: { in: needed } },
+        select: { number: true, content: true },
+      })
+    ).map((row) => [row.number, row.content]),
+  );
+  const before = texts.get(sides.from) ?? null;
+  const after = to.kind === "current" ? current!.content : (texts.get(to.number) ?? null);
   const unavailable = before === null ? "from" : after === null ? "to" : null;
   return {
     ok: true,
@@ -520,7 +535,7 @@ export async function compareRevisions(
     title: current?.title ?? rows[0].title,
     history,
     currentAvailable: current !== null,
-    from: { kind: "revision", number: fromRow.number },
+    from: { kind: "revision", number: sides.from },
     to,
     unavailable,
     diff: unavailable ? null : diffTexts(before!, after!),

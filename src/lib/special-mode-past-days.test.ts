@@ -228,7 +228,8 @@ test("проверяется тот день, который запишется,
   // Перенос по entryId: клетка-источник проходит те же правила (своя строка,
   // день в окне, закрытые дни), override источника — в аудит.
   assert.match(put, /employeeId: editedEntry\.employeeId,\s*entryDayKey: toEntryDateKey\(editedEntry\.date\)/);
-  assert.match(put, /checkEntryWrite\(writeCtx, actor, editedEntry\.date\)/);
+  // Источник — запреты прошлых дней без правила будущего (journal-entry-source.test.ts).
+  assert.match(put, /checkEntrySourceWrite\(writeCtx, actor, editedEntry\.date\)/);
   assert.match(put, /overrideDates\.push\(editedEntry\.date\)/);
   // Источник проверяется до записи override и до самой записи.
   assert.ok(put.indexOf("sourceScope") < put.indexOf("logPastDayOverride({"));

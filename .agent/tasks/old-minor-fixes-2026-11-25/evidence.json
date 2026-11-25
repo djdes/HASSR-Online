@@ -1,0 +1,81 @@
+{
+  "task": "old-minor-fixes-2026-11-25",
+  "branch": "claude/fervent-brown-ed5apv",
+  "base": "dd898d487 (origin/master)",
+  "head": "74b12baa0 + evidence commit",
+  "stand": "next dev :3000, local PostgreSQL, demo org admin@haccp.local, staff cook-e2e-special@haccp.local",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/journal-entry-delete.test.ts (RED: no module; GREEN 5/5)",
+        "raw/stand/minor-fixes-e2e-output.txt AC1",
+        "round 2: malformed ids → 400 (unit 6/6, stand: rows intact)"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/journal-entry-source.test.ts (RED 0/3; GREEN 3/3)",
+        "src/lib/special-mode-past-days.test.ts (source assertion updated)",
+        "raw/stand/minor-fixes-e2e-output.txt AC2"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "raw/eslint.txt (exit 0 on 22 changed src files; before: 1 error + 4 warnings)"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "raw/site-locale-proxy.txt (6/6 with and without .env; before: 4/6 with .env)"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/ppk/revision-minors.test.ts (pickCompareSides, query shape)"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/ppk/revision-minors.test.ts (readSnapshotWithRetry, recheck order, 409 text)"
+      ],
+      "note": "concurrent edit during approval not reproduced on the stand"
+    },
+    "AC7": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/ppk/revision-minors.test.ts (codes, catalogs, routes, components)",
+        "npm run i18n:check 103/103",
+        "raw/stand/minor-fixes-e2e-output.txt AC7 (API codes, English toast)",
+        "raw/stand/screens/ac7-en-draft-toast.png"
+      ]
+    },
+    "AC8": {
+      "status": "PASS",
+      "evidence": [
+        "buildings-card-layout.test.ts (GREEN 4/4)",
+        "raw/stand/round3/ac8-names-output.txt (verifier-round2 probe: 0 regressions vs master-sim, 0 overflow, 0 focus, 0 order; pin alone in 7/429 cases where last word + pin is wider than the line)",
+        "raw/stand/round3/ac8-a11y-output.txt (33/33)",
+        "raw/stand/round3/ac8-hit-area-output.txt (28px button, 48x48 hit area)"
+      ],
+      "note": "spec refinement for AC8 added after round 2"
+    },
+    "AC9": {
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.txt (exit 0)",
+        "raw/test-gate.txt (targeted 80 files, 371/0)",
+        "raw/eslint.txt (22 files, exit 0)",
+        "raw/stand/minor-fixes-e2e-output.txt (22/22)"
+      ],
+      "deploy": "after merge to master; no DB schema change"
+    }
+  },
+  "round": 3,
+  "previous_verdict": "round 1 FAIL (AC8 names cut in flex row), round 2 FAIL (AC8 long last word cut by the glued last-letter pin); see verdict-round1.json, verdict-round2.json"
+}

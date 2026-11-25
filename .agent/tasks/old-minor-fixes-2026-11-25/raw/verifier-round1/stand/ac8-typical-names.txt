@@ -1,0 +1,12 @@
+320px branch:   Производственный цех №2 [col 90px] broken: Производственный | Кондитерский цех [col 90px] broken: Кондитерский | Центральная кухня [col 90px] broken: Центральная | Столовая «Берёзка» [col 90px] broken: «Берёзка»
+320px previous: no broken words
+360px branch:   Производственный цех №2 [col 130px] broken: Производственный
+360px previous: no broken words
+375px branch:   Производственный цех №2 [col 145px] broken: Производственный
+375px previous: no broken words
+390px branch:   Производственный цех №2 [col 160px] broken: Производственный
+390px previous: no broken words
+412px branch:   no broken words
+412px previous: no broken words
+430px branch:   no broken words
+430px previous: no broken words

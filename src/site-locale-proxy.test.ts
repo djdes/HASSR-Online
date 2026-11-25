@@ -39,9 +39,14 @@ test("English prefix never rewrites protected routes or callbacks", async () => 
   assert.equal((await request("/root")).status, 404);
 });
 
+// Prefetch must not touch the language cookie. Other cookies are not this
+// test's business: with an auth secret in the environment (a local `.env`)
+// the page guard gives a new guest its `wesetup.visitor` cookie.
+const NO_LOCALE_COOKIE = /wesetup\.site-locale=/;
+
 test("prefetching another language does not overwrite the visitor preference", async () => {
   const response = await request("/en", { "sec-fetch-dest": "empty" });
-  assert.equal(response.headers.get("set-cookie"), null);
+  assert.doesNotMatch(response.headers.get("set-cookie") ?? "", NO_LOCALE_COOKIE);
   assert.equal(response.headers.get("x-middleware-request-x-wesetup-site-locale"), "en");
 });
 
@@ -73,7 +78,7 @@ test("partners and privacy trust their six explicit URLs without rewriting navig
       assert.match(response.headers.get("set-cookie") ?? "", new RegExp(`wesetup.site-locale=${locale}`));
       assert.match(response.headers.get("cache-control") ?? "", /public.*s-maxage=60/);
       const prefetched = await request(path, { "sec-fetch-dest": "empty" });
-      assert.equal(prefetched.headers.get("set-cookie"), null);
+      assert.doesNotMatch(prefetched.headers.get("set-cookie") ?? "", NO_LOCALE_COOKIE);
       assert.equal(prefetched.headers.get("x-middleware-request-x-wesetup-site-locale"), locale);
     }
   }

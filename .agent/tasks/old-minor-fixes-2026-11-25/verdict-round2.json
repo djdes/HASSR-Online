@@ -1,0 +1,93 @@
+{
+  "task": "old-minor-fixes-2026-11-25",
+  "round": 2,
+  "verdict": "FAIL",
+  "judged": {
+    "branch": "claude/fervent-brown-ed5apv",
+    "commit": "1855c0269e86290ba7a2dae719cc14791a066aee",
+    "base": "origin/master dd898d48722204e3c98a1ab34caaabb7227069c6 (merge-base = base, branch not behind)",
+    "time": "2026-11-25T22:15:32Z",
+    "stand": "next dev :3000 on the working tree of HEAD (no local changes to product code), local PostgreSQL 16, demo org admin@haccp.local (owner), cook-e2e-special@haccp.local (cook); own test points/documents removed, special mode, owner locale, active point and pinned list restored; DB snapshot before/after identical",
+    "verifier": "fresh independent verifier, round 2 (Claude Code subagent)"
+  },
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "FAIL",
+    "AC9": "PASS"
+  },
+  "criteria_notes": {
+    "AC1": "Own stand script raw/verifier-round2/stand/ac1-ac2.mjs (35/35; health journal, because the builder's leftover org-wide November hygiene documents make a new hygiene document 409): automation doc + special mode window 3 → DELETE {employeeId, date:-1} 200 {deleted:1} while the same employee's -6 row exists; only that row removed (owner -6/-2 and cook -1 kept); {employeeId, date:-6} 403 past_day_locked; {ids:[-6 row]} 403; {ids:[locked], employeeId: other, date} 403 (ids win); {employeeId} with a locked day 403, nothing deleted; invalid date 400 «Некорректная дата»; {} and {date} 400; {ids:[], employeeId, date} and {ids:null, …} → by employee and day, 200; cook 403; regular doc: {ids:[a,b]} exactly 2 rows, {employeeId} the whole row. Unit tests journal-entry-delete.test.ts 6/6.",
+    "AC2": "Same script: manager moves own +2 row to today 200 (same row id now today); move INTO +2 403 future_day_locked; write +3 403 future_day_locked; cook moves own +2 row 403 not_today (row not moved); manager moves the cook's +2 row to today 200; automation doc: source on locked -6 403 past_day_locked, source +1 → today 200. journal-entry-source.test.ts 3/3, special-mode-past-days.test.ts passes.",
+    "AC3": "npx eslint on the 22 changed src .ts/.tsx files: no output, exit 0 (raw/verifier-round2/eslint.txt). page.tsx / climate-document-client.tsx / journal-entry-write.ts unchanged since round 1 (which checked the Link on the disabled-journal screen on the stand).",
+    "AC4": "src/site-locale-proxy.test.ts passes without .env and with .env loaded (focused run 36/36 both ways, raw/verifier-round2/focused-tests.txt).",
+    "AC5": "PPK code unchanged since round 1 (git diff 88f837835..HEAD touches only the buildings card and the delete rule). Round-1 equivalence harness rerun on current code: 747 calls, branch compareRevisions ≡ origin/master copy (raw/verifier-round2/ac5-equivalence-rerun.txt); revision-minors.test.ts passes.",
+    "AC6": "Code unchanged since round 1 (race harness then: 0 revisions with text ≠ fingerprint, 409 doc_changed); revision-minors.test.ts (readSnapshotWithRetry retry+log, recheck before the transaction, 409 text) passes now.",
+    "AC7": "Round-1 AC7 stand script rerun on HEAD (raw/verifier-round2/stand/ac7-output.txt, 34/34): compare/approve/draft errors carry code next to the unchanged Russian error (bad_request, doc_not_found, no_revisions, revision_not_found, no_current_text, doc_empty, ai_not_configured 503, forbidden for the cook); UI en: draft toast, approve doc_changed, unknown code → server text, non-JSON → «Could not approve the revision», compare revision_not_found / choose_point translated, real approve and compare work; UI uz: draft and doc_changed in Uzbek. i18n:check 103/103 (contract fresh).",
+    "AC8": "Structure, accessibility and desktop pass: on 320–639 px the pin is inside the heading on the line of the last character for every name tried (64 cards — 33 probe names + the 31 real cards — × 9 phone widths), never alone on a line, no overflow past the card and no page h-scroll at any width (0 cases), exactly one visible/focusable pin per card at every width (320/390/639/640/1024/1280: one pin in the accessibility tree, one Tab stop, the heading named by the object name, Enter/click toggle and save, focus kept), from 640 px the order name → sphere → pin identical to origin/master's markup, desktop hover unchanged (unpinned 0 → 1 on hover/focus, pinned always visible); emoji, flag, VS16 and decomposed «й» render correctly in Chrome. FAIL: names that END in a word that fits a line alone but not with the 52 px pin are cut mid-word (the last letter or closing quote moves to the next line with the pin) — 320 px: «Цех кондитерский», «Цех заготовочный», «Цех производственный», «Кафе «Шоколадница»», «Магазин «Перекрёсток»», «Пекарня «Хлебосольная»», «Кафе «Кофемания»»; 360 px: «Цех производственный», «Склад продовольственный», «Столовая общеобразовательная»; 375 px: the last two; 390 px: «Столовая общеобразовательная»; none of these is cut in origin/master's markup. See issue AC8-last-word-cut and problems.md.",
+    "AC9": "npm run typecheck exit 0; npm run test:gate mode=changed 80 files, pass 371 fail 0 (24 s); 28 extra tests that read the changed sources 250/250; design guards (borderless, neutral-palette, one-accent) 12/12; ESLint of the 22 changed files clean; i18n:check 103/103; no schema change; branch up to date with origin/master. Merge and deploy follow a PASS verdict; the AC8 stand failure is counted under AC8."
+  },
+  "round1_issues": {
+    "AC8_names_cut": "not fixed",
+    "malformed_ids": "fixed"
+  },
+  "round1_issues_notes": {
+    "AC8_names_cut": "Fixed for the round-1 repro (seed «Кафе «Ромашка»», «Производственный цех №2», «Кондитерский цех», «Центральная кухня», «Столовая «Берёзка»» and all 31 real cards of the demo org: no cuts at 320–639 px), but the same defect — words cut mid-word on phones because of the 48 px pin — remains for names that end in a long word (issue AC8-last-word-cut).",
+    "malformed_ids": "Stand: {ids:[5], employeeId}, {ids:[null,\"\"], employeeId}, {ids:\"abc\", employeeId}, {ids:{}, employeeId}, {ids:[5], employeeId, date}, {ids:[\"x\",5]} → 400 «Некорректный список строк», the employee's rows intact (29 → 29); unit test covers it."
+  },
+  "issues": [
+    {
+      "id": "AC8-last-word-cut",
+      "severity": "blocking",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 689,
+      "description": "On phones the pin is glued to the LAST CHARACTER of the name (splitForPin, line 371; <span className=\"whitespace-nowrap\">{nameTail}<PinButton/></span>, line 689). The pin is a 48 px touch box (app-theme.css:1540) plus ml-1, so the end of the name is an unbreakable «last word + 52 px». When the last word fits a line alone but not with the pin, Chrome breaks inside the word (break-words on the h2): «Цех / кондитерски / й 📎» and «Кафе / «Шоколадница / » 📎» at 320 px, «Цех / производственны / й 📎» at 360 px, «Столовая / общеобразовательна / я 📎» at 390 px; origin/master's markup kept these words whole. Band: line − 52 px < last word ≤ line (≈ 11–16-letter final words at 320 px, ≈ 15–19 at 360 px). The builder's evidence missed it because its detector (raw/stand/card-pin-measure.mjs:55, reused round-1 probe ac8-typical-names.mjs:23) measures only h2.firstChild, i.e. the name without its last character, and no probed name ended in a long word. Smallest fix, checked in the page: split at the last WORD and wrap it with the pin in <span className=\"inline-block max-w-full\"> (no nowrap) — 0 avoidable cuts and 0 overflow on the probe set; the pin drops to its own line only when «last word + pin» exceeds the line; optionally a smaller phone pin box with an ::after hit area (data-touch-compact) halves that band.",
+      "repro": "next dev :3000; as admin@haccp.local create a point «Цех кондитерский» (or «Кафе «Шоколадница»»), open /settings/buildings at 320×900 → «кондитерски / й 📎»; «Цех производственный» at 360×900; «Столовая общеобразовательная» at 390×900. Scripted: node .agent/tasks/old-minor-fixes-2026-11-25/raw/verifier-round2/stand/ac8-names.mjs <outdir> (env loaded; creates and deletes its own points; branch vs origin/master markup per width). Summary raw/verifier-round2/stand/ac8-summary.txt; screenshots raw/verifier-round2/stand/screens/ac8-320-Цех-кондитерский-{branch,master-sim}.png, ac8-390-Столовая-общеобразовател-{branch,master-sim}.png; fix experiment raw/verifier-round2/stand/ac8-fix-experiment.txt."
+    },
+    {
+      "id": "split-by-code-point",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 371,
+      "description": "splitForPin splits by code points (Array.from), not grapheme clusters: a ZWJ emoji, a flag, ❤️ (VS16) or a decomposed «й» at the end of a name is split across two elements. Chrome shapes across the boundary and renders them correctly (checked); WebKit (every iPhone browser) is not installed in the sandbox and was not checked. Splitting at the last word (fix of AC8-last-word-cut) removes the risk; otherwise Intl.Segmenter.",
+      "repro": "Points «Шеф 👨‍🍳», «Россия 🇷🇺», «Пекарня ❤️», «Цех мясно\\u0438\\u0306»: raw/verifier-round2/stand/screens/ac8-390-Россия--branch.png, ac8-390-Цех-мяснои--branch.png (Chrome: correct)."
+    },
+    {
+      "id": "labelled-heading-with-button",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 684,
+      "description": "The h2 has aria-label = name and contains the phone pin. Chrome keeps the button in the accessibility tree inside the heading (Tab, Enter and click work; one focus stop at every width), but some screen readers in browse mode read only the label of a labelled heading and skip its content; the pin remains reachable by Tab.",
+      "repro": "raw/verifier-round2/stand/ac8-a11y-snapshots.txt (aria snapshot at 320/390/639 px: heading \"…\" [level=2] → text, button \"Закрепить «…» первым\")."
+    },
+    {
+      "id": "delete-null-body-500",
+      "severity": "minor",
+      "file": "src/lib/journal-entry-delete.ts",
+      "line": 32,
+      "description": "Pre-existing (master the same): a DELETE body that is the JSON value null reaches entryDeleteTarget(documentId, null) → TypeError → 500 instead of 400.",
+      "repro": "entryDeleteTarget('d', null as never) throws; route: request.json() resolves to null for the body «null»."
+    },
+    {
+      "id": "automation-lock-utc-day",
+      "severity": "minor",
+      "file": "src/lib/closed-day.ts",
+      "line": 26,
+      "description": "Pre-existing, outside the spec, unchanged since round 1: the automation lock takes «today» in UTC while the past-days window uses the organization's timezone (00:00–03:00 Moscow time the Moscow «yesterday» of an automation document is not locked).",
+      "repro": "See verdict-round1.json issue automation-lock-utc-day."
+    },
+    {
+      "id": "stand-leftovers-from-builder-runs",
+      "severity": "minor",
+      "file": ".agent/tasks/old-minor-fixes-2026-11-25/raw/stand/minor-fixes-e2e.mjs",
+      "line": 1,
+      "description": "Stand hygiene, not product: the builder's e2e runs deleted their points but not their documents; JournalDocument.building is onDelete: SetNull, so three hygiene documents «Гигиена мелочи 2026-11-25/26» (Nov 1–30) are now org-wide, show on every point of the demo org and make a new November hygiene document at any point a 409 «За этот период уже есть документ». Both demo users' lastActiveBuildingId still points at a deleted point. Left as found.",
+      "repro": "select title, \"buildingId\" from \"JournalDocument\" where title like 'Гигиена мелочи%'"
+    }
+  ]
+}

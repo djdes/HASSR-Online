@@ -1,0 +1,205 @@
+[
+  {
+    "width": 320,
+    "pinWithName": true,
+    "order": "rows",
+    "name": {
+      "top": 386,
+      "bottom": 500,
+      "left": 37,
+      "right": 180
+    },
+    "pin": {
+      "top": 466,
+      "bottom": 514,
+      "left": 93
+    },
+    "chip": {
+      "top": 518,
+      "bottom": 585,
+      "left": 37
+    },
+    "docW": 320,
+    "vw": 320,
+    "lastWord": {
+      "top": 476,
+      "bottom": 500,
+      "right": 79
+    },
+    "broken": []
+  },
+  {
+    "width": 360,
+    "pinWithName": true,
+    "order": "rows",
+    "name": {
+      "top": 399,
+      "bottom": 486,
+      "left": 37,
+      "right": 245
+    },
+    "pin": {
+      "top": 452,
+      "bottom": 500,
+      "left": 93
+    },
+    "chip": {
+      "top": 504,
+      "bottom": 571,
+      "left": 37
+    },
+    "docW": 360,
+    "vw": 360,
+    "lastWord": {
+      "top": 462,
+      "bottom": 486,
+      "right": 79
+    },
+    "broken": []
+  },
+  {
+    "width": 375,
+    "pinWithName": true,
+    "order": "rows",
+    "name": {
+      "top": 413,
+      "bottom": 473,
+      "left": 37,
+      "right": 256
+    },
+    "pin": {
+      "top": 439,
+      "bottom": 487,
+      "left": 208
+    },
+    "chip": {
+      "top": 491,
+      "bottom": 558,
+      "left": 37
+    },
+    "docW": 375,
+    "vw": 375,
+    "lastWord": {
+      "top": 449,
+      "bottom": 473,
+      "right": 193
+    },
+    "broken": []
+  },
+  {
+    "width": 390,
+    "pinWithName": true,
+    "order": "rows",
+    "name": {
+      "top": 413,
+      "bottom": 473,
+      "left": 37,
+      "right": 269
+    },
+    "pin": {
+      "top": 439,
+      "bottom": 487,
+      "left": 184
+    },
+    "chip": {
+      "top": 491,
+      "bottom": 538,
+      "left": 37
+    },
+    "docW": 390,
+    "vw": 390,
+    "lastWord": {
+      "top": 449,
+      "bottom": 473,
+      "right": 169
+    },
+    "broken": []
+  },
+  {
+    "width": 430,
+    "pinWithName": true,
+    "order": "rows",
+    "name": {
+      "top": 413,
+      "bottom": 473,
+      "left": 37,
+      "right": 269
+    },
+    "pin": {
+      "top": 439,
+      "bottom": 487,
+      "left": 184
+    },
+    "chip": {
+      "top": 491,
+      "bottom": 538,
+      "left": 37
+    },
+    "docW": 430,
+    "vw": 430,
+    "lastWord": {
+      "top": 449,
+      "bottom": 473,
+      "right": 169
+    },
+    "broken": []
+  },
+  {
+    "width": 700,
+    "pinWithName": false,
+    "order": "chip→pin",
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 415
+    },
+    "pin": {
+      "top": 468,
+      "bottom": 496,
+      "left": 415
+    },
+    "chip": {
+      "top": 469,
+      "bottom": 495,
+      "left": 37
+    },
+    "docW": 700,
+    "vw": 700,
+    "lastWord": {
+      "top": 438,
+      "bottom": 462,
+      "right": 405
+    },
+    "broken": []
+  },
+  {
+    "width": 1280,
+    "pinWithName": true,
+    "order": "chip→pin",
+    "name": {
+      "top": 481,
+      "bottom": 508,
+      "left": 333,
+      "right": 687
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 509,
+      "left": 1074
+    },
+    "chip": {
+      "top": 482,
+      "bottom": 508,
+      "left": 695
+    },
+    "docW": 1280,
+    "vw": 1280,
+    "lastWord": {
+      "top": 482,
+      "bottom": 506,
+      "right": 677
+    },
+    "broken": []
+  }
+]

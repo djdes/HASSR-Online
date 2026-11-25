@@ -1,0 +1,109 @@
+{
+ "summary": {
+  "pinAloneJustified": 7,
+  "measurements": 832,
+  "widths": [
+   320,
+   360,
+   375,
+   390,
+   412,
+   430,
+   480,
+   600,
+   639,
+   640,
+   700,
+   1024,
+   1280
+  ],
+  "cards": 64,
+  "regressions": 0,
+  "improvements": 0,
+  "bothCut": 16,
+  "pinAlone": 7,
+  "otherPinProblems": 0,
+  "overflow": 0,
+  "focus": 0,
+  "order": 0,
+  "misc": [
+   "not on the page: Офис",
+   "cleanup: test points left 0 of 33"
+  ]
+ },
+ "names_summary": "64 cards × 13 widths (320–1280 px) = 832 measurements: 0 words cut that master-sim keeps whole, 0 overflow, 0 cards with visible pins ≠ 1, 0 order differences, pin on its own line 7×, every time with last word + pin wider than the line (7/7) (other pin problems 0)",
+ "repro_note": "Round-2 repro names on current code (cut words / pin): «Цех кондитерский» 320:whole, 360:whole, 375:whole, 390:whole; «Кафе «Шоколадница»» 320:whole (pin on own line), 360:whole, 375:whole, 390:whole; «Цех производственный» 320:whole (pin on own line), 360:whole, 375:whole, 390:whole; «Столовая общеобразовательная» 320:cut общеобразовательная, 360:whole (pin on own line), 375:whole (pin on own line), 390:whole; «Склад продовольственный» 320:cut продовольственный, 360:whole (pin on own line), 375:whole, 390:whole; «Пекарня «Хлебосольная»» 320:whole (pin on own line), 360:whole, 375:whole, 390:whole.",
+ "hyphen_master_note": "origin/master's markup also puts the pin alone below the name there (measured: ac8-hyphen-check-output.txt), the branch additionally leaves the icon alone (see AC8-icon-alone-single-word).",
+ "pin_alone": [
+  {
+   "width": 320,
+   "name": "Цех производственный",
+   "lastWord": "производственный",
+   "lastWordWidth": 168,
+   "lastWordLines": 1,
+   "row": 170,
+   "wordPlusPin": 200,
+   "justified": true
+  },
+  {
+   "width": 320,
+   "name": "Кафе «Шоколадница»",
+   "lastWord": "«Шоколадница»",
+   "lastWordWidth": 142,
+   "lastWordLines": 1,
+   "row": 170,
+   "wordPlusPin": 174,
+   "justified": true
+  },
+  {
+   "width": 320,
+   "name": "Пекарня «Хлебосольная»",
+   "lastWord": "«Хлебосольная»",
+   "lastWordWidth": 145,
+   "lastWordLines": 1,
+   "row": 170,
+   "wordPlusPin": 177,
+   "justified": true
+  },
+  {
+   "width": 360,
+   "name": "Склад продовольственный",
+   "lastWord": "продовольственный",
+   "lastWordWidth": 179,
+   "lastWordLines": 1,
+   "row": 210,
+   "wordPlusPin": 211,
+   "justified": true
+  },
+  {
+   "width": 360,
+   "name": "Столовая общеобразовательная",
+   "lastWord": "общеобразовательная",
+   "lastWordWidth": 198,
+   "lastWordLines": 1,
+   "row": 210,
+   "wordPlusPin": 230,
+   "justified": true
+  },
+  {
+   "width": 375,
+   "name": "Столовая общеобразовательная",
+   "lastWord": "общеобразовательная",
+   "lastWordWidth": 198,
+   "lastWordLines": 1,
+   "row": 225,
+   "wordPlusPin": 230,
+   "justified": true
+  },
+  {
+   "width": 390,
+   "name": "Сверхдлинноеназваниеобъектабезединогопробела",
+   "lastWord": "Сверхдлинноеназваниеобъектабезединогопробела",
+   "lastWordWidth": 457,
+   "lastWordLines": 2,
+   "row": 240,
+   "wordPlusPin": 489,
+   "justified": true
+  }
+ ]
+}

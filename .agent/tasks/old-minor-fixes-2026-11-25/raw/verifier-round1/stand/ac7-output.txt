@@ -1,0 +1,38 @@
+# Verifier stand AC7 (next dev :3000, branch 88f837835), 2026-11-25T21:18:05Z
+PASS setup: test point — 200
+PASS setup: point PPK seeded by the first PPK request — 404
+PASS API compare: empty docKey — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API compare: docKey of 201 chars — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API compare: from=abc — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API compare: to=xyz — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API compare: garbage key — 404 doc_not_found — 404 {"error":"Документ не найден","code":"doc_not_found"}
+PASS API compare: no revisions — 404 no_revisions — 404 {"error":"У документа нет утверждённых редакций","code":"no_revisions"}
+PASS API compare: from=999 — 404 revision_not_found — 404 {"error":"Редакция не найдена","code":"revision_not_found"}
+PASS API compare: other point's doc → current side unavailable — 404 no_current_text — 404 {"error":"Текущего текста документа нет","code":"no_current_text"}
+PASS API compare: success body unchanged (history, from/to, diff; no code) — 200
+PASS API approve: {} — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API approve: garbage key — 404 doc_not_found — 404 {"error":"Документ не найден","code":"doc_not_found"}
+PASS API approve: empty text doc — 400 doc_empty — 400 {"error":"Документ пуст: сохраните текст или загрузите скан","code":"doc_empty"}
+PASS API draft: {} — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API draft: unknown block — 400 bad_request — 400 {"error":"Неверный запрос","code":"bad_request"}
+PASS API draft: AI not configured on the stand — 503 ai_not_configured — 503 {"error":"ИИ-помощник не подключён: черновик сейчас недоступен","code":"ai_not_configured"}
+PASS API access: cook → compare — 403 forbidden — 403 {"error":"Нет доступа к разделу","code":"forbidden"}
+PASS API access: cook → approve — 403 forbidden — 403 {"error":"Нет доступа к разделу","code":"forbidden"}
+PASS API access: cook → draft — 403 forbidden — 403 {"error":"Нет доступа к разделу","code":"forbidden"}
+PASS UI en: page is in English (draft button)
+PASS UI en: draft error (real 503 ai_not_configured) → English text by code — The AI assistant is not connected: drafts are unavailable right now
+PASS UI en: approve 409 doc_changed → «The document changed during approval — approve it again» — The document changed during approval — approve it again
+PASS UI en: approve with an unknown code → server text — Серверный текст с новым кодом
+PASS UI en: approve without a JSON body → local fallback «Could not approve the revision» — Could not approve the revision
+PASS UI en: real approval still works (revision created) — Revision ППК 012 approved / revisions=1
+PASS UI en: compare 404 revision_not_found → «Revision not found» — Close | Compare revisions: | Before | After |  | Revision not found
+PASS UI en: compare 403 choose_point → English text — Close | Compare revisions: | Before | After |  | Choose your site in the header: the production control program is kept for each site
+PASS UI en: compare with an unknown code → server text — Close | Compare revisions: | Before | After |  | Сервер: новая ошибка сравнения
+PASS UI en: real compare opens without an error — Close | Compare revisions: Основные понятия и определения | Before | ППК 012 of 26.11.2026 | After | Current text | ППК 012 of 26.11.2026 | The text has not changed | added | rem
+PASS UI uz: draft error → «AI-yordamchi ulanmagan: qoralama hozircha mavjud emas» — AI-yordamchi ulanmagan: qoralama hozircha mavjud emas
+PASS UI uz: approve 409 doc_changed → «Tasdiqlash vaqtida hujjat oʻzgardi — yana tasdiqlang» — Tasdiqlash vaqtida hujjat oʻzgardi — yana tasdiqlang
+PASS cleanup: point revisions removed and test point deleted — revisions=1, delete 200
+PASS cleanup: owner locale and active point restored — {"locale":null,"lastActiveBuildingId":"cmwwloahs00l7cf7d23jbg9pt"}
+
+34/34 PASS
+exit=0

@@ -1,0 +1,27 @@
+# src/site-locale-proxy.test.ts WITHOUT .env
+ok 1 - English document keeps its explicit route and receives a trusted locale
+ok 2 - caller-supplied locale headers cannot change the locale of the requested URL
+ok 3 - English prefix never rewrites protected routes or callbacks
+ok 4 - prefetching another language does not overwrite the visitor preference
+ok 5 - English pages retain the navigation budget and show an English cooldown
+ok 6 - partners and privacy trust their six explicit URLs without rewriting navigation
+# tests 6
+# pass 6
+# fail 0
+exit=0
+# src/site-locale-proxy.test.ts WITH .env loaded (set -a; . ./.env)
+ok 1 - English document keeps its explicit route and receives a trusted locale
+ok 2 - caller-supplied locale headers cannot change the locale of the requested URL
+ok 3 - English prefix never rewrites protected routes or callbacks
+ok 4 - prefetching another language does not overwrite the visitor preference
+ok 5 - English pages retain the navigation budget and show an English cooldown
+ok 6 - partners and privacy trust their six explicit URLs without rewriting navigation
+# tests 6
+# pass 6
+# fail 0
+exit=0
+# full focused set WITH .env loaded
+# tests 42
+# pass 42
+# fail 0
+exit=0

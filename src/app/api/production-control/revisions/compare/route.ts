@@ -22,15 +22,15 @@ export async function GET(request: Request) {
   const docKey = params.get("docKey") ?? "";
   const fromRaw = params.get("from");
   const toRaw = params.get("to");
-  if (!docKey || docKey.length > 200) return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
-  if (fromRaw !== null && !NUMBER_RE.test(fromRaw)) return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
+  if (!docKey || docKey.length > 200) return NextResponse.json({ error: "Неверный запрос", code: "bad_request" }, { status: 400 });
+  if (fromRaw !== null && !NUMBER_RE.test(fromRaw)) return NextResponse.json({ error: "Неверный запрос", code: "bad_request" }, { status: 400 });
   if (toRaw !== null && toRaw !== "current" && !NUMBER_RE.test(toRaw)) {
-    return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
+    return NextResponse.json({ error: "Неверный запрос", code: "bad_request" }, { status: 400 });
   }
   const result = await compareRevisions(auth.scope, docKey, isPointScoped(auth.session.user) ? auth.scope.buildingId : null, {
     from: fromRaw === null ? null : Number(fromRaw),
     to: toRaw === null ? null : toRaw === "current" ? "current" : Number(toRaw),
   });
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  if (!result.ok) return NextResponse.json({ error: result.error, code: result.code }, { status: result.status });
   return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } });
 }

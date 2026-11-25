@@ -1,0 +1,9 @@
+# node landscape-chrome-check.mjs — iPhone SE landscape 568×320: what lies under the pin's zone (elementsFromPoint, top 4)
+# the lower part of the 48×48 zone (dy ≥ +23) is covered by the fixed floating bottom bar (div.fixed inset-x-3 z-30 lg:hidden),
+# the pin button is next in the stack → page chrome over content, not a smaller zone
+pin [377.8, 147.0, 28, 28], innerHeight 320
+(0,0)      button(pin) > svg > button(pin) > span.inline-block
+(0,+20)    button(pin) > span(chip) > div.flex
+(0,+23)    div.flex bg-[var(--app-fab-bg)] > div.fixed inset-x-3 z-30 lg:hidden > button(pin) > span(chip)
+(±23.5,+23.5) same as (0,+23)
+(0,-23.5)  button(pin) > div.group(card)

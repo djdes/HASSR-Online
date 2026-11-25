@@ -1,0 +1,17 @@
+Verifier round 3 — independent AC8 layout probe (ac8-layout.mjs), current code 7eeaccbfe
+card x profile measurements: 930 (phone layout < 640 px: 620 in 10 profiles; >= 640 px: 310 in 5 profiles); 31 own names + 31 real demo cards
+profiles: zoom150-pixel7-275=62, fold-cover-280=62, zoom125-360-288=62, galaxy-s9p-320=62, galaxy-s24-360=62, pixel5-393=62, pixel7-412=62, galaxy-a55-480=62, iphone-se-landscape-568=62, nexus7-600=62, w630=62, s9p-landscape-658=62, s8-landscape-740=62, w1024=62, w1280=62
+words cut on the branch but not in the origin/master simulation (regressions): 0
+words cut in master-sim but not on the branch (improvements): 4 -> 275px ООО «Продторг» [«Продторг»]; 280px ООО «Продторг» [«Продторг»]; 288px ООО «Продторг» [«Продторг»]; 320px Кафе «Шоколадница» [«Шоколадница»]
+words cut in both (wider than the whole line, or a hyphen break): 64
+overflow past the card content box / page h-scroll: 0
+cards with visible pins != 1: 0; pins in the accessibility tree != 1: 0; heading accessible name != object name: 0
+phone: pin outside the heading: 0; >=640: pin inside the heading: 0; >=640 order differs from name->sphere->pin or from master-sim: 0
+phone: multi-line name with the sphere not below it: 0
+phone: pin on its own line (not on the line of the last character): 39 cases; with 'last word + pin wider than the line' (spec condition): 39/39
+   stricter check (part after the last hyphen + pin) flags 1: 393px Склад-овощехранилище: word 213.6+32 > line 243 (spec condition holds), but 'овощехранилище' 152.6+32 would fit -> greedy line breaking keeps the hyphenated word whole and drops the pin; master-sim also has the pin alone there
+icon alone on the first line: branch only 10 (single-word names in a narrow band), master-sim only 305
+   branch-only: 275px Choyxona; 280px Choyxona; 288px Choyxona; 320px Кондитерская; 320px Пищекомбинат; 360px Кафе-кондитерская; 360px Овощехранилище; 393px Склад-овощехранилище; 412px Склад-овощехранилище; 412px Мясоперерабатывающий
+hit zone flags in this run: 64 + overlaps 3 — measurement artefacts (page scrolls itself to the top once after load; fixed bottom bar with «Добавить объект» covers the lower part of the zone in the 320-px-tall landscape viewport), re-measured in ac8-hitzone-recheck.mjs: 480/480 zones 48x48, corners hit, +-25.5 px miss, no in-flow control overlapped, min gap zone->pencil 2 px
+misc: not on page "Офис"; own points left 0 of 31
+note: after this run ac8-layout.mjs only gained the master-sim pin placement in its per-card line (withLast=branch/master:…); the measurements above come from the run whose output is ac8-layout-output.txt / ac8-layout-lines.txt / ac8-layout-summary.json

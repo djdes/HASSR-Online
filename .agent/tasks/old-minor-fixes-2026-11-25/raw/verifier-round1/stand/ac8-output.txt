@@ -1,0 +1,33 @@
+# Verifier stand AC8 (next dev :3000, branch 88f837835), 2026-11-25T21:22:54Z
+PASS setup: point «Столовая при машинострои…» — 200
+PASS setup: point «Кафе Ю…» — 200
+PASS AC8 320px long: icon, name and pin on one row (name wraps inside), sphere below — lines=10 pin@(159,426) name(61-151,315-585) chip below noHScroll=true
+PASS AC8 320px short: icon, name and pin on one row — lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true
+INFO 320px words broken mid-word across 35 cards — this layout: 19 ["верификатор (Кафе e2e верификатор 13:53:4)","верификатор (Кафе e2e верификатор 13:54:1)","верификатор (Кафе e2e верификатор 13:54:3)","верификатор (Кафе e2e верификатор авто 13)","верификатор (Кафе e2e верификатор авто 13)","верификатор-2 (Кафе e2e верификатор-2 14:54)","спецрежим (Кафе e2e спецрежим 13:35:32)","спецрежим (Кафе e2e спецрежим 13:38:00)"]; previous layout (simulated): 1 ["машиностроительном (Столовая при машиностроитель)"]
+PASS AC8 360px long: icon, name and pin on one row (name wraps inside), sphere below — lines=6 pin@(199,426) name(61-191,369-531) chip below noHScroll=true
+PASS AC8 360px short: icon, name and pin on one row — lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true
+INFO 360px words broken mid-word across 35 cards — this layout: 3 ["верификатор-2 (Кафе e2e верификатор-2 14:54)","машиностроительном (Столовая при машиностроитель)","промышленной (Столовая при машиностроитель)"]; previous layout (simulated): 0 []
+PASS AC8 375px long: icon, name and pin on one row (name wraps inside), sphere below — lines=6 pin@(214,426) name(61-206,369-531) chip below noHScroll=true
+PASS AC8 375px short: icon, name and pin on one row — lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true
+INFO 375px words broken mid-word across 35 cards — this layout: 1 ["машиностроительном (Столовая при машиностроитель)"]; previous layout (simulated): 0 []
+PASS AC8 390px long: icon, name and pin on one row (name wraps inside), sphere below — lines=6 pin@(229,426) name(61-221,369-531) chip below noHScroll=true
+PASS AC8 390px short: icon, name and pin on one row — lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true
+INFO 390px words broken mid-word across 35 cards — this layout: 1 ["машиностроительном (Столовая при машиностроитель)"]; previous layout (simulated): 0 []
+PASS AC8 430px long: icon, name and pin on one row (name wraps inside), sphere below — lines=4 pin@(269,426) name(61-261,396-504) chip below noHScroll=true
+PASS AC8 430px short: icon, name and pin on one row — lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true
+INFO 430px words broken mid-word across 35 cards — this layout: 0 []; previous layout (simulated): 0 []
+PASS AC8 639px long: icon, name and pin on one row (name wraps inside), sphere below — lines=2 pin@(478,426) name(61-470,423-477) chip below noHScroll=true
+PASS AC8 639px short: icon, name and pin on one row — lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true
+INFO 639px words broken mid-word across 35 cards — this layout: 0 []; previous layout (simulated): 0 []
+PASS AC8 640px long: order name → sphere → pin, group dissolved — display=contents name(37-531,423) chip(37-407,482) pin(415,481) pinOpacity=1 noHScroll=true
+PASS AC8 640px short: order name → sphere → pin, group dissolved — display=contents name(61-126,437) chip(134-504,437) pin(37,468) pinOpacity=1 noHScroll=true
+PASS AC8 700px long: order name → sphere → pin, group dissolved — display=contents name(37-591,423) chip(37-407,482) pin(415,481) pinOpacity=1 noHScroll=true
+PASS AC8 700px short: order name → sphere → pin, group dissolved — display=contents name(61-126,437) chip(134-504,437) pin(512,436) pinOpacity=1 noHScroll=true
+PASS AC8 1280px long: order name → sphere → pin, group dissolved — display=contents name(333-1024,449) chip(309-679,481) pin(687,480) pinOpacity=0 noHScroll=true
+PASS AC8 1280px short: order name → sphere → pin, group dissolved — display=contents name(333-398,437) chip(406-776,437) pin(784,436) pinOpacity=0 noHScroll=true
+PASS AC8 1280px: unpinned pin hidden until the card is hovered (unchanged) — opacity 0 → 1
+PASS cleanup: point cmwwmr0w800kyiy7djczhbtab deleted — 200
+PASS cleanup: point cmwwmr0xv00kziy7dwelq6eru deleted — 200
+
+23/23 PASS
+exit=0

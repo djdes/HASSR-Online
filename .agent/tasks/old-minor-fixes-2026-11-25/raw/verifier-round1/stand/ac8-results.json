@@ -1,0 +1,117 @@
+[
+  {
+    "name": "setup: point «Столовая при машинострои…»",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "setup: point «Кафе Ю…»",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "AC8 320px long: icon, name and pin on one row (name wraps inside), sphere below",
+    "ok": true,
+    "detail": "lines=10 pin@(159,426) name(61-151,315-585) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 320px short: icon, name and pin on one row",
+    "ok": true,
+    "detail": "lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 360px long: icon, name and pin on one row (name wraps inside), sphere below",
+    "ok": true,
+    "detail": "lines=6 pin@(199,426) name(61-191,369-531) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 360px short: icon, name and pin on one row",
+    "ok": true,
+    "detail": "lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 375px long: icon, name and pin on one row (name wraps inside), sphere below",
+    "ok": true,
+    "detail": "lines=6 pin@(214,426) name(61-206,369-531) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 375px short: icon, name and pin on one row",
+    "ok": true,
+    "detail": "lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 390px long: icon, name and pin on one row (name wraps inside), sphere below",
+    "ok": true,
+    "detail": "lines=6 pin@(229,426) name(61-221,369-531) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 390px short: icon, name and pin on one row",
+    "ok": true,
+    "detail": "lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 430px long: icon, name and pin on one row (name wraps inside), sphere below",
+    "ok": true,
+    "detail": "lines=4 pin@(269,426) name(61-261,396-504) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 430px short: icon, name and pin on one row",
+    "ok": true,
+    "detail": "lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 639px long: icon, name and pin on one row (name wraps inside), sphere below",
+    "ok": true,
+    "detail": "lines=2 pin@(478,426) name(61-470,423-477) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 639px short: icon, name and pin on one row",
+    "ok": true,
+    "detail": "lines=1 pin@(134,426) name(61-126,437-464) chip below noHScroll=true"
+  },
+  {
+    "name": "AC8 640px long: order name → sphere → pin, group dissolved",
+    "ok": true,
+    "detail": "display=contents name(37-531,423) chip(37-407,482) pin(415,481) pinOpacity=1 noHScroll=true"
+  },
+  {
+    "name": "AC8 640px short: order name → sphere → pin, group dissolved",
+    "ok": true,
+    "detail": "display=contents name(61-126,437) chip(134-504,437) pin(37,468) pinOpacity=1 noHScroll=true"
+  },
+  {
+    "name": "AC8 700px long: order name → sphere → pin, group dissolved",
+    "ok": true,
+    "detail": "display=contents name(37-591,423) chip(37-407,482) pin(415,481) pinOpacity=1 noHScroll=true"
+  },
+  {
+    "name": "AC8 700px short: order name → sphere → pin, group dissolved",
+    "ok": true,
+    "detail": "display=contents name(61-126,437) chip(134-504,437) pin(512,436) pinOpacity=1 noHScroll=true"
+  },
+  {
+    "name": "AC8 1280px long: order name → sphere → pin, group dissolved",
+    "ok": true,
+    "detail": "display=contents name(333-1024,449) chip(309-679,481) pin(687,480) pinOpacity=0 noHScroll=true"
+  },
+  {
+    "name": "AC8 1280px short: order name → sphere → pin, group dissolved",
+    "ok": true,
+    "detail": "display=contents name(333-398,437) chip(406-776,437) pin(784,436) pinOpacity=0 noHScroll=true"
+  },
+  {
+    "name": "AC8 1280px: unpinned pin hidden until the card is hovered (unchanged)",
+    "ok": true,
+    "detail": "opacity 0 → 1"
+  },
+  {
+    "name": "cleanup: point cmwwmr0w800kyiy7djczhbtab deleted",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "cleanup: point cmwwmr0xv00kziy7dwelq6eru deleted",
+    "ok": true,
+    "detail": "200"
+  }
+]

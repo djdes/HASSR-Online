@@ -102,3 +102,57 @@ export function revisionLabel(info: Pick<RevisionInfo, "code" | "approvedAt">, t
   }
   return `${info.code} от ${date}`;
 }
+
+/** Сторона сравнения: утверждённая редакция или текущий текст документа. */
+export type RevisionCompareSide = { kind: "revision"; number: number } | { kind: "current" };
+
+/**
+ * Какие стороны сравнить (2026-11-25). `rows` — редакции документа от новой к
+ * старой (хотя бы одна). Без `from`/`to`: документ изменён после утверждения —
+ * последняя редакция ↔ текущий текст, иначе предыдущая ↔ последняя.
+ */
+export function pickCompareSides(
+  rows: ReadonlyArray<{ number: number; contentHash: string }>,
+  requested: { from?: number | null; to?: number | "current" | null },
+  current: { available: boolean; hash: string | null },
+): { ok: true; from: number; to: RevisionCompareSide } | { ok: false; code: "revision_not_found" | "no_current_text" } {
+  const latest = rows[0];
+  let from = requested.from ?? null;
+  let to: RevisionCompareSide | null =
+    requested.to === "current" ? { kind: "current" } : typeof requested.to === "number" ? { kind: "revision", number: requested.to } : null;
+  if (from === null && to === null) {
+    const changed = current.hash !== null && current.hash !== latest.contentHash;
+    if (changed || rows.length === 1) {
+      from = latest.number;
+      to = current.available ? { kind: "current" } : { kind: "revision", number: latest.number };
+    } else {
+      from = rows[1].number;
+      to = { kind: "revision", number: latest.number };
+    }
+  }
+  if (from === null) from = latest.number;
+  if (to === null) to = current.available ? { kind: "current" } : { kind: "revision", number: latest.number };
+  const numbers = new Set(rows.map((row) => row.number));
+  if (!numbers.has(from)) return { ok: false, code: "revision_not_found" };
+  if (to.kind === "revision" && !numbers.has(to.number)) return { ok: false, code: "revision_not_found" };
+  if (to.kind === "current" && !current.available) return { ok: false, code: "no_current_text" };
+  return { ok: true, from, to };
+}
+
+/**
+ * Текст редакции при утверждении: один повтор, потом `log` и `null` —
+ * утверждение проходит без текста (как раньше), но не молча.
+ */
+export async function readSnapshotWithRetry<T>(read: () => Promise<T>, log: (error: unknown) => void): Promise<T | null> {
+  try {
+    return await read();
+  } catch {
+    // Второй раз — сбои чтения файла или базы бывают разовыми.
+  }
+  try {
+    return await read();
+  } catch (error) {
+    log(error);
+    return null;
+  }
+}
