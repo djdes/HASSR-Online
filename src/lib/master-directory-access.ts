@@ -82,6 +82,8 @@ export function evaluateDirectoryRequest(pathname: string, orgKind: unknown): Di
   const kind = parseOrgKind(orgKind);
   const isApi = matchesPrefix(pathname, "/api");
   if (kind === "directory") {
+    // Public ad landing must remain reachable when a directory session is active.
+    if (pathname === "/akciya") return { action: "allow" };
     if (DIRECTORY_ALLOWED_PREFIXES.some((prefix) => matchesPrefix(pathname, prefix))) return { action: "allow" };
     if (!isApi && isStaticAsset(pathname)) return { action: "allow" };
     return isApi

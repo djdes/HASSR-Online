@@ -77,6 +77,7 @@ export async function telegramBotInfo(): Promise<{ name: string; username: strin
   if (!telegramChannelBotToken().token) return null;
   try {
     const me = await call((bot) => bot.api.getMe());
+    if (!me.username) return null;
     return { name: me.first_name, username: me.username };
   } catch {
     return null;
