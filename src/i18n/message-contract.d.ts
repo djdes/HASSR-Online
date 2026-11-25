@@ -22306,7 +22306,6 @@ export type MessageContract = {
       "linked": "Telegram привязан",
       "notLinked": "Telegram не привязан",
       "linkInApp": "Привязать этот Telegram",
-      "linkByPhone": "Привязать по номеру из Telegram",
       "linkViaBot": "Привязать через бота Telegram",
       "linking": "Привязываем…",
       "linkedSuccess": "Telegram успешно привязан",
@@ -22317,14 +22316,14 @@ export type MessageContract = {
       "editButton": "Изменить телефон",
       "addButton": "Указать телефон",
       "title": "Номер телефона",
-      "description": "По номеру телефона работают быстрая привязка Telegram и вход в приложение.",
       "label": "Телефон",
       "placeholder": "+7 999 123-45-67",
       "save": "Сохранить",
       "saving": "Сохраняем…",
       "cancel": "Отмена",
       "saved": "Телефон сохранён",
-      "error": "Не удалось сохранить телефон"
+      "error": "Не удалось сохранить телефон",
+      "taken": "Этот номер уже у другого сотрудника"
     }
   },
   "miniToday": {

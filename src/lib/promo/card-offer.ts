@@ -33,6 +33,32 @@ export const CARD_PROMO_RECORD = {
   note: "Акция по визитке: QR на обороте → wesetup.ru/vizitka, −10 % на первую оплату новым клиентам, без срока.",
 };
 
+/**
+ * Акция из рекламных постов (25.11.2026): ссылка из поста ведёт на
+ * `/akciya` — 14 дней бесплатно и −10 % на первую оплату. Свой код, чтобы
+ * в /root/promo-codes было видно, сколько оплат пришло именно с рекламы.
+ */
+export const AD_PROMO_CODE = "SETUP10";
+export const AD_PROMO_PATH = "/akciya";
+
+export const AD_PROMO_RECORD = {
+  code: AD_PROMO_CODE,
+  kind: "percent" as const,
+  value: 10,
+  startsAt: null,
+  endsAt: null,
+  maxUses: null,
+  newClientsOnly: true,
+  lifetime: false,
+  note: "Акция из рекламы: пост → wesetup.ru/akciya, 14 дней бесплатно и −10 % на первую оплату новым клиентам, без срока.",
+};
+
+/** Промокоды страниц акций и их кампании — для scripts/seed-card-promo.ts. */
+export const OFFER_PROMO_RECORDS = [
+  { campaignId: "vizitka", record: CARD_PROMO_RECORD },
+  { campaignId: "akciya", record: AD_PROMO_RECORD },
+] as const;
+
 export type CardDiscount = { kind: "percent" | "fixed"; value: number };
 
 export type CardTierPrice = {
@@ -77,10 +103,10 @@ export function cardTierPrice(
   };
 }
 
-/** Куда ведёт кнопка оплаты: оформление с тарифом, периодом и кодом. */
-export function cardOrderHref(tier: PaidTier, cycle: BillingCycle, withCode: boolean): string {
+/** Куда ведёт кнопка оплаты: оформление с тарифом, периодом и кодом (null — без кода). */
+export function cardOrderHref(tier: PaidTier, cycle: BillingCycle, code: string | null): string {
   const params = new URLSearchParams({ plan: tier, cycle });
-  if (withCode) params.set("promo", CARD_PROMO_CODE);
+  if (code) params.set("promo", code);
   return `/order?${params.toString()}`;
 }
 

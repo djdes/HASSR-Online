@@ -22305,7 +22305,6 @@
       "linked": "Telegram linked",
       "notLinked": "Telegram not linked",
       "linkInApp": "Link this Telegram",
-      "linkByPhone": "Link via Telegram phone",
       "linkViaBot": "Link via Telegram bot",
       "linking": "Linking…",
       "linkedSuccess": "Telegram linked successfully",
@@ -22316,14 +22315,14 @@
       "editButton": "Change phone",
       "addButton": "Add phone number",
       "title": "Phone number",
-      "description": "Your phone number enables quick Telegram linking and app sign-in.",
       "label": "Phone",
       "placeholder": "+7 999 123-45-67",
       "save": "Save",
       "saving": "Saving…",
       "cancel": "Cancel",
       "saved": "Phone number saved",
-      "error": "Could not save phone number"
+      "error": "Could not save phone number",
+      "taken": "This number belongs to another employee"
     }
   },
   "miniToday": {

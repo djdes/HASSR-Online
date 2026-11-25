@@ -1,5 +1,6 @@
 /**
- * Промокод акции по визитке — src/lib/promo/card-offer.ts (VIZITKA10).
+ * Промокоды страниц акций — src/lib/promo/card-offer.ts (VIZITKA10 для
+ * /vizitka, SETUP10 для /akciya из рекламных постов).
  *
  * Идемпотентен: кода нет — создаёт ВКЛЮЧЁННЫМ (визитки уже печатаются с QR
  * на /vizitka); код есть — не трогает (ROOT мог поменять размер или
@@ -10,13 +11,16 @@
  */
 
 import { db } from "../src/lib/db";
-import { CARD_PROMO_RECORD } from "../src/lib/promo/card-offer";
+import { OFFER_PROMO_RECORDS } from "../src/lib/promo/card-offer";
 import { describeDiscount, isValidPromoCodeFormat } from "../src/lib/promo/rules";
 
 const APPLY = process.argv.includes("--apply");
 
 async function main() {
-  const item = CARD_PROMO_RECORD;
+  for (const { campaignId, record } of OFFER_PROMO_RECORDS) await seed(campaignId, record);
+}
+
+async function seed(campaignId: string, item: (typeof OFFER_PROMO_RECORDS)[number]["record"]) {
   if (!isValidPromoCodeFormat(item.code)) throw new Error(`Некорректный код ${item.code}`);
   const line = `${item.code}: ${describeDiscount(item)}, без срока и лимита${item.newClientsOnly ? ", только новым" : ""}`;
   const exists = await db.promoCode.findUnique({ where: { code: item.code }, select: { active: true } });
@@ -40,7 +44,7 @@ async function main() {
       newClientsOnly: item.newClientsOnly,
       lifetime: item.lifetime,
       note: item.note,
-      campaignId: "vizitka",
+      campaignId,
     },
   });
   console.info(`[promo] card: создан включённым — ${line}`);

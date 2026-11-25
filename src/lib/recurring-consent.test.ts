@@ -40,7 +40,6 @@ describe("автопродление без автосписаний", () => {
       assert.match(card.body, /7, 3/, locale);
     }
     const ru = JSON.parse(read("src/i18n/messages/ru.json")) as { settingsUi: { renewalCard: { body: string } } };
-    // Текст сокращён в #343 («Автосписаний нет») — смысл тот же: списаний не обещаем.
-    assert.match(ru.settingsUi.renewalCard.body, /(Автоматических списаний|Автосписаний) нет/);
+    assert.match(ru.settingsUi.renewalCard.body, /Автосписаний нет/);
   });
 });

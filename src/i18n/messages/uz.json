@@ -22305,7 +22305,6 @@
       "linked": "Telegram ulangan",
       "notLinked": "Telegram ulanmagan",
       "linkInApp": "Ushbu Telegram’ni ulash",
-      "linkByPhone": "Telegram raqami bilan ulash",
       "linkViaBot": "Telegram bot orqali ulash",
       "linking": "Ulanmoqda…",
       "linkedSuccess": "Telegram muvaffaqiyatli ulandi",
@@ -22316,14 +22315,14 @@
       "editButton": "Telefonni o‘zgartirish",
       "addButton": "Telefon raqamini kiritish",
       "title": "Telefon raqami",
-      "description": "Telefon raqami Telegram’ni tez ulash va ilovaga kirish uchun kerak.",
       "label": "Telefon",
       "placeholder": "+7 999 123-45-67",
       "save": "Saqlash",
       "saving": "Saqlanmoqda…",
       "cancel": "Bekor qilish",
       "saved": "Telefon saqlandi",
-      "error": "Telefonni saqlab bo‘lmadi"
+      "error": "Telefonni saqlab bo‘lmadi",
+      "taken": "Bu raqam boshqa xodimga tegishli"
     }
   },
   "miniToday": {

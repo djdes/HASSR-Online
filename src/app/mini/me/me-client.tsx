@@ -241,7 +241,7 @@ export function MiniMeClient({
     }
   }
 
-  async function handleLinkTelegramInApp(withContact: boolean) {
+  async function handleLinkTelegramInApp(withContact: boolean, replacePhone = false) {
     if (tgBusy !== "none") return;
     const initData = getTelegramWebApp()?.initData;
     if (!initData) {
@@ -263,20 +263,28 @@ export function MiniMeClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          contactResponse ? { initData, contactResponse } : { initData },
+          contactResponse ? { initData, contactResponse, replacePhone } : { initData },
         ),
       });
       const body = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         status?: string;
         phoneSaved?: string | null;
+        phoneTaken?: boolean;
       };
       if (res.ok && body.ok) {
+        const wasLinked = isTgLinked;
         setIsTgLinked(true);
         if (typeof body.phoneSaved === "string" && body.phoneSaved) {
           setCurrentPhone(body.phoneSaved);
         }
-        toast.success(t("telegram.linkedSuccess"));
+        if (replacePhone && body.phoneTaken) {
+          setTgError(t("phoneDialog.taken"));
+        } else if (replacePhone && wasLinked) {
+          toast.success(t("phoneDialog.saved"));
+        } else {
+          toast.success(t("telegram.linkedSuccess"));
+        }
         return;
       }
       if (
@@ -559,20 +567,6 @@ export function MiniMeClient({
                   )}
                   {tgBusy === "inApp" ? t("telegram.linking") : t("telegram.linkInApp")}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleLinkTelegramInApp(true)}
-                  disabled={tgBusy !== "none"}
-                  aria-busy={tgBusy === "phone"}
-                  className="mini-btn-secondary mini-press w-full"
-                >
-                  {tgBusy === "phone" ? (
-                    <Loader2 className="size-5 animate-spin" aria-hidden />
-                  ) : (
-                    <Phone className="size-5" aria-hidden />
-                  )}
-                  {tgBusy === "phone" ? t("telegram.linking") : t("telegram.linkByPhone")}
-                </button>
               </>
             ) : telegramBotUsername ? (
               <button
@@ -591,12 +585,23 @@ export function MiniMeClient({
               </button>
             ) : null
           ) : null}
+          {/* В Telegram номер не вводят руками: Telegram сам пришлёт
+              подтверждённый контакт (заодно привяжет аккаунт). Ручной
+              ввод — только в браузере и приложении. */}
           <button
             type="button"
-            onClick={openPhoneDialog}
+            onClick={inTelegram ? () => handleLinkTelegramInApp(true, true) : openPhoneDialog}
+            disabled={inTelegram && tgBusy !== "none"}
+            aria-busy={tgBusy === "phone"}
             className="mini-btn-secondary mini-press w-full"
           >
-            <Pencil className="size-4" aria-hidden />
+            {tgBusy === "phone" ? (
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+            ) : inTelegram ? (
+              <Phone className="size-4" aria-hidden />
+            ) : (
+              <Pencil className="size-4" aria-hidden />
+            )}
             {currentPhone ? t("phoneDialog.editButton") : t("phoneDialog.addButton")}
           </button>
         </div>
@@ -875,12 +880,6 @@ export function MiniMeClient({
               </button>
             </form>
           </div>
-          <p
-            className="mt-1.5 text-[15px] leading-relaxed"
-            style={{ color: "var(--mini-text-muted)" }}
-          >
-            {t("phoneDialog.description")}
-          </p>
           <form method="post" onSubmit={savePhone} noValidate className="mt-4 space-y-3">
             <div>
               <label htmlFor="mini-me-phone" className="mini-label mb-1.5 block">

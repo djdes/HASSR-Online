@@ -194,18 +194,57 @@ export function MiniThemeProvider({
   // разные layout'ы, при переходе между ними оболочка монтируется заново
   // без скрипта до гидрации, и обычный эффект показывал кадр в теме
   // сервера (профиля), пока не применял «как на устройстве».
+  // Тема профиля, перепроверенная свежим запросом (см. ниже).
+  const [checkedProfileTheme, setCheckedProfileTheme] = useState<MiniTheme | null>(null);
+  const [needProfileCheck, setNeedProfileCheck] = useState(false);
   useBeforePaintEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const stored = readStoredChoice(storageGet);
+    let profile = userPicked.current ? null : (checkedProfileTheme ?? effectiveProfileTheme);
+    // Выбрал «тёмную» в профиле и ушёл на главную — оболочка монтируется
+    // заново с темой профиля из разметки, а та могла устареть (запрос
+    // сохранения ещё в пути, закэшированный ответ роутера). Профиль главнее
+    // устройства, и тема возвращалась светлой. Пока сервер не подтвердил,
+    // выбор этого устройства главнее; расхождение сверяем запросом.
+    const storedExplicit = isMiniTheme(stored.mode) ? stored.mode : null;
+    if (!checkedProfileTheme && profile && storedExplicit && storedExplicit !== profile) {
+      profile = null;
+      setNeedProfileCheck(true);
+    }
     commit(
       resolveMiniThemeChoice({
-        profileTheme: userPicked.current ? null : effectiveProfileTheme,
-        stored: readStoredChoice(storageGet),
+        profileTheme: profile,
+        stored,
         telegramColorScheme: readTelegramColorScheme(),
         fallback: initialTheme,
       }),
       "resolve"
     );
-  }, [commit, effectiveProfileTheme, initialTheme]);
+  }, [checkedProfileTheme, commit, effectiveProfileTheme, initialTheme]);
+
+  useEffect(() => {
+    if (!needProfileCheck) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/me/theme", { cache: "no-store" });
+        if (!res.ok || cancelled || userPicked.current) return;
+        const body = (await res.json()) as { theme?: unknown };
+        if (cancelled || userPicked.current || !isMiniTheme(body.theme)) return;
+        // Сервер знает другую тему — её выбрали на другом устройстве:
+        // запоминаем и здесь, чтобы при следующем входе не сверять снова.
+        const stored = readStoredChoice(storageGet);
+        if (stored.mode !== body.theme && !stored.auto && stored.mode !== "system") {
+          storageWrite(choiceStorageEntries({ mode: body.theme, autoBySchedule: false }, body.theme));
+        }
+        setCheckedProfileTheme(body.theme);
+      } catch {
+        /* нет связи — остаёмся на выборе устройства */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [needProfileCheck]);
 
   // Вход из Telegram проходит на клиенте, серверная разметка отдана
   // раньше и с темой по умолчанию. Как только сессия появилась —

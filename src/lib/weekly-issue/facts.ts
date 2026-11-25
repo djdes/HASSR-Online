@@ -34,7 +34,7 @@ export const WEEKLY_BUTTON = { text: "Перейти на сайт", url: `${SIT
 
 /** Префиксы внутренних разделов — клиенту не интересны (ROOT, CRM, СММ…). */
 const INTERNAL_PREFIX =
-  /^(смм|smm|crm|срм|root|рут|рассылк\p{L}*|админ\p{L}*|ии-сводк\p{L}*|сводка администратор\p{L}*|seo|сео|презентаци\p{L}*|брендбук|визитк\p{L}*|ci|deploy|деплой|dispatcher|диспетчер)(?![\p{L}\p{N}])/iu;
+  /^(смм|smm|crm|срм|root|рут|типы|доказательства|evidence|рассылк\p{L}*|админ\p{L}*|ии-сводк\p{L}*|сводка администратор\p{L}*|seo|сео|презентаци\p{L}*|брендбук|визитк\p{L}*|ci|deploy|деплой|dispatcher|диспетчер)(?![\p{L}\p{N}])/iu;
 /** Техничка в любом месте строки (целые слова). */
 const TECHNICAL =
   /(?<![\p{L}\p{N}])(merge|revert|chore|refactor|рефакторинг|тест|тесты|тестов|tests?|lint|eslint|tsc|typecheck|ci|github actions|зависимости|deps?|bump|prisma|миграция|миграции|скрипт|скрипты|script|worktree|wip)(?![\p{L}\p{N}])/iu;
@@ -55,6 +55,8 @@ export function selectCommitSubjects(messages: readonly string[], limit = 40): s
     const subject = raw.replace(CONVENTIONAL, "").replace(/\s*\(#\d+\)\s*$/, "").replace(/\s+/g, " ").trim();
     if (subject.length < 8) continue;
     if (INTERNAL_PREFIX.test(subject) || TECHNICAL.test(subject)) continue;
+    // Клиентам пишем по-русски: коммиты без кириллицы и про файлы стилей — техничка.
+    if (!/[а-яё]/i.test(subject) || /\.(css|tsx?|json|md)(?![a-z])/i.test(subject)) continue;
     const key = subject.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
