@@ -804,7 +804,7 @@ export default function ClaimPage({
   return (
     // Нижний отступ больше обычного: последняя кнопка («Вернуть
     // задачу») пряталась под нижним меню приложения сразу при открытии.
-    <div className="space-y-4 pb-40">
+    <div className="space-y-4 pb-40" data-mini-stagger>
       <BackToday />
 
       {/* «Что заполняем» — как строка «Кто / Что» QR-формы: подпись
@@ -899,6 +899,8 @@ export default function ClaimPage({
                   }
                 >
                   <div
+                    // Номер стал галочкой — кружок встаёт на пружине.
+                    data-mini-tick={done ? "" : undefined}
                     className="absolute -left-[24px] top-4 flex size-8 items-center justify-center rounded-full text-[14px] font-bold"
                     style={{
                       background: done ? "var(--mini-ok-fill)" : "var(--mini-accent)",

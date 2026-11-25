@@ -7,6 +7,7 @@ import { AlertOctagon, CheckCircle2, CircleAlert, Loader2, ShieldCheck, Sparkles
 import { WESETUP_BRAND } from "@/lib/smm/brand-profile";
 import { FIX_LABELS, GROUP_LABELS, applyAllFixes, applyFix, type CheckGroup, type FixId, type PostReport } from "@/lib/smm/quality";
 import { cn } from "@/lib/utils";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 export type QualityDraft = {
   text: string;
@@ -41,6 +42,7 @@ function Ring({ value, color }: { value: number; color: string }) {
         strokeWidth="7"
         strokeLinecap="round"
         strokeDasharray={`${(value / 100) * c} ${c}`}
+        data-meter="ring"
         transform="rotate(-90 32 32)"
       />
       <text x="32" y="37" textAnchor="middle" className="fill-[#0b1024] text-[15px] font-semibold">
@@ -57,11 +59,12 @@ function Meter({ label, value, invert }: { label: string; value: number; invert?
     <div>
       <div className="flex justify-between text-[12px] text-[#6f7282]">
         <span>{label}</span>
-        <span className="tabular-nums">{value}</span>
+        <MotionNumber value={value} className="tabular-nums" />
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#eef0f7]">
         <div
           className={cn("h-full rounded-full", good ? "bg-[#16a34a]" : mid ? "bg-[#e59b00]" : "bg-[#dc4b3e]")}
+          data-meter
           style={{ width: `${Math.max(4, value)}%` }}
         />
       </div>

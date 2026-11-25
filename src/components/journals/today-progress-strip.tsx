@@ -102,6 +102,7 @@ export function TodayProgressStrip({
         <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#dcdfed]">
           <div
             className="h-full rounded-full bg-[#5566f6] transition-[width] duration-200"
+            data-meter
             style={{ width: `${percent}%` }}
           />
         </div>

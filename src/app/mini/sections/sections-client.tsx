@@ -78,7 +78,7 @@ export function MiniSectionsClient({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-24">
+    <div className="flex flex-1 flex-col gap-4 pb-24" data-mini-stagger>
       <header className="mini-card px-5 py-5">
         <p className="mini-eyebrow">{t("home.eyebrow")}</p>
         <h1 className="mini-h1 mt-1">{t("home.title")}</h1>

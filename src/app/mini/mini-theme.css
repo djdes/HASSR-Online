@@ -1600,3 +1600,110 @@ html:has(#mini-root) {
   outline: none;
   box-shadow: inset 0 0 0 3px var(--mini-accent-ring);
 }
+
+/* --------------------------------------------------------------------
+ * Движение экранов (раунд 4, язык — `src/app/motion.css`, spec
+ * `site-motion-2026-11-22`). Всё короткое (≤ 0.45 с), без отскока сверх
+ * пружины `--spring` (~1.5 %), только opacity / translate / scale; ничего
+ * на наведение, без `will-change`. Метки ставит разметка экранов:
+ *
+ *   • `data-mini-stagger` — контейнер экрана: прямые дети входят по
+ *     очереди (подъём на 6px и проявление), шаг 30 мс, не дальше шестого.
+ *     Играет при монтировании — первый показ и подмена «загрузка →
+ *     данные»; обновление тех же данных узлы не пересоздаёт и не играет.
+ *     Слои (`dialog`, `popover`, fixed / sticky / absolute) не трогаем:
+ *     у `<dialog>` анимация запускалась бы на каждом открытии.
+ *   • `data-mini-done` — строка задачи, которую человек только что
+ *     закрыл: плитка с галочкой встаёт на пружине.
+ *   • `data-mini-tick` — номер шага стал галочкой.
+ *   • `data-mini-count` — счётчик пересоздан с новым числом (`key`):
+ *     число поднимается на место.
+ *   • `data-mini-skeleton` — скелетон проявляется с задержкой 0.15 с:
+ *     быстрая загрузка не мигает серыми полосами.
+ *
+ * Заливка `fill-mode: backwards`, не `both`: после конца анимации на
+ * элементе не остаётся `translate` / `scale` — иначе он стал бы
+ * containing block для `position: fixed` потомков (см. `.mini-reveal`).
+ *
+ * Выключатели: всё включается только под `prefers-reduced-motion:
+ * no-preference` и без `data-view-still` на <html> («Без анимации»).
+ * Без включения — просто статичный экран в конечном состоянии. В старом
+ * Safari (Telegram iOS) без `sibling-index()` — задержки через
+ * `:nth-child`; без `interpolate-size` раскрытие происходит сразу.
+ * ------------------------------------------------------------------ */
+@keyframes miniEnter {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+@keyframes miniPop {
+  from {
+    scale: 0.6;
+  }
+}
+@keyframes miniCountIn {
+  from {
+    opacity: 0;
+    translate: 0 3px;
+  }
+}
+@keyframes miniFadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-view-still]) .mini-root [data-mini-stagger] > :where(:not(dialog, [popover], .fixed, .sticky, .absolute)) {
+    --mini-stagger-step: 30ms;
+    animation: miniEnter 0.24s var(--spring-soft) backwards;
+  }
+  /* Литерал в `@supports`, не `var()`: с `var()` проверка истинна везде. */
+  @supports (animation-delay: calc(sibling-index() * 0.1s)) {
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :where(:not(dialog, [popover], .fixed, .sticky, .absolute)) {
+      animation-delay: calc(min(sibling-index() - 1, 6) * var(--mini-stagger-step));
+    }
+  }
+  /* `:nth-child` весит больше — поэтому только там, где `sibling-index()` нет. */
+  @supports not (animation-delay: calc(sibling-index() * 0.1s)) {
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :nth-child(2) { animation-delay: 30ms; }
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :nth-child(3) { animation-delay: 60ms; }
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :nth-child(4) { animation-delay: 90ms; }
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :nth-child(5) { animation-delay: 120ms; }
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :nth-child(6) { animation-delay: 150ms; }
+    html:not([data-view-still]) .mini-root [data-mini-stagger] > :nth-child(n + 7) { animation-delay: 180ms; }
+  }
+
+  html:not([data-view-still]) .mini-root [data-mini-done] .mini-tile,
+  html:not([data-view-still]) .mini-root [data-mini-tick] {
+    animation: miniPop 0.45s var(--spring) backwards;
+  }
+
+  html:not([data-view-still]) .mini-root [data-mini-count] {
+    animation: miniCountIn 0.28s var(--spring-soft) backwards;
+  }
+
+  html:not([data-view-still]) .mini-root [data-mini-skeleton] {
+    animation: miniFadeIn 0.2s ease-out 0.15s backwards;
+  }
+}
+
+/* Раскрытие `.mini-disclosure`: высота едет к `auto` там, где есть
+   `interpolate-size` (Chromium); Safari и Firefox открывают сразу. */
+.mini-disclosure::details-content {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  contain: layout;
+}
+.mini-disclosure:not([open])::details-content {
+  block-size: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-view-still]) .mini-disclosure::details-content {
+    transition:
+      block-size 0.26s var(--spring-soft),
+      content-visibility 0.26s;
+    transition-behavior: allow-discrete;
+  }
+}

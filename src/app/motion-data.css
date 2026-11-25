@@ -1,1 +1,41 @@
-/* motion-data: filled by the motion round 4 (2026-11-25). */
+/*
+ * Motion round 4 (2026-11-25): progress bars, rings and numbers — the item left out of round 2
+ * (`.agent/tasks/site-motion-round2-2026-11-22/spec.md`, «Out of scope»). Same language as
+ * `motion.css`: geometry rides `--spring-soft` (no visible overshoot), nothing moves at rest,
+ * nothing on hover.
+ *
+ * • `[data-meter]` — the fill of a bar whose length is an inline `width`. It grows from 0 the
+ *   first time it is painted (`@starting-style`) and eases to a new value when the width changes.
+ *   The inline width is the value at rest; the start state needs `!important` to stand above it
+ *   for that one frame and nowhere else.
+ * • `[data-meter="ring"]` — the arc of an SVG ring drawn with `stroke-dasharray="filled length"`.
+ *   It draws from an empty dash and eases between values the same way.
+ * • Numbers count in `src/components/motion/motion-number.tsx` (a text node needs JavaScript).
+ *
+ * Opt-in, not opt-out: all of it lives inside `prefers-reduced-motion: no-preference` and under
+ * `:root:not([data-view-still])` («Без анимации»), so with either switch the bars are simply drawn
+ * at their value. Print never sees a transition (no `@starting-style` in a printed page).
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-view-still]) :where([data-meter]:not([data-meter="ring"])) {
+    transition-property: width, background-color, color;
+    transition-duration: 0.7s, 0.2s, 0.2s;
+    transition-timing-function: var(--spring-soft), ease-out, ease-out;
+  }
+
+  :root:not([data-view-still]) :where([data-meter="ring"]) {
+    transition-property: stroke-dasharray, stroke;
+    transition-duration: 0.8s, 0.2s;
+    transition-timing-function: var(--spring-soft), ease-out;
+  }
+
+  @starting-style {
+    :root:not([data-view-still]) :where([data-meter]:not([data-meter="ring"])) {
+      width: 0 !important;
+    }
+    :root:not([data-view-still]) :where([data-meter="ring"]) {
+      stroke-dasharray: 0 1000;
+    }
+  }
+}

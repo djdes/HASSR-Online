@@ -407,7 +407,7 @@ export function MiniMeClient({
         : null;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-24">
+    <div className="flex flex-1 flex-col gap-4 pb-24" data-mini-stagger>
       <Link
         href={homeHref}
         className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"

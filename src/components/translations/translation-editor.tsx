@@ -649,7 +649,7 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
               <div className="flex flex-wrap items-center gap-2 text-[13px] text-[#6f7282]" data-testid="translation-auto-progress">
                 <Loader2 className="size-4 shrink-0 animate-spin" />
                 <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-[#eef0f7]" aria-hidden>
-                  <span className="block h-full rounded-full bg-[#5566f6] transition-[width]" style={{ width: `${autoProgress.total ? Math.round((autoProgress.done / autoProgress.total) * 100) : 0}%` }} />
+                  <span className="block h-full rounded-full bg-[#5566f6] transition-[width]" data-meter style={{ width: `${autoProgress.total ? Math.round((autoProgress.done / autoProgress.total) * 100) : 0}%` }} />
                 </span>
                 <span role="status">
                   {autoProgress.waitSeconds !== null

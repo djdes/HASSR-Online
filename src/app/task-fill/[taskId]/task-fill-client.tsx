@@ -1416,6 +1416,7 @@ function PipelineWizard({
           <div className="h-2 w-24 overflow-hidden rounded-full bg-[#eef1ff]">
             <div
               className="h-full bg-gradient-to-r from-[#5566f6] to-[#7a5cff] transition-all duration-500"
+              data-meter
               style={{ width: `${Math.round((confirmedCount / total) * 100)}%` }}
             />
           </div>

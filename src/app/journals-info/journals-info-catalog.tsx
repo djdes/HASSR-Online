@@ -104,7 +104,7 @@ export function JournalsInfoCatalog({
       </div>
 
       {filteredGroups.length === 0 ? (
-        <div className="rounded-3xl border border-[#ececf4] bg-[#fafbff] px-6 py-12 text-center">
+        <div data-motion-empty="" className="rounded-3xl border border-[#ececf4] bg-[#fafbff] px-6 py-12 text-center">
           <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[#eef1ff] text-[#5566f6]">
             <SearchX className="size-6" />
           </div>

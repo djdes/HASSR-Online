@@ -174,9 +174,9 @@ function MonitorItem({
       </div>
       <div className="mt-3" data-testid="monitor-progress">
         <div className="flex h-2.5 overflow-hidden rounded-full bg-[#eceef7]">
-          <span className="bg-[#22a04b]" style={{ width: part(c.sent) }} />
-          <span className="bg-[#e0584a]" style={{ width: part(c.failed) }} />
-          <span className="bg-[#b9bdd0]" style={{ width: part(c.skipped + c.cancelled) }} />
+          <span className="bg-[#22a04b]" data-meter style={{ width: part(c.sent) }} />
+          <span className="bg-[#e0584a]" data-meter style={{ width: part(c.failed) }} />
+          <span className="bg-[#b9bdd0]" data-meter style={{ width: part(c.skipped + c.cancelled) }} />
         </div>
         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[#6f7282]">
           <span>

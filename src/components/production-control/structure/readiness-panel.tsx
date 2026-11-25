@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { CalendarClock, Download, FileCheck2, QrCode, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PpkProgressBar } from "@/components/production-control/ppk-progress-bar";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 export type ReadinessData = {
   done: number;
@@ -33,7 +34,7 @@ export async function PpkReadinessPanel({ data }: { data: ReadinessData }) {
           <p className="text-[13px] text-[#6f7282]">{t("readinessFilled", { done: String(data.done), total: String(data.total) })}</p>
         </div>
         <span className="text-[28px] leading-none font-semibold tracking-[-0.02em] tabular-nums text-[#0b1024]" data-ppk-readiness-percent>
-          {percent}%
+          <MotionNumber value={percent} suffix="%" />
         </span>
       </div>
       <PpkProgressBar done={data.done} total={data.total} label={t("readinessFilled", { done: String(data.done), total: String(data.total) })} />

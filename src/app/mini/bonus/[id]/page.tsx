@@ -73,7 +73,7 @@ export default async function MiniBonusFillPage({
 
   return (
     <DomainMessagesBoundary namespaces={["miniBonus"]}>
-      <div className="flex flex-1 flex-col gap-4 pb-24 px-1">
+      <div className="flex flex-1 flex-col gap-4 pb-24 px-1" data-mini-stagger>
         <BonusPageCopy kind="header" templateName={obligation.template.name.toLowerCase()} />
         <BonusSubmitForm
           obligationId={obligation.id}

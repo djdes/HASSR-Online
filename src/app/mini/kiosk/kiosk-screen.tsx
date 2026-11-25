@@ -245,7 +245,7 @@ export function KioskScreen() {
       </div>
 
       {/* Плитки сотрудников — карточки QR-страниц. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" data-mini-stagger>
         {filtered.map((e) => (
           <button
             key={e.id}

@@ -24,6 +24,7 @@ export function PpkProgressBar({
     >
       <div
         className="h-full rounded-full bg-[#5566f6] transition-[width] duration-200"
+        data-meter
         style={{ width: `${percent}%` }}
       />
     </div>

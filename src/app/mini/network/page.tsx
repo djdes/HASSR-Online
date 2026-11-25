@@ -56,7 +56,7 @@ export default async function MiniNetworkPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-24" data-mini-network>
+    <div className="flex flex-1 flex-col gap-4 pb-24" data-mini-network data-mini-stagger>
       <header className="mini-card px-5 py-5">
         <p className="mini-eyebrow">{t("mini.eyebrow")}</p>
         <h1 className="mini-h1 mt-1">{t("mini.title")}</h1>

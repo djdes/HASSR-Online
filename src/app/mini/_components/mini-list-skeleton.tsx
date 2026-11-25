@@ -23,6 +23,8 @@ export function MiniListSkeleton({
       role="status"
       aria-label={label ?? t("loading")}
       data-testid="mini-list-skeleton"
+      // Проявляется с задержкой (mini-theme.css): быстрая загрузка не мигает.
+      data-mini-skeleton
     >
       <div
         className="mini-skeleton-bar"

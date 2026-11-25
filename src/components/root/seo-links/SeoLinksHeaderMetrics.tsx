@@ -178,6 +178,7 @@ export function SeoLinksHeaderMetrics({
           <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-[#eef1ff]">
             <div
               className="h-full rounded-full bg-[#5566f6] transition-all"
+              data-meter
               style={{ width: `${spendProgressPct}%` }}
             />
           </div>

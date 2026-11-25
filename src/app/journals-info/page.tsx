@@ -137,7 +137,7 @@ export default async function JournalsInfoListPage() {
           каталог по нормативам; этот блок даёт второй вход тем, кто
           ищет «для кафе» или «журнал ХАССП скачать». */}
       <section className="mx-auto max-w-[1200px] px-4 pb-12 sm:px-6 sm:pb-14">
-        <div className="grid gap-6 md:grid-cols-2">
+        <div data-motion-stagger="" className="grid gap-6 md:grid-cols-2">
           <div className="rounded-3xl border border-[#ececf4] bg-white p-6 sm:p-8">
             <div className="mb-2 inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-[#5566f6]">
               <Building2 className="size-3.5" />

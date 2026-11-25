@@ -281,7 +281,7 @@ export default function MiniTodayPage() {
       );
     }
     return (
-      <div className="space-y-3 pb-24">
+      <div className="space-y-3 pb-24" data-mini-skeleton>
         <div
           className="flex h-40 items-center justify-center gap-2 text-[16px]"
           style={{ color: "var(--mini-text-muted)" }}
@@ -313,7 +313,9 @@ export default function MiniTodayPage() {
   ).length;
 
   return (
-    <div className="space-y-4 pb-24">
+    // `data-mini-stagger`: карточка дня, плашки и группы входят по очереди
+    // (mini-theme.css) — и когда данные пришли на смену крутилке.
+    <div className="space-y-4 pb-24" data-mini-stagger>
 
       {/* Карточка дня — как карточки QR-страниц: подпись капсом,
           крупный заголовок, счётчики-пилюли. */}
@@ -332,7 +334,8 @@ export default function MiniTodayPage() {
               {t("mineCount", { count: totalMine })}
             </span>
           ) : null}
-          <span className="mini-pill" data-tone="ok">
+          {/* `key`: новое число — новый узел, и оно поднимается на место. */}
+          <span key={totalDone} className="mini-pill" data-tone="ok" data-mini-count>
             {t("doneCount", { count: totalDone })}
           </span>
         </div>
@@ -520,6 +523,15 @@ function ScopeRow({
   const t = useTranslations("miniToday");
   const poolT = useTranslations("miniTaskPool");
   const av = scope.availability;
+  // Только что закрытая на этом экране задача — плитка с галочкой встаёт на
+  // пружине (mini-theme.css). Состояние «до» — по образцу React для
+  // подстройки под новый проп: при загрузке экрана не играет.
+  const [prevAv, setPrevAv] = useState(av);
+  const [justDone, setJustDone] = useState(false);
+  if (prevAv !== av) {
+    setPrevAv(av);
+    setJustDone(av === "completed");
+  }
   // Строка — карточка QR-страниц. Цвета из темы: экран открывается и в
   // тёмном оформлении. «Занято коллегой» не гасим прозрачностью (текст
   // терял контраст) — тише делаем подложку.
@@ -543,6 +555,7 @@ function ScopeRow({
     <div
       className="mini-card flex items-center gap-3 p-3.5 transition-colors"
       style={rowStyle}
+      data-mini-done={justDone ? "" : undefined}
     >
       <span className="mini-tile" style={iconStyle}>
         {av === "completed" ? (

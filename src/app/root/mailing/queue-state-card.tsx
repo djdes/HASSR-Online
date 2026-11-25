@@ -112,7 +112,7 @@ export function QueueStateCard({ campaignId, status, version }: { campaignId: st
                 <li key={slot.hour} className="flex items-center gap-2 text-[12px]">
                   <span className="w-[104px] shrink-0 tabular-nums text-[#6f7282]">{hourLabel(slot.hour)}</span>
                   <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#f2f3f8]">
-                    <span className="block h-full rounded-full bg-[#5566f6]" style={{ width: `${Math.max(4, (slot.count / max) * 100)}%` }} />
+                    <span className="block h-full rounded-full bg-[#5566f6]" data-meter style={{ width: `${Math.max(4, (slot.count / max) * 100)}%` }} />
                   </span>
                   <b className="w-12 shrink-0 text-right tabular-nums text-[#0b1024]">{slot.count}</b>
                 </li>

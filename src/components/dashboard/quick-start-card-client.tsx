@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LinkPendingOverlay } from "@/components/ui/link-pending";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 /**
  * Карточка быстрого старта на /dashboard: заголовок, прогресс и большая
@@ -78,7 +79,7 @@ export function QuickStartCardCompact({
                 больше негде. На мобиле он встаёт справа от полосы: висящая
                 над ней цифра читалась как оторванная от всего. */}
             <span className="pointer-events-none absolute bottom-full left-0 mb-1.5 hidden w-full text-center text-[11px] font-semibold tabular-nums text-[#6f7282] sm:block">
-              {percent}%
+              <MotionNumber value={percent} suffix="%" />
             </span>
             <div className="h-2 w-full overflow-hidden rounded-full bg-[#ececf4]">
               <div
@@ -89,11 +90,12 @@ export function QuickStartCardCompact({
                       ? "bg-amber-400"
                       : "bg-[#5566f6]"
                 }`}
+                data-meter
                 style={{ width: `${percent}%` }}
               />
             </div>
             <span className="shrink-0 text-[12px] font-semibold tabular-nums text-[#6f7282] sm:hidden">
-              {percent}%
+              <MotionNumber value={percent} suffix="%" />
             </span>
           </div>
 
