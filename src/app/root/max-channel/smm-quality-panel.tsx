@@ -199,7 +199,7 @@ export function SmmQualityPanel({
             <Meter label="Заспамленность" value={report.spamIndex} invert />
             <Meter label="Сила продажи" value={report.salesIndex} />
             {(Object.keys(report.groups) as CheckGroup[])
-              .filter((g) => g !== "platform" && g !== "schedule")
+              .filter((g) => g !== "platform" && g !== "schedule" && g !== "spam" && g !== "sales")
               .map((g) => (
                 <Meter key={g} label={GROUP_LABELS[g]} value={report.groups[g]} />
               ))}
