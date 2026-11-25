@@ -194,14 +194,50 @@ model MaxChannelPost {
   url         String?
   error       String?
   attempts    Int        @default(0)
-  /// manual | blog
+  /// manual | blog | auto | import
   source      String     @default("manual")
   createdById String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  /// Рубрика из профиля бренда (src/lib/smm/brand-profile.ts).
+  rubric         String?
+  /// Параметры отправки (A30): без звука, закрепить, без превью ссылок, запрет пересылки (Telegram).
+  silent         Boolean    @default(false)
+  pin            Boolean    @default(false)
+  disablePreview Boolean    @default(false)
+  protect        Boolean    @default(false)
+  /// Автоудаление из канала (A11).
+  deleteAt       DateTime?
+  /// Согласование (A24): none | pending | approved.
+  approval       String     @default("none")
+  approvedById   String?
+  /// Балл качества на момент сохранения (B01) и вердикт ready | improve | block.
+  qualityScore   Int?
+  qualityVerdict String?
+  /// Публикация с баллом ниже порога — кто подтвердил (B02).
+  forcedById     String?
+  /// Короткая ссылка кнопки wesetup.ru/api/go/<code> и переходы (A16, A28).
+  shortCode      String?    @unique
+  clicks         Int        @default(0)
+  versions       MaxChannelPostVersion[]
 
   @@index([status, scheduledAt])
   @@index([channelId, createdAt])
+  @@index([status, deleteAt])
+}
+
+/// История правок текста поста (A25).
+model MaxChannelPostVersion {
+  id         String         @id @default(cuid())
+  postId     String
+  post       MaxChannelPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  text       String
+  buttonText String?
+  buttonUrl  String?
+  editedById String?
+  createdAt  DateTime       @default(now())
+
+  @@index([postId, createdAt])
 }
 
 /// Автопост дня в каналы Telegram и MAX (src/lib/channel-autopost): тема из

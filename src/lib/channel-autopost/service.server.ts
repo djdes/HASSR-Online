@@ -15,6 +15,9 @@ import {
 } from "@/lib/codex-gateway";
 import { MAX_POST_IMAGE_DIR } from "@/lib/max/channel-post";
 import { notifyPlatformAdmin } from "@/lib/platform-admin";
+import { applyAllFixes, rubricOf } from "@/lib/smm/quality";
+import { BRAND, newShortCode, qualityFor, saveTemplateImage } from "@/lib/smm/service.server";
+import { titleFromPost } from "@/lib/smm/templates";
 import { uploadsDir } from "@/lib/uploads-path";
 
 import {
@@ -141,10 +144,24 @@ async function schedulePosts(row: Row, imagePath: string | null): Promise<void> 
     return;
   }
   const ids: string[] = [];
+  const rubric = rubricFor(row.topicKey);
+  const report = await qualityFor({
+    text: row.text ?? "",
+    images: imagePath ? [imagePath] : [],
+    buttonText: row.buttonText,
+    buttonUrl: row.buttonUrl,
+    rubric,
+    scheduledAt: row.publishAt,
+    channelIds: channels.map((c) => c.id),
+  }).catch(() => null);
   for (const channel of channels) {
     const post = await db.maxChannelPost.create({
       data: {
         channelId: channel.id,
+        rubric,
+        shortCode: row.buttonUrl ? newShortCode() : null,
+        qualityScore: report?.score ?? null,
+        qualityVerdict: report?.verdict ?? null,
         text: row.text ?? "",
         images: imagePath ? [imagePath] : [],
         buttonText: row.buttonText,
@@ -194,9 +211,12 @@ async function stepText(row: Row): Promise<void> {
     await fail(row, "ИИ вернул текст не по правилам (длина, ссылки или формат)", true);
     return;
   }
+  // B30: детерминированные исправления по фирменному стилю — капс, «!!!»,
+  // написание бренда, хэштеги рубрики, подпись с контактами.
+  const text = applyAllFixes({ text: parsed.text, rubric: rubricFor(row.topicKey), buttonText: row.buttonText, buttonUrl: row.buttonUrl, images: [{}] }, BRAND);
   await db.channelAutopost.update({
     where: { id: row.id },
-    data: { status: "image", text: parsed.text, imagePrompt: parsed.imagePrompt, error: null },
+    data: { status: "image", text, imagePrompt: parsed.imagePrompt, error: null },
   });
 }
 
@@ -252,7 +272,23 @@ async function stepImage(row: Row, now: Date): Promise<void> {
   const dir = join(uploadsDir(), MAX_POST_IMAGE_DIR);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, name), bytes);
-  await schedulePosts(row, `${MAX_POST_IMAGE_DIR}/${name}`);
+  const photoPath = `${MAX_POST_IMAGE_DIR}/${name}`;
+  // A23/B29: ИИ-фото — в фирменный шаблон (плашка, заголовок, логотип).
+  const branded = await saveTemplateImage({
+    template: "photo-band",
+    photoPath,
+    data: { title: titleFromPost(row.text ?? "") || row.topicTitle, rubric: rubricOf(BRAND, rubricFor(row.topicKey))?.label },
+  }).catch((error) => {
+    console.warn("[autopost] template failed, raw photo used", (error as Error)?.message?.slice(0, 120));
+    return photoPath;
+  });
+  await schedulePosts(row, branded);
+}
+
+/** Рубрика автопоста по виду темы (journal:…, feature:…, term:…). */
+function rubricFor(topicKey: string): string {
+  const kind = topicKey.split(":")[0];
+  return kind === "feature" ? "feature" : kind === "term" ? "term" : "journal";
 }
 
 /** Один проход крона. Повторный и параллельный запуск безопасны. */

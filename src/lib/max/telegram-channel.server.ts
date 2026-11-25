@@ -107,7 +107,18 @@ export async function inspectTelegramChannel(ref: string): Promise<TelegramChann
   };
 }
 
-type TelegramPost = { text: string; images: string[]; buttonText: string | null; buttonUrl: string | null; campaign: string | null };
+type TelegramPost = {
+  text: string;
+  images: string[];
+  buttonText: string | null;
+  buttonUrl: string | null;
+  campaign: string | null;
+  shortCode?: string | null;
+  silent?: boolean;
+  pin?: boolean;
+  disablePreview?: boolean;
+  protect?: boolean;
+};
 
 async function photo(relativePath: string): Promise<InputFile> {
   const bytes = await readFile(join(uploadsDir(), ...relativePath.split("/")));
@@ -130,20 +141,22 @@ export async function sendTelegramPost(
   const plan = planTelegramPost(post);
   const chatId = channel.chatId;
   const ids: number[] = [];
+  // Параметры отправки (A30): без звука и запрет пересылки — на каждое сообщение.
+  const opts = { disable_notification: Boolean(post.silent), protect_content: Boolean(post.protect) };
   if (plan.mode === "caption") {
     const file = await photo(post.images[0]);
     const sent = await call((bot) =>
-      bot.api.sendPhoto(chatId, file, { caption: plan.html, parse_mode: "HTML", reply_markup: plan.replyMarkup }),
+      bot.api.sendPhoto(chatId, file, { caption: plan.html, parse_mode: "HTML", reply_markup: plan.replyMarkup, ...opts }),
     );
     ids.push(sent.message_id);
   } else {
     if (plan.mode === "photos-then-text") {
       const files = await Promise.all(post.images.slice(0, 10).map(photo));
       if (files.length === 1) {
-        const sent = await call((bot) => bot.api.sendPhoto(chatId, files[0]));
+        const sent = await call((bot) => bot.api.sendPhoto(chatId, files[0], opts));
         ids.push(sent.message_id);
       } else {
-        const sent = await call((bot) => bot.api.sendMediaGroup(chatId, files.map((media) => ({ type: "photo" as const, media }))));
+        const sent = await call((bot) => bot.api.sendMediaGroup(chatId, files.map((media) => ({ type: "photo" as const, media })), opts));
         ids.push(...sent.map((message) => message.message_id));
       }
     }
@@ -152,7 +165,8 @@ export async function sendTelegramPost(
         bot.api.sendMessage(chatId, plan.html, {
           parse_mode: "HTML",
           reply_markup: plan.replyMarkup,
-          ...(ids.length ? { link_preview_options: { is_disabled: true } } : {}),
+          ...opts,
+          ...(ids.length || post.disablePreview ? { link_preview_options: { is_disabled: true } } : {}),
         }),
       );
       ids.push(sent.message_id);
@@ -160,6 +174,12 @@ export async function sendTelegramPost(
       if (ids.length) await deleteTelegramMessages(chatId, ids).catch(() => undefined);
       throw error;
     }
+  }
+  if (post.pin && ids[0]) {
+    // Закрепить (A30): нужен админ с правом закрепления; сбой не отменяет публикацию.
+    await call((bot) => bot.api.pinChatMessage(chatId, ids[0], { disable_notification: true })).catch((error) =>
+      console.warn("[telegram-channel] pin failed", (error as Error)?.message?.slice(0, 120)),
+    );
   }
   return { messageIds: ids, url: telegramMessageUrl(usernameFromLink(channel.link), chatId, ids[0]) };
 }
@@ -195,7 +215,7 @@ export async function editTelegramPost(
         bot.api.editMessageText(chatId, last, plan.html, {
           parse_mode: "HTML",
           reply_markup: replyMarkup,
-          ...(messageIds.length > 1 ? { link_preview_options: { is_disabled: true } } : {}),
+          ...(messageIds.length > 1 || post.disablePreview ? { link_preview_options: { is_disabled: true } } : {}),
         }),
       );
     }

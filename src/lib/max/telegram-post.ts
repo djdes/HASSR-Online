@@ -1,5 +1,5 @@
 import { escapeHtml } from "@/lib/html-escape";
-import { tagSiteLinks, withUtm } from "./channel-post";
+import { buttonHref, tagSiteLinks } from "./channel-post";
 
 /**
  * Пост в Telegram-канал — чистая логика без сети. Текст пишется один раз
@@ -68,13 +68,14 @@ export function planTelegramPost(post: {
   buttonText?: string | null;
   buttonUrl?: string | null;
   campaign?: string | null;
+  shortCode?: string | null;
 }): TelegramPostPlan {
   const html = markdownToTelegramHtml(post.text, post.campaign);
   const buttonText = post.buttonText?.trim();
   const buttonUrl = post.buttonUrl?.trim();
   const replyMarkup =
     buttonText && buttonUrl
-      ? { inline_keyboard: [[{ text: buttonText, url: withUtm(buttonUrl, post.campaign, "telegram") }]] }
+      ? { inline_keyboard: [[{ text: buttonText, url: buttonHref(post, "telegram") }]] }
       : undefined;
   const mode =
     post.images.length === 0

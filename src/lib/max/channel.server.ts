@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { db } from "@/lib/db";
 import { uploadsDir } from "@/lib/uploads-path";
 import { maxConfig } from "./config";
+import { notifyPlatformAdmin } from "@/lib/platform-admin";
+
 import { buildMaxPostBody, parseChannelMembershipUpdate } from "./channel-post";
 import {
   deleteTelegramMessages,
@@ -223,6 +225,9 @@ type PostForSend = {
   buttonText: string | null;
   buttonUrl: string | null;
   campaign: string | null;
+  shortCode?: string | null;
+  silent?: boolean;
+  disablePreview?: boolean;
 };
 
 async function messageBody(post: PostForSend) {
@@ -272,12 +277,18 @@ export async function publishPost(postId: string): Promise<{ ok: boolean; error?
     }
     const body = await messageBody(post);
     const sent = await withAttachmentRetry(() =>
-      channelApi<SentMessage>(`/messages?chat_id=${encodeURIComponent(post.channel.chatId)}`, {
-        method: "POST",
-        body,
-        timeoutMs: 30_000,
-      }),
+      channelApi<SentMessage>(
+        `/messages?chat_id=${encodeURIComponent(post.channel.chatId)}${post.disablePreview ? "&disable_link_preview=true" : ""}`,
+        { method: "POST", body, timeoutMs: 30_000 },
+      ),
     );
+    const mid = sent.message?.body?.mid;
+    if (post.pin && mid) {
+      // Закрепить (A30); сбой не отменяет публикацию.
+      await channelApi(`/chats/${encodeURIComponent(post.channel.chatId)}/pin`, { method: "PUT", body: { message_id: mid, notify: false } }).catch(
+        (error) => console.warn("[max-channel] pin failed", (error as Error)?.message?.slice(0, 120)),
+      );
+    }
     await db.maxChannelPost.update({
       where: { id: postId },
       data: {
@@ -295,6 +306,11 @@ export async function publishPost(postId: string): Promise<{ ok: boolean; error?
     const cause = (error as { cause?: { code?: unknown } })?.cause?.code;
     console.error(`[${post.channel.platform}-channel] publish failed`, error instanceof MaxApiFailure ? error.status : (error as Error)?.name, (error as Error)?.message?.slice(0, 200), typeof cause === "string" ? cause : "");
     await db.maxChannelPost.update({ where: { id: postId }, data: { status: "failed", error: message } });
+    // A27: сбой публикации — администратору (по разу на попытку).
+    await notifyPlatformAdmin(
+      `⚠️ Пост в канал «${post.channel.title}» (${post.channel.platform === "telegram" ? "Telegram" : "MAX"}) не опубликован: ${message}. Повторите на /root/max-channel.`,
+      { kind: "system", dedupeKey: `channel-post-failed:${postId}:${post.attempts}` },
+    ).catch(() => {});
     return { ok: false, error: message };
   }
 }
@@ -353,6 +369,18 @@ export async function publishDuePosts(now: Date = new Date()): Promise<{ publish
     else failed += 1;
     // MAX: не больше двух сообщений в секунду в один канал.
     await new Promise((resolve) => setTimeout(resolve, 600));
+  }
+  // A11: автоудаление вышедших постов по сроку.
+  const expired = await db.maxChannelPost.findMany({
+    where: { status: "sent", deleteAt: { lte: now } },
+    take: 10,
+    select: { id: true },
+  });
+  for (const post of expired) {
+    await deletePublishedPost(post.id).catch(async (error) => {
+      console.warn("[channel] autodelete failed", (error as Error)?.message?.slice(0, 120));
+      await db.maxChannelPost.update({ where: { id: post.id }, data: { deleteAt: null, error: `Автоудаление не вышло: ${explainMaxFailure(error)}` } });
+    });
   }
   return { published, failed };
 }

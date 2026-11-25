@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -35,7 +35,12 @@ import {
   type MaxPostStatus,
 } from "@/lib/max/channel-post";
 import { planTelegramPost } from "@/lib/max/telegram-post";
+import { rubricOf } from "@/lib/smm/quality";
+import { WESETUP_BRAND } from "@/lib/smm/brand-profile";
 import { cn } from "@/lib/utils";
+
+import { CsvImport, PostExtraActions, RubricPicker, SendOptionsBox, TemplateBuilder, WeekPlan, type SendOptions } from "./smm-extras";
+import { SmmQualityPanel } from "./smm-quality-panel";
 
 export type ChannelView = {
   id: string;
@@ -63,6 +68,16 @@ export type PostView = {
   error: string | null;
   source: string;
   createdAt: string;
+  rubric: string | null;
+  clicks: number;
+  qualityScore: number | null;
+  qualityVerdict: string | null;
+  approval: string;
+  silent: boolean;
+  pin: boolean;
+  disablePreview: boolean;
+  protect: boolean;
+  deleteAt: string | null;
 };
 
 type BotState = { info: { name: string; username: string } | null; tokenConfigured: boolean; separate: boolean };
@@ -87,7 +102,8 @@ type Draft = {
   buttonUrl: string;
   campaign: string;
   scheduledAt: string;
-};
+  rubric: string;
+} & SendOptions;
 
 const CARD = "rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] md:p-6";
 const SECTION_LABEL = "mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]";
@@ -102,6 +118,7 @@ const BTN_SMALL =
 
 const STATUS_TONE: Record<MaxPostStatus, string> = {
   draft: "bg-[#f5f6ff] text-[#3848c7]",
+  review: "bg-[#fff8e6] text-[#9a6200]",
   scheduled: "bg-[#eef1ff] text-[#3848c7]",
   sending: "bg-[#eef1ff] text-[#3848c7]",
   sent: "bg-[#ecfdf5] text-[#116b2a]",
@@ -120,8 +137,18 @@ function emptyDraft(channelIds: string[]): Draft {
     buttonUrl: "",
     campaign: defaultCampaign(),
     scheduledAt: "",
+    rubric: "",
+    silent: false,
+    pin: false,
+    disablePreview: false,
+    protect: false,
+    deleteAt: "",
+    needsApproval: false,
   };
 }
+
+/** A09: несохранённый новый пост живёт в браузере, пока его не отправят. */
+const AUTOSAVE_KEY = "wesetup:channel-draft";
 
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
@@ -182,7 +209,12 @@ async function callJson(url: string, method: string, body?: unknown): Promise<Re
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Не получилось — повторите позже.");
+  if (!response.ok) {
+    throw Object.assign(new Error(typeof data.error === "string" ? data.error : "Не получилось — повторите позже."), {
+      status: response.status,
+      data,
+    });
+  }
   return data;
 }
 
@@ -192,9 +224,38 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
   const defaultChannelIds = usable.filter((channel) => channel.botIsAdmin).map((channel) => channel.id);
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(defaultChannelIds));
   const [busy, setBusy] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<null | { kind: "publish" } | { kind: "delete"; post: PostView }>(null);
+  const [confirm, setConfirm] = useState<
+    null | { kind: "publish" } | { kind: "delete"; post: PostView } | { kind: "gate"; message: string; retry: () => Promise<void> }
+  >(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(AUTOSAVE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<Draft>;
+        if (parsed.text?.trim()) {
+          setDraft((current) => ({ ...current, ...parsed, editingId: null, editingStatus: null }));
+          toast.message("Восстановлен несохранённый черновик");
+        }
+      }
+    } catch {
+      /* битый черновик — игнорируем */
+    }
+  }, []);
+  useEffect(() => {
+    if (draft.editingId) return;
+    const timer = setTimeout(() => {
+      try {
+        if (draft.text.trim()) window.localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(draft));
+        else window.localStorage.removeItem(AUTOSAVE_KEY);
+      } catch {
+        /* приватный режим */
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [draft]);
 
   const selected = usable.filter((item) => draft.channelIds.includes(item.id));
   const selectedNames = selected.map((item) => `«${item.title}» (${CHANNEL_PLATFORM_LABELS[item.platform]})`).join(" и ");
@@ -270,10 +331,17 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
       buttonUrl: draft.buttonUrl || null,
       campaign: draft.campaign || null,
       scheduledAt: action === "schedule" && draft.scheduledAt ? new Date(draft.scheduledAt).toISOString() : null,
+      rubric: draft.rubric || null,
+      silent: draft.silent,
+      pin: draft.pin,
+      disablePreview: draft.disablePreview,
+      protect: draft.protect,
+      deleteAt: draft.deleteAt ? new Date(draft.deleteAt).toISOString() : null,
+      needsApproval: draft.needsApproval,
     };
   }
 
-  async function submit(action: "draft" | "schedule" | "publish") {
+  async function submit(action: "draft" | "schedule" | "publish", force = false) {
     if (action === "schedule" && !draft.scheduledAt) {
       toast.error("Выберите дату и время публикации");
       return;
@@ -283,31 +351,45 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
       if (draft.editingId) {
         await callJson(`/api/root/max-channel/posts/${draft.editingId}`, "PATCH", {
           ...payload(),
+          force,
           scheduledAt: action === "schedule" ? new Date(draft.scheduledAt).toISOString() : null,
         });
-        if (action === "publish" && !editingSent) {
-          await callJson(`/api/root/max-channel/posts/${draft.editingId}/publish`, "POST");
+        if (action === "publish" && !editingSent && !draft.needsApproval) {
+          await callJson(`/api/root/max-channel/posts/${draft.editingId}/publish`, "POST", { force });
         }
       } else {
-        const result = await callJson("/api/root/max-channel/posts", "POST", payload(action));
+        const result = await callJson("/api/root/max-channel/posts", "POST", { ...payload(action), force });
         const failed = Array.isArray(result.failed) ? (result.failed as string[]) : [];
         if (failed.length) toast.error(`Не везде получилось. ${failed.join(" ")}`);
       }
       const where = selected.length > 1 ? "в каналах" : "в канале";
       toast.success(
-        editingSent
-          ? "Пост изменён в канале"
-          : action === "publish"
-            ? `Пост опубликован ${where}`
-            : action === "schedule"
-              ? `Пост выйдет ${formatWhen(new Date(draft.scheduledAt).toISOString())} ${where}`
-              : "Черновик сохранён",
+        draft.needsApproval && action !== "draft"
+          ? "Пост отправлен на согласование"
+          : editingSent
+            ? "Пост изменён в канале"
+            : action === "publish"
+              ? `Пост опубликован ${where}`
+              : action === "schedule"
+                ? `Пост выйдет ${formatWhen(new Date(draft.scheduledAt).toISOString())} ${where}`
+                : "Черновик сохранён",
       );
       setDraft(emptyDraft(defaultChannelIds));
+      try {
+        window.localStorage.removeItem(AUTOSAVE_KEY);
+      } catch {
+        /* приватный режим */
+      }
       router.refresh();
     } catch (error) {
-      toast.error((error as Error).message);
-      router.refresh();
+      const failure = error as Error & { status?: number; data?: { gate?: boolean } };
+      if (failure.status === 422 && failure.data?.gate && !force) {
+        // B02: проверка качества против — решает человек.
+        setConfirm({ kind: "gate", message: failure.message, retry: () => submit(action, true) });
+      } else {
+        toast.error(failure.message);
+        router.refresh();
+      }
     } finally {
       setBusy(null);
     }
@@ -323,18 +405,28 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
       buttonText: post.buttonText ?? "",
       buttonUrl: post.buttonUrl ?? "",
       campaign: post.campaign ?? "",
-      scheduledAt: post.status === "scheduled" ? toLocalInput(post.scheduledAt) : "",
+      scheduledAt: post.status === "scheduled" || post.status === "review" ? toLocalInput(post.scheduledAt) : "",
+      rubric: post.rubric ?? "",
+      silent: post.silent,
+      pin: post.pin,
+      disablePreview: post.disablePreview,
+      protect: post.protect,
+      deleteAt: toLocalInput(post.deleteAt),
+      needsApproval: false,
     });
     composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function publishExisting(post: PostView) {
+  async function publishExisting(post: PostView, force = false) {
     setBusy(`publish-${post.id}`);
     try {
-      await callJson(`/api/root/max-channel/posts/${post.id}/publish`, "POST");
+      await callJson(`/api/root/max-channel/posts/${post.id}/publish`, "POST", { force });
       toast.success("Пост опубликован в канале");
     } catch (error) {
-      toast.error((error as Error).message);
+      const failure = error as Error & { status?: number; data?: { gate?: boolean } };
+      if (failure.status === 422 && failure.data?.gate && !force) {
+        setConfirm({ kind: "gate", message: failure.message, retry: () => publishExisting(post, true) });
+      } else toast.error(failure.message);
     } finally {
       setBusy(null);
       router.refresh();
@@ -515,6 +607,10 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
             </div>
           ) : null}
 
+          <div className="mb-4">
+            <RubricPicker value={draft.rubric} onChange={(rubric) => patch({ rubric })} />
+          </div>
+
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <span className="text-[13px] font-medium text-[#3c4053]">Текст поста</span>
             <div className="flex gap-1">
@@ -580,6 +676,14 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
               ) : null}
             </div>
             <p className="mt-1.5 text-[12px] text-[#9b9fb3]">JPG, PNG, WebP или GIF до 10 МБ, до {MAX_POST_IMAGES_LIMIT} штук.</p>
+            {draft.images.length < MAX_POST_IMAGES_LIMIT && !editingSent ? (
+              <TemplateBuilder
+                text={draft.text}
+                images={draft.images}
+                rubricLabel={rubricOf(WESETUP_BRAND, draft.rubric)?.label ?? ""}
+                onCreated={(path) => setDraft((current) => ({ ...current, images: [path, ...current.images].slice(0, MAX_POST_IMAGES_LIMIT) }))}
+              />
+            ) : null}
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -600,6 +704,8 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
               Ссылки на wesetup.ru получат utm_source=max, utm_medium=social и эту метку.
             </span>
           </label>
+
+          <SendOptionsBox value={draft} onChange={(next) => patch(next)} editingSent={editingSent} />
 
           {telegramSplit ? (
             <p className="mt-4 rounded-2xl bg-[#e8f4fd] px-4 py-2.5 text-[13px] leading-[1.5] text-[#1d6fa5]">
@@ -675,7 +781,8 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
           </div>
         </section>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <SmmQualityPanel draft={draft} onText={(text) => patch({ text })} />
           <div className={SECTION_LABEL}>Как увидят подписчики</div>
           <PostPreview channelTitle={selected[0]?.title ?? "Канал WeSetup"} draft={draft} />
         </aside>
@@ -684,7 +791,27 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
       <section className={CARD}>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <div className={cn(SECTION_LABEL, "mb-0")}>План публикаций</div>
-          <span className="text-[12px] text-[#9b9fb3]">Выходят сами, проверка — раз в минуту</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] text-[#9b9fb3]">Выходят сами, проверка — раз в минуту</span>
+            <CsvImport channelIds={defaultChannelIds} />
+          </div>
+        </div>
+        <p className="mb-3 text-[12px] text-[#9b9fb3]">
+          CSV: дата;время;текст;кнопка;ссылка;рубрика (ДД.ММ.ГГГГ и ЧЧ:ММ по Москве). Посты с блокирующими замечаниями встают черновиками.
+        </p>
+        <div className="mb-5">
+          <WeekPlan
+            posts={posts}
+            onEdit={(id) => {
+              const post = posts.find((item) => item.id === id);
+              if (post && post.status !== "deleted" && post.status !== "sending") startEdit(post);
+            }}
+            onSlot={(iso) => {
+              patch({ scheduledAt: toLocalInput(iso) });
+              composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              toast.message(`Время поставлено: ${formatWhen(iso)} — нажмите «Запланировать»`);
+            }}
+          />
         </div>
         {scheduled.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-4 py-5 text-center text-[13px] text-[#6f7282]">
@@ -766,6 +893,24 @@ export function MaxChannelClient({ bots, channels, posts, articles, autoposts }:
           { label: "Потом пост можно исправить или удалить отсюда же" },
         ]}
         confirmLabel="Опубликовать"
+      />
+      <ConfirmDialog
+        open={confirm?.kind === "gate"}
+        onClose={() => setConfirm(null)}
+        onConfirm={async () => {
+          const target = confirm?.kind === "gate" ? confirm : null;
+          setConfirm(null);
+          if (target) await target.retry();
+        }}
+        title="Проверка качества против публикации"
+        variant="danger"
+        icon={TriangleAlert}
+        bullets={[
+          { label: confirm?.kind === "gate" ? confirm.message : "", tone: "warn" },
+          { label: "Лучше нажать «Починить всё» в панели качества справа" },
+          { label: "Если всё равно публикуем — отметим, кто подтвердил" },
+        ]}
+        confirmLabel="Опубликовать всё равно"
       />
       <ConfirmDialog
         open={confirm?.kind === "delete"}
@@ -1015,7 +1160,7 @@ function PostRow({
   const when =
     post.status === "sent" || post.status === "deleted"
       ? post.sentAt && `вышел ${formatWhen(post.sentAt)}`
-      : post.status === "scheduled"
+      : post.status === "scheduled" || (post.status === "review" && post.scheduledAt)
         ? `выйдет ${formatWhen(post.scheduledAt)}`
         : `создан ${formatWhen(post.createdAt)}`;
   const firstLine = firstLineOf(post.text);
@@ -1036,8 +1181,21 @@ function PostRow({
           ) : null}
         </div>
         <div className="mt-1 truncate text-[14px] font-medium text-[#0b1024]">{firstLine}</div>
-        {post.images.length ? <div className="text-[12px] text-[#9b9fb3]">Картинок: {post.images.length}</div> : null}
+        <div className="flex flex-wrap gap-x-3 text-[12px] text-[#9b9fb3]">
+          {post.images.length ? <span>Картинок: {post.images.length}</span> : null}
+          {post.qualityScore !== null ? (
+            <span className={post.qualityVerdict === "block" ? "text-[#a13a32]" : post.qualityVerdict === "ready" ? "text-[#116b2a]" : "text-[#9a6200]"}>
+              Качество {post.qualityScore}/100
+            </span>
+          ) : null}
+          {post.status === "sent" || post.clicks ? <span>Переходов по кнопке: {post.clicks}</span> : null}
+          {post.rubric ? <span>{rubricOf(WESETUP_BRAND, post.rubric)?.label ?? post.rubric}</span> : null}
+          {post.pin ? <span>Закреплён</span> : null}
+          {post.silent ? <span>Без звука</span> : null}
+          {post.deleteAt && post.status === "sent" ? <span>Удалится {formatWhen(post.deleteAt)}</span> : null}
+        </div>
         {post.error ? <div className="mt-1 text-[13px] text-[#a13a32]">{post.error}</div> : null}
+        <PostExtraActions post={post} />
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         {post.url ? (
