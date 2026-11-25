@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
 const postBodySchema = z.object({
   initData: z.string().min(1),
   contactResponse: z.string().min(1).optional(),
+  /** Заменить сохранённый номер номером из контакта («Изменить номер»). */
+  replacePhone: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -95,6 +97,7 @@ export async function POST(request: Request) {
     userId: session.user.id,
     chatId: String(verifiedInit.data.user.id),
     verifiedPhone,
+    replacePhone: Boolean(verifiedPhone && parsed.data.replacePhone),
   });
 
   if (!result.ok) {
@@ -109,5 +112,6 @@ export async function POST(request: Request) {
     ok: true,
     status: result.status,
     phoneSaved: result.phoneSaved ?? null,
+    phoneTaken: result.phoneTaken === true,
   });
 }

@@ -340,3 +340,56 @@ test("linkTelegramToAuthenticatedUser saves verifiedPhone only when user has no 
     data: { telegramChatId: "777" },
   });
 });
+
+test("linkTelegramToAuthenticatedUser с replacePhone меняет номер и при уже привязанном Telegram", async () => {
+  const makeClient = (owner: { id: string } | null, updates: unknown[]): AuthLinkDb => {
+    let calls = 0;
+    return {
+      user: {
+        findFirst: async () => {
+          calls += 1;
+          return calls === 1 ? null : owner;
+        },
+        findUnique: async () => ({
+          id: "u1",
+          organizationId: "org1",
+          telegramChatId: "777",
+          phone: "+79990000000",
+        }),
+        update: async (args) => {
+          updates.push(args);
+        },
+      },
+    };
+  };
+
+  // Без флага — как раньше: уже привязан, номер не трогаем.
+  const plain: unknown[] = [];
+  assert.deepEqual(
+    await linkTelegramToAuthenticatedUser({ userId: "u1", chatId: "777", verifiedPhone: "+79991112233" }, makeClient(null, plain)),
+    { ok: true, status: "already_linked", phoneSaved: null },
+  );
+  assert.equal(plain.length, 0);
+
+  // «Изменить номер»: номер из контакта Telegram заменяет сохранённый.
+  const replaced: unknown[] = [];
+  assert.deepEqual(
+    await linkTelegramToAuthenticatedUser(
+      { userId: "u1", chatId: "777", verifiedPhone: "8 999 111-22-33", replacePhone: true },
+      makeClient(null, replaced),
+    ),
+    { ok: true, status: "already_linked", phoneSaved: "+79991112233" },
+  );
+  assert.deepEqual(replaced[0], { where: { id: "u1" }, data: { phone: "+79991112233" } });
+
+  // Номер у другого сотрудника — не пишем, сообщаем.
+  const taken: unknown[] = [];
+  assert.deepEqual(
+    await linkTelegramToAuthenticatedUser(
+      { userId: "u1", chatId: "777", verifiedPhone: "+79991112233", replacePhone: true },
+      makeClient({ id: "u2" }, taken),
+    ),
+    { ok: true, status: "already_linked", phoneSaved: null, phoneTaken: true },
+  );
+  assert.equal(taken.length, 0);
+});
