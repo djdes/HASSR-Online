@@ -1,0 +1,4 @@
+▲ Next.js 16.2.12 (webpack)
+✓ Compiled successfully in 6.7min
+exit=0 seconds=435
+first attempts: OOM-killed by the sandbox memory limit (build worker anon-rss 13.6 GB); retried with NEXT_DIST_DIR=.next-sm and --max-old-space-size=6144

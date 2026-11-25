@@ -1,0 +1,5 @@
+=== Test stats: pass=7571, fail=2 ===
+✗ НОВЫЕ регрессии (нет в baseline):
+real	5m25.044s
+exit=1
+  - borderless.css / neutral-palette.css stale after merging master (file counters) → regenerated; borderless/neutral-palette tests 6/6
