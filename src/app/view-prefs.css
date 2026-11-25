@@ -183,7 +183,20 @@ body {
   outline-offset: 2px;
 }
 
-/* «Перейти к содержимому» — видна только в фокусе с клавиатуры. */
+/* «Перейти к содержимому» — видна только в фокусе с клавиатуры.
+   Вне фокуса — вырезана клипом, а не только сдвинута: в WebView Telegram
+   первая ссылка получала фокус при открытии (без клавиатуры), и плашка
+   торчала из-под шапки мини-приложения. Поэтому показываем лишь при
+   `:focus-visible` (Tab), а мышь/палец/программный фокус её не открывают. */
+.skip-to-content:not(:focus-visible) {
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  box-shadow: none;
+}
 .skip-to-content {
   position: fixed;
   left: 12px;
@@ -198,7 +211,6 @@ body {
   font-weight: 600;
   box-shadow: 0 12px 32px -12px rgba(11, 16, 36, 0.55);
 }
-.skip-to-content:focus,
 .skip-to-content:focus-visible {
   transform: none;
   outline: 3px solid #7cf5c0;

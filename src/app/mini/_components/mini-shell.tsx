@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
+import { BrandLogo, BrandMark } from "@/components/brand/logo";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { MaxConnectButton } from "@/components/max/max-connect-button";
 import { UndoRedoButtons } from "@/components/journals/undo-redo-buttons";
@@ -343,12 +344,15 @@ export function MiniTopBar({
               className={showBack ? "mini-topbar-ico mini-topbar-ico--beside-back" : "mini-topbar-ico"}
               aria-hidden
             >
-              W
+              {/* Актуальный знак — иконка приложения (блокнот «С»), как в
+                  фавиконе и PWA-иконках, а не буква «W». */}
+              <BrandMark size={36} title="" />
             </span>
           )}
           <span className="min-w-0 flex-1">
             <span className="mini-topbar-eyebrow">
-              WeSetup
+              {/* Начертание «сетап» маской: цвет — от `.mini-topbar-eyebrow`. */}
+              <BrandLogo height={11} title="" className="mini-topbar-wordmark" />
               {roleGroup
                 ? ` · ${tMini(roleGroup === "manager" ? "roleManager" : "roleStaff")}`
                 : null}

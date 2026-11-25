@@ -802,12 +802,11 @@ html[data-keyboard-open] .mini-nav-rail {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.mini-topbar-ico img {
+  display: block;
 }
 .mini-topbar-eyebrow {
   display: block;
@@ -820,6 +819,13 @@ html[data-keyboard-open] .mini-nav-rail {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.72);
+}
+/* Знак «сетап» в строке над названием: белый, чуть ярче подписи роли. */
+.mini-topbar-wordmark {
+  display: inline-block !important;
+  vertical-align: -1px;
+  margin-right: 0.2em;
+  color: #ffffff;
 }
 .mini-topbar-title {
   display: block;
