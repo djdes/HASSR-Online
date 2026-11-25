@@ -1,13 +1,21 @@
 # Evidence — special-mode-past-days-2026-11-25 (раунд 2)
 
 Ветка `claude/fervent-brown-ed5apv`. Раунд 1 — коммит a302f9a04 (+ слияние master 059ad782a, доказательства
-f7626c263); проверяющий вынес FAIL (`verdict.json`, `problems.md`: P1, P2 и три мелких замечания). Раунд 2 — исправления
-bd14d54bb, заголовок 12686d1c3, слияние свежего master (#343, #345, акция /akciya). Стенд: `next build --webpack`
-(Next 16.2.12, `raw/next-build-round2-summary.txt`) + `next start :3000`, локальный PostgreSQL, демо-организация
-`admin@haccp.local`; повар `cook-e2e-special@haccp.local` (`raw/stand/setup-cook-user.ts`) и временный сотрудник с
-«проверкой задач» без admin.full `verify-e2e-special@haccp.local` (роль cook + набор прав head_chef,
-`raw/stand/setup-verify-user.ts`). Сценарий — `raw/stand/e2e-special-mode.mjs`, вывод —
-`raw/stand/e2e-special-mode-output.txt`, снимки — `raw/stand/screens/` (png в git не попадают, лежат локально).
+f7626c263); проверяющий вынес FAIL (`verdict-round1.json`, `problems-round1.md`: P1, P2 и три мелких замечания). Раунд 2 — исправления
+bd14d54bb, заголовок 12686d1c3, слияние свежего master 01761004f (#343, #345, акция /akciya), ожидаемые переключатели
+DB-сценария обмена 2b847bc82.
+
+Стенд — локальный PostgreSQL, демо-организация `admin@haccp.local`; повар `cook-e2e-special@haccp.local`
+(`raw/stand/setup-cook-user.ts`) и временный сотрудник с «проверкой задач» без admin.full
+`verify-e2e-special@haccp.local` (роль cook + набор прав head_chef, `raw/stand/setup-verify-user.ts`). Сценарий —
+`raw/stand/e2e-special-mode.mjs`:
+- код исправлений bd14d54bb — production-сборка `next build --webpack` (Next 16.2.12,
+  `raw/next-build-round2-summary.txt`) + `next start :3000`: 43/43 (`raw/stand/e2e-special-mode-output-round2-prod.txt`);
+- финальный код (заголовок + слияние master) — `next dev :3000`, как браузерный смоук в CI: 44/44
+  (`raw/stand/e2e-special-mode-output.txt`). Production-сборку финального кода песочница дважды прервала по пределу
+  памяти (SIGKILL сборщика, один раз — вместе с параллельным typecheck), поэтому dev.
+
+Снимки — `raw/stand/screens/` (png в git не попадают, лежат локально).
 
 ## Что исправлено после проверки
 
@@ -38,8 +46,8 @@ bd14d54bb, заголовок 12686d1c3, слияние свежего master (#
 - Тесты: `app-nav.test.ts` (руководитель видит пункт; «проверка задач» и head_chef без admin.full — пункта нет, но
   `/inspection/settings` не в `deniedNavHrefs`; повар — в `deniedNavHrefs`), `inspection-pages.test.ts`.
 - Стенд: руководитель — пункт, карточка, переключатель, нет тихой ссылки, заголовок «Спецрежим»; «проверка задач» —
-  карточки и пункта нет, тихая ссылка есть, по ней страница открывается (не «Нет доступа»), заголовок «Спецрежим»,
-  переключатель недоступен. Снимки `01-inspection-card.png`, `06-verify-user-settings.png`.
+  карточки и пункта нет, тихая ссылка есть, по ней страница открывается (не «Нет доступа»), заголовок «Спецрежим»
+  (финальный код), переключатель недоступен. Снимки `01-inspection-card.png`, `06-verify-user-settings.png`.
 
 ## AC2 — «Информация об организации»: PASS
 
@@ -84,11 +92,16 @@ bd14d54bb, заголовок 12686d1c3, слияние свежего master (#
   `npm run i18n:types` (контракт пересобран), borderless/палитра пересобраны.
 - Стенд: подсказка «Спецрежим разрешает правку прошлых дней за последние 7 дней — на эти дни запрет не действует».
 
-## AC6 — качество: в работе (полный прогон тестов, ESLint и стенд после слияния master дописываются)
+## AC6 — качество: PASS (выкладка — после слияния в master)
 
-- `npm run typecheck` — `raw/typecheck.txt`.
-- Тесты — `raw/tests-round2-summary.txt` (`npm run test:gate` после слияния master), pre-commit каждого коммита — зелёный.
-- ESLint изменённых файлов — `raw/eslint-round2.txt`.
-- `next build` — успешно (`raw/next-build-round2-summary.txt`).
-- Стенд — `raw/stand/e2e-special-mode-output.txt`; спецрежим демо-организации возвращён как был.
+- `npm run typecheck` после слияния master — exit 0 (`raw/typecheck.txt`).
+- `npm run test:gate` после слияния master — эскалация до полного набора (27 файлов кода): 7577 пройдено, 0 упало
+  (`raw/tests-round2-summary.txt`); pre-commit каждого коммита — зелёный.
+- ESLint всех изменённых веткой файлов — новых замечаний нет: 1 ошибка и 5 предупреждений те же, что на master
+  (`raw/eslint-round2.txt`).
+- Сборка: production-сборка кода исправлений — успешно (`raw/next-build-round2-summary.txt`); финальный код — dev-стенд
+  44/44 (см. шапку); на PR для финального кода зелёные «E2E scenarios (DB level)» (20 сценариев) и «Browser smoke (new
+  features)». DB-сценарий обмена `new-lists-check` падал на PR после слияния (ожидаемые переключатели без новых полей) —
+  исправлен, локально 55/55 (`raw/e2e-db-new-lists-check.txt`), на PR — зелёный.
+- Стенд — спецрежим демо-организации возвращён как был.
 - Схема БД не меняется (настройка спецрежима — `PlatformSetting`).

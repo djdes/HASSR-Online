@@ -104,6 +104,8 @@ await verifyPage.waitForLoadState("networkidle");
 await verifyPage.locator("[data-inspection-special-mode]").first().waitFor({ timeout: 30000 }).catch(() => {});
 const verifyCard = verifyPage.locator("[data-inspection-special-mode]");
 check("AC1 «проверка задач»: страница открывается, не «Нет доступа»", (await verifyPage.locator("[data-access-denied]").count()) === 0 && (await verifyCard.count()) === 1);
+const verifyHeading = (await verifyPage.locator("h1").first().innerText().catch(() => "")).trim();
+check("AC1 «проверка задач»: заголовок страницы «Спецрежим»", verifyHeading === "Спецрежим", verifyHeading);
 check("AC1 «проверка задач»: спецрежим только для просмотра", (await verifyCard.locator('button[role="switch"]').count()) === 1 && !(await verifyCard.locator('button[role="switch"]').isEnabled()));
 await verifyPage.screenshot({ path: `${OUT}/06-verify-user-settings.png` });
 await verifyContext.close();

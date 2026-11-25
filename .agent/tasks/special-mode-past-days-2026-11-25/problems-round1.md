@@ -18,7 +18,7 @@ and management roles without `admin.full` (head_chef/technologist presets).
 **Repro.** Staff user with role `cook` and preset `head_chef` → `/inspection`: no card, no menu item, quiet link
 present (all correct) → click it → `[data-access-denied=forbidden]`, no `[data-inspection-special-mode]`.
 `deniedNavHrefs({ role: "cook", permissionPreset: "head_chef" }, facts)` contains `/inspection/settings`.
-Evidence: `raw/verifier/verifier-e2e-output.txt` (V1), `raw/verifier/screens/v1-verifier-settings-page.png`.
+Evidence: `raw/verifier-round1/verifier-e2e-output.txt` (V1), `raw/verifier-round1/screens/v1-verifier-settings-page.png`.
 
 **Smallest fix (keeps the spec as written).** Let a menu item have a wider page rule than its visibility:
 - `NavMenuItem`: optional `pageAccess?: NavAccess` (the page's own guard when it admits more people than see the item);
@@ -44,7 +44,7 @@ is wrong. No test covers it; the builder's stand script ticks the box only if it
 
 **Repro.** Set the special mode to all boxes false, disabled (new-org state), open `/inspection` as owner, flip the
 switch → `[data-special-mode-option=pastDays]` has `data-state="checked"`. Evidence:
-`raw/verifier/verifier-e2e-output.txt` (V2), `raw/verifier/screens/v2-enable-dialog-defaults.png`.
+`raw/verifier-round1/verifier-e2e-output.txt` (V2), `raw/verifier-round1/screens/v2-enable-dialog-defaults.png`.
 
 **Smallest fix.** In `preset()` tick everything except `pastDays` when there is no previous choice:
 `AUTOMATION_FEATURES.map((feature) => [feature, feature !== "pastDays"])`, and say in its docblock that past-day
@@ -57,8 +57,8 @@ editing is only ever ticked by hand. Add a test (e.g. move the preset into a pur
 - `entries/route.ts:113`, `entries/bulk/route.ts:142`: the scope check uses `String(date).slice(0, 10)` but the row
   is written at the parsed, UTC-normalised date. `"2026-11-24T00:00:00+14:00"` passes as 24th and is stored on the
   23rd → one extra day beyond the window (and yesterday when the mode is off). Derive the key from the normalised
-  date. Evidence: `raw/verifier/offset-probe.txt`.
+  date. Evidence: `raw/verifier-round1/offset-probe.txt`.
 - `entries/route.ts:221`: PUT with `entryId` moves any entry of the document; only the target is scope-checked, so
-  staff can move a colleague's (or an out-of-window) entry onto their own row. Evidence: `raw/verifier/move-probe.txt`.
+  staff can move a colleague's (or an out-of-window) entry onto their own row. Evidence: `raw/verifier-round1/move-probe.txt`.
 - `src/app/(dashboard)/inspection/settings/page.tsx:14-22`: the docblock still describes the hidden 2026-11-05
   state (no menu item, title «Настройки раздела»).

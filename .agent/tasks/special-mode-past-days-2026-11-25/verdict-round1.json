@@ -32,7 +32,7 @@
       "file": "src/lib/app-nav.ts",
       "line": 547,
       "description": "New menu item { id: \"special\", href: \"/inspection/settings\", access: ADMIN } replaced hiddenMatch. deniedNavHrefs()/closedNavHrefs() (app-nav.ts:945-982) now list /inspection/settings for every user without admin.full, and SectionFrame (src/components/layout/section-frame.tsx:59) renders «Нет доступа к этому разделу» instead of the page. The page guard itself still admits hasFullWorkspaceAccess || tasks.verify, and /inspection (src/app/(dashboard)/inspection/page.tsx:223-225) still renders the quiet link «Настройки раздела» to it for those users, so the link leads to a dead end. Spec R1: «остальным — как было (тихая ссылка, страница только для просмотра)». The nav rule no longer mirrors the page guard (the token test in app-nav.test.ts only checks that the page mentions \"admin.full\", so it did not catch this).",
-      "repro": "Stand: user with role cook + permissionPreset head_chef (tasks.verify, no admin.full). Open /inspection → quiet link «Настройки раздела» is shown, no card, no menu item (OK). Click it / open /inspection/settings → [data-access-denied=forbidden] «Нет доступа к этому разделу», no [data-inspection-special-mode]. Unit: deniedNavHrefs({ role: \"cook\", permissionPreset: \"head_chef\" }, facts).includes(\"/inspection/settings\") === true (also for role technologist/head_chef). Evidence: raw/verifier/verifier-e2e-output.txt (V1), raw/verifier/screens/v1-verifier-settings-page.png."
+      "repro": "Stand: user with role cook + permissionPreset head_chef (tasks.verify, no admin.full). Open /inspection → quiet link «Настройки раздела» is shown, no card, no menu item (OK). Click it / open /inspection/settings → [data-access-denied=forbidden] «Нет доступа к этому разделу», no [data-inspection-special-mode]. Unit: deniedNavHrefs({ role: \"cook\", permissionPreset: \"head_chef\" }, facts).includes(\"/inspection/settings\") === true (also for role technologist/head_chef). Evidence: raw/verifier-round1/verifier-e2e-output.txt (V1), raw/verifier-round1/screens/v1-verifier-settings-page.png."
     },
     {
       "id": "AC3-enable-dialog-preticks-past-days",
@@ -40,7 +40,7 @@
       "file": "src/components/inspection/inspection-special-mode-card.tsx",
       "line": 47,
       "description": "preset() returns every AUTOMATION_FEATURES entry ticked when the organisation has no previous choice (AUTOMATION_OFF — every new organisation and legacy «всё скрыто» ones). Since pastDays was appended to AUTOMATION_FEATURES, the first «Включить» dialog pre-ticks «Правка прошлых дней» (7 days); confirming the dialog as offered opens the last 7 days to staff, opens automation documents and bypasses «Запретить редактирование записей за прошлые дни» for those days. Contradicts R3 «По умолчанию выключена: у новых организаций» and the owner's wording (forbidden by default, allowed explicitly). Past-day editing is a relaxation of a compliance control, not automation, so the «включают ради автоматики целиком» rationale of preset() does not apply to it. No test covers the dialog's initial state; the builder's stand script clicks the box only if it is unticked, so it never observed this.",
-      "repro": "Stand: PATCH /api/settings/journal-controls with all boxes false and enabled false (state of a new org), open /inspection as owner, flip the special-mode switch → [data-special-mode-option=pastDays] has data-state=checked (all six are checked). Press «Включить» → saved {pastDays:true,pastDaysLimit:7}. Evidence: raw/verifier/verifier-e2e-output.txt (V2), raw/verifier/screens/v2-enable-dialog-defaults.png; builder output raw/stand/e2e-special-mode-output.txt shows the same save with all boxes true."
+      "repro": "Stand: PATCH /api/settings/journal-controls with all boxes false and enabled false (state of a new org), open /inspection as owner, flip the special-mode switch → [data-special-mode-option=pastDays] has data-state=checked (all six are checked). Press «Включить» → saved {pastDays:true,pastDaysLimit:7}. Evidence: raw/verifier-round1/verifier-e2e-output.txt (V2), raw/verifier-round1/screens/v2-enable-dialog-defaults.png; builder output raw/stand/e2e-special-mode-output.txt shows the same save with all boxes true."
     },
     {
       "id": "scope-day-key-from-raw-date-string",
@@ -48,7 +48,7 @@
       "file": "src/app/api/journal-documents/[id]/entries/route.ts",
       "line": 113,
       "description": "Pre-existing pattern, inherited by the new window: checkEntryScope gets entryDayKey = String(date).slice(0, 10) while the row is written at new Date(date) normalised to UTC midnight. A crafted timestamp with a positive offset moves the write one day earlier than the checked key, so staff get one extra day beyond the window (and, with the mode off, yesterday instead of today only). Same in bulk/route.ts:142 (String(item.date) vs toEntryDayUtc). The grid never sends such values; a direct API call is needed. Not introduced by this change; fix by deriving the key from the normalised date (dateObj.toISOString().slice(0, 10)) or rejecting non-YYYY-MM-DD dates.",
-      "repro": "Window 1 day, today 2026-11-25: cook PUT date \"2026-11-24T00:00:00+14:00\" → 200, row stored on 2026-11-23 (plain \"2026-11-23\" → 403). Mode off: \"2026-11-25T00:00:00+14:00\" → 200, stored 2026-11-24. Evidence: raw/verifier/offset-probe.txt."
+      "repro": "Window 1 day, today 2026-11-25: cook PUT date \"2026-11-24T00:00:00+14:00\" → 200, row stored on 2026-11-23 (plain \"2026-11-23\" → 403). Mode off: \"2026-11-25T00:00:00+14:00\" → 200, stored 2026-11-24. Evidence: raw/verifier-round1/offset-probe.txt."
     },
     {
       "id": "entry-move-ignores-source-row",
@@ -56,7 +56,7 @@
       "file": "src/app/api/journal-documents/[id]/entries/route.ts",
       "line": 221,
       "description": "Pre-existing, out of this task's scope: PUT with entryId moves an existing entry (decideEntryMove checks only that it belongs to the document), and the scope check looks only at the target employee/date. A staff user can move another person's entry from any date (beyond the window, or on a colleague's row) onto their own row today/in the window, which removes it from the original place. Not introduced here; worth a separate fix (apply checkEntryScope/checkEntryWrite to the source entry too).",
-      "repro": "Owner writes own row 2026-11-05; cook PUT {entryId: <that id>, employeeId: cook, date: today} with the special mode off → 200, the row now belongs to the cook on 2026-11-25. Evidence: raw/verifier/move-probe.txt."
+      "repro": "Owner writes own row 2026-11-05; cook PUT {entryId: <that id>, employeeId: cook, date: today} with the special mode off → 200, the row now belongs to the cook on 2026-11-25. Evidence: raw/verifier-round1/move-probe.txt."
     },
     {
       "id": "stale-settings-page-docblock",

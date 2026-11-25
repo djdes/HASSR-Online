@@ -1,5 +1,5 @@
-# Пробы проверяющего (raw/verifier/move-probe.mjs, offset-probe.mjs) на исправленном стенде, 2026-11-25T14:18:58Z
-# До исправления: оба переноса/метки — 200 (raw/verifier/move-probe.txt, offset-probe.txt). После:
+# Пробы проверяющего (raw/verifier-round1/move-probe.mjs, offset-probe.mjs) на исправленном стенде, 2026-11-25T14:18:58Z
+# До исправления: оба переноса/метки — 200 (raw/verifier-round1/move-probe.txt, offset-probe.txt). После:
 owner writes own row | 2026-11-05 | 200
 cook PUT entryId=owner's entry → own row today (special mode off) | 403 | {"employeeId":"cmwv7iv6x0001x27d874e9a0z","d":"2026-11-05"}
 limit 1: plain 2 days ago | 403 | Прошлые записи можно менять только за вчерашний день.

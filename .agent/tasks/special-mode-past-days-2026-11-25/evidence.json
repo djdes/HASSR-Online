@@ -2,8 +2,8 @@
   "task": "special-mode-past-days-2026-11-25",
   "round": 2,
   "branch": "claude/fervent-brown-ed5apv",
-  "head": "01761004f (bd14d54bb fixes + 12686d1c3 title + merge of origin/master afae9db11) + evidence commit",
-  "previous_verdict": "FAIL (verdict.json, problems.md: P1 AC1, P2 AC3, 3 minor)",
+  "head": "93c13c3e1 + evidence commit (fixes bd14d54bb, title 12686d1c3, merge 01761004f, scenario fixture 2b847bc82)",
+  "previous_verdict": "FAIL (verdict-round1.json, problems-round1.md: P1 AC1, P2 AC3, 3 minor)",
   "stand": "next build --webpack (Next 16.2.12) + next start :3000 from .next-sm, local PostgreSQL, demo org admin@haccp.local, staff cook-e2e-special@haccp.local, tasks.verify staff verify-e2e-special@haccp.local (cook + head_chef preset)",
   "fixes": {
     "P1": "NavMenuItem.pageAccess; special item pageAccess fullAccessOr(\"tasks.verify\"); closedNavHrefs uses pageAccess ?? access; page title «Спецрежим» for everyone",
@@ -13,11 +13,65 @@
     "minor_docblock": "settings page comment updated"
   },
   "criteria": {
-    "AC1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "src/components/inspection/inspection-pages.test.ts", "raw/stand/e2e-special-mode-output.txt AC1 checks (owner + tasks.verify user)", "raw/stand/screens/01-inspection-card.png", "raw/stand/screens/06-verify-user-settings.png"] },
-    "AC2": { "status": "PASS", "evidence": ["src/app/(dashboard)/settings/organization/page.tsx", "raw/stand/e2e-special-mode-output.txt AC2 checks", "raw/stand/screens/03-organization-card.png"] },
-    "AC3": { "status": "PASS", "evidence": ["src/lib/special-mode-past-days.test.ts (dialog preset test)", "src/lib/journal-controls.test.ts", "raw/stand/e2e-special-mode-output.txt AC3 checks (first open: pastDays unchecked)", "raw/stand/screens/02a-dialog-first-open.png", "raw/stand/screens/02-dialog-past-days.png"] },
-    "AC4": { "status": "PASS", "evidence": ["src/lib/special-mode-past-days.test.ts", "raw/stand/e2e-special-mode-output.txt AC4, offset and move checks", "raw/stand/verifier-probes-rerun.txt (403, were 200)", "raw/stand/screens/04-cook-grid.png"] },
-    "AC5": { "status": "PASS", "evidence": ["src/i18n/messages/{ru,en,uz}.json", "npm run i18n:types after merge", "src/i18n/catalog-validation.test.ts", "src/lib/navigation-localization.test.ts"] },
-    "AC6": { "status": "PENDING", "evidence": ["raw/typecheck.txt", "raw/tests-round2-summary.txt", "raw/eslint-round2.txt", "raw/next-build-round2-summary.txt", "raw/stand/e2e-special-mode-output.txt"], "deploy": "after merge to master; no DB schema change" }
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/app-nav.test.ts",
+        "src/components/inspection/inspection-pages.test.ts",
+        "raw/stand/e2e-special-mode-output.txt AC1 checks (owner + tasks.verify user)",
+        "raw/stand/screens/01-inspection-card.png",
+        "raw/stand/screens/06-verify-user-settings.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/(dashboard)/settings/organization/page.tsx",
+        "raw/stand/e2e-special-mode-output.txt AC2 checks",
+        "raw/stand/screens/03-organization-card.png"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/special-mode-past-days.test.ts (dialog preset test)",
+        "src/lib/journal-controls.test.ts",
+        "raw/stand/e2e-special-mode-output.txt AC3 checks (first open: pastDays unchecked)",
+        "raw/stand/screens/02a-dialog-first-open.png",
+        "raw/stand/screens/02-dialog-past-days.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/special-mode-past-days.test.ts",
+        "raw/stand/e2e-special-mode-output.txt AC4, offset and move checks",
+        "raw/stand/verifier-probes-rerun.txt (403, were 200)",
+        "raw/stand/screens/04-cook-grid.png"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/i18n/messages/{ru,en,uz}.json",
+        "npm run i18n:types after merge",
+        "src/i18n/catalog-validation.test.ts",
+        "src/lib/navigation-localization.test.ts"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "raw/typecheck.txt (exit 0 after merge)",
+        "raw/tests-round2-summary.txt (full suite 7577/0)",
+        "raw/eslint-round2.txt (no new findings)",
+        "raw/next-build-round2-summary.txt (production build of the fix code)",
+        "raw/stand/e2e-special-mode-output-round2-prod.txt (43/43, production)",
+        "raw/stand/e2e-special-mode-output.txt (44/44, final code, next dev)",
+        "raw/e2e-db-new-lists-check.txt (55/55)",
+        "PR checks on the final head: E2E scenarios (DB level) and Browser smoke — success"
+      ],
+      "deploy": "after merge to master; no DB schema change"
+    }
   }
 }

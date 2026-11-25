@@ -6,7 +6,7 @@
       "detail": "{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7}"
     },
     {
-      "name": "стенд: объект «Кафе e2e спецрежим 14:18:10»",
+      "name": "стенд: объект «Кафе e2e спецрежим 14:36:04»",
       "ok": true,
       "detail": "200"
     },
@@ -59,6 +59,11 @@
       "name": "AC1 «проверка задач»: страница открывается, не «Нет доступа»",
       "ok": true,
       "detail": ""
+    },
+    {
+      "name": "AC1 «проверка задач»: заголовок страницы «Спецрежим»",
+      "ok": true,
+      "detail": "Спецрежим"
     },
     {
       "name": "AC1 «проверка задач»: спецрежим только для просмотра",
