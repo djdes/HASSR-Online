@@ -1,5 +1,4 @@
-# npm run test:gate на 7120e112f, 2026-11-25T20:54:46Z
-→ [test:changed] Отобрано 80 связанных тестовых файлов для 34 изменённых файлов:
-=== Targeted test stats (80 files, 24.4s): pass=368, fail=0 ===
+# npm run test:gate на 74b12baa0 (раунд 2), 2026-11-25T21:48:59Z
+=== Targeted test stats (80 files, 25.8s): pass=371, fail=0 ===
 ✓ Все затронутые тесты прошли.
 exit=0
