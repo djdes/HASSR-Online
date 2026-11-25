@@ -1,0 +1,85 @@
+{
+  "task": "special-mode-past-days-2026-11-25",
+  "verdict": "PASS",
+  "judged": {
+    "branch": "claude/fervent-brown-ed5apv",
+    "commit": "62b2e9691e22475014a5d222348d82991103e836",
+    "merge_base_with_origin_master": "afae9db113382aa20e245f98483eefe407d76c19",
+    "origin_master": "55ca86a24 (1 commit ahead: #347 Mini App, no file overlap with the branch, git merge-tree clean; PR #346 mergeable_state=clean, PR checks on 62b2e9691: E2E scenarios (DB level) success, Browser smoke (new features) success)",
+    "time": "2026-11-25T15:15:00Z",
+    "stand": "next dev :3000 from the repo root (HEAD 62b2e9691), local PostgreSQL 16, demo org admin@haccp.local (org today 2026-11-25, Europe/Moscow); staff cook-e2e-special@haccp.local; tasks.verify staff verify-e2e-special@haccp.local (cook + head_chef preset, left in place); temporary point manager point-mgr-e2e-verifier2@haccp.local (manager + admin preset, buildingIds = one point) created and deleted by the verifier; own point «Кафе e2e верификатор-2 14:54:36» with hygiene, cold-equipment and health documents. Dev server stopped afterwards; special-mode setting, Organization.lockPastDayEdits, own point automation and own documents' autoFill restored (raw/verifier-round2/stand-final-state.json).",
+    "verifier": "fresh independent verifier (round 2); product code not edited; artifacts in raw/verifier-round2/"
+  },
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS"
+  },
+  "criteria_notes": {
+    "AC1": "Owner: section menu item «Спецрежим» → /inspection/settings, page title «Спецрежим», card with enabled switch; «К вам пришла проверка» shows the card at the bottom instead of the quiet link, with chips and «Изменить» when on (verifier2-e2e AC1-1..3, AC3-5; screens/a1-owner-inspection.png, b-inspection-on.png). tasks.verify staff: no card and no menu item on /inspection, the quiet link «Настройки раздела» opens /inspection/settings (no [data-access-denied]), title «Спецрежим», switch disabled, «попросите руководителя» text; PATCH 403 (AC1-4..7, screens/a1-verify-settings-page.png). Cook: /inspection/settings still closed (AC1-9). Nav model: special item access ADMIN + pageAccess fullAccessOr(\"tasks.verify\"), closedNavHrefs uses pageAccess ?? access; app-nav tests (verifyOnly/headChef not denied, cook denied, owner sees 8 items) pass. Builder scenario rerun 44/44.",
+    "AC2": "/settings/organization renders the same card (canManage = !isPointScoped; page itself requires admin.full). Enabled/changed in «Пришла проверка» → visible on «Информация об организации» (chip + lock hint «за последние 3 дня»); changed there («Изменить», 1 day) → visible on the «Спецрежим» page (AC2-5, AC2-6; builder rerun covers enable-there → visible-in-inspection). Point manager with admin.full but point-scoped: PATCH 403 «Это общие настройки компании…», /inspection shows the quiet link (no managing card), /inspection/settings card read-only, /settings/organization redirects (company page) — no enabled switch anywhere (AC2-1..4).",
+    "AC3": "First «Включить» dialog for an organisation without a previous choice (all boxes false, mode off): on /inspection, /settings/organization and /inspection/settings the five automation boxes are checked, «Правка прошлых дней» unchecked, no limit select; cancel saves nothing (AC3-1.0..1.2, AC3-2; screens/b-first-dialog-*.png). Ticking it shows «Насколько назад» with 6 options, default 7; saved {pastDays:true, pastDaysLimit:3}; chip «Правка прошлых дней: 3 дня»; «Изменить» reopens the saved choice; switching off keeps the choice and re-enabling offers it again (AC3-3..9). Stored defaults: saved choice without the key → pastDays false (others kept); no stored setting → off (AC3-10, AC3-11). Unit tests: specialModeDialogPreset, parse/defaults, readStoredAutomation missing keys.",
+    "AC4": "Pure rule pastDayOpen / checkEntryScope / isCellLocked / checkEntryWrite covered by special-mode-past-days.test.ts (passes). Stand, staff own row: mode off → yesterday 403 «только сегодня», today 200; window 3 → yesterday 200, 3 days ago 200, 4 days ago 403 «…за последние 3 дня.», tomorrow 403, colleague's row 403 foreign_row; window 1 → 2 days ago 403 «…только за вчерашний день.»; no limit → 20 days ago 200, tomorrow 403; box ticked but mode off, or mode on but box unticked → 403 as before (AC4-1..24). Offsets: the checked day is the written day (+14:00 / −05:00 cases incl. bulk) (AC4-3, 9-12, 16-17). Bulk stroke reaching beyond the window → 403. Moves via entryId: colleague's entry → 403 foreign_row; own entry from beyond the window → 403; in-window move → 200; to tomorrow → 403; mode off, yesterday → today → 403 (MV-1..7). Org lock: staff in window 200 / beyond 403; owner move beyond window 200 with one closed_day.override audit holding both target and source days; in-window owner move → no audit (MV-8..11). Automation document: box unticked → owner yesterday 403 past_day_locked; window 3 → owner yesterday 200, staff own 2 days ago 200, staff 4 days ago 403; owner move from a locked day 403 (source); in-window move 200 (ad6-probe); delete of a locked row 403 (AD-1..7). Cold-equipment grid for staff: off 174 «только сегодня» cells; window 3 → 126 window-text cells, 30 future cells, 3 days open; off again → 174 (GR-1, GR-2). Builder rerun 44/44.",
+    "AC5": "All new/changed keys present in ru/en/uz (feature title/hint, «Насколько назад» + options/any/chip, pastDaysWindow in hygiene.errors and journalWidgets.headerEdit, lockPastDaysSpecialLimited/Any, menu item, route title); stand texts as expected (chip, window refusals, lock hint, «Спецрежим» title); «нигде, кроме этой страницы» removed. npm run i18n:check 103/103 (contract in sync); borderless / neutral-palette / one-accent tests 18/18 and both generators report «up to date».",
+    "AC6": "npm run typecheck exit 0. ESLint on 28 changed files: 1 error + 5 warnings, identical on the origin/master versions (no new findings). npm run test:changed escalated to the full suite: CI-like run (local .env not loaded) 7577 pass / 0 fail; with the local .env loaded two src/site-locale-proxy.test.ts tests fail (4/6 with .env vs 6/6 without — environment artifact, untouched code). Focused tests 97/97. DB scenario new-lists-check 55/55. next build not rerun (sandbox rule): builder's production build of the fix commit bd14d54bb succeeded; later commits typecheck and all touched pages compiled/rendered under next dev. No Prisma schema / package / CI change. Deploy is post-merge and not judged here (branch is 1 commit behind master, clean merge)."
+  },
+  "round1_issues": {
+    "P1": {
+      "status": "fixed",
+      "evidence": "src/lib/app-nav.ts:165 NavMenuItem.pageAccess, :554 special item pageAccess fullAccessOr(\"tasks.verify\"), :982 closedNavHrefs uses pageAccess ?? access; tasks.verify user follows the quiet link to /inspection/settings, page renders read-only with title «Спецрежим», no «Нет доступа» (raw/verifier-round2/verifier2-e2e-output.txt AC1-4..6); app-nav.test.ts asserts verifyOnly/headChef not denied, cook denied."
+    },
+    "P2": {
+      "status": "fixed",
+      "evidence": "src/lib/journal-controls.ts specialModeDialogPreset() (fresh: every automation box except pastDays); card calls it (inspection-special-mode-card.tsx:84); unit test in special-mode-past-days.test.ts; stand AC3-1.0..1.2 on all three places: pastDays=unchecked, others checked."
+    },
+    "minor_scope_day_key_from_raw_date_string": {
+      "status": "fixed",
+      "evidence": "entries/route.ts:108-127 and bulk/route.ts:139-152 check toEntryDateKey of the UTC-midnight day; unparsable → 400. Stand: «today+14:00» (mode off) 403, «2 days ago+14:00» stored 3 days ago 200, «3 days ago+14:00» 403, «4 days ago T23:00-05:00» stored 3 days ago 200, «today T22:00-05:00» 403, bulk variants 403/200 (AC4-3, 9-13, 16-17)."
+    },
+    "minor_entry_move_ignores_source_row": {
+      "status": "fixed",
+      "evidence": "entries/route.ts:179-213 checks the source cell with checkEntryScope + checkEntryWrite when the row changes employee/day, logs source override. Stand MV-1 (colleague's entry 403), MV-2 (beyond window 403), MV-7 (mode off 403), MV-8/11 (override audit with both days / none in window), AD-5 (locked automation source 403). Side effect noted as issue MV12-future-source-move."
+    },
+    "minor_stale_settings_page_docblock": {
+      "status": "fixed",
+      "evidence": "src/app/(dashboard)/inspection/settings/page.tsx:15-23 describes the 2026-11-25 state. The /inspection page docblock still has the old text (issue stale-inspection-page-docblock)."
+    }
+  },
+  "issues": [
+    {
+      "id": "MV12-future-source-move",
+      "severity": "minor",
+      "file": "src/app/api/journal-documents/[id]/entries/route.ts",
+      "line": 205,
+      "description": "New side effect of the round-1 move fix: the source cell goes through checkEntryWrite, whose first check is «future day», so moving an existing row OUT of a future-dated day (e.g. to today) is now refused for everyone, managers included; on origin/master it was allowed (only the target was checked). Future-dated rows exist only via PATCH or pre-created document rows, and the UI clients that send entryId are tracked-document and climate; delete + re-add still works. Not covered by the spec (which keeps writes INTO future days closed). Optional smallest change: for the source, apply checkEntryScope and the past-day locks but skip the future-day check.",
+      "repro": "Owner PATCH /api/journal-documents/<doc>/entries {entries:[{employeeId: owner, date: today+2, data}]} → 200; free owner's today cell; owner PUT {entryId: <that row>, employeeId: owner, date: today, data} → 403 future_day_locked «Нельзя заполнять журнал будущим числом…». raw/verifier-round2/verifier2-e2e-output.txt MV-12."
+    },
+    {
+      "id": "delete-by-employee-and-date-ignores-date",
+      "severity": "minor",
+      "file": "src/app/api/journal-documents/[id]/entries/route.ts",
+      "line": 575,
+      "description": "Pre-existing, not introduced here: in an automation document DELETE {employeeId, date} collects ALL of the employee's rows as candidates (the date is not in the filter), so deleting a single in-window (or today's) cell is refused with past_day_locked whenever the employee has any older locked row. The UI never sends this form (grids send ids, hygiene/health send employeeId only), so the window rule works from the UI; fix by adding the date to the candidate filter when body.date is set.",
+      "repro": "Own automation hygiene document, window 3, owner has rows 6 and 1 days ago: DELETE {employeeId: owner, date: yesterday} → 403; DELETE {ids: [yesterday's row]} → 200 (raw/verifier-round2/ad6-probe-output.txt)."
+    },
+    {
+      "id": "stale-inspection-page-docblock",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/inspection/page.tsx",
+      "line": 32,
+      "description": "The page docblock still says «Спецрежим (2026-11-05) нигде не назван: вход — тихая ссылка «Настройки раздела» в самом низу страницы», while the page now shows the special-mode card to admin.full managers (the inline comment at the card is correct).",
+      "repro": "Read the comment above InspectionPage."
+    },
+    {
+      "id": "local-env-breaks-site-locale-proxy-tests",
+      "severity": "minor",
+      "file": "src/site-locale-proxy.test.ts",
+      "line": 42,
+      "description": "Not a branch problem: running the suite with the local .env loaded (set -a; . ./.env) makes «prefetching another language does not overwrite the visitor preference» and «partners and privacy trust their six explicit URLs…» fail (with the secrets of .env the proxy sets a wesetup.visitor cookie on the prefetch request). Without .env (as in CI) both pass and the full suite is 7577/0. Only matters for whoever runs test:changed with the stand env loaded.",
+      "repro": "(set -a; . ./.env; set +a; node --import tsx --test src/site-locale-proxy.test.ts) → 4/6; without .env → 6/6 (raw/verifier-round2/site-locale-proxy-env-compare.txt)."
+    }
+  ]
+}

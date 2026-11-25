@@ -23,6 +23,8 @@ import { OrgHealthWidget } from "@/components/dashboard/org-health-widget";
 import { runOrgHealthCheck } from "@/lib/org-health-check";
 import { ConsultantCard } from "@/components/dashboard/consultant-card";
 import { getVisibleOrgBranding } from "@/lib/partners/branding";
+import { isPointScoped } from "@/lib/point-scope";
+import { InspectionSpecialModeCard } from "@/components/inspection/inspection-special-mode-card";
 import { toConsultantContact } from "@/lib/partners/consultant-contact";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +90,7 @@ export default async function OrganizationInfoPage() {
   );
 
   return (
-    <DomainMessagesBoundary namespaces={["settingsManagement"]}>
+    <DomainMessagesBoundary namespaces={["settingsManagement", "inspectionDay"]}>
     <div className="space-y-5">
       <PageHeader
         title={t("page.title")}
@@ -154,6 +156,11 @@ export default async function OrganizationInfoPage() {
           createdAt: org.createdAt.toISOString(),
         }}
       />
+
+      {/* Спецрежим (владелец, 2026-11-25): включить и настроить можно и здесь,
+          не только в «Пришла проверка». Он на всю компанию — руководителю
+          точки только просмотр, как в API. */}
+      <InspectionSpecialModeCard canManage={!isPointScoped(session.user)} />
 
       <PublicBadgeCard initial={badge} organizationName={org.name} />
 

@@ -1587,8 +1587,8 @@
     },
     "special": {
       "title": "Special mode",
-      "lead": "Turns on journal automation — only the parts you tick. While the mode is off, journals have no automation: employees make all entries themselves.",
-      "offState": "Automation is hidden now: journals have no autofill, no automatic documents, no quick-fill buttons and no “Catch up on gaps”.",
+      "lead": "Turns on journal automation and editing of past days — only the parts you tick. While the mode is off, journals have no automation and past days are closed for editing.",
+      "offState": "Automation is hidden now: journals have no autofill, no automatic documents, no quick-fill buttons and no “Catch up on gaps”; past days are closed for editing.",
       "onState": "Shown in journals:",
       "noneChosen": "Nothing is ticked — journals have no automation.",
       "change": "Change",
@@ -1612,6 +1612,10 @@
         "catchUp": {
           "title": "“Catch up on gaps”",
           "hint": "An icon above the journals on the home page and an item in search: a grid of the last 14 days where empty days are filled with a copy of the nearest filled day."
+        },
+        "pastDays": {
+          "title": "Editing past days",
+          "hint": "Employees can add and correct their own entries for past days; managers can also edit days filled by automation. Without this tick past days are closed; future days are always closed."
         }
       },
       "dialogTitle": "What to turn on in journals",
@@ -1629,7 +1633,13 @@
       "off": "Off",
       "saved": "Saved",
       "saveError": "Could not save changes",
-      "askManager": "Only a manager can turn the mode on, off or change it — ask them."
+      "askManager": "Only a manager can turn the mode on, off or change it — ask them.",
+      "pastDaysLimit": {
+        "label": "How far back",
+        "option": "{days, plural, one {# day} other {# days}}",
+        "any": "No limit",
+        "chip": "Editing past days: {limit}"
+      }
     },
     "experts": {
       "title": "Expert help",
@@ -1697,10 +1707,10 @@
         "a1": "The organization's management. The request is seen by a WeSetup manager."
       },
       "special": {
-        "lead": "Special mode: turns on journal automation item by item — autofill, automatic documents, quick-fill buttons and “Catch up on gaps”. It is not mentioned anywhere except this page.",
+        "lead": "Special mode: turns on journal automation item by item — autofill, automatic documents, quick-fill buttons, “Catch up on gaps” — and editing of past days.",
         "guideTitle": "Good to know",
-        "guide1": "The mode is off by default: journals contain only what employees enter.",
-        "guide2": "The mode applies to the whole organization — all locations at once.",
+        "guide1": "The mode is off by default: journals contain only what employees enter, and past days are closed for editing.",
+        "guide2": "The mode applies to the whole organization — all locations at once. You can turn it on and set it up here and in “Organization details”.",
         "guide3": "A manager turns it on and changes it; others can see what is on.",
         "whenTitle": "When to turn it on",
         "when1": "Journals follow the same routine and you want help — turn the mode on and tick what you need.",
@@ -3724,7 +3734,8 @@
             "experts": "Consulting",
             "now": "What to do now",
             "visits": "Visit log",
-            "readiness": "Inspection readiness"
+            "readiness": "Inspection readiness",
+            "special": "Special mode"
           }
         },
         "office": {
@@ -4166,7 +4177,7 @@
       "monitoring": "Monitoring",
       "journals_points": "Site journals",
       "inspection_laws": "Regulatory documents",
-      "inspection_settings": "Section settings",
+      "inspection_settings": "Special mode",
       "settings_offline": "Offline work"
     },
     "breadcrumbs": {
@@ -4314,7 +4325,8 @@
       "pastDaysLocked": "Past days are locked. Changes must be entered on the same day.",
       "futureDayLocked": "You cannot fill in the log for a future date. Enter the record on the day the work is done.",
       "foreignRow": "You can fill in only your own row.",
-      "notToday": "You can fill in only today's row. For past days, ask the person responsible for the log."
+      "notToday": "You can fill in only today's row. For past days, ask the person responsible for the log.",
+      "pastDaysWindow": "{days, plural, one {Past entries can only be changed for yesterday.} other {Past entries can only be changed for the last # days.}}"
     },
     "offlineLabel": "Hygiene · {date}",
     "list": {
@@ -4744,7 +4756,8 @@
       "foreignRow": "You can only fill in your own row",
       "notToday": "You can only fill in today’s entries. The person responsible for the log can edit previous days.",
       "futureDay": "You cannot fill in future dates. Record the entry on the day the work is done.",
-      "generatedTitle": "{name} — {period}"
+      "generatedTitle": "{name} — {period}",
+      "pastDaysWindow": "{days, plural, one {Past entries can only be changed for yesterday.} other {Past entries can only be changed for the last # days.}}"
     },
     "periodicity": {
       "hygiene": "Before every shift — production staff; other staff — before entering the production area",
@@ -11504,7 +11517,9 @@
           "contacts": "Contacts and notifications",
           "contactsHint": "Phone, accountant email, time zone and language"
         },
-        "city": "City"
+        "city": "City",
+        "lockPastDaysSpecialLimited": "Special mode allows editing past days for the last {days, plural, one {# day} other {# days}} — this ban does not apply to those days.",
+        "lockPastDaysSpecialAny": "Special mode allows editing past days with no limit — this ban does not apply now."
       },
       "partnerConversion": {
         "title": "Move to partner workspace",

@@ -24,6 +24,8 @@ import "./select-polish.css";
 import "./neutral-palette.css";
 // After the palettes: neutral box borders give way to fills (scripts/gen-borderless.mjs).
 import "./borderless.css";
+// Notifications panel: theme tokens only, its own enter / leave motion (notifications-bell.tsx).
+import "./notifications-panel.css";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";

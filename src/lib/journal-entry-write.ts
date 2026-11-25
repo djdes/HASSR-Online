@@ -11,7 +11,8 @@ import {
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
 import { isManagementRole } from "@/lib/user-roles";
 import { orgTodayKey } from "@/lib/timezone";
-import { FUTURE_DAY_LOCKED_MESSAGE } from "@/lib/journal-entry-scope";
+import { FUTURE_DAY_LOCKED_MESSAGE, pastDayOpen, type PastDaysPolicy } from "@/lib/journal-entry-scope";
+import { loadPastDaysPolicy } from "@/lib/journal-controls.server";
 
 /**
  * Общие проверки записи в сетку журнала (`JournalDocumentEntry`).
@@ -45,6 +46,12 @@ export type EntryWriteContext = {
   org: { lockPastDayEdits: boolean; shiftEndHour: number } | null;
   /** Сегодня в часовом поясе организации, `YYYY-MM-DD`. */
   todayKey: string;
+  /**
+   * «Правка прошлых дней» спецрежима (2026-11-25): дни в окне открыты —
+   * сотруднику своя строка (`checkEntryScope`), в автодокументе и при
+   * «Запретить редактирование записей за прошлые дни».
+   */
+  pastDays: PastDaysPolicy;
 };
 
 
@@ -78,14 +85,20 @@ export async function loadEntryWriteContext(
       : (await db.journalDocument.findUnique({ where: { id: doc.id }, select: { buildingId: true } }))?.buildingId;
   const org = withBuildingJournalSettings(orgRow, await readBuildingJournalSettings(db, buildingId));
 
+  const todayKey = orgTodayKey(org?.timezone ?? undefined);
+  const pastDays = await loadPastDaysPolicy(doc.organizationId);
+
   return {
-    todayKey: orgTodayKey(org?.timezone ?? undefined),
+    todayKey,
+    pastDays,
     automation: {
       documentAutoFill: doc.autoFill === true,
       automationEnabled: Boolean(
         doc.template?.code && isJournalAutomationEnabled(org, doc.template.code)
       ),
       shiftEndHour: org?.shiftEndHour ?? 0,
+      pastDays,
+      todayKey,
     },
     org: org
       ? {
@@ -107,7 +120,7 @@ export {
 } from "@/lib/journal-entry-scope";
 
 /** Дата ячейки → `YYYY-MM-DD`. Записи хранятся в UTC-полночь дня. */
-function toEntryDateKey(date: Date): string {
+export function toEntryDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
@@ -153,7 +166,9 @@ export function checkEntryWrite(
 
   let isOverride = automationDecision.isOverride;
 
-  if (ctx.org) {
+  // День в окне «Правки прошлых дней» спецрежима: явное разрешение
+  // руководителя, запрет организации на него не действует.
+  if (ctx.org && !pastDayOpen(ctx.pastDays, toEntryDateKey(entryDate), ctx.todayKey)) {
     const orgDecision = canEditEntryAt(entryDate, closedActor, ctx.org);
     if (!orgDecision.allowed) {
       return {

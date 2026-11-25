@@ -1587,8 +1587,8 @@
     },
     "special": {
       "title": "Maxsus rejim",
-      "lead": "Jurnallarda avtomatikani yoqadi — faqat siz belgilaganini. Rejim o‘chiq bo‘lsa, jurnallarda avtomatika yo‘q: yozuvlarni xodimlar o‘zlari kiritadi.",
-      "offState": "Hozir avtomatika yashirilgan: jurnallarda avtomatik to‘ldirish, avtomatik hujjatlar, tezkor tugmalar va «O‘tkazib yuborilganlarni to‘ldirish» yo‘q.",
+      "lead": "Jurnallarda avtomatikani va o‘tgan kunlarni tahrirlashni yoqadi — faqat siz belgilaganini. Rejim o‘chiq bo‘lsa, avtomatika yo‘q, o‘tgan kunlar tahrirlash uchun yopiq.",
+      "offState": "Hozir avtomatika yashirilgan: jurnallarda avtomatik to‘ldirish, avtomatik hujjatlar, tezkor tugmalar va «O‘tkazib yuborilganlarni to‘ldirish» yo‘q, o‘tgan kunlar tahrirlash uchun yopiq.",
       "onState": "Jurnallarda ko‘rinadi:",
       "noneChosen": "Hech narsa belgilanmagan — jurnallarda avtomatika yo‘q.",
       "change": "O‘zgartirish",
@@ -1612,6 +1612,10 @@
         "catchUp": {
           "title": "«O‘tkazib yuborilganlarni to‘ldirish»",
           "hint": "Bosh sahifadagi jurnallar ustidagi belgi va qidiruvdagi band: oxirgi 14 kun jadvali, bo‘sh kunlar eng yaqin to‘ldirilgan kun nusxasi bilan to‘ldiriladi."
+        },
+        "pastDays": {
+          "title": "O‘tgan kunlarni tahrirlash",
+          "hint": "Xodimlar o‘tgan kunlar uchun o‘z yozuvlarini kiritadi va tuzatadi, rahbariyat — avtomatika to‘ldirgan kunlarni ham. Belgisiz o‘tgan kunlar yopiq, kelgusi kunlar doim yopiq."
         }
       },
       "dialogTitle": "Jurnallarda nimani yoqish kerak",
@@ -1629,7 +1633,13 @@
       "off": "O‘chirilgan",
       "saved": "Saqlandi",
       "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
-      "askManager": "Rejimni yoqish, o‘chirish yoki o‘zgartirishni rahbar qila oladi — undan so‘rang."
+      "askManager": "Rejimni yoqish, o‘chirish yoki o‘zgartirishni rahbar qila oladi — undan so‘rang.",
+      "pastDaysLimit": {
+        "label": "Qancha orqaga",
+        "option": "{days, plural, one {# kun} other {# kun}}",
+        "any": "Cheklovsiz",
+        "chip": "O‘tgan kunlarni tahrirlash: {limit}"
+      }
     },
     "experts": {
       "title": "Ekspert yordami",
@@ -1697,10 +1707,10 @@
         "a1": "Tashkilot rahbariyati. Arizani WeSetup menejeri ko‘radi."
       },
       "special": {
-        "lead": "Maxsus rejim: jurnallar avtomatikasini belgilar bo‘yicha yoqadi — avtomatik to‘ldirish, hujjatlarni avtomatik yaratish, tezkor tugmalar va «O‘tkazib yuborilganlarni to‘ldirish». Bu sahifadan boshqa hech qayerda u haqida aytilmaydi.",
+        "lead": "Maxsus rejim: jurnallar avtomatikasini belgilar bo‘yicha yoqadi — avtomatik to‘ldirish, hujjatlarni avtomatik yaratish, tezkor tugmalar, «O‘tkazib yuborilganlarni to‘ldirish» — va o‘tgan kunlarni tahrirlashni.",
         "guideTitle": "Bilish muhim",
-        "guide1": "Rejim sukut bo‘yicha o‘chiq: jurnallarda faqat xodimlar kiritgan yozuvlar bo‘ladi.",
-        "guide2": "Rejim butun tashkilotga — barcha nuqtalarga birdaniga amal qiladi.",
+        "guide1": "Rejim sukut bo‘yicha o‘chiq: jurnallarda faqat xodimlar kiritgan yozuvlar bo‘ladi, o‘tgan kunlar tahrirlash uchun yopiq.",
+        "guide2": "Rejim butun tashkilotga — barcha nuqtalarga birdaniga amal qiladi. Uni shu yerda va «Tashkilot haqida ma’lumot»da yoqish va sozlash mumkin.",
         "guide3": "Rahbar yoqadi va o‘zgartiradi; boshqalar nima yoqilganini ko‘radi.",
         "whenTitle": "Qachon yoqish kerak",
         "when1": "Jurnallar bir xil jadval bo‘yicha yuritiladi va yordam kerak — rejimni yoqing va keraklisini belgilang.",
@@ -3724,7 +3734,8 @@
             "experts": "Konsalting",
             "now": "Hozir nima qilish kerak",
             "visits": "Tashriflar jurnali",
-            "readiness": "Tekshiruvga tayyorgarlik"
+            "readiness": "Tekshiruvga tayyorgarlik",
+            "special": "Maxsus rejim"
           }
         },
         "office": {
@@ -4166,7 +4177,7 @@
       "monitoring": "Monitoring",
       "journals_points": "Nuqtalar jurnallari",
       "inspection_laws": "Me’yoriy hujjatlar",
-      "inspection_settings": "Bo‘lim sozlamalari",
+      "inspection_settings": "Maxsus rejim",
       "settings_offline": "Aloqasiz ishlash"
     },
     "breadcrumbs": {
@@ -4314,7 +4325,8 @@
       "pastDaysLocked": "O‘tgan kunlar yopilgan — o‘zgarishlar o‘sha kunning o‘zida kiritiladi.",
       "futureDayLocked": "Jurnalni kelajak sanasi bilan to‘ldirib bo‘lmaydi: yozuv ish bajarilgan kuni kiritiladi.",
       "foreignRow": "Faqat o‘z qatoringizni to‘ldirishingiz mumkin.",
-      "notToday": "Faqat bugungi qatorni to‘ldirishingiz mumkin. O‘tgan kunlar bo‘yicha o‘zgarishlarni jurnal uchun mas’ul shaxs kiritadi."
+      "notToday": "Faqat bugungi qatorni to‘ldirishingiz mumkin. O‘tgan kunlar bo‘yicha o‘zgarishlarni jurnal uchun mas’ul shaxs kiritadi.",
+      "pastDaysWindow": "{days, plural, one {O‘tgan yozuvlarni faqat kechagi kun uchun o‘zgartirish mumkin.} other {O‘tgan yozuvlarni faqat oxirgi # kun uchun o‘zgartirish mumkin.}}"
     },
     "offlineLabel": "Gigiyena · {date}",
     "list": {
@@ -4744,7 +4756,8 @@
       "foreignRow": "Faqat o‘z qatoringizni to‘ldirishingiz mumkin",
       "notToday": "Faqat bugungi kun yozuvlarini to‘ldirish mumkin. Oldingi kunlarni jurnal uchun mas’ul shaxs tahrirlaydi.",
       "futureDay": "Kelajak sanalari uchun jurnalni to‘ldirish mumkin emas. Yozuv ish bajarilgan kuni kiritiladi.",
-      "generatedTitle": "{name} — {period}"
+      "generatedTitle": "{name} — {period}",
+      "pastDaysWindow": "{days, plural, one {O‘tgan yozuvlarni faqat kechagi kun uchun o‘zgartirish mumkin.} other {O‘tgan yozuvlarni faqat oxirgi # kun uchun o‘zgartirish mumkin.}}"
     },
     "periodicity": {
       "hygiene": "Har bir smenadan oldin — ishlab chiqarish xodimlari; qolganlar — ishlab chiqarish hududiga kirishdan oldin",
@@ -11504,7 +11517,9 @@
           "contacts": "Kontaktlar va bildirishnomalar",
           "contactsHint": "Telefon, buxgalter emaili, vaqt mintaqasi va til"
         },
-        "city": "Shahar"
+        "city": "Shahar",
+        "lockPastDaysSpecialLimited": "Maxsus rejim o‘tgan kunlarni oxirgi {days, plural, one {# kun} other {# kun}} davomida tahrirlashga ruxsat beradi — bu kunlarga taqiq amal qilmaydi.",
+        "lockPastDaysSpecialAny": "Maxsus rejim o‘tgan kunlarni cheklovsiz tahrirlashga ruxsat beradi — taqiq hozir amal qilmaydi."
       },
       "partnerConversion": {
         "title": "Hamkor kabinetiga o‘tkazish",

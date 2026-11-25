@@ -1,0 +1,4 @@
+limit 1: plain 2 days ago | 403 | Прошлые записи можно менять только за вчерашний день.
+limit 1: crafted "2026-11-24T00:00:00+14:00" | 200 | stored dates: 2026-11-23 (2 days ago = 2026-11-23)
+special mode off: crafted "2026-11-25T00:00:00+14:00" (pre-existing rule) | 200 | stored dates: 2026-11-24 (yesterday = 2026-11-24)
+restored special-mode setting | ok | 

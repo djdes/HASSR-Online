@@ -1,0 +1,488 @@
+/*
+ * Панель уведомлений (`src/components/layout/notifications-bell.tsx`).
+ *
+ * Панель порталится в <body>, вне `.app-shell`, поэтому цвета — только
+ * переменные тем `--app-*` (app-theme.css объявляет их на :root, тёмная тема —
+ * на body; «Новая» тема перекрашивает их в neutral-palette.css). Ни одного
+ * своего хекса: светлая, тёмная, «Новая» и тёмная мини-приложения берут цвета
+ * из одних и тех же токенов.
+ *
+ * Владелец (скриншот мини-приложения в тёмной теме, 2026-11-25): «кнопки
+ * приклеены, секции пластмассовые». Отсюда: панель действий отделена от
+ * списка зазором, а тень-разделитель появляется, только когда список
+ * прокручен; пункты — мягкие поверхности без рамок и толстых полос; галочки
+ * свои, в цвете темы.
+ *
+ * Движение — 150–250 мс. Перемещение и масштаб — только при
+ * `prefers-reduced-motion: no-preference`; при «Уменьшить движение» остаётся
+ * прозрачность. «Без анимации» (`:root[data-view-still]`, view-prefs.css)
+ * гасит всё глобально — конечное состояние у каждого правила видимое.
+ */
+
+/* ---- Слой и окно ---------------------------------------------------- */
+
+.notif-overlay {
+  background-color: rgb(11 16 36 / 0.18);
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .notif-overlay {
+  background-color: var(--app-scrim);
+}
+@starting-style {
+  .notif-overlay {
+    opacity: 0;
+  }
+}
+.notif-overlay[data-closing] {
+  opacity: 0;
+  transition-duration: 0.16s;
+  transition-timing-function: ease-in;
+}
+
+.notif-panel {
+  --notif-edge: transparent;
+  --notif-pad: 1.25rem;
+  background-color: var(--app-surface-elevated);
+  color: var(--app-text);
+  box-shadow:
+    0 0 0 1px var(--notif-edge),
+    0 30px 80px -20px rgb(11 16 36 / 0.35);
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+@media (width >= 40rem) {
+  .notif-panel {
+    --notif-pad: 1.5rem;
+  }
+}
+/* Тёмная: окно светлее карточки, по краю — тонкая полупрозрачная линия. */
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .notif-panel {
+  --notif-edge: var(--app-border);
+  box-shadow:
+    0 0 0 1px var(--notif-edge),
+    0 30px 80px -20px rgb(0 0 0 / 0.6);
+}
+@starting-style {
+  .notif-panel {
+    opacity: 0;
+  }
+}
+.notif-panel[data-closing] {
+  opacity: 0;
+  transition-duration: 0.16s;
+  transition-timing-function: ease-in;
+}
+/* Окно выезжает из-под колокольчика (сверху справа) и чуть растёт. Конечное
+   значение — `none`: оставшийся `translate` сделал бы окно containing block
+   для `position: fixed` внутри. */
+@media (prefers-reduced-motion: no-preference) {
+  .notif-panel {
+    transform-origin: top right;
+    translate: none;
+    scale: none;
+    transition:
+      opacity 0.2s ease-out,
+      translate 0.24s var(--spring-soft, cubic-bezier(0.2, 0, 0, 1)),
+      scale 0.24s var(--spring-soft, cubic-bezier(0.2, 0, 0, 1));
+  }
+  @starting-style {
+    .notif-panel {
+      translate: 0 -8px;
+      scale: 0.97;
+    }
+  }
+  .notif-panel[data-closing] {
+    translate: 0 -6px;
+    scale: 0.98;
+    transition-duration: 0.16s;
+    transition-timing-function: ease-in;
+  }
+}
+
+/* ---- Вкладки: индикатор едет за выбранной --------------------------- */
+
+.notif-tabs {
+  position: relative;
+  box-shadow: inset 0 -1px 0 var(--app-border);
+}
+.notif-tab {
+  position: relative;
+  min-block-size: 44px;
+  color: var(--app-text-muted);
+  transition: color 0.18s ease-out;
+}
+.notif-tab[aria-selected="true"] {
+  color: var(--app-text);
+  anchor-name: var(--notif-tab-anchor);
+}
+@media (hover: hover) {
+  .notif-tab:not([aria-selected="true"]):hover {
+    color: var(--app-text-secondary);
+  }
+}
+.notif-tab:focus-visible {
+  outline: 2px solid var(--app-indigo);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+/* Полоса — псевдоэлемент списка вкладок, привязанный якорем к выбранной.
+   Рисуется рамкой, не заливкой: режим принудительных цветов заливку убирает. */
+.notif-tabs::after {
+  content: "";
+  position: absolute;
+  position-anchor: var(--notif-tab-anchor);
+  inset-block-end: 0;
+  inset-inline-start: anchor(self-start);
+  inset-inline-end: anchor(self-end);
+  border-block-end: 2px solid var(--app-indigo);
+  border-radius: 2px;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .notif-tabs::after {
+    transition: inset 0.22s var(--spring-soft, cubic-bezier(0.2, 0, 0, 1));
+  }
+}
+@supports not (position-anchor: --notif-tab) {
+  .notif-tabs::after {
+    content: none;
+  }
+  .notif-tab {
+    border-block-end: 2px solid transparent;
+  }
+  .notif-tab[aria-selected="true"] {
+    border-block-end-color: var(--app-indigo);
+  }
+}
+
+/* ---- Панель действий ----------------------------------------------- */
+
+.notif-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem var(--notif-pad) 0.625rem;
+}
+.notif-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 40px;
+  padding-inline: 1rem;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 0.16s ease-out,
+    color 0.16s ease-out;
+}
+@media (pointer: coarse) {
+  .notif-action {
+    min-block-size: 44px;
+  }
+}
+.notif-action:focus-visible {
+  outline: 2px solid var(--app-indigo);
+  outline-offset: 2px;
+}
+.notif-action[data-kind="read"] {
+  background-color: var(--app-tint-indigo-2);
+  color: var(--app-indigo-deep);
+}
+.notif-action[data-kind="delete"] {
+  background-color: var(--app-warn-bg);
+  color: var(--app-warn-fg);
+}
+/* «Удалить все» — необратимо и реже нужно: тише соседей и отодвинуто вправо. */
+.notif-action[data-kind="delete-all"] {
+  margin-inline-start: auto;
+  background-color: transparent;
+  color: var(--app-warn-fg);
+}
+@media (hover: hover) {
+  .notif-action[data-kind="read"]:hover {
+    background-color: color-mix(in srgb, var(--app-tint-indigo-2), var(--app-indigo) 12%);
+  }
+  .notif-action:is([data-kind="delete"], [data-kind="delete-all"]):hover {
+    background-color: color-mix(in srgb, var(--app-warn-bg), var(--app-warn-fg) 12%);
+  }
+}
+
+/* ---- Прокрутка: тень под панелью действий только при прокрутке ------ */
+
+.notif-scroll {
+  container-type: scroll-state;
+  overscroll-behavior: contain;
+  scroll-padding-block-start: 0.75rem;
+}
+.notif-scroll::before {
+  content: "";
+  display: block;
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  block-size: 0.875rem;
+  margin-block-end: -0.875rem;
+  pointer-events: none;
+  border-block-start: 1px solid var(--app-border);
+  background: radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.12), transparent);
+  opacity: 0;
+  transition: opacity 0.18s ease-out;
+}
+body:is([data-app-theme="dark"], :has(.app-shell[data-app-theme="dark"])) .notif-scroll::before {
+  background: radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.35), transparent);
+}
+@container scroll-state(scrollable: block-start) {
+  .notif-scroll::before {
+    opacity: 1;
+  }
+}
+@supports not (container-type: scroll-state) {
+  .notif-scroll::before {
+    animation: notif-show-shadow linear both;
+    animation-timeline: scroll();
+    animation-range: 0 1.5rem;
+  }
+}
+/* Без scroll-driven анимаций (старый WebView) — метка от IntersectionObserver. */
+.notif-scroll[data-scrolled]::before {
+  opacity: 1;
+}
+@keyframes notif-show-shadow {
+  to {
+    opacity: 1;
+  }
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem var(--notif-pad) 1rem;
+}
+
+/* ---- Карточка уведомления ------------------------------------------ */
+
+/* Обёртка-сетка схлопывается при уходе пункта (`data-leaving`): высота
+   уходит плавно, соседи подтягиваются без скачка. */
+.notif-collapse {
+  display: grid;
+  /* `minmax(0, …)`: без него длинная подпись растягивает колонку и `truncate` не работает. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 0.22s ease-in,
+    opacity 0.16s ease-in;
+}
+.notif-collapse > * {
+  min-block-size: 0;
+}
+.notif-collapse[data-leaving] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+.notif-collapse[data-leaving] > * {
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .notif-collapse {
+    transition: opacity 0.12s linear;
+  }
+}
+
+.notif-card-gap {
+  padding-block-end: 0.5rem;
+}
+.notif-card {
+  border-radius: 18px;
+  background-color: var(--app-veil, rgb(11 16 36 / 0.045));
+  transition: background-color 0.18s ease-out;
+}
+/* Выбранное — подсветка темы, без рамки. */
+.notif-card:has(input:is(:checked, :indeterminate)) {
+  background-color: var(--app-tint-indigo);
+}
+
+.notif-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-block-size: 48px;
+  padding: 0.25rem 0.875rem 0.25rem 0.25rem;
+}
+.notif-card-title {
+  min-inline-size: 0;
+  padding-block: 0.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--app-text);
+}
+.notif-link {
+  color: var(--app-indigo-deep);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+@media (hover: hover) {
+  .notif-link:hover {
+    text-decoration: underline;
+  }
+}
+.notif-link:focus-visible {
+  outline: 2px solid var(--app-indigo);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Подпункты: без полос между ними — тонкий зазор и своя подсветка. */
+.notif-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0.375rem 0.375rem;
+}
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-block-size: 48px;
+  padding-inline-end: 0.625rem;
+  border-radius: 12px;
+  transition: background-color 0.16s ease-out;
+}
+@media (hover: hover) {
+  .notif-item:hover {
+    background-color: var(--app-veil-hover, rgb(11 16 36 / 0.08));
+  }
+}
+.notif-item:has(input:checked) {
+  background-color: var(--app-tint-indigo-2);
+}
+.notif-item-link {
+  display: flex;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  align-self: stretch;
+  padding-block: 0.5rem;
+  border-radius: 10px;
+}
+.notif-item-link:focus-visible {
+  outline: 2px solid var(--app-indigo);
+  outline-offset: 2px;
+}
+.notif-item-link:active {
+  opacity: 0.75;
+}
+
+/* ---- Галочка ------------------------------------------------------- */
+
+/* Зона нажатия 44×44 вокруг галочки 20px. */
+.notif-check-hit {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.notif-check {
+  --notif-check-icon: none;
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  inline-size: 20px;
+  aspect-ratio: 1;
+  margin: 0;
+  border: 1.5px solid var(--app-border-strong);
+  border-radius: 6px;
+  background-color: var(--app-surface-elevated);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    border-color 0.15s ease-out;
+}
+.notif-check::before {
+  content: "";
+  inline-size: 12px;
+  aspect-ratio: 1;
+  background-color: currentColor;
+  mask: var(--notif-check-icon) no-repeat center / contain;
+  scale: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .notif-check::before {
+    transition: scale 0.15s var(--spring-lively, ease-out);
+  }
+}
+.notif-check:checked {
+  --notif-check-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>");
+}
+.notif-check:indeterminate {
+  --notif-check-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'><line x1='6' y1='12' x2='18' y2='12'></line></svg>");
+}
+.notif-check:is(:checked, :indeterminate) {
+  border-color: var(--app-indigo);
+  background-color: var(--app-indigo);
+}
+.notif-check:is(:checked, :indeterminate)::before {
+  scale: 1;
+}
+@media (hover: hover) {
+  .notif-check:not(:checked, :indeterminate):hover {
+    border-color: var(--app-indigo);
+  }
+}
+.notif-check:focus-visible {
+  outline: 2px solid var(--app-indigo);
+  outline-offset: 2px;
+}
+@media (forced-colors: active) {
+  .notif-check::before {
+    background-color: CanvasText;
+  }
+}
+
+/* ---- Появление пунктов: лёгкая лесенка ------------------------------ */
+
+@keyframes notif-row-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .notif-list > .notif-collapse {
+    /* `backwards`, не `both`: после анимации на пункте не остаётся translate. */
+    animation: notif-row-in 0.22s ease-out backwards;
+    animation-delay: min(calc(var(--notif-i, 0) * 35ms), 210ms);
+  }
+  @supports (animation-delay: calc(sibling-index() * 0.1s)) {
+    .notif-list > .notif-collapse {
+      animation-delay: min(calc((sibling-index() - 1) * 35ms), 210ms);
+    }
+  }
+}
+
+/* ---- Счётчик на колокольчике --------------------------------------- */
+
+@keyframes notif-badge-pop {
+  from {
+    scale: 0.4;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .notif-badge {
+    animation: notif-badge-pop 0.24s var(--spring-lively, ease-out) backwards;
+  }
+}

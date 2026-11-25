@@ -1,0 +1,16 @@
+# Subtest: ambiguous translations and template fragments cannot appear as approved copy
+ok 100 - ambiguous translations and template fragments cannot appear as approved copy
+  ---
+  duration_ms: 0.505743
+  type: 'test'
+  ...
+1..100
+# tests 103
+# suites 1
+# pass 103
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14214.215467
+exit=0

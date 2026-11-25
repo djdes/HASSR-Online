@@ -1,0 +1,2 @@
+owner writes own row | 2026-11-05 | 200
+cook PUT entryId=owner's entry → own row today (special mode off) | 200 | {"employeeId":"cmww4cb620000jh7ddn98zwv0","d":"2026-11-25"}

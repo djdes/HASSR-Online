@@ -39,6 +39,7 @@ import {
 } from "@/lib/cleaning-document";
 import { FinishedProductDocumentClient } from "@/components/journals/finished-product-document-client";
 import { getJournalControls } from "@/lib/journal-controls.server";
+import { pastDaysPolicy } from "@/lib/journal-controls";
 import {
   FINISHED_PRODUCT_DOCUMENT_TEMPLATE_CODE,
   normalizeFinishedProductDocumentConfig,
@@ -605,6 +606,9 @@ async function JournalDocumentBody({
   // Дата считается в зоне организации, а не в UTC процесса: иначе до
   // 03:00 МСК «сегодня» на сервере — вчерашний день (см. orgTodayKey).
   const todayKey = orgTodayKey(organization?.timezone);
+  // Спецрежим «Правка прошлых дней» (2026-11-25): сетки открывают прошлые
+  // дни в окне по тому же правилу, что сервер (`pastDayOpen`).
+  const pastDays = pastDaysPolicy(await getJournalControls(getActiveOrgId(session)));
 
   // Приказы к журналу (гигиена, БЖГП) — блок под документом: один набор на
   // журнал организации, печатается после страниц журнала.
@@ -646,6 +650,7 @@ async function JournalDocumentBody({
           }))}
           useV2={organization?.experimentalUiV2 ?? true}
           pastDaysLocked={automationLocked}
+          pastDays={pastDays}
           todayKey={todayKey}
           viewer={{
             id: session.user.id,
@@ -692,6 +697,7 @@ async function JournalDocumentBody({
         // здоровья нельзя было заполнить вообще.
         todayKey={todayKey}
         pastDaysLocked={automationLocked}
+          pastDays={pastDays}
         viewer={{
           id: session.user.id,
           role: session.user.role,
@@ -1021,6 +1027,7 @@ async function JournalDocumentBody({
           data: normalizeColdEquipmentEntryData(entry.data),
         }))}
         useV2={organization?.experimentalUiV2 ?? true}
+        pastDays={pastDays}
         viewer={{
           id: session.user.id,
           role: session.user.role,
@@ -1532,6 +1539,7 @@ async function JournalDocumentBody({
           data: normalizeClimateEntryData(entry.data),
         }))}
         useV2={organization?.experimentalUiV2 ?? true}
+        pastDays={pastDays}
         viewer={{
           id: session.user.id,
           role: session.user.role,

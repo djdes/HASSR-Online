@@ -1498,7 +1498,12 @@ html:has(#mini-root) {
   box-shadow: 0 0 0 4px var(--mini-accent-ring);
 }
 
-/* Native HTML <dialog> with smooth entry and safe viewport margins */
+/* Native HTML <dialog> with smooth entry and exit.
+ * `overlay` и `display` — дискретные: окно остаётся в верхнем слое, пока
+ * доигрывает уход. `allow-discrete` — отдельным свойством: в сокращённой
+ * записи старые браузеры выбросили бы весь `transition`. Подложка гаснет
+ * вместе с окном. «Уменьшить движение» — без сдвига и масштаба, остаётся
+ * прозрачность. */
 .mini-dialog {
   margin: auto;
   max-inline-size: min(calc(100dvw - 24px), 26rem);
@@ -1514,12 +1519,13 @@ html:has(#mini-root) {
   transition:
     opacity 0.18s var(--mini-ease),
     transform 0.22s var(--mini-ease),
-    overlay 0.22s allow-discrete,
-    display 0.22s allow-discrete;
+    overlay 0.22s,
+    display 0.22s;
+  transition-behavior: allow-discrete;
 }
 .mini-dialog[open] {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: none;
 }
 @starting-style {
   .mini-dialog[open] {
@@ -1531,11 +1537,25 @@ html:has(#mini-root) {
   background: rgba(11, 16, 36, 0.56);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition:
+    opacity 0.2s var(--mini-ease),
+    overlay 0.22s,
+    display 0.22s;
+  transition-behavior: allow-discrete;
+}
+.mini-dialog[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  .mini-dialog[open]::backdrop {
+    opacity: 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mini-dialog {
+  .mini-dialog,
+  .mini-dialog[open] {
     transform: none;
-    transition: none;
   }
   @starting-style {
     .mini-dialog[open] {

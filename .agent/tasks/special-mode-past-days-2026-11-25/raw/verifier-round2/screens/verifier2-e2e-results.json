@@ -1,0 +1,498 @@
+{
+  "today": "2026-11-25",
+  "results": [
+    {
+      "id": "setup",
+      "name": "raw special-mode setting at start",
+      "info": true,
+      "detail": "{\"automation\":{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7},\"sensorCamera\":{\"cold_equipment_control\":false,\"climate_control\":false},\"brakerageSetup\":{}}"
+    },
+    {
+      "id": "setup",
+      "name": "org at start",
+      "info": true,
+      "detail": "{\"lockPastDayEdits\":false,\"timezone\":\"Europe/Moscow\",\"shiftEndHour\":0,\"perLocationJournals\":true}"
+    },
+    {
+      "id": "setup",
+      "name": "org today (Moscow)",
+      "info": true,
+      "detail": "2026-11-25; month 2026-11-01..2026-11-30"
+    },
+    {
+      "id": "AC1-1",
+      "name": "owner: section menu has «Спецрежим» → /inspection/settings",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "AC1-2",
+      "name": "owner /inspection: special-mode card at the bottom, switch enabled, no quiet link",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "AC1-3",
+      "name": "owner /inspection/settings: title «Спецрежим», card with enabled switch, no access-denied",
+      "ok": true,
+      "detail": "Спецрежим"
+    },
+    {
+      "id": "AC1-4",
+      "name": "tasks.verify /inspection: no card, quiet link «Настройки раздела» present",
+      "ok": true,
+      "detail": "Настройки раздела"
+    },
+    {
+      "id": "AC1-5",
+      "name": "tasks.verify: no «Спецрежим» item in the section menu",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "AC1-6",
+      "name": "tasks.verify: quiet link opens the page (not «Нет доступа»), title «Спецрежим», read-only card + «попросите руководителя»",
+      "ok": true,
+      "detail": "h1=Спецрежим"
+    },
+    {
+      "id": "AC1-7",
+      "name": "tasks.verify: PATCH journal-controls refused (403), as before",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "id": "AC1-8",
+      "name": "tasks.verify GET /settings/organization status (admin.full page, as before)",
+      "info": true,
+      "detail": "307"
+    },
+    {
+      "id": "AC1-9",
+      "name": "cook: /inspection/settings stays closed (no special-mode card)",
+      "ok": true,
+      "detail": "http://localhost:3000/inspection/settings"
+    },
+    {
+      "id": "AC2-1",
+      "name": "point manager: PATCH journal-controls 403 (company-only, as before)",
+      "ok": true,
+      "detail": "403 Это общие настройки компании — их меняет руководство компании"
+    },
+    {
+      "id": "AC2-2",
+      "name": "point manager /inspection: no managing card (quiet link instead)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "AC2-3",
+      "name": "point manager /inspection/settings: card read-only (switch disabled)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "AC2-4",
+      "name": "point manager /settings/organization: no enabled switch",
+      "ok": true,
+      "detail": "no card (company page closed); url=http://localhost:3000/dashboard"
+    },
+    {
+      "id": "AC3-1.0",
+      "name": "first «Включить» dialog on /inspection: automation ticked, «Правка прошлых дней» NOT ticked, no limit select",
+      "ok": true,
+      "detail": "{\"autoFill\":\"checked\",\"autoCreate\":\"checked\",\"copyYesterday\":\"checked\",\"closeDayAutofill\":\"checked\",\"catchUp\":\"checked\",\"pastDays\":\"unchecked\"}"
+    },
+    {
+      "id": "AC3-1.1",
+      "name": "first «Включить» dialog on /settings/organization: automation ticked, «Правка прошлых дней» NOT ticked, no limit select",
+      "ok": true,
+      "detail": "{\"autoFill\":\"checked\",\"autoCreate\":\"checked\",\"copyYesterday\":\"checked\",\"closeDayAutofill\":\"checked\",\"catchUp\":\"checked\",\"pastDays\":\"unchecked\"}"
+    },
+    {
+      "id": "AC3-1.2",
+      "name": "first «Включить» dialog on /inspection/settings: automation ticked, «Правка прошлых дней» NOT ticked, no limit select",
+      "ok": true,
+      "detail": "{\"autoFill\":\"checked\",\"autoCreate\":\"checked\",\"copyYesterday\":\"checked\",\"closeDayAutofill\":\"checked\",\"catchUp\":\"checked\",\"pastDays\":\"unchecked\"}"
+    },
+    {
+      "id": "AC3-2",
+      "name": "cancelling the first dialog saves nothing",
+      "ok": true,
+      "detail": "{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7}"
+    },
+    {
+      "id": "AC3-3",
+      "name": "«Насколько назад» appears when ticked: 6 options, default 7",
+      "ok": true,
+      "detail": "1:1 день | 3:3 дня | 7:7 дней | 14:14 дней | 30:30 дней | 0:Без ограничения"
+    },
+    {
+      "id": "AC3-4",
+      "name": "saved: enabled, pastDays true, pastDaysLimit 3",
+      "ok": true,
+      "detail": "{\"enabled\":true,\"autoFill\":true,\"autoCreate\":true,\"copyYesterday\":true,\"closeDayAutofill\":true,\"catchUp\":true,\"pastDays\":true,\"pastDaysLimit\":3}"
+    },
+    {
+      "id": "AC3-5",
+      "name": "card on /inspection shows «Правка прошлых дней: 3 дня» and «Изменить»",
+      "ok": true,
+      "detail": "Видно в журналах: Автозаполнение журналов Автосоздание документов «Скопировать вчерашнее» «Автозаполнить» на главной «Догнать пропуски» Правка прошлых дней: 3 дня Изменить"
+    },
+    {
+      "id": "AC2-5",
+      "name": "set in «Пришла проверка» → «Информация об организации» card shows 3 days + hint «за последние 3 дня»",
+      "ok": true,
+      "detail": "Видно в журналах: Автозаполнение журналов Автосоздание документов «Скопировать вчерашнее» «Автозаполнить» на главной «До || Вчерашние записи сможет менять только администратор. Спецрежим разрешает правку прошлых дней за последние 3 дня — на эти дни запрет не действует."
+    },
+    {
+      "id": "AC3-6",
+      "name": "«Изменить» opens the saved choice (box ticked, 3 days)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "AC3-7",
+      "name": "hint follows the change: «за последний 1 день»",
+      "ok": true,
+      "detail": "Вчерашние записи сможет менять только администратор. Спецрежим разрешает правку прошлых дней за последний 1 день — на эти дни запрет не действует."
+    },
+    {
+      "id": "AC2-6",
+      "name": "changed in «Информация об организации» → «Спецрежим» page shows «Правка прошлых дней: 1 день»",
+      "ok": true,
+      "detail": "Видно в журналах: Автозаполнение журналов Автосоздание документов «Скопировать вчерашнее» «Автозаполнить» на главной «Догнать пропуски» Правка прошлых дней: 1 день Изменить"
+    },
+    {
+      "id": "AC3-8",
+      "name": "switch off: mode off, choice kept (pastDays true, 1 day)",
+      "ok": true,
+      "detail": "{\"enabled\":false,\"autoFill\":true,\"autoCreate\":true,\"copyYesterday\":true,\"closeDayAutofill\":true,\"catchUp\":true,\"pastDays\":true,\"pastDaysLimit\":1}"
+    },
+    {
+      "id": "AC3-9",
+      "name": "re-enable dialog: previous choice (box ticked, 1 day)",
+      "ok": true,
+      "detail": "checked 1"
+    },
+    {
+      "id": "AC3-10",
+      "name": "saved choice without the key → pastDays false (others kept), limit 7",
+      "ok": true,
+      "detail": "{\"enabled\":true,\"autoFill\":true,\"autoCreate\":true,\"copyYesterday\":true,\"closeDayAutofill\":true,\"catchUp\":true,\"pastDays\":false,\"pastDaysLimit\":7}"
+    },
+    {
+      "id": "AC3-11",
+      "name": "no saved setting (org created after 2026-10-28) → off, pastDays false",
+      "ok": true,
+      "detail": "{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7}"
+    },
+    {
+      "id": "setup-1",
+      "name": "own point «Кафе e2e верификатор-2 14:54:36»",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "setup-2",
+      "name": "own hygiene + cold documents for the month",
+      "ok": true,
+      "detail": "201 201"
+    },
+    {
+      "id": "setup-3",
+      "name": "entries pre-created in the hygiene document",
+      "info": true,
+      "detail": "750"
+    },
+    {
+      "id": "AC4-1",
+      "name": "mode off: staff yesterday → 403 «только сегодня»",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "AC4-2",
+      "name": "mode off: staff today → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AC4-3",
+      "name": "mode off: «today+14:00» (written as yesterday) → 403",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "AC4-4",
+      "name": "window 3: staff own row yesterday → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AC4-5",
+      "name": "window 3: 3 days ago (boundary) → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AC4-6",
+      "name": "window 3: 4 days ago → 403 «за последние 3 дня»",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня."
+    },
+    {
+      "id": "AC4-7",
+      "name": "window 3: tomorrow → 403",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "AC4-8",
+      "name": "window 3: colleague's row yesterday → 403 foreign_row",
+      "ok": true,
+      "detail": "403 foreign_row Можно заполнять только свою строку"
+    },
+    {
+      "id": "AC4-9",
+      "name": "«2 days ago T00:00+14:00» → written 3 days ago → 200",
+      "ok": true,
+      "detail": "200 date=2026-11-22T00:00:00.000Z"
+    },
+    {
+      "id": "AC4-10",
+      "name": "«3 days ago T00:00+14:00» → would be 4 days ago → 403",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня."
+    },
+    {
+      "id": "AC4-11",
+      "name": "«4 days ago T23:00-05:00» → written 3 days ago → 200",
+      "ok": true,
+      "detail": "200 date=2026-11-22T00:00:00.000Z"
+    },
+    {
+      "id": "AC4-12",
+      "name": "«today T22:00-05:00» → tomorrow → 403",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "AC4-13",
+      "name": "unparsable date → 400",
+      "ok": true,
+      "detail": "400  Некорректная дата"
+    },
+    {
+      "id": "AC4-14",
+      "name": "bulk window 3: own yesterday + 2 days ago → saved 2",
+      "ok": true,
+      "detail": "{\"saved\":2,\"skipped\":0}"
+    },
+    {
+      "id": "AC4-15",
+      "name": "bulk window 3: stroke reaching 4 days ago → 403",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня."
+    },
+    {
+      "id": "AC4-16",
+      "name": "bulk: «3 days ago+14:00» (written 4 days ago) → 403",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня."
+    },
+    {
+      "id": "AC4-17",
+      "name": "bulk: «2 days ago+14:00» → saved on 3 days ago",
+      "ok": true,
+      "detail": "{\"saved\":1,\"skipped\":0}"
+    },
+    {
+      "id": "AC4-18",
+      "name": "bulk: colleague's row → 403 foreign_row",
+      "ok": true,
+      "detail": "403 foreign_row Можно заполнять только свою строку"
+    },
+    {
+      "id": "AC4-19",
+      "name": "window 1: yesterday → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AC4-20",
+      "name": "window 1: 2 days ago → 403 «только за вчерашний день»",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за вчерашний день."
+    },
+    {
+      "id": "AC4-21",
+      "name": "no limit: 2026-11-05 → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AC4-22",
+      "name": "no limit: tomorrow still 403",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "AC4-23",
+      "name": "box ticked, mode OFF: yesterday → 403 «только сегодня»",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "AC4-24",
+      "name": "mode on, box unticked: yesterday → 403",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "MV-1",
+      "name": "staff moves a colleague's yesterday entry onto own row → 403 foreign_row, entry untouched",
+      "ok": true,
+      "detail": "403 foreign_row Можно заполнять только свою строку src={\"employeeId\":\"cmwv7iv6x0001x27d874e9a0z\",\"d\":\"2026-11-24\"}"
+    },
+    {
+      "id": "MV-2",
+      "name": "staff moves own entry from 6 days ago (beyond window 3) to 2 days ago → 403 window text, untouched",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня. src={\"employeeId\":\"cmww4cb620000jh7ddn98zwv0\",\"d\":\"2026-11-19\"}"
+    },
+    {
+      "id": "MV-3",
+      "name": "staff moves own yesterday entry to 2 days ago (both in window) → 200, same row moved",
+      "ok": true,
+      "detail": "200 src={\"employeeId\":\"cmww4cb620000jh7ddn98zwv0\",\"d\":\"2026-11-23\"}"
+    },
+    {
+      "id": "MV-4",
+      "name": "staff moves own entry to tomorrow → 403",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал."
+    },
+    {
+      "id": "MV-5",
+      "name": "plain edit with entryId (same cell) → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "MV-6",
+      "name": "entryId from another document → 404 «Строка не найдена в этом документе»",
+      "ok": true,
+      "detail": "404  Строка не найдена в этом документе"
+    },
+    {
+      "id": "MV-7",
+      "name": "mode off: staff moves own-row yesterday entry to today → 403 not_today (source), untouched",
+      "ok": true,
+      "detail": "403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал. src={\"employeeId\":\"cmww4cb620000jh7ddn98zwv0\",\"d\":\"2026-11-24\"}"
+    },
+    {
+      "id": "MV-8",
+      "name": "org lock: owner moves 6 days ago → 5 days ago (beyond window) → 200; one override audit with both days",
+      "ok": true,
+      "detail": "200 dates=[\"2026-11-20T00:00:00.000Z\",\"2026-11-19T00:00:00.000Z\"]"
+    },
+    {
+      "id": "MV-9",
+      "name": "org lock + window 3: staff own yesterday → 200 (lock does not apply in the window)",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "MV-10",
+      "name": "org lock + window 3: staff 5 days ago → 403",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня."
+    },
+    {
+      "id": "MV-11",
+      "name": "org lock: owner move inside the window → 200, no override audit",
+      "ok": true,
+      "detail": "200 audits 1→1"
+    },
+    {
+      "id": "MV-12",
+      "name": "owner moves an entry from a future day (created by PATCH) to today",
+      "info": true,
+      "detail": "PATCH 200; move 403 future_day_locked Нельзя заполнять журнал будущим числом: запись вносится в день, когда работа выполнена.; row now {\"employeeId\":\"cmwv7iv6x0001x27d874e9a0z\",\"d\":\"2026-11-27\"}"
+    },
+    {
+      "id": "AD-1",
+      "name": "automation doc, box unticked: owner yesterday → 403 past_day_locked (lock active)",
+      "ok": true,
+      "detail": "403 past_day_locked Прошлые дни закрыты — изменения вносятся день в день"
+    },
+    {
+      "id": "AD-2",
+      "name": "automation doc, window 3: owner yesterday → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AD-3",
+      "name": "automation doc, window 3: staff own 2 days ago → 200",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "id": "AD-4",
+      "name": "automation doc, window 3: staff 4 days ago → 403",
+      "ok": true,
+      "detail": "403 not_today Прошлые записи можно менять только за последние 3 дня."
+    },
+    {
+      "id": "AD-5",
+      "name": "automation doc: owner moves 6 days ago (locked) → yesterday → 403 past_day_locked (source), untouched",
+      "ok": true,
+      "detail": "403 past_day_locked Прошлые дни закрыты — изменения вносятся день в день freedTarget=false"
+    },
+    {
+      "id": "AD-6",
+      "name": "automation doc: owner moves 2 days ago → yesterday (both in window) → 200",
+      "ok": false,
+      "detail": "409 entry_slot_taken У этого сотрудника на эту дату уже есть запись. Откройте её и дополните или выберите другую дату."
+    },
+    {
+      "id": "AD-7",
+      "name": "automation doc: owner deletes a row 6 days ago → 403 (as before)",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "id": "GR-1",
+      "name": "staff grid: off → every non-today day closed «только сегодня»; window 3 → 3 days open, older days show the window text, future still closed",
+      "ok": true,
+      "detail": "{\"gridOff\":{\"notToday\":174,\"window\":0},\"gridOn\":{\"notToday\":30,\"window\":126},\"k\":6,\"daysBefore\":24,\"daysAfter\":5}"
+    },
+    {
+      "id": "GR-2",
+      "name": "staff grid: mode off again → as before",
+      "ok": true,
+      "detail": "{\"notToday\":174,\"window\":0}"
+    },
+    {
+      "id": "GR-3",
+      "name": "mode off: no special-mode hint under «Запретить редактирование…»",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "id": "restore",
+      "name": "special mode and org lock restored",
+      "ok": true,
+      "detail": "{\"automation\":{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7},\"sensorCamera\":{\"cold_equipment_control\":false,\"climate_control\":false},\"brakerageSetup\":{}} lock=false"
+    },
+    {
+      "id": "errors",
+      "name": "no page errors",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "errors": []
+}

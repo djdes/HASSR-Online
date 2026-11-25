@@ -1,0 +1,18 @@
+2026-11-25T14:45:40Z
+62b2e9691e22475014a5d222348d82991103e836
+
+> haccp-online@0.1.0 test:changed
+> node scripts/test-changed.mjs
+
+→ [test:changed] Эскалация до полного прогона: Изменено 27 файлов кода (порог 25)
+
+=== Test stats: pass=7575, fail=2 ===
+
+✗ НОВЫЕ регрессии (нет в baseline):
+  - partners and privacy trust their six explicit URLs without rewriting navigation
+  - prefetching another language does not overwrite the visitor preference
+
+Если эти fails ожидаемы — добавьте в tests/.legacy-failures.txt.
+Если регрессии — почините код.
+exit=1 elapsed=262s
+2026-11-25T14:50:02Z

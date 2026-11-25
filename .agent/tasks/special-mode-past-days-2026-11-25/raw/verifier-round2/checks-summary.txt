@@ -1,0 +1,49 @@
+# Verifier round 2 — special-mode-past-days-2026-11-25
+# Branch claude/fervent-brown-ed5apv, HEAD 62b2e9691 (merge-base with origin/master afae9db11; origin/master 55ca86a24 is 1 commit ahead,
+# no file overlap, `git merge-tree` clean, PR #346 mergeable_state=clean, PR checks on 62b2e9691: E2E scenarios (DB level) success,
+# Browser smoke (new features) success). Product code not edited by the verifier.
+
+Commands (current code)
+- npm run typecheck ............................................. exit 0 (typecheck.txt)
+- focused tests (6 files given by the caller) ...................... 97/97 pass (focused-tests.txt)
+- npm run test:changed → escalated to the full suite (27 code files > 25):
+    run 3, CI-like (local .env NOT loaded) ......................... pass=7577 fail=0, exit 0 (test-changed-full-run3-no-env.log)
+    runs 1-2 with the local .env loaded ............................ pass=7575 fail=2 — both in src/site-locale-proxy.test.ts;
+      caused by the local .env (same file: 4/6 with .env, 6/6 without — site-locale-proxy-env-compare.txt); branch does not touch
+      proxy/locale code. Environment artifact, not a regression.
+    PDFs of english-version-1375e736 restored after each run.
+- npx eslint on the 28 changed src/scripts files ..................... 1 error + 5 warnings, identical on origin/master versions
+                                                                      (eslint-head.txt vs eslint-origin-master.txt) → no new findings
+- npm run i18n:check ............................................... 103/103, contract in sync (i18n-check.txt)
+- borderless / neutral-palette / one-accent / catalog / nav-localization tests 18/18; gen-borderless --check and
+  gen-neutral-palette --check: up to date (design-tests.txt)
+- bash scripts/e2e/run-all.sh new-lists-check ...................... 55/55 (switches incl. pastDays true + pastDaysLimit 14 transfer)
+- next build: NOT run (sandbox rule). Builder's production build of the fix commit bd14d54bb succeeded
+  (../next-build-round2-summary.txt); final head typechecks and every touched page compiled and rendered in next dev.
+
+Stand (next dev :3000, local PostgreSQL, demo org; dev server stopped afterwards)
+- verifier2-e2e.mjs (own checks) ................................... 75/76; the 1 FAIL (AD-6) is a setup artifact, redone in
+                                                                      ad6-probe.mjs → 4/4 PASS + restore
+- builder scenario raw/stand/e2e-special-mode.mjs rerun .............. 44/44 (builder-scenario-rerun-output.txt)
+- hygiene/health grid probes: not applicable on this stand (see notes in their outputs)
+- temporary point manager (role manager + preset admin, buildingIds=[Кафе «Ромашка»]) created and deleted by the verifier
+- stand restored: special-mode setting raw value, Organization.lockPastDayEdits=false, own point automation null, own docs autoFill
+  false (stand-final-state.json); verify-e2e-special@haccp.local left in place as asked.
+
+Round-1 issues
+- P1 (AC1, quiet link → «Нет доступа»): FIXED — NavMenuItem.pageAccess; tasks.verify user: quiet link opens /inspection/settings,
+  title «Спецрежим», read-only card, no access-denied (AC1-4..6); app-nav tests: verifyOnly/headChef not denied, cook denied.
+- P2 (AC3, first dialog pre-ticks «Правка прошлых дней»): FIXED — specialModeDialogPreset(); first dialog on /inspection,
+  /settings/organization and /inspection/settings: 5 automation boxes checked, pastDays unchecked, no limit select (AC3-1.x);
+  cancel saves nothing; unit test present.
+- minor date key from raw string: FIXED — PUT/bulk check toEntryDateKey of the UTC-midnight day (AC4-3, 9-12, 16-17).
+- minor entry move ignoring the source row: FIXED — source passes checkEntryScope + checkEntryWrite, override of source audited
+  (MV-1, MV-2, MV-7, MV-8, MV-11, AD-5). Side effect: moving a row OUT of a future day is now refused for everyone (MV-12).
+- minor stale docblock of /inspection/settings: FIXED. (The /inspection page docblock, line 32, is still the 2026-11-05 text.)
+
+New non-blocking findings
+- MV-12: PUT with entryId from a future-dated row to today → 403 future_day_locked for owner and staff (was allowed before the
+  source check). Edge case; delete + re-add still works.
+- Pre-existing: DELETE {employeeId, date} in an automation document collects all of the employee's rows (date ignored), so an
+  in-window (or today's) cell is refused when any older locked row exists. UI never sends this form (it sends ids or employeeId).
+- Stale comment: src/app/(dashboard)/inspection/page.tsx:32 «Спецрежим (2026-11-05) нигде не назван: вход — тихая ссылка…».

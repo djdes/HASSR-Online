@@ -1,0 +1,33 @@
+## typecheck
+
+
+real	0m18.355s
+user	0m21.247s
+sys	0m2.324s
+exit=0
+
+## test:changed (escalated to full: 96 related test files > 80)
+→ [test:changed] Эскалация до полного прогона: Найдено 96 связанных тестовых файлов (порог 80)
+=== Test stats: pass=7573, fail=0 ===
+✓ Все тесты прошли.
+real	4m17.331s
+exit=0
+
+## i18n:check
+# tests 103
+# pass 103
+# fail 0
+
+## focused tests
+# tests 116
+# pass 116
+# fail 0
+
+## eslint (changed src ts/tsx, 26 files)
+   73:3  warning  'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                      @typescript-eslint/no-unused-vars
+  190:3  warning  'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+  578:9  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  110:8  warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  12:10  warning  'isManagementRole' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+✖ 5 problems (1 error, 4 warnings)
+all 5 findings exist unchanged at merge-base 3de59e22c (pre-existing)

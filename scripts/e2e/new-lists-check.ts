@@ -161,7 +161,7 @@ async function main() {
 
   // A: one journal off, nothing automated, controls saved «off».
   await db.organization.update({ where: { id: a.id }, data: { disabledJournalCodes: ["health_check"], autoJournalCodes: [], journalAutomationJson: {} } });
-  await updateJournalControls(a.id, { automation: { enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false, catchUp: false } });
+  await updateJournalControls(a.id, { automation: { enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false, catchUp: false, pastDays: false, pastDaysLimit: 7 } });
   // B: its own set, a responsible person for hygiene, no saved controls yet; a point WITHOUT its own journal settings
   // (an organization whose points keep their own set is left out of «Журналы» — org E below).
   await db.organization.update({
@@ -249,7 +249,8 @@ async function main() {
       journalAutomationJson: { hygiene: { autoCreate: true, autoFill: true }, cleaning: { autoCreate: true, autoFill: false } },
     },
   });
-  const switches = { enabled: true, autoFill: true, autoCreate: true, copyYesterday: false, closeDayAutofill: true, catchUp: false };
+  // «Правка прошлых дней» с глубиной (спецрежим, 2026-11-25) переезжает вместе с остальными переключателями.
+  const switches = { enabled: true, autoFill: true, autoCreate: true, copyYesterday: false, closeDayAutofill: true, catchUp: false, pastDays: true, pastDaysLimit: 14 as const };
   await updateJournalControls(a.id, { automation: switches });
   const edit = await runDirectoryExchange(cabinet.id, { actor: x.actor });
   const bAfter = await settingsOf(b.id);
