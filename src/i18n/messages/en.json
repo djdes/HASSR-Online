@@ -10278,7 +10278,7 @@
       },
       "equipment": {
         "title": "Equipment",
-        "hint": "Refrigerators, freezers, ovens — each unit has its own norm and QR sticker.",
+        "hint": "Each unit has its own range and QR sticker",
         "count": "{count, plural, one {# unit} other {# units}}",
         "emptyTitle": "No equipment yet",
         "emptyBody": "Add a refrigerator or a freezer — its temperature norm goes into the journal.",
@@ -10291,7 +10291,7 @@
       },
       "uv": {
         "title": "UV lamps and units",
-        "hint": "Germicidal lamps and recirculators. Operating hours are counted by the “I switched on / I switched off” buttons on the lamp sticker.",
+        "hint": "Germicidal lamps and recirculators",
         "add": "Add UV lamp",
         "emptyTitle": "No UV lamps yet",
         "emptyBody": "Add a lamp and choose the model — the rated service life is filled in automatically.",
@@ -10306,7 +10306,7 @@
       },
       "qr": {
         "title": "QR stickers and posters",
-        "hint": "A sticker on equipment and a poster in a room: an employee scans it and makes an entry without signing in.",
+        "hint": "Entries by scan, no sign-in needed",
         "stickers": "{count, plural, one {# sticker} other {# stickers}}",
         "stickersHint": "one per equipment unit of the site",
         "posters": "{count, plural, one {# poster} other {# posters}}",
@@ -10318,7 +10318,7 @@
       },
       "danger": {
         "title": "Deleting the site",
-        "hint": "The site's rooms are deleted. Equipment and journal documents stay in the organization.",
+        "hint": "Rooms are deleted; equipment and documents stay",
         "button": "Delete site",
         "confirmTitle": "Delete site “{name}”?",
         "confirmDescription": "This can't be undone. What will happen:",
@@ -10330,7 +10330,7 @@
         "failed": "Couldn't delete the site"
       },
       "wizard": {
-        "description": "Four steps and the site is ready for journals. You can adjust everything later on the site page.",
+        "description": "Four steps and the site is ready for journals",
         "progress": "Step {step} of {total}",
         "steps": {
           "head": "Name, address, type",
@@ -10405,7 +10405,7 @@
       },
       "staff": {
         "title": "Site staff",
-        "hint": "Add the employees who work here. Their logs and tasks will be linked to this location.",
+        "hint": "Their journals and tasks stay at this site",
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add employee",
         "emptyTitle": "No one at this site yet",
@@ -10416,7 +10416,7 @@
       },
       "journals": {
         "title": "Site journals",
-        "hint": "Which journals the site keeps and who is on the grading commission — each site has its own.",
+        "hint": "Site journals and the tasting committee",
         "inWork": "{count, plural, one {# journal} other {# journals}}",
         "inWorkHint": "in use at the site",
         "auto": "{count, plural, one {# journal} other {# journals}}",
@@ -10475,14 +10475,14 @@
       "theme": "Theme",
       "savedToAccount": "Your choice is saved to your account.",
       "whatsNewTitle": "What’s new",
-      "whatsNewHint": "A brief list of changes shown once per version when you first open the service after an update.",
+      "whatsNewHint": "Once after each update",
       "whatsNewEnabled": "The update notice will be shown",
       "whatsNewDisabled": "The update notice is disabled",
       "saveFailed": "Could not save the setting"
     },
     "apiPage": {
       "title": "API integrations",
-      "description": "A key for external employee apps and sensors. Share it with your integration provider.",
+      "description": "A key for your integrator: apps and sensors",
       "keyTitle": "Organization API key",
       "keyDescriptionBefore": "All requests to",
       "keyDescriptionMiddle": "with this key are automatically recorded under the organization",
@@ -10520,7 +10520,7 @@
     },
     "aiConnect": {
       "title": "AI assistants & API",
-      "description": "Connect ChatGPT, Claude or your developer — check journal status, fill cells and add employees right in the chat.",
+      "description": "ChatGPT, Claude or a developer — journals via chat",
       "badgeMcp": "MCP for AI",
       "badgeRest": "REST API · OpenAPI",
       "guide": {
@@ -10666,12 +10666,12 @@
       },
       "legacy": {
         "title": "Key for sensors and older integrations",
-        "hint": "Shared organization key for POST /api/external/* requests (give it to your developer). AI assistants need a personal key above."
+        "hint": "For developers: POST /api/external/*"
       }
     },
     "accounting": {
       "title": "Accounting",
-      "description": "Once a week, we email the accountant a CSV file of write-offs from the Losses and Waste journal for the last 7 days. The file opens in Excel and can be imported into 1C from a spreadsheet document.",
+      "description": "Weekly write-off export to your accountant. Once a week we email a CSV of write-offs from the Losses and Waste journal for 7 days. It opens in Excel and can be imported into 1C from a spreadsheet document.",
       "emailRequired": "Enter an email address",
       "saveFailed": "Could not save the accountant’s email",
       "disconnectFailed": "Could not turn off the email report",
@@ -10680,12 +10680,12 @@
       "emailTitle": "Accountant email",
       "connected": "Connected",
       "reportSchedule": "next report: Monday, 9:00 AM Moscow time",
-      "emailHint": "Enter an address to receive the weekly write-off CSV reports.",
+      "emailHint": "Weekly CSV reports will be sent here",
       "save": "Save",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "emailContentsTitle": "Email contents:",
-      "emailContents": "A CSV file (opens in Excel) is attached, with columns for date, category, product, quantity, unit, amount in RUB, and reason. Dates are in DD.MM.YYYY format. No email is sent if there were no write-offs that week.",
+      "emailContents": "A CSV for Excel and 1C. Columns: date, category, product, quantity, unit, amount in RUB and reason; dates as DD.MM.YYYY. No write-offs in a week — no email.",
       "confirmTitle": "Turn off the accountant email report?",
       "confirmDescription": "{email} will stop receiving the weekly write-off report.",
       "confirmBulletSchedule": "Monday emails will stop",
@@ -10695,7 +10695,7 @@
     },
     "security": {
       "title": "Security",
-      "description": "See when and where your account was accessed, and sign out of every device at once.",
+      "description": "Sign-in history and sign-out everywhere",
       "historyTitle": "Sign-in history",
       "historyEmpty": "No sign-ins yet. History has been recorded since September 2026 and updates with each sign-in.",
       "when": "When",
@@ -10703,18 +10703,18 @@
       "methodLabel": "Method",
       "ip": "IP",
       "newDevice": "new device",
-      "newDeviceNotice": "We email and message you on Telegram when someone signs in from a new device. If you don’t recognize the sign-in, end all sessions and change your password.",
+      "newDeviceNotice": "We email and message you on Telegram about new devices",
       "logoutEverywhere": "Sign out everywhere",
-      "logoutDescription": "Ends sessions on every device, including your phone, workplace tablet and any computer where you forgot to sign out. You will also need to sign in again here.",
+      "logoutDescription": "Including devices where you forgot to sign out",
       "logoutAll": "End all sessions",
       "logoutFailed": "Could not end the sessions. Check your connection and try again.",
       "telegramCodeTitle": "Telegram code at sign-in",
-      "telegramCodeDescription": "After your password, we’ll ask for a six-digit code from Telegram. A stolen password alone won’t be enough to access your account. Signing in through Telegram itself does not require a code.",
+      "telegramCodeDescription": "A stolen password won’t be enough",
       "disableCode": "Turn off code",
       "enableCode": "Turn on code",
       "telegramNotLinked": "Link Telegram in your profile first to receive sign-in codes.",
       "codeEnabledNote": "On: we’ll ask for a code when you sign in with a password.",
-      "codeEnabledToast": "A Telegram code will now be required at sign-in",
+      "codeEnabledToast": "A Telegram code is now required for password sign-in. Signing in via Telegram needs no code",
       "codeDisabledToast": "Sign-in code turned off",
       "codeSaveFailed": "Could not change this setting. Try again.",
       "confirmTitle": "End all sessions?",
@@ -10775,7 +10775,7 @@
         "statusRegistered": "registered",
         "statusPaid": "paid",
         "title": "Invite a colleague — earn {percent, number}%",
-        "subtitle": "When a colleague subscribes, we credit {percent, number}% of its price in points. One reward is paid per invited business.",
+        "subtitle": "{percent, number}% of a colleague’s subscription, in points",
         "emailPlaceholder": "Colleague’s email",
         "messagePlaceholder": "Add a short note (optional)",
         "send": "Send",
@@ -10842,7 +10842,7 @@
         "title": "Balance details",
         "empty": "Nothing here yet.",
         "emptyWithNextSteps": "Nothing here yet. Invite a colleague, leave a review, or add funds to earn your first points.",
-        "subtitle": "Credit: money added to the balance (top-ups, card and invoice payments, bonuses, refunds). Debit: charges (plan, services). Balance: after each operation.",
+        "subtitle": "Credit is money in, debit is charges",
         "date": "Date",
         "operation": "Transaction",
         "total": "Balance",
@@ -10857,7 +10857,7 @@
       },
       "account": {
         "title": "Account balance",
-        "subtitle": "Balances of all organizations in your account. You can move money between them — the transfer shows in the history of both organizations.",
+        "subtitle": "Organization balances and transfers",
         "current": "current",
         "total": "Account total",
         "transfer": "Transfer",
@@ -10896,7 +10896,7 @@
       "openFailed": "Could not open the payment page. Try again.",
       "networkError": "Network unavailable. Try again.",
       "title": "Add funds",
-      "subtitle": "Once payment is confirmed, funds are credited to the organization balance as points at ₽1 = 1 point. Points can be used to pay for a subscription.",
+      "subtitle": "₽1 = 1 point, credited once payment is confirmed",
       "quickAmountLabel": "Choose an amount",
       "amountLabel": "Amount",
       "customAmountLabel": "Or enter an amount, ₽",
@@ -11013,7 +11013,7 @@
         },
         "edo": {
           "title": "Incoming invoices",
-          "description": "Supplier UPDs from e-documents — into the acceptance log after checking the goods"
+          "description": "Supplier UPDs into the acceptance log"
         },
         "settings_integrations_mercury": {
           "title": "Mercury federal information system",
@@ -11021,15 +11021,15 @@
         },
         "settings_integrations_edo": {
           "title": "E-documents: Diadoc and SBIS",
-          "description": "Supplier UPDs arrive in “Incoming invoices” by themselves"
+          "description": "Supplier UPDs into “Incoming invoices”"
         },
         "settings_integrations_iiko": {
           "title": "iiko",
-          "description": "Invoices go to “Incoming”, write-offs — to “Losses”, goods and dishes — to the product directory"
+          "description": "Invoices, write-offs and products"
         },
         "settings_integrations_poster": {
           "title": "Poster",
-          "description": "Supplies go to “Incoming”, write-offs — to “Losses”, the menu — to the product directory and quality control"
+          "description": "Supplies, write-offs and menu"
         },
         "settings_integrations_1c": {
           "title": "1C: HR",
@@ -11053,7 +11053,7 @@
         },
         "settings_organization": {
           "title": "Organization profile",
-          "description": "Name, tax ID, address, branding, and time zone for agreements and printable PDFs."
+          "description": "Name, tax ID, address, branding, time zone"
         },
         "settings_areas": {
           "title": "Production areas",
@@ -11061,7 +11061,7 @@
         },
         "settings_buildings": {
           "title": "Locations and rooms",
-          "description": "Business locations and rooms inside them. Use separate cleaning and climate journals for each location."
+          "description": "Locations with addresses and rooms"
         },
         "settings_equipment": {
           "title": "Equipment",
@@ -11077,7 +11077,7 @@
         },
         "settings_position_staff_visibility": {
           "title": "Colleague visibility",
-          "description": "Control staff visibility by job title for the software module and the bot."
+          "description": "Staff visibility by job title"
         },
         "settings_journals": {
           "title": "Journal set",
@@ -11085,23 +11085,23 @@
         },
         "settings_names": {
           "title": "Names",
-          "description": "Use your own journal and menu names for your team. Official names remain on printed forms and for inspectors."
+          "description": "Your own journal and menu names"
         },
         "settings_journal_pipelines": {
           "title": "Journal step-by-step guides",
-          "description": "Instructions for each journal: what to take, where to go, and what to do."
+          "description": "What to take, where to go, what to do"
         },
         "settings_journal_flow": {
           "title": "Who takes each task",
-          "description": "Choose whether a task is claimed by the first available staff member, anyone, or an administrator."
+          "description": "First come, anyone or admin only"
         },
         "settings_role_presets": {
           "title": "Role permission sets",
-          "description": "See which permissions each role has."
+          "description": "What each role can do"
         },
         "settings_journal_periods": {
           "title": "Journal periods",
-          "description": "Set how long each journal covers: a month, a set number of days, or a year."
+          "description": "How long each journal covers"
         },
         "settings_products": {
           "title": "Product directory",
@@ -11113,7 +11113,7 @@
         },
         "settings_kiosk": {
           "title": "Shared tablet",
-          "description": "Let staff sign their journal entries with a personal PIN on a shared shift tablet."
+          "description": "One shift tablet, PIN sign-in"
         },
         "settings_auto_journals": {
           "title": "Automatic journal creation",
@@ -11133,31 +11133,31 @@
         },
         "settings_journal_responsibles": {
           "title": "Journal owners",
-          "description": "Assign an owner for each journal. One click applies ready-made sets, such as assigning cleaning to cleaners."
+          "description": "Who fills in each journal"
         },
         "settings_journal_task_mode": {
           "title": "Task assignment and review",
-          "description": "For each journal, choose how tasks are created in the software module (by room, staff member or shift) and whether a second review is required."
+          "description": "How tasks are created and reviewed"
         },
         "settings_onboarding_template": {
           "title": "Business templates",
-          "description": "Set up roles, rooms, equipment, and required journals for a business type in one click."
+          "description": "Ready settings for your business type"
         },
         "settings_journal_checklists": {
           "title": "Journal checklists",
-          "description": "Create the steps staff must check before submitting a journal entry. Required items block submission; all checks are logged."
+          "description": "Step list inside the journal form"
         },
         "settings_task_visibility": {
           "title": "Who can see all tasks",
-          "description": "Choose which management job title can see every task in the software module. Nobody has this access by default."
+          "description": "Admin mode in the software module"
         },
         "settings_journals_by_position": {
           "title": "Job title × journal matrix",
-          "description": "The same access choices in a job-title-by-journal matrix for advanced users."
+          "description": "The same choice as a table"
         },
         "settings_journal_bonuses": {
           "title": "Journal rewards",
-          "description": "Set the reward per one-off journal task in the software module."
+          "description": "Staff reward per journal"
         },
         "settings_notifications": {
           "title": "Notifications",
@@ -11165,7 +11165,7 @@
         },
         "settings_webhooks": {
           "title": "Webhooks",
-          "description": "Send WeSetup events to your server: entries, deviations, CAPA, and payments."
+          "description": "WeSetup events to your server"
         },
         "settings_calendar": {
           "title": "Calendar",
@@ -11185,7 +11185,7 @@
         },
         "settings_services": {
           "title": "Specialist services",
-          "description": "Configure journals, audits, consultations, and on-site specialist visits."
+          "description": "Setup, audit, advice, on-site visit"
         },
         "settings_audit": {
           "title": "Activity log",
@@ -11197,11 +11197,11 @@
         },
         "settings_experimental": {
           "title": "Experimental features",
-          "description": "Try new features that are still being improved, such as the new journal layout."
+          "description": "New features in progress"
         },
         "settings_inspector_portal": {
           "title": "Inspector portal",
-          "description": "Create a view-only link for sanitary inspectors with an expiry time."
+          "description": "View-only link for inspectors"
         },
         "settings_api": {
           "title": "AI assistants & API",
@@ -11209,7 +11209,7 @@
         },
         "settings_integrations_tasksflow": {
           "title": "Software module",
-          "description": "Assign automatic cleaning tasks through the software module (tasksflow.ru)."
+          "description": "Staff tasks on smartphones"
         },
         "settings_backup": {
           "title": "Yandex Disk backup",
@@ -11225,11 +11225,11 @@
         },
         "settings_partner": {
           "title": "Become a partner",
-          "description": "Bring your own clients under your brand and earn rewards."
+          "description": "Your clients under your brand"
         },
         "settings_master_cabinet": {
           "title": "Master cabinet",
-          "description": "Upload a menu and ingredients once so every client location receives them in its procurement and expiry logs."
+          "description": "One menu and ingredients for all sites"
         },
         "settings_appearance": {
           "title": "Appearance",
@@ -11257,7 +11257,7 @@
         },
         "settings_offline": {
           "title": "Offline work",
-          "description": "Devices where journals are filled in without the internet, and records made offline"
+          "description": "Filling journals offline"
         }
       }
     },
@@ -11281,7 +11281,7 @@
       },
       "form": {
         "logoTitle": "Logo",
-        "logoHint": "In the left menu, in PDF headers of journals, production control documents and orders, on QR posters and in the inspector portal. PNG, JPG or SVG up to 500 KB.",
+        "logoHint": "PNG, JPG or SVG up to 500 KB",
         "logoUpload": "Upload logo",
         "logoReplace": "Replace",
         "logoRemove": "Delete logo",
@@ -11335,7 +11335,7 @@
         "journalHeaderPreview": "Journal header: {name}",
         "useFromRegistry": "Use registry name: {name}",
         "sphere": "Main sector",
-        "sphereHint": "Suggested for new sites. Each site has its own type — change it in Sites",
+        "sphereHint": "For new sites; each site has its own",
         "ownership": "Organization type",
         "ownershipHint": "Privately owned, chain, or government-owned establishment",
         "locations": "Locations",
@@ -11370,7 +11370,7 @@
         "resetToRegistry": "Use registry value",
         "docsPreviewTitle": "How it looks in documents",
         "docsPreviewJournal": "Journal header",
-        "docsPreviewNote": "The preview includes unsaved changes. A location is added to the header of its own documents.",
+        "docsPreviewNote": "Includes unsaved edits",
         "contactsTitle": "Contacts",
         "contactsSubtitle": "Accounting email for weekly reports",
         "accountantEmail": "Accountant email",
@@ -11389,7 +11389,7 @@
         "brandColor": "Brand color",
         "brandColorHint": "Color code, for example #5566f6. An accent in documents and posters; the workspace keeps the WeSetup style",
         "logoUrl": "Logo link",
-        "logoUrlHint": "A logo from a link appears in the menu, on posters and in the inspector portal. PDFs print only an uploaded file.",
+        "logoUrlHint": "Only an uploaded file is printed in PDFs",
         "preview": "Preview",
         "currentLogoPreview": "Current logo preview",
         "shiftsTitle": "Shifts and journal rules",
@@ -11494,7 +11494,7 @@
       },
       "partnerConversion": {
         "title": "Move to partner workspace",
-        "description": "If you manage this organization for a client, move it to your partner workspace “{partnerName}”. The organization will pay its own subscription, and you will earn rewards from its payments.",
+        "description": "The organization pays itself, you earn a reward",
         "open": "Move to partner workspace",
         "blocked": "This organization cannot be moved yet",
         "confirmTitle": "Move “{organizationName}” to the partner workspace?",
@@ -11578,7 +11578,7 @@
         "disabled": "Disabled",
         "enable": "Enable badge",
         "disable": "Disable badge",
-        "description": "A badge for your website and social media: guests see that journals are kept and how many were filled in over 30 days. No names or entries.",
+        "description": "A badge for your site and social media — no names or entries",
         "previewSite": "your business website",
         "menuContacts": "Menu · Contacts",
         "imageAlt": "WeSetup badge: electronic HACCP journals",
@@ -11628,11 +11628,11 @@
       },
       "deletion": {
         "title": "Delete organization",
-        "description": "Everything is permanently deleted 30 days after the request; you can cancel before then. Export an archive first: Settings → Backup.",
+        "description": "Permanently, 30 days after the request",
         "alreadyScheduled": "Deletion is already scheduled. Cancel it from the banner at the top of the page.",
         "schedule": "Schedule deletion",
         "confirmTitle": "Delete the organization in 30 days?",
-        "confirmDescription": "Enter the organization name to confirm.",
+        "confirmDescription": "Export an archive first: Settings → Backup. Enter the organization name to confirm.",
         "confirmData": "Journals, documents, staff, and settings will be deleted",
         "cancelWindow": "You have 30 days to cancel. A banner will appear in the workspace, and managers will receive an email.",
         "subscriptionNotRefunded": "The subscription is non-refundable",
@@ -11646,15 +11646,15 @@
         "alreadyRequested": "Deletion is already scheduled"
       },
       "documentsPage": {
-        "description": "One block of details for journal headers, production control documents, orders and the inspector portal. Empty fields come from the registry.",
+        "description": "Details for journal and document headers",
         "orgTitle": "About the organization",
-        "orgLead": "Document details on top of the registry extract: fill in only what is outdated or inaccurate in the registry.",
+        "orgLead": "Fill in only what is outdated in the registry",
         "fromRequisites": "From “Company details”",
         "innValue": "Tax ID {inn}",
         "editRequisites": "Edit",
-        "journalShortNameHint": "Printed in the header of every journal. Empty — the short registry name or the full name.",
+        "journalShortNameHint": "For journal headers. Empty — from the registry",
         "pointTitle": "About the location",
-        "pointLead": "A location's documents print its name, address, KPP and phone. Pick a location and check the header in the preview.",
+        "pointLead": "Site name, address, KPP and phone",
         "pointPick": "Location",
         "pointUntitled": "Untitled location",
         "pointJournalName": "Name for journals",
@@ -11704,13 +11704,13 @@
         "siteTitle": "Site",
         "siteLead": "Printed on the right of every poster and label header.",
         "siteLabel": "Site address",
-        "siteHint": "Empty — we print wesetup.ru. The address at the bottom of the sheet never changes — always wesetup.ru.",
+        "siteHint": "Empty — we print wesetup.ru",
         "sitePlaceholder": "example.com",
         "qrTitle": "QR codes",
         "qrLead": "A frame and an icon in the centre make the code yours. It scans just as reliably.",
         "qrIconLabel": "Centre icon",
         "qrIconHint": "A square picture, PNG or SVG up to 500 KB",
-        "qrFallback": "What goes in the centre: the uploaded icon → the logo, if it is nearly square → the first letter of the company name.",
+        "qrFallback": "Center: icon, else logo or first letter",
         "qrFrameLabel": "QR frame in the brand color",
         "qrFrameHint": "Off — the frame is black.",
         "qrCenterLabel": "Logo in the QR centre",
@@ -11737,10 +11737,10 @@
         "labelUntil": "Use by 27.10 21:00",
         "labelResp": "By: Ivanova",
         "sampleOrgName": "Your company",
-        "description": "Logo, colors and site appear on posters, QR codes, plates, Setup Helper labels and on the pages employees open by QR. Journals stay black and white.",
+        "description": "Logo and colors for posters, QR codes and labels",
         "logoLead": "The file is saved right away: the logo appears in the left menu and in documents.",
         "colorTitle": "Colors",
-        "colorLead": "All colors are optional. None chosen — we print in WeSetup colors; one chosen — we derive the rest from it.",
+        "colorLead": "Optional: pick one and we match the rest",
         "colorHint": "Color code, for example #5566f6",
         "colorPicker": "Pick a color",
         "colorReset": "Remove color",
@@ -11776,7 +11776,7 @@
         "paletteNone": "The logo has no color — choose colors yourself",
         "paletteFailed": "Couldn't read the logo colors — choose colors yourself",
         "cabinetLabel": "Workspace in company colors",
-        "cabinetHint": "Buttons, links and selected menu items use the primary color (darker if that reads better). Journals and documents stay black and white.",
+        "cabinetHint": "Workspace buttons and menu in your color",
         "cabinetNeedsColor": "Choose a primary color — without it the workspace keeps the WeSetup colors.",
         "previewQrPageCaption": "Employee's phone after scanning a QR",
         "previewQrPageTitle": "Fridge No. 1",
@@ -11790,14 +11790,14 @@
         "qrCenterHintOn": "On — the company's icon or logo is in the centre."
       },
       "contactsPage": {
-        "description": "Phone and email for documents and reports, time zone and language — and where notifications go.",
+        "description": "Phone, email, time zone and language",
         "contactsTitle": "Organization contacts",
-        "contactsLead": "The phone is printed in document details; the accountant email receives the 1C export.",
+        "contactsLead": "For documents and the accountant export",
         "phoneHint": "Contact for inspectors and suppliers — printed in documents",
-        "regionLead": "The time zone sets shift boundaries and scheduled task times; the language applies to the workspace, Mini App and emails.",
+        "regionLead": "Shift and task times, workspace language",
         "timezoneHint": "Used for shifts, tasks and reminders",
         "notifyTitle": "Notifications",
-        "notifyLead": "Notifications go to each person individually — in Telegram and by email. Everyone chooses what to receive in their own settings.",
+        "notifyLead": "Everyone sets up their own notifications",
         "telegramTitle": "Telegram",
         "telegramLinked": "Connected",
         "telegramNotLinked": "Not connected",
@@ -11819,22 +11819,22 @@
           "notifyTitle": "Notifications",
           "notifyBody": "Everyone receives notifications individually. Connect Telegram and choose what to receive in “Set up notifications”."
         },
-        "cityHint": "Pick from the list and the time zone is set for you. Journals record time in it.",
+        "cityHint": "The time zone fills in automatically",
         "cityPlaceholder": "Start typing your city"
       }
     },
     "accessMatrices": {
       "pages": {
         "employeesTitle": "Journal access for employees",
-        "employeesDescription": "Choose which logs employees can see and fill. Click a cell to change access. Ready-made sets are designed for typical food service positions: review them before applying. Until any box is checked, the employee sees all logs under the old access rules.",
+        "employeesDescription": "Which journals an employee sees and fills in. Click a cell to change access. With no ticks, the employee sees all journals. Ready-made sets fit typical catering positions — review them before applying.",
         "positionsTitle": "Journal access by position",
-        "positionsDescription": "Choose which journals employees in each position receive when you send a task to everyone. If a position has no selected journals, its employees can currently access all journals. To restrict a journal for one employee, open <access>employee journal access settings</access>.",
+        "positionsDescription": "Journals for each position; no ticks means all. For individuals — <access>staff access</access>",
         "accessLink": "Journal access for employees"
       },
       "presets": {
         "title": "Ready-made sets",
         "employeesDescription": "Quickly grant common journal bundles to employees in matching positions.",
-        "positionsDescription": "Quickly assign journal bundles to matching positions. Positions are matched by part of their name.",
+        "positionsDescription": "Typical sets by position name",
         "cleaning": "Cleaning → cleaners",
         "temperature": "Temperature → employees",
         "health": "Health → everyone",
@@ -11889,7 +11889,7 @@
         "other": "Other"
       },
       "heading": "Apply the “{preset}” template",
-      "description": "Configure positions and journal access, and enable automatic document creation each month. Applying the template again does not create duplicates.",
+      "description": "Positions, journal access and auto-creation",
       "companyType": "Company type",
       "typeChanged": "The company type will change",
       "seedStaff": "Add demo employees for testing",
@@ -11906,7 +11906,7 @@
       }
     },
     "office": {
-      "description": "Everything company-wide: management, sites and their equipment. Journals are kept at the sites.",
+      "description": "Management, sites and equipment company-wide",
       "guide": {
         "title": "How the office and sites work",
         "office": {
@@ -11924,7 +11924,7 @@
       },
       "staff": {
         "title": "Management",
-        "hint": "The director, the manager and everyone who runs journals and settings for the whole company. Site staff are on the site pages.",
+        "hint": "Management and company-wide staff",
         "count": "{count, plural, =0 {no staff} one {# employee} other {# employees}}",
         "add": "Add to office",
         "emptyTitle": "No management yet",
@@ -11934,14 +11934,14 @@
       },
       "journals": {
         "title": "Journals are kept at the sites",
-        "hint": "The office is not a site: journal documents are created for a site. Open the journals of the site you need.",
+        "hint": "Journals are kept at the sites",
         "failed": "Could not open the office",
         "create": "Create a site",
         "empty": "No sites yet — create the first one and its journals will appear here."
       },
       "points": {
         "title": "Company sites",
-        "hint": "Everything specific to a site — staff, journals, rooms and equipment — is on the site page.",
+        "hint": "Staff, journals and rooms are on the site page",
         "add": "Add site",
         "unplaced": "{count, plural, one {# employee is} other {# employees are}} not assigned to a place yet: they are added to the journals of every site.",
         "unplacedLink": "Assign",
@@ -11952,13 +11952,13 @@
       "equipment": {
         "all": "Show all site equipment",
         "count": "{count, plural, =0 {no equipment} one {# unit} other {# units}}",
-        "hint": "Fridges, sinks and other equipment by site. The full list shows which site each unit belongs to, and you can move it.",
+        "hint": "Equipment belongs to sites",
         "loose": "Without a site: {count}",
         "title": "Site equipment"
       }
     },
     "network": {
-      "description": "All organizations of your account on one screen: today's journals, balance, own 14 days and directory exchange.",
+      "description": "All account organizations on one screen",
       "plan": {
         "label": "Account plan: {plan}",
         "paid": "{tier} · {count, plural, one {# location} other {# locations}}",
@@ -12016,7 +12016,7 @@
           "today": "Today"
         },
         "range": "{from} — {to}: full days, today not included.",
-        "hint": "A day counts when every daily journal the organization keeps has an entry or the day is closed. Days before the organization was created and after it was closed are not counted.",
+        "hint": "A day counts when every daily journal has an entry or the day is closed. Days before the organization was created and after it was closed are not counted.",
         "columns": {
           "filled": "Days with journals filled",
           "records": "Journal entries"
@@ -12050,7 +12050,7 @@
       },
       "managers": {
         "title": "Network managers",
-        "description": "A network manager sees the Network page, sets up and runs directory exchange, transfers data and undoes transfers, reviews skipped records and exchange history, issues the master cabinet code, sees the account balance and moves money between organizations. Requests from other companies, appointing managers, the plan and payments stay with the owner. Every action of a manager is logged under their name.",
+        "description": "A manager runs the network for the owner. They see the Network page, set up and run directory exchange, transfer data and undo transfers, review skipped records and exchange history, issue the master cabinet code, see the account balance and move money between organizations. Requests from other companies, appointing managers, the plan and payments stay with the owner. Every action of a manager is logged under their name.",
         "empty": "No managers yet — only the owner manages the network.",
         "inactive": "rights inactive: no full access",
         "since": "appointed {date}",
@@ -15027,7 +15027,7 @@
   "printAgent": {
     "card": {
       "disconnected": "No printer connected yet",
-      "description": "Install the app on the computer connected to your printer to print journals straight from your phone. This can help during an unexpected inspection.",
+      "description": "Print journals from your phone to your printer",
       "download": "Download Online Printer",
       "lastSeen": "Last connected: {date}",
       "neverSeen": "Has never connected",
@@ -15046,7 +15046,7 @@
       "page": {
         "eyebrow": "Printing",
         "title": "Online printer",
-        "description": "An application on the printer's computer that lets you send journals to print from your phone.",
+        "description": "Print journals from your phone to your printer",
         "how": "How it works",
         "downloadStep": "Download the archive and extract it on the computer connected to the printer.",
         "installStep": "Run <file>{filename}</file>. The application will ask for your Wesetup email and password, let you choose a printer, and add itself to startup. Nothing else needs to be installed.",
@@ -15070,7 +15070,7 @@
         "disconnected": "“{name}” has been disconnected from printing",
         "point": "Prints for",
         "allPoints": "Whole organization",
-        "pointHint": "A location’s journals print on that location’s printer. “Whole organization” prints shared journals and locations without their own printer.",
+        "pointHint": "Site journals print on its printer, the rest on the shared one",
         "pointChanged": "“{name}” now prints for: {point}",
         "pointAria": "Which location “{name}” prints for"
       },
@@ -15088,7 +15088,7 @@
     },
     "labelPrinters": {
       "heading": "Label printers",
-      "description": "Bluetooth printers connected in the Setup Helper Android app. Labels print from the phone even without internet.",
+      "description": "Bluetooth label printers in Setup Helper",
       "how": "How to connect",
       "downloadStep": "Download the app to an Android phone with the button or QR code and install it — the browser will ask you to allow the installation.",
       "loginStep": "Sign in to the app with your WeSetup email and password. You only need to do this once: after that the app works without internet.",
@@ -15113,7 +15113,7 @@
       },
       "devices": {
         "heading": "Phones with the app",
-        "description": "Signing in to the app gives the phone a key. Disconnect a phone if it is lost or no longer needed.",
+        "description": "Phones signed in to the app",
         "empty": "No one has signed in to the app yet.",
         "lastSeen": "{user} · last seen {when}",
         "neverSeen": "{user} · has not connected yet",
@@ -15127,7 +15127,7 @@
       },
       "confirm": {
         "title": "Disconnect “{name}”?",
-        "description": "This phone's key will stop working: the app will sign out the next time it reaches the server.",
+        "description": "This phone’s key will stop working: the app will sign out the next time it reaches the server. Disconnect lost or unused phones.",
         "offline": "While the phone is offline, the app keeps printing.",
         "printers": "Connected printers will stay in the list."
       },
@@ -15154,7 +15154,7 @@
     "labelLog": {
       "eyebrow": "Setup Helper",
       "title": "Labeling log",
-      "description": "Labels printed in the Setup Helper app: what was labeled, when it was made and how long it keeps. They arrive from the phone as soon as it is online.",
+      "description": "Labels printed in Setup Helper",
       "periods": {
         "today": "Today",
         "7d": "7 days",
@@ -15181,7 +15181,7 @@
       "limit": "Showing the latest {count} labels of the period.",
       "summary": {
         "heading": "Labeling",
-        "description": "Every label printed in the app goes to the labeling log: what, when it was made, how long it keeps and who made it.",
+        "description": "Every label goes to the labeling log",
         "today": "Printed today",
         "todayValue": "{labels} · {copies}",
         "soon": "Expiring within a day",
@@ -24376,7 +24376,7 @@
   },
   "settingsTaskVisibility": {
     "title": "Who can see all tasks in the software module",
-    "description": "Choose the positions whose employees need access to all tasks in the software module. The setting is used during synchronization. If none of the employees taking part in synchronization hold a selected position, the previous administrator selection rule applies. Check the resulting access in the software module.",
+    "description": "Admin mode in the software module",
     "guide": {
       "title": "How this works",
       "default": {
@@ -24413,22 +24413,17 @@
       "unauthorized": "Sign in to continue"
     },
     "saved": {
-      "none": "Saved: no positions are selected.",
-      "some": "Saved. Positions in the selection: {count}."
-    },
-    "intro": {
-      "title": "Who can see OTHER employees’ tasks in the software module",
-      "description": "Select the positions whose employees need access to all company tasks in the software module. The setting is used during synchronization; check the resulting permissions in the software module separately.",
-      "recommendation": "<recommendation>Recommendation:</recommendation> one responsible position is usually enough. To check your team’s work, set up “<hierarchy>{hierarchyPath}</hierarchy>”."
+      "none": "Saved: no positions selected. Check the resulting access in the software module.",
+      "some": "Saved. Positions: {count}. Applies at the next sync with the software module."
     },
     "groups": {
       "management": "Management",
       "staff": "Employees"
     },
-    "staffHint": "Employees should only see their own tasks. If someone checks other people’s work, move their position to Management in the position settings.",
+    "staffHint": "Checks others’ work? Move the position to Management",
     "footer": {
-      "dirty": "Unsaved changes. Save to apply your selection during the next synchronization with the software module.",
-      "none": "No positions are selected. Check the resulting access in the software module separately.",
+      "dirty": "You have unsaved changes",
+      "none": "No positions selected",
       "selected": "Positions in the selection: <countValue>{count}</countValue>."
     },
     "save": "Save",
@@ -29658,13 +29653,13 @@
     },
     "autoJournalsPage": {
       "title": "Automatic journal creation and filling",
-      "description": "Select the journals for which WeSetup should create a new document for the current period by itself. The second tick is daily auto-filling: every day at 06:00 the site marks employees as “Healthy, {example}” and records days off, leave and sick leave on its own.",
+      "description": "New period documents are created automatically",
       "pointsNote": "Points: <b>{count, number}</b> — each selected journal is created separately for every point.",
       "guideTitle": "How to set up auto-creation",
       "guide1Title": "Select journals",
       "guide1Body": "Tick those that should be created automatically every month or period (SanPiN, HACCP, daily ones).",
       "guide2Title": "The system does the rest",
-      "guide2Body": "Every morning the system checks whether there is an active document. If not, one is created for the whole current period.",
+      "guide2Body": "Every morning the system checks for an active document; if none, one is created for the whole period. The second tick is auto-filling: at 06:00 the site marks “Healthy, {example}” and records days off, leave and sick leave itself.",
       "guide3Title": "Less manual work",
       "guide3Body": "On the 1st of the month you do not need to create a document for each journal — the system does it. The manager only monitors completion.",
       "qa1Q": "What if I created a document manually earlier?",
@@ -29704,13 +29699,13 @@
       "runTitle": "Create the missing documents right now",
       "runNow": "Create now ({count, number})",
       "automation": "Automation",
-      "automationBody1": "Every day at 04:00 we check the journals enabled here and create any missing documents for the current period. At 06:00 journals with auto-filling get today’s entries: staff journals get health marks that take days off into account, the rest get readings and signatures from the document settings. You do not need to come here every 1st of the month.",
-      "automationBody2": "Who becomes responsible in new documents and which employees appear in the rows is chosen on the journal’s own page when the switch is turned on. Here there are only the switches themselves."
+      "automationBody1": "Documents at 04:00, auto-fill at 06:00",
+      "automationBody2": "Owners are chosen on the journal page"
     },
     "buildingsPage": {
       "title": "Points and rooms",
-      "description": "Business points (buildings with an address) and the rooms inside them. Cleaning journal tasks are assigned by room — one task per room per day. If there are several points, journals can be kept separately for each one: turn this on with the switch below.",
-      "qrPostersHint": "An A4 poster with a QR code for each room: an employee scans it and records temperature and humidity without signing in",
+      "description": "Business addresses and the rooms inside",
+      "qrPostersHint": "An A4 poster per room",
       "qrPostersShort": "QR posters",
       "qrPosters": "Room QR posters",
       "guideTitle": "How to set up points and rooms",
@@ -29747,10 +29742,10 @@
       "noPoints": "There are no points yet",
       "noPointsHint": "Add the first one — for example, your main point or workshop. Inside it you will add rooms, by which cleaning tasks are assigned.",
       "perPointTitle": "Keep journals separately by point",
-      "perPointOnHint": "On: the header has a point selector, journal documents are created for each point, staff and settings are shared.",
-      "perPointOffHint": "For now buildings are just groups of rooms and documents are shared. Turn it on if these are different points: each will have its own documents and a point selector will appear in the header.",
+      "perPointOnHint": "Journal documents per point",
+      "perPointOffHint": "Documents are shared by all points now",
       "readOnlyHint": "Only the client can change this — the consultant has view-only access",
-      "unnamedHint": "{count, plural, one {One point is still called} other {# points are still called}} “Точка N”. The name and address are printed in journal and PDF headers — click the pencil on the point and enter the real ones.",
+      "unnamedHint": "{count, plural, one {One point is still called} other {# points are still called}} “Точка N” — click the pencil and enter a name",
       "staffUpdated": "Employees updated: {count, number}",
       "noChanges": "No changes",
       "enterName": "Enter the point name",
@@ -29768,7 +29763,7 @@
       "addressLabel": "Point address",
       "journalNamePlaceholder": "Name in journal headers — the exact legal name",
       "journalNameLabel": "Name in journal headers",
-      "journalNameHint": "Printed in journal and PDF headers instead of the point’s name and address. Menus and lists keep the short name. Empty means “name, address”.",
+      "journalNameHint": "For journal and PDF headers. Empty means “name, address”",
       "kppLabel": "Point KPP (tax registration reason code)",
       "phoneLabel": "Point phone",
       "save": "Save",
@@ -29786,7 +29781,7 @@
       "change": "Change",
       "andMore": "and {count, number} more",
       "everywhere": "everywhere",
-      "everywhereHint": "“Everywhere” means the employee has no points selected. Remove the only point and they will receive tasks from all points again.",
+      "everywhereHint": "“Everywhere” — no points selected, tasks from all",
       "noRooms": "There are no rooms yet — add some so they appear in the cleaning journals.",
       "orCopyFrom": "or copy from",
       "copyFromLabel": "Point to copy rooms from",
@@ -29804,7 +29799,7 @@
       "add": "Add",
       "addRoom": "Add room",
       "officeBadge": "Office",
-      "sphereHint": "The site type defines its journal set: when you change it, the mandatory journals of the new type are turned on and nothing is turned off.",
+      "sphereHint": "New type journals turn on, old ones stay",
       "sphereJournalsLimited": "The type is saved, but its journals do not fit your plan's limit — turn on the ones you need in Journal settings."
     },
     "calendarPage": {
@@ -29815,7 +29810,7 @@
       "kindCapa": "Corrective actions",
       "kindBatch": "Batch expiry dates",
       "title": "Calendar",
-      "description": "Deadlines for medical books, calibrations, subscription and batches — in the calendar on your phone and computer, without signing in.",
+      "description": "Medical book, calibration and subscription deadlines in your calendar",
       "eventsPerYear": "Events for the year: {count, number}"
     },
     "calendarClient": {
@@ -29866,74 +29861,62 @@
     },
     "compliancePage": {
       "title": "Journal strictness",
-      "description": "Journal strictness settings: who can edit already saved entries and when, and what happens when a temperature goes out of range. By default any employee can open their completed task and change the values. The edit history is kept in the journal regardless of these settings."
+      "description": "Who can edit journal entries and when. By default an employee can open their completed task and change the values. The edit history is always kept."
     },
     "complianceClient": {
       "durationMinutes": "{count, number} min",
       "durationHours": "{count, plural, one {# hour} other {# hours}}",
       "qrModePublicLabel": "From a list",
-      "qrModePublicHint": "Anyone who scanned the poster picks their own name. Fastest, but during an inspection an entry can be disputed: anyone could have picked the name.",
+      "qrModePublicHint": "Fast, but anyone could pick the name",
       "qrModePinLabel": "Name + PIN",
-      "qrModePinHint": "The employee picks their name and enters the personal 4-digit PIN from their card. Five mistakes lock it for 15 minutes. Simpler than a password on someone else’s phone.",
+      "qrModePinHint": "Personal 4-digit PIN from the card",
       "qrModeAuthLabel": "Only after signing in",
-      "qrModeAuthHint": "After scanning, the employee signs in with their own account (password or Telegram); no name is picked. The entry is signed by the account — inspectors find this reliable.",
+      "qrModeAuthHint": "Sign in with own account — most reliable",
       "saveFailed": "Could not save",
       "saveError": "Save error",
       "error": "Error",
       "readingPhotoOff": "Photo capture is off: readings are entered manually, QR forms have no photo button",
-      "readingPhotoRequiredOn": "Photo is required: a temperature cannot be saved via QR without a photo",
-      "readingPhotoOn": "Photo capture is on: QR forms start with “Take a photo of the reading”",
+      "readingPhotoRequiredOn": "Photo is required: a temperature cannot be saved via QR without a photo. Maintenance, repair and humidity need none",
+      "readingPhotoOn": "Photo capture is on: QR forms start with “Take a photo of the reading”; manual entry still works",
       "healthQrOn": "QR clearance is on: employees check in themselves, and at the end of the shift you receive a list of those who did not",
       "healthQrOff": "QR clearance is off: hygiene is marked in the journal",
-      "qrAuthSaved": "QR forms now require sign-in: the account signs the entry",
-      "qrPinSaved": "QR forms: name + PIN. Set PINs for employees in their cards",
-      "qrPublicSaved": "QR forms are open: the name is picked from a list",
-      "editOnlyOn": "On: only administrators can edit",
-      "editOnlyOff": "Off: any employee can edit",
-      "lockOn": "Closed day is on: yesterday’s entries are locked",
+      "qrAuthSaved": "QR forms now require sign-in: the account signs the entry. No need to reprint posters",
+      "qrPinSaved": "QR forms: name + PIN. Set PINs in employee cards — the same code as on the shared tablet. Five mistakes lock it for 15 minutes",
+      "qrPublicSaved": "QR forms are open: the name is picked from a list. No need to reprint posters",
+      "editOnlyOn": "On: only managers can edit completed entries",
+      "editOnlyOff": "Off: employees can fix their own entries",
+      "lockOn": "Closed day is on: staff cannot edit past days; management edits go to the activity log",
       "lockOff": "Closed day is off: entries can be edited",
-      "photoOn": "Photo evidence is on: every task step now requires a photo",
+      "photoOn": "Photo evidence is on: every task step needs a photo — about 30–60 seconds per task",
       "photoOff": "Photo evidence is off: task steps are confirmed with a single button",
-      "escalateOn": "Management will be told if a deviation is not fixed in time",
+      "escalateOn": "Management will be told if the responsible person does not fix a deviation in time",
       "escalateOff": "Only the person responsible for the journal will be notified",
       "waitSaved": "Waiting for a fix for {duration}",
-      "shiftEndSaved": "Shift end hour: {time}",
+      "shiftEndSaved": "Shift closes at {time}: empty shift tasks close marked “closed automatically”",
       "editOnlyTitle": "Only admins can edit completed entries",
-      "editOnlyBody": "When on, the “Edit data” button on an already completed task appears only for managers (manager, head chef, technologist, owner). Regular employees see the entry as saved, with no way to change it.",
-      "editOnlyNote": "Off by default. Most teams do not need this strictness — an employee who has just filled in a journal should be able to fix a typo themselves.",
-      "historyNote": "<b>Edit history</b> is kept in the journal regardless of this switch — every change is recorded with the author, time and previous values. This is a HACCP requirement and cannot be turned off.",
+      "historyNote": "<b>Edit history</b> is always kept — a HACCP requirement",
       "shiftTitle": "End hour of the working shift",
-      "shiftBody": "At this hour (UTC), the system automatically closes all “shared shift tasks” (event-based journals) that have no entries, marking them “closed automatically”. In “Today” they turn green, but in the weekly report the manager sees this as a sign of negligence.",
-      "shiftNote": "Default is <strong>0</strong> (midnight UTC = 03:00 Moscow time). For night shifts set, for example, 6 — the shift will close at 06:00 UTC = 09:00 Moscow time.",
+      "shiftNote": "UTC: <strong>0</strong> = 03:00 Moscow time",
       "lockTitle": "Closed day — yesterday’s entries cannot be edited",
-      "lockBody": "When on, after the “start of today” (taking the shift end hour above into account) regular employees cannot change or delete entries for past days. Management still can, but every such action is recorded in the activity log, marked “<code>Closed day edit</code>”.",
-      "lockNote": "Use it if your business undergoes a HACCP audit and you need to guarantee that a waiter cannot backdate yesterday’s temperature check.",
       "photoTitle": "Photo evidence at every task step",
-      "photoBody": "When enabled, employees attach a photo to each task step in the software module. The Done button becomes available after upload. Managers can review the photo to check how that step was completed.",
-      "photoNote": "Turns journal filling from a “bare tick” into real proof for inspections. The downside is that every task takes employees 30–60 seconds longer.",
       "escalateTitle": "Notify management if a deviation is not fixed",
-      "escalateBody": "When a temperature goes out of range, the message goes immediately to the <b>person responsible for the journal</b> — the one assigned in “Journal owners”. If they have not brought the temperature back to normal and have not written in the journal what they did, managers find out after the set time. One message per deviation, not per reading.",
-      "escalateNote": "Turn it off if the responsible person is the manager — then the second message is just noise. If no responsible person is assigned or they have no Telegram connected, the message goes to management immediately.",
       "waitFor": "Wait for a fix for",
       "waitThen": "— then notify management",
       "qrTitle": "Entry via QR poster",
-      "qrDescription": "An employee scans the poster of a journal, fridge or room and records an entry from their phone. Choose how the person who did it is confirmed. There is no need to reprint posters when you change the mode.",
+      "qrDescription": "How the author of an entry is confirmed",
       "qrModesLabel": "QR form mode",
       "healthQrTitle": "Fit-for-work clearance via the hygiene journal QR",
-      "healthQrBody": "The employee signs before the shift: no temperature above 37 °C, no signs of infection in them or their family, no respiratory illness or pustules on the skin. At the shift end hour, those responsible for the main journals receive a list of people who did not check in.",
       "healthQrAria": "Fit-for-work clearance via QR",
       "readingPhotoTitle": "Reading photo capture",
-      "readingPhotoBody": "On the fridge sticker and the storeroom poster the first button is “Take a photo of the reading”: the photo of the thermometer or display goes into the journal next to the value. {autofill} If they do not want to take a photo — “Enter manually”. Turn it off and the photo buttons disappear.",
-      "readingPhotoAutofillOn": "Digits from the photo are filled in automatically — the employee only has to check and save.",
-      "readingPhotoAutofillOff": "Digits from the photo are filled in automatically on the Premium plan; for now the employee types them in.",
+      "readingPhotoAutofillOn": "Digits from the photo fill in automatically",
+      "readingPhotoAutofillOff": "Reading digits from photos is on Premium",
       "readingPhotoRequiredTitle": "Photo is required",
-      "readingPhotoRequiredBody": "A temperature cannot be saved via QR without a photo: the photo confirms the measurement was taken at the fridge itself. “Maintenance”, “Repair” and humidity need no photo.",
-      "pinNote": "The PIN is set in the employee card (“Staff → card → PIN for quick QR authorisation”) or on the shared tablet page — it is the same code. An employee without a PIN cannot record via QR. In public mode the PIN is also asked from those who have one."
+      "pinNote": "Without a PIN in their card, an employee cannot record via QR"
     },
     "consultantPage": {
       "clientOnly": "Only the client can change consultant settings.",
       "title": "Consultant",
-      "description": "A SanPiN / HACCP consultant or integrator sees your workspace and helps you keep journals. You choose the access level and can turn off the support at any time — access closes immediately."
+      "description": "A specialist who helps you keep journals. You choose the access level and can turn it off at any time — access closes immediately."
     },
     "consultantClient": {
       "levelView": "View only",
@@ -29964,19 +29947,19 @@
       "accessLabel": "Consultant access level",
       "nowCanEdit": "{name} can now edit journals",
       "nowViewOnly": "{name} can now only view",
-      "levelNote": "A level change takes effect immediately. At any level the consultant does not see billing or the plan and cannot delete the organisation. They can also change the level themselves — then you get a notification and the event is logged; you can switch back to “view only” or disconnect the consultant here in one click. Their actions appear in the <link>activity log</link> marked “{mark}”.",
+      "levelNote": "Cannot see billing or the plan; actions go to the <link>activity log</link> (“{mark}”)",
       "markSupport": "support service",
       "markPartner": "partner",
       "brandingEyebrow": "Branding",
       "brandingTitle": "Consultant logo and contacts in your workspace",
-      "brandingBody": "While support is on, the workspace header, the sign-in page and PDFs show the logo and contacts of {name}. If you want to see only WeSetup branding, turn it off. The consultant keeps their access.",
+      "brandingBody": "In the header, on the sign-in page and in PDFs",
       "brandingShown": "Consultant branding is shown again",
-      "brandingHidden": "Consultant branding is hidden",
+      "brandingHidden": "Consultant branding is hidden; their access remains",
       "showBranding": "Show branding",
       "hideBranding": "Hide branding",
       "detachEyebrow": "Disconnecting",
       "detachTitle": "End the support",
-      "detachBody": "The consultant’s access closes immediately and branding returns to WeSetup. Your journals and the entries they made remain. You can connect a consultant again at any time — by link or code.",
+      "detachBody": "Access closes at once; journals and entries stay",
       "detachButton": "Disconnect consultant",
       "detachDialogTitle": "Disconnect {name}?",
       "detachDialogDescription": "The support ends immediately.",
@@ -30035,11 +30018,11 @@
       "title": "Equipment",
       "subtitleByPoints": "Fridges, sensors, ovens — by point and room",
       "subtitle": "Fridges, sensors, ovens — by workshop",
-      "stickersHint": "QR stickers for the equipment of the point selected at the top — record temperature from a phone",
+      "stickersHint": "Record temperature from a phone",
       "stickers": "QR stickers",
-      "postersHint": "An A4 poster with a QR code for each fridge of the point selected at the top: an employee scans it and records the temperature without signing in",
+      "postersHint": "An A4 poster per fridge",
       "plates": "Plates",
-      "platesHint": "A plate for each fridge and freezer of the point selected at the top: COLD or FROST, temperature range, number, workshop and QR - 4 per A4 sheet",
+      "platesHint": "COLD or FROST, range and QR — 4 per sheet",
       "posters": "A4 posters",
       "emptyTitle": "No equipment yet",
       "emptyAdd": "First create a room of the point, then the equipment in it.",
@@ -30058,17 +30041,16 @@
     },
     "experimentalPage": {
       "title": "Experimental features",
-      "description": "Experimental features that are not yet ready for everyone. Turn them on for your organisation one at a time — if something breaks, turn the switch off and you will return to the old look without losing data. All changes are recorded in the activity log."
+      "description": "New features still in progress. Turn them on one at a time: switch off to return to the old look without losing data. Changes go to the activity log."
     },
     "experimentalClient": {
       "saveFailed": "Could not save",
       "v2On": "The new journal layout is on. Journals are gradually switching to it.",
-      "v2Off": "The new journal layout is off. Back to the old look.",
+      "v2Off": "The new journal layout is off — back to the old look, data intact.",
       "error": "Error",
       "v2Title": "New journal layout",
       "recommended": "recommended",
-      "v2Body": "One look for all journal pages: the same windows, button bars and dialogs. Only the appearance changes — features, tables and buttons stay the same. On by default for everyone since May 2026: all 33 active journals have been switched over with no problems.",
-      "v2Note": "If something looks odd, turn the switch off and you will go back to the old look without losing data (the old look is kept in every journal as a backup)."
+      "v2Body": "One look for windows and buttons — same features"
     },
     "inspectorPortalClient": {
       "revokeFailed": "Could not revoke",
@@ -30153,27 +30135,27 @@
       "afterCreate": "After creation the QR and an A4 print button will appear. You can print the sheet any number of times — the QR does not change until you revoke it.",
       "createQr": "Create QR",
       "recentViews": "Recent views",
-      "recentViewsHint": "What the inspector opened, when and from which address. The full list is in the activity log.",
+      "recentViewsHint": "The full list is in the activity log",
       "noViews": "Nobody has opened the journals via QR or link yet."
     },
     "inspectorPortalPage": {
       "title": "Inspector portal",
-      "description": "View-only access for the sanitary inspectorate / Rospotrebnadzor. The inspector scans the QR code, picks a period and browses the journals sheet by sheet, just like a paper folder. They cannot change anything, and every view is recorded."
+      "description": "Journals for inspectors, view only. The inspector scans the QR code, picks a period and browses the journals like a paper folder. They cannot change anything; every view is recorded."
     },
     "mercurySettingsClient": {
       "modeOffTitle": "Read only",
-      "modeOffBody": "Incoming VSDs are visible and fill in the acceptance journal, but you certify them yourself in your Mercury account.",
+      "modeOffBody": "You redeem them yourself in Mercury",
       "modeAssistedTitle": "I certify myself, with one button (recommended)",
-      "modeAssistedBody": "The system finds the document, calculates the deadline, sends reminders and fills in the journal row. Certification happens on your button press after physical acceptance.",
+      "modeAssistedBody": "Redeemed by your button after acceptance",
       "modeAutoTitle": "Automatically after the journal is filled in",
-      "modeAutoBody": "Certifies on its own, but ONLY after a person has filled in the incoming inspection row and marked it “accept”, and only when the volume matches exactly. Works from a whitelist of suppliers.",
+      "modeAutoBody": "After “accept” in the journal, if volume matches exactly",
       "saveFailed": "Could not save",
       "credentialsSaved": "Details saved",
       "error": "Error",
       "unavailableTitle": "Mercury comes with the Premium plan",
       "unavailableBody": "Incoming VSDs, one-tap certification and automatic filling of the acceptance journal.",
       "demoTitle": "Demo mode — data is not from Mercury",
-      "demoBody": "The Vetis.API access key has not been configured on the server yet, so sample documents are shown. Real VSDs will appear once Rosselkhoznadzor approves the application.",
+      "demoBody": "Real VSDs appear once Rosselkhoznadzor approves the application",
       "connection": "Connection",
       "systemRegistered": "The WeSetup information system is registered in Vetis.API",
       "systemDemo": "The Vetis.API key is not configured on the server — demo mode is active",
@@ -30186,7 +30168,7 @@
       "envProd": "Production environment",
       "saveCredentials": "Save details",
       "redemptionMode": "Certification mode",
-      "redemptionModeHint": "Certifying a VSD is a legally significant action of the authorised person. We deliberately do not do it for you by default.",
+      "redemptionModeHint": "A legally significant action — manual by default",
       "modeChanged": "Certification mode changed",
       "enterprisesAndSync": "Sites and synchronisation",
       "syncDisabled": "Synchronisation turned off",
@@ -30196,7 +30178,7 @@
       "noEnterprises": "No sites yet. Load them from Mercury or add one manually by its GUID from the Cerberus registry, then choose a location — the site's VSDs will go to that location's acceptance journal.",
       "pointFallback": "location",
       "commonJournal": "shared journal",
-      "enterprisesHint": "A site's VSDs go to the incoming control journal of the chosen location. A site without a location goes to the shared journal. Only enabled sites are polled.",
+      "enterprisesHint": "A site’s VSDs go to its location’s acceptance journal",
       "loadEnterprises": "Load from Mercury",
       "loadQueued": "The request has been sent to Mercury — sites will appear here after the next exchange, usually within a few minutes",
       "loadAlreadyQueued": "The request is already sent — sites will appear after Mercury replies",
@@ -30232,7 +30214,7 @@
     "mercuryPage": {
       "eyebrow": "Integrations",
       "title": "FSIS “Mercury”",
-      "description": "Incoming veterinary documents arrive on their own; acceptance and certification happen in one window.",
+      "description": "Incoming vet documents: accept and redeem in one window",
       "guideTitle": "How to connect Mercury",
       "b1Title": "Find the business entity GUID",
       "b1Body": "Mercury account → “Business entity”. This is your organisation’s identifier in the Cerberus registry and is not a secret.",
@@ -30275,10 +30257,10 @@
       "disconnectFailed": "Could not disconnect",
       "disconnected": "Software module disconnected",
       "disconnectError": "Disconnection error",
-      "pageDescription": "Automatic sending of tasks to cleaners via the software module (a task service for staff, <link>tasksflow.ru</link>). Employee synchronisation automatically creates missing people in the software module, and cleaning journal rows turn into recurring tasks for the cleaner. When a task is marked as done, the journal cell is filled in automatically.",
+      "pageDescription": "Staff tasks via <link>tasksflow.ru</link>",
       "unavailable": "The software module is unavailable",
       "linksTitle": "Employee links",
-      "linksHint": "Synchronisation works by phone number. If an employee already exists in the software module, they will be linked automatically. If they are not there yet, WeSetup will create them in the company the API key is bound to. The phone number must be in the format <code>+7XXXXXXXXXX</code> — then synchronisation will work without any manual tinkering.",
+      "linksHint": "Linked by phone in <code>+7XXXXXXXXXX</code> format",
       "loading": "Loading…",
       "noEmployees": "No employees with an active account",
       "noEmployeesHint": "Add employees in the “Staff” section, fill in their phone numbers, then click “Synchronise”.",
@@ -30337,9 +30319,9 @@
       "b1Title": "Get an API key",
       "b1Body": "In the software module’s admin panel: Integrations → Create API token. Copy the key and enter your software module’s address (URL).",
       "b2Title": "Link your employees",
-      "b2Body": "After connecting, a list of your employees and the software module team will open. Link them by matching full name or phone number.",
+      "b2Body": "Synchronisation links employees by phone number. Anyone missing from the software module is created in the company the API key belongs to.",
       "b3Title": "Tasks will start flowing",
-      "b3Body": "Once linked, every morning WeSetup sends the day’s tasks to the software module: “Fill in journal X”. The employee gets a notification in Telegram.",
+      "b3Body": "Cleaning journal rows become recurring tasks; every morning WeSetup sends the day’s tasks. A completed task fills in the journal cell itself.",
       "q1": "Who is the verifier?",
       "a1": "This is the employee who checks a completed journal (a two-step check). They are set on the “People responsible for journals” page, in the “Who verifies” section.",
       "q2": "Can I work without the software module?",
@@ -30347,7 +30329,7 @@
     },
     "journalChecklistsPage": {
       "title": "Checklists for journals",
-      "description": "For each journal you can create a list of actions (for example “disassemble the equipment, wash, reassemble”). The employee will see the checklist in the fill-in form and tick the items. Required items block submission. All ticks are saved in the activity log.",
+      "description": "Ticks the employee sets in the form. For example: “disassemble, wash, reassemble”. Required items block submission; all ticks are saved to the activity log.",
       "itemsCount": "{count, number} {count, plural, one {item} other {items}}",
       "noChecklist": "No checklist",
       "disabledTitle": "Disabled journals",
@@ -30355,7 +30337,7 @@
     },
     "journalChecklistsCodePage": {
       "eyebrow": "Employee checklist",
-      "description": "A list of actions the employee must complete before saving a journal entry. Any item can be made required — then the form will not be submitted until all ticks are set. All ticks are saved to the activity log.",
+      "description": "What to do before saving an entry. A required item blocks the form until it is ticked. All ticks are saved to the activity log.",
       "cleaningTitle": "The cleaning checklist is configured in “Buildings and rooms”",
       "cleaningBody": "Since 8 May 2026, routine and deep cleaning are set up in the room itself. Open <link>Locations and rooms</link> and click “Configure” next to the room — everything is set there: what to clean, on which days, with which products, and the checklist. The items below are kept for compatibility with the old format; add new ones in the room settings."
     },
@@ -30438,11 +30420,11 @@
       "modeSaved": "Mode saved",
       "error": "Error",
       "title": "Task distribution mode",
-      "description": "How employees receive tasks. The change applies to ALL journals at once. You can change it at any time — unfinished tasks will continue as they were taken.",
+      "description": "How employees receive tasks. Applies to all journals at once; started tasks continue as they were taken.",
       "pros": "Pros",
       "cons": "Cons",
       "saving": "Saving...",
-      "footerHint": "💡 The mode is shared by all of the organisation’s journals. What exactly to do in each task, step by step, is configured in the <link>“Journal step-by-step instructions”</link> section."
+      "footerHint": "Task steps are in <link>“Journal step-by-step instructions”</link>"
     },
     "seedAllButton": {
       "failed": "Could not create steps for all journals",
@@ -30464,10 +30446,10 @@
     },
     "journalPipelinesPage": {
       "title": "Journal step-by-step instructions",
-      "description": "Set up step-by-step instructions: what supplies to take, where to go and what to check. Employees see these steps when they open a task.",
+      "description": "Steps the employee sees in a task",
       "quickStart": "🚀 Quick start",
       "quickStartTitle": "Create steps for all journals in one click",
-      "quickStartBody": "Creates basic steps for each journal from its columns. Journals that are already configured (<strong>{configured, number}</strong>) are not recreated. Journals without defined columns will arrive in notifications for manual setup.",
+      "quickStartBody": "Basic steps from columns. Configured ones (<strong>{configured, number}</strong>) are not recreated.",
       "legendTitle": "Status legend:",
       "legendTemplate": "🌳 Template",
       "legendTemplateBody": "— the steps were created from the journal’s columns, basic setup.",
@@ -30517,7 +30499,7 @@
       "resetBullet3": "Journal entries are not affected",
       "resetConfirm": "Restore defaults",
       "titlePrefix": "Step-by-step instructions",
-      "description": "Employees see these steps when they open the task. Describe specific actions so a new employee can complete the work without extra instructions.",
+      "description": "Steps the employee sees in a task",
       "introLabel": "Hint above the steps (optional)",
       "introPlaceholder": "For example: “Room cleaning. Follow the steps in order”",
       "stepTitlePlaceholder": "Step name (for example, “Get the equipment”)",
@@ -30532,7 +30514,7 @@
     },
     "journalResponsiblesPage": {
       "title": "Journal responsibles",
-      "description": "Choose which positions fill in each journal and who appears in the document header. Changes apply to open documents and printouts. Review the suggested assignments before using auto-assign.",
+      "description": "Who fills in and reviews each journal",
       "guideTitle": "How to assign journal responsibles",
       "b1Title": "“Fill in” (top block)",
       "b1Body": "the employees who keep the records. There can be one or several (for committees).",
@@ -30551,7 +30533,7 @@
     },
     "journalTaskModePage": {
       "title": "Task distribution modes",
-      "description": "For each journal, choose how exactly tasks in the software module are created and how the responsible person verifies them. Cleaning can be distributed by room, hygiene by employee, quality checks by shift. One journal = one summary task by default. If you leave “As default”, the system will pick a sensible mode for this type of journal.",
+      "description": "How journal tasks are created and reviewed",
       "noAreasWarning": "⚠ No rooms are set up in the organisation. The “Per room” mode will not create tasks until you add workshops in <link>“Rooms”</link>.",
       "guideTitle": "How task distribution modes work",
       "b1Title": "Per room",
@@ -30580,7 +30562,7 @@
       "stepDeleted": "Step deleted",
       "moveNodeFailed": "Could not move the node",
       "eyebrow": "Employee guide (trial version)",
-      "description": "The “how to fill in the journal” instruction that the employee sees in the “How to fill in” window. It is not tied to columns — it is reference information. You can nest subsections.",
+      "description": "The “How to fill in” help for employees. It is not tied to journal columns; you can nest subsections.",
       "addStep": "Add step",
       "emptyTitle": "The guide is not set up yet",
       "emptyBody": "Add the first step — for example, “What should be available” or “How often to fill in”. Each step consists of a title, an explanation and an optional photo.",
@@ -30631,7 +30613,7 @@
       "nodesRemoved": "Nodes removed: {count, number}",
       "treeCleared": "Tree cleared",
       "moveNodeFailed": "Could not move the node",
-      "description": "The steps the software module will guide the employee through. Pinned steps (📌) are linked to journal columns and fill them in automatically. Steps you add (✏) are your own instructions and hints.",
+      "description": "Steps the module guides the employee through. Pinned steps (📌) are linked to journal columns and fill them in; steps you add (✏) are your hints.",
       "addStep": "Add step",
       "noColumns": "The journal has no defined columns",
       "seedFromColumns": "Create from journal columns",
@@ -30710,7 +30692,7 @@
     },
     "journalBonusesPage": {
       "title": "Journal bonuses",
-      "description": "The amount an employee receives on the “Additional bonus” account in the software module for completing a “single” journal for the day. It is visible to the worker right on the task card and encourages them to “grab” the work first. If you set 0, no bonus is awarded."
+      "description": "A reward for a “single” journal. It goes to the “Additional bonus” account in the software module and shows on the task card. 0 means no reward."
     },
     "onboardingAdvancedPage": {
       "orgInfoTitle": "Name, tax ID, address",
@@ -30921,18 +30903,18 @@
       "distModeTitle": "Distribution mode",
       "defaultAssignee": "Default assignee",
       "autoRoundRobin": "— Auto (in turn) —",
-      "autoHint": "If not specified, the system rotates eligible employees over the last 7 days.",
+      "autoHint": "Not set — we rotate suitable employees",
       "allowedPositions": "Who can receive it",
       "noPositions": "No positions have been created yet.",
       "allowedPositionsHint": "Empty means all positions are allowed.",
       "bonusTitle": "Completion bonus",
       "bonusBadge": "Bonus journal",
-      "bonusHint": "0 ₽ means a regular obligation. If above 0, the employee gets a “Take with bonus” button with photo proof; the bonus goes to the first person to complete it.",
+      "bonusHint": "0 ₽ — no bonus; the first to complete gets it",
       "savedState": "Saved"
     },
     "kioskClient": {
       "error": "Error",
-      "photoOn": "Photo at sign-in turned on",
+      "photoOn": "Photo at sign-in is on. A frame is taken only with the employee’s consent — the tablet asks at first sign-in",
       "photoOff": "Photo at sign-in turned off",
       "createFailed": "Could not create",
       "deviceAdded": "Tablet added: open the QR code on it",
@@ -30955,8 +30937,7 @@
       "autolock": "Auto-lock",
       "autolockLabel": "Return to the list after (seconds of inactivity)",
       "photoTitle": "Photo at sign-in",
-      "photoLabel": "Take a frame from the front camera when signing in with a PIN and attach it to the signature.",
-      "photoNote": "This is proof that “this exact person signed in” for inspections, not face recognition. The frame is taken only after the employee’s consent; the tablet asks for it at the first sign-in. Without consent the employee works as usual and no photo is taken.",
+      "photoLabel": "Attach a front camera frame to the signature",
       "employeePins": "Employee PINs",
       "issueAll": "Issue to everyone without a code",
       "pinSet": "PIN set",
@@ -30975,13 +30956,13 @@
     },
     "kioskPage": {
       "title": "Shared tablet",
-      "description": "A shared workplace tablet: each employee signs entries with a personal 4-digit PIN.",
+      "description": "Employees sign entries with their own PIN",
       "withoutPin": "Without PIN: {count, number}",
       "allHavePin": "Everyone has a PIN"
     },
     "masterCabinetPage": {
       "title": "Master cabinets",
-      "description": "The cabinet operator maintains the menu and raw materials, and the connected points receive them in their quality-check and perishables journals. Here you see which cabinets exist, which points are connected and who works in them."
+      "description": "One menu and ingredients for connected sites"
     },
     "namesSettingsClient": {
       "fixFields": "Check the fields marked in red",
@@ -30989,9 +30970,9 @@
       "savedCount": "Saved: {count, plural, one {# name} other {# names}}. The menu and journals already use the new names",
       "noChanges": "There were no changes",
       "sectionsTitle": "Menu sections",
-      "sectionsHint": "Menu items of the workspace and the mini app. “Settings” and “Sign out” cannot be renamed.",
+      "sectionsHint": "“Settings” and “Sign out” cannot be renamed",
       "journalsTitle": "Journals",
-      "journalsHint": "The official name is shown in grey: it stays in print, for the inspector and in reports.",
+      "journalsHint": "Grey is official: for print and inspectors",
       "customCount": " {count, number} of {total, number} have a custom name.",
       "searchPlaceholder": "Find a journal by its custom or official name",
       "searchAria": "Find a journal",
@@ -31008,7 +30989,7 @@
     },
     "namesPage": {
       "title": "Names",
-      "description": "Name menu sections and journals the way your team is used to. Only employees of your organisation will see the custom name: in the menu, on the home page, in journals, QR forms, the mini app and Telegram. Print, the inspector view and reports keep the official names.",
+      "description": "Your own names for your team. Only your employees see them — in the menu, journals, QR forms, the mini app and Telegram. Print, the inspector view and reports keep the official names.",
       "customCount": "{count, plural, one {# custom name} other {# custom names}}"
     },
     "onboardingPage": {
@@ -31032,7 +31013,7 @@
     },
     "onboardingTemplatePage": {
       "title": "Set up the account in 3 minutes",
-      "description": "Pick your type of business and answer five questions — positions, rooms, equipment and journals are set up. Nothing gets deleted."
+      "description": "Five questions and your workspace is set up. Positions, rooms, equipment and journals. Nothing gets deleted."
     },
     "createPaperDocumentDialog": {
       "titleRequired": "Enter the document name",
@@ -31181,16 +31162,16 @@
     },
     "partnerPage": {
       "title": "Become a partner",
-      "description": "Do you advise on SanPiN / HACCP, implement systems or service equipment? Connect your clients to WeSetup under your own brand and earn a reward from their subscriptions."
+      "description": "Connect clients under your own brand. For SanPiN and HACCP consultants, integrators and service companies — a reward from every client subscription."
     },
     "permissionsPage": {
       "title": "Access rights",
-      "description": "Three levels of setup: a base package for a <strong>group</strong> (Management / Staff), special rights for a <strong>position</strong> and, if needed, individually for a <strong>specific person</strong>. Rights set on a lower level replace those of a higher one.",
+      "description": "Group → position → person: the lower level wins",
       "masterCabinets": "Access to master cabinets"
     },
     "positionStaffVisibilityPage": {
       "title": "Staff visibility by position",
-      "description": "Choose which employees each position can see. For example, a shift supervisor can see their team. The setting applies in the software module and the Telegram bot to everyone in that position, including new employees."
+      "description": "Which employees each position can see. For example, a shift lead sees their team. Applies in the software module and the Telegram bot to everyone in the position, including new staff."
     },
     "qrPosterCard": {
       "checkLinkTitle": "Open the QR code link in a new tab to check that the form opens",
@@ -31222,11 +31203,11 @@
       "titleOverview": "QR codes",
       "descJournalDoc": "{journal} · stickers for the document “{document}”",
       "descJournalMissing": "Journal not found",
-      "descObjectsRoom": "Stickers for warehouses and rooms: the employee scans and enters temperature and humidity.",
-      "descObjectsEquipment": "Stickers for refrigerators and equipment: the employee scans and enters a reading.",
-      "descOverview": "Universal codes, the QR code of every enabled journal and object stickers.",
+      "descObjectsRoom": "Stickers for warehouses and rooms",
+      "descObjectsEquipment": "Stickers for fridges and equipment",
+      "descOverview": "Shared codes, journal QR codes and object stickers",
       "extraTitle": "Additional: for a single document",
-      "extraHint": "They lead only to their own document and stop working after its last day. They are not ticked; tick them if you need them.",
+      "extraHint": "Work until their document ends",
       "stickerEquipment": "Equipment stickers",
       "stickerRooms": "Warehouse and room stickers",
       "stickerKeywords": "refrigerators rooms warehouses objects",
@@ -31247,20 +31228,20 @@
       "showAll": "Show all",
       "mainTitleOverview": "Universal: not tied to a single journal",
       "mainTitleJournal": "Main: always work",
-      "mainHintOverview": "Each is a separate poster, ticked for printing. “All journals” goes on the wall by the entrance, where the employee chooses a journal. “Clearance” is for the shift supervisor.",
+      "mainHintOverview": "“All journals” by the entrance, “Clearance” for the supervisor",
       "mainHintJournal": "Ticked for printing. The code is perpetual: put it up once and it works.",
       "noDocuments": "There are no current documents. The main QR code is enough: on scanning it finds or creates a document itself.",
       "journalsTitle": "Journals: each has its own QR",
-      "journalsHint": "All enabled journals. The code leads straight to the journal with no choice and always works: if there is no document, it is created on the first scan. Additional codes for a separate document are available via the “QR control point” button in the journal itself.",
+      "journalsHint": "The code opens the journal directly and always works",
       "noJournals": "There are no enabled journals.",
       "pickJournals": "Choose journals",
       "objectsTitle": "Objects: refrigerators, warehouses, lamps",
-      "objectsHint": "Entries are made via the sticker on the object itself. The journal QR code shows the status of the objects for today.",
+      "objectsHint": "Entries via the sticker on the object itself",
       "objectSectionRooms": "Rooms",
       "objectSectionEquipment": "Equipment",
       "objectSectionStickers": "Object stickers",
-      "objectHintRoom": "It is stuck in the room itself: entries are made via the sticker, so it is clear what exactly was measured.",
-      "objectHintEquipment": "It is stuck on the object itself: entries are made via the sticker, so it is clear what exactly was measured.",
+      "objectHintRoom": "Stuck in the room, so it is clear what was measured",
+      "objectHintEquipment": "Stuck on the object, so it is clear what was measured",
       "formatForFound": "Format for the found ones",
       "formatForAll": "Format for all",
       "formatForFoundStickers": "Format for the found stickers",
@@ -31298,26 +31279,26 @@
       "allSaved": "All changes saved"
     },
     "journalScopePage": {
-      "description": "How tasks of this journal behave for employees, in the app and in the software module: the task type (personal or shared), the “Not required today” button and the list of reasons."
+      "description": "How this journal’s tasks behave for employees"
     },
     "rolePresetsPage": {
       "title": "Permission sets by role",
-      "description": "What each role sees on the site and in the Telegram bot. You can assign a permission set to a specific employee under “Staff”.",
+      "description": "What each role sees on the site and in the bot",
       "staff": "Staff",
       "headChefWarning": "<strong>The production manager</strong> does NOT have the <code>journals.view</code> permission by default — they see “tasks” instead of “journals”, work on the Control Board and review completed tasks. If needed, tick the box below and they will get access to the Journals section.",
-      "changePresetHint": "To change the permission set for a specific employee, open <link>Staff</link> and pick one from the list. Changes apply right away — the employee will see the new interface after refreshing the page."
+      "changePresetHint": "Assign a set to an employee under <link>Staff</link>"
     },
     "schedulePage": {
       "title": "Shift schedule",
-      "intro": "Record who is on duty today and in which position. The Telegram bot and mini app use this schedule to send reminders to the responsible employee working today.",
+      "intro": "Who is on shift today and in which position. Bot and mini app reminders go to whoever works today.",
       "noteDay": "This page is about a specific day.",
-      "noteDayBody": "The “Day off”, “Vacation” and “Sick leave” marks in this table mean the person will be absent on that exact date: they will not get reminders and will see the banner “Today your schedule says: sick leave” in the app.",
+      "noteDayBody": "A “Day off”, “Vacation” or “Sick leave” mark stops reminders on that date.",
       "noteLong": "Long vacations, sick leave and permanent days off",
-      "noteLongBody": "are set up in the employee card under <link>“Staff”</link>: the journals take them from there — the hygiene journal fills in “D” and “Vac” by itself and does not ask an absent person for a mark."
+      "noteLongBody": "— in the employee card under <link>“Staff”</link>; journals take them into account."
     },
     "servicesPage": {
       "title": "Services",
-      "description": "Work by a food safety specialist: journal setup, a pre-inspection audit, documentation development."
+      "description": "Journal setup, audit and documents"
     },
     "servicesCatalog": {
       "contactRequired": "Enter a name and a phone number for contact",
@@ -31402,7 +31383,7 @@
     },
     "addOrganizationButton": {
       "add": "Add organisation",
-      "hint": "A second location with its own journals and staff — your plan counts it as a separate location. Staff and storage limits are shared across all organisations."
+      "hint": "A separate point in the plan; limits are shared"
     },
     "buildingGroupHeader": {
       "withoutPoint": "No location"
@@ -31476,7 +31457,7 @@
       "savedAll": "Saved for {ok, number} journals",
       "networkError": "Network error",
       "quickSetup": "Quick setup",
-      "quickSetupHint": "Apply one amount to all journals in the current filter. Personal journals (hygiene, medical books) are skipped — set a bonus for them manually if you really need to.",
+      "quickSetupHint": "One amount for filtered journals, except personal ones",
       "clearAll": "Clear for all",
       "plusAll": "+{value, number} ₽ for all",
       "filterPlaceholder": "Filter journals",
@@ -31725,8 +31706,8 @@
       "planLegacy": "Subscription (previous plan)",
       "planTrial": "Trial — until {date}",
       "statusTitle": "Your plan",
-      "trialNote": "Everything in Premium is open — {days, plural, one {# day} other {# days}} left. After that, {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}} stay free, or choose a plan below.",
-      "freeNote": "Free: {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# log} other {# logs}}. To bring back all employees and logs, choose Standard or Premium.",
+      "trialNote": "All of Premium is open — {days, plural, one {# day} other {# days}} left. Then {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# journal} other {# journals}} stay free.",
+      "freeNote": "Free: {employees, plural, one {# employee} other {# employees}} and {journals, plural, one {# journal} other {# journals}}",
       "legacyNote": "The previous plan stays in force until the end of the paid term with no new limits. You can switch to Standard, Premium or VIP now — the unused balance will be credited.",
       "cycleYear": "billed yearly",
       "cycleMonth": "billed monthly",
@@ -31890,7 +31871,7 @@
       "removeTitle": "Remove",
       "addPosition": "Add a position",
       "fillersTitle": "Fill in the journal",
-      "perEmployeeNote": "The “Per employee” journal needs no one assigned to fill it in: each employee fills in their own entry, and a senior person verifies it. Click “Auto-assign” — it adds all positions and puts the administrator in “Who verifies”.",
+      "perEmployeeNote": "Everyone fills in their own entry — no need to assign",
       "journalsNotFound": "No journals found for “{query}”.",
       "applyAllTitle": "Auto-assign all journals?",
       "applyAllDescription": "The system picks responsible people by position name: cleaning for cleaners, temperature for shift staff, calibration for a technologist or production manager; journals are shared out evenly. The manager becomes the reviewer. Check the assignments for your organisation.",
@@ -31920,7 +31901,7 @@
       "deleteConfirm": "Delete permanently",
       "deletePhrase": "DELETE",
       "pointBannerTitle": "Responsibles of the point “{point}”",
-      "pointBannerBody": "Here are the staff of this point and those with “All points”. A journal without its own responsibles takes them from the “Whole organization” settings if the person works at this point; the rest are picked from the point's staff. For another point, choose it at the top.",
+      "pointBannerBody": "These are the point’s staff and those with “All points”. A journal without its own responsibles takes them from “Whole organization” if the person works at this point; the rest are picked from the point’s staff. For another point, choose it at the top.",
       "pointOwn": "Own for the point",
       "pointInherited": "Same as organization",
       "pointReset": "Use organization settings",
@@ -31931,7 +31912,7 @@
       "pointResetConfirm": "Return",
       "pointResetDone": "The journal is the same as the organization again, documents updated: {docs}",
       "pointResetError": "Could not return the organization's responsibles",
-      "pointPositionsNote": "The positions that keep the journal are shared by the organization — change them in “Whole organization” mode."
+      "pointPositionsNote": "Positions are shared — change them in “Whole organization”"
     },
     "journalTaskModeClient": {
       "saveFailed": "Failed to save",
@@ -32170,12 +32151,12 @@
       "saved": "Permissions saved",
       "networkError": "Network error",
       "groupDefaults": "Group defaults",
-      "groupDefaultsHint": "If nothing is overridden for the position or for a specific person, these base sets apply. They are changed by editing the position.",
+      "groupDefaultsHint": "Apply when nothing is set for the position or person",
       "management": "Management",
       "staff": "Staff",
       "positions": "Positions",
       "individualRights": "Individual permissions",
-      "individualHint": "Special permissions for one specific person only. By default an employee inherits the permissions of their position.",
+      "individualHint": "Position rights by default",
       "sourceUser": "personal permissions",
       "sourcePositionNamed": "from position “{name}”",
       "sourcePosition": "from position",
@@ -32205,7 +32186,7 @@
       "filterManagement": "Mgmt.",
       "filterStaff": "Staff",
       "syncTasksflow": "Sync with the software module",
-      "hint": "Click a position chip to switch the whole group on or off. The arrow to the right of the chip expands the list of employees in that position — there you can remove a specific person from visibility.",
+      "hint": "Chip — whole position, arrow — individual employees",
       "employees": "{count, plural, one {# employee} other {# employees}}",
       "categoryManagement": "management",
       "categoryStaff": "staff",
@@ -32232,7 +32213,7 @@
       "activeIntro": "The plan renews itself.",
       "nextCharge": "Next charge on <strong>{date}</strong> for {amount} ₽.",
       "activeOutro": "We will notify you of the amount 3 days in advance. You can turn it off at any time — access stays until the end of the paid period.",
-      "inactiveBody": "Payment is one-off — when the term ends, the account moves to the free plan. To enable auto-renewal, pay for the next period with the consent box ticked: paid time is not lost, the new period is added to the current term.",
+      "inactiveBody": "One-off payment: after the term, the free plan. Auto-renewal turns on with the next payment.",
       "disable": "Disable auto-renewal",
       "enable": "Enable auto-renewal",
       "confirmTitle": "Disable auto-renewal?",
@@ -32244,7 +32225,7 @@
     },
     "renewalCard": {
       "title": "Renewal",
-      "body": "Paid until <strong>{date}</strong>. There are no automatic charges — renew the plan in advance: the new period is added to the current one. We will remind you in Telegram and by email 7, 3 and 1 day before it ends.",
+      "body": "Paid until <strong>{date}</strong>. No auto-charges — we’ll remind you 7, 3 and 1 day before.",
       "renew": "Renew early"
     },
     "resumePausedCard": {
@@ -32261,7 +32242,7 @@
       "saveFailed": "Failed to save",
       "resetDone": "All roles have been reset to the default permissions.",
       "resetFailed": "Failed to reset",
-      "hint": "Click the ticks to remove or add a capability for a role. Changes apply after you press “Save”.",
+      "hint": "Ticks apply after “Save”",
       "resetToDefaults": "Reset to defaults",
       "save": "Save",
       "noChanges": "No changes",
@@ -32313,7 +32294,7 @@
       "tasksflowUnreachable": "Could not reach the software module",
       "deleteFailed": "Failed to delete",
       "syncTitle": "Sync with the software module",
-      "syncHint": "The hierarchy is configured here and the same hierarchy is passed to the software module — each manager sees only the tasks of their subordinates.",
+      "syncHint": "Managers see their team’s tasks in the module",
       "applied": "✓ Applied: {count, number}",
       "appliedSkipped": " · skipped {count, number}",
       "appliedErrors": " · errors {count, number}",
@@ -32365,7 +32346,7 @@
       "notConfigured": "The software module is not connected for this organisation. Task events (creation, completion, deletion) will appear here after you connect it in the <link>integration settings</link>.",
       "empty": "No software module events in the last 30 days",
       "title": "Software module events",
-      "subtitle": "Task history in the software module: creation, completion, deletion and “done by another cleaner”",
+      "subtitle": "Task creation, completion and deletion",
       "eventsCount": " · {count, plural, one {# event} other {# events}}",
       "refresh": "Refresh",
       "actionCreated": "Task created",
@@ -32381,7 +32362,7 @@
     },
     "equipmentDelivery": {
       "title": "Equipment delivery",
-      "lead": "Temperature sensors, thermo-hygrometers and a tablet arrive already linked to your account — readings go into the logs right away. The set and amount follow the price list; a manager agrees delivery and installation, payment after agreement.",
+      "lead": "Sensors and tablet arrive linked — readings go straight to journals",
       "lockedText": "Delivery of pre-connected equipment and smart sensor connection come with the Premium plan.",
       "upgrade": "Switch to Premium",
       "bundles": "Ready-made sets",

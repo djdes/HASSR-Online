@@ -347,16 +347,11 @@ export function ComplianceClient({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
+                {/* Под тумблером только заголовок: что изменилось — в тосте
+                    после переключения (руководитель 2026-11: «без сочинений»). */}
                 <div className="text-[15px] font-semibold text-[#0b1024]">
                   {t("editOnlyTitle")}
                 </div>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  {t("editOnlyBody")}
-                  <br />
-                  <span className="text-[12px] text-[#9b9fb3]">
-                    {t("editOnlyNote")}
-                  </span>
-                </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 {saving ? (
@@ -393,14 +388,10 @@ export function ComplianceClient({
                 <div className="text-[15px] font-semibold text-[#0b1024]">
                   {t("shiftTitle")}
                 </div>
-                <p className="mt-1 max-w-[520px] text-[13px] leading-relaxed text-[#6f7282]">
-                  {t("shiftBody")}
-                  <br />
-                  <span className="text-[12px] text-[#9b9fb3]">
-                    {t.rich("shiftNote", {
-                      strong: (chunks) => <strong>{chunks}</strong>,
-                    })}
-                  </span>
+                <p className="mt-1 text-[12px] text-[#9b9fb3]">
+                  {t.rich("shiftNote", {
+                    strong: (chunks) => <strong>{chunks}</strong>,
+                  })}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
@@ -438,15 +429,6 @@ export function ComplianceClient({
                 <div className="text-[15px] font-semibold text-[#0b1024]">
                   {t("lockTitle")}
                 </div>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  {t.rich("lockBody", {
-                    code: (chunks) => <span className="font-mono text-[12px]">{chunks}</span>,
-                  })}
-                  <br />
-                  <span className="text-[12px] text-[#9b9fb3]">
-                    {t("lockNote")}
-                  </span>
-                </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 {savingLock ? (
@@ -477,13 +459,6 @@ export function ComplianceClient({
                 <div className="text-[15px] font-semibold text-[#0b1024]">
                   {t("photoTitle")}
                 </div>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  {t("photoBody")}
-                  <br />
-                  <span className="text-[12px] text-[#9b9fb3]">
-                    {t("photoNote")}
-                  </span>
-                </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 {savingPhoto ? (
@@ -514,15 +489,6 @@ export function ComplianceClient({
                 <div className="text-[15px] font-semibold text-[#0b1024]">
                   {t("escalateTitle")}
                 </div>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-                  {t.rich("escalateBody", {
-                    b: (chunks) => <span className="font-medium text-[#0b1024]">{chunks}</span>,
-                  })}
-                  <br />
-                  <span className="text-[12px] text-[#9b9fb3]">
-                    {t("escalateNote")}
-                  </span>
-                </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 {savingEscalation ? (
@@ -609,9 +575,6 @@ export function ComplianceClient({
             <label className="mt-4 flex cursor-pointer items-start justify-between gap-4 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 transition-colors duration-150 hover:bg-[#f5f6ff]">
               <span className="min-w-0">
                 <span className="block text-[14px] font-semibold text-[#0b1024]">{t("healthQrTitle")}</span>
-                <span className="mt-1 block text-[12.5px] leading-[1.5] text-[#6f7282]">
-                  {t("healthQrBody")}
-                </span>
               </span>
               <Switch
                 checked={healthQr}
@@ -631,11 +594,7 @@ export function ComplianceClient({
                     {t("readingPhotoTitle")}
                   </span>
                   <span className="mt-1 block text-[13px] leading-[1.5] text-[#6f7282]">
-                    {t("readingPhotoBody", {
-                      autofill: readingPhotoAutofill
-                        ? t("readingPhotoAutofillOn")
-                        : t("readingPhotoAutofillOff"),
-                    })}
+                    {readingPhotoAutofill ? t("readingPhotoAutofillOn") : t("readingPhotoAutofillOff")}
                   </span>
                 </span>
                 <Switch
@@ -650,9 +609,6 @@ export function ComplianceClient({
                 <label className="mt-4 flex cursor-pointer items-start justify-between gap-4 border-t border-[#ececf4] pt-4">
                   <span className="min-w-0">
                     <span className="block text-[14px] font-semibold text-[#0b1024]">{t("readingPhotoRequiredTitle")}</span>
-                    <span className="mt-1 block text-[13px] leading-[1.5] text-[#6f7282]">
-                      {t("readingPhotoRequiredBody")}
-                    </span>
                   </span>
                   <Switch
                     checked={readingPhoto.required}

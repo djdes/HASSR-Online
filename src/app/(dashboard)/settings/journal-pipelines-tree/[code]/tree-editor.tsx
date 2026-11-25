@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreText } from "@/components/ui/more-text";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -434,7 +435,7 @@ export function TreeEditorClient({
       <PageHeader
         eyebrow="Pipeline (beta)"
         title={journalName}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
         actions={
           <>
             {tree && tree.nodes.length > 0 ? (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { MoreText } from "@/components/ui/more-text";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -110,7 +111,7 @@ export function NetworkManagersClient({
   return (
     <section className="rounded-3xl border border-[#ececf4] bg-white p-5" data-network-managers>
       <h2 className="text-[16px] font-semibold text-[#0b1024]">{labels.title}</h2>
-      <p className="mt-1 max-w-[720px] text-[13.5px] leading-[1.5] text-[#6f7282]">{labels.description}</p>
+      <p className="mt-1 max-w-[720px] text-[13.5px] leading-[1.5] text-[#6f7282]"><MoreText text={labels.description} /></p>
 
       {managers.length === 0 ? (
         <p className="mt-4 text-[13.5px] text-[#9b9fb3]">{labels.empty}</p>

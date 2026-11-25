@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden } from "next/navigation";
 import { FileSpreadsheet } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -36,7 +37,7 @@ export default async function AccountingSettingsPage() {
               {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              {t("description")}
+              <MoreText text={t("description")} />
             </p>
           </div>
         </div>

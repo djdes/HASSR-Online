@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { CalendarRange } from "lucide-react";
@@ -88,7 +89,7 @@ export default async function ScheduleSettingsPage() {
               {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              {t("intro")}
+              <MoreText text={t("intro")} />
             </p>
             {/* Честно про границу: журналы читают не WorkShift, а отпуска и
                 выходные из карточки сотрудника. Раньше здесь было обещание

@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Award } from "lucide-react";
@@ -31,7 +32,7 @@ export default async function PartnerApplicationPage() {
             {t("title")}
           </h1>
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-            {t("description")}
+            <MoreText text={t("description")} />
           </p>
         </div>
       </div>

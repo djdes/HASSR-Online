@@ -58,12 +58,9 @@ export function ExperimentalClient({ initialExperimentalUiV2 }: Props) {
                     {t("recommended")}
                   </span>
                 </div>
+                {/* Одна строка под тумблером; что будет при выключении — в тосте. */}
                 <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
                   {t("v2Body")}
-                  <br />
-                  <span className="text-[12px] text-[#9b9fb3]">
-                    {t("v2Note")}
-                  </span>
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">

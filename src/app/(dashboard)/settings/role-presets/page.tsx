@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -50,7 +51,7 @@ export default async function RolePresetsPage() {
           прятать его внутри абзаца. */}
       <PageHeader
         title={t("title")}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
         actions={
           <Link
             href="/settings/users"

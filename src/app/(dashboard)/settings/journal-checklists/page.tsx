@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -55,7 +56,7 @@ export default async function JournalChecklistsHubPage() {
           показать сразу. Иконка ListChecks осталась только на карточках. */}
       <PageHeader
         title={t("title")}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
       />
 
       <div className="grid gap-3 sm:grid-cols-2">

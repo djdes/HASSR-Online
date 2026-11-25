@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { Coins } from "lucide-react";
 
 import { requireAuth, getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
@@ -68,7 +69,7 @@ export default async function BalanceSettingsPage() {
           <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
             {inApp
               ? t("inAppDescription")
-              : t("description")}
+              : <MoreText text={t("description")} />}
           </p>
         </div>
       </div>
