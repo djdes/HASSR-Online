@@ -61,6 +61,12 @@ describe("analyzePost", () => {
     assert.equal(report.verdict, "block");
   });
 
+  it("без эталонных телефонов номер не блокирует", () => {
+    const report = analyzePost({ text: `${GOOD}
+Звоните +7 (900) 123-45-67` }, { ...P, phones: [] }, { now: NOW });
+    assert.equal(item(report, "phone")?.status, "ok");
+  });
+
   it("неправильное написание бренда и обращение на «ты»", () => {
     const report = analyzePost({ text: "**Wesetup для тебя**\nТвой журнал всегда под рукой." }, P, { now: NOW });
     assert.equal(report.items.find((i) => i.id === "spelling:Wesetup")?.status, "fail");
