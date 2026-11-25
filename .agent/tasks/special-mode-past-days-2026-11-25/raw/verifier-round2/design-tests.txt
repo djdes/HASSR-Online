@@ -1,0 +1,4 @@
+# tests 18
+# pass 18
+# fail 0
+exit=0

@@ -1,0 +1,43 @@
+INFO start: raw special-mode setting — {"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}}
+INFO start: org — {"lockPastDayEdits":false,"timezone":"Europe/Moscow","shiftEndHour":0}
+PASS V1 verifier /inspection opens (tasks.verify) — http://localhost:3000/inspection
+PASS V1 verifier: no special-mode card on /inspection
+PASS V1 verifier: quiet link kept on /inspection
+PASS V1 verifier: no «Спецрежим» menu item
+FAIL V1 verifier: /inspection/settings still viewable read-only (spec R1 «как было») — {"deniedPanels":1,"cardVisible":0,"deniedText":"Нет доступа к этому разделу Раздел закрыт для вашей роли. Если он нужен для работы, попросите руководителя открыть доступ. Выберите нужный раздел в меню слева —"}
+FAIL V2 enable dialog (no previous choice): «Правка прошлых дней» NOT pre-checked (default off) — {"autoFill":"checked","autoCreate":"checked","copyYesterday":"checked","closeDayAutofill":"checked","catchUp":"checked","pastDays":"checked"}
+PASS stand: own point — 200
+PASS stand: hygiene doc — 2026-11-01..2026-11-30
+PASS V3 saved choice without key: cook yesterday → 403 not_today — 403 Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS V3 saved choice without key: server reports pastDays false, other boxes kept — {"enabled":true,"autoFill":true,"autoCreate":true,"copyYesterday":true,"closeDayAutofill":true,"catchUp":true,"pastDays":false,"pastDaysLimit":7}
+PASS V4 no stored setting: pastDays false and cook yesterday → 403 — 403 {"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7}
+PASS V5 limit 1: cook yesterday → 200 — 200
+PASS V5 limit 1: cook 2 days ago → 403 «только за вчерашний день» — 403 Прошлые записи можно менять только за вчерашний день.
+PASS V5 no limit: cook 2026-11-05 → 200 — 200
+PASS V5 no limit: cook tomorrow → 403 — 403 Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS V5 no limit: owner tomorrow → 403 future_day_locked — 403 future_day_locked
+PASS V5 special mode on, box unticked: cook yesterday → 403 — 403
+PASS V5 org lock on + window: cook yesterday → 200 (lock does not apply in window) — 200 
+PASS V5 org lock on: cook 8 days ago → 403 — 403 Прошлые записи можно менять только за последние 7 дней.
+PASS V5 org lock on: owner 3 days ago (in window) → 200 without override audit — 200 audit 0→0
+PASS V5 org lock on: owner 9 days ago (beyond window) → 200 with closed_day.override audit — 200 audit 0→1
+PASS V5 bulk: cook paints 2 days ago + today → saved 2 — 200 {"saved":2,"skipped":0}
+PASS V5 bulk: stroke reaching beyond window → 403 — 403 Прошлые записи можно менять только за последние 7 дней.
+PASS V5 bulk: other person's row → 403 foreign_row — 403 foreign_row
+PASS stand: automation doc
+INFO auto doc entries right after creation — 750
+PASS V6 auto doc + window: cook yesterday own row → 200 — 200 
+PASS V6 auto doc: owner PUT 8 days ago → 403 past_day_locked — 403 past_day_locked
+PASS V6 auto doc: owner PATCH 2 days ago (window) → 200 — 200 
+PASS V6 auto doc: owner PATCH 8 days ago → 403 — 403 past_day_locked
+PASS V6 auto doc: owner DELETE entry 9 days ago → 403 — 403 Прошлые дни закрыты — изменения вносятся день в день
+PASS V6 auto doc: owner DELETE entry 2 days ago (window) → 200 — 200 {"deleted":1}
+PASS V6 auto doc, special mode off: owner PATCH 2 days ago → 403 — 403 past_day_locked
+PASS V6 auto doc, special mode off: owner PUT yesterday → 403 — 403 past_day_locked
+PASS V7 card chip shows 14 days — Видно в журналах: Автозаполнение журналов Правка прошлых дней: 14 дней Изменить
+INFO V7 dark: «Насколько назад» select colours — {"color":"rgb(242, 243, 251)","bg":"rgb(58, 55, 87)"}
+PASS V7 org lock hint for 14 days — Вчерашние записи сможет менять только администратор. Спецрежим разрешает правку прошлых дней за последние 14 дней — на эти дни запрет не действует.
+PASS restore: special-mode setting back to raw start value — {"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}}
+PASS no page errors
+
+35/37 PASS

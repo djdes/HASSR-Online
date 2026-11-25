@@ -1,0 +1,18 @@
+## with .env loaded
+ok 1 - English document keeps its explicit route and receives a trusted locale
+ok 2 - caller-supplied locale headers cannot change the locale of the requested URL
+ok 3 - English prefix never rewrites protected routes or callbacks
+not ok 4 - prefetching another language does not overwrite the visitor preference
+ok 5 - English pages retain the navigation budget and show an English cooldown
+not ok 6 - partners and privacy trust their six explicit URLs without rewriting navigation
+# pass 4
+# fail 2
+## without .env
+ok 1 - English document keeps its explicit route and receives a trusted locale
+ok 2 - caller-supplied locale headers cannot change the locale of the requested URL
+ok 3 - English prefix never rewrites protected routes or callbacks
+ok 4 - prefetching another language does not overwrite the visitor preference
+ok 5 - English pages retain the navigation budget and show an English cooldown
+ok 6 - partners and privacy trust their six explicit URLs without rewriting navigation
+# pass 6
+# fail 0

@@ -13,22 +13,26 @@ export const dynamic = "force-dynamic";
 
 /**
  * Специальный режим организации (скан 83: «СпецРежим») — с пояснением, что
- * он включает и когда. С 2026-11-05 о нём не говорят нигде, кроме этой
- * страницы: нет пункта меню, шага на «Что делать сейчас» и карточки в
- * «Реквизитах». Адрес нейтральный — `/inspection/settings`, заголовок
- * «Настройки раздела»; вход — тихая ссылка внизу «Что делать сейчас».
- * Видят руководство и «проверка задач» (как раньше); переключает только
- * `admin.full` (как в API), остальным — «попросите руководителя».
+ * он включает и когда. С 2026-11-25 включается и настраивается в трёх местах
+ * с одной общей настройкой: пункт меню «Спецрежим» этого раздела (эта
+ * страница, руководителю), карточка внизу «К вам пришла проверка» и карточка
+ * в «Информации об организации». Страницу видят руководство и «проверка
+ * задач» (им — тихая ссылка «Настройки раздела» с «К вам пришла проверка»);
+ * переключает только `admin.full` не руководитель точки (как в API),
+ * остальным — «попросите руководителя».
  */
 export default async function InspectionSpecialModePage() {
   const session = await requireAuth();
   if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) forbidden();
 
   const t = await getTranslations("inspectionDay.pages.special");
+  // Заголовок — «Спецрежим» у всех: у кого нет пункта меню (руководство без
+  // admin.full, «проверка задач»), иначе стоял бы заголовок раздела.
+  const tRoutes = await getTranslations("navigation.routes");
 
   return (
     <div className="space-y-4">
-      <SectionPageHeader description={t("lead")} />
+      <SectionPageHeader title={tRoutes("inspection_settings")} description={t("lead")} />
 
       <PageGuide
         storageKey="inspection-settings"

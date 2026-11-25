@@ -365,7 +365,7 @@ test("правило каждой вкладки и карточки повто�
       })),
       ...(section.menu ?? []).flatMap((group) =>
         group.items.flatMap((item) => [
-          { name: `${section.key}/${item.id}`, href: item.href, access: item.access },
+          { name: `${section.key}/${item.id}`, href: item.href, access: item.pageAccess ?? item.access },
           ...(item.tabs ?? []).map((tab) => ({
             name: `${section.key}/${item.id}/${tab.id}`,
             href: tab.href,
@@ -581,7 +581,7 @@ test("у каждого раздела, кроме «Остального» и �
   // Фото 6-го листа: нормативные документы, ППК и ХАССП, QR для проверяющего, консалтинг.
   assert.deepEqual(menuShape("inspection"), [
     [null, ["laws", "norms", "portal", "experts"]],
-    ["more", ["now", "visits", "readiness"]],
+    ["more", ["now", "visits", "readiness", "special"]],
   ]);
   // «Права и доступ» — одна страница без вкладок; прежние четыре страницы —
   // её подробные редакторы (подсвечивают пункт).
@@ -832,27 +832,29 @@ test("«Пришла проверка»: блоки страницы — сво�
     ["/settings/inspector-portal", "portal"],
     ["/dashboard/compliance-audit", "readiness"],
     ["/inspection/experts", "experts"],
+    // Спецрежим (владелец, 2026-11-25) — снова пункт меню раздела, но только руководству.
+    ["/inspection/settings", "special"],
   ]) {
     const place = sectionForPath(path);
     assert.equal(place?.section, "inspection", path);
     assert.equal(place?.menuItemId, id, path);
   }
-  // Спецрежим — без пункта меню и вкладки (2026-11-05): скрытый путь раздела.
-  assert.equal(sectionForPath("/inspection/settings")?.section, "inspection");
-  assert.equal(sectionForPath("/inspection/settings")?.isTabRoot, false);
-  const navHrefs = NAV_SECTIONS.flatMap((section) => [
-    ...section.tabs.map((tab) => tab.href),
-    ...(section.menu ?? []).flatMap((group) => group.items.flatMap((item) => [item.href, ...(item.tabs ?? []).map((tab) => tab.href)])),
-  ]);
-  assert.ok(!navHrefs.some((href) => href.includes("special") || href.startsWith("/inspection/settings")));
+  // Сотрудник с «проверкой задач» раздел видит, пункт спецрежима — нет; страница для
+  // просмотра (тихая ссылка) ему и заведующей открыта, как раньше.
+  assert.ok(visibleItemIds(verifyOnly, "inspection").includes("now"));
+  assert.ok(!visibleItemIds(verifyOnly, "inspection").includes("special"));
+  for (const actor of [verifyOnly, headChef]) {
+    assert.ok(!deniedNavHrefs(actor, withChecklists).includes("/inspection/settings"));
+  }
+  assert.ok(deniedNavHrefs(cook, withChecklists).includes("/inspection/settings"));
   // «Нормативка» раздела — не пункт ППК: левое меню не переключается.
   assert.notEqual(sectionForPath("/inspection/norms")?.section, "productionControl");
   assert.ok(!keys(cook, withChecklists).includes("inspection"));
   assert.ok(!keys(cleaner, withChecklists).includes("inspection"));
   // «Нормативные документы» раздела — своя страница: левое меню не переключается на ППК.
   assert.equal(sectionForPath("/inspection/laws")?.section, "inspection");
-  // Руководитель видит все семь пунктов.
-  assert.deepEqual(visibleItemIds(owner, "inspection"), ["laws", "norms", "portal", "experts", "now", "visits", "readiness"]);
+  // Руководитель видит все восемь пунктов.
+  assert.deepEqual(visibleItemIds(owner, "inspection"), ["laws", "norms", "portal", "experts", "now", "visits", "readiness", "special"]);
 });
 
 test("статическая модель без динамических сегментов в адресах пунктов", () => {

@@ -59,6 +59,8 @@ import { confirmAsync } from "@/components/ui/confirm-async";
 import { submitWithOfflineFallback } from "@/lib/use-offline-submit";
 import {
   hasFullDocumentAccess,
+  pastDayOpen,
+  type PastDaysPolicy,
 } from "@/lib/journal-entry-scope";
 import { formatDate, type Locale } from "@/i18n/locales";
 import { useJournalUndo } from "@/lib/journal-undo";
@@ -116,6 +118,11 @@ type Props = {
    * рисует замок и не даёт кликнуть.
    */
   pastDaysLocked?: boolean;
+  /**
+   * «Правка прошлых дней» спецрежима (2026-11-25): прошлые дни в окне
+   * открыты — правило то же, что на сервере (`pastDayOpen`).
+   */
+  pastDays?: PastDaysPolicy | null;
   /**
    * Сегодняшний день (YYYY-MM-DD) с сервера. Считать `new Date()` в
    * рендере нельзя (react-hooks/purity) — и дата сервера всё равно
@@ -364,6 +371,7 @@ export function HygieneDocumentClient({
   initialEntries,
   useV2 = false,
   pastDaysLocked = false,
+  pastDays = null,
   todayKey = "",
   viewer,
   hygieneFormVersion = 1,
@@ -898,7 +906,7 @@ export function HygieneDocumentClient({
    * лексикографический порядок совпадает с хронологическим.
    */
   function isDayLocked(dateKey: string) {
-    return pastDaysLocked && todayKey !== "" && dateKey < todayKey;
+    return pastDaysLocked && todayKey !== "" && dateKey < todayKey && !pastDayOpen(pastDays, dateKey, todayKey);
   }
 
   /**
@@ -921,7 +929,11 @@ export function HygieneDocumentClient({
     if (isDayLocked(dateKey)) return t("errors.pastDaysLocked");
     if (viewerHasFullAccess || !viewer) return null;
     if (employeeId !== viewer.id) return t("errors.foreignRow");
-    if (todayKey !== "" && dateKey !== todayKey) return t("errors.notToday");
+    if (todayKey !== "" && dateKey !== todayKey && !pastDayOpen(pastDays, dateKey, todayKey)) {
+      return pastDays?.allowed && pastDays.limitDays !== null && dateKey < todayKey
+        ? t("errors.pastDaysWindow", { days: pastDays.limitDays })
+        : t("errors.notToday");
+    }
     return null;
   }
 

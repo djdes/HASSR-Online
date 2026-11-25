@@ -72,6 +72,8 @@ import { promptAsync } from "@/components/ui/prompt-async";
 import { PAST_DAY_LOCKED_MESSAGE } from "@/lib/closed-day";
 import {
   hasFullDocumentAccess,
+  pastDayOpen,
+  type PastDaysPolicy,
 } from "@/lib/journal-entry-scope";
 import { ORG_NAME_FALLBACK } from "@/lib/journal-constants";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
@@ -116,6 +118,11 @@ type Props = {
   todayKey?: string;
   /** Документ ведёт автоматика: прошлые дни закрыты на редактирование. */
   pastDaysLocked?: boolean;
+  /**
+   * «Правка прошлых дней» спецрежима (2026-11-25): прошлые дни в окне
+   * открыты — правило то же, что на сервере (`pastDayOpen`).
+   */
+  pastDays?: PastDaysPolicy | null;
   /**
    * Кто смотрит. Нужен, чтобы гасить чужие строки и не-сегодняшние дни
    * прямо в сетке — теми же правилами, что и сервер.
@@ -256,6 +263,7 @@ export function HealthDocumentClient(props: Props) {
     // кухне врут чаще сервера.
     todayKey = "",
     pastDaysLocked = false,
+    pastDays = null,
     viewer,
   } = props;
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
@@ -387,12 +395,16 @@ export function HealthDocumentClient(props: Props) {
   /** Причина, по которой ячейка закрыта, или null. */
   function cellLockReason(employeeId: string, dateKey: string): string | null {
     if (todayKey !== "" && dateKey > todayKey) return scopeT("futureDay");
-    if (pastDaysLocked && todayKey !== "" && dateKey < todayKey) {
+    if (pastDaysLocked && todayKey !== "" && dateKey < todayKey && !pastDayOpen(pastDays, dateKey, todayKey)) {
       return PAST_DAY_LOCKED_MESSAGE;
     }
     if (viewerHasFullAccess || !viewer) return null;
     if (employeeId !== viewer.id) return scopeT("foreignRow");
-    if (todayKey !== "" && dateKey !== todayKey) return scopeT("notToday");
+    if (todayKey !== "" && dateKey !== todayKey && !pastDayOpen(pastDays, dateKey, todayKey)) {
+      return pastDays?.allowed && pastDays.limitDays !== null && dateKey < todayKey
+        ? scopeT("pastDaysWindow", { days: pastDays.limitDays })
+        : scopeT("notToday");
+    }
     return null;
   }
 

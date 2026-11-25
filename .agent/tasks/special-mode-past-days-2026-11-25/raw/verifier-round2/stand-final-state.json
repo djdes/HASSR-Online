@@ -1,0 +1,33 @@
+{
+ "setting": "{\"automation\":{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7},\"sensorCamera\":{\"cold_equipment_control\":false,\"climate_control\":false},\"brakerageSetup\":{}}",
+ "lock": {
+  "lockPastDayEdits": false
+ },
+ "pointAutomation": {
+  "journalAutomationJson": null
+ },
+ "docs": [
+  {
+   "title": "Холодильники верификатор-2 2026-11-25",
+   "autoFill": false
+  },
+  {
+   "title": "Гигиена верификатор-2 2026-11-25",
+   "autoFill": false
+  },
+  {
+   "title": "Здоровье верификатор-2 2026-11-25",
+   "autoFill": false
+  }
+ ],
+ "users": [
+  {
+   "email": "verify-e2e-special@haccp.local",
+   "isActive": true
+  },
+  {
+   "email": "cook-e2e-special@haccp.local",
+   "isActive": true
+  }
+ ]
+}

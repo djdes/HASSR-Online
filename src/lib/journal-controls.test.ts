@@ -102,8 +102,9 @@ test("a box added later (catchUp) is on only if special mode is on AND the org u
   assert.equal(resolveAddedFeature({ specialModeOn: false, used: true }), false);
   // A choice saved before the box existed reports it as missing — the server fills it in.
   const before = { enabled: true, autoFill: true, autoCreate: true, copyYesterday: true, closeDayAutofill: true };
-  assert.deepEqual(readStoredAutomation({ automation: before }).missing, ["catchUp"]);
-  assert.deepEqual(readStoredAutomation({ automation: { ...before, catchUp: false } }).missing, []);
+  // «Правка прошлых дней» (2026-11-25) — тоже галочка, добавленная позже.
+  assert.deepEqual(readStoredAutomation({ automation: before }).missing, ["catchUp", "pastDays"]);
+  assert.deepEqual(readStoredAutomation({ automation: { ...before, catchUp: false, pastDays: false } }).missing, []);
   // Until then the client sees it off (fail-closed).
   assert.equal(automationOn(parseJournalControls({ automation: before }), "catchUp"), false);
   // The server rule lives next to resolveLegacyAutomation and checks the catch-up audit trail.

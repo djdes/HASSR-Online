@@ -1,0 +1,20 @@
+[BABEL] Note: The code generator has deoptimised the styling of /home/user/HASSR-Online/src/i18n/message-contract.d.ts as it exceeds the max of 500KB.
+
+/home/user/HASSR-Online/scripts/e2e/new-lists-check.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/home/user/HASSR-Online/src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx
+   73:3  warning  'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                      @typescript-eslint/no-unused-vars
+  190:3  warning  'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+  578:9  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+/home/user/HASSR-Online/src/components/journals/climate-document-client.tsx
+  110:8  warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/user/HASSR-Online/src/lib/journal-entry-write.ts
+  12:10  warning  'isManagementRole' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 6 problems (1 error, 5 warnings)
+
+exit=1
+# Все находки есть и на origin/master (те же конструкции и строки: page.tsx:73/190/578, climate-document-client.tsx:110, journal-entry-write.ts:12 — неиспользуемый импорт и на master); scripts/e2e игнорируется конфигом ESLint. Новых замечаний нет.

@@ -1,4 +1,5 @@
 import { isManagementRole } from "@/lib/user-roles";
+import { pastDayOpen, type PastDaysPolicy } from "@/lib/journal-entry-scope";
 
 /**
  * «Закрытый день» (Compliance feature 3.10.4):
@@ -98,6 +99,13 @@ export type AutomationLockContext = {
   automationEnabled: boolean;
   /** Граница смены организации (см. getStartOfToday). */
   shiftEndHour: number;
+  /**
+   * «Правка прошлых дней» спецрежима (2026-11-25): дни в её окне не
+   * заперты и в автодокументе. Нет — запрет как раньше.
+   */
+  pastDays?: PastDaysPolicy | null;
+  /** Сегодня в поясе организации (`YYYY-MM-DD`) — от него считается окно. */
+  todayKey?: string;
 };
 
 /** Дата записи как Date — принимаем и `YYYY-MM-DD`, и Date. */
@@ -126,7 +134,11 @@ export function isCellLocked(
     startOfToday.getUTCMonth(),
     startOfToday.getUTCDate()
   );
-  return toEntryDate(entryDate).getTime() < todayDay;
+  const entry = toEntryDate(entryDate);
+  if (entry.getTime() >= todayDay) return false;
+  // Спецрежим «Правка прошлых дней»: день в окне открыт и в автодокументе.
+  const todayKey = ctx.todayKey || new Date(todayDay).toISOString().slice(0, 10);
+  return !pastDayOpen(ctx.pastDays, entry.toISOString().slice(0, 10), todayKey);
 }
 
 /**

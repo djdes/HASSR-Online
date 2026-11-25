@@ -5,7 +5,7 @@ import { hasCapability } from "@/lib/permission-presets";
 import { COMPANY_ONLY_API_ERROR, isPointScoped } from "@/lib/point-scope";
 import { recordAuditLog } from "@/lib/audit-log";
 import { getJournalControls, updateJournalControls } from "@/lib/journal-controls.server";
-import { SENSOR_JOURNAL_CODES } from "@/lib/journal-controls";
+import { SENSOR_JOURNAL_CODES, isPastDaysLimit, type PastDaysLimit } from "@/lib/journal-controls";
 
 export const dynamic = "force-dynamic";
 const schema = z.object({
@@ -18,6 +18,9 @@ const schema = z.object({
     closeDayAutofill: z.boolean(),
     // Галочка 2026-11-05: старое окно её не присылает — тогда остаётся прежнее значение.
     catchUp: z.boolean().optional(),
+    // «Правка прошлых дней» и «Насколько назад» (2026-11-25) — так же необязательны.
+    pastDays: z.boolean().optional(),
+    pastDaysLimit: z.custom<PastDaysLimit>(isPastDaysLimit).optional(),
   }).strict().optional(),
   camera: z.object({ code: z.enum(SENSOR_JOURNAL_CODES), enabled: z.boolean() }).optional(),
   setup: z.object({ code: z.enum(["finished_product", "perishable_rejection"]), decision: z.literal("declined") }).optional(),

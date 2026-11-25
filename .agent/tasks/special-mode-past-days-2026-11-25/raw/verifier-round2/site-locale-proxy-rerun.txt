@@ -1,0 +1,47 @@
+TAP version 13
+# Subtest: English document keeps its explicit route and receives a trusted locale
+ok 1 - English document keeps its explicit route and receives a trusted locale
+  ---
+  duration_ms: 9.477224
+  type: 'test'
+  ...
+# Subtest: caller-supplied locale headers cannot change the locale of the requested URL
+ok 2 - caller-supplied locale headers cannot change the locale of the requested URL
+  ---
+  duration_ms: 4.526924
+  type: 'test'
+  ...
+# Subtest: English prefix never rewrites protected routes or callbacks
+ok 3 - English prefix never rewrites protected routes or callbacks
+  ---
+  duration_ms: 7.080103
+  type: 'test'
+  ...
+# Subtest: prefetching another language does not overwrite the visitor preference
+ok 4 - prefetching another language does not overwrite the visitor preference
+  ---
+  duration_ms: 0.962448
+  type: 'test'
+  ...
+# Subtest: English pages retain the navigation budget and show an English cooldown
+ok 5 - English pages retain the navigation budget and show an English cooldown
+  ---
+  duration_ms: 9.895063
+  type: 'test'
+  ...
+# Subtest: partners and privacy trust their six explicit URLs without rewriting navigation
+ok 6 - partners and privacy trust their six explicit URLs without rewriting navigation
+  ---
+  duration_ms: 5.050409
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 385.553761
+exit=0

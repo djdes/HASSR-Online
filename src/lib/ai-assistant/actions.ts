@@ -34,7 +34,6 @@ import {
 import { createStaffMember, type CreateStaffResult } from "@/lib/staff-create";
 import { SEATS_PER_POINT } from "@/lib/tariff-plans";
 import { isManagementRole } from "@/lib/user-roles";
-import { orgTodayKey } from "@/lib/timezone";
 import { automationOn } from "@/lib/journal-controls";
 import { getJournalControls } from "@/lib/journal-controls.server";
 import {
@@ -536,13 +535,9 @@ async function executeFillCells(
     };
   }
 
-  const org = await db.organization.findUnique({
-    where: { id: ctx.orgId },
-    select: { timezone: true },
-  });
-  const todayKey = orgTodayKey(org?.timezone ?? undefined);
-
-  // Рядовой сотрудник — только своя строка и только сегодня, как руками.
+  // Рядовой сотрудник — только своя строка и только сегодня, как руками
+  // (спецрежим «Правка прошлых дней» — и прошлые дни в окне).
+  const writeCtx = await loadEntryWriteContext(doc);
   for (const employeeId of input.employeeIds) {
     for (const dateKey of input.dates) {
       const scope = checkEntryScope({
@@ -550,9 +545,17 @@ async function executeFillCells(
         responsibleUserId: doc.responsibleUserId,
         employeeId,
         entryDayKey: dateKey,
-        todayKey,
+        todayKey: writeCtx.todayKey,
+        pastDays: writeCtx.pastDays,
       });
-      if (!scope.allowed) return { ok: false, error: t(scope.code === "foreign_row" ? "journalWidgets.headerEdit.foreignRow" : "journalWidgets.headerEdit.notToday") };
+      if (!scope.allowed) {
+        if (scope.code === "foreign_row") return { ok: false, error: t("journalWidgets.headerEdit.foreignRow") };
+        const limit = writeCtx.pastDays.allowed && dateKey < writeCtx.todayKey ? writeCtx.pastDays.limitDays : null;
+        return {
+          ok: false,
+          error: limit !== null ? t("journalWidgets.headerEdit.pastDaysWindow", { days: limit }) : t("journalWidgets.headerEdit.notToday"),
+        };
+      }
     }
   }
 
@@ -603,7 +606,6 @@ async function executeFillCells(
     return input.values.data;
   }
 
-  const writeCtx = await loadEntryWriteContext(doc);
   const accepted: Array<{ employeeId: string; date: Date; data: unknown }> = [];
   const overrideDates: Date[] = [];
   let skipped = 0;

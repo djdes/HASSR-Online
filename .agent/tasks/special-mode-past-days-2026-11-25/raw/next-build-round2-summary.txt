@@ -1,0 +1,10 @@
+# next build --webpack, round 2 (после исправлений проверяющего), 2026-11-25T14:16:38Z
+# NEXT_DIST_DIR=.next-sm NODE_OPTIONS=--max-old-space-size=6144
+▲ Next.js 16.2.12 (webpack)
+✓ Compiled successfully in 3.7min
+  Generating static pages using 3 workers (0/171) ...
+  Generating static pages using 3 workers (42/171) 
+  Generating static pages using 3 workers (85/171) 
+  Generating static pages using 3 workers (128/171) 
+✓ Generating static pages using 3 workers (171/171) in 1064ms
+exit=0
