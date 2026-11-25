@@ -4189,7 +4189,10 @@
       "sections": "All sections",
       "workspace": "Workspace",
       "login": "Sign in",
-      "home": "Go to home screen"
+      "home": "Go to home screen",
+      "roleManager": "Manager",
+      "roleStaff": "Staff",
+      "roleReadonly": "View only"
     }
   },
   "hygiene": {
@@ -16673,7 +16676,9 @@
         "staffNoAction": "👋 <b>{name}</b>, your workspace is ready.\n\n✅ All required logs for today are complete. You can take a breath.\n\nFill in logs with one tap right here in Telegram — no browser or paperwork needed.",
         "staffTaskButton": "🎯 Open task",
         "staffLogsButton": "📋 My logs",
-        "unlinkedBody": "👋 Hi! This is <b>WeSetup</b> — digital SanPiN and HACCP logs for food service businesses.\n\nYour Telegram is not linked to a work account yet. Ask your manager to send you a personal invitation link, or create one under “Staff” → “Telegram invitation”.\n\nOnce linked, you can fill in logs, view tasks and receive notifications here.\n\nHave a question about the service? Just message us here and we’ll reply."
+        "unlinkedBody": "👋 Hi! This is <b>WeSetup</b> — digital SanPiN and HACCP logs for food service businesses.\n\nYour Telegram is not linked to a work account yet. Ask your manager to send you a personal invitation link, or create one under “Staff” → “Telegram invitation”.\n\nOnce linked, you can fill in logs, view tasks and receive notifications here.\n\nHave a question about the service? Just message us here and we’ll reply.",
+        "sharePhoneButton": "📱 Share phone number",
+        "openMiniAppButton": "📱 Open app"
       },
       "errors": {
         "accountNotFound": "Account not found. Create a new link under Settings → Notifications.",
@@ -16726,6 +16731,15 @@
         "organizationLine": "Organization: {organization}",
         "emailLine": "Email: <code>{email}</code>",
         "button": "⚙️ Profile settings"
+      },
+      "contact": {
+        "notOwnContact": "Please share your own contact using the “📱 Share phone number” button.",
+        "invalidPhone": "Could not recognize the phone number. Check it and try again.",
+        "notFound": "No employee found with phone number {phone}. Sign in to the Mini App with your password or ask your manager to add your number.",
+        "ambiguous": "Multiple profiles match {phone}. Sign in to the Mini App with your phone and password to link the right account.",
+        "alreadyLinkedOther": "This Telegram is already linked to another account. Unlink it there using /stop.",
+        "userHasOtherTelegram": "Another Telegram is already linked to the account with {phone}. Contact your manager or unlink the old Telegram in Profile.",
+        "linkedSuccess": "✅ Phone {phone} confirmed — Telegram is now linked to <b>{name}</b>!"
       }
     }
   },
@@ -18800,7 +18814,8 @@
         "expired": "Your Telegram session has expired. Close the app and reopen it from the bot.",
         "notConfirmed": "Telegram could not confirm your sign-in. Close the app and reopen it from the bot.",
         "notConfigured": "Telegram sign-in is not configured yet. Contact your manager.",
-        "generic": "We could not sign you in. Try again or sign in with your phone."
+        "generic": "We could not sign you in. Try again or sign in with your phone.",
+        "notLinked": "Your Telegram account is not linked to a workspace profile yet."
       },
       "action": {
         "closeApp": "Close app",
@@ -18810,10 +18825,43 @@
       "loading": {
         "heading": "Opening your workspace…",
         "description": "Checking your sign-in. This should take a few seconds."
+      },
+      "linkPhone": {
+        "heading": "Link via phone number",
+        "description": "Share your phone number from Telegram — we will find your staff profile and open your workspace right away.",
+        "shareButton": "Share Telegram phone number",
+        "sharing": "Linking profile…",
+        "orPassword": "or sign in the usual way",
+        "passwordButton": "Sign in with phone and password",
+        "declined": "You cancelled sharing your phone number. Tap the button again or sign in with your password.",
+        "notFound": "No profile matched this phone number. Sign in with your phone or email and password to link Telegram right away.",
+        "ambiguous": "Multiple profiles share this phone number. Sign in with your phone and password to pick the right account.",
+        "alreadyLinkedOther": "This Telegram account is already linked to another employee. Unlink it via /stop there or sign in with your password.",
+        "userHasOtherTelegram": "Another Telegram account is already linked to your profile. Sign in with your password and update it in Profile.",
+        "pendingBot": "Phone number sent to the bot — finishing sign-in…",
+        "failed": "Could not link Telegram by phone number. Try again or sign in with your password.",
+        "success": "Telegram linked! Opening your workspace…"
       }
     },
     "navigation": {
       "landmark": "App sections"
+    },
+    "roleBar": {
+      "landmark": "Role quick actions",
+      "managerBadge": "Manager mode",
+      "supervisorBadge": "Shift control",
+      "staffBadge": "Staff mode",
+      "readonlyBadge": "View only",
+      "actions": {
+        "todayJournals": "Today's journals",
+        "verifications": "Review entries",
+        "staff": "Employees",
+        "reports": "Reports",
+        "controlBoard": "Control board",
+        "myTasks": "Shift tasks",
+        "journals": "Journals",
+        "profile": "Profile"
+      }
     }
   },
   "publicJournalIndex": {
@@ -21718,7 +21766,14 @@
     "telegram": {
       "login": "Sign in with Telegram",
       "accountInfo": "To the account linked to this Telegram account.",
-      "otherAccount": "or another account"
+      "otherAccount": "or another account",
+      "sharePhone": "Sign in & link via Telegram phone",
+      "sharingPhone": "Checking phone…",
+      "linkOnLogin": "Link this Telegram to my account",
+      "linkOnLoginHint": "Next time, your workspace will open in one tap without a password.",
+      "linkedToast": "Telegram linked to your account",
+      "conflictToast": "This Telegram is already linked to another employee",
+      "userOtherTgToast": "Another Telegram is already linked to this account — unlink the old one in Profile"
     },
     "mode": {
       "label": "Sign in with",
@@ -21766,7 +21821,13 @@
       "tooManyCodeAttempts": "Too many attempts. Sign in again to receive a new code.",
       "accountUnavailable": "This account is unavailable",
       "loginFailed": "Could not sign in. Check your details and try again.",
-      "connectionFailed": "No connection. Check your internet and try again."
+      "connectionFailed": "No connection. Check your internet and try again.",
+      "contactDeclined": "Phone number sharing was cancelled",
+      "phoneNotFound": "No employee found with this phone number. Sign in with phone and password.",
+      "phoneAmbiguous": "Multiple accounts share this phone number — sign in with your password.",
+      "telegramConflict": "This Telegram account is already linked to another profile.",
+      "userHasOtherTelegram": "Another Telegram account is already linked to this profile.",
+      "contactPending": "Open the bot chat to confirm your phone number, or sign in with your password."
     }
   },
   "miniSections": {
@@ -22231,6 +22292,36 @@
       "headChef": "Head chef",
       "cook": "Employee",
       "waiter": "Waiter"
+    },
+    "roleGroup": {
+      "label": "Workspace mode",
+      "manager": "Manager",
+      "staff": "Staff"
+    },
+    "telegram": {
+      "title": "Telegram and phone",
+      "linked": "Telegram linked",
+      "notLinked": "Telegram not linked",
+      "linkInApp": "Link this Telegram",
+      "linkByPhone": "Link via Telegram phone",
+      "linkViaBot": "Link via Telegram bot",
+      "linking": "Linking…",
+      "linkedSuccess": "Telegram linked successfully",
+      "linkConflict": "This Telegram is already linked to another employee",
+      "linkFailed": "Could not link Telegram. Please try again later."
+    },
+    "phoneDialog": {
+      "editButton": "Change phone",
+      "addButton": "Add phone number",
+      "title": "Phone number",
+      "description": "Your phone number enables quick Telegram linking and app sign-in.",
+      "label": "Phone",
+      "placeholder": "+7 999 123-45-67",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saved": "Phone number saved",
+      "error": "Could not save phone number"
     }
   },
   "miniToday": {

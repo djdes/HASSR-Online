@@ -5,7 +5,10 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 
-import { TELEGRAM_SIGN_IN_MESSAGES } from "@/lib/telegram-auth-messages";
+import {
+  TELEGRAM_SIGN_IN_MESSAGES,
+  TELEGRAM_SIGN_IN_NOT_LINKED,
+} from "@/lib/telegram-auth-messages";
 import { miniEntryErrorPresentation } from "./mini-entry-error-presentation";
 import * as deniedNotice from "./denied-notice";
 import { miniNavItems, type MiniNavItem } from "@/app/mini/_lib/nav-items";
@@ -155,9 +158,15 @@ function createEntry(options: EntryOptions = {}) {
       useSearchParams: () => ({ get: (key: string) => key === "next" ? context.next : key === "nps" ? context.nps : null }),
     },
     "next-intl": { useTranslations: resolveTranslator },
-    "lucide-react": { Loader2: "Loader2", ShieldAlert: "ShieldAlert" },
+    "lucide-react": {
+      CheckCircle2: "CheckCircle2",
+      Loader2: "Loader2",
+      Phone: "Phone",
+      ShieldAlert: "ShieldAlert",
+    },
     "./_lib/cookie-session": { adoptCookieSession: async () => context.cookie },
     "./_lib/signed-out-mark": {
+      clearSignedOutMark: () => undefined,
       isSignedOutManually: () => context.signedOut,
       miniEntryStep: ({ hasInitData, signedOut }: { hasInitData: boolean; signedOut: boolean }) => signedOut
         ? "login-screen"
@@ -176,6 +185,7 @@ function createEntry(options: EntryOptions = {}) {
     },
     "./_components/telegram-web-app": {
       getTelegramWebApp: () => context.telegram && { ...context.telegram, close: () => { calls.close += 1; } },
+      requestTelegramContact: async () => ({ status: "cancelled" as const }),
     },
     "@/lib/mini-entry-error-presentation": { miniEntryErrorPresentation },
     // `?denied=` из proxy несётся на домашнюю — настоящий модуль, он чистый.
@@ -375,4 +385,30 @@ test("legacy Telegram auth errors retain their safe semantic compatibility mappi
   const unknown = miniEntryErrorPresentation("private server diagnostic");
   assert.equal(unknown.key, "generic");
   assert.equal(unknown.problem, null);
+});
+
+test("unlinked Telegram entry renders localized phone-link onboarding card in ru/en/uz", async () => {
+  for (const locale of ["ru", "en", "uz"] as const) {
+    const messages = loadLocale(locale);
+    const entry = createEntry({
+      locale,
+      next: "/journals/hygiene",
+      signInResult: { error: TELEGRAM_SIGN_IN_NOT_LINKED },
+    });
+    entry.render();
+    await flushAsync();
+    const tree = entry.render();
+    const text = elementText(tree);
+    assert.ok(text.includes(String(atPath(messages, "miniHome.entry.linkPhone.heading"))));
+    assert.ok(text.includes(String(atPath(messages, "miniHome.entry.linkPhone.shareButton"))));
+    const fallbackLink = findElement(
+      tree,
+      (node) => node.type === "a" && (node.props as Dict).href === "/mini/login?linkTg=1&next=%2Fjournals%2Fhygiene",
+    );
+    assert.ok(fallbackLink, `${locale}: fallback login link must preserve linkTg=1 and next`);
+    assert.ok(elementText(fallbackLink).includes(String(atPath(messages, "miniHome.entry.linkPhone.passwordButton"))));
+    if (locale !== "ru") {
+      assert.doesNotMatch(text, /[А-Яа-яЁё]/, `${locale}: leaked Cyrillic in unlinked phone view`);
+    }
+  }
 });

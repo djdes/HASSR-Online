@@ -1,16 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Eye, EyeOff, Loader2, Send } from "lucide-react";
+import { Eye, EyeOff, Loader2, Phone, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { formatRuPhoneInput } from "@/lib/phone-input";
 import { sanitizeMiniAppRedirectPath } from "@/lib/journal-obligation-links";
 
-import { getTelegramWebApp } from "../_components/telegram-web-app";
+import { getTelegramWebApp, requestTelegramContact } from "../_components/telegram-web-app";
 import { isInsideMobileApp } from "@/lib/mobile-app";
 import { clearSignedOutMark, telegramSignInHref } from "../_lib/signed-out-mark";
-import { miniLoginErrorKey, type LoginErrorKey } from "./login-error-presentation";
+import {
+  miniLinkPhoneErrorKey,
+  miniLoginErrorKey,
+  type LoginErrorKey,
+} from "./login-error-presentation";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -59,10 +64,13 @@ function useTelegramInitData(): boolean {
 export function MiniLoginForm({
   next,
   initialPhone,
+  linkTelegramDefault = false,
 }: {
   next?: string;
   /** Номер из строки запроса — приходит с экрана «Готово» после QR-регистрации. */
   initialPhone?: string;
+  /** Пришли с экрана «Telegram не привязан» — привязка включена по умолчанию. */
+  linkTelegramDefault?: boolean;
 }) {
   // До загрузки скриптов кнопка выключена: иначе браузер отправит форму сам (утечка пароля, 2026-11-24).
   const hydrated = useHydrated();
@@ -77,13 +85,24 @@ export function MiniLoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<LoginErrorKey | null>(null);
+  const [fieldError, setFieldError] = useState<{
+    field: "phone" | "email" | "password";
+    key: LoginErrorKey;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [leavingToTelegram, setLeavingToTelegram] = useState(false);
+  const [sharingPhone, setSharingPhone] = useState(false);
+  const [linkOnLogin, setLinkOnLogin] = useState(true);
   // Второй шаг: код из Telegram, если включено в «Безопасности».
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const phoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (linkTelegramDefault) setLinkOnLogin(true);
+  }, [linkTelegramDefault]);
 
   // Фокус в поле — только вне Telegram. Там сверху кнопка «Войти через
   // Telegram», а клавиатура, выехавшая сама, закрыла бы полэкрана и
@@ -106,22 +125,27 @@ export function MiniLoginForm({
 
   // Клавиша ввода в телефоне или почте — к паролю; в пароле — «Войти».
   function focusPasswordOnEnter(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.nativeEvent.isComposing) return;
     if (event.key !== "Enter" || password) return;
     event.preventDefault();
     passwordRef.current?.focus();
   }
 
   /** Вошли: пометка «вышел вручную» больше не нужна — уходим, куда шли. */
-  function finishLogin() {
+  function finishLogin(fallbackHref?: string) {
     clearSignedOutMark();
     // Куда возвращать — только внутрь сайта: адрес приходит из строки
     // запроса, и без проверки он стал бы открытым редиректом.
     const target = next ? sanitizeMiniAppRedirectPath(next) : null;
+    const safeFallback =
+      typeof fallbackHref === "string" && fallbackHref.startsWith("/")
+        ? fallbackHref
+        : "/mini";
     // Перезагрузка страницей, а не router.replace: `/mini` пускает по
     // `useSession().status`, а он живёт в уже смонтированном
     // SessionProvider и про свежую куку не узнает. Клиентский переход
     // вернул бы нас на этот же экран — вход бы «не срабатывал».
-    window.location.assign(target ?? "/mini");
+    window.location.assign(target ?? safeFallback);
   }
 
   /**
@@ -134,23 +158,118 @@ export function MiniLoginForm({
     window.location.assign(telegramSignInHref(next));
   }
 
+  async function handleSharePhoneLogin() {
+    if (sharingPhone || leavingToTelegram || busy) return;
+    const initData = getTelegramWebApp()?.initData;
+    if (!initData) {
+      setError("loginFailed");
+      return;
+    }
+    setSharingPhone(true);
+    setError(null);
+    setFieldError(null);
+    try {
+      const contact = await requestTelegramContact();
+      if (contact.status === "cancelled") {
+        setError("contactDeclined");
+        return;
+      }
+      if (contact.status === "unsupported") {
+        setError("loginFailed");
+        return;
+      }
+      const postLink = async (contactResponse?: string) => {
+        const res = await fetch("/api/mini/link-telegram-phone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            contactResponse ? { initData, contactResponse } : { initData },
+          ),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          status?: string;
+          homeHref?: string;
+        };
+        return { res, body };
+      };
+
+      const first = await postLink(contact.response);
+      if (first.res.ok && first.body.ok) {
+        finishLogin(first.body.homeHref);
+        return;
+      }
+      if (first.res.status === 202 || first.body.status === "pending_bot_contact") {
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+          const poll = await postLink();
+          if (poll.res.ok && poll.body.ok) {
+            finishLogin(poll.body.homeHref);
+            return;
+          }
+          if (poll.res.status !== 202 && poll.body.status !== "pending_bot_contact") {
+            setError(miniLinkPhoneErrorKey(poll.body.status));
+            return;
+          }
+        }
+        setError("contactPending");
+        return;
+      }
+      setError(miniLinkPhoneErrorKey(first.body.status));
+    } catch {
+      setError("connectionFailed");
+    } finally {
+      setSharingPhone(false);
+    }
+  }
+
   function switchMode(nextMode: LoginMode) {
     setMode(nextMode);
     setError(null);
+    setFieldError(null);
   }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;
+
+    if (mode === "phone" && !phone.trim()) {
+      setFieldError({ field: "phone", key: "phoneRequired" });
+      setError("phoneRequired");
+      phoneRef.current?.focus();
+      return;
+    }
+    if (mode === "email" && !email.trim()) {
+      setFieldError({ field: "email", key: "emailRequired" });
+      setError("emailRequired");
+      emailRef.current?.focus();
+      return;
+    }
+    if (!password) {
+      const key: LoginErrorKey = mode === "phone" ? "phoneRequired" : "emailRequired";
+      setFieldError({ field: "password", key });
+      setError(key);
+      passwordRef.current?.focus();
+      return;
+    }
+
     setBusy(true);
     setError(null);
+    setFieldError(null);
 
     try {
+      const initData = inTelegram ? getTelegramWebApp()?.initData : undefined;
+      const telegramPayload =
+        inTelegram && linkOnLogin && initData
+          ? { initData, linkTelegram: true }
+          : {};
       const res = await fetch(LOGIN_ENDPOINT[mode], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          mode === "phone" ? { phone, password } : { email: email.trim(), password }
+          mode === "phone"
+            ? { phone, password, ...telegramPayload }
+            : { email: email.trim(), password, ...telegramPayload }
         ),
       });
       const body = await res.json().catch(() => ({}));
@@ -162,6 +281,13 @@ export function MiniLoginForm({
         setChallengeId(String(body.challengeId));
         setCode("");
         return;
+      }
+      if (body.telegramLinkStatus === "linked" || body.telegramLinkStatus === "already_linked") {
+        toast.success(t("telegram.linkedToast"));
+      } else if (body.telegramLinkStatus === "conflict") {
+        toast.warning(t("telegram.conflictToast"));
+      } else if (body.telegramLinkStatus === "user_already_linked_other_tg") {
+        toast.warning(t("telegram.userOtherTgToast"));
       }
       finishLogin();
     } catch {
@@ -248,14 +374,28 @@ export function MiniLoginForm({
         <div className="mt-5">
           <button
             type="button"
+            onClick={handleSharePhoneLogin}
+            disabled={sharingPhone || leavingToTelegram || busy}
+            aria-busy={sharingPhone}
+            className="mini-btn-primary mini-press w-full"
+          >
+            {sharingPhone ? (
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+            ) : (
+              <Phone className="size-5" aria-hidden />
+            )}
+            {sharingPhone ? t("telegram.sharingPhone") : t("telegram.sharePhone")}
+          </button>
+          <button
+            type="button"
             onClick={signInWithTelegram}
-            disabled={leavingToTelegram}
-            className="mini-btn-secondary mini-press w-full"
+            disabled={leavingToTelegram || sharingPhone}
+            className="mini-btn-secondary mini-press mt-2 w-full"
           >
             {leavingToTelegram ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-5 animate-spin" aria-hidden />
             ) : (
-              <Send className="size-5" />
+              <Send className="size-5" aria-hidden />
             )}
             {leavingToTelegram ? t("actions.switchingToTelegram") : t("telegram.login")}
           </button>
@@ -312,7 +452,12 @@ export function MiniLoginForm({
               onKeyDown={focusPasswordOnEnter}
               autoComplete="tel"
               value={phone}
-              onChange={(e) => setPhone(formatRuPhoneInput(e.target.value))}
+              onChange={(e) => {
+                setPhone(formatRuPhoneInput(e.target.value));
+                if (fieldError?.field === "phone") setFieldError(null);
+              }}
+              aria-invalid={fieldError?.field === "phone" || undefined}
+              aria-describedby={fieldError?.field === "phone" ? "mini-login-error" : undefined}
               placeholder={t("fields.phonePlaceholder")}
               className="mini-input"
             />
@@ -323,6 +468,7 @@ export function MiniLoginForm({
               {t("fields.email")}
             </label>
             <input
+              ref={emailRef}
               id="email"
               name="email"
               type="email"
@@ -331,10 +477,16 @@ export function MiniLoginForm({
               onKeyDown={focusPasswordOnEnter}
               autoComplete="email"
               autoCapitalize="none"
+              autoCorrect="off"
               spellCheck={false}
               autoFocus
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldError?.field === "email") setFieldError(null);
+              }}
+              aria-invalid={fieldError?.field === "email" || undefined}
+              aria-describedby={fieldError?.field === "email" ? "mini-login-error" : undefined}
               placeholder={t("fields.emailPlaceholder")}
               className="mini-input"
             />
@@ -354,13 +506,19 @@ export function MiniLoginForm({
               enterKeyHint="go"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldError?.field === "password") setFieldError(null);
+              }}
+              aria-invalid={fieldError?.field === "password" || undefined}
+              aria-describedby={fieldError?.field === "password" ? "mini-login-error" : undefined}
               className="mini-input"
               style={{ paddingRight: 60 }}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
+              aria-pressed={showPassword}
               aria-label={showPassword ? t("fields.hidePassword") : t("fields.showPassword")}
               className="absolute right-1 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-xl"
               style={{ color: "var(--mini-text-muted)" }}
@@ -370,9 +528,34 @@ export function MiniLoginForm({
           </div>
         </div>
 
+        {inTelegram ? (
+          <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl px-1 py-2">
+            <input
+              type="checkbox"
+              checked={linkOnLogin}
+              onChange={(e) => setLinkOnLogin(e.target.checked)}
+              className="mt-1 size-5 shrink-0 accent-[#5566f6]"
+            />
+            <span className="min-w-0 flex-1">
+              <span
+                className="block text-[15px] font-semibold leading-snug"
+                style={{ color: "var(--mini-text)" }}
+              >
+                {t("telegram.linkOnLogin")}
+              </span>
+              <span
+                className="mt-0.5 block text-[13.5px] leading-snug"
+                style={{ color: "var(--mini-text-muted)" }}
+              >
+                {t("telegram.linkOnLoginHint")}
+              </span>
+            </span>
+          </label>
+        ) : null}
+
         {/* Светлая тема: #ff6b6b на белом почти не читался. */}
         {error ? (
-          <p role="alert" className="mini-err">
+          <p id="mini-login-error" role="alert" className="mini-err">
             {tError(error)}
           </p>
         ) : null}
@@ -380,7 +563,7 @@ export function MiniLoginForm({
         <button
           ref={submitRef}
           type="submit"
-          disabled={busy || !password || (mode === "phone" ? !phone : !email.trim()) || !hydrated}
+          disabled={busy || !hydrated}
           aria-busy={busy}
           aria-label={busy ? t("actions.loggingIn") : t("actions.login")}
           className="mini-btn-primary mini-press w-full"

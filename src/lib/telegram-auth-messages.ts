@@ -27,6 +27,10 @@ export const TELEGRAM_SIGN_IN_MESSAGES: Record<TelegramSignInProblem, string> = 
 export const TELEGRAM_SIGN_IN_NOT_CONFIGURED =
   "Вход через Telegram пока не настроен. Сообщите руководителю.";
 
+/** Аккаунт не связан с Telegram — совпадает с ошибкой провайдера в `src/lib/auth.ts`. */
+export const TELEGRAM_SIGN_IN_NOT_LINKED =
+  "Аккаунт не связан с Telegram. Получите приглашение у руководителя.";
+
 /**
  * Код проверки подписи → текст для человека.
  * Значения кодов — `InitDataVerifyError` из `telegram-init-data.ts`.

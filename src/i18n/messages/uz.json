@@ -4189,7 +4189,10 @@
       "sections": "Barcha bo‘limlar",
       "workspace": "Kabinet",
       "login": "Kirish",
-      "home": "Bosh ekranga o‘tish"
+      "home": "Bosh ekranga o‘tish",
+      "roleManager": "Rahbar",
+      "roleStaff": "Xodim",
+      "roleReadonly": "Faqat ko‘rish"
     }
   },
   "hygiene": {
@@ -16673,7 +16676,9 @@
         "staffNoAction": "👋 <b>{name}</b>, kabinetingiz tayyor.\n\n✅ Bugungi barcha majburiy jurnallar to‘ldirilgan.\n\nJurnallarni brauzer va qog‘ozsiz, shu Telegram’da bir bosishda to‘ldiring.",
         "staffTaskButton": "🎯 Vazifani ochish",
         "staffLogsButton": "📋 Jurnallarim",
-        "unlinkedBody": "👋 Salom! Bu <b>WeSetup</b> — umumiy ovqatlanish korxonalari uchun SanPiN va HACCP elektron jurnallari.\n\nTelegram’ingiz hali ish hisobiga ulanmagan. Rahbaringizdan shaxsiy taklif havolasini yuborishini so‘rang yoki uni «Xodimlar» → «Telegram taklifnomasi» bo‘limida yarating.\n\nUlangandan so‘ng jurnallarni to‘ldirishingiz, vazifalarni ko‘rishingiz va bildirishnomalarni shu yerda olishingiz mumkin.\n\nXizmat haqida savolingiz bormi? Shu yerga yozing — javob beramiz."
+        "unlinkedBody": "👋 Salom! Bu <b>WeSetup</b> — umumiy ovqatlanish korxonalari uchun SanPiN va HACCP elektron jurnallari.\n\nTelegram’ingiz hali ish hisobiga ulanmagan. Rahbaringizdan shaxsiy taklif havolasini yuborishini so‘rang yoki uni «Xodimlar» → «Telegram taklifnomasi» bo‘limida yarating.\n\nUlangandan so‘ng jurnallarni to‘ldirishingiz, vazifalarni ko‘rishingiz va bildirishnomalarni shu yerda olishingiz mumkin.\n\nXizmat haqida savolingiz bormi? Shu yerga yozing — javob beramiz.",
+        "sharePhoneButton": "📱 Telefon raqamini ulashish",
+        "openMiniAppButton": "📱 Ilovani ochish"
       },
       "errors": {
         "accountNotFound": "Hisob topilmadi. Sozlamalar → Bildirishnomalar bo‘limida yangi havola yarating.",
@@ -16726,6 +16731,15 @@
         "organizationLine": "Tashkilot: {organization}",
         "emailLine": "Email: <code>{email}</code>",
         "button": "⚙️ Profil sozlamalari"
+      },
+      "contact": {
+        "notOwnContact": "Iltimos, «📱 Telefon raqamini ulashish» tugmasi orqali faqat o‘z kontaktingizni yuboring.",
+        "invalidPhone": "Telefon raqamini aniqlab bo‘lmadi. Tekshirib, qayta urinib ko‘ring.",
+        "notFound": "{phone} raqamli xodim topilmadi. Mini-ilovaga parol bilan kiring yoki rahbaringizdan raqamingizni kiritishni so‘rang.",
+        "ambiguous": "{phone} raqamiga bir nechta profil topildi. Kerakli hisobni ulash uchun mini-ilovaga telefon va parol bilan kiring.",
+        "alreadyLinkedOther": "Bu Telegram allaqachon boshqa hisobga ulangan. Uni o‘sha hisobda /stop buyrug‘i bilan uzing.",
+        "userHasOtherTelegram": "{phone} raqamli hisobga allaqachon boshqa Telegram ulangan. Rahbaringizga murojaat qiling yoki Profildan eski Telegram’ni uzing.",
+        "linkedSuccess": "✅ {phone} raqami tasdiqlandi — Telegram <b>{name}</b> profiliga ulandi!"
       }
     }
   },
@@ -18800,7 +18814,8 @@
         "expired": "Telegram sessiyangiz muddati tugadi. Ilovani yoping va botdan qayta oching.",
         "notConfirmed": "Telegram kirishni tasdiqlamadi. Ilovani yoping va botdan qayta oching.",
         "notConfigured": "Telegram orqali kirish hali sozlanmagan. Rahbaringizga xabar bering.",
-        "generic": "Kirish amalga oshmadi. Qayta urinib ko‘ring yoki telefon orqali kiring."
+        "generic": "Kirish amalga oshmadi. Qayta urinib ko‘ring yoki telefon orqali kiring.",
+        "notLinked": "Telegram’ingiz hali ish hisobiga ulanmagan."
       },
       "action": {
         "closeApp": "Ilovani yopish",
@@ -18810,10 +18825,43 @@
       "loading": {
         "heading": "Ish maydoni ochilmoqda…",
         "description": "Kirish tekshirilmoqda. Bu bir necha soniya oladi."
+      },
+      "linkPhone": {
+        "heading": "Telefon raqami orqali ulash",
+        "description": "Telegram’dagi telefon raqamingizni ulashing — ish profilingizni topamiz va kabinetni darhol ochamiz.",
+        "shareButton": "Telegram raqamini ulashish",
+        "sharing": "Profil ulanmoqda…",
+        "orPassword": "yoki odatiy usulda kiring",
+        "passwordButton": "Telefon va parol bilan kirish",
+        "declined": "Raqam yuborish bekor qilindi. Tugmani qayta bosing yoki parol bilan kiring.",
+        "notFound": "Bu raqam bo‘yicha profil topilmadi. Telefon yoki pochta va parol bilan kiring — Telegram darhol ulanadi.",
+        "ambiguous": "Bu raqamga bir nechta profil biriktirilgan. Kerakli hisobni tanlash uchun telefon va parol bilan kiring.",
+        "alreadyLinkedOther": "Bu Telegram allaqachon boshqa xodimga ulangan. O‘sha hisobda /stop buyrug‘i bilan uzing yoki parol bilan kiring.",
+        "userHasOtherTelegram": "Profilingizga allaqachon boshqa Telegram ulangan. Parol bilan kirib, Profilda ulanishni yangilang.",
+        "pendingBot": "Raqam botga yuborildi — kirish yakunlanmoqda…",
+        "failed": "Telegram’ni raqam orqali ulab bo‘lmadi. Qayta urinib ko‘ring yoki parol bilan kiring.",
+        "success": "Telegram ulandi! Kabinet ochilmoqda…"
       }
     },
     "navigation": {
       "landmark": "Ilova bo‘limlari"
+    },
+    "roleBar": {
+      "landmark": "Rol tezkor amallari",
+      "managerBadge": "Rahbar rejimi",
+      "supervisorBadge": "Smena nazorati",
+      "staffBadge": "Xodim rejimi",
+      "readonlyBadge": "Faqat ko‘rish",
+      "actions": {
+        "todayJournals": "Bugungi jurnallar",
+        "verifications": "Yozuvlarni tekshirish",
+        "staff": "Xodimlar",
+        "reports": "Hisobotlar",
+        "controlBoard": "Nazorat taxtasi",
+        "myTasks": "Smena vazifalari",
+        "journals": "Jurnallar",
+        "profile": "Profil"
+      }
     }
   },
   "publicJournalIndex": {
@@ -21718,7 +21766,14 @@
     "telegram": {
       "login": "Telegram orqali kirish",
       "accountInfo": "Ushbu Telegram ulangan hisobga.",
-      "otherAccount": "yoki boshqa hisob"
+      "otherAccount": "yoki boshqa hisob",
+      "sharePhone": "Telegram raqami orqali kirish va ulash",
+      "sharingPhone": "Raqam tekshirilmoqda…",
+      "linkOnLogin": "Ushbu Telegram’ni hisobga ulash",
+      "linkOnLoginHint": "Keyingi safar kabinet parolsiz, bir bosishda ochiladi.",
+      "linkedToast": "Telegram hisobingizga ulandi",
+      "conflictToast": "Bu Telegram allaqachon boshqa xodimga ulangan",
+      "userOtherTgToast": "Hisobga boshqa Telegram ulangan — eskisini Profildan uzing"
     },
     "mode": {
       "label": "Kirish usuli",
@@ -21766,7 +21821,13 @@
       "tooManyCodeAttempts": "Urinishlar juda ko‘p. Yangi kod olish uchun qayta kiring.",
       "accountUnavailable": "Bu hisobdan foydalanib bo‘lmaydi",
       "loginFailed": "Hisobga kirib bo‘lmadi. Ma’lumotlarni tekshirib, qayta urinib ko‘ring.",
-      "connectionFailed": "Aloqa yo‘q. Internetni tekshirib, qayta urinib ko‘ring."
+      "connectionFailed": "Aloqa yo‘q. Internetni tekshirib, qayta urinib ko‘ring.",
+      "contactDeclined": "Raqam yuborish bekor qilindi",
+      "phoneNotFound": "Bu raqamli xodim topilmadi. Telefon va parol bilan kiring.",
+      "phoneAmbiguous": "Bu raqam bo‘yicha bir nechta hisob topildi — parol bilan kiring.",
+      "telegramConflict": "Bu Telegram allaqachon boshqa profilga ulangan.",
+      "userHasOtherTelegram": "Profilga allaqachon boshqa Telegram ulangan.",
+      "contactPending": "Bot chatini ochib raqamni tasdiqlang yoki parol bilan kiring."
     }
   },
   "miniSections": {
@@ -22231,6 +22292,36 @@
       "headChef": "Bosh oshpaz",
       "cook": "Xodim",
       "waiter": "Ofitsiant"
+    },
+    "roleGroup": {
+      "label": "Kabinet rejimi",
+      "manager": "Rahbar",
+      "staff": "Xodim"
+    },
+    "telegram": {
+      "title": "Telegram va telefon",
+      "linked": "Telegram ulangan",
+      "notLinked": "Telegram ulanmagan",
+      "linkInApp": "Ushbu Telegram’ni ulash",
+      "linkByPhone": "Telegram raqami bilan ulash",
+      "linkViaBot": "Telegram bot orqali ulash",
+      "linking": "Ulanmoqda…",
+      "linkedSuccess": "Telegram muvaffaqiyatli ulandi",
+      "linkConflict": "Bu Telegram allaqachon boshqa xodimga ulangan",
+      "linkFailed": "Telegram’ni ulab bo‘lmadi. Keyinroq urinib ko‘ring."
+    },
+    "phoneDialog": {
+      "editButton": "Telefonni o‘zgartirish",
+      "addButton": "Telefon raqamini kiritish",
+      "title": "Telefon raqami",
+      "description": "Telefon raqami Telegram’ni tez ulash va ilovaga kirish uchun kerak.",
+      "label": "Telefon",
+      "placeholder": "+7 999 123-45-67",
+      "save": "Saqlash",
+      "saving": "Saqlanmoqda…",
+      "cancel": "Bekor qilish",
+      "saved": "Telefon saqlandi",
+      "error": "Telefonni saqlab bo‘lmadi"
     }
   },
   "miniToday": {

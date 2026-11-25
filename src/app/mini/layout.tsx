@@ -9,6 +9,7 @@ import { isMobileAppUserAgent } from "@/lib/mobile-app";
 import { iosStartupImages } from "@/lib/pwa-assets";
 import { MiniSessionProvider } from "./_components/mini-session-provider";
 import { MiniAppShell } from "./_components/mini-app-shell";
+import { MiniRoleBar } from "./_components/mini-role-bar";
 import { loadMiniShellData } from "./_components/mini-shell-data";
 import { ContentTransitionProvider } from "@/components/layout/content-transition";
 import { ScopeBoundary } from "@/components/layout/scope-boundary";
@@ -71,8 +72,6 @@ export async function generateMetadata(): Promise<Metadata> {
 const BASE_VIEWPORT: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   // Цвет фирменной шапки — тот же `theme-color`, что у QR-страниц.
   themeColor: "#0b1024",
 };
@@ -102,7 +101,16 @@ export default async function MiniLayout({
               пока экран новой не пришёл — «…» у пункта, тост — после. Экран
               собирается заново из данных новой (`lib/cabinet-scope.ts`). */}
           <ContentTransitionProvider>
-            <ScopeBoundary scopeKey={shell.scope.data}>{children}</ScopeBoundary>
+            <ScopeBoundary scopeKey={shell.scope.data}>
+              {shell.authed ? (
+                <MiniRoleBar
+                  roleKind={shell.roleKind}
+                  roleGroup={shell.roleGroup}
+                  quickActions={shell.roleQuickActions}
+                />
+              ) : null}
+              {children}
+            </ScopeBoundary>
           </ContentTransitionProvider>
         </MiniAppShell>
       </MiniSessionProvider>

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 /**
  * Guards the owner's rule of 2026-11-22 (spec `.agent/tasks/borderless-2026-11-22`): in the
@@ -18,7 +19,7 @@ test("borderless.css собран из текущих цветов рамок в
 });
 
 test("рамка-коробка — светло-серая, серо-голубая или бледно-индиговая; статус и акцент — нет", async () => {
-  const { isNeutralBorder } = (await import(join(process.cwd(), "scripts/borderless-neutral.mjs"))) as {
+  const { isNeutralBorder } = (await import(pathToFileURL(join(process.cwd(), "scripts/borderless-neutral.mjs")).href)) as {
     isNeutralBorder: (hex: string) => boolean;
   };
   for (const hex of ["dcdfed", "ececf4", "dfe1ec", "e7e7ec", "dcdde3", "c9cee6", "e5e7eb", "dfe3ff", "dfe3fb"]) {

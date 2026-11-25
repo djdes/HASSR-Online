@@ -86,7 +86,7 @@ async function replyWithLinkedStart(
   });
 }
 
-async function replyWithLoadedStartHome(
+export async function replyWithLoadedStartHome(
   ctx: Context,
   fromId: string
 ): Promise<void> {
@@ -100,9 +100,19 @@ async function replyWithLoadedStartHome(
   await setChatCommands(ctx, fromId, messages);
 
   if (home.kind === "unlinked") {
+    const tStart = createTranslator({
+      locale,
+      messages,
+      namespace: "telegram.bot.start",
+    });
     await ctx.reply(buildTelegramUnlinkedStartReply(locale, messages).text, {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
+      reply_markup: {
+        keyboard: [[{ text: tStart("sharePhoneButton"), request_contact: true }]],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
     });
     return;
   }

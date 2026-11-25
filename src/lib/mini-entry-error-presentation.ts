@@ -1,6 +1,7 @@
 import {
   TELEGRAM_SIGN_IN_MESSAGES,
   TELEGRAM_SIGN_IN_NOT_CONFIGURED,
+  TELEGRAM_SIGN_IN_NOT_LINKED,
   telegramSignInProblemFromMessage,
   type TelegramSignInProblem,
 } from "@/lib/telegram-auth-messages";
@@ -11,6 +12,7 @@ export type MiniEntryErrorKey =
   | "expired"
   | "notConfirmed"
   | "notConfigured"
+  | "notLinked"
   | "generic";
 
 export type MiniEntryErrorPresentation = {
@@ -32,6 +34,9 @@ export function miniEntryErrorPresentation(
   }
   if (text === TELEGRAM_SIGN_IN_NOT_CONFIGURED) {
     return { key: "notConfigured", problem: null };
+  }
+  if (text === TELEGRAM_SIGN_IN_NOT_LINKED) {
+    return { key: "notLinked", problem: null };
   }
   return { key: "generic", problem: null };
 }

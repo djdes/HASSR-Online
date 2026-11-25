@@ -141,3 +141,23 @@ describe("mini-theme: карточки темы в профиле", () => {
     assert.equal(declaration(CSS, ".mini-root main [data-theme-tile]::after", "content"), "none");
   });
 });
+
+describe("mini-theme: modern-web-guidance", () => {
+  it("учитывает отступы прокрутки под фиксированные панели и безопасные зоны", () => {
+    assert.match(CSS, /scroll-padding-top:\s*calc\(var\(--mini-safe-t\)/);
+    assert.match(CSS, /scroll-padding-bottom:\s*calc\(var\(--mini-safe-b\)/);
+  });
+
+  it("использует container queries для упрощения мобильного вида и перенос текста", () => {
+    assert.match(CSS, /container:\s*mini-main\s*\/\s*inline-size/);
+    assert.match(CSS, /@container\s+mini-main\s*\(inline-size\s*<\s*34rem\)/);
+    assert.match(CSS, /text-wrap:\s*balance/);
+    assert.match(CSS, /text-wrap:\s*pretty/);
+  });
+
+  it("описывает нативный диалог редактирования с ::backdrop и полосу ролей", () => {
+    assert.ok(CSS.includes(".mini-dialog {"));
+    assert.ok(CSS.includes(".mini-dialog::backdrop {"));
+    assert.ok(CSS.includes(".mini-role-bar {"));
+  });
+});

@@ -4,13 +4,18 @@ import { PersonalLanguageSelect } from "@/components/i18n/personal-language-sele
 import Link from "next/link";
 import { MiniOrgSwitcher } from "@/app/mini/_components/mini-org-switcher";
 import { MiniLocationSwitcher } from "@/app/mini/_components/mini-location-switcher";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { parseMobileAppUserAgent, type MobileAppPlatform } from "@/lib/mobile-app";
 import { unregisterPushDevice } from "@/lib/native-bridge";
 import { AppPushSettings } from "@/app/mini/_components/app-push-settings";
 import { MarketingEmailToggle } from "@/components/settings/marketing-email-toggle";
+import { formatPhone } from "@/lib/phone";
+import { formatRuPhoneInput } from "@/lib/phone-input";
+import type { MiniRoleGroup } from "@/lib/mini-role";
+import { getTelegramWebApp, requestTelegramContact } from "../_components/telegram-web-app";
 
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
 import { hasCapability } from "@/lib/permission-presets";
@@ -19,18 +24,25 @@ import { miniHomeHref } from "@/app/mini/_lib/nav-items";
 import { getUserRoleLabel } from "@/lib/user-roles";
 import {
   ArrowLeft,
+  CheckCircle2,
   ChevronRight,
   Coins,
   CreditCard,
   FileSignature,
+  Link2,
+  Loader2,
   LogOut,
   MessageCircleMore,
   Palette,
+  Pencil,
+  Phone,
+  Send,
   ShieldCheck,
   Trash2,
   Unlink,
   LayoutGrid,
   MonitorSmartphone,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -71,11 +83,22 @@ import { BillingStaffNotice } from "@/components/billing/billing-staff-notice";
  *     чего понадобится новое приглашение. Это аналог выхода именно для
  *     Telegram, поэтому он остаётся.
  */
+const subscribeNever = () => () => {};
+
+function useInTelegram(): boolean {
+  return useSyncExternalStore(
+    subscribeNever,
+    () => Boolean(getTelegramWebApp()?.initData),
+    () => false,
+  );
+}
+
 export function MiniMeClient({
   telegramBotUsername,
   positionTitle = null,
   phone = null,
   telegramLinked = false,
+  roleGroup = "staff",
   billingAnnouncement = null,
   billingStaffNotice = false,
   platformPanel = false,
@@ -105,12 +128,25 @@ export function MiniMeClient({
    *  для телефона человек входит по паролю, и кнопка только пугала бы и
    *  выкидывала из аккаунта. */
   telegramLinked?: boolean;
+  /** Группа роли кабинета («Руководитель» / «Сотрудник»). */
+  roleGroup?: MiniRoleGroup;
 }) {
+  const locale = useLocale();
   const t = useTranslations("miniProfile");
   const tView = useTranslations("common.viewPrefs");
   const { data: session, status } = useSession();
+  const inTelegram = useInTelegram();
   const [busy, setBusy] = useState<"none" | "signout" | "unlink">("none");
   const [error, setError] = useState<"unlinkFailed" | "signOutFailed" | "unauthorized" | null>(null);
+  const [isTgLinked, setIsTgLinked] = useState(telegramLinked);
+  const [currentPhone, setCurrentPhone] = useState<string | null>(phone);
+  const [tgBusy, setTgBusy] = useState<"none" | "inApp" | "phone" | "bot">("none");
+  const [tgError, setTgError] = useState<string | null>(null);
+  const phoneDialogRef = useRef<HTMLDialogElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const [phoneDraft, setPhoneDraft] = useState("");
+  const [phoneSaving, setPhoneSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   // Confirm-state для двух destructive actions. Project rule (CLAUDE.md
   // §6): native window.confirm не используем — только ConfirmDialog с
   // bullet-описанием последствий.
@@ -205,6 +241,134 @@ export function MiniMeClient({
     }
   }
 
+  async function handleLinkTelegramInApp(withContact: boolean) {
+    if (tgBusy !== "none") return;
+    const initData = getTelegramWebApp()?.initData;
+    if (!initData) {
+      setTgError(t("telegram.linkFailed"));
+      return;
+    }
+    setTgError(null);
+    setTgBusy(withContact ? "phone" : "inApp");
+    try {
+      let contactResponse: string | undefined;
+      if (withContact) {
+        const contact = await requestTelegramContact();
+        if (contact.status !== "sent") {
+          return;
+        }
+        contactResponse = contact.response;
+      }
+      const res = await fetch("/api/mini/link-telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          contactResponse ? { initData, contactResponse } : { initData },
+        ),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        status?: string;
+        phoneSaved?: string | null;
+      };
+      if (res.ok && body.ok) {
+        setIsTgLinked(true);
+        if (typeof body.phoneSaved === "string" && body.phoneSaved) {
+          setCurrentPhone(body.phoneSaved);
+        }
+        toast.success(t("telegram.linkedSuccess"));
+        return;
+      }
+      if (
+        res.status === 409 ||
+        body.status === "conflict" ||
+        body.status === "user_already_linked_other_tg"
+      ) {
+        setTgError(t("telegram.linkConflict"));
+        return;
+      }
+      setTgError(t("telegram.linkFailed"));
+    } catch {
+      setTgError(t("telegram.linkFailed"));
+    } finally {
+      setTgBusy("none");
+    }
+  }
+
+  async function handleLinkViaBot() {
+    if (tgBusy !== "none") return;
+    setTgError(null);
+    setTgBusy("bot");
+    try {
+      const res = await fetch("/api/mini/link-telegram", { method: "GET" });
+      const body = (await res.json().catch(() => ({}))) as {
+        botLinkUrl?: string | null;
+      };
+      if (res.ok && typeof body.botLinkUrl === "string" && body.botLinkUrl) {
+        window.open(body.botLinkUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+      setTgError(t("telegram.linkFailed"));
+    } catch {
+      setTgError(t("telegram.linkFailed"));
+    } finally {
+      setTgBusy("none");
+    }
+  }
+
+  function openPhoneDialog() {
+    setPhoneDraft(currentPhone ? formatRuPhoneInput(currentPhone) : "");
+    setPhoneError(null);
+    phoneDialogRef.current?.showModal();
+    window.setTimeout(() => phoneInputRef.current?.focus(), 0);
+  }
+
+  async function savePhone(event: React.FormEvent) {
+    event.preventDefault();
+    if (phoneSaving) return;
+    const trimmed = phoneDraft.trim();
+    if (!trimmed) {
+      setPhoneError(t("phoneDialog.error"));
+      phoneInputRef.current?.focus();
+      return;
+    }
+    setPhoneSaving(true);
+    setPhoneError(null);
+    try {
+      const res = await fetch("/api/users/me/phone", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: trimmed }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        phone?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        setPhoneError(
+          locale === "ru" && typeof body.error === "string" && body.error
+            ? body.error
+            : t("phoneDialog.error"),
+        );
+        phoneInputRef.current?.focus();
+        return;
+      }
+      if (typeof body.phone === "string" && body.phone) {
+        setCurrentPhone(body.phone);
+      } else {
+        setCurrentPhone(trimmed);
+      }
+      phoneDialogRef.current?.close();
+      toast.success(t("phoneDialog.saved"));
+    } catch {
+      setPhoneError(t("phoneDialog.error"));
+    } finally {
+      setPhoneSaving(false);
+    }
+  }
+
+  const formattedPhone = formatPhone(currentPhone) || currentPhone;
+
   const fullAccess = hasFullWorkspaceAccess(u);
   // Логотип и цвет организации — в её настройках, куда пускают только с
   // `admin.full`: то же условие, что у ссылки в меню профиля сайта
@@ -285,6 +449,15 @@ export function MiniMeClient({
               {u.organizationName || "—"}
             </dd>
           </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt style={{ color: "var(--mini-text-muted)" }}>{t("roleGroup.label")}</dt>
+            <dd
+              className="min-w-0 truncate text-right font-semibold"
+              style={{ color: "var(--mini-text)" }}
+            >
+              {roleGroup === "manager" ? t("roleGroup.manager") : t("roleGroup.staff")}
+            </dd>
+          </div>
           {/* Подпись должности — та же, что в «Сотрудниках» и
               «Команде» (`getUserPositionLabel`): справочная должность
               важнее роли. Иначе в профиле у заведующей стояло
@@ -320,7 +493,7 @@ export function MiniMeClient({
               className="min-w-0 truncate text-right font-semibold"
               style={{ color: "var(--mini-text)" }}
             >
-              {phone || t("fields.phoneMissing")}
+              {formattedPhone || t("fields.phoneMissing")}
             </dd>
           </div>
           {u.email && !u.email.endsWith("@invite.local") ? (
@@ -335,6 +508,98 @@ export function MiniMeClient({
             </div>
           ) : null}
         </dl>
+      </section>
+
+      {/* Telegram и телефон: статус привязки, привязка из Mini App или через бота, диалог номера */}
+      <section className="mini-card p-4" data-testid="mini-telegram-phone">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2
+            className="text-[17px] font-semibold"
+            style={{ color: "var(--mini-text)" }}
+          >
+            {t("telegram.title")}
+          </h2>
+          <span
+            className="mini-pill"
+            data-tone={isTgLinked ? "ok" : "warn"}
+          >
+            {isTgLinked ? <CheckCircle2 className="size-4" aria-hidden /> : null}
+            {isTgLinked ? t("telegram.linked") : t("telegram.notLinked")}
+          </span>
+        </div>
+        <p
+          className="mt-2 text-[15px]"
+          style={{ color: "var(--mini-text-muted)" }}
+        >
+          {t("fields.phone")}:{" "}
+          <span className="font-semibold" style={{ color: "var(--mini-text)" }}>
+            {formattedPhone || t("fields.phoneMissing")}
+          </span>
+        </p>
+        {tgError ? (
+          <p role="alert" className="mini-err mt-3">
+            {tgError}
+          </p>
+        ) : null}
+        <div className="mt-3 flex flex-col gap-2">
+          {!isTgLinked ? (
+            inTelegram ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleLinkTelegramInApp(false)}
+                  disabled={tgBusy !== "none"}
+                  aria-busy={tgBusy === "inApp"}
+                  className="mini-btn-primary mini-press w-full"
+                >
+                  {tgBusy === "inApp" ? (
+                    <Loader2 className="size-5 animate-spin" aria-hidden />
+                  ) : (
+                    <Link2 className="size-5" aria-hidden />
+                  )}
+                  {tgBusy === "inApp" ? t("telegram.linking") : t("telegram.linkInApp")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLinkTelegramInApp(true)}
+                  disabled={tgBusy !== "none"}
+                  aria-busy={tgBusy === "phone"}
+                  className="mini-btn-secondary mini-press w-full"
+                >
+                  {tgBusy === "phone" ? (
+                    <Loader2 className="size-5 animate-spin" aria-hidden />
+                  ) : (
+                    <Phone className="size-5" aria-hidden />
+                  )}
+                  {tgBusy === "phone" ? t("telegram.linking") : t("telegram.linkByPhone")}
+                </button>
+              </>
+            ) : telegramBotUsername ? (
+              <button
+                type="button"
+                onClick={handleLinkViaBot}
+                disabled={tgBusy !== "none"}
+                aria-busy={tgBusy === "bot"}
+                className="mini-btn-primary mini-press w-full"
+              >
+                {tgBusy === "bot" ? (
+                  <Loader2 className="size-5 animate-spin" aria-hidden />
+                ) : (
+                  <Send className="size-5" aria-hidden />
+                )}
+                {tgBusy === "bot" ? t("telegram.linking") : t("telegram.linkViaBot")}
+              </button>
+            ) : null
+          ) : null}
+          <button
+            type="button"
+            onClick={openPhoneDialog}
+            className="mini-btn-secondary mini-press w-full"
+          >
+            <Pencil className="size-4" aria-hidden />
+            {currentPhone ? t("phoneDialog.editButton") : t("phoneDialog.addButton")}
+          </button>
+        </div>
       </section>
 
       {/* Ключи входа: во встроенном браузере Android-приложения WebAuthn не
@@ -503,7 +768,7 @@ export function MiniMeClient({
         >
           <ProfileRow icon={LogOut} label={t("rows.signOut")} hint={t("rows.signOutHint")} chevron={false} />
         </button>
-        {telegramLinked ? (
+        {isTgLinked ? (
         <button
           type="button"
           onClick={() => setConfirmUnlinkOpen(true)}
@@ -584,6 +849,87 @@ export function MiniMeClient({
         variant="danger"
         typeToConfirm={t("confirm.unlinkPhrase")}
       />
+
+      <dialog
+        ref={phoneDialogRef}
+        className="mini-dialog"
+        aria-labelledby="mini-phone-dialog-title"
+        {...({ closedby: "any" } as Record<string, string>)}
+      >
+        <div className="p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2
+              id="mini-phone-dialog-title"
+              className="text-[18px] font-semibold"
+              style={{ color: "var(--mini-text)" }}
+            >
+              {t("phoneDialog.title")}
+            </h2>
+            <form method="dialog">
+              <button
+                type="submit"
+                aria-label={t("phoneDialog.cancel")}
+                className="mini-btn-ghost -mr-2 flex size-12 items-center justify-center p-0"
+              >
+                <X className="size-5" aria-hidden />
+              </button>
+            </form>
+          </div>
+          <p
+            className="mt-1.5 text-[15px] leading-relaxed"
+            style={{ color: "var(--mini-text-muted)" }}
+          >
+            {t("phoneDialog.description")}
+          </p>
+          <form method="post" onSubmit={savePhone} noValidate className="mt-4 space-y-3">
+            <div>
+              <label htmlFor="mini-me-phone" className="mini-label mb-1.5 block">
+                {t("phoneDialog.label")}
+              </label>
+              <input
+                ref={phoneInputRef}
+                id="mini-me-phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phoneDraft}
+                onChange={(e) => {
+                  setPhoneDraft(formatRuPhoneInput(e.target.value, phoneDraft));
+                  setPhoneError(null);
+                }}
+                placeholder={t("phoneDialog.placeholder")}
+                aria-invalid={Boolean(phoneError) || undefined}
+                aria-describedby={phoneError ? "mini-me-phone-error" : undefined}
+                className="mini-input"
+              />
+            </div>
+            {phoneError ? (
+              <p id="mini-me-phone-error" role="alert" className="mini-err">
+                {phoneError}
+              </p>
+            ) : null}
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => phoneDialogRef.current?.close()}
+                disabled={phoneSaving}
+                className="mini-btn-secondary mini-press flex-1"
+              >
+                {t("phoneDialog.cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={phoneSaving}
+                aria-busy={phoneSaving}
+                className="mini-btn-primary mini-press flex-1"
+              >
+                {phoneSaving ? t("phoneDialog.saving") : t("phoneDialog.save")}
+              </button>
+            </div>
+          </form>
+        </div>
+      </dialog>
     </div>
   );
 }

@@ -1,0 +1,211 @@
+{
+  "taskId": "telegram-mobile-role-miniapp-2026-11-25",
+  "branch": "t3/telegram-mobile-role-app",
+  "baseCommit": "e11c3606c084007b34f4a65b4ee94fef9084ca07",
+  "status": "ready_for_final_verification",
+  "generatedAt": "2026-11-25T12:04:00+03:00",
+  "threads": {
+    "workerA": "[Worker A: Backend phone-link auth, role resolver & bot contact handler](t3-thread://v2/9d8428a7-44ba-4508-adf3-6a4197953273/thread:delegated-task:command%3Amcp%3Ab8e9b3c9-08c4-4459-ad6a-ef6b82268ef3%3Adelegate-task%3Ae96ffc70-7ada-4f7a-9922-febeb1786eb6)",
+    "workerB": "[Worker B: Modern Web Guidance mobile UI, role bar & phone-link screens](t3-thread://v2/9d8428a7-44ba-4508-adf3-6a4197953273/thread:delegated-task:command%3Amcp%3Ab8e9b3c9-08c4-4459-ad6a-ef6b82268ef3%3Adelegate-task%3Ae3a20ad8-dab0-46a0-88bf-f5948e49af16)",
+    "verifier1": "[Verifier: Telegram Mobile Role Mini App AC1-AC7 audit](t3-thread://v2/9d8428a7-44ba-4508-adf3-6a4197953273/thread:delegated-task:command%3Amcp%3Ab8e9b3c9-08c4-4459-ad6a-ef6b82268ef3%3Adelegate-task%3Ae1c5d494-c3fa-4d8a-8acc-590a332431a2)"
+  },
+  "coreFilesModified": false,
+  "eolOnlyFiles": [
+    "src/i18n/messages/confirm/en.json",
+    "src/i18n/messages/confirm/ru.json",
+    "src/i18n/messages/confirm/uz.json",
+    "src/i18n/messages/errors/en.json",
+    "src/i18n/messages/errors/ru.json",
+    "src/i18n/messages/errors/uz.json",
+    "src/i18n/pricing-message-contract.d.ts"
+  ],
+  "modifiedFiles": [
+    "src/app/(dashboard)/layout.tsx",
+    "src/app/api/auth/login/route.ts",
+    "src/app/api/mini/login/route.ts",
+    "src/app/api/mini/session/route.ts",
+    "src/app/borderless.css",
+    "src/app/mini/_components/mini-app-shell.tsx",
+    "src/app/mini/_components/mini-shell-data.ts",
+    "src/app/mini/_components/mini-shell.tsx",
+    "src/app/mini/_components/telegram-web-app.ts",
+    "src/app/mini/_components/telegram-web-app.test.ts",
+    "src/app/mini/layout.tsx",
+    "src/app/mini/login/login-error-presentation.ts",
+    "src/app/mini/login/login-form.tsx",
+    "src/app/mini/login/page.tsx",
+    "src/app/mini/me/me-client.tsx",
+    "src/app/mini/me/page.tsx",
+    "src/app/mini/mini-theme.css",
+    "src/app/mini/mini-theme.test.ts",
+    "src/app/mini/page.tsx",
+    "src/app/mini/sections/sections-client.tsx",
+    "src/app/neutral-palette.css",
+    "src/i18n/message-contract.d.ts",
+    "src/i18n/messages/en.json",
+    "src/i18n/messages/ru.json",
+    "src/i18n/messages/uz.json",
+    "src/lib/bot/bot-app.ts",
+    "src/lib/bot/handlers/start.ts",
+    "src/lib/mini-entry-error-presentation.ts",
+    "src/lib/mini-home-localization.test.ts",
+    "src/lib/telegram-auth-messages.ts",
+    "src/lib/telegram-init-data.ts"
+  ],
+  "createdFiles": [
+    "src/app/api/mini/link-telegram-phone/route.ts",
+    "src/app/api/mini/link-telegram/route.ts",
+    "src/app/mini/_components/mini-role-bar.tsx",
+    "src/lib/bot/handlers/contact.ts",
+    "src/lib/bot/handlers/contact.test.ts",
+    "src/lib/mini-role.ts",
+    "src/lib/mini-role.test.ts",
+    "src/lib/telegram-init-data.test.ts",
+    "src/lib/telegram-phone-link.ts",
+    "src/lib/telegram-phone-link.test.ts"
+  ],
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/telegram-init-data.ts",
+        "src/lib/telegram-phone-link.ts",
+        "src/app/api/mini/link-telegram-phone/route.ts",
+        "src/app/mini/_components/telegram-web-app.ts",
+        "src/app/mini/page.tsx",
+        "src/lib/telegram-auth-messages.ts",
+        "src/lib/mini-entry-error-presentation.ts"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/api/mini/login/route.ts",
+        "src/app/api/auth/login/route.ts",
+        "src/app/api/mini/link-telegram/route.ts",
+        "src/app/mini/login/page.tsx",
+        "src/app/mini/login/login-form.tsx",
+        "src/app/mini/login/login-error-presentation.ts",
+        "src/app/mini/me/page.tsx",
+        "src/app/mini/me/me-client.tsx"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/bot/handlers/start.ts",
+        "src/lib/bot/handlers/contact.ts",
+        "src/lib/bot/bot-app.ts"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/mini-role.ts",
+        "src/app/api/mini/session/route.ts",
+        "src/app/mini/_components/mini-shell-data.ts",
+        "src/app/mini/_components/mini-app-shell.tsx",
+        "src/app/mini/_components/mini-shell.tsx",
+        "src/app/mini/_components/mini-role-bar.tsx",
+        "src/app/mini/layout.tsx",
+        "src/app/(dashboard)/layout.tsx"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "src/app/mini/layout.tsx",
+        "src/app/mini/mini-theme.css",
+        "src/app/mini/sections/sections-client.tsx",
+        "src/app/mini/login/login-form.tsx",
+        "src/app/mini/me/me-client.tsx",
+        "src/app/borderless.css",
+        "src/app/neutral-palette.css"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "evidence": [
+        "src/i18n/messages/ru.json",
+        "src/i18n/messages/en.json",
+        "src/i18n/messages/uz.json",
+        "src/i18n/message-contract.d.ts",
+        "src/lib/mini-home-localization.test.ts"
+      ]
+    },
+    "AC7": {
+      "status": "PENDING_VERIFIER_2",
+      "evidence": [
+        ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/spec.md",
+        ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/problems.md",
+        ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/evidence.md",
+        ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/evidence.json"
+      ]
+    }
+  },
+  "checks": {
+    "postLastEdit": [
+      {
+        "name": "i18n-types-check",
+        "command": "node scripts/i18n-types.mjs --check",
+        "exitCode": 0
+      },
+      {
+        "name": "targeted-unit-tests",
+        "command": "node --import tsx --test src/lib/telegram-init-data.test.ts src/lib/telegram-phone-link.test.ts src/lib/mini-role.test.ts src/lib/bot/handlers/contact.test.ts src/lib/bot/start-response.test.ts src/app/mini/_components/telegram-web-app.test.ts src/app/mini/_components/mini-theme-model.test.ts src/app/mini/_lib/nav-items.test.ts src/app/mini/mini-theme.test.ts src/lib/mini-home-localization.test.ts src/app/mini/login/login-error-presentation.test.ts src/app/neutral-palette.test.ts src/app/one-accent.test.ts",
+        "exitCode": 0,
+        "tests": 104,
+        "passed": 104,
+        "failed": 0,
+        "skipped": 0,
+        "rawPath": ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/raw/unit-tests.txt"
+      },
+      {
+        "name": "eslint-34-files",
+        "command": "npx eslint <27 production + 7 test files>",
+        "exitCode": 0,
+        "errors": 0,
+        "warnings": 0,
+        "rawPath": ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/raw/eslint.txt"
+      },
+      {
+        "name": "typecheck",
+        "command": "npm run typecheck",
+        "exitCode": 0,
+        "errors": 0,
+        "rawPath": ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/raw/typecheck.txt"
+      }
+    ],
+    "preFinalPolish": [
+      {
+        "name": "i18n-check-full",
+        "command": "npm run i18n:check",
+        "exitCode": 0,
+        "tests": 103,
+        "passed": 103,
+        "failed": 0,
+        "rawPath": ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/raw/i18n-check.txt"
+      },
+      {
+        "name": "test-changed-82-files",
+        "command": "TEST_CHANGED_MAX_FILES=100 TEST_CHANGED_MAX_TESTS=200 node scripts/test-changed.mjs",
+        "exitCode": 1,
+        "files": 82,
+        "passed": 392,
+        "failed": 1,
+        "notes": "Pre-existing Windows-only ESM import path failure in src/app/borderless.test.ts:21 (ERR_UNSUPPORTED_ESM_URL_SCHEME)",
+        "rawPath": ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/raw/test-changed.txt"
+      },
+      {
+        "name": "targeted-5-file-suite",
+        "command": "node --import tsx --test (borderless + password-forms-post + mini + bot)",
+        "exitCode": 1,
+        "tests": 98,
+        "passed": 96,
+        "failed": 2,
+        "notes": "Pre-existing Windows-only failures in src/app/borderless.test.ts:21 and src/app/password-forms-post.test.ts:62,101",
+        "rawPath": ".agent/tasks/telegram-mobile-role-miniapp-2026-11-25/raw/targeted-tests.txt"
+      }
+    ]
+  }
+}

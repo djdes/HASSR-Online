@@ -12,6 +12,7 @@ import { deletionDueAt } from "@/lib/org-deletion";
 import { getPartnerHintRates } from "@/lib/partners/partner-hint";
 import { currentAnnouncement } from "@/lib/platform-status";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
+import { resolveMiniRole } from "@/lib/mini-role";
 import { miniHomeHref, miniNavItems } from "@/app/mini/_lib/nav-items";
 import { customSectionNameByHref } from "@/lib/custom-names";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
@@ -87,6 +88,7 @@ export async function loadMiniShellData(session: Session | null) {
   // оттуда человека сразу перекидывало дальше — лишний прыжок и
   // мигающий экран.
   const actor = session?.user ?? null;
+  const role = resolveMiniRole(actor);
   // Свои названия разделов организации (вкладка «Журналы» и т. п.).
   const customNames = session?.user
     ? await getOrgCustomNames(getActiveOrgId(session))
@@ -95,6 +97,9 @@ export async function loadMiniShellData(session: Session | null) {
   return {
     authed: Boolean(session?.user),
     homeHref: miniHomeHref(actor),
+    roleKind: role.kind,
+    roleGroup: role.group,
+    roleQuickActions: role.quickActions,
     navItems: miniNavItems(actor).map((item) => {
       const customLabel = customSectionNameByHref(customNames, item.href);
       return {

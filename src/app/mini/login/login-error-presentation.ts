@@ -14,7 +14,30 @@ export type LoginErrorKey =
   | "tooManyCodeAttempts"
   | "accountUnavailable"
   | "loginFailed"
-  | "connectionFailed";
+  | "connectionFailed"
+  | "contactDeclined"
+  | "phoneNotFound"
+  | "phoneAmbiguous"
+  | "telegramConflict"
+  | "userHasOtherTelegram"
+  | "contactPending";
+
+export function miniLinkPhoneErrorKey(status: unknown): LoginErrorKey {
+  switch (status) {
+    case "not_found":
+      return "phoneNotFound";
+    case "ambiguous":
+      return "phoneAmbiguous";
+    case "telegram_already_linked_other":
+      return "telegramConflict";
+    case "user_already_linked_other_tg":
+      return "userHasOtherTelegram";
+    case "pending_bot_contact":
+      return "contactPending";
+    default:
+      return "loginFailed";
+  }
+}
 
 /** Translate exact legacy API strings while keeping unknown diagnostics private. */
 export function miniLoginErrorKey(message: unknown, codeStep = false): LoginErrorKey {
