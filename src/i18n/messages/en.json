@@ -1805,11 +1805,8 @@
         "xlarge": "Extra large"
       },
       "contrast": "High contrast",
-      "contrastHint": "Darker, sharper secondary text. Turns on by itself if your phone or computer asks for it.",
       "motion": "Reduce motion",
-      "motionHint": "Dialogs and menus open without movement. Also follows your device setting.",
       "hints": "Page explanations",
-      "hintsHint": "Subtitles and “How it works” blocks.",
       "more": "Contrast, motion, explanations",
       "hideHintsEverywhere": "Hide explanations everywhere",
       "hintsHidden": "Explanations hidden. Bring them back in the profile menu: “Readability”.",
@@ -17007,7 +17004,6 @@
   },
   "notificationSettings": {
     "title": "Notifications",
-    "description": "Telegram notifications and event preferences.",
     "loadError": "Could not load settings",
     "unlinkedSuccess": "Telegram disconnected",
     "unlinkError": "Could not disconnect Telegram",
@@ -17018,7 +17014,7 @@
     "active": "Channel active",
     "notConnected": "Not connected",
     "botTitle": "Telegram notification bot",
-    "botDescription": "Receive alerts about temperature deviations, incomplete logs and new assignments directly in Telegram.",
+    "botDescription": "Deviations, missed logs and assignments",
     "unlinking": "Disconnecting…",
     "unlink": "Disconnect Telegram",
     "openBot": "Open @{username}",
@@ -17026,7 +17022,6 @@
     "copyCommand": "Copy command",
     "botNotConfigured": "The administrator has not configured the Telegram bot yet.",
     "howTitle": "How to connect",
-    "howDescription": "If the bot does not respond when you tap Start, Telegram did not pass on your link code. Send the command to the bot manually.",
     "stepOpenTitle": "Open the bot",
     "stepOpenBody": "Click <strong>Open @{username}</strong> above to open a chat with the bot.",
     "stepCommandTitle": "Send the command",
@@ -17034,12 +17029,11 @@
     "stepDoneTitle": "Done",
     "stepDoneBody": "The bot will send <strong>a greeting and a button to open your workspace</strong>. The link code is valid for 15 minutes; refresh the page if it expires.",
     "typesTitle": "Notification types",
-    "typesLinked": "Choose which events are sent to your chat.",
     "typesUnlinked": "Available after connecting Telegram.",
     "preferences": {
       "temperature": {
         "label": "Temperature deviations",
-        "description": "Sent when a smart sensor reading is outside the equipment limits"
+        "description": "From smart sensors"
       },
       "deviations": {
         "label": "Log deviations",
@@ -17051,19 +17045,16 @@
       },
       "weeklyDigest": {
         "label": "Weekly email report",
-        "description": "Monday at 08:00: completed and missed entries, deviations, missing staff checks and upcoming expiry dates, emailed to the manager"
+        "description": "Mondays at 08:00"
       }
     },
     "quietTitle": "Quiet hours",
-    "quietDescription": "During quiet hours, Telegram reminders and summaries are delayed until the period ends. Temperature deviations and incidents are sent immediately. Times use the organization’s time zone.",
     "quietEnable": "Enable",
     "quietFrom": "From",
     "quietTo": "To",
     "notesTitle": "Good to know",
     "noteOwners": "All organization owners receive notifications.",
     "noteStop": "To stop notifications, send <command>/stop</command> to the bot or click Disconnect Telegram above.",
-    "noteHistory": "The platform administrator keeps sent-message history. Contact support if a message was not delivered.",
-    "noteFirst": "The bot cannot message you first; you need to start the conversation.",
     "previewOnline": "online",
     "previewWaiting": "waiting for connection",
     "previewAssigned": "🔔 A log has been assigned to you: Temperature monitoring",
@@ -17072,22 +17063,17 @@
     "previewConnect": "To connect, open the link in WeSetup settings",
     "smsTitle": "SMS notifications",
     "smsDevelopment": "In development",
-    "smsDescription": "Reminders about incomplete logs will reach staff without Telegram or email. For frontline staff, this is often the only available channel.",
-    "smsSuccess": "Thank you — we will let you know when it launches",
+    "smsSuccess": "Thank you — we will let you know at launch. SMS will be charged separately from your plan.",
     "smsError": "Could not send your request",
     "smsSent": "We will notify you at launch",
     "smsNotify": "Notify me when available",
-    "smsPricing": "Pricing will be announced at launch. SMS is charged separately from your plan.",
     "marketing": {
       "title": "News and offers",
       "enabled": "News and offers enabled",
-      "disabled": "News and offers disabled",
+      "disabled": "News turned off. Sign-in codes, invoices and log notifications are always sent.",
       "saveError": "Could not save changes",
-      "loading": "Loading…",
-      "manual": "Marketing for {email} has been manually disabled across email, in-app notifications, phone and browser alerts, and Telegram. Contact support to enable it again.",
-      "bounced": "WeSetup news and offers appear in in-app notifications, phone and browser alerts, and Telegram. Emails to {email} were undeliverable, so this address is blocked; contact support if it works again. Sign-in codes, invoices and log notifications are always sent.",
-      "noEmail": "WeSetup news and offers appear in in-app notifications, phone and browser alerts, and Telegram. Sign-in codes, invoices and log notifications are always sent.",
-      "normal": "WeSetup news and offers are sent to {email} and appear in in-app notifications, phone and browser alerts, and Telegram. Turn this off to stop them in all channels. Sign-in codes, invoices and log notifications are always sent."
+      "manual": "Disabled by support — contact us to turn it back on",
+      "bounced": "Emails to {email} are not delivered"
     },
     "nativePush": {
       "title": "Notifications on this phone",
@@ -17105,7 +17091,8 @@
       "organizationSwitchFailed": "Could not switch organizations. Please try again.",
       "locationHeading": "Location",
       "locationSwitchFailed": "Could not switch locations. Please try again."
-    }
+    },
+    "quietEnabled": "Quiet hours on. Temperature deviations and incidents arrive immediately, everything else after the window."
   },
   "complaintRegister": {
     "title": "Complaint register",
@@ -17274,7 +17261,7 @@
   },
   "phoneBinding": {
     "title": "Phone binding",
-    "intro": "Your phone number connects your account to the software module, which sends tasks to employees. Add it once, and the integration will match it automatically.",
+    "intro": "Links your account to the task module",
     "status": {
       "empty": "No phone number added",
       "linked": "Connected to the software module",
@@ -17282,7 +17269,7 @@
     },
     "input": {
       "label": "Phone number",
-      "help": "Enter the number in any format; we will normalize it to <format>+7XXXXXXXXXX</format>. International numbers keep their original country code.",
+      "help": "Any format — we will convert it to <format>+7XXXXXXXXXX</format>",
       "tooShort": "Enter the complete number (at least 10 digits)."
     },
     "actions": {
@@ -18828,7 +18815,7 @@
       },
       "linkPhone": {
         "heading": "Link via phone number",
-        "description": "Share your phone number from Telegram — we will find your staff profile and open your workspace right away.",
+        "description": "We will find your profile by your Telegram number",
         "shareButton": "Share Telegram phone number",
         "sharing": "Linking profile…",
         "orPassword": "or sign in the usual way",
@@ -21052,7 +21039,7 @@
     "outbox": {
       "eyebrow": "Sending",
       "title": "Unsent entries",
-      "description": "Entries are stored on your phone and sent automatically when a connection is available. You can close the app — your entries will be kept.",
+      "description": "They will be sent once you are back online",
       "emptyTitle": "Everything sent",
       "emptyDescription": "No entries in the queue.",
       "ownCount": "Your entries · {count}",
@@ -22263,7 +22250,7 @@
       "unlinkHint": "you will need a new invitation",
       "deleteAccount": "Delete account",
       "deleteAccountBusy": "…",
-      "deleteAccountHint": "your phone and sign-in will be removed; company journals will remain",
+      "deleteAccountHint": "company journals will remain",
       "acknowledge": "Documents to acknowledge",
       "acknowledgeHint": "policy and instructions",
       "sectionsMenuHint": "workspace menu"
@@ -22462,9 +22449,8 @@
   },
   "passkeySettings": {
     "title": "Face ID / fingerprint",
-    "description": "Sign in to WeSetup from this phone and on a shared tablet using biometrics instead of a PIN. The passkey is stored only on your device.",
     "add": "Add",
-    "unsupported": "This device has no biometric authenticator, or the browser does not support it. Open your profile on your own phone.",
+    "unsupported": "No biometrics on this device — open your profile on your phone",
     "registrationSuccess": "Face ID / fingerprint connected",
     "registrationCancelled": "Canceled",
     "operationFailed": "Could not complete the passkey action. Please try again.",
@@ -22472,10 +22458,10 @@
     "deviceFallback": "Device",
     "credentialDates": "Added: {createdDate}{hasLastUsed, select, yes { · last sign-in: {lastUsedDate}} other {}}",
     "deleteLabel": "Delete",
-    "empty": "There are no passkeys yet.",
     "deleteTitle": "Delete this passkey?",
     "deleteDescription": "Device “{deviceName}” will no longer be able to sign in with Face ID. Records signed with it will remain.",
-    "deleteConfirm": "Delete"
+    "deleteConfirm": "Delete",
+    "registrationHint": "Sign in from this phone and on a shared tablet without a PIN. The key stays on this device."
   },
   "masterCabinetUi": {
     "dialog": {

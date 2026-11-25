@@ -1805,11 +1805,8 @@
         "xlarge": "Juda katta"
       },
       "contrast": "Yuqori kontrast",
-      "contrastHint": "Izohlar to‘qroq va aniqroq. Telefon yoki kompyuterda shunday sozlangan bo‘lsa, o‘zi yoqiladi.",
       "motion": "Animatsiyasiz",
-      "motionHint": "Oynalar va menyular harakatsiz ochiladi. Qurilma sozlamasiga ham amal qiladi.",
       "hints": "Sahifalardagi izohlar",
-      "hintsHint": "Sarlavha ostidagi matnlar va «Bu qanday ishlaydi» bloklari.",
       "more": "Kontrast, animatsiya, izohlar",
       "hideHintsEverywhere": "Izohlarni hamma joyda yashirish",
       "hintsHidden": "Izohlar yashirildi. Qaytarish — profil menyusida: «O‘qish qulayligi».",
@@ -17007,7 +17004,6 @@
   },
   "notificationSettings": {
     "title": "Bildirishnomalar",
-    "description": "Telegram bildirishnomalari va hodisa turlari sozlamalari.",
     "loadError": "Sozlamalarni yuklab bo‘lmadi",
     "unlinkedSuccess": "Telegram uzildi",
     "unlinkError": "Telegramni uzib bo‘lmadi",
@@ -17018,7 +17014,7 @@
     "active": "Kanal faol",
     "notConnected": "Ulanmagan",
     "botTitle": "Telegram bildirishnoma boti",
-    "botDescription": "Harorat og‘ishlari, to‘ldirilmagan jurnallar va yangi topshiriqlar haqida xabarlarni bevosita Telegramda oling.",
+    "botDescription": "Og‘ishlar, to‘ldirilmagan jurnallar va topshiriqlar",
     "unlinking": "Uzilmoqda…",
     "unlink": "Telegramni uzish",
     "openBot": "@{username} botini ochish",
@@ -17026,7 +17022,6 @@
     "copyCommand": "Buyruqni nusxalash",
     "botNotConfigured": "Administrator Telegram botini hali sozlamagan.",
     "howTitle": "Qanday ulash mumkin",
-    "howDescription": "Botda Start tugmasini bosganda javob kelmasa, Telegram ulash kodini uzatmagan. Buyruqni botga qo‘lda yuboring.",
     "stepOpenTitle": "Botni oching",
     "stepOpenBody": "Bot bilan chatni ochish uchun yuqoridagi <strong>@{username} botini ochish</strong> tugmasini bosing.",
     "stepCommandTitle": "Buyruqni yuboring",
@@ -17034,12 +17029,11 @@
     "stepDoneTitle": "Tayyor",
     "stepDoneBody": "Bot <strong>salomlashuv xabari va kabinetni ochish tugmasini</strong> yuboradi. Ulash kodi 15 daqiqa amal qiladi; muddati tugasa, sahifani yangilang.",
     "typesTitle": "Bildirishnoma turlari",
-    "typesLinked": "Chatingizga qaysi hodisalar yuborilishini tanlang.",
     "typesUnlinked": "Telegram ulangandan so‘ng faollashadi.",
     "preferences": {
       "temperature": {
         "label": "Harorat og‘ishlari",
-        "description": "Aqlli datchik ko‘rsatkichi uskuna me’yoridan chiqqanda yuboriladi"
+        "description": "Aqlli datchiklardan"
       },
       "deviations": {
         "label": "Jurnallardagi og‘ishlar",
@@ -17051,19 +17045,16 @@
       },
       "weeklyDigest": {
         "label": "Haftalik elektron hisobot",
-        "description": "Dushanba, 08:00: to‘ldirilgan va o‘tkazib yuborilgan yozuvlar, og‘ishlar, qayd etmagan xodimlar va muddati tugayotgan hujjatlar — rahbarga elektron xat bilan"
+        "description": "Dushanba kunlari soat 08:00 da"
       }
     },
     "quietTitle": "Sokin soatlar",
-    "quietDescription": "Bu vaqtda Telegram eslatmalari va xulosalari davr tugagach yuboriladi. Harorat og‘ishlari va hodisalar haqida xabarlar darhol keladi. Vaqt tashkilotning vaqt mintaqasi bo‘yicha.",
     "quietEnable": "Yoqish",
     "quietFrom": "Boshlanishi",
     "quietTo": "Tugashi",
     "notesTitle": "Bilish foydali",
     "noteOwners": "Tashkilotning barcha egalari bildirishnomalarni oladi.",
     "noteStop": "Bildirishnomalarni to‘xtatish uchun botga <command>/stop</command> yuboring yoki yuqoridagi «Telegramni uzish» tugmasini bosing.",
-    "noteHistory": "Yuborilgan xabarlar tarixini platforma administratori saqlaydi. Xabar yetib kelmasa, qo‘llab-quvvatlash xizmatiga yozing.",
-    "noteFirst": "Bot birinchi bo‘lib yozmaydi — suhbatni siz boshlashingiz kerak.",
     "previewOnline": "onlayn",
     "previewWaiting": "ulanish kutilmoqda",
     "previewAssigned": "🔔 Sizga jurnal biriktirildi: Harorat nazorati",
@@ -17072,22 +17063,17 @@
     "previewConnect": "Ulanish uchun WeSetup sozlamalaridagi havolani oching",
     "smsTitle": "SMS bildirishnomalari",
     "smsDevelopment": "Ishlab chiqilmoqda",
-    "smsDescription": "To‘ldirilmagan jurnal haqidagi eslatmalar Telegram yoki elektron pochtasi yo‘q xodimlarga ham yetib boradi. Ishlab chiqarish xodimlari uchun bu ko‘pincha yagona aloqa kanalidir.",
-    "smsSuccess": "Rahmat, ishga tushganda xabar beramiz",
+    "smsSuccess": "Rahmat, ishga tushganda xabar beramiz. SMS tarifdan alohida to‘lanadi.",
     "smsError": "So‘rovingizni yuborib bo‘lmadi",
     "smsSent": "Ishga tushganda xabar beramiz",
     "smsNotify": "Ishga tushganda xabar bering",
-    "smsPricing": "Narx ishga tushganda e’lon qilinadi. SMS uchun tarifdan alohida haq olinadi.",
     "marketing": {
       "title": "Yangiliklar va takliflar",
       "enabled": "Yangiliklar va takliflar yoqildi",
-      "disabled": "Yangiliklar va takliflar o‘chirildi",
+      "disabled": "Yangiliklar o‘chirildi. Kirish kodlari, hisoblar va jurnal bildirishnomalari doim keladi.",
       "saveError": "O‘zgarishlarni saqlab bo‘lmadi",
-      "loading": "Yuklanmoqda…",
-      "manual": "{email} uchun reklama elektron pochta, ilova bildirishnomalari, telefon va brauzerdagi bildirishnomalar hamda Telegramda qo‘lda o‘chirilgan. Qayta yoqish uchun qo‘llab-quvvatlash xizmatiga yozing.",
-      "bounced": "WeSetup yangiliklari va aksiyalari ilova bildirishnomalari, telefon va brauzerdagi bildirishnomalar hamda Telegramda keladi. {email} manziliga xatlar yetib bormagani uchun manzil bloklangan; u yana ishlasa, qo‘llab-quvvatlash xizmatiga yozing. Kirish kodlari, hisoblar va jurnal bildirishnomalari doim yuboriladi.",
-      "noEmail": "WeSetup yangiliklari va aksiyalari ilova bildirishnomalari, telefon va brauzerdagi bildirishnomalar hamda Telegramda keladi. Kirish kodlari, hisoblar va jurnal bildirishnomalari doim yuboriladi.",
-      "normal": "WeSetup yangiliklari va aksiyalari {email} manziliga, ilova bildirishnomalari, telefon va brauzerdagi bildirishnomalar hamda Telegramga yuboriladi. Barcha kanallarda ularni to‘xtatish uchun bu sozlamani o‘chiring. Kirish kodlari, hisoblar va jurnal bildirishnomalari doim yuboriladi."
+      "manual": "Qo‘llab-quvvatlash o‘chirgan — qayta yoqish uchun yozing",
+      "bounced": "{email} manziliga xatlar yetib bormayapti"
     },
     "nativePush": {
       "title": "Ushbu telefondagi bildirishnomalar",
@@ -17105,7 +17091,8 @@
       "organizationSwitchFailed": "Tashkilotni almashtirib bo‘lmadi. Yana bir bor urinib ko‘ring.",
       "locationHeading": "Joylashuv",
       "locationSwitchFailed": "Joylashuvni almashtirib bo‘lmadi. Yana bir bor urinib ko‘ring."
-    }
+    },
+    "quietEnabled": "Sokin soatlar yoqildi. Harorat og‘ishlari va hodisalar darhol, qolganlari oynadan keyin keladi."
   },
   "complaintRegister": {
     "title": "Shikoyatlarni ro‘yxatga olish jurnali",
@@ -17274,7 +17261,7 @@
   },
   "phoneBinding": {
     "title": "Telefonni bog‘lash",
-    "intro": "Telefon raqamingiz akkauntingizni xodimlarga vazifa yuboradigan dasturiy modul bilan bog‘laydi. Raqamni bir marta kiriting, integratsiya uni avtomatik topadi.",
+    "intro": "Akkauntni vazifalar moduli bilan bog‘laydi",
     "status": {
       "empty": "Telefon raqami kiritilmagan",
       "linked": "Dasturiy modul bilan bog‘langan",
@@ -17282,7 +17269,7 @@
     },
     "input": {
       "label": "Telefon raqami",
-      "help": "Raqamni istalgan formatda kiriting, biz uni <format>+7XXXXXXXXXX</format> formatiga keltiramiz. Xalqaro raqamlarda mamlakat kodi o‘zgarmaydi.",
+      "help": "Istalgan format — <format>+7XXXXXXXXXX</format> ko‘rinishiga keltiramiz",
       "tooShort": "To‘liq raqamni kiriting (kamida 10 ta raqam)."
     },
     "actions": {
@@ -18828,7 +18815,7 @@
       },
       "linkPhone": {
         "heading": "Telefon raqami orqali ulash",
-        "description": "Telegram’dagi telefon raqamingizni ulashing — ish profilingizni topamiz va kabinetni darhol ochamiz.",
+        "description": "Profilingizni Telegram raqami orqali topamiz",
         "shareButton": "Telegram raqamini ulashish",
         "sharing": "Profil ulanmoqda…",
         "orPassword": "yoki odatiy usulda kiring",
@@ -21052,7 +21039,7 @@
     "outbox": {
       "eyebrow": "Yuborish",
       "title": "Yuborilmagan qaydlar",
-      "description": "Qaydlar telefonda saqlanadi va aloqa paydo bo‘lganda avtomatik yuboriladi. Ilovani yopishingiz mumkin — qaydlar yo‘qolmaydi.",
+      "description": "Aloqa paydo bo‘lganda o‘zi yuboriladi",
       "emptyTitle": "Hammasi yuborildi",
       "emptyDescription": "Navbatda qaydlar yo‘q.",
       "ownCount": "Sizning qaydlaringiz · {count}",
@@ -22263,7 +22250,7 @@
       "unlinkHint": "yangi taklifnoma kerak bo‘ladi",
       "deleteAccount": "Hisobni o‘chirish",
       "deleteAccountBusy": "…",
-      "deleteAccountHint": "telefon va kirish ma’lumotlari o‘chadi, kompaniya jurnallari saqlanadi",
+      "deleteAccountHint": "kompaniya jurnallari saqlanadi",
       "acknowledge": "Tanishish uchun hujjatlar",
       "acknowledgeHint": "siyosat va yo‘riqnomalar",
       "sectionsMenuHint": "kabinet menyusi"
@@ -22462,9 +22449,8 @@
   },
   "passkeySettings": {
     "title": "Face ID / barmoq izi",
-    "description": "WeSetup’ga shu telefondan va umumiy planshetdan PIN-kodsiz biometrik tasdiqlash orqali kiring. Passkey faqat qurilmangizda saqlanadi.",
     "add": "Qo‘shish",
-    "unsupported": "Bu qurilmada biometrik tasdiqlash mavjud emas yoki brauzer uni qo‘llab-quvvatlamaydi. Profilni o‘z telefoningizda oching.",
+    "unsupported": "Bu qurilmada biometriya yo‘q — profilni telefoningizda oching",
     "registrationSuccess": "Face ID / barmoq izi ulandi",
     "registrationCancelled": "Bekor qilindi",
     "operationFailed": "Passkey bilan amalni bajarib bo‘lmadi. Yana bir bor urinib ko‘ring.",
@@ -22472,10 +22458,10 @@
     "deviceFallback": "Qurilma",
     "credentialDates": "Qo‘shilgan: {createdDate}{hasLastUsed, select, yes { · oxirgi kirish: {lastUsedDate}} other {}}",
     "deleteLabel": "O‘chirish",
-    "empty": "Hozircha passkey yo‘q.",
     "deleteTitle": "Passkey o‘chirilsinmi?",
     "deleteDescription": "“{deviceName}” qurilmasi Face ID orqali tizimga kira olmaydi. U bilan avval imzolangan yozuvlar saqlanib qoladi.",
-    "deleteConfirm": "O‘chirish"
+    "deleteConfirm": "O‘chirish",
+    "registrationHint": "Shu telefondan va umumiy planshetdan PIN-kodsiz kiring. Kalit faqat shu qurilmada saqlanadi."
   },
   "masterCabinetUi": {
     "dialog": {
