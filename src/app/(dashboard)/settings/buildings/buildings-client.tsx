@@ -362,6 +362,17 @@ export function BuildingsClient({
   );
 }
 
+/**
+ * Название без последнего символа и сам символ: на телефоне скрепка неразрывно
+ * «приклеена» к последнему символу, поэтому не начинает строку одна, а
+ * название переносится по словам на всю ширину карточки. По символам, не по
+ * кодовым единицам: эмодзи в конце не разрезается.
+ */
+export function splitForPin(name: string): [string, string] {
+  const chars = Array.from(name.trimEnd());
+  return [chars.slice(0, -1).join(""), chars.slice(-1).join("")];
+}
+
 function BuildingCard({
   building,
   pinned = false,
@@ -420,6 +431,7 @@ function BuildingCard({
   // Сфера объекта (владелец, 2026-11-23): у офиса её нет.
   const isOffice = building.kind === "office";
   const sphere = normalizeObjectCategory(building.sphere);
+  const [nameHead, nameTail] = splitForPin(building.name);
   const [draftSphere, setDraftSphere] = useState<ObjectCategory | null>(sphere);
   const categoryLabel = useObjectCategoryLabel();
   // Сотрудники точки: кто работает здесь (User.buildingIds содержит точку).
@@ -659,16 +671,38 @@ function BuildingCard({
                 пищевой продукции») на телефоне уходит под название, а не
                 сжимает его в столбик. */}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              {/* На телефоне значок, название и скрепка — одна строка: длинное
-                  название переносится внутри неё, скрепка не остаётся одна.
-                  С 640 px группа растворяется в строке (`sm:contents`):
-                  название, сфера, скрепка — как раньше. */}
-              <div className="flex min-w-0 items-center gap-x-2 sm:contents" data-building-title>
-                <Building2 className="size-4 shrink-0 text-[#5566f6]" />
-                <h2 className="min-w-0 break-words text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-                  {building.name}
+              {/* На телефоне значок и название — обычный текст на всю ширину
+                  карточки (слова не рвутся), скрепка — внутри заголовка,
+                  неразрывно «приклеена» к последнему символу: не начинает строку
+                  одна. Отдельный элемент со склейкой Chrome здесь всё равно
+                  переносил. С 640 px группа растворяется (`sm:contents`) и
+                  скрепка — отдельная, в конце: название, сфера, скрепка. */}
+              <div className="min-w-0 sm:contents" data-building-title>
+                <Building2 className="size-4 shrink-0 text-[#5566f6] max-sm:mr-2 max-sm:inline-block max-sm:align-[-0.125em]" />
+                <h2
+                  className="min-w-0 break-words text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024] max-sm:inline"
+                  aria-label={onTogglePin ? building.name : undefined}
+                >
+                  {onTogglePin ? (
+                    <>
+                      {nameHead}
+                      <span className="whitespace-nowrap">
+                        {nameTail}
+                        <PinButton
+                          pinned={pinned}
+                          onToggle={onTogglePin}
+                          name={building.name}
+                          className="ml-1 align-middle sm:hidden"
+                        />
+                      </span>
+                    </>
+                  ) : (
+                    building.name
+                  )}
                 </h2>
-                {onTogglePin ? <PinButton pinned={pinned} onToggle={onTogglePin} name={building.name} className="shrink-0 sm:order-last" /> : null}
+                {onTogglePin ? (
+                  <PinButton pinned={pinned} onToggle={onTogglePin} name={building.name} className="max-sm:hidden sm:order-last" />
+                ) : null}
               </div>
               {building.kind === "office" ? (
                 <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]" data-building-office>

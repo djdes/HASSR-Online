@@ -1,0 +1,152 @@
+[
+  {
+    "name": "setup: test point created",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "setup: hygiene document created",
+    "ok": true,
+    "detail": "201 rows=720"
+  },
+  {
+    "name": "AC1 automation doc, no past-days window: {employeeId, date: 2 days ago} — 403 past_day_locked",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 window 3 days: {employeeId, date: 2 days ago} — 200, deleted 1 (old code: 403 because of the -6 row)",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 only that employee's row of that day: admin -6/-1/today and cook -2 untouched",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 same request again (no such row) — 200 deleted 0",
+    "ok": true,
+    "detail": "200 {\"deleted\":0}"
+  },
+  {
+    "name": "AC1 {employeeId, date: 6 days ago} (beyond window) — 403 past_day_locked, row kept",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 date with a time part maps to that day (UTC midnight) — 200",
+    "ok": true,
+    "detail": "200 {\"deleted\":0}"
+  },
+  {
+    "name": "AC1 {ids: [row beyond window]} — 403, row kept",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 {ids: [admin row beyond window], employeeId: cook} — 403 (lock check uses exactly the ids; old code checked ids∩employee and deleted)",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 {ids: [admin -1 row], employeeId: cook, date: -2} — exactly that id deleted (200, 1); cook's -2 row kept",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 {employeeId} — whole row incl. a locked day — 403, nothing deleted",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 {ids: [], employeeId, date: today} — empty ids ignored, today's row deleted (200, 1)",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 cook's row 6 days ago by manager — 403",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 cook's row 2 days ago (in window) by manager — 200, deleted 1",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 invalid date — 400 «Некорректная дата»",
+    "ok": true,
+    "detail": "400 Некорректная дата"
+  },
+  {
+    "name": "AC1 empty body / only date / malformed JSON — 400",
+    "ok": true,
+    "detail": "400 400 400"
+  },
+  {
+    "name": "AC1 staff (cook) cannot DELETE — 403, row kept",
+    "ok": true,
+    "detail": "403 Это действие доступно руководителю"
+  },
+  {
+    "name": "AC1 regular document: {employeeId, date: 6 days ago} — 200, deleted 1",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 regular document: {employeeId} — every row of the employee (cook: -6 and -1)",
+    "ok": true,
+    "detail": "200 {\"deleted\":2}"
+  },
+  {
+    "name": "AC2 manager moves own row from the day after tomorrow to today — 200, same row now today",
+    "ok": true,
+    "detail": "200  → 2026-11-26"
+  },
+  {
+    "name": "AC2 moving a row INTO a future day — 403 future_day_locked",
+    "ok": true,
+    "detail": "403 future_day_locked"
+  },
+  {
+    "name": "AC2 writing a future day — 403 future_day_locked, nothing created",
+    "ok": true,
+    "detail": "403 future_day_locked"
+  },
+  {
+    "name": "AC2 staff moves own row from a future day — 403 not_today, row stays",
+    "ok": true,
+    "detail": "403 not_today"
+  },
+  {
+    "name": "AC2 manager moves cook's future row to yesterday (allowed day) — 200",
+    "ok": true,
+    "detail": "200  → 2026-11-25"
+  },
+  {
+    "name": "AC2 automation doc: source on a locked past day — 403 past_day_locked (source still checked)",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC2 automation doc: manager moves tomorrow's row to today — 200",
+    "ok": true,
+    "detail": "200 "
+  },
+  {
+    "name": "cleanup: document deleted",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "cleanup: test point deleted",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "cleanup: special mode setting restored",
+    "ok": true,
+    "detail": ""
+  }
+]

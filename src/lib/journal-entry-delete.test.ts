@@ -30,8 +30,14 @@ test("{ ids }: ровно эти строки, сотрудник и дата н
     ok: true,
     where: { documentId: DOC, id: { in: ["a", "b"] } },
   });
-  // Не строки в списке не доходят до базы.
-  assert.deepEqual(entryDeleteTarget(DOC, { ids: ["a", 5, null, ""] }), { ok: true, where: { documentId: DOC, id: { in: ["a"] } } });
+});
+
+test("испорченный список ids — 400, а не «вся строка сотрудника»", () => {
+  // Раньше (master) такое падало 500; отбросить мусор и удалить по employeeId — опасно.
+  const bad = { ok: false, status: 400, error: "Некорректный список строк" };
+  assert.deepEqual(entryDeleteTarget(DOC, { ids: [5], employeeId: "u1" }), bad);
+  assert.deepEqual(entryDeleteTarget(DOC, { ids: ["a", 5, null, ""] }), bad);
+  assert.deepEqual(entryDeleteTarget(DOC, { ids: "a", employeeId: "u1" }), bad);
 });
 
 test("{ employeeId } без даты — вся строка сотрудника, как раньше", () => {

@@ -4,115 +4,145 @@
     "pinWithName": true,
     "order": "rows",
     "name": {
-      "top": 382,
-      "bottom": 517,
-      "left": 61,
-      "right": 151
+      "top": 386,
+      "bottom": 500,
+      "left": 37,
+      "right": 180
     },
     "pin": {
-      "top": 426,
-      "bottom": 474,
-      "left": 159
+      "top": 466,
+      "bottom": 514,
+      "left": 93
     },
     "chip": {
-      "top": 521,
-      "bottom": 588,
+      "top": 518,
+      "bottom": 585,
       "left": 37
     },
     "docW": 320,
-    "vw": 320
+    "vw": 320,
+    "lastWord": {
+      "top": 476,
+      "bottom": 500,
+      "right": 79
+    },
+    "broken": []
   },
   {
     "width": 360,
     "pinWithName": true,
     "order": "rows",
     "name": {
-      "top": 396,
-      "bottom": 504,
-      "left": 61,
-      "right": 191
+      "top": 399,
+      "bottom": 486,
+      "left": 37,
+      "right": 245
     },
     "pin": {
-      "top": 426,
-      "bottom": 474,
-      "left": 199
+      "top": 452,
+      "bottom": 500,
+      "left": 93
     },
     "chip": {
-      "top": 508,
-      "bottom": 575,
+      "top": 504,
+      "bottom": 571,
       "left": 37
     },
     "docW": 360,
-    "vw": 360
+    "vw": 360,
+    "lastWord": {
+      "top": 462,
+      "bottom": 486,
+      "right": 79
+    },
+    "broken": []
   },
   {
     "width": 375,
     "pinWithName": true,
     "order": "rows",
     "name": {
-      "top": 409,
-      "bottom": 490,
-      "left": 61,
-      "right": 206
+      "top": 413,
+      "bottom": 473,
+      "left": 37,
+      "right": 256
     },
     "pin": {
-      "top": 426,
-      "bottom": 474,
-      "left": 214
+      "top": 439,
+      "bottom": 487,
+      "left": 208
     },
     "chip": {
-      "top": 494,
-      "bottom": 561,
+      "top": 491,
+      "bottom": 558,
       "left": 37
     },
     "docW": 375,
-    "vw": 375
+    "vw": 375,
+    "lastWord": {
+      "top": 449,
+      "bottom": 473,
+      "right": 193
+    },
+    "broken": []
   },
   {
     "width": 390,
     "pinWithName": true,
     "order": "rows",
     "name": {
-      "top": 410,
-      "bottom": 491,
-      "left": 61,
-      "right": 221
+      "top": 413,
+      "bottom": 473,
+      "left": 37,
+      "right": 269
     },
     "pin": {
-      "top": 426,
-      "bottom": 474,
-      "left": 229
+      "top": 439,
+      "bottom": 487,
+      "left": 184
     },
     "chip": {
-      "top": 495,
-      "bottom": 542,
+      "top": 491,
+      "bottom": 538,
       "left": 37
     },
     "docW": 390,
-    "vw": 390
+    "vw": 390,
+    "lastWord": {
+      "top": 449,
+      "bottom": 473,
+      "right": 169
+    },
+    "broken": []
   },
   {
     "width": 430,
     "pinWithName": true,
     "order": "rows",
     "name": {
-      "top": 423,
-      "bottom": 477,
-      "left": 61,
-      "right": 261
+      "top": 413,
+      "bottom": 473,
+      "left": 37,
+      "right": 269
     },
     "pin": {
-      "top": 426,
-      "bottom": 474,
-      "left": 269
+      "top": 439,
+      "bottom": 487,
+      "left": 184
     },
     "chip": {
-      "top": 481,
-      "bottom": 528,
+      "top": 491,
+      "bottom": 538,
       "left": 37
     },
     "docW": 430,
-    "vw": 430
+    "vw": 430,
+    "lastWord": {
+      "top": 449,
+      "bottom": 473,
+      "right": 169
+    },
+    "broken": []
   },
   {
     "width": 700,
@@ -135,7 +165,13 @@
       "left": 37
     },
     "docW": 700,
-    "vw": 700
+    "vw": 700,
+    "lastWord": {
+      "top": 438,
+      "bottom": 462,
+      "right": 405
+    },
+    "broken": []
   },
   {
     "width": 1280,
@@ -158,6 +194,12 @@
       "left": 695
     },
     "docW": 1280,
-    "vw": 1280
+    "vw": 1280,
+    "lastWord": {
+      "top": 482,
+      "bottom": 506,
+      "right": 677
+    },
+    "broken": []
   }
 ]

@@ -1,0 +1,84 @@
+{
+  "task": "old-minor-fixes-2026-11-25",
+  "verdict": "FAIL",
+  "judged": {
+    "branch": "claude/fervent-brown-ed5apv",
+    "commit": "88f8378358cf7776a33a16d00974089124dc65f2",
+    "base": "origin/master dd898d48722204e3c98a1ab34caaabb7227069c6 (merge-base = base)",
+    "time": "2026-11-25T21:34:00Z",
+    "stand": "next dev :3000 on the working tree of HEAD (no local changes to product code), local PostgreSQL 16, demo org admin@haccp.local (owner), cook-e2e-special@haccp.local (cook); own test points/documents, removed afterwards; special mode, users' locale and active point restored",
+    "verifier": "fresh independent verifier (Claude Code subagent)"
+  },
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
+    "AC8": "FAIL",
+    "AC9": "PASS"
+  },
+  "criteria_notes": {
+    "AC1": "entryDeleteTarget() is one pure rule used for both the lock check and deleteMany (route.ts:560-587). Own stand script raw/verifier-round1/stand/ac1-ac2-stand.mjs (30/30 with AC2): automation doc, no window → {employeeId,date:-2d} 403 past_day_locked; window 3 days → same request 200 {deleted:1} while the same employee's -6d row exists; only that employee's row of that day removed (cook's row of the same day kept); -6d by {employeeId,date} and by {ids} → 403; {ids:[locked row], employeeId: cook} → 403 (master checked ids∩employee and would delete); {ids,employeeId,date} deletes exactly the ids; {employeeId} with a locked day → 403, nothing deleted; {ids:[],employeeId,date} → ids ignored; invalid date → 400 «Некорректная дата»; {} / {date} / malformed JSON → 400; cook → 403; regular doc → no locks, {employeeId} deletes the whole row. Unit tests journal-entry-delete.test.ts 5/5.",
+    "AC2": "checkEntryWrite is behaviour-identical to master (future rule + checkPastDayLocks; other callers bulk route, ai-assistant actions unaffected); checkEntrySourceWrite = past-day locks only, used only for the PUT move source. Stand: manager moves own row +2d → today 200 (same row id); move INTO +2d 403 future_day_locked; write +3d 403; cook moves own +2d row 403 not_today; manager moves cook's +2d row to yesterday 200; automation doc: source on locked -6d 403 past_day_locked, +1d → today 200.",
+    "AC3": "npx eslint on the 22 changed src files: no output, exit 0 (raw/verifier-round1/eslint.txt); origin/master versions via stdin: page.tsx 1 error + 2 warnings, climate-document-client.tsx 1 warning, journal-entry-write.ts 1 warning (raw/verifier-round1/eslint-master-baseline.txt). Behaviour: disabled-journal screen still shows «Открыть настройки набора журналов» → /settings/journals and navigates there (raw/verifier-round1/stand/ac3-output.txt).",
+    "AC4": "src/site-locale-proxy.test.ts 6/6 without .env and 6/6 with .env loaded; origin/master's version of the test 4/6 with .env, 6/6 without (raw/verifier-round1/site-locale-proxy*.txt). The assertion still catches a prefetch that sets wesetup.site-locale.",
+    "AC5": "Own equivalence harness (raw/verifier-round1/ppk/ac5-compare-equivalence.ts) runs branch compareRevisions against origin/master's copy on the local DB: 747 calls over all docKeys × 3 scopes × point filters × requested sides + 999 calls on an 82-revision document — deepStrictEqual everywhere, failures differ only by the new code (which matches the text). Prisma SQL log: history query without content, hasContent via content IS NOT NULL, text only with number IN (…); master read content of every revision.",
+    "AC6": "Own race test (raw/verifier-round1/ppk/ac6-approve-race.ts): text doc edited non-stop with unique versions while approving. Branch: 60 approvals → 21 created, 39 × 409 doc_changed, 0 revisions whose text ≠ fingerprint, nothing stored on 409. origin/master copy (control): 60 created, 34 with text ≠ fingerprint. Quiet approval: created, then «same». Retry+log: readSnapshotWithRetry unit-tested (one retry, then log, null). Test data removed (org back to 11 revisions).",
+    "AC7": "Stand (raw/verifier-round1/stand/ac7-stand.mjs, 34/34): compare 400 bad_request (empty/long key, bad from/to), 404 doc_not_found / no_revisions / revision_not_found / no_current_text; approve 400 bad_request, 404 doc_not_found, 400 doc_empty; draft 400 bad_request, 503 ai_not_configured; cook 403 forbidden on all three — every body keeps the old Russian error plus code; success body unchanged. UI en: draft toast «The AI assistant is not connected…», approve doc_changed «The document changed during approval — approve it again», unknown code → server text, non-JSON → «Could not approve the revision», compare revision_not_found / choose_point translated, unknown code → server text; UI uz: draft and doc_changed in Uzbek. Catalog keys present in ru/en/uz, no duplicate keys, i18n:check 103/103, message contract fresh.",
+    "AC8": "Structural conditions hold on the stand (raw/verifier-round1/stand/ac8-output.txt, 23/23): on 320–639 px icon, name and pin share the [data-building-title] row, a long name wraps inside it, sphere below; from 640 px the group is display:contents and the order is name → sphere → pin; no horizontal scroll; unpinned pin still hover-only at 1280. FAIL because the change makes the name column narrow enough to cut ordinary words mid-word on phones (blocking issue AC8-mid-word-breaks): see issues and problems.md.",
+    "AC9": "npm run typecheck exit 0; npm run test:gate mode=changed, 80 files, pass 368 fail 0; focused 7 files 42/42 (with and without .env); 49 extra string-reading tests not picked by the import graph 373/373; ESLint of changed files clean; i18n:check 103/103; no schema change. Merge and deploy are pending and follow a PASS verdict."
+  },
+  "issues": [
+    {
+      "id": "AC8-mid-word-breaks",
+      "severity": "blocking",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 666,
+      "description": "Regression introduced by the AC8 change. On phones the name now shares its row with the icon and with the pin, which the global touch-target rule (src/app/app-theme.css:1540, icon buttons min 48×48 on phones) makes 48 px wide; the name column shrinks from the full header width (170/210/225/240 px at 320/360/375/390 px on master) to 90/130/145/160 px, and `break-words` (line 668) then cuts ordinary words mid-word. Measured on the stand, branch vs the previous layout (same page with the group dissolved): 320 px — 19 words split across 35 cards vs 1, including the demo seed «Кафе «Ромашка»» → «Кафе / «Ромашка / »», «Поликлиника», and 4 of 6 typical names («Производственный», «Кондитерский», «Центральная», «Берёзка») vs 0; 360/375/390 px (most phones) — «Производственный цех №2» renders «Производственны / й цех №2» vs intact before; 412/430 px — none. AC8 asks that the long name wrap inside the row; cutting short or domain-typical words is a new visible defect in the exact card and widths AC8 governs (master had none for these names).",
+      "repro": "next dev :3000; as admin@haccp.local open /settings/buildings at 390×900 with a point named «Производственный цех №2» (or 320×900 and the seed card «Кафе «Ромашка»»): the first word is split across lines. Scripted: node .agent/tasks/old-minor-fixes-2026-11-25/raw/verifier-round1/stand/ac8-typical-names.mjs <outdir> (env loaded) — prints broken words per width for the branch and the previous layout; screenshots raw/verifier-round1/stand/screens/ac8-typical-production-390-branch.png, ac8-real-romashka-320-branch.png vs ac8-real-romashka-320-previous-simulated.png."
+    },
+    {
+      "id": "AC8-short-sphere-same-row",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 673,
+      "description": "With a short name and a short sphere label («Кабинет 7», «Медицинские услуги») the chip stays on the name row after the pin at 639 px (below at 320–430 px). Same order as master; harmless, but not literally «сфера — ниже».",
+      "repro": "raw/verifier-round1/stand/ac8-short-sphere.mjs → raw/verifier-round1/stand/ac8-short-sphere.txt"
+    },
+    {
+      "id": "pin-alone-640-700",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+      "line": 671,
+      "description": "Pre-existing, unchanged by spec («с 640 px как раньше»): at 640–~700 px a card with a short name and the long food sphere chip puts the pin alone at the start of the second row.",
+      "repro": "raw/verifier-round1/stand/ac8-output.txt, «AC8 640px short»: pin(37,468) under name(61-126,437) + chip(134-504,437)."
+    },
+    {
+      "id": "delete-nonstring-ids-fallback",
+      "severity": "minor",
+      "file": "src/lib/journal-entry-delete.ts",
+      "line": 28,
+      "description": "A body whose ids array holds only non-strings plus employeeId ({ids:[5], employeeId}) now falls back to «delete the employee's whole row» (master threw a Prisma validation error → 500). No client sends this (all send string ids or {employeeId}); the day locks still apply. Safer: a non-empty ids array with no valid id → 400.",
+      "repro": "entryDeleteTarget('d', {ids:[5], employeeId:'u1'}) → { ok: true, where: { documentId:'d', employeeId:'u1' } }"
+    },
+    {
+      "id": "automation-lock-utc-day",
+      "severity": "minor",
+      "file": "src/lib/closed-day.ts",
+      "line": 26,
+      "description": "Pre-existing, outside the spec: the automation lock takes «today» from getStartOfToday (UTC hours) while todayKey and the past-days window use the organization's timezone, so from 00:00 to 03:00 Moscow time the Moscow «yesterday» row of an automation document is not locked at all. Seen while building the AC1 stand (run at 00:11 MSK), worked around by testing «2 days ago».",
+      "repro": "At 21:00–24:00 UTC, automation doc, no window: DELETE {employeeId, date: <Moscow yesterday>} → 200 instead of 403."
+    },
+    {
+      "id": "stand-leftovers-from-builder-run",
+      "severity": "minor",
+      "file": ".agent/tasks/old-minor-fixes-2026-11-25/raw/stand/minor-fixes-e2e.mjs",
+      "line": 1,
+      "description": "Stand hygiene, not product: the builder's e2e script leaves its test points «Кафе мелочи 20:50:10» and «Кафе мелочи 20:52:47» (with hygiene documents) in the demo org, and both demo users' lastActiveBuildingId point at one of them. Left as found; all verifier changes were removed or restored.",
+      "repro": "select name from \"Building\" where name like 'Кафе мелочи%'"
+    }
+  ]
+}

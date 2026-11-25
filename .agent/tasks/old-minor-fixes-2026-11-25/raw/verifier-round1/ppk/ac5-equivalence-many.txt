@@ -1,0 +1,5 @@
+# AC5 equivalence on the race-test document (82 revisions with text), 2026-11-25T21:06:25Z
+docKey text:text-ccp-method@cmwv9fd4i000hye7duwz934zr (org cmwv7iv6…, revisions [82 revisions, sampled 12,13,14,15,91,92,93,53]) — equal
+
+EQUIVALENT: 999 calls (510 ok [328 without current text], 489 errors by code {"revision_not_found":120,"doc_not_found":333,"no_current_text":36})
+exit=0

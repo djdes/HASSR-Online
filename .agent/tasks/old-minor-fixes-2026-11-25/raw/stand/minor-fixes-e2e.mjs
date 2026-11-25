@@ -70,6 +70,10 @@ try {
   check("AC1 строка за окном (6 дней назад) — 403 past_day_locked", res.status() === 403 && body.code === "past_day_locked", `${res.status()} ${body.code ?? ""}`);
   res = await owner.api.delete(url, { data: { employeeId: ADMIN.id, date: "не дата" } });
   check("AC1 неверная дата — 400", res.status() === 400, String(res.status()));
+  const ownerRows = async () => Number((await q(`select count(*)::int c from "JournalDocumentEntry" where "documentId"=$1 and "employeeId"=$2`, [doc.id, ADMIN.id]))[0].c);
+  const rowsBefore = await ownerRows();
+  res = await owner.api.delete(url, { data: { ids: [5], employeeId: ADMIN.id } });
+  check("AC1 испорченный ids с сотрудником — 400, строка сотрудника цела (не «удалить всю строку»)", res.status() === 400 && (await ownerRows()) === rowsBefore, `${res.status()} rows ${rowsBefore}→${await ownerRows()}`);
   await q(`update "Building" set "journalAutomationJson"=null where id=$1`, [point.id]);
   await q(`update "JournalDocument" set "autoFill"=false where id=$1`, [doc.id]);
   await owner.api.patch(`${BASE}/api/settings/journal-controls`, { data: { automation: OFF } });
@@ -148,6 +152,11 @@ try {
   // Утверждение на стенде не должно оставлять редакций.
   if (point) await q(`delete from "PpkRevision" where "organizationId"=$1 and "docKey" like $2`, [ADMIN.organizationId, `%@${point.id}`]).catch(() => {});
   if (doc) await q(`update "JournalDocument" set "autoFill"=false where id=$1`, [doc.id]).catch(() => {});
+  // Точки сценария (и прошлых прогонов) — удалить: стенд остаётся как был.
+  const leftovers = await q(`select id from "Building" where "organizationId"=$1 and name like 'Кафе мелочи %'`, [ADMIN.organizationId]).catch(() => []);
+  for (const row of leftovers) await owner.api.delete(`${BASE}/api/settings/buildings/${row.id}`).catch(() => {});
+  const left = await q(`select count(*)::int c from "Building" where "organizationId"=$1 and name like 'Кафе мелочи %'`, [ADMIN.organizationId]);
+  check("стенд: точки сценария удалены", left[0].c === 0, `осталось ${left[0].c}`);
   if (rawSetting === null) await q(`delete from "PlatformSetting" where key=$1`, [KEY]);
   else await q(`update "PlatformSetting" set value=$2 where key=$1`, [KEY, rawSetting]);
   const restored = (await q(`select value from "PlatformSetting" where key=$1`, [KEY]))[0]?.value ?? null;

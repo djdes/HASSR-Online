@@ -1,0 +1,2 @@
+# npx eslint on changed src files at 88f837835, 2026-11-25T20:59:42Z
+exit=0

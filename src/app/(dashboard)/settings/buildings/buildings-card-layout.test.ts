@@ -3,24 +3,42 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
+import { splitForPin } from "./buildings-client";
+
 /*
  * Карточка объекта («Объекты»): скрепка закрепления не остаётся одна в строке
- * (проверка ППК, V10). На телефоне значок, название и скрепка — одна
- * неразрывная группа (длинное название переносится внутри неё), сфера/«Офис» —
- * отдельным элементом ниже; с 640 px группа «растворяется» (`sm:contents`) и
- * порядок прежний: название, сфера, скрепка (`sm:order-last`).
+ * (проверка ППК, V10) и не отнимает у названия ширину (проверка мелочей: в
+ * флекс-ряду скрепка 48 px сужала название, слова рвались посреди). На
+ * телефоне значок и название — обычный текст на всю ширину, скрепка внутри
+ * заголовка неразрывно «приклеена» к последнему символу названия (отдельный
+ * элемент со склейкой U+2060 Chrome на этой странице всё равно переносил). С
+ * 640 px — отдельная скрепка в конце строки: название, сфера, скрепка, как раньше.
  */
 
 const source = readFileSync(path.join(process.cwd(), "src/app/(dashboard)/settings/buildings/buildings-client.tsx"), "utf8");
-const header = source.slice(source.indexOf("<Building2 className"), source.indexOf("{building.address ? ("));
+const start = source.lastIndexOf("<div", source.indexOf("data-building-title"));
+const header = source.slice(start, source.indexOf("{building.address ? ("));
 
-test("значок, название и скрепка — одна группа; на широком экране она растворяется в строке", () => {
-  const group = source.slice(source.lastIndexOf("<div", source.indexOf("<Building2 className")), source.indexOf("{building.address ? ("));
-  assert.match(group, /<div className="flex min-w-0 items-center gap-x-2 sm:contents" data-building-title>/);
-  assert.match(header, /<Building2 className="size-4 shrink-0 text-\[#5566f6\]" \/>/);
-  assert.match(header, /<PinButton pinned=\{pinned\} onToggle=\{onTogglePin\} name=\{building\.name\} className="shrink-0 sm:order-last" \/>/);
-  // Скрепка — внутри группы, до сферы и «Офиса».
-  assert.ok(header.indexOf("<PinButton") < header.indexOf("data-building-office"), "скрепка в группе с названием");
+test("последний символ названия — отдельно: к нему приклеивается скрепка", () => {
+  assert.deepEqual(splitForPin("Кафе «Ромашка»"), ["Кафе «Ромашка", "»"]);
+  assert.deepEqual(splitForPin("Цех №2  "), ["Цех №", "2"]);
+  assert.deepEqual(splitForPin("А"), ["", "А"]);
+  assert.deepEqual(splitForPin("Кафе 🍰"), ["Кафе ", "🍰"], "символ, а не половина суррогатной пары");
+});
+
+test("на телефоне: текстовый поток, скрепка в заголовке после последнего символа без переноса", () => {
+  assert.match(header, /^<div className="min-w-0 sm:contents" data-building-title>/);
+  assert.match(header, /<Building2 className="size-4 shrink-0 text-\[#5566f6\] max-sm:mr-2 max-sm:inline-block max-sm:align-\[-0\.125em\]" \/>/);
+  assert.match(header, /<h2\s+className="min-w-0 break-words text-\[18px\] font-semibold tracking-\[-0\.01em\] text-\[#0b1024\] max-sm:inline"\s+aria-label=\{onTogglePin \? building\.name : undefined\}/);
+  assert.match(header, /\{nameHead\}\s*<span className="whitespace-nowrap">\s*\{nameTail\}\s*<PinButton[\s\S]*?className="ml-1 align-middle sm:hidden"/);
+});
+
+test("с 640 px — отдельная скрепка в конце строки; на телефоне она скрыта", () => {
+  assert.match(header, /className="max-sm:hidden sm:order-last"/);
+  const desktopPin = header.indexOf('className="max-sm:hidden sm:order-last"');
+  assert.ok(desktopPin > header.indexOf("</h2>"), "не внутри заголовка");
+  assert.ok(desktopPin < header.indexOf("data-building-office"), "в группе, до сферы");
+  assert.doesNotMatch(header, /u2060/, "склейка отдельным элементом не работает — её нет");
 });
 
 test("сфере больше не нужен max-sm:order-last: она и так после группы", () => {

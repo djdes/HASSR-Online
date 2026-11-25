@@ -33,7 +33,8 @@ try {
     await page.waitForTimeout(800);
     const m = await heading.evaluate((h2) => {
       const header = h2.closest("div.flex.flex-wrap") ?? h2.parentElement?.parentElement;
-      const pin = header?.querySelector("[data-pin-building]");
+      // Видимая скрепка: на телефоне — в заголовке, с 640 px — отдельная.
+      const pin = [...(header?.querySelectorAll("[data-pin-building]") ?? [])].find((el) => el.getBoundingClientRect().width > 0);
       const chip = header?.querySelector("[data-building-sphere],[data-building-office]");
       const r = (el) => el ? el.getBoundingClientRect() : null;
       const n = r(h2), p = r(pin), c = r(chip);
@@ -42,12 +43,28 @@ try {
         pin: p && { top: Math.round(p.top), bottom: Math.round(p.bottom), left: Math.round(p.left) },
         chip: c && { top: Math.round(c.top), bottom: Math.round(c.bottom), left: Math.round(c.left) },
         docW: document.documentElement.scrollWidth, vw: window.innerWidth,
+        // Последнее слово названия: скрепка должна стоять в его строке.
+        lastWord: (() => {
+          const node = h2.firstChild; const text = node?.textContent ?? ""; const at = text.trimEnd().lastIndexOf(" ") + 1;
+          const range = document.createRange(); range.setStart(node, at); range.setEnd(node, text.trimEnd().length);
+          const rects = [...range.getClientRects()]; const last = rects[rects.length - 1];
+          return last ? { top: Math.round(last.top), bottom: Math.round(last.bottom), right: Math.round(last.right) } : null;
+        })(),
+        // Слова, разорванные посреди (больше одной строки у слова).
+        broken: (() => {
+          const node = h2.firstChild; const out = []; const re = /\S+/g; let m;
+          while ((m = re.exec(node.textContent))) {
+            const range = document.createRange(); range.setStart(node, m.index); range.setEnd(node, m.index + m[0].length);
+            if (new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size > 1) out.push(m[0]);
+          }
+          return out;
+        })(),
       };
     });
-    const pinWithName = m.pin && m.name ? m.pin.top < m.name.bottom && m.pin.bottom > m.name.top : null;
+    const pinWithName = m.pin && m.lastWord ? m.pin.top < m.lastWord.bottom && m.pin.bottom > m.lastWord.top : null;
     const order = m.pin && m.chip ? (m.pin.top === m.chip.top || Math.abs(m.pin.top - m.chip.top) < 12 ? (m.pin.left > m.chip.left ? "chip→pin" : "pin→chip") : "rows") : "?";
     rows.push({ width, pinWithName, order, ...m });
-    console.log(`${LABEL} ${width}px: pin on name row=${pinWithName} order=${order} noHScroll=${m.docW <= m.vw}`);
+    console.log(`${LABEL} ${width}px: pin with last word=${pinWithName} order=${order} broken=[${m.broken.join(", ")}] noHScroll=${m.docW <= m.vw}`);
     // Снимок — шапка карточки (значок, название, сфера, скрепка, адрес).
     const box = await heading.evaluate((h2) => {
       const header = (h2.closest("div.flex.flex-wrap") ?? h2.parentElement).parentElement;
