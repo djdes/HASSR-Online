@@ -98,11 +98,7 @@ export default async function PermissionsSettingsPage() {
               {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              {t.rich("description", {
-                strong: (chunks) => (
-                  <strong className="text-[#0b1024]">{chunks}</strong>
-                ),
-              })}
+              {t("description")}
             </p>
             {cabinetsAccess ? (
               <a

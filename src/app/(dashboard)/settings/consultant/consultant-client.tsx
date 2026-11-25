@@ -282,7 +282,7 @@ export function ConsultantSettingsClient({
       <Card eyebrow={t("brandingEyebrow")} title={t("brandingTitle")}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-[560px] text-[14px] leading-[1.55] text-[#3c4053]">
-            {t("brandingBody", { name: consultant.brandName })}
+            {t("brandingBody")}
           </p>
           <button
             type="button"
