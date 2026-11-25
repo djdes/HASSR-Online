@@ -4,10 +4,11 @@ import ru from "@/i18n/messages/ru.json";
 import en from "@/i18n/messages/en.json";
 import uz from "@/i18n/messages/uz.json";
 import { defaultUvSpecification, formatControlFrequencyLabel, type UvSpecification } from "@/lib/uv-lamp-runtime-document";
+import { baseLocale } from "@/i18n/locales";
 
 type TrackedUvKey = keyof typeof ru.trackedUvPdf;
 export function trackedUvPdfCopy(locale: Locale = "ru") {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].trackedUvPdf });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].trackedUvPdf });
 }
 export function trackedPdfTitle(value: string, code: string, locale: Locale = "ru") {
   if (value) return value;

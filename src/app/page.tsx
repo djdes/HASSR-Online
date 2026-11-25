@@ -101,7 +101,7 @@ export async function generateMetadata() {
       languages: siteLanguageAlternates("/"),
       types: { "text/markdown": `https://wesetup.ru${alternateMarkdownPath(localizedHref("/", locale))}` },
     },
-    openGraph: { title, description, url, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", images: [image] },
+    openGraph: { title, description, url, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], siteName: "WeSetup", images: [image] },
     twitter: { card: "summary_large_image" as const, title, description, images: [image] },
   };
 }
@@ -385,7 +385,7 @@ export default async function LandingPage() {
         email: COMPANY_EMAIL,
         telephone: COMPANY_PHONE.tel,
         contactPoint: [
-          { "@type": "ContactPoint", contactType: "customer support", telephone: COMPANY_PHONE.tel, email: COMPANY_EMAIL, areaServed: "RU", availableLanguage: ["ru", "en", "uz"] },
+          { "@type": "ContactPoint", contactType: "customer support", telephone: COMPANY_PHONE.tel, email: COMPANY_EMAIL, areaServed: "RU", availableLanguage: ["ru", "en", "uz", "tg", "hy", "ky", "de", "fr"] },
         ],
       },
       {

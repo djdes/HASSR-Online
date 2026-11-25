@@ -260,7 +260,7 @@ function BonusStatusPill({
   );
 }
 
-const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" };
 
 function formatRubles(kopecks: number, locale: string): string {
   if (!Number.isFinite(kopecks)) return "0";

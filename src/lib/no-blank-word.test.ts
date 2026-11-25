@@ -171,7 +171,7 @@ function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const entry of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
     const relative = `${dir}/${entry.name}`;
     if (entry.isDirectory()) sourceFiles(relative, out);
-    else if ((SOURCE_FILE.test(entry.name) && !TEST_FILE.test(entry.name) && !entry.name.endsWith(".d.ts")) || (dir === "src/i18n/messages" && entry.name.endsWith(".json"))) out.push(relative);
+    else if ((SOURCE_FILE.test(entry.name) && !TEST_FILE.test(entry.name) && !entry.name.endsWith(".d.ts")) || (dir === "src/i18n/messages" && /^(ru|en|uz)\.json$/.test(entry.name))) out.push(relative);
   }
   return out;
 }

@@ -1,3 +1,4 @@
+import { baseLocale } from "@/i18n/locales";
 import { getTranslations } from "next-intl/server";
 
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -52,8 +53,8 @@ export default async function RootEmailsPage({ searchParams }: { searchParams: P
     id: entry.id,
     title: templates[entry.id]?.title ?? entry.id,
     when: templates[entry.id]?.when ?? "",
-    locale: email.locale,
-    locales: [...entry.locales],
+    locale: baseLocale(email.locale),
+    locales: entry.locales.map(baseLocale),
     subject: email.subject,
     preheader: email.preheader,
     html: email.html,

@@ -127,8 +127,8 @@ test("тариф в меню профиля: «Тариф организации
   }
 });
 
-test("языки: русский, английский и узбекский — во всех переключателях", () => {
-  assert.deepEqual([...OFFERED_LOCALES], ["ru", "en", "uz"]);
+test("языки: русский, английский, узбекский, таджикский, армянский, киргизский, немецкий, французский — во всех переключателях", () => {
+  assert.deepEqual([...OFFERED_LOCALES], ["ru", "en", "uz", "tg", "hy", "ky", "de", "fr"]);
 });
 
 // Владелец, 2026-11-23: «переключение шагов не работает» — выключенные до сохранения анкеты
@@ -170,7 +170,7 @@ test("мастер на телефоне — лист снизу; пары по�
     assert.doesNotMatch(hint, /WESETUP50|href=/);
   }
   const notes = await Promise.all(LOCALES.map(async (locale) => (await loadMessages(locale)).dashboardUi.completeProfileNudge.demoNote));
-  assert.deepEqual(notes, ["Демо-организация, 7 дней", "Demo organisation, 7 days", "Demo tashkilot, 7 kun"]);
+  assert.deepEqual(notes, ["Демо-организация, 7 дней", "Demo organisation, 7 days", "Demo tashkilot, 7 kun", "Созмони демо, 7 рӯз", "Դեմո-կազմակերպություն, 7 օր", "Демо-уюм, 7 күн", "Demo-Organisation, 7 Tage", "Établissement de démonstration, 7 jours"]);
 });
 
 test("свои окна на телефоне — листом снизу, с 640px — по центру", () => {

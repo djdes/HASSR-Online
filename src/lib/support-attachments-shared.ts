@@ -23,7 +23,7 @@ export function isImageAttachment(meta: {
   return meta.mimeType.startsWith("image/");
 }
 
-export function formatBytes(size: number, locale: "ru" | "en" | "uz" = "ru"): string {
+export function formatBytes(size: number, locale: string = "ru"): string {
   const intlLocale = locale === "uz" ? "uz-Latn" : locale;
   const format = (
     value: number,

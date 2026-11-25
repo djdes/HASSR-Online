@@ -9,7 +9,7 @@ import { CITY_ORDER } from "@/content/cities";
 import { COMPARISON_ORDER } from "@/content/comparisons";
 import { GLOSSARY } from "@/content/glossary";
 import { KB_ARTICLES } from "@/content/kb/articles";
-import { publicLocaleRoute, publicLocalesForPath, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
+import { publicLocaleRoute, indexedLocalesForPath, localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
 import { articleLanguageAlternates } from "@/lib/article-language-alternates";
 import { articleLastModified, newestArticleDate } from "@/lib/article-visibility";
 import { readPromoSitemapArticles } from "@/lib/promo-cache";
@@ -148,7 +148,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const pathname = new URL(page.url).pathname;
     if (!publicLocaleRoute(pathname)) return [page];
     const alternates = page.alternates ?? { languages: siteLanguageAlternates(pathname) };
-    return publicLocalesForPath(pathname)
+    return indexedLocalesForPath(pathname)
       .filter(locale => Boolean(alternates.languages?.[locale]))
       .map(locale => ({ ...page, url: `${SITE}${localizedHref(pathname, locale)}`, alternates }));
   });

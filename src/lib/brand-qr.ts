@@ -66,7 +66,7 @@ export type BrandQrOptions = {
   /** Что в центре кода. По умолчанию — знак WeSetup. */
   center?: BrandQrCenter;
   /** Locale of the built-in caption; QR payload and geometry stay unchanged. */
-  locale?: "ru" | "en" | "uz";
+  locale?: import("@/i18n/locales").Locale;
 };
 
 export const BRAND_QR_CAPTION_TITLE = "Отсканировать";

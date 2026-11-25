@@ -295,7 +295,7 @@ export async function buildChatJobText(args: {
 
 /** A fixed allowlist prevents request data from becoming prompt instructions. */
 export function assistantResponseLanguage(locale?: SiteLocale): string {
-  return { ru: "Russian", en: "English", uz: "Uzbek (Latin script)" }[parseSiteLocale(locale)];
+  return { ru: "Russian", en: "English", uz: "Uzbek (Latin script)", tg: "Tajik (Cyrillic)", hy: "Armenian", ky: "Kyrgyz (Cyrillic)", de: "German", fr: "French" }[parseSiteLocale(locale)];
 }
 
 /**

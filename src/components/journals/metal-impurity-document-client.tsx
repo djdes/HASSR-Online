@@ -115,7 +115,7 @@ type ListEditorSectionProps = {
   onDirectoryAdd?: (names: string[]) => void;
 };
 
-const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" };
 
 function formatDisplayDate(value: string, locale: string) {
   if (!value) return "__________";

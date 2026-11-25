@@ -1,3 +1,4 @@
+import { LOCALES } from "./locales";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { localizedHref, parseSiteLocale, publicLocaleRoute, publicLocalesForPath, siteLanguageAlternates, resolveRequestLocale } from "./site-locale";
@@ -13,7 +14,7 @@ test("API email locale comes from the request cookie or explicit authenticated p
 
 test("only explicit supported locale values are accepted", () => {
   assert.equal(parseSiteLocale("en"), "en");
-  for (const value of [null, undefined, "EN", "fr", "en,ru", "<script>"]) assert.equal(parseSiteLocale(value), "ru");
+  for (const value of [null, undefined, "EN", "es", "en,ru", "<script>"]) assert.equal(parseSiteLocale(value), "ru");
 });
 
 test("translated public URLs round-trip without losing queries or hashes", () => {
@@ -27,7 +28,7 @@ test("blog aliases preserve slugs and filters while explicit URLs override saved
   for (const path of ["/blog", "/blog/zhurnal-dezinfektsii", "/blog/feed.xml"]) {
     assert.equal(localizedHref(`${path}?tag=test#heading`, "uz"), `/uz${path}?tag=test#heading`);
     assert.equal(localizedHref(`/uz${path}`, "ru"), path);
-    assert.deepEqual(publicLocalesForPath(path), ["ru", "en", "uz"]);
+    assert.deepEqual(publicLocalesForPath(path), [...LOCALES]);
     const request = new Request(`https://wesetup.ru${path}`, { headers: { cookie: "wesetup.site-locale=en" } });
     assert.equal(resolveRequestLocale(request), "ru");
   }
@@ -50,8 +51,8 @@ test("Uzbek auth aliases round-trip and only advertise existing translated route
   assert.deepEqual(publicLocaleRoute("/uz/login"), { locale: "uz", pathname: "/login" });
   assert.equal(localizedHref("/en/register?next=%2Fdashboard#email", "uz"), "/uz/register?next=%2Fdashboard#email");
   assert.equal(localizedHref("/uz/register?next=%2Fdashboard", "ru"), "/register?next=%2Fdashboard");
-  assert.deepEqual(publicLocalesForPath("/login"), ["ru", "en", "uz"]);
-  assert.deepEqual(publicLocalesForPath("/"), ["ru", "en", "uz"]);
+  assert.deepEqual(publicLocalesForPath("/login"), [...LOCALES]);
+  assert.deepEqual(publicLocalesForPath("/"), [...LOCALES]);
   assert.equal(publicLocaleRoute("/uz/api/auth"), null);
   assert.equal(publicLocaleRoute("/uz/root"), null);
   assert.equal(localizedHref("/api/reports/pdf", "uz"), "/api/reports/pdf");
@@ -63,7 +64,7 @@ test("about, partners and privacy expose only explicit reciprocal public aliases
     for (const locale of ["ru", "en", "uz"] as const) {
       const expected = `${locale === "ru" ? "" : `/${locale}`}${page}`;
       assert.deepEqual(publicLocaleRoute(expected), { locale, pathname: page });
-      assert.deepEqual(publicLocalesForPath(expected), ["ru", "en", "uz"]);
+      assert.deepEqual(publicLocalesForPath(expected), [...LOCALES]);
       assert.equal(localizedHref(`${page}?source=original#agreement`, locale), `${expected}?source=original#agreement`);
       for (const from of [page, `/en${page}`, `/uz${page}`]) {
         assert.equal(localizedHref(`${from}?source=original#agreement`, locale), `${expected}?source=original#agreement`);

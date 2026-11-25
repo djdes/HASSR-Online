@@ -50,7 +50,7 @@ function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
 
 type VoiceText = ReturnType<typeof useTranslations<"miniUi">>;
 
-const SPEECH_LANG: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+const SPEECH_LANG: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" };
 
 /** Почему запись не пошла — словами, и что делать дальше. */
 function micErrorText(t: VoiceText, code?: string): string {

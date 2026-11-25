@@ -7,12 +7,13 @@ import uz from "@/i18n/messages/uz.json";
 import { FREE_MAX_JOURNALS } from "@/lib/tariff-plans";
 import { FREE_MAX_USERS } from "@/lib/plan-limits";
 import { trialExplanation, trialPhaseLabel } from "./tariff-presentation";
+import { baseLocale } from "@/i18n/locales";
 
 const settings = { trialDays: 14, launchedAt: "2026-10-25T21:00:00Z", graceDays: 7, transitionEnabled: true };
 
 test("trial phases switch exactly at the launch moment in all locales", () => {
   for (const locale of ["ru", "en", "uz"] as const) {
-    const messages = { ru, en, uz }[locale];
+    const messages = { ru, en, uz }[baseLocale(locale)];
     const t = createTranslator({ locale, messages, namespace: "rootTariffs" });
     const launch = new Date(settings.launchedAt).getTime();
     assert.equal(trialPhaseLabel(t, settings, launch - 1), t("phaseBeforeLaunch", { date: "26.10.2026, 00:00" }));
@@ -35,7 +36,7 @@ test("Russian trial copy names the free limits and the launch date in Moscow tim
 
 test("price editor and counters messages keep their arguments", () => {
   for (const locale of ["ru", "en", "uz"] as const) {
-    const messages = { ru, en, uz }[locale];
+    const messages = { ru, en, uz }[baseLocale(locale)];
     const t = createTranslator({ locale, messages, namespace: "rootTariffs" });
     const paid = t("paidHint", { standard: 0, premium: 2, vip: 5, legacy: 3 });
     assert.ok(paid.includes("2") && paid.includes("5"));

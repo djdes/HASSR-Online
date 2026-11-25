@@ -18,7 +18,7 @@ export const maxDuration = 150;
  */
 
 const Body = z.object({
-  locale: z.enum(["en", "uz"]),
+  locale: z.enum(["en", "uz", "tg", "hy", "ky", "de", "fr"]),
   keys: z.array(z.string().min(1).max(300)).min(1).max(AUTO_TRANSLATE_BATCH),
   /** Явная просьба перевести строку заново, даже если её правили вручную. */
   overwriteManual: z.boolean().optional(),

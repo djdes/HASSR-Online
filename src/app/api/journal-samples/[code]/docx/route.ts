@@ -1,3 +1,4 @@
+import { baseLocale } from "@/i18n/locales";
 import { NextResponse } from "next/server";
 import {
   isDocxBlankCode,
@@ -77,7 +78,7 @@ export async function GET(
             }
           : null,
         // Свой Word-макет есть у части журналов; остальным — таблица по колонкам образца.
-        columns: isDocxSampleCode(code) ? null : (journalPageContent(code, locale) ?? journalPageContent(code, "ru"))?.sample?.columns ?? null,
+        columns: isDocxSampleCode(code) ? null : (journalPageContent(code, baseLocale(locale)) ?? journalPageContent(code, "ru"))?.sample?.columns ?? null,
         footer: {
           qrUrl: blankFileQrUrl({ origin: journalPdfQrOrigin(), target, email: check.email, organizationId: check.organizationId }),
           lines: await sampleFooterLines(locale),

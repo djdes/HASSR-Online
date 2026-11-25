@@ -89,7 +89,7 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
   // Сколько строк всего раздела (поиска) ждут автоперевода — с сервера.
-  const [candidates, setCandidates] = useState<Record<TargetLocale, number>>({ en: 0, uz: 0 });
+  const [candidates, setCandidates] = useState<Record<TargetLocale, number>>({ en: 0, uz: 0, tg: 0, hy: 0, ky: 0, de: 0, fr: 0 });
   const [autoProgress, setAutoProgress] = useState<{ done: number; total: number; waitSeconds: number | null } | null>(null);
   const autoStop = useRef(false);
   const [autoRow, setAutoRow] = useState<string | null>(null);
@@ -625,7 +625,7 @@ export function TranslationEditor({ initialCategories, initialView }: { initialC
                 <Sparkles className="size-4 text-[#5566f6]" />
                 {t("actions.auto")}
               </span>
-              {(["en", "uz"] as const).map((locale) => {
+              {(["en", "uz", "tg", "hy", "ky", "de", "fr"] as const).map((locale) => {
                 const label = t("actions.autoBatch", { language: LOCALE_NAMES[locale], count: String(candidates[locale]) });
                 return (
                   <Button

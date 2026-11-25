@@ -12,6 +12,11 @@ export const AUTO_TRANSLATE_BATCH = 30;
 const TARGET_NAMES: Record<Exclude<Locale, "ru">, string> = {
   en: "английский (British English, интерфейс SaaS)",
   uz: "узбекский, латиница (O‘zbekcha, апостроф ‘)",
+  tg: "таджикский (тоҷикӣ, кириллица)",
+  hy: "армянский (Հայերեն, восточноармянский)",
+  ky: "киргизский (кыргызча, кириллица)",
+  de: "немецкий (Deutsch, обращение на «Sie»)",
+  fr: "французский (français, обращение на «vous»)",
 };
 
 export function buildAutoTranslateJob(target: Exclude<Locale, "ru">, source: Record<string, string>): string {

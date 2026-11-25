@@ -251,7 +251,7 @@ function isValidIsoDate(value: string | undefined): boolean {
   return !Number.isNaN(parsed.getTime());
 }
 
-const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" };
 
 function formatDate(iso: string, locale: string): string {
   try {

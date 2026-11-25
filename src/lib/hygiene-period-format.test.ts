@@ -4,7 +4,7 @@ import { formatHygienePeriodBounds } from "@/lib/hygiene-period-format";
 
 describe("formatHygienePeriodBounds", () => {
   it("retains native healthy date bytes for all months and leap/year boundaries", () => {
-    const locales = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn-UZ" } as const;
+    const locales = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" } as const;
     const dates = [...Array.from({ length: 12 }, (_, month) => `2026-${String(month + 1).padStart(2, "0")}-16`), "2024-02-29", "2026-12-31", "2027-01-01"];
     for (const locale of ["ru", "en", "uz"] as const) for (const date of dates) {
       const value = new Date(`${date}T00:00:00Z`);

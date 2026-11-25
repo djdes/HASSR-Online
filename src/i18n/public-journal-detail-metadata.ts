@@ -21,7 +21,7 @@ export async function publicJournalDetailMetadata(locale: Locale, code: string):
     alternates: { canonical: url, languages: siteLanguageAlternates(pathname) },
     openGraph: {
       title, description, url, type: "article", siteName: "WeSetup",
-      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], images: ogImages(image),
+      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], images: ogImages(image),
     },
     twitter: { card: DEFAULT_TWITTER_CARD, title, description, images: twitterImages(image) },
   };

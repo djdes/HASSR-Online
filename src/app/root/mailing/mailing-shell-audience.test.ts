@@ -10,10 +10,11 @@ import uz from "@/i18n/messages/uz.json";
 import { DEFAULT_USER_FILTERS } from "@/lib/mailing/audience";
 import { UsersTab } from "./users-tab";
 import { MailingFeedbackProvider } from "./mailing-feedback";
+import { baseLocale } from "@/i18n/locales";
 
 for (const locale of ["ru", "en", "uz"] as const) {
   test(`actual Users initial SSR uses only domain copy in ${locale} and runs no effects`, () => {
-    const messages = { ru, en, uz }[locale].rootMailingShellAudience;
+    const messages = { ru, en, uz }[baseLocale(locale)].rootMailingShellAudience;
     let callbacks = 0;
     const props = {
       filters: { ...DEFAULT_USER_FILTERS, search: "RAW Рассылка <organization>" },

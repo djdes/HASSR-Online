@@ -134,7 +134,7 @@ import {
   getCleaningVentilationFilePrefix,
 } from "@/lib/cleaning-ventilation-checklist-document";
 import { drawCleaningVentilationChecklistPdf } from "@/lib/cleaning-ventilation-checklist-pdf";
-import { FORMAT_LOCALES, formatDate, formatNumber, type Locale } from "@/i18n/locales";
+import { FORMAT_LOCALES, formatDate, formatNumber, type Locale, baseLocale } from "@/i18n/locales";
 import { journalPdfCopy } from "@/i18n/journal-pdf-copy";
 import { createTranslator } from "use-intl/core";
 import { commissionRoleLabel } from "@/lib/brakerage-commission";
@@ -2430,7 +2430,7 @@ function drawClimatePdf(doc: jsPDF, params: {
   const catalogs = { ru: ruMessages, en: enMessages, uz: uzMessages };
   const t = createTranslator({
     locale,
-    messages: catalogs[locale] as MessageContract,
+    messages: catalogs[baseLocale(locale)] as MessageContract,
     namespace: "climate.print",
   });
   // Экранный H1 над штампом в бланк не идёт — название журнала уже
@@ -2553,7 +2553,7 @@ function drawColdEquipmentPdf(doc: jsPDF, params: {
   const catalogs = { ru: ruMessages, en: enMessages, uz: uzMessages };
   const t = createTranslator({
     locale,
-    messages: catalogs[locale] as MessageContract,
+    messages: catalogs[baseLocale(locale)] as MessageContract,
     namespace: "coldEquipment.print",
     onError: error => { throw error; },
   });
@@ -2794,7 +2794,7 @@ function drawCleaningPdf(doc: jsPDF, params: {
 }) {
   const config = normalizeCleaningDocumentConfig(params.config);
   const locale = params.locale ?? "ru";
-  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[locale];
+  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)];
   const t = createTranslator({ locale, messages: messages as MessageContract, namespace: "cleaningGrid.cleaning", onError: (error) => { throw error; } });
 
   const dateKeys = buildDateKeys(params.dateFrom, params.dateTo);
@@ -3317,9 +3317,9 @@ function drawFinishedProductPdf(doc: jsPDF, params: {
   fallbackSignatureName?: string;
 }) {
   const locale = params.locale;
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "finishedProduct", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "finishedProduct", onError: error => { throw error; } });
   const dayKey = (value: Date | string) => value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
-  const commissionT = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "journalControls.commissionDialog", onError: error => { throw error; } });
+  const commissionT = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "journalControls.commissionDialog", onError: error => { throw error; } });
   const commissionRoleLabels = { chair: commissionT("chair"), member: commissionT("member") };
   const title = finishedTitle(params.title, dayKey(params.dateFrom), dayKey(params.dateTo), locale, t);
   drawTitle(doc, t("title"));
@@ -3762,7 +3762,7 @@ function drawIncomingControlPdf(doc: jsPDF, params: {
   users: PdfPositionUser[];
 }) {
   const locale = params.locale ?? "ru";
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const cfg = params.config;
   const sourceRows =
     params.sourceConfig && typeof params.sourceConfig === "object" && !Array.isArray(params.sourceConfig)
@@ -3931,7 +3931,7 @@ function drawAcceptancePdf(doc: jsPDF, params: {
   users: PdfPositionUser[];
 }) {
   const locale = params.locale ?? "ru";
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const cfg = params.config;
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -4144,7 +4144,7 @@ function drawProductWriteoffPdf(doc: jsPDF, params: {
   config: ReturnType<typeof normalizeProductWriteoffConfig>;
 }) {
   const locale = params.locale ?? "ru";
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const title = params.titleIsDefault ? t("productWriteoff.title") : params.title;
   const documentName = params.documentNameIsDefault ? t("productWriteoff.title") : params.config.documentName || title;
   drawTitle(doc, title);
@@ -4302,7 +4302,7 @@ function drawPerishableRejectionPdf(doc: jsPDF, params: {
   config: ReturnType<typeof normalizePerishableRejectionConfig>;
 }) {
   const locale = params.locale;
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "perishableRejection", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "perishableRejection", onError: error => { throw error; } });
   const title = perishableTitle(params.title, params.dateFrom.toISOString().slice(0, 10), locale, t);
   drawTitle(doc, title);
   const headerBottom = drawJournalHeader(doc, {
@@ -4610,7 +4610,7 @@ function drawBreakdownHistoryPdf(doc: jsPDF, params: {
 }) {
   const cfg = params.config;
   const locale = params.locale;
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "breakdownHistory", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "breakdownHistory", onError: error => { throw error; } });
   const dateFrom = params.dateFrom instanceof Date ? params.dateFrom.toISOString().slice(0, 10) : params.dateFrom.slice(0, 10);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -4697,7 +4697,7 @@ function drawAccidentPdf(doc: jsPDF, params: {
 }) {
   const cfg = params.config;
   const locale = params.locale;
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "accidentJournal", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "accidentJournal", onError: error => { throw error; } });
   const dateFrom = params.dateFrom instanceof Date ? params.dateFrom.toISOString().slice(0, 10) : params.dateFrom.slice(0, 10);
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -4791,7 +4791,7 @@ function drawEquipmentCalibrationPdf(doc: jsPDF, params: {
 }) {
   const cfg = params.config;
   const locale = params.locale;
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "equipmentCalibration", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "equipmentCalibration", onError: error => { throw error; } });
   // «УТВЕРЖДАЮ»: должность и ФИО одного человека, как на экране.
   // Сохранённые строки — только если человека нет в ростере.
   const approver = resolveApprover(cfg, params.users);
@@ -5067,7 +5067,7 @@ function drawSanitationDayPdf(doc: jsPDF, params: {
   users?: readonly PersonDisplayUser[];
 }) {
   const locale = params.locale ?? "ru";
-  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[locale];
+  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)];
   const t = createTranslator({ locale, messages: messages as MessageContract, namespace: "cleaningGrid.cleaning", onError: (error) => { throw error; } });
   const cfg = params.config;
   // «УТВЕРЖДАЮ» и «Ответственный»: должность и ФИО одного человека, как
@@ -6221,7 +6221,7 @@ function drawComplaintPdf(doc: jsPDF, params: {
   equipment: { id: string; name: string }[];
 }) {
   const locale = params.locale;
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "complaintRegister", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "complaintRegister", onError: error => { throw error; } });
   const from = params.dateFrom instanceof Date ? params.dateFrom.toISOString().slice(0, 10) : params.dateFrom.slice(0, 10);
   const title = complaintTitle(params.title, from, locale, t);
   drawTitle(doc, title);
@@ -6291,7 +6291,7 @@ function drawRegisterPdf(doc: jsPDF, params: {
   equipment: { id: string; name: string }[];
 }) {
   const locale = params.locale;
-  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract;
+  const messages = { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract;
   const t = createTranslator({ locale, messages, namespace: "genericRegister", onError: error => { throw error; } });
   const day = (value: Date | string) => value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
   const title = registerTitle(params.title, params.templateCode, day(params.dateFrom), day(params.dateTo), locale, messages, t);
@@ -6660,7 +6660,7 @@ function drawMetalImpurityPdf(doc: jsPDF, params: {
   config: ReturnType<typeof normalizeMetalImpurityConfig>;
 }) {
   const locale = params.locale ?? "ru";
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const title = params.titleIsDefault ? t("metalImpurity.title") : params.title;
   drawTitle(doc, title);
   const metaBottom = drawClimateMetaTable(doc, {
@@ -6761,7 +6761,7 @@ function drawIntensiveCoolingPdf(doc: jsPDF, params: {
   users: PdfPositionUser[];
 }) {
   const locale = params.locale ?? "ru";
-  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
+  const t = createTranslator({ locale, messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract, namespace: "foodControlPdf", onError: (error) => { throw error; } });
   const pageWidth = doc.internal.pageSize.getWidth();
   const title = params.titleIsDefault ? t("intensiveCooling.title") : params.title;
 
@@ -6860,7 +6860,7 @@ function drawFryerOilPdf(doc: jsPDF, params: {
 }) {
   const locale = params.locale;
   const catalogs = { ru: ruMessages, en: enMessages, uz: uzMessages };
-  const t = createTranslator({ locale, messages: catalogs[locale] as MessageContract, namespace: "fryerOil", onError: error => { throw error; } });
+  const t = createTranslator({ locale, messages: catalogs[baseLocale(locale)] as MessageContract, namespace: "fryerOil", onError: error => { throw error; } });
   const formatter = new Intl.DateTimeFormat(FORMAT_LOCALES[locale], { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
   const dateText = (value: Date | string) => {
     const key = value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
@@ -7712,7 +7712,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
   const periodicityKey = standardPeriodicityKey(activeControlPeriodicity, templateCode);
   if (periodicityKey && input.locale && input.locale !== "ru") {
     const catalogs = { ru: ruMessages, en: enMessages, uz: uzMessages };
-    activeControlPeriodicity = catalogs[input.locale].journalWidgets.periodicity[periodicityKey];
+    activeControlPeriodicity = catalogs[baseLocale(input.locale)].journalWidgets.periodicity[periodicityKey];
   }
   activeOrganizationShortName = orgName;
   activeOrgLogo = input.logo ?? null;
@@ -7771,7 +7771,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     const climateTitle = document.title || getClimateDocumentTitle();
     const climateNames = createTranslator({
       locale: input.locale ?? "ru",
-      messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[input.locale ?? "ru"] as MessageContract,
+      messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(input.locale ?? "ru")] as MessageContract,
       namespace: "journals.names",
     });
     drawClimatePdf(doc, {
@@ -7794,7 +7794,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
       organizationName,
       title: document.title || createTranslator({
         locale: input.locale ?? "ru",
-        messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[input.locale ?? "ru"] as MessageContract,
+        messages: { ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(input.locale ?? "ru")] as MessageContract,
         namespace: "journals.names",
       })("cold_equipment_control"),
       dateFrom: document.dateFrom,
@@ -7842,7 +7842,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
       }
     }
     const locale = input.locale ?? "ru";
-    const cleaningMessages = ({ ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract).cleaningGrid.cleaning;
+    const cleaningMessages = ({ ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract).cleaningGrid.cleaning;
     const dateFromKey = document.dateFrom instanceof Date ? document.dateFrom.toISOString().slice(0, 10) : String(document.dateFrom).slice(0, 10);
     const dateToKey = document.dateTo instanceof Date ? document.dateTo.toISOString().slice(0, 10) : String(document.dateTo).slice(0, 10);
     const localizedAutoTitle = presentDocumentTitle({
@@ -7981,7 +7981,7 @@ export function renderJournalDocumentPdf(input: JournalDocumentPdfInput): Render
     });
   } else if (templateCode === SANITATION_DAY_TEMPLATE_CODE) {
     const locale = input.locale ?? "ru";
-    const cleaningMessages = ({ ru: ruMessages, en: enMessages, uz: uzMessages }[locale] as MessageContract).cleaningGrid.cleaning;
+    const cleaningMessages = ({ ru: ruMessages, en: enMessages, uz: uzMessages }[baseLocale(locale)] as MessageContract).cleaningGrid.cleaning;
     const sanitationConfig = normalizeSanitationDayConfig(document.config);
     const dateFromKey = document.dateFrom instanceof Date ? document.dateFrom.toISOString().slice(0, 10) : String(document.dateFrom).slice(0, 10);
     const dateToKey = document.dateTo instanceof Date ? document.dateTo.toISOString().slice(0, 10) : String(document.dateTo).slice(0, 10);

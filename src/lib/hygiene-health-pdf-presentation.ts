@@ -1,5 +1,5 @@
 import { createTranslator } from "use-intl/core";
-import { formatDate, type Locale } from "@/i18n/locales";
+import { formatDate, type Locale, baseLocale } from "@/i18n/locales";
 import ru from "@/i18n/messages/ru.json";
 import en from "@/i18n/messages/en.json";
 import uz from "@/i18n/messages/uz.json";
@@ -7,7 +7,7 @@ import { coerceUtcDate, formatMonthLabel, getWeekdayShort, HYGIENE_DEMO_TEAM_V2,
 import { normalizeUserRole } from "@/lib/user-roles";
 
 export function hygieneHealthPdfCopy(locale: Locale = "ru") {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].hygieneHealthPdf });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].hygieneHealthPdf });
 }
 
 /** Explicit document titles are customer data, even when identical to a built-in. */

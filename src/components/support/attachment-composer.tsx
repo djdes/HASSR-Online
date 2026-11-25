@@ -1,5 +1,6 @@
 "use client";
 
+import type { Locale } from "@/i18n/locales";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
@@ -220,7 +221,7 @@ export function AttachmentChips({
   onRemove,
   formatSizeBytes,
 }: {
-  formatSizeBytes?: (sizeBytes: number, locale: "ru" | "en" | "uz") => string;
+  formatSizeBytes?: (sizeBytes: number, locale: Locale) => string;
   uploads: UploadItem[];
   onRemove: (key: string) => void;
 }) {

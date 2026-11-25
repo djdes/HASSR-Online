@@ -38,7 +38,7 @@ test("validateOverride accepts matching arguments and resets empty or original v
 
 test("validateOverride rejects unknown keys and locales, broken ICU and lost placeholders", () => {
   assert.deepEqual(validateOverride({ locale: "en", key: "nope", value: "x" }, catalogs), { ok: false, error: "unknown_key" });
-  assert.deepEqual(validateOverride({ locale: "de", key: "a.title", value: "x" }, catalogs), { ok: false, error: "unknown_locale" });
+  assert.deepEqual(validateOverride({ locale: "es", key: "a.title", value: "x" }, catalogs), { ok: false, error: "unknown_locale" });
   assert.deepEqual(validateOverride({ locale: "en", key: "a.title", value: "Journal" }, catalogs), { ok: false, error: "argument_mismatch", expected: ["name"] });
   assert.deepEqual(validateOverride({ locale: "en", key: "a.title", value: "Journal {nam}" }, catalogs), { ok: false, error: "argument_mismatch", expected: ["name"] });
   assert.deepEqual(validateOverride({ locale: "en", key: "a.title", value: "Journal {name" }, catalogs), { ok: false, error: "invalid_icu" });

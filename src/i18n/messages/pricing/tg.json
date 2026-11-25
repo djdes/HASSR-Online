@@ -1,0 +1,23 @@
+{
+  "price": {
+    "regularBeforePromotion": "Нархи муқаррарӣ то аксия",
+    "regularBeforeDiscount": "Нархи муқаррарӣ то тахфиф",
+    "discountedPrice": "Нархи тахфифёфта"
+  },
+  "promotion": {
+    "month": "{month, select, 0 {январ} 1 {феврал} 2 {март} 3 {апрел} 4 {май} 5 {июн} 6 {июл} 7 {август} 8 {сентябр} 9 {октябр} 10 {ноябр} 11 {декабр} other {моҳ}}",
+    "endDate": "то {day, number} {month}",
+    "endDateTimeLabel": "то {day, number} {month}, {time}",
+    "endDateTime": "{date}, {time}",
+    "badge": "−{percent, number} % {end}",
+    "endHint": "Аксия {dateTime} бо вақти Маскав ба охир мерасад"
+  },
+  "discount": {
+    "percent": "−{value, number} %",
+    "fixed": "−{value, number} ₽",
+    "lifetime": "Тахфифи доимии шумо {amount}",
+    "promoCode": "{lifetime, select, yes {Промокод {code}: {amount} барои доимӣ} no {Промокод {code}: {amount}} other {Промокод {code}: {amount}}}",
+    "lifetimeUntil": "Тахфифи шумо {amount} то {date}",
+    "promoCodeMonths": "Промокод {code}: {amount} ба муддати {months, plural, one {# моҳ} other {# моҳ}}"
+  }
+}

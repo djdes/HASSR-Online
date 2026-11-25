@@ -1,0 +1,17 @@
+{
+  "common": {
+    "delete": "Нест кардан",
+    "save": "Нигоҳ доштан",
+    "cancel": "Бекор кардан",
+    "close": "Пӯшидан"
+  },
+  "journalControls": {
+    "confirm": {
+      "confirm": "Подтвердить",
+      "cancel": "Отмена",
+      "close": "Закрыть",
+      "typeInstruction": "Чтобы продолжить, введите <required>{phrase}</required>",
+      "mismatch": "Не совпало — введите точно так, как написано выше."
+    }
+  }
+}

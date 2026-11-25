@@ -66,7 +66,7 @@ export async function generateMetadata({
     ...(article.translationMissing || scheduled ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: "article",
-      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[article.contentLocale],
+      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[article.contentLocale],
       siteName: "WeSetup",
       url,
       title: article.title,

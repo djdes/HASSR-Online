@@ -112,7 +112,7 @@ test("CAPA generated suggestions capture explicit locale without changing regula
     const instruction = capaSuggestionLanguageInstruction(locale);
     assert.match(instruction, /Keep JSON property names unchanged/);
     assert.match(instruction, /numeric values and the existing regulatory context/);
-    assert.match(instruction, new RegExp({ ru: "Russian", en: "English", uz: "Uzbek using the Latin alphabet" }[locale]));
+    assert.match(instruction, new RegExp({ ru: "Russian", en: "English", uz: "Uzbek using the Latin alphabet", tg: "Tajik (Cyrillic)", hy: "Armenian", ky: "Kyrgyz (Cyrillic)", de: "German", fr: "French" }[locale]));
   }
   assert.equal(resolveExportLocale(null, { locale: "uz", organizationLocale: "en" }), "uz");
   assert.equal(resolveExportLocale(null, { locale: null, organizationLocale: "en" }), "en");

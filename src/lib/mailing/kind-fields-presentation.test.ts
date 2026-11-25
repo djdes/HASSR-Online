@@ -15,7 +15,7 @@ import uz from "@/i18n/messages/uz.json";
 import { fieldDiscountLabel, fieldNumber, fieldPromoOptionLabel, fieldSphereKey, fieldSphereLabel } from "./kind-fields-presentation";
 
 const catalogs = { ru, en, uz };
-const locales: Locale[] = ["ru", "en", "uz"];
+const locales = ["ru", "en", "uz"] as const;
 const option: KpPromoOption = { code: "RAW_КОД-21", kind: "fixed", value: 12500, lifetime: false, endsAt: "2026-12-31T21:00:00Z", usesLeft: 12500, newClientsOnly: false, label: "NEVER parse this raw Russian producer label" };
 
 test("sphere map covers original order and excludes prototype and unknown values", () => {
@@ -116,6 +116,6 @@ test("finite Uzbek decimal presentation has an explicit stable profile without r
 
 test("nonfinite values keep each original native locale path", () => {
   for (const value of [NaN, Infinity, -Infinity]) for (const locale of locales) {
-    assert.equal(fieldNumber(value, locale), value.toLocaleString({ ru: "ru-RU", en: "en-GB", uz: "uz-Latn-UZ" }[locale]));
+    assert.equal(fieldNumber(value, locale), value.toLocaleString({ ru: "ru-RU", en: "en-GB", uz: "uz-Latn-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" }[locale]));
   }
 });
