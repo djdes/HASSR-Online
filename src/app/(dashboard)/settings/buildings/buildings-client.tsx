@@ -659,10 +659,17 @@ function BuildingCard({
                 пищевой продукции») на телефоне уходит под название, а не
                 сжимает его в столбик. */}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <Building2 className="size-4 text-[#5566f6]" />
-              <h2 className="min-w-0 break-words text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
-                {building.name}
-              </h2>
+              {/* На телефоне значок, название и скрепка — одна строка: длинное
+                  название переносится внутри неё, скрепка не остаётся одна.
+                  С 640 px группа растворяется в строке (`sm:contents`):
+                  название, сфера, скрепка — как раньше. */}
+              <div className="flex min-w-0 items-center gap-x-2 sm:contents" data-building-title>
+                <Building2 className="size-4 shrink-0 text-[#5566f6]" />
+                <h2 className="min-w-0 break-words text-[18px] font-semibold tracking-[-0.01em] text-[#0b1024]">
+                  {building.name}
+                </h2>
+                {onTogglePin ? <PinButton pinned={pinned} onToggle={onTogglePin} name={building.name} className="shrink-0 sm:order-last" /> : null}
+              </div>
               {building.kind === "office" ? (
                 <span className="rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]" data-building-office>
                   {t("officeBadge")}
@@ -670,18 +677,16 @@ function BuildingCard({
               ) : (
                 <span
                   data-building-sphere={sphere ?? ""}
-                  // На телефоне сфера — последней: скрепка остаётся в строке с названием.
                   className={
                     sphere
-                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7] max-sm:order-last"
-                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00] max-sm:order-last"
+                      ? "rounded-full bg-[#f5f6ff] px-2.5 py-1 text-[12px] font-medium text-[#3848c7]"
+                      : "rounded-full bg-[#fff8eb] px-2.5 py-1 text-[12px] font-medium text-[#b25f00]"
                   }
                   title={t("sphereHint")}
                 >
                   {categoryLabel(sphere)}
                 </span>
               )}
-              {onTogglePin ? <PinButton pinned={pinned} onToggle={onTogglePin} name={building.name} /> : null}
             </div>
             {building.address ? (
               <div className="mt-0.5 text-[13px] text-[#6f7282]">{building.address}</div>

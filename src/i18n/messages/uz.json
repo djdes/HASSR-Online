@@ -1148,7 +1148,17 @@
         "draftReplaceTitle": "Matn qoralama bilan almashtirilsinmi?",
         "draftReplaceBody": "Maydondagi matn AI-yordamchi qoralamasi bilan almashtiriladi. «Saqlash»ni bosmaguningizcha saqlangan matn oʻzgarmaydi.",
         "draftReplaceConfirm": "Almashtirish",
-        "draftReplaceCancel": "Bekor qilish"
+        "draftReplaceCancel": "Bekor qilish",
+        "draftErrors": {
+          "forbidden": "Bu boʻlimga kirish huquqingiz yoʻq",
+          "choosePoint": "Sarlavhada oʻz nuqtangizni tanlang: ishlab chiqarish nazorati dasturi har bir nuqta uchun yuritiladi",
+          "badRequest": "Notoʻgʻri soʻrov",
+          "rateLimited": "Soʻrovlar soni koʻp. Bir daqiqa kuting",
+          "aiNotConfigured": "AI-yordamchi ulanmagan: qoralama hozircha mavjud emas",
+          "aiTimeout": "AI-yordamchi oʻz vaqtida javob bermadi. Yana urinib koʻring",
+          "aiFailed": "AI-yordamchi qoralama tayyorlay olmadi. Yana urinib koʻring",
+          "aiEmpty": "AI-yordamchi boʻsh qoralama qaytardi. Yana urinib koʻring"
+        }
       },
       "order": {
         "ordersTitle": "HACCP guruhini tuzish toʻgʻrisidagi buyruq",
@@ -1384,7 +1394,25 @@
         "legendRemoved": "olib tashlangan",
         "collapsed": "… oʻzgarishsiz: {count} belgi …",
         "showAll": "Butun matnni koʻrsatish",
-        "withPrevious": "{code} bilan solishtirish"
+        "withPrevious": "{code} bilan solishtirish",
+        "errors": {
+          "forbidden": "Bu boʻlimga kirish huquqingiz yoʻq",
+          "choosePoint": "Sarlavhada oʻz nuqtangizni tanlang: ishlab chiqarish nazorati dasturi har bir nuqta uchun yuritiladi",
+          "badRequest": "Notoʻgʻri soʻrov",
+          "docNotFound": "Hujjat topilmadi",
+          "noRevisions": "Hujjatning tasdiqlangan tahrirlari yoʻq",
+          "revisionNotFound": "Tahrir topilmadi",
+          "noCurrentText": "Hujjatning joriy matni yoʻq"
+        }
+      },
+      "errors": {
+        "forbidden": "Bu boʻlimga kirish huquqingiz yoʻq",
+        "choosePoint": "Sarlavhada oʻz nuqtangizni tanlang: ishlab chiqarish nazorati dasturi har bir nuqta uchun yuritiladi",
+        "badRequest": "Notoʻgʻri soʻrov",
+        "kbForbidden": "Bilimlar bazasi hujjatlarini uni boshqaradigan kishi tasdiqlaydi",
+        "docNotFound": "Hujjat topilmadi",
+        "docEmpty": "Hujjat boʻsh: matnni saqlang yoki skan yuklang",
+        "docChanged": "Tasdiqlash vaqtida hujjat oʻzgardi — yana tasdiqlang"
       }
     },
     "textDocs": {

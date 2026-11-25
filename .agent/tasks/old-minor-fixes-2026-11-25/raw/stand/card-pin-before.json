@@ -1,0 +1,163 @@
+[
+  {
+    "width": 320,
+    "pinWithName": false,
+    "order": "rows",
+    "name": {
+      "top": 409,
+      "bottom": 490,
+      "left": 37,
+      "right": 207
+    },
+    "pin": {
+      "top": 494,
+      "bottom": 542,
+      "left": 37
+    },
+    "chip": {
+      "top": 546,
+      "bottom": 613,
+      "left": 37
+    },
+    "docW": 320,
+    "vw": 320
+  },
+  {
+    "width": 360,
+    "pinWithName": false,
+    "order": "rows",
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 37,
+      "right": 247
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 529,
+      "left": 37
+    },
+    "chip": {
+      "top": 533,
+      "bottom": 600,
+      "left": 37
+    },
+    "docW": 360,
+    "vw": 360
+  },
+  {
+    "width": 375,
+    "pinWithName": false,
+    "order": "rows",
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 37,
+      "right": 262
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 529,
+      "left": 37
+    },
+    "chip": {
+      "top": 533,
+      "bottom": 600,
+      "left": 37
+    },
+    "docW": 375,
+    "vw": 375
+  },
+  {
+    "width": 390,
+    "pinWithName": false,
+    "order": "rows",
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 37,
+      "right": 277
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 529,
+      "left": 37
+    },
+    "chip": {
+      "top": 533,
+      "bottom": 580,
+      "left": 37
+    },
+    "docW": 390,
+    "vw": 390
+  },
+  {
+    "width": 430,
+    "pinWithName": false,
+    "order": "rows",
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 37,
+      "right": 317
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 529,
+      "left": 37
+    },
+    "chip": {
+      "top": 533,
+      "bottom": 580,
+      "left": 37
+    },
+    "docW": 430,
+    "vw": 430
+  },
+  {
+    "width": 700,
+    "pinWithName": false,
+    "order": "chip→pin",
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 415
+    },
+    "pin": {
+      "top": 468,
+      "bottom": 496,
+      "left": 415
+    },
+    "chip": {
+      "top": 469,
+      "bottom": 495,
+      "left": 37
+    },
+    "docW": 700,
+    "vw": 700
+  },
+  {
+    "width": 1280,
+    "pinWithName": true,
+    "order": "chip→pin",
+    "name": {
+      "top": 481,
+      "bottom": 508,
+      "left": 333,
+      "right": 687
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 509,
+      "left": 1074
+    },
+    "chip": {
+      "top": 482,
+      "bottom": 508,
+      "left": 695
+    },
+    "docW": 1280,
+    "vw": 1280
+  }
+]

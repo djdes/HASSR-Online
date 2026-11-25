@@ -1,0 +1,23 @@
+# Стенд: next dev :3000 (локальная копия), рабочее дерево ветки после правок, 2026-11-25T20:53:06Z
+PASS стенд: точка — 200
+PASS стенд: документ гигиены — 201
+PASS AC1 документ автоматики, окно 3 дня: удаление строки за вчера по сотруднику и дню — 200 (раньше 403 из-за строки 6 дней назад) — 200 {"deleted":1}
+PASS AC1 строка 6 дней назад не тронута
+PASS AC1 строка за окном (6 дней назад) — 403 past_day_locked — 403 past_day_locked
+PASS AC1 неверная дата — 400 — 400
+PASS стенд: у руководителя строка на послезавтра — PATCH 200
+PASS AC2 руководитель переносит строку с послезавтра на сегодня — 200 (было 403 future_day_locked) — 200  → 2026-11-25
+PASS AC2 запись В будущий день — по-прежнему 403 — 403 future_day_locked
+PASS AC2 сотрудник свою строку с будущего дня не переносит — 403 — 403 not_today
+PASS AC7 сравнение: пустой ключ — 400 bad_request — 400 bad_request
+PASS AC7 сравнение: битый ключ — 404 doc_not_found — 404 doc_not_found
+PASS AC7 сравнение: у документа нет редакций — 404 no_revisions — 404 no_revisions
+PASS AC7 утверждение: без ключа — 400 bad_request — 400 bad_request
+PASS AC7 утверждение: документа нет — 404 doc_not_found — 404 doc_not_found
+PASS AC7 черновик: неверный запрос — 400 bad_request — 400 bad_request
+PASS AC7 черновик: ИИ-помощник не подключён на стенде — 503 ai_not_configured — 503 ai_not_configured
+PASS AC7 доступ ППК: сотруднику — 403 forbidden — 403 forbidden
+PASS AC7 интерфейс en: ошибка черновика по-английски — The AI assistant is not connected: drafts are unavailable right now
+PASS стенд: спецрежим возвращён как был
+
+20/20 PASS

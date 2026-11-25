@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { PPK_DRAFT_ERROR_CODES, ppkErrorText } from "@/lib/ppk/api-errors";
 import { toast } from "sonner";
 import { Loader2, RotateCcw, Sparkles } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -73,9 +74,10 @@ export function TextDocEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ block }),
       });
-      const body = (await response.json().catch(() => null)) as { text?: string; error?: string } | null;
+      const body = (await response.json().catch(() => null)) as { text?: string; error?: string; code?: string } | null;
       if (!response.ok || !body?.text) {
-        toast.error(body?.error || t("draftFailed"));
+        // Текст по коду — на языке интерфейса; неизвестный код — текст сервера.
+        toast.error(ppkErrorText(body, PPK_DRAFT_ERROR_CODES, (key) => t(`draftErrors.${key}`), t("draftFailed")));
         return;
       }
       // Черновик — в поле, не сохранён: человек проверяет и нажимает «Сохранить».

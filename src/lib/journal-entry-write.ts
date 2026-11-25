@@ -9,7 +9,6 @@ import {
   type AutomationLockContext,
 } from "@/lib/closed-day";
 import { isJournalAutomationEnabled } from "@/lib/journal-automation";
-import { isManagementRole } from "@/lib/user-roles";
 import { orgTodayKey } from "@/lib/timezone";
 import { FUTURE_DAY_LOCKED_MESSAGE, pastDayOpen, type PastDaysPolicy } from "@/lib/journal-entry-scope";
 import { loadPastDaysPolicy } from "@/lib/journal-controls.server";
@@ -139,8 +138,6 @@ export function checkEntryWrite(
   actor: EntryWriteActor,
   entryDate: Date
 ): EntryWriteDecision {
-  const closedActor = { role: actor.role, isRoot: actor.isRoot };
-
   // Будущее не заполняется никем. Проверка идёт ПЕРВОЙ: она не про
   // права, а про смысл записи, поэтому override'ов у неё нет.
   if (ctx.todayKey && toEntryDateKey(entryDate) > ctx.todayKey) {
@@ -150,6 +147,30 @@ export function checkEntryWrite(
       code: "future_day_locked",
     };
   }
+  return checkPastDayLocks(ctx, actor, entryDate);
+}
+
+/**
+ * Клетка, откуда уходит строка при переносе (PUT с `entryId`): те же
+ * запреты прошлых дней, что у цели, но без правила будущего — оно о том,
+ * куда пишут. Убрать строку с будущего дня руководство могло и до
+ * спецрежима; сотруднику не даёт `checkEntryScope` (не его день).
+ */
+export function checkEntrySourceWrite(
+  ctx: EntryWriteContext,
+  actor: EntryWriteActor,
+  entryDate: Date
+): EntryWriteDecision {
+  return checkPastDayLocks(ctx, actor, entryDate);
+}
+
+/** Запреты прошлых дней: документ автоматики и запрет организации. */
+function checkPastDayLocks(
+  ctx: EntryWriteContext,
+  actor: EntryWriteActor,
+  entryDate: Date
+): EntryWriteDecision {
+  const closedActor = { role: actor.role, isRoot: actor.isRoot };
 
   const automationDecision = canEditAutomationCell(
     entryDate,

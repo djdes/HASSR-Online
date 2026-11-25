@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { captureAcceptanceSource } from "@/lib/acceptance-source.server";
 import { loadAcceptanceSources } from "@/lib/acceptance-sources.server";
 import { receivesSupplyRows } from "@/lib/acceptance-sources";
@@ -70,7 +71,6 @@ import {
   toDateKey,
 } from "@/lib/hygiene-document";
 import {
-  ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
   isAcceptanceDocumentTemplate,
   normalizeAcceptanceDocumentConfig,
 } from "@/lib/acceptance-document";
@@ -187,7 +187,6 @@ import {
 } from "@/lib/cleaning-ventilation-checklist-document";
 import { SanitaryDayChecklistDocumentClient } from "@/components/journals/sanitary-day-checklist-document-client";
 import {
-  SANITARY_DAY_CHECKLIST_TEMPLATE_CODE,
   isSanitaryDayChecklistTemplate,
   normalizeSdcConfig,
   normalizeSdcEntryData,
@@ -575,12 +574,12 @@ async function JournalDocumentBody({
         <p className="text-[14px] leading-[1.6] text-[#6f7282]">
           {tPage("disabledDescription", { name: disabledJournalName })}
         </p>
-        <a
+        <Link
           href="/settings/journals"
           className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#5566f6] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_-12px_rgba(85,102,246,0.55)] transition-colors hover:bg-[#4a5bf0]"
         >
           {tPage("openJournalSettings")}
-        </a>
+        </Link>
       </div>
     );
   }

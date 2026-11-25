@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { PPK_APPROVE_ERROR_CODES, ppkErrorText } from "@/lib/ppk/api-errors";
 import { toast } from "sonner";
 import { BadgeCheck, Loader2, Stamp } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -80,7 +81,8 @@ export function useRevisionStates(docKeys: readonly string[], initial?: Record<s
   return { states: keysParam ? states : NO_STATES, reload, prompt, setPrompt };
 }
 
-type ApproveOutcome = { ok: true; created: boolean; code: string } | { ok: false; error: string | null };
+type ApproveError = { error?: string; code?: string } | null;
+type ApproveOutcome = { ok: true; created: boolean; code: string } | { ok: false; body: ApproveError };
 
 /** POST утверждения: новая редакция или прежняя (без изменений). */
 async function approve(docKey: string): Promise<ApproveOutcome> {
@@ -91,13 +93,13 @@ async function approve(docKey: string): Promise<ApproveOutcome> {
       body: JSON.stringify({ docKey }),
     });
     const body = (await response.json().catch(() => null)) as
-      | { created?: boolean; revision?: { code: string }; error?: string }
+      | { created?: boolean; revision?: { code: string }; error?: string; code?: string }
       | null;
-    if (!response.ok || !body?.revision) return { ok: false, error: body?.error ?? null };
+    if (!response.ok || !body?.revision) return { ok: false, body };
     window.dispatchEvent(new Event("ppk:revision"));
     return { ok: true, created: Boolean(body.created), code: body.revision.code };
   } catch {
-    return { ok: false, error: null };
+    return { ok: false, body: null };
   }
 }
 
@@ -183,7 +185,8 @@ export function RevisionControl({
               toast.success(outcome.created ? t("approvedToast", { code: outcome.code }) : t("sameToast", { code: outcome.code }));
               close();
             } else {
-              toast.error(outcome.error || t("failed"));
+              // Текст по коду — на языке интерфейса; неизвестный код — текст сервера.
+              toast.error(ppkErrorText(outcome.body, PPK_APPROVE_ERROR_CODES, (key) => t(`errors.${key}`), t("failed")));
             }
           } finally {
             setBusy(false);

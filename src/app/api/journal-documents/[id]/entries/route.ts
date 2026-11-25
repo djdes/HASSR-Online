@@ -14,6 +14,7 @@ import { canWriteJournal } from "@/lib/journal-acl";
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE } from "@/lib/cold-equipment-document";
 import { processColdEquipmentEntryDeviations } from "@/lib/temperature-deviations";
 import {
+  checkEntrySourceWrite,
   checkEntryWrite,
   isValidDate,
   loadEntryWriteContext,
@@ -25,6 +26,7 @@ import {
   type EntryWriteDoc,
 } from "@/lib/journal-entry-write";
 import { checkEntryScope } from "@/lib/journal-entry-write";
+import { entryDeleteTarget, type EntryDeleteBody } from "@/lib/journal-entry-delete";
 import { decideEntryMove } from "@/lib/tracked-document";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
@@ -202,7 +204,7 @@ export async function PUT(
         { status: 403 }
       );
     }
-    const sourceDecision = checkEntryWrite(writeCtx, actor, editedEntry.date);
+    const sourceDecision = checkEntrySourceWrite(writeCtx, actor, editedEntry.date);
     if (!sourceDecision.allowed) {
       return NextResponse.json(
         { error: sourceDecision.error, code: sourceDecision.code },
@@ -551,11 +553,14 @@ export async function DELETE(
     return NextResponse.json({ error: "Документ закрыт" }, { status: 400 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as {
-    ids?: string[];
-    employeeId?: string;
-    date?: string;
-  };
+  const body = (await request.json().catch(() => ({}))) as EntryDeleteBody;
+  // Одни и те же строки проверяются на закрытые дни и удаляются
+  // (`journal-entry-delete.ts`): { ids }, { employeeId, date } или вся
+  // строка сотрудника { employeeId }.
+  const target = entryDeleteTarget(documentId, body);
+  if (!target.ok) {
+    return NextResponse.json({ error: target.error }, { status: target.status });
+  }
 
   // Удаление — тоже правка прошлого дня: в автодокументе строку за
   // вчера убрать нельзя, иначе запрет на редактирование обходится
@@ -567,13 +572,7 @@ export async function DELETE(
     session.user.isRoot !== true
   ) {
     const candidates = await db.journalDocumentEntry.findMany({
-      where: {
-        documentId,
-        ...(Array.isArray(body.ids) && body.ids.length > 0
-          ? { id: { in: body.ids } }
-          : {}),
-        ...(body.employeeId ? { employeeId: body.employeeId } : {}),
-      },
+      where: target.where,
       select: { date: true },
     });
     if (candidates.some((entry) => isCellLocked(entry.date, deleteLockCtx))) {
@@ -584,48 +583,6 @@ export async function DELETE(
     }
   }
 
-  if (Array.isArray(body.ids) && body.ids.length > 0) {
-    const result = await db.journalDocumentEntry.deleteMany({
-      where: {
-        documentId,
-        id: { in: body.ids },
-      },
-    });
-
-    return NextResponse.json({ deleted: result.count });
-  }
-
-  if (body.employeeId && body.date) {
-    const dateObj = new Date(body.date);
-    if (!isValidDate(dateObj)) {
-      return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
-    }
-    dateObj.setUTCHours(0, 0, 0, 0);
-
-    const result = await db.journalDocumentEntry.deleteMany({
-      where: {
-        documentId,
-        employeeId: body.employeeId,
-        date: dateObj,
-      },
-    });
-
-    return NextResponse.json({ deleted: result.count });
-  }
-
-  if (body.employeeId) {
-    const result = await db.journalDocumentEntry.deleteMany({
-      where: {
-        documentId,
-        employeeId: body.employeeId,
-      },
-    });
-
-    return NextResponse.json({ deleted: result.count });
-  }
-
-  return NextResponse.json(
-    { error: "Нужно передать ids либо employeeId и date" },
-    { status: 400 }
-  );
+  const result = await db.journalDocumentEntry.deleteMany({ where: target.where });
+  return NextResponse.json({ deleted: result.count });
 }

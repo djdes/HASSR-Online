@@ -23,14 +23,14 @@ export async function requirePpkAccess(): Promise<
   if (!hasFullWorkspaceAccess(auth.session.user)) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Нет доступа к разделу" }, { status: 403 }),
+      response: NextResponse.json({ error: "Нет доступа к разделу", code: "forbidden" }, { status: 403 }),
     };
   }
   const scope = await ppkScopeForSession(auth.session);
   if (!ppkScopeAllowed(auth.session, scope)) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Выберите свою точку в шапке: ППК ведётся для каждой точки" }, { status: 403 }),
+      response: NextResponse.json({ error: "Выберите свою точку в шапке: ППК ведётся для каждой точки", code: "choose_point" }, { status: 403 }),
     };
   }
   return { ok: true, session: auth.session, organizationId: scope.organizationId, scope };

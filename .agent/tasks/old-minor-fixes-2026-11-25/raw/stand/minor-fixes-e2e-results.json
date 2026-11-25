@@ -1,0 +1,102 @@
+[
+  {
+    "name": "стенд: точка",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "стенд: документ гигиены",
+    "ok": true,
+    "detail": "201"
+  },
+  {
+    "name": "AC1 документ автоматики, окно 3 дня: удаление строки за вчера по сотруднику и дню — 200 (раньше 403 из-за строки 6 дней назад)",
+    "ok": true,
+    "detail": "200 {\"deleted\":1}"
+  },
+  {
+    "name": "AC1 строка 6 дней назад не тронута",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "AC1 строка за окном (6 дней назад) — 403 past_day_locked",
+    "ok": true,
+    "detail": "403 past_day_locked"
+  },
+  {
+    "name": "AC1 неверная дата — 400",
+    "ok": true,
+    "detail": "400"
+  },
+  {
+    "name": "стенд: у руководителя строка на послезавтра",
+    "ok": true,
+    "detail": "PATCH 200"
+  },
+  {
+    "name": "AC2 руководитель переносит строку с послезавтра на сегодня — 200 (было 403 future_day_locked)",
+    "ok": true,
+    "detail": "200  → 2026-11-25"
+  },
+  {
+    "name": "AC2 запись В будущий день — по-прежнему 403",
+    "ok": true,
+    "detail": "403 future_day_locked"
+  },
+  {
+    "name": "AC2 сотрудник свою строку с будущего дня не переносит — 403",
+    "ok": true,
+    "detail": "403 not_today"
+  },
+  {
+    "name": "AC7 сравнение: пустой ключ — 400 bad_request",
+    "ok": true,
+    "detail": "400 bad_request"
+  },
+  {
+    "name": "AC7 сравнение: битый ключ — 404 doc_not_found",
+    "ok": true,
+    "detail": "404 doc_not_found"
+  },
+  {
+    "name": "AC7 сравнение: у документа нет редакций — 404 no_revisions",
+    "ok": true,
+    "detail": "404 no_revisions"
+  },
+  {
+    "name": "AC7 утверждение: без ключа — 400 bad_request",
+    "ok": true,
+    "detail": "400 bad_request"
+  },
+  {
+    "name": "AC7 утверждение: документа нет — 404 doc_not_found",
+    "ok": true,
+    "detail": "404 doc_not_found"
+  },
+  {
+    "name": "AC7 черновик: неверный запрос — 400 bad_request",
+    "ok": true,
+    "detail": "400 bad_request"
+  },
+  {
+    "name": "AC7 черновик: ИИ-помощник не подключён на стенде — 503 ai_not_configured",
+    "ok": true,
+    "detail": "503 ai_not_configured"
+  },
+  {
+    "name": "AC7 доступ ППК: сотруднику — 403 forbidden",
+    "ok": true,
+    "detail": "403 forbidden"
+  },
+  {
+    "name": "AC7 интерфейс en: ошибка черновика по-английски",
+    "ok": true,
+    "detail": "The AI assistant is not connected: drafts are unavailable right now"
+  },
+  {
+    "name": "стенд: спецрежим возвращён как был",
+    "ok": true,
+    "detail": ""
+  }
+]
