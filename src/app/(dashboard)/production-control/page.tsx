@@ -13,7 +13,7 @@ import {
 } from "@/lib/production-control-docs";
 import { loadPpkStatuses } from "@/lib/ppk/facts.server";
 import { ppkProgress } from "@/lib/ppk/status";
-import { STARTER_BLOCKS, starterBlocksFor } from "@/lib/ppk/starter-packs";
+import { ALL_STARTER_BLOCKS, starterBlocksFor } from "@/lib/ppk/starter-packs";
 import { loadPpkItemFacts } from "@/lib/ppk/structure-facts.server";
 import { ppkItemProgress, ppkItemStatuses, ppkNextItem } from "@/lib/ppk/structure-status";
 import { PPK_STRUCTURE, ppkItemHref } from "@/lib/ppk/structure";
@@ -70,7 +70,7 @@ export default async function ProductionControlPage() {
     getTranslations("productionControl.revisions"),
     db.ppkRecord.groupBy({
       by: ["block"],
-      where: { ...ppkWhere(scope), block: { in: [...STARTER_BLOCKS] } },
+      where: { ...ppkWhere(scope), block: { in: [...ALL_STARTER_BLOCKS] } },
       _count: { _all: true },
     }),
     loadStarterSphere(scope),
@@ -85,7 +85,7 @@ export default async function ProductionControlPage() {
   const facts = await loadPpkItemFacts(scope, statuses);
   const itemStatuses = ppkItemStatuses(facts);
   // Блоки, где уже есть данные: мастер «типовыми за 10 минут» их не тронет.
-  const filledBlocks = STARTER_BLOCKS.filter((block) => blockCounts.some((row) => row.block === block));
+  const filledBlocks = ALL_STARTER_BLOCKS.filter((block) => blockCounts.some((row) => row.block === block));
 
   const blocks = ppkProgress(statuses);
   const { done, total } = ppkItemProgress(itemStatuses);

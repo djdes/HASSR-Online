@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OBJECT_CATEGORY_ICONS } from "@/components/settings/object-category-picker";
 import { cn } from "@/lib/utils";
+import { PRP_TABLE_BLOCKS } from "@/lib/ppk/prp-tables";
 import {
   STARTER_KINDS,
   STARTER_SPHERES,
@@ -45,6 +46,8 @@ export function PpkStarterWizard({ filled, defaultSphere }: { filled: StarterBlo
   if (pending("lab-plan")) willAdd.push(t("items.labPlan"));
   if (pending("pest-plan")) willAdd.push(t("items.pestPlan"));
   if (pending("norms")) willAdd.push(t("items.norms", { count: summary.norms }));
+  const prpRows = PRP_TABLE_BLOCKS.filter(pending).reduce((sum, block) => sum + summary.prp[block], 0);
+  if (prpRows > 0) willAdd.push(t("items.prp", { count: prpRows }));
   if (pending("policy")) willAdd.push(t("items.policy"));
   const skippedNames = blocks.filter((block) => filled.includes(block)).map((block) => t(`blockNames.${block}`));
 
@@ -71,6 +74,8 @@ export function PpkStarterWizard({ filled, defaultSphere }: { filled: StarterBlo
       if (created["pest-plan"]) parts.push(t("items.pestPlan"));
       // Нормативы — одна запись со списком документов: в сообщении — число документов, как в окне.
       if (created.norms) parts.push(t("items.norms", { count: summary.norms }));
+      const createdPrp = PRP_TABLE_BLOCKS.reduce((sum, block) => sum + (created[block] ?? 0), 0);
+      if (createdPrp > 0) parts.push(t("items.prp", { count: createdPrp }));
       if (created.policy) parts.push(t("items.policy"));
       toast.success(parts.length > 0 ? t("done", { summary: parts.join(", ") }) : t("nothing"));
       setOpen(false);

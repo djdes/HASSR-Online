@@ -53,7 +53,7 @@ type PfSubmission = { ok: true; jobId: string } | Extract<PfJobResult, { ok: fal
 
 export async function enqueuePfJob(inputText: string, suppliedConfig?: AssistantConfig): Promise<PfSubmission> {
   const config = suppliedConfig ?? await resolveAssistantConfig();
-  if (!config) return { ok: false, code: "not_configured", error: "??-???????? ?????????? ? ?????????? ?? ?????????" };
+  if (!config) return { ok: false, code: "not_configured", error: "ИИ-помощник недоступен: в настройках не подключён диспетчер" };
   // 1. Enqueue.
   try {
     const response = await fetch(`${config.pfApiUrl}/agent/ai-prompt-jobs`, {
@@ -127,7 +127,7 @@ export async function enqueueAndWait(
   options?: { deadlineMs?: number }
 ): Promise<PfJobResult> {
   const config = await resolveAssistantConfig();
-  if (!config) return { ok: false, code: "not_configured", error: "??-???????? ?????????? ? ?????????? ?? ?????????" };
+  if (!config) return { ok: false, code: "not_configured", error: "ИИ-помощник недоступен: в настройках не подключён диспетчер" };
   const deadline = Date.now() + (options?.deadlineMs ?? DEFAULT_DEADLINE_MS);
   const submission = await enqueuePfJob(inputText, config);
   if (!submission.ok) return submission;

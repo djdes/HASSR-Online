@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
  * POST { sphere, kind? } — заполняет типовыми данными только пустые блоки ППК.
  * Общепит (`food`, вид заведения `kind`): продукция, опасности, блок-схемы,
  * планы лаборатории и дезинсекции, нормативы, текст политики (без утверждения).
- * Медицина, услуги, спорт: планы лаборатории и дезинсекции, нормативы сферы.
+ * Медицина, услуги, спорт: опасные факторы, таблицы ПОПМ 3.1–3.4, планы лаборатории и дезинсекции, нормативы сферы.
  * Прежний запрос `{ kind }` — общепит. Блоки с данными пропускаются; одной транзакцией.
  */
 export async function POST(request: Request) {
@@ -63,6 +63,11 @@ export async function POST(request: Request) {
         token: randomBytes(16).toString("base64url"),
       },
     ],
+    // Таблицы ПОПМ 3.1–3.4 — у медицины, услуг и спорта (2026-11-25).
+    "prp-infections": pack.prp["prp-infections"],
+    "prp-disinfection": pack.prp["prp-disinfection"],
+    "prp-emergencies": pack.prp["prp-emergencies"],
+    "prp-medical": pack.prp["prp-medical"],
   };
 
   try {

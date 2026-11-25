@@ -1,0 +1,11 @@
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium } = require("/opt/node-tools/node_modules/playwright");
+const file = new URL("./out/index.html", import.meta.url).href;
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const before = await (async () => { await page.goto(file); await page.waitForFunction(() => window.__done === true); return page.evaluate(() => ({ id: document.querySelector("button").id, clientId: window.__clientId, errors: window.__errors })); })();
+console.log("server id in DOM:", before.id, " client useId:", before.clientId, before.id === before.clientId ? "(same)" : "(DIFFERENT)");
+const mismatch = before.errors.filter((e) => /hydrat|didn't match/i.test(e));
+console.log(mismatch.length ? `HYDRATION MISMATCH (${mismatch.length})\n` + mismatch[0].slice(0, 900) : "no hydration errors");
+await browser.close();

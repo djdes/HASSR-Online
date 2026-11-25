@@ -1,0 +1,27 @@
+=== bundled React of next 16.1.7
+react 19.3.0-canary-f93b9fd4-20251217 ssr: <main><i></i><link rel="x"/><section><button id="_R_a_" aria-controls="_R_a_content">switcher</button></section></main>
+server id in DOM: _R_a_  client useId: _R_2_ (DIFFERENT)
+HYDRATION MISMATCH (1)
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+%s%s https://react.dev/link/hydration-mismatch 
+  <App chunk={{status:"fu...", ...}}>
+    <main>
+      <SegmentViewNode>
+        <i>
+        <link>
+        <section>
+          <Labelled>
+            <button
++             id="_R_2_"
+-             id="_R_a_"
++             
+=== bundled React of next 16.2.12
+react 19.3.0-canary-3f0b9e61-20260317 ssr: <main><i></i><link rel="x"/><section><button id="_R_a_" aria-controls="_R_a_content">switcher</button></section></main>
+server id in DOM: _R_a_  client useId: _R_a_ (same)
+no hydration errors

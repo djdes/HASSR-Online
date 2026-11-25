@@ -6,6 +6,8 @@
 import { OBJECT_CATEGORY_VALUES, type ObjectCategory } from "@/lib/object-categories";
 import { productIndicatorPreset, TYPICAL_HAZARDS } from "./haccp-presets";
 import { NORM_CATALOG } from "./norm-catalog";
+import { PRP_TABLE_BLOCKS, type PrpRow, type PrpTableBlock } from "./prp-tables";
+import { SPHERE_HAZARDS, SPHERE_PRP } from "./sphere-presets";
 import type {
   HazardData,
   LabPlanItem,
@@ -32,7 +34,13 @@ export const STARTER_BLOCKS = [
   "norms",
   "policy",
 ] as const satisfies readonly PpkRecordBlock[];
-export type StarterBlock = (typeof STARTER_BLOCKS)[number];
+/**
+ * Блоки мастера: блоки общепита и таблицы ПОПМ 3.1–3.4 (их заполняют типовыми
+ * медицина, услуги и спорт; владелец, 2026-11-25).
+ */
+export type StarterBlock = (typeof STARTER_BLOCKS)[number] | PrpTableBlock;
+/** Все блоки, которые может заполнить мастер: по ним обзор считает «уже заполнено». */
+export const ALL_STARTER_BLOCKS: readonly StarterBlock[] = [...STARTER_BLOCKS, ...PRP_TABLE_BLOCKS];
 
 export type StarterPack = {
   products: ProductData[];
@@ -41,7 +49,13 @@ export type StarterPack = {
   labPlan: LabPlanItem[];
   pestPlan: PestPlanItem[];
   norms: string[];
+  /** Строки таблиц ПОПМ 3.1–3.4; у общепита — пустые. */
+  prp: Record<PrpTableBlock, PrpRow[]>;
 };
+
+function emptyPrp(): Record<PrpTableBlock, PrpRow[]> {
+  return Object.fromEntries(PRP_TABLE_BLOCKS.map((block) => [block, []])) as unknown as Record<PrpTableBlock, PrpRow[]>;
+}
 
 /** Типовой план лаборатории — те же строки, что кнопка «Заполнить типовым» на странице лаборатории. */
 const TYPICAL_LAB_PLAN: LabPlanItem[] = [
@@ -225,6 +239,7 @@ export function starterPack(kind: StarterKind): StarterPack {
     labPlan: TYPICAL_LAB_PLAN.map((row) => ({ ...row })),
     pestPlan: TYPICAL_PEST_PLAN.map((row) => ({ ...row })),
     norms: [...RECOMMENDED_NORMS],
+    prp: emptyPrp(),
   };
 }
 
@@ -235,7 +250,13 @@ export type StarterSummary = {
   labPlan: number;
   pestPlan: number;
   norms: number;
+  /** Строк в таблицах ПОПМ по таблицам. */
+  prp: Record<PrpTableBlock, number>;
 };
+
+function prpCounts(pack: StarterPack): Record<PrpTableBlock, number> {
+  return Object.fromEntries(PRP_TABLE_BLOCKS.map((block) => [block, pack.prp[block].length])) as unknown as Record<PrpTableBlock, number>;
+}
 
 /** Сколько чего добавит пакет — для подписи в окне мастера. */
 export function starterSummary(kind: StarterKind): StarterSummary {
@@ -247,14 +268,15 @@ export function starterSummary(kind: StarterKind): StarterSummary {
     labPlan: pack.labPlan.length,
     pestPlan: pack.pestPlan.length,
     norms: pack.norms.length,
+    prp: prpCounts(pack),
   };
 }
 
 /**
  * Мастер по сферам объекта (владелец, 2026-11-24: «по сферам как в объекте —
  * 4 шт»): общепит — прежние 4 вида заведения; медицина, услуги и спорт — свои
- * план лаборатории и нормативы, без продукции, опасностей, блок-схем и политики
- * пищевой безопасности (это ХАССП только общепита).
+ * опасные факторы, таблицы ПОПМ 3.1–3.4 (2026-11-25), план лаборатории и
+ * нормативы, без продукции, блок-схем и политики пищевой безопасности.
  */
 export const STARTER_SPHERES = OBJECT_CATEGORY_VALUES;
 export type StarterSphere = ObjectCategory;
@@ -263,7 +285,7 @@ export function isStarterSphere(value: unknown): value is StarterSphere {
   return typeof value === "string" && (STARTER_SPHERES as readonly string[]).includes(value);
 }
 
-const OTHER_SPHERE_BLOCKS = ["lab-plan", "pest-plan", "norms"] as const satisfies readonly StarterBlock[];
+const OTHER_SPHERE_BLOCKS: readonly StarterBlock[] = ["hazards", "lab-plan", "pest-plan", "norms", ...PRP_TABLE_BLOCKS];
 
 /** Блоки, которые мастер заполняет для сферы. */
 export function starterBlocksFor(sphere: StarterSphere): readonly StarterBlock[] {
@@ -312,11 +334,14 @@ export function sphereStarterPack(sphere: StarterSphere, kind: StarterKind = "ca
   if (sphere === "food") return starterPack(kind);
   return {
     products: [],
-    hazards: [],
+    hazards: SPHERE_HAZARDS[sphere].map((row) => ({ ...row })),
     flowcharts: [],
     labPlan: SPHERE_LAB_PLAN[sphere].map((row) => ({ ...row })),
     pestPlan: TYPICAL_PEST_PLAN.map((row) => ({ ...row })),
     norms: [...SPHERE_NORMS[sphere]],
+    prp: Object.fromEntries(
+      PRP_TABLE_BLOCKS.map((block) => [block, SPHERE_PRP[sphere][block].map((row) => ({ ...row }))]),
+    ) as unknown as Record<PrpTableBlock, PrpRow[]>,
   };
 }
 
@@ -330,5 +355,6 @@ export function sphereStarterSummary(sphere: StarterSphere, kind: StarterKind = 
     labPlan: pack.labPlan.length,
     pestPlan: pack.pestPlan.length,
     norms: pack.norms.length,
+    prp: prpCounts(pack),
   };
 }

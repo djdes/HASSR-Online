@@ -799,7 +799,8 @@
         "labPlan": "lab plan",
         "pestPlan": "pest control plan",
         "norms": "{count, plural, one {# regulation} other {# regulations}}",
-        "policy": "policy text"
+        "policy": "policy text",
+        "prp": "{count, plural, one {# PRP table row} other {# PRP table rows}}"
       },
       "blockNames": {
         "products": "products",
@@ -808,7 +809,11 @@
         "lab-plan": "lab plan",
         "pest-plan": "pest control plan",
         "norms": "regulations",
-        "policy": "policy"
+        "policy": "policy",
+        "prp-infections": "infection prevention (3.1)",
+        "prp-disinfection": "disinfection (3.2)",
+        "prp-emergencies": "emergencies (3.3)",
+        "prp-medical": "medical checks (3.4)"
       },
       "alreadyFilled": "Already filled, left as is: {blocks}",
       "fill": "Fill in",
@@ -1118,7 +1123,16 @@
         "resetTemplate": "Restore template",
         "scanOrText": "Instead of the text, you can upload a scan of your own document below — then the scan goes into the program.",
         "revisionTitle": "Document revision",
-        "revisionHint": "An approved revision gets a programme number. If even one word changes, the programme asks to approve a new revision with a new number."
+        "revisionHint": "An approved revision gets a programme number. If even one word changes, the programme asks to approve a new revision with a new number.",
+        "draft": "Draft from the AI assistant",
+        "drafting": "Preparing a draft…",
+        "draftReady": "The draft is ready — check it and press “Save”",
+        "draftFailed": "Could not get a draft. Please try again",
+        "draftHint": "The AI assistant drafts the text from the cabinet data: HACCP team, products, hazards, journals. The draft is not saved automatically — check it and press “Save”.",
+        "draftReplaceTitle": "Replace the text with a draft?",
+        "draftReplaceBody": "The text in the field will be replaced with the AI assistant draft. The saved text does not change until you press “Save”.",
+        "draftReplaceConfirm": "Replace",
+        "draftReplaceCancel": "Cancel"
       },
       "order": {
         "ordersTitle": "Order establishing the HACCP team",
@@ -1335,7 +1349,27 @@
       "stateCurrent": "Latest revision",
       "stateSuperseded": "Replaced by {code}",
       "registerEmpty": "No approved revisions yet. Open a programme document (item texts, procedures, instructions) and press “Approve revision”.",
-      "back": "Back to the programme"
+      "back": "Back to the programme",
+      "compare": {
+        "open": "Compare",
+        "title": "Compare revisions: {title}",
+        "from": "Before",
+        "to": "After",
+        "current": "Current text",
+        "option": "{code} of {date}",
+        "summary": "Words added: {added} · removed: {removed}",
+        "same": "The text has not changed",
+        "byLines": "The texts differ a lot — compared line by line",
+        "whole": "The texts are completely different",
+        "noContent": "The text of revision {code} was not saved: it was approved before comparison was added",
+        "loading": "Comparing…",
+        "failed": "Could not compare the revisions",
+        "legendAdded": "added",
+        "legendRemoved": "removed",
+        "collapsed": "… unchanged: {count} chars …",
+        "showAll": "Show the whole text",
+        "withPrevious": "Compare with {code}"
+      }
     },
     "textDocs": {
       "createInstruction": "Write an instruction",

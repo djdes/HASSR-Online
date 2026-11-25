@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Loader2, RotateCcw } from "lucide-react";
+import { Loader2, RotateCcw, Sparkles } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { isDraftBlock } from "@/lib/ppk/text-drafts";
 import type { PpkFolderKey } from "@/lib/ppk/folders";
 import type { PpkTextBlock } from "@/lib/ppk/records";
 import {
@@ -13,6 +15,7 @@ import {
 } from "@/components/production-control/ppk-ui";
 
 const API = "/api/production-control/records";
+const DRAFT_API = "/api/production-control/text-docs/draft";
 const MAX = 30000;
 
 /**
@@ -55,6 +58,35 @@ export function TextDocEditor({
   const [savedAt, setSavedAt] = useState<string | null>(record?.updatedAt ?? null);
   const [text, setText] = useState<string>(record ? record.text : template);
   const [saving, setSaving] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [askReplace, setAskReplace] = useState(false);
+  // Черновик от ИИ-помощника (2026-11-25): только у пунктов с текстом.
+  const canDraft = isDraftBlock(block);
+
+  async function draft() {
+    if (drafting) return;
+    setAskReplace(false);
+    setDrafting(true);
+    try {
+      const response = await fetch(DRAFT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ block }),
+      });
+      const body = (await response.json().catch(() => null)) as { text?: string; error?: string } | null;
+      if (!response.ok || !body?.text) {
+        toast.error(body?.error || t("draftFailed"));
+        return;
+      }
+      // Черновик — в поле, не сохранён: человек проверяет и нажимает «Сохранить».
+      setText(body.text);
+      toast.success(t("draftReady"));
+    } catch {
+      toast.error(t("draftFailed"));
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   const fromTemplate = savedText === null && template.length > 0;
   const dirty = savedText === null ? text.trim().length > 0 : text !== savedText;
@@ -135,11 +167,33 @@ export function TextDocEditor({
             {t("resetTemplate")}
           </button>
         ) : null}
+        {canDraft ? (
+          <button
+            type="button"
+            onClick={() => (text.trim() ? setAskReplace(true) : void draft())}
+            disabled={drafting || saving}
+            className={PPK_BUTTON_TEXT_CLASS}
+            data-ppk-draft
+          >
+            {drafting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
+            {drafting ? t("drafting") : t("draft")}
+          </button>
+        ) : null}
         <span className="text-[12.5px] tabular-nums text-[#9b9fb3]">
           {text.length.toLocaleString(locale)} / {MAX.toLocaleString(locale)}
         </span>
       </div>
       {scanFolder ? <p className="text-[12.5px] text-[#6f7282]">{t("scanOrText")}</p> : null}
+      {canDraft ? <p className="text-[12.5px] text-[#6f7282]">{t("draftHint")}</p> : null}
+      <ConfirmDialog
+        open={askReplace}
+        onClose={() => setAskReplace(false)}
+        onConfirm={() => void draft()}
+        title={t("draftReplaceTitle")}
+        description={t("draftReplaceBody")}
+        confirmLabel={t("draftReplaceConfirm")}
+        cancelLabel={t("draftReplaceCancel")}
+      />
     </section>
   );
 }
