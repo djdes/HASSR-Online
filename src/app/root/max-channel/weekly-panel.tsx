@@ -330,7 +330,7 @@ function IssueCard({
   const facts = issue.facts;
   return (
     <div className="mt-5 grid gap-5 overflow-hidden rounded-3xl border border-[#ececf4] bg-[#fafbff] md:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-      <div className="relative aspect-[4/3] bg-[#eef1ff] md:aspect-auto md:min-h-[320px]">
+      <div className="relative aspect-[4/3] self-start bg-[#eef1ff] md:m-4 md:mr-0 md:overflow-hidden md:rounded-2xl">
         {issue.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- загруженная картинка поста, как в превью канала
           <img src={issue.imageUrl} alt="Картинка выпуска" className="size-full object-cover" />
