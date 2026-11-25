@@ -8,3 +8,5 @@
 6. The repo targets ES2017. Replace BigInt literals in PostgreSQL count fixtures with BigInt(...) constructors; keep the existing tsconfig unchanged.
 
 Rerun current-code typecheck and the complete targeted gate before marking AC5 PASS.
+
+Resolved: verify-typecheck.log and verify-gate.log both exit 0 on the current code merged with origin/master; all 442 related assertions pass. The first commit-hook invocation was stopped when it selected an unnecessary full-suite escalation; the rerun kept the hook enabled and passed all 84 related files with the supported threshold 90. No checks were bypassed.
