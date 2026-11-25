@@ -26,10 +26,13 @@ export default async function InspectionSpecialModePage() {
   if (!hasFullWorkspaceAccess(session.user) && !hasCapability(session.user, "tasks.verify")) forbidden();
 
   const t = await getTranslations("inspectionDay.pages.special");
+  // Заголовок — «Спецрежим» у всех: у кого нет пункта меню (руководство без
+  // admin.full, «проверка задач»), иначе стоял бы заголовок раздела.
+  const tRoutes = await getTranslations("navigation.routes");
 
   return (
     <div className="space-y-4">
-      <SectionPageHeader description={t("lead")} />
+      <SectionPageHeader title={tRoutes("inspection_settings")} description={t("lead")} />
 
       <PageGuide
         storageKey="inspection-settings"

@@ -51,8 +51,9 @@ const ownerApi = ownerContext.request;
 // Исходное состояние спецрежима — вернём его в конце.
 const initial = await (await ownerApi.get(`${BASE}/api/settings/journal-controls`)).json();
 check("стенд: настройка спецрежима читается", initial?.automation && typeof initial.automation.enabled === "boolean", JSON.stringify(initial.automation));
-// Чистый старт: спецрежим выключен (галочки как были).
-await ownerApi.patch(`${BASE}/api/settings/journal-controls`, { data: { automation: { ...initial.automation, enabled: false } } });
+// Чистый старт — как у новой организации: спецрежим выключен, ни одной галочки.
+const NEW_ORG = { enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false, catchUp: false, pastDays: false, pastDaysLimit: 7 };
+await ownerApi.patch(`${BASE}/api/settings/journal-controls`, { data: { automation: NEW_ORG } });
 
 // Свой объект для сценария: документ журнала заводится на объекте.
 const pointName = `Кафе e2e спецрежим ${new Date().toISOString().slice(11, 19)}`;
@@ -90,6 +91,23 @@ await open(owner, "/inspection/settings");
 const heading = (await owner.locator("h1").first().innerText().catch(() => "")).trim();
 check("AC1 страница спецрежима: заголовок «Спецрежим»", /Спецрежим/.test(heading), heading);
 
+// ---------- AC1: «проверка задач» без admin.full — как было: тихая ссылка, страница для просмотра ----------
+const verifyContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "ru-RU" });
+const verifyPage = await login(verifyContext, SETUP.verifyEmail, SETUP.verifyPassword);
+await open(verifyPage, "/inspection");
+check("AC1 «проверка задач»: карточки нет, тихая ссылка есть",
+  (await verifyPage.locator("[data-inspection-special-mode]").count()) === 0 && (await verifyPage.locator("[data-inspection-settings-link]").count()) === 1);
+check("AC1 «проверка задач»: пункта меню «Спецрежим» нет", (await verifyPage.locator('a[href="/inspection/settings"]').filter({ hasText: "Спецрежим" }).count()) === 0);
+await verifyPage.click("[data-inspection-settings-link]");
+await verifyPage.waitForURL((u) => u.pathname === "/inspection/settings", { timeout: 60000 });
+await verifyPage.waitForLoadState("networkidle");
+await verifyPage.locator("[data-inspection-special-mode]").first().waitFor({ timeout: 30000 }).catch(() => {});
+const verifyCard = verifyPage.locator("[data-inspection-special-mode]");
+check("AC1 «проверка задач»: страница открывается, не «Нет доступа»", (await verifyPage.locator("[data-access-denied]").count()) === 0 && (await verifyCard.count()) === 1);
+check("AC1 «проверка задач»: спецрежим только для просмотра", (await verifyCard.locator('button[role="switch"]').count()) === 1 && !(await verifyCard.locator('button[role="switch"]').isEnabled()));
+await verifyPage.screenshot({ path: `${OUT}/06-verify-user-settings.png` });
+await verifyContext.close();
+
 // ---------- Сотрудник до включения ----------
 const cookContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "ru-RU" });
 await login(cookContext, SETUP.email, SETUP.password);
@@ -100,10 +118,25 @@ const yesterday = dayKey(-1);
 const weekAgo = dayKey(-7);
 const eightDaysAgo = dayKey(-8);
 const tomorrow = dayKey(1);
-let response = await put(today);
+// Перенос строки по entryId: клетка-источник проходит те же правила (иначе сотрудник забирал чужую запись к себе).
+const entryOf = async (res) => (await res.json().catch(() => ({}))).entry?.id;
+const move = (entryId, date, employeeId = SETUP.cookId) =>
+  cookApi.put(`${BASE}/api/journal-documents/${doc.id}/entries`, { data: { entryId, employeeId, date, data: { status: "day_off", temperatureAbove37: null } } });
+let response = await ownerApi.put(`${BASE}/api/journal-documents/${doc.id}/entries`, { data: { employeeId: SETUP.adminId, date: dayKey(-3), data: { status: "day_off", temperatureAbove37: null } } });
+const ownerEntryId = await entryOf(response);
+check("стенд: запись руководителя 3 дня назад", response.ok() && ownerEntryId, String(response.status()));
+response = await move(ownerEntryId, today);
+let body = await response.json().catch(() => ({}));
+check("перенос: чужую запись прошлого дня к себе на сегодня — отказ", response.status() === 403 && body.code === "foreign_row", `${response.status()} ${body.code ?? ""}`);
+// Метка со смещением пишется на день раньше — проверяется этот день.
+response = await put(`${today}T00:00:00+14:00`);
+body = await response.json().catch(() => ({}));
+check("дата со смещением «сегодня+14:00» (пишется вчерашним днём) без спецрежима — отказ", response.status() === 403 && body.code === "not_today", `${response.status()} ${body.code ?? ""}`);
+
+response = await put(today);
 check("AC4 сотрудник: сегодня — можно (как всегда)", response.ok(), String(response.status()));
 response = await put(yesterday);
-let body = await response.json().catch(() => ({}));
+body = await response.json().catch(() => ({}));
 check("AC4 без спецрежима: вчера — отказ «только сегодня»", response.status() === 403 && body.code === "not_today", `${response.status()} ${body.error ?? ""}`);
 
 // Сетка сотрудника до включения: все прошлые дни закрыты подсказкой «только сегодня».
@@ -131,6 +164,11 @@ const dialog = owner.locator("[data-special-mode-dialog]");
 await dialog.waitFor({ timeout: 15000 });
 const pastOption = dialog.locator('[data-special-mode-option="pastDays"]');
 check("AC3 окно: галочка «Правка прошлых дней»", (await pastOption.count()) === 1);
+const tickedFirst = await dialog.locator("[data-special-mode-option]").evaluateAll((nodes) => nodes.map((node) => `${node.getAttribute("data-special-mode-option")}=${node.getAttribute("data-state")}`));
+check("AC3 окно впервые: автоматика отмечена, «Правка прошлых дней» — нет (только руками)",
+  (await pastOption.getAttribute("data-state")) !== "checked" && tickedFirst.filter((item) => item.endsWith("=checked")).length === tickedFirst.length - 1,
+  tickedFirst.join(", "));
+await owner.screenshot({ path: `${OUT}/02a-dialog-first-open.png` });
 if ((await pastOption.getAttribute("data-state")) !== "checked") await pastOption.click();
 const limitSelect = dialog.locator("[data-special-mode-past-days-limit]");
 check("AC3 окно: «Насколько назад» — 6 вариантов, по умолчанию 7 дней", (await limitSelect.locator("option").count()) === 6 && (await limitSelect.inputValue()) === "7", await limitSelect.inputValue());
@@ -155,7 +193,8 @@ check("AC2 включено в «Информации об организаци�
 
 // ---------- AC4: сотрудник при включённой галочке ----------
 response = await put(yesterday);
-check("AC4 спецрежим: вчера своя строка — можно", response.ok(), String(response.status()));
+const yesterdayEntryId = await entryOf(response);
+check("AC4 спецрежим: вчера своя строка — можно", response.ok() && yesterdayEntryId, String(response.status()));
 response = await put(weekAgo);
 check("AC4 спецрежим: 7 дней назад — можно (граница окна)", response.ok(), String(response.status()));
 response = await put(eightDaysAgo);
@@ -167,6 +206,26 @@ check("AC4 спецрежим: завтра — отказ", response.status() =
 response = await put(yesterday, SETUP.adminId);
 body = await response.json().catch(() => ({}));
 check("AC4 спецрежим: чужая строка — отказ", response.status() === 403 && body.code === "foreign_row", `${response.status()} ${body.code ?? ""}`);
+response = await put(`${dayKey(-6)}T00:00:00+14:00`);
+check("дата со смещением: «6 дней назад+14:00» (пишется 7 днями назад) — можно", response.ok(), String(response.status()));
+response = await put(`${weekAgo}T00:00:00+14:00`);
+body = await response.json().catch(() => ({}));
+check("дата со смещением: «7 дней назад+14:00» (пишется 8 днями назад) — отказ за окном", response.status() === 403 && /последние 7 дней/.test(body.error ?? ""), `${response.status()} ${body.error ?? ""}`);
+// Документ гигиены заводит заглушку на каждую клетку «сотрудник × день» — переносить некуда (409 «клетка занята»,
+// как и раньше). Руководитель освобождает клетку позавчера, сотрудник переносит туда свою вчерашнюю запись.
+response = await ownerApi.delete(`${BASE}/api/journal-documents/${doc.id}/entries`, { data: { employeeId: SETUP.cookId, date: dayKey(-2) } });
+check("стенд: руководитель освободил клетку повара позавчера", response.ok(), String(response.status()));
+response = await move(yesterdayEntryId, dayKey(-2));
+body = await response.json().catch(() => ({}));
+check("перенос в окне: своя вчерашняя запись на позавчера — можно",
+  response.ok() && body.entry?.id === yesterdayEntryId && String(body.entry?.date ?? "").startsWith(dayKey(-2)),
+  `${response.status()} ${body.entry?.date ?? body.code ?? ""}`);
+response = await ownerApi.put(`${BASE}/api/journal-documents/${doc.id}/entries`, { data: { employeeId: SETUP.cookId, date: dayKey(-9), data: { status: "day_off", temperatureAbove37: null } } });
+const oldCookEntryId = await entryOf(response);
+check("стенд: руководитель записал строку повара 9 дней назад", response.ok() && oldCookEntryId, String(response.status()));
+response = await move(oldCookEntryId, dayKey(-3));
+body = await response.json().catch(() => ({}));
+check("перенос: запись из-за окна (9 дней назад) в окно — отказ", response.status() === 403 && /последние 7 дней/.test(body.error ?? ""), `${response.status()} ${body.error ?? ""}`);
 
 // Сетка сотрудника при включённой галочке: 7 последних дней открыты, раньше — подсказка про окно, будущее — закрыто.
 const gridAfter = await gridCounts();
