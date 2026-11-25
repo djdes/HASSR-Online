@@ -126,7 +126,12 @@ export function NotificationSettings({
         body: JSON.stringify(newPrefs),
       });
       if (!res.ok) throw new Error();
-      toast.success(feedback.current("saved"));
+      // Что именно молчит в тихие часы — объясняем при включении, а не под заголовком.
+      toast.success(
+        next.enabled && !oldPrefs.quietHours?.enabled
+          ? feedback.current("quietEnabled")
+          : feedback.current("saved"),
+      );
     } catch {
       setPrefs(oldPrefs);
       toast.error(feedback.current("saveError"));
@@ -258,9 +263,6 @@ export function NotificationSettings({
               <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">
                 {t("howTitle")}
               </h3>
-              <p className="mt-2 max-w-[520px] text-[14px] text-[#6f7282]">
-                {t("howDescription")}
-              </p>
             </div>
           </div>
           <ol className="mt-6 grid gap-4 md:grid-cols-3">
@@ -304,9 +306,10 @@ export function NotificationSettings({
             <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">
               {t("typesTitle")}
             </h3>
-            <p className="mt-1 text-[14px] text-[#6f7282]">
-              {t(isLinked ? "typesLinked" : "typesUnlinked")}
-            </p>
+            {/* Пока Telegram не привязан, тумблеры неактивны — объясняем почему. */}
+            {isLinked ? null : (
+              <p className="mt-1 text-[14px] text-[#6f7282]">{t("typesUnlinked")}</p>
+            )}
           </div>
         </header>
         <ul className="divide-y divide-[#f0f1f8]">
@@ -352,9 +355,6 @@ export function NotificationSettings({
       <section className="rounded-3xl border border-[#ececf4] bg-white shadow-[0_0_0_1px_rgba(240,240,250,0.45)]" data-testid="quiet-hours">
         <header className="border-b border-[#f0f1f8] px-8 py-6">
           <h3 className="text-[20px] font-semibold tracking-tight text-[#0b1024]">{t("quietTitle")}</h3>
-          <p className="mt-1 text-[14px] text-[#6f7282]">
-            {t("quietDescription")}
-          </p>
         </header>
         <div className="flex flex-wrap items-center gap-4 px-8 py-5">
           <label className="inline-flex items-center gap-3 text-[15px] font-medium text-[#0b1024]">
@@ -393,8 +393,6 @@ export function NotificationSettings({
         <ul className="mt-3 grid gap-1.5 md:grid-cols-2">
           <li>• {t("noteOwners")}</li>
           <li>• {t.rich("noteStop", { command: (chunks) => <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[12px] text-[#5566f6]">{chunks}</code> })}</li>
-          <li>• {t("noteHistory")}</li>
-          <li>• {t("noteFirst")}</li>
         </ul>
       </section>
     </div>
@@ -405,10 +403,7 @@ export function NotificationSettings({
 function HeaderBlock() {
   const t = useTranslations("notificationSettings");
   return (
-    <PageHeader
-      title={t("title")}
-      description={t("description")}
-    />
+    <PageHeader title={t("title")} />
   );
 }
 
@@ -625,9 +620,6 @@ function SmsAndAppTeaser() {
                   {t("smsDevelopment")}
                 </span>
               </div>
-              <p className="mt-1.5 max-w-[520px] text-[13.5px] leading-[1.55] text-[#6f7282]">
-                {t("smsDescription")}
-              </p>
             </div>
           </div>
           <SwitchToggle label={t("smsTitle")} checked={false} disabled onChange={() => {}} />
@@ -646,9 +638,6 @@ function SmsAndAppTeaser() {
             {interestBusy ? <Loader2 className="size-4 animate-spin" /> : null}
             {t(interestSent ? "smsSent" : "smsNotify")}
           </button>
-          <span className="text-[12.5px] text-[#9b9fb3]">
-            {t("smsPricing")}
-          </span>
         </div>
       </div>
 

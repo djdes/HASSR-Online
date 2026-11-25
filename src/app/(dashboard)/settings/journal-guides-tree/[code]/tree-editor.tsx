@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreText } from "@/components/ui/more-text";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -188,7 +189,7 @@ export function GuideTreeEditorClient({
       <PageHeader
         eyebrow={t("eyebrow")}
         title={journalName}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
         actions={
           <Button
             type="button"

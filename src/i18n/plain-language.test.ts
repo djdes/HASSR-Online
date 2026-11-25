@@ -90,7 +90,8 @@ test("сервис задач называется «Программный мо
     assert.match(messages.phoneBinding.sidebar.tasksflow, /<link>tasksflow\.ru<\/link>/);
   }
   assert.match(catalogs.ru.phoneBinding.sidebar.tasksflow, /сервис задач для сотрудников/);
-  assert.match(catalogs.ru.settingsUi.tasksflowSettingsClient.pageDescription, /сервис задач для сотрудников/);
+  // Подпись страницы — одна строка (руководитель 2026-11: «без сочинений»): что делает и ссылка.
+  assert.match(catalogs.ru.settingsUi.tasksflowSettingsClient.pageDescription, /^Задачи сотрудникам через <link>tasksflow\.ru<\/link>$/);
   const phone = readFileSync("src/app/(dashboard)/settings/phone/phone-binding-client.tsx", "utf8");
   assert.match(phone, /t\.rich\("sidebar\.tasksflow", \{[\s\S]*?link: chunks => \([\s\S]*?href=\{TASKSFLOW_SITE_URL\}/);
 });

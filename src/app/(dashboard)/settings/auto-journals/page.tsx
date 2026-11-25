@@ -114,7 +114,7 @@ export default async function AutoJournalsPage() {
               {t("title")}
             </h1>
             <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">
-              {t("description", { example: "t\u00a0<\u00a037" })}
+              {t("description")}
             </p>
           </div>
         </div>
@@ -137,7 +137,7 @@ export default async function AutoJournalsPage() {
         storageKey="settings-auto-journals-v1"
         bullets={[
           { title: t("guide1Title"), body: t("guide1Body") },
-          { title: t("guide2Title"), body: t("guide2Body") },
+          { title: t("guide2Title"), body: t("guide2Body", { example: "t\u00a0<\u00a037" }) },
           { title: t("guide3Title"), body: t("guide3Body") },
         ]}
         qa={[

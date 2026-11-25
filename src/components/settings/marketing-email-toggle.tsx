@@ -62,15 +62,14 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
   // Ручную блокировку снимает только поддержка; «не принимает почту» касается
   // одного письма — колокольчик, push и Telegram переключатель по-прежнему включает.
   const disabled = !state || busy || state.blockedReason === "manual";
-  const hint = !state
-    ? t("loading")
-    : state.blockedReason === "manual"
-      ? t("manual", { email: state.email ?? "" })
-      : state.blockedReason === "bounced"
-        ? t("bounced", { email: state.email ?? "" })
-        : !state.email
-          ? t("noEmail")
-          : t("normal", { email: state.email });
+  // Под тумблером — только то, что мешает: блокировка или недоходящие письма.
+  // Оговорка «служебные приходят всегда» — тостом при выключении.
+  const hint =
+    state?.blockedReason === "manual"
+      ? t("manual")
+      : state?.blockedReason === "bounced" && state.email
+        ? t("bounced", { email: state.email })
+        : null;
 
   const checked = Boolean(state?.subscribed);
   const switchEl = (
@@ -97,14 +96,16 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
   if (variant === "mini") {
     return (
       <section className="mini-card p-4" data-testid="marketing-email-mini">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-[17px] font-semibold" style={{ color: "var(--mini-text)" }}>
               {t("title")}
             </h2>
-            <p className="mt-1 text-[14px] leading-[1.5]" style={{ color: "var(--mini-text-muted)" }}>
-              {hint}
-            </p>
+            {hint ? (
+              <p className="mt-1 text-[14px] leading-[1.5]" style={{ color: "var(--mini-text-muted)" }}>
+                {hint}
+              </p>
+            ) : null}
           </div>
           {switchEl}
         </div>
@@ -118,13 +119,13 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
       data-testid="marketing-email"
     >
       <div className="flex items-center justify-between gap-6 px-6 py-5 md:px-8">
-        <div className="flex items-start gap-4">
-          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#f5f6ff] text-[#5566f6]">
+        <div className="flex items-center gap-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#f5f6ff] text-[#5566f6]">
             <Megaphone className="size-4" />
           </div>
           <div>
             <div className="text-[15px] font-medium text-[#0b1024]">{t("title")}</div>
-            <div className="mt-1 text-[13px] text-[#6f7282]">{hint}</div>
+            {hint ? <div className="mt-1 text-[13px] text-[#6f7282]">{hint}</div> : null}
           </div>
         </div>
         {switchEl}

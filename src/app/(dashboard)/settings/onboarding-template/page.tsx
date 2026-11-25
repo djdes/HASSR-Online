@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -27,7 +28,7 @@ export default async function OnboardingTemplatePage({
           объяснение, а карточки шаблонов видны сразу. */}
       <PageHeader
         title={t("title")}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
       />
 
       <OnboardingTemplateClient templates={ORG_TEMPLATES} initialResult={initialResult} />

@@ -13,6 +13,7 @@ import { useViewPrefs } from "./view-prefs-provider";
  * контраст, без анимации, пояснения на страницах. Одни и те же контролы в
  * «Настройки → Оформление», в окне из меню профиля (его видит любой
  * сотрудник) и в профиле мини-приложения. Всё — настройка этого устройства.
+ * Подписей под тумблерами нет: названия понятны сами, а эффект виден сразу.
  */
 export function ReadabilityControls({
   size = "comfortable",
@@ -33,21 +34,18 @@ export function ReadabilityControls({
         <ToggleRow
           testId="view-contrast"
           title={t("contrast")}
-          hint={t("contrastHint")}
           checked={prefs.contrast === "high"}
           onChange={(on) => update({ contrast: on ? "high" : "auto" })}
         />
         <ToggleRow
           testId="view-motion"
           title={t("motion")}
-          hint={t("motionHint")}
           checked={prefs.motion === "reduce"}
           onChange={(on) => update({ motion: on ? "reduce" : "auto" })}
         />
         <ToggleRow
           testId="view-hints"
           title={t("hints")}
-          hint={t("hintsHint")}
           checked={prefs.hints === "on"}
           onChange={(on) => update({ hints: on ? "on" : "off" })}
         />
@@ -58,13 +56,11 @@ export function ReadabilityControls({
 
 function ToggleRow({
   title,
-  hint,
   checked,
   onChange,
   testId,
 }: {
   title: string;
-  hint: string;
   checked: boolean;
   onChange: (on: boolean) => void;
   testId: string;
@@ -74,7 +70,6 @@ function ToggleRow({
     <div className="flex items-center gap-3 px-4 py-3">
       <label htmlFor={id} className="min-w-0 flex-1 cursor-pointer">
         <span className="block text-[14px] font-medium text-[var(--app-text,#0b1024)]">{title}</span>
-        <span className="mt-0.5 block text-[12.5px] leading-snug text-[#6f7282]">{hint}</span>
       </label>
       <Switch id={id} checked={checked} onCheckedChange={onChange} data-testid={testId} />
     </div>

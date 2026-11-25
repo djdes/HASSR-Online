@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreText } from "@/components/ui/more-text";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Mail, Trash2 } from "lucide-react";
@@ -115,7 +116,7 @@ export function AccountingClient({ initialEmail }: Props) {
 
       <div className="mt-5 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-4 text-[12px] leading-relaxed text-[#6f7282]">
         <span className="font-medium text-[#0b1024]">{t("emailContentsTitle")}</span>{" "}
-        {t("emailContents")}
+        <MoreText text={t("emailContents")} />
       </div>
 
       {/* Нативный confirm() в приложении Telegram может не показаться —

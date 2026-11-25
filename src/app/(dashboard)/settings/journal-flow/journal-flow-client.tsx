@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreText } from "@/components/ui/more-text";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
@@ -73,7 +74,7 @@ export function JournalFlowClient({ initialMode }: { initialMode: Mode }) {
           заголовком, и именно их человек пришёл нажимать. */}
       <PageHeader
         title={t("title")}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
       />
 
       <div className="grid gap-3 lg:grid-cols-3">

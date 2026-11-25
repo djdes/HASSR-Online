@@ -11,6 +11,7 @@ import {
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
 import { runComplianceAudit } from "@/lib/compliance-audit";
+import { MoreText } from "@/components/ui/more-text";
 
 export const dynamic = "force-dynamic";
 
@@ -168,7 +169,8 @@ export default async function ComplianceAuditPage() {
 
       <div className="rounded-2xl border border-[#5566f6]/15 bg-[#f5f6ff]/50 p-4 text-[13px] leading-relaxed text-[#3848c7]">
         <strong>{t("scoringTitle")}</strong>{" "}
-        {t("scoringBody", { total: report.checks.length })}
+        {/* Веса и пороги — по «Подробнее»: видна только первая фраза. */}
+        <MoreText text={t("scoringBody", { total: report.checks.length })} />
       </div>
     </div>
   );

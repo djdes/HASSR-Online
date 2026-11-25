@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden, notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -97,7 +98,7 @@ export default async function JournalChecklistEditorPage({
       <PageHeader
         eyebrow={t("eyebrow")}
         title={meta.name}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
       />
 
       {code === "cleaning" ? (

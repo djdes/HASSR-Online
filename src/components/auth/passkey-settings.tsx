@@ -44,6 +44,12 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
   }, []);
 
   async function add() {
+    // Кнопку заранее не блокируем: о неподдерживаемом устройстве говорим
+    // только тому, кто действительно попробовал добавить ключ.
+    if (supported === false) {
+      toast.error(currentT.current("unsupported"));
+      return;
+    }
     setBusy(true);
     try {
       const { startRegistration } = await import("@simplewebauthn/browser");
@@ -58,7 +64,10 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
       });
       const verJson = (await ver.json()) as { error?: string };
       if (!ver.ok) throw new Error(verJson.error ?? "passkey_registration_verification_failed");
-      toast.success(currentT.current("registrationSuccess"));
+      // Пояснение, что даёт ключ, — в момент подключения, а не под заголовком.
+      toast.success(currentT.current("registrationSuccess"), {
+        description: currentT.current("registrationHint"),
+      });
       await load();
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
@@ -89,28 +98,19 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
 
   return (
     <div>
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[14px] font-semibold" style={{ color: text }}>
-            {t("title")}
-          </div>
-          <div className="mt-0.5 text-[12px] leading-relaxed" style={{ color: muted }}>
-            {t("description")}
-          </div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        {/* Заголовок понятен сам; что даёт ключ — в тосте после «Добавить». */}
+        <div className="text-[14px] font-semibold" style={{ color: text }}>
+          {t("title")}
         </div>
         <button
           onClick={add}
-          disabled={busy || supported === false}
+          disabled={busy}
           className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white disabled:opacity-50"
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} {t("add")}
         </button>
       </div>
-      {supported === false ? (
-        <p className="text-[12px]" style={{ color: muted }}>
-          {t("unsupported")}
-        </p>
-      ) : null}
       {creds && creds.length > 0 ? (
         <ul className="space-y-1.5">
           {creds.map((c) => (
@@ -132,8 +132,6 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
             </li>
           ))}
         </ul>
-      ) : creds ? (
-        <p className="text-[12px]" style={{ color: muted }}>{t("empty")}</p>
       ) : null}
       {remove ? (
         <ConfirmDialog

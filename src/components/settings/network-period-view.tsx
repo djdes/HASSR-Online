@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { NetworkGoButton } from "@/components/settings/network-go-button";
@@ -75,7 +76,7 @@ export async function NetworkPeriodView({
       <p className="text-[13px] leading-relaxed text-[#6f7282]">
         {t("period.range", { from: formatNetworkDay(dayOf(summary.range.from), locale), to: formatNetworkDay(dayOf(summary.range.to), locale) })}
         {" "}
-        {t("period.hint")}
+        <MoreText text={t("period.hint")} />
       </p>
 
       <section className="grid gap-3 sm:grid-cols-3" data-network-period-totals>

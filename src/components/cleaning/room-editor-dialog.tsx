@@ -332,10 +332,15 @@ export function RoomEditorDialog({
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
-      toast.success(t("saved"));
-      onOpenChange(false);
       const sameList = (a: string[], b: string[]) =>
         a.length === b.length && a.every((v, i) => v === b[i]);
+      // «С завтрашних задач» — оговорка момента сохранения, а не подпись
+      // под блоком «Кто убирает».
+      const cleanersChanged = !sameList(cleanerUserIds, initial.cleanerUserIds ?? []);
+      toast.success(t("saved"), {
+        description: cleanersChanged ? t("cleanersFromTomorrow") : undefined,
+      });
+      onOpenChange(false);
       const scheduleChanged =
         currentDays !== (initial.currentDays ?? 127) ||
         generalDays !== (initial.generalDays ?? 0) ||
@@ -595,16 +600,17 @@ export function RoomEditorDialog({
                 <input
                   type="checkbox"
                   checked={requirePhoto}
-                  onChange={(e) => setRequirePhoto(e.target.checked)}
+                  onChange={(e) => {
+                    setRequirePhoto(e.target.checked);
+                    // Пояснение — в момент включения, а не подписью под галочкой.
+                    if (e.target.checked) toast.info(t("requirePhotoOnToast"));
+                  }}
                   className="mt-0.5 size-4 cursor-pointer accent-[#5566f6]"
                 />
                 <div className="flex-1">
                   <div className="text-[14px] font-semibold text-[#0b1024]">
                     {t("requirePhotoTitle")}
                   </div>
-                  <p className="mt-0.5 text-[12px] leading-[1.55] text-[#6f7282]">
-                    {t("requirePhotoHint")}
-                  </p>
                 </div>
               </label>
 

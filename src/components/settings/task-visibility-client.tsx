@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Eye, Loader2, Save } from "lucide-react";
-import Link from "next/link";
+import { Crown, Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTaskVisibilityFeedback } from "./task-visibility-feedback";
 import { taskVisibilitySaveError } from "@/lib/task-visibility-presentation";
@@ -23,7 +22,6 @@ type Props = {
 export function TaskVisibilityClient({ positions }: Props) {
   const router = useRouter();
   const t = useTranslations("settingsTaskVisibility");
-  const tNav = useTranslations("navigation");
   const feedback = useTaskVisibilityFeedback();
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(positions.filter((p) => p.seesAllTasks).map((p) => p.id)),
@@ -86,29 +84,8 @@ export function TaskVisibilityClient({ positions }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-3xl border border-[#5566f6]/20 bg-gradient-to-br from-[#f5f6ff] to-white p-5">
-        <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#5566f6] text-white">
-            <Eye className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-[#0b1024]">
-              {t("intro.title")}
-            </h3>
-            <p className="mt-1 text-[12.5px] leading-snug text-[#3c4053]">
-              {t("intro.description")}
-            </p>
-            <p className="mt-2 text-[12px] text-[#6f7282]">
-              {t.rich("intro.recommendation", {
-                recommendation: (chunks) => <strong className="text-[#0b1024]">{chunks}</strong>,
-                hierarchy: (chunks) => <Link href="/settings/staff-hierarchy" className="text-[#5566f6] hover:underline">{chunks}</Link>,
-                hierarchyPath: tNav("shell.menus.staff.items.hierarchy"),
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
-
+      {/* Вводная карточка снята: заголовок страницы и «Как это работает» уже
+          объясняют выбор — повтор абзацами только отодвигал список должностей. */}
       {management.length > 0 ? (
         <div className="rounded-3xl border border-[#ececf4] bg-white p-5">
           <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#3848c7]">

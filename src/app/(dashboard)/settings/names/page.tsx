@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
@@ -47,7 +48,7 @@ export default async function NamesSettingsPage() {
     <div className="space-y-5">
       <PageHeader
         title={t("title")}
-        description={t("description")}
+        description={<MoreText text={t("description")} />}
         actions={
           customCount > 0 ? (
             <PageHeaderStat>

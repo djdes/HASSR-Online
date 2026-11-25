@@ -1,3 +1,4 @@
+import { MoreText } from "@/components/ui/more-text";
 import { forbidden } from "next/navigation";
 import { KeyRound } from "lucide-react";
 import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
@@ -80,7 +81,7 @@ export default async function JournalAccessMatrixPage() {
             <h1 className="text-[clamp(1.75rem,2vw+1rem,2rem)] leading-tight font-bold tracking-[-0.02em] text-[#0b1024]">
               {t("pages.employeesTitle")}
             </h1>
-            <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]">{t("pages.employeesDescription")}</p>
+            <p className="mt-1.5 max-w-[680px] text-[14px] leading-relaxed text-[#6f7282]"><MoreText text={t("pages.employeesDescription")} /></p>
           </div>
         </div>
       </div>

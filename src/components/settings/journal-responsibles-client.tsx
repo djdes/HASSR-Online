@@ -34,6 +34,7 @@ import {
 import { getSchemaForJournal } from "@/lib/journal-responsible-schemas";
 import { isPlaceholderStaffUser } from "@/lib/journal-roster";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { MoreText } from "@/components/ui/more-text";
 import { confirmAsync } from "@/components/ui/confirm-async";
 import { SectionJump } from "@/components/shared/section-jump";
 
@@ -1739,7 +1740,7 @@ export function JournalResponsiblesClient({
             <div className="text-[15px] font-semibold leading-tight text-[#0b1024]">
               {t("pointBannerTitle", { point: point.name })}
             </div>
-            <p className="mt-1 text-[13px] leading-[1.55] text-[#3c4053]">{t("pointBannerBody")}</p>
+            <p className="mt-1 text-[13px] leading-[1.55] text-[#3c4053]"><MoreText text={t("pointBannerBody")} /></p>
           </div>
         </div>
       ) : null}

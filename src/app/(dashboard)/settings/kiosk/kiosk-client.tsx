@@ -236,11 +236,9 @@ export function KioskClient({
             onChange={(e) => togglePhoto(e.target.checked)}
             className="mt-1 size-4 accent-[#5566f6]"
           />
+          {/* Про согласие сотрудника — в тосте после включения, не абзацем здесь. */}
           <span className="text-[14px] leading-relaxed text-[#0b1024]">
             {t("photoLabel")}
-            <span className="block text-[13px] text-[#6f7282]">
-              {t("photoNote")}
-            </span>
           </span>
         </label>
       </section>
