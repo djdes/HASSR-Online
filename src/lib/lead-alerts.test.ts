@@ -61,5 +61,9 @@ describe("горячие лиды — админу в Telegram", () => {
     assert.match(nps, /dedupeKey: `nps:\$\{response\.id\}`/);
     assert.match(nps, /becameLow \? `nps:\$\{existing\.id\}` : `nps-comment:\$\{existing\.id\}`/);
     assert.match(nps, /\.catch\(\(error\) => console\.error\("\[nps\] admin alert failed"/);
+    // Перещёлкивание цифр (1 → 5 → 1) не шлёт повторное «Низкая оценка»:
+    // ключ сверяется в памяти и в журнале отправок до отправки.
+    assert.match(nps, /recentAlertKeys\.has\(args\.dedupeKey\)\) return;/);
+    assert.match(nps, /db\.telegramLog\.findFirst\(\{\s*where: \{ dedupeKey: args\.dedupeKey/);
   });
 });
