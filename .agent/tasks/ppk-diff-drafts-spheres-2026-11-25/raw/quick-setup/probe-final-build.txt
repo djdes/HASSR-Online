@@ -1,0 +1,11 @@
+# Стенд :3001 — production build 7a61af49a (финальный код), Next 16.2.12
+  2892 ms  click apply
+  2984 ms  → POST /api/settings/onboarding-template 
+  3181 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=dBUv0_TjuVO_J-Sj (RSC)
+  3182 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk (RSC)
+  3206 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=dBUv0_TjuVO_J-Sj
+  3208 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk
+  3458 ms  navigated /settings/onboarding-template?done=8.7.6
+  dom@1728  result=false questions=true kindPicker=false
+  dom@1955  result=true questions=false kindPicker=false
+final: {"result":true,"kinds":false,"header":"Меню СР"}

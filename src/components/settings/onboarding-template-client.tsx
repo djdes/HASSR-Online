@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, ClipboardList, Loader2, Minus, Plus, QrCode, Sparkles, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -11,18 +11,20 @@ import {
   QUICK_SETUP_LIMITS,
   customizeTemplate,
   defaultQuickSetupAnswers,
+  formatQuickSetupDone,
   zoneOptions,
   type OrgTemplate,
   type OrgTemplateKind,
   type QuickSetupAnswers,
+  type QuickSetupResult,
 } from "@/lib/onboarding-templates";
 import { cn } from "@/lib/utils";
 
 type Props = {
   templates: OrgTemplate[];
+  /** Итог из адреса (`?done=`): страница смонтирована заново после «Применить». */
+  initialResult?: QuickSetupResult | null;
 };
-
-type ApplyResult = { positionsCreated: number; areasCreated: number; equipmentCreated: number };
 
 const CARD = "rounded-3xl border border-[#ececf4] bg-white p-5 shadow-[0_0_0_1px_rgba(240,240,250,0.45)] sm:p-6";
 const PRIMARY =
@@ -53,13 +55,14 @@ function Stepper({ label, value, max, onChange, testId }: { label: string; value
  * вид деятельности → пять вопросов → готово. Итог «будет создано» считает
  * та же `customizeTemplate`, что и сервер, — цифры совпадают.
  */
-export function OnboardingTemplateClient({ templates }: Props) {
+export function OnboardingTemplateClient({ templates, initialResult }: Props) {
   const t = useTranslations("settingsUi.quickSetup");
   const router = useRouter();
+  const pathname = usePathname() || "/settings/onboarding-template";
   const [kind, setKind] = useState<OrgTemplateKind | null>(null);
   const [answers, setAnswers] = useState<QuickSetupAnswers | null>(null);
   const [applying, setApplying] = useState(false);
-  const [result, setResult] = useState<ApplyResult | null>(null);
+  const [result, setResult] = useState<QuickSetupResult | null>(initialResult ?? null);
 
   const template = templates.find((item) => item.kind === kind) ?? null;
   const plan = useMemo(() => (template && answers ? customizeTemplate(template, answers) : null), [template, answers]);
@@ -92,12 +95,22 @@ export function OnboardingTemplateClient({ templates }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: template.kind, answers }),
       });
-      const data = (await res.json().catch(() => null)) as (ApplyResult & { error?: string }) | null;
+      const data = (await res.json().catch(() => null)) as (QuickSetupResult & { error?: string }) | null;
       if (!res.ok || !data) {
         toast.error(data?.error ?? t("failed"));
         return;
       }
-      setResult({ positionsCreated: data.positionsCreated, areasCreated: data.areasCreated, equipmentCreated: data.equipmentCreated });
+      const done: QuickSetupResult = {
+        positionsCreated: data.positionsCreated,
+        areasCreated: data.areasCreated,
+        equipmentCreated: data.equipmentCreated,
+      };
+      setResult(done);
+      // Первая настройка заводит объект и офис: у организации включаются
+      // точки, область данных меняется, и страница монтируется заново
+      // (`SectionFrame`). Итог — в адресе, чтобы новая страница показала его,
+      // а не снова шаг 1; обновление подтягивает шапку и меню с точками.
+      router.replace(`${pathname}?done=${formatQuickSetupDone(done)}`, { scroll: false });
       router.refresh();
     } catch {
       toast.error(t("failed"));
@@ -274,7 +287,17 @@ export function OnboardingTemplateClient({ templates }: Props) {
               </Link>
             ))}
           </div>
-          <button type="button" className={cn(OUTLINE, "mt-5 h-auto min-h-11 w-full py-2 text-center sm:w-auto")} onClick={() => { setKind(null); setAnswers(null); setResult(null); }}>
+          <button
+            type="button"
+            className={cn(OUTLINE, "mt-5 h-auto min-h-11 w-full py-2 text-center sm:w-auto")}
+            onClick={() => {
+              setKind(null);
+              setAnswers(null);
+              setResult(null);
+              // Итог больше не нужен и в адресе: иначе обновление страницы вернёт его.
+              router.replace(pathname, { scroll: false });
+            }}
+          >
             {t("again")}
           </button>
         </section>

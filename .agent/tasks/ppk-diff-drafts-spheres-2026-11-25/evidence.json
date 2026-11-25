@@ -1,0 +1,72 @@
+{
+  "task": "ppk-diff-drafts-spheres-2026-11-25",
+  "base": "3c6385694",
+  "branch": "claude/fervent-brown-ed5apv",
+  "pr": "djdes/HASSR-Online#337",
+  "stand": "next build --webpack (Next 16.2.12, heap 8192 MB) + next start :3000, local PostgreSQL, demo org admin@haccp.local, mock ProjectsFlow queue on 127.0.0.1:4010",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/ppk/revision-diff.test.ts 7/7",
+        "raw/stand/e2e-tz3-output.txt: approve ППК 006 -> edit -> ППК 007 -> compare +[пищевой продукции месяц] −[квартал], 3 added / 1 removed; changed after approval -> latest vs current; register «Сравнить с ППК 006» with highlight; old revision without text -> «текст не сохранён»; API 404/400/401; phone 390/390",
+        "raw/stand/screens/03-compare-revisions.png, 04-compare-old-revision.png, 06-phone-compare.png, 07b-dark-compare-settled.png"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/ppk/text-drafts.test.ts 5/5",
+        "raw/stand/e2e-tz3-output.txt: button on 2.2, replace confirmation, draft in field without markup and unsaved, saved after «Сохранить», 429 after 5/min, unknown block 400",
+        "raw/stand/draft-job-sample.txt: job type wesetup_generate_sop, section, <org_data> with object and sphere",
+        "raw/stand/screens/05-draft-2-2.png"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": [
+        "src/lib/ppk/starter-packs.test.ts 8/8",
+        "raw/stand/e2e-tz3-output.txt: medical object — 8 hazards + 17 PRP rows (5/4/4/4), items 2.6 and 3.1–3.4 not empty, starter card hidden, 2.6/3.3 show medical content",
+        "raw/stand/screens/01-starter-medical.png"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": [
+        "raw/smoke-root-cause/explanation.md (root cause: React replay dropped the Forked flag, facebook/react#35518)",
+        "raw/smoke-root-cause/smoke-run2-before-fix.log: FAIL 04-acceptance before the fix",
+        "raw/smoke-root-cause/repro-output.txt: React of Next 16.1.7 -> server _R_a_ vs client _R_2_ mismatch; React of Next 16.2.12 -> no mismatch",
+        "raw/smoke-root-cause/smoke-after-run1.txt, run2, run3: 48/48 each, three consecutive local smoke runs on Next 16.2.12",
+        "CI run 45555959514 (c4be8954b): quick-setup-result timeout — second cause: first quick setup enables points (object + office), scope key changes, SectionFrame remounts the page and the wizard result was lost",
+        "raw/quick-setup/explanation.md; raw/quick-setup/probe-before-fix.txt (stand, result disappears, wizard back to step 1)",
+        "fix 7a61af49a: result in the URL (?done=p.a.e), page passes initialResult; tests in src/lib/onboarding-templates.test.ts",
+        "raw/quick-setup/probe-after-fix.txt 3/3 result stays; raw/quick-setup/smoke-fixed-run1..3.txt 48/48 each; CI run 45559363374 (7a61af49a) Browser smoke success"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "evidence": [
+        "npm run typecheck exit 0",
+        "raw/full-tests-summary.txt: TEST_FULL=1 npm run test:gate pass=7495 fail=0",
+        "raw/eslint-summary.txt: whole repo 38 errors / 222 warnings (same rule types), branch files 0/0",
+        "raw/i18n-check.txt 103/103",
+        "borderless.css / neutral-palette.css regenerated (file counters only)",
+        "raw/next-build.log: Next 16.2.12 webpack build OK in 502 s with 8 GB heap",
+        "raw/stand/e2e-tz3-output.txt 30/30",
+        "raw/stand/pagepass.tsv: 47 key pages OK (all 200, /kp 404 as baseline), no error screens/JS/hydration errors; PPK PDFs 200 application/pdf",
+        "raw/next-build-final.log: final code 7a61af49a, next build --webpack into .next-build with 8 GB heap, OK in 558 s",
+        "raw/stand-final/e2e-tz3-output.txt 30/30 and raw/stand-final/pagepass.tsv 47 pages + PPK PDFs on next start :3001 of the final build",
+        "raw/quick-setup/probe-final-build.txt: quick setup result stays on the final production build",
+        "verdict.json: fresh verifier PASS on 7a61af49a (typecheck 0, full suite 7497/0, i18n 103/103, smoke 3 consecutive incl. CI 45559363374)"
+      ],
+      "deploy": "after merge: prisma db push adds optional PpkRevision.content; server runs npm ci (lock changed)"
+    }
+  },
+  "head": "7a61af49a",
+  "known_minor": [
+    "V2 compare loads all revision texts of a document",
+    "V3 fingerprint and content read separately on approval",
+    "V4 line breaks kept in stored text",
+    "V5 server error texts Russian-only like other PPK APIs"
+  ]
+}

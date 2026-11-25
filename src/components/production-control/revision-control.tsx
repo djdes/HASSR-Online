@@ -7,6 +7,7 @@ import { BadgeCheck, Loader2, Stamp } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { revisionCode, type RevisionState } from "@/lib/ppk/revisions";
 import { PPK_BUTTON_OUTLINE_CLASS, PPK_BUTTON_TEXT_CLASS } from "@/components/production-control/ppk-ui";
+import { RevisionCompareButton } from "@/components/production-control/revision-compare";
 
 const API = "/api/production-control/revisions";
 
@@ -169,6 +170,8 @@ export function RevisionControl({
         </button>
       ) : null}
       {canApprove && state.empty && !compact ? <span className="text-[12.5px] text-[#6f7282]">{t("emptyHint")}</span> : null}
+      {/* «Сравнить» (2026-11-25): изменён после утверждения — последняя редакция ↔ текущий текст, иначе — предыдущая ↔ последняя. */}
+      {state.latest ? <RevisionCompareButton docKey={state.docKey} timeZone={timeZone} /> : null}
       <ConfirmDialog
         open={open && canApprove && !state.empty && state.status !== "approved"}
         onClose={close}

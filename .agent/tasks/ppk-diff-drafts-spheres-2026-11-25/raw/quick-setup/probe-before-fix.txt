@@ -1,0 +1,20 @@
+# Стенд :3000 — production build c4be8954b (до правки), Next 16.2.12
+    48 ms  navigated /login
+   299 ms  navigated /login
+  1158 ms  navigated /home
+  1162 ms  → GET /settings/onboarding-template 
+  1312 ms  ← 200 /settings/onboarding-template
+  1328 ms  navigated /settings/onboarding-template
+  1345 ms  → GET /_next/static/chunks/app/(dashboard)/settings/onboarding-template/page-5f57f3e8059cc568.js 
+  1536 ms  ← 200 /_next/static/chunks/app/(dashboard)/settings/onboarding-template/page-5f57f3e8059cc568.js
+  1584 ms  navigated /settings/onboarding-template
+  2456 ms  click apply
+  2508 ms  → POST /api/settings/onboarding-template 
+  2714 ms  ← 200 /api/settings/onboarding-template
+  2723 ms  → GET /settings/onboarding-template?_rsc=hsH_aeBcfJN09zIk (RSC)
+  2752 ms  ← 200 /settings/onboarding-template?_rsc=hsH_aeBcfJN09zIk
+  3281 ms  navigated /settings/onboarding-template
+  dom@1338  result=false questions=true kindPicker=false
+  dom@1574  result=true questions=false kindPicker=false
+  dom@2122  result=false questions=false kindPicker=true
+final: {"result":false,"kinds":true,"header":"Меню СР"}

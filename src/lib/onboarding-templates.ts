@@ -578,3 +578,27 @@ export function plannedDisabledJournals(plan: QuickSetupPlan, allCodes: readonly
   for (const code of plan.enable) disabled.delete(code);
   return allCodes.filter((code) => disabled.has(code));
 }
+
+/** Итог «Применить»: сколько добавлено должностей, зон и оборудования. */
+export type QuickSetupResult = { positionsCreated: number; areasCreated: number; equipmentCreated: number };
+
+const QUICK_SETUP_DONE_RE = /^(\d{1,4})\.(\d{1,4})\.(\d{1,4})$/;
+
+/**
+ * Итог настройки в адресе страницы (`?done=должности.зоны.оборудование`,
+ * 2026-11-25). Первая настройка заводит объект и офис — у организации
+ * включаются точки, меняется область данных, и `SectionFrame` монтирует
+ * страницу заново: итог из состояния мастера пропадал через долю секунды,
+ * и мастер снова показывал шаг 1. Из адреса его рисует и новая страница.
+ */
+export function formatQuickSetupDone(result: QuickSetupResult): string {
+  const part = (value: number) => String(Math.min(9999, Math.max(0, Math.trunc(Number(value) || 0))));
+  return `${part(result.positionsCreated)}.${part(result.areasCreated)}.${part(result.equipmentCreated)}`;
+}
+
+export function parseQuickSetupDone(value: string | string[] | undefined | null): QuickSetupResult | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const match = typeof raw === "string" ? QUICK_SETUP_DONE_RE.exec(raw) : null;
+  if (!match) return null;
+  return { positionsCreated: Number(match[1]), areasCreated: Number(match[2]), equipmentCreated: Number(match[3]) };
+}

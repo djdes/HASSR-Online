@@ -2,16 +2,23 @@ import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { hasCapability } from "@/lib/permission-presets";
-import { ORG_TEMPLATES } from "@/lib/onboarding-templates";
+import { ORG_TEMPLATES, parseQuickSetupDone } from "@/lib/onboarding-templates";
 import { OnboardingTemplateClient } from "@/components/settings/onboarding-template-client";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
 
-export default async function OnboardingTemplatePage() {
+export default async function OnboardingTemplatePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ done?: string | string[] }>;
+}) {
   const t = await getTranslations("settingsUi.onboardingTemplatePage");
   const session = await requireAuth();
   if (!hasCapability(session.user, "admin.full")) forbidden();
+  // Итог «Применить» из адреса: переживает новую область данных (первая
+  // настройка включает точки, и страница монтируется заново).
+  const initialResult = parseQuickSetupDone((await searchParams).done);
 
   return (
     <div className="space-y-5">
@@ -23,7 +30,7 @@ export default async function OnboardingTemplatePage() {
         description={t("description")}
       />
 
-      <OnboardingTemplateClient templates={ORG_TEMPLATES} />
+      <OnboardingTemplateClient templates={ORG_TEMPLATES} initialResult={initialResult} />
     </div>
   );
 }

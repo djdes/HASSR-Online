@@ -1,0 +1,14 @@
+=== run 1 05:40:10
+exit=0
+RESULT: all 48 checks passed
+RESULT: smoke passed
+=== run 2 05:42:41
+exit=0
+RESULT: all 48 checks passed
+RESULT: smoke passed
+=== run 3 05:44:54
+exit=0
+RESULT: all 48 checks passed
+RESULT: smoke passed
+
+[exited with code 0]

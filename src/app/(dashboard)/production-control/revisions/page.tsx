@@ -9,6 +9,7 @@ import { ppkPageScope } from "@/lib/ppk/access.server";
 import { isPointScoped } from "@/lib/point-scope";
 import { loadRevisionRegister } from "@/lib/ppk/revisions.server";
 import { PageHeader } from "@/components/ui/page-header";
+import { RevisionCompareButton } from "@/components/production-control/revision-compare";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,8 @@ function ruDate(iso: string, timeZone: string): string {
 
 /**
  * Реестр редакций документов ППК (2026-11-24): номер «ППК NNN», документ,
- * дата и кто утвердил; у прежних редакций — какой редакцией заменены.
+ * дата и кто утвердил; у прежних редакций — какой редакцией заменены; у
+ * редакции с предшественницей — «Сравнить с ППК NNN» (2026-11-25).
  */
 export default async function RevisionsPage() {
   const session = await requireAuth();
@@ -73,6 +75,18 @@ export default async function RevisionsPage() {
                     ) : (
                       <span className="font-medium text-[#116b2a]">{t("stateCurrent")}</span>
                     )}
+                    {row.previous ? (
+                      <div className="mt-1">
+                        <RevisionCompareButton
+                          docKey={row.docKey}
+                          timeZone={timeZone}
+                          from={row.previous.number}
+                          to={row.number}
+                          label={t("compare.withPrevious", { code: row.previous.code })}
+                          className="h-8 px-0 text-[13px]"
+                        />
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))}

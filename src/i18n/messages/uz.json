@@ -799,7 +799,8 @@
         "labPlan": "laboratoriya rejasi",
         "pestPlan": "dezinsektsiya rejasi",
         "norms": "{count, plural, one {# me'yoriy hujjat} other {# me'yoriy hujjat}}",
-        "policy": "siyosat matni"
+        "policy": "siyosat matni",
+        "prp": "{count, plural, one {MDTD jadvallarining # qatori} other {MDTD jadvallarining # qatori}}"
       },
       "blockNames": {
         "products": "mahsulotlar",
@@ -808,7 +809,11 @@
         "lab-plan": "laboratoriya rejasi",
         "pest-plan": "dezinsektsiya rejasi",
         "norms": "me'yoriy hujjatlar",
-        "policy": "siyosat"
+        "policy": "siyosat",
+        "prp-infections": "infeksiyalarning oldini olish (3.1)",
+        "prp-disinfection": "dezinfeksiya (3.2)",
+        "prp-emergencies": "favqulodda holatlar (3.3)",
+        "prp-medical": "tibbiy koʻriklar (3.4)"
       },
       "alreadyFilled": "Allaqachon to'ldirilgan, tegmaymiz: {blocks}",
       "fill": "To'ldirish",
@@ -1118,7 +1123,16 @@
         "resetTemplate": "Shablonni qaytarish",
         "scanOrText": "Matn oʻrniga quyida oʻz hujjatingiz skanini yuklash mumkin — unda dasturga skan kiradi.",
         "revisionTitle": "Hujjat tahriri",
-        "revisionHint": "Tasdiqlangan tahrir dastur raqamini oladi. Bitta so‘z o‘zgarsa ham, dastur yangi raqamli yangi tahrirni tasdiqlashni so‘raydi."
+        "revisionHint": "Tasdiqlangan tahrir dastur raqamini oladi. Bitta so‘z o‘zgarsa ham, dastur yangi raqamli yangi tahrirni tasdiqlashni so‘raydi.",
+        "draft": "AI-yordamchidan qoralama",
+        "drafting": "Qoralama tayyorlanmoqda…",
+        "draftReady": "Qoralama tayyor — tekshirib, «Saqlash»ni bosing",
+        "draftFailed": "Qoralamani olib boʻlmadi. Yana urinib koʻring",
+        "draftHint": "AI-yordamchi kabinet maʼlumotlari asosida qoralama tuzadi: HACCP guruhi, mahsulotlar, xavfli omillar, jurnallar. Qoralama oʻzi saqlanmaydi — tekshirib, «Saqlash»ni bosing.",
+        "draftReplaceTitle": "Matn qoralama bilan almashtirilsinmi?",
+        "draftReplaceBody": "Maydondagi matn AI-yordamchi qoralamasi bilan almashtiriladi. «Saqlash»ni bosmaguningizcha saqlangan matn oʻzgarmaydi.",
+        "draftReplaceConfirm": "Almashtirish",
+        "draftReplaceCancel": "Bekor qilish"
       },
       "order": {
         "ordersTitle": "HACCP guruhini tuzish toʻgʻrisidagi buyruq",
@@ -1335,7 +1349,27 @@
       "stateCurrent": "Oxirgi tahrir",
       "stateSuperseded": "{code} bilan almashtirilgan",
       "registerEmpty": "Hali tasdiqlangan tahrirlar yo‘q. Dastur hujjatini (band matnlari, tartiblar, yo‘riqnomalar) oching va «Tahrirni tasdiqlash»ni bosing.",
-      "back": "Dasturga qaytish"
+      "back": "Dasturga qaytish",
+      "compare": {
+        "open": "Solishtirish",
+        "title": "Tahrirlarni solishtirish: {title}",
+        "from": "Avval",
+        "to": "Keyin",
+        "current": "Joriy matn",
+        "option": "{code}, {date}",
+        "summary": "Qoʻshilgan soʻzlar: {added} · olib tashlangan: {removed}",
+        "same": "Matn oʻzgarmagan",
+        "byLines": "Matnlar juda farq qiladi — satrma-satr solishtirildi",
+        "whole": "Matnlar butunlay boshqacha",
+        "noContent": "{code} tahriri matni saqlanmagan: u solishtirish paydo boʻlishidan oldin tasdiqlangan",
+        "loading": "Solishtirilmoqda…",
+        "failed": "Tahrirlarni solishtirib boʻlmadi",
+        "legendAdded": "qoʻshilgan",
+        "legendRemoved": "olib tashlangan",
+        "collapsed": "… oʻzgarishsiz: {count} belgi …",
+        "showAll": "Butun matnni koʻrsatish",
+        "withPrevious": "{code} bilan solishtirish"
+      }
     },
     "textDocs": {
       "createInstruction": "Yo‘riqnomani matn bilan yaratish",

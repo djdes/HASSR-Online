@@ -68,23 +68,48 @@ test("isStarterKind", () => {
   assert.equal(isStarterKind(undefined), false);
 });
 
-test("мастер по сферам: 4 сферы объекта; общепит — прежние пакеты, остальные — свои планы и нормативы", async () => {
-  const { STARTER_SPHERES, sphereStarterPack, starterBlocksFor, isStarterSphere } = await import("./starter-packs");
+test("мастер по сферам: 4 сферы объекта; общепит — прежние пакеты, остальные — свои опасности, ПОПМ, планы и нормативы", async () => {
+  const { STARTER_SPHERES, sphereStarterPack, sphereStarterSummary, starterBlocksFor, isStarterSphere, ALL_STARTER_BLOCKS, STARTER_BLOCKS } =
+    await import("./starter-packs");
   const { NORM_CATALOG } = await import("./norm-catalog");
   const { PPK_RECORD_SCHEMAS } = await import("./records");
+  const { PRP_TABLE_BLOCKS } = await import("./prp-tables");
   assert.deepEqual([...STARTER_SPHERES], ["food", "medical", "consumer", "sport"]);
   assert.equal(isStarterSphere("medical"), true);
   assert.equal(isStarterSphere("cafe"), false);
   assert.deepEqual(sphereStarterPack("food", "bakery"), starterPack("bakery"));
+  // Общепит не изменился: те же блоки, таблиц ПОПМ мастер ему не заполняет.
+  assert.deepEqual([...starterBlocksFor("food")], [...STARTER_BLOCKS]);
+  for (const block of PRP_TABLE_BLOCKS) assert.equal(sphereStarterPack("food").prp[block].length, 0);
+  assert.deepEqual([...ALL_STARTER_BLOCKS], [...STARTER_BLOCKS, ...PRP_TABLE_BLOCKS]);
   for (const sphere of ["medical", "consumer", "sport"] as const) {
     const pack = sphereStarterPack(sphere);
-    assert.equal(pack.products.length + pack.hazards.length + pack.flowcharts.length, 0, `${sphere}: без ХАССП общепита`);
+    assert.equal(pack.products.length + pack.flowcharts.length, 0, `${sphere}: без продукции и блок-схем общепита`);
+    assert.ok(pack.hazards.length >= 6, `${sphere}: свои опасные факторы`);
+    for (const row of pack.hazards) assert.ok(PPK_RECORD_SCHEMAS.hazards.safeParse(row).success, `${sphere}: опасность ${row.hazard}`);
+    assert.ok(new Set(pack.hazards.map((row) => row.type)).size >= 3, `${sphere}: разные виды опасностей`);
+    for (const block of PRP_TABLE_BLOCKS) {
+      assert.ok(pack.prp[block].length >= 3, `${sphere}: таблица ${block}`);
+      for (const row of pack.prp[block]) assert.ok(PPK_RECORD_SCHEMAS[block].safeParse(row).success, `${sphere}: ${block} ${JSON.stringify(row)}`);
+    }
     assert.ok(pack.labPlan.length >= 3, `${sphere}: план лаборатории`);
     assert.ok(pack.pestPlan.length >= 3, `${sphere}: план дезинсекции`);
     for (const id of pack.norms) assert.ok(NORM_CATALOG.some((doc) => doc.id === id), `${sphere}: норматив ${id} в каталоге`);
     for (const row of pack.labPlan) assert.ok(PPK_RECORD_SCHEMAS["lab-plan"].safeParse(row).success, `${sphere}: ${row.subject}`);
-    assert.deepEqual([...starterBlocksFor(sphere)], ["lab-plan", "pest-plan", "norms"]);
+    assert.deepEqual([...starterBlocksFor(sphere)], ["hazards", "lab-plan", "pest-plan", "norms", ...PRP_TABLE_BLOCKS]);
+    const summary = sphereStarterSummary(sphere);
+    assert.equal(summary.hazards, pack.hazards.length);
+    for (const block of PRP_TABLE_BLOCKS) assert.equal(summary.prp[block], pack.prp[block].length);
   }
+  // Каждый вызов — новая копия: правка пакета не меняет следующий.
+  const first = sphereStarterPack("medical");
+  first.hazards[0].hazard = "изменено";
+  first.prp["prp-medical"][0].kind = "изменено";
+  assert.notEqual(sphereStarterPack("medical").hazards[0].hazard, "изменено");
+  assert.notEqual(sphereStarterPack("medical").prp["prp-medical"][0].kind, "изменено");
   assert.ok(sphereStarterPack("sport").labPlan.some((row) => /бассейн/i.test(row.subject)));
+  assert.ok(sphereStarterPack("sport").hazards.some((row) => /бассейн/i.test(row.step)));
+  assert.ok(sphereStarterPack("consumer").hazards.some((row) => /маникюр/i.test(row.step)));
+  assert.ok(sphereStarterPack("medical").prp["prp-emergencies"].some((row) => /кров/i.test(row.situation)));
   assert.ok(sphereStarterPack("medical").norms.includes("order-29n"));
 });

@@ -1,0 +1,4 @@
+=== Test stats: pass=7495, fail=0 ===
+✓ Все тесты прошли.
+real	5m43.847s
+exit=0

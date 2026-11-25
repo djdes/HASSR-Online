@@ -10,8 +10,10 @@ import {
   ZONE_JOURNALS,
   customizeTemplate,
   defaultQuickSetupAnswers,
+  formatQuickSetupDone,
   getOrgTemplate,
   isKnownZone,
+  parseQuickSetupDone,
   plannedDisabledJournals,
   zoneOptions,
   type QuickSetupAnswers,
@@ -151,3 +153,25 @@ test("API: ответы проверяются zod и списком помещ�
   const onboarding = readFileSync(new URL("../app/(dashboard)/settings/onboarding/page.tsx", import.meta.url), "utf8");
   assert.match(onboarding, /!status\.coreComplete \? \(\s*<Link\s+href="\/settings\/onboarding-template"/);
 });
+
+test("итог настройки в адресе: запись и чтение, мусор — null", () => {
+  const done = formatQuickSetupDone({ positionsCreated: 7, areasCreated: 5, equipmentCreated: 12 });
+  assert.equal(done, "7.5.12");
+  assert.deepEqual(parseQuickSetupDone(done), { positionsCreated: 7, areasCreated: 5, equipmentCreated: 12 });
+  assert.deepEqual(parseQuickSetupDone(["0.0.0", "1.1.1"]), { positionsCreated: 0, areasCreated: 0, equipmentCreated: 0 });
+  assert.equal(formatQuickSetupDone({ positionsCreated: -3, areasCreated: 1.9, equipmentCreated: 123456 }), "0.1.9999");
+  for (const bad of [undefined, null, "", "1.2", "1.2.3.4", "a.b.c", "-1.2.3", "1.2.3 ", "12345.1.1"]) {
+    assert.equal(parseQuickSetupDone(bad as string | undefined), null, String(bad));
+  }
+});
+
+test("итог настройки переживает новую область данных: страница берёт его из адреса", () => {
+  const page = readFileSync(new URL("../app/(dashboard)/settings/onboarding-template/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /parseQuickSetupDone\(/);
+  assert.match(page, /initialResult=\{/);
+  const client = readFileSync(new URL("../components/settings/onboarding-template-client.tsx", import.meta.url), "utf8");
+  assert.match(client, /useState<QuickSetupResult \| null>\(initialResult \?\? null\)/);
+  assert.match(client, /formatQuickSetupDone\(done\)/);
+  assert.ok(client.indexOf("router.replace(") < client.indexOf("router.refresh()"), "сначала адрес с итогом, потом обновление");
+});
+

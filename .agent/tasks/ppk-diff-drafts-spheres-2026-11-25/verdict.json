@@ -1,0 +1,106 @@
+{
+  "task": "ppk-diff-drafts-spheres-2026-11-25",
+  "verdict": "PASS",
+  "judged": {
+    "branch": "claude/fervent-brown-ed5apv",
+    "commit": "7a61af49afde3a481c168d524b635fe1c2509e07",
+    "base": "3c638569489f448bcd72159a08fe27807b120ff2 (origin/master)",
+    "note": "HEAD moved during verification: c4be8954b (task commit) -> 7a61af49a (quick-setup result kept in ?done=, a follow-up for a CI regression of the Next 16.2.12 upgrade). Code checks, tests, CI and local smoke were judged on 7a61af49a. The :3000 stand serves the production build of c4be8954b; its PPK code is identical to HEAD (7a61af49a touches only the onboarding quick-setup files).",
+    "when": "2026-11-25 06:10-06:55 UTC",
+    "verifier": "fresh verifier (Claude Code subagent), independent of builder evidence"
+  },
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS"
+  },
+  "criteria_notes": {
+    "AC1": [
+      "Code: approveRevision stores PpkRevision.content (revisionContent: item/policy text, DOCX text via docxPlainText with 8 MB XML limit, 'Файл: …' lines for scans/PDF, limit 200 000); compareRevisions picks default pairs and checks org/point visibility; GET /api/production-control/revisions/compare validates numbers (^[1-9]\\d{0,8}$) and docKey length.",
+      "revision-diff.test.ts 7/7 (node --test).",
+      "Stand scenario e2e-tz3.mjs re-run by me on a fresh medical point: 30/30 PASS — ППК 008 -> ППК 009, '+[пищевой продукции месяц] −[квартал]', 'Добавлено слов: 3 · удалено: 1'; changed-after-approval -> latest vs 'Текущий текст'; register 'Сравнить с ППК 008' with highlight; pre-task revision -> 'текст не сохранён'.",
+      "Boundary probe (34/34): owner own point 200; owner other point of own org 200 with revisions only (as the register); revision numbers of another document 404; other organisation's point 404; unknown/malformed keys 404; bad from/to/docKey 400; point-scoped manager (temporary user, pointScope=[own point]): other point 404 (also with explicit numbers), shared knowledge doc 200, register hides other point, switching to other point 403; employee (operator) 403; anonymous 401.",
+      "Screens (settled): light, dark, «Новая» design, iPhone 13 — no horizontal scroll (390/390), diff body without border on --app-veil, added green rgb(17,107,42), removed red rgb(161,58,50) line-through; all colours have dark-theme mappings in app-theme.css; no page/hydration errors."
+    ],
+    "AC2": [
+      "Code: POST /api/production-control/text-docs/draft -> requirePpkAccess -> zod enum of 6 blocks -> aiHeavyRateLimiter (5/min, key ppk-draft:<user>) -> loadDraftContext (PPK scope only) -> buildDraftPrompt -> enqueueAndWait (ProjectsFlow queue, type wesetup_generate_sop); no direct model call anywhere in the diff. Draft is returned, never written; the editor only setText()s it.",
+      "text-drafts.test.ts 5/5.",
+      "Stand: draft button present on exactly 1.8, 1.9, 2.2, 2.3, 2.9, app-3 (absent on 2.1, 2.6, 3.3); non-empty field asks 'Заменить текст черновиком?'; draft lands in the field without markup and unsaved ('Сохранить' enabled); 429 after 5/min; unknown block 400; bad body 400.",
+      "Queue job text seen in the mock queue: first line 'type: wesetup_generate_sop', section, <org_data> with organisation, the point-scoped manager's own object, sphere 'Медицинские услуги', staff count, the 8 medical hazards, journals and the current item text; nothing from the other point.",
+      "Error path: failed queue job -> 502 'ИИ-помощник не смог подготовить черновик…', error toast, field and saved text unchanged after reload. not_configured (503) and timeout (504) checked by code reading only (would need the stand's env changed). pf-client '????' replaced with readable text."
+    ],
+    "AC3": [
+      "starter-packs.test.ts 8/8: medical/consumer/sport have >=6 valid hazards of >=3 types and 4 PRP tables (3.1-3.4) with >=3 valid rows each; fresh copies per call.",
+      "Food unchanged: evaluated sphereStarterPack('food', kind) of origin/master and HEAD for cafe/canteen/bakery/shop — identical JSON (74 670 bytes each), 0 PRP rows, same block list [products, hazards, flowchart, lab-plan, pest-plan, norms, policy].",
+      "Stand (my run, medical): 'Что добавится: 8 опасностей, план лаборатории, план дезинсекции, 7 нормативов, 17 строк таблиц ПОПМ'; created hazards 8, prp 5/4/4/4; items 2.6 'Начат', 3.1-3.4 'Заполнен'; starter card hidden; 2.6/3.3 show medical content.",
+      "Only empty sections (extra probe, sport point with an own 3.3 row): 3.3 skipped and keeps only the own row, the rest created; a second run creates nothing; card hidden."
+    ],
+    "AC4": [
+      "Root cause re-checked: Next 16.1.7 bundles React 19.3.0-canary-f93b9fd4-20251217 whose resetWorkInProgress keeps flags & 132120578 (drops Forked = 1<<20, the flag beginWork reads during hydration to pushTreeId); Next 16.2.12 bundles 19.3.0-canary-3f0b9e61-20260317 with mask 133169154 (+1<<20).",
+      "Deterministic repro re-run from scratch copies: React of Next 16.1.7 -> server '_R_a_', client '_R_2_', HYDRATION MISMATCH; React of Next 16.2.12 -> '_R_a_'/'_R_a_', no errors.",
+      "Before fix: smoke-run2-before-fix.log — FAIL 04-acceptance hydration mismatch on the header object switcher (DropdownMenuTrigger id).",
+      "The upgrade surfaced a second CI failure on the task commit c4be8954b (run 45555959514: 'quick-setup-result' not visible in 120 s — result lost when the page remounts on the scope change). Fixed in 7a61af49a (result kept in ?done=); reviewed: strict regex parse, numbers only, admin.full page.",
+      "After, on HEAD 7a61af49a: CI run 45559363374 browser smoke 48/48 + DB e2e success; my local SMOKE_ONLY=browser npm run smoke:local run 1: 48/48; run 2: 48/48 — three consecutive passes on HEAD, no hydration errors. (Builder: 3 local runs on c4be8954b and 3 on the fix, raw/smoke-root-cause and raw/quick-setup.)"
+    ],
+    "AC5": [
+      "Typecheck: from-scratch tsc (fresh tsBuildInfo in scratch) exit 0 in 6m13s, then incremental re-check after the late commit exit 0. (npm run typecheck reuses the builder's incremental cache.)",
+      "ESLint on the 23 changed TS/TSX files (incl. onboarding): 0 errors, 0 warnings.",
+      "npm run test:changed auto-escalated to the full suite (package-lock.json is a core file): pass=7497 fail=0 (7a61af49a adds 2 tests over the builder's 7495). Rewritten .agent/tasks/english-version-1375e736/raw/*.pdf restored with git checkout.",
+      "npm run i18n:check 103/103; npm run i18n:types regenerates message-contract.d.ts with no diff; ru/en/uz have the same new keys; no hard-coded Russian UI strings in changed components.",
+      "borderless/neutral-palette/one-accent tests 12/12 (generated CSS current).",
+      "Build: c4be8954b — builder's next build --webpack exit 0 (raw/next-build.log), served on :3000; HEAD 7a61af49a — production build exit 0 in 558 s with complete output (see build_head). I did not start a build myself (peak ~12 GB would risk OOM-killing the shared stand).",
+      "Stand page pass re-run: 47/47 (all 200, /kp 404 as baseline), no error screens, JS or hydration errors. Stand log clean apart from the expected mock_failed job and ENVIRONMENT_FALLBACK, which older Next 16.1.7 stand logs also show.",
+      "Deploy: the only schema change is ALTER TABLE \"PpkRevision\" ADD COLUMN \"content\" TEXT, accepted by scripts/lib/schema-safety.cjs additiveSchemaSql (statementCount 1); lockfile changes only next, @next/*, eslint-config-next (npm ci on deploy). The deploy itself happens after merge and was not observed."
+    ],
+    "build_head": "Builder's production build of HEAD 7a61af49a (next build --webpack, NEXT_DIST_DIR=.next-build, 8 GB heap, log scratchpad/build-final.log) observed by me: 'Compiled successfully in 7.9min', 171/171 static pages, exit=0 in 558 s, BUILD_ID 06:49:08; the onboarding-template page, revisions page and both new API routes are present with client-reference manifests and .nft.json traces (1261). Note: this 16 GB sandbox OOM-killed one ~11.8 GB node child during that build (dmesg ~06:47) and an earlier ~7 GB one at ~06:39 while my second smoke overlapped; the build still completed. The :3000 stand still serves the c4be8954b build."
+  },
+  "issues": [
+    {
+      "id": "V1",
+      "severity": "minor",
+      "file": ".agent/tasks/ppk-diff-drafts-spheres-2026-11-25/evidence.md",
+      "line": 64,
+      "description": "AC4 evidence was updated at 06:34 for the CI failure on c4be8954b (run 45555959514) and the fix 7a61af49a, but the AC5 items still describe c4be8954b: full tests 'pass 7495' (HEAD gives 7497/0), raw/next-build.log is the build of c4be8954b, and the :3000 stand serves that build. HEAD's own build/stand numbers are not recorded.",
+      "repro": "Compare evidence.md AC5 with git log -1 (7a61af49a) and raw/next-build.log timestamp (06:04, before the 06:16 commit)."
+    },
+    {
+      "id": "V2",
+      "severity": "minor",
+      "file": "src/lib/ppk/revisions.server.ts",
+      "line": 485,
+      "description": "compareRevisions selects content (up to 200 000 chars) of every revision of the document, though only the two compared rows need it and the history only needs hasContent. A document with many large revisions loads megabytes per compare request.",
+      "repro": "Read the findMany select in compareRevisions."
+    },
+    {
+      "id": "V3",
+      "severity": "minor",
+      "file": "src/lib/ppk/revisions.server.ts",
+      "line": 335,
+      "description": "approveRevision takes the hash (resolveRevisionDocs, line 331) and the stored content (revisionContent, line 335) from two separate reads, so an edit landing between them stores content that does not match contentHash. A failing snapshot read is swallowed (.catch(() => null)) and the revision is then shown as 'approved before comparison existed'.",
+      "repro": "Code reading; needs a concurrent save during approval to observe."
+    },
+    {
+      "id": "V4",
+      "severity": "minor",
+      "file": "src/lib/ppk/revisions.server.ts",
+      "line": 317,
+      "description": "Spec Р1 says the stored text is 'как для отпечатка (без лишних пробелов)'; the implementation stores the trimmed raw text (line breaks and inner spaces kept). The diff ignores whitespace, so behaviour matches the intent and paragraphs stay readable; only the wording differs.",
+      "repro": "SELECT content FROM \"PpkRevision\" WHERE content IS NOT NULL;"
+    },
+    {
+      "id": "V5",
+      "severity": "minor",
+      "file": "src/components/production-control/revision-compare.tsx",
+      "line": 81,
+      "description": "Server error texts of the two new APIs (e.g. 'Текущего текста документа нет', 'ИИ-помощник не подключён…') and the 'Файл: … КБ · отпечаток …' content lines are Russian-only and shown verbatim in the en/uz UI (also text-doc-editor.tsx:78). Same pattern as the existing PPK APIs, not a regression.",
+      "repro": "Switch locale to en, compare with to=current on a document of another point -> Russian error text."
+    }
+  ],
+  "side_effects_of_verification": [
+    "Created on the local stand DB (demo org): medical point 'Поликлиника e2e 06:13:09' with revisions ППК 008/009 (stand scenario), sport point 'Спорт verify 06:35:48' (partial-fill probe), a 2.3 text containing 'FAILJOB' on the medical point (error-path probe), audit-log rows. A temporary user verify-pm@haccp.local was created for the point-scope probe and deleted afterwards.",
+    "My second local smoke overlapped the builder's production build; the kernel OOM-killed one ~7 GB node process at ~06:39 UTC (per the coordinator, the builder's build). The :3000 stand and the mock queue were not affected."
+  ],
+  "artifacts": "/tmp/claude-0/-home-user-HASSR-Online/d71dfd22-e8ae-5524-a77c-52d9336f142f/scratchpad/verify/ (e2e-run1/, probe-boundaries.txt, screens/, smoke-local.txt, smoke-local-2.txt, test-changed.txt, typecheck-fresh.txt, pagepass.tsv, repro-1617/, repro-16212/, foodcmp/, ci-run-*.log)"
+}
