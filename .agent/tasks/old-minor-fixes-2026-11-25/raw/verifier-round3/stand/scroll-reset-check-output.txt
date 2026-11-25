@@ -1,0 +1,5 @@
+# node scroll-reset-check.mjs (env loaded, next dev :3000) — scrollIntoView right after networkidle, then scrollY over time
+Galaxy S24 card 5 of 62 {"sy":2864,"top":349.171875} [{"sy":2864,"top":349},{"sy":2864,"top":349},{"sy":2864,"top":349}]
+Galaxy S24 card 59 of 62 {"sy":31906,"top":348.765625} [{"sy":31906,"top":349},{"sy":31906,"top":349},{"sy":31906,"top":349}]
+Galaxy S9+ card 5 of 62 {"sy":3190,"top":287.953125} [{"sy":0,"top":3543},{"sy":0,"top":3543},{"sy":0,"top":3543}]
+Galaxy S9+ card 59 of 62 {"sy":35612,"top":287.546875} [{"sy":35612,"top":288},{"sy":35612,"top":288},{"sy":35612,"top":288}]

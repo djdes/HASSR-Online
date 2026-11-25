@@ -1,0 +1,16 @@
+zoom150-pixel7-275: done
+fold-cover-280: done
+zoom125-360-288: done
+galaxy-s9p-320: done
+galaxy-s24-360: done
+pixel5-393: done
+pixel7-412: done
+galaxy-a55-480: done
+iphone-se-landscape-568: done
+nexus7-600: done
+measured 480, not ok 0, own points left 0/17, min gap zone→right control 2 px
+
+real	1m47.402s
+user	0m7.477s
+sys	0m2.274s
+exit=0
