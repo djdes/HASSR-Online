@@ -1,0 +1,88 @@
+# NOTE (verifier): the single FAIL below (AD-6, 409 entry_slot_taken) is a scenario-setup artifact: the target cell was freed with
+#  DELETE {employeeId, date}, which the automation-document guard refuses because its candidate query ignores `date` (pre-existing,
+#  not used by the UI). Redone with DELETE {ids} in ad6-probe-output.txt: the in-window move → 200, box unticked → 403. 75/76 + redo = all pass.
+INFO [setup] raw special-mode setting at start — {"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}}
+INFO [setup] org at start — {"lockPastDayEdits":false,"timezone":"Europe/Moscow","shiftEndHour":0,"perLocationJournals":true}
+INFO [setup] org today (Moscow) — 2026-11-25; month 2026-11-01..2026-11-30
+PASS [AC1-1] owner: section menu has «Спецрежим» → /inspection/settings — count=1
+PASS [AC1-2] owner /inspection: special-mode card at the bottom, switch enabled, no quiet link
+PASS [AC1-3] owner /inspection/settings: title «Спецрежим», card with enabled switch, no access-denied — Спецрежим
+PASS [AC1-4] tasks.verify /inspection: no card, quiet link «Настройки раздела» present — Настройки раздела
+PASS [AC1-5] tasks.verify: no «Спецрежим» item in the section menu
+PASS [AC1-6] tasks.verify: quiet link opens the page (not «Нет доступа»), title «Спецрежим», read-only card + «попросите руководителя» — h1=Спецрежим
+PASS [AC1-7] tasks.verify: PATCH journal-controls refused (403), as before — 403
+INFO [AC1-8] tasks.verify GET /settings/organization status (admin.full page, as before) — 307
+PASS [AC1-9] cook: /inspection/settings stays closed (no special-mode card) — http://localhost:3000/inspection/settings
+PASS [AC2-1] point manager: PATCH journal-controls 403 (company-only, as before) — 403 Это общие настройки компании — их меняет руководство компании
+PASS [AC2-2] point manager /inspection: no managing card (quiet link instead)
+PASS [AC2-3] point manager /inspection/settings: card read-only (switch disabled)
+PASS [AC2-4] point manager /settings/organization: no enabled switch — no card (company page closed); url=http://localhost:3000/dashboard
+PASS [AC3-1.0] first «Включить» dialog on /inspection: automation ticked, «Правка прошлых дней» NOT ticked, no limit select — {"autoFill":"checked","autoCreate":"checked","copyYesterday":"checked","closeDayAutofill":"checked","catchUp":"checked","pastDays":"unchecked"}
+PASS [AC3-1.1] first «Включить» dialog on /settings/organization: automation ticked, «Правка прошлых дней» NOT ticked, no limit select — {"autoFill":"checked","autoCreate":"checked","copyYesterday":"checked","closeDayAutofill":"checked","catchUp":"checked","pastDays":"unchecked"}
+PASS [AC3-1.2] first «Включить» dialog on /inspection/settings: automation ticked, «Правка прошлых дней» NOT ticked, no limit select — {"autoFill":"checked","autoCreate":"checked","copyYesterday":"checked","closeDayAutofill":"checked","catchUp":"checked","pastDays":"unchecked"}
+PASS [AC3-2] cancelling the first dialog saves nothing — {"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7}
+PASS [AC3-3] «Насколько назад» appears when ticked: 6 options, default 7 — 1:1 день | 3:3 дня | 7:7 дней | 14:14 дней | 30:30 дней | 0:Без ограничения
+PASS [AC3-4] saved: enabled, pastDays true, pastDaysLimit 3 — {"enabled":true,"autoFill":true,"autoCreate":true,"copyYesterday":true,"closeDayAutofill":true,"catchUp":true,"pastDays":true,"pastDaysLimit":3}
+PASS [AC3-5] card on /inspection shows «Правка прошлых дней: 3 дня» and «Изменить» — Видно в журналах: Автозаполнение журналов Автосоздание документов «Скопировать вчерашнее» «Автозаполнить» на главной «Догнать пропуски» Правка прошлых дней: 3 дня Изменить
+PASS [AC2-5] set in «Пришла проверка» → «Информация об организации» card shows 3 days + hint «за последние 3 дня» — Видно в журналах: Автозаполнение журналов Автосоздание документов «Скопировать вчерашнее» «Автозаполнить» на главной «До || Вчерашние записи сможет менять только администратор. Спецрежим разрешает правку прошлых дней за последние 3 дня — на эти дни запрет не действует.
+PASS [AC3-6] «Изменить» opens the saved choice (box ticked, 3 days)
+PASS [AC3-7] hint follows the change: «за последний 1 день» — Вчерашние записи сможет менять только администратор. Спецрежим разрешает правку прошлых дней за последний 1 день — на эти дни запрет не действует.
+PASS [AC2-6] changed in «Информация об организации» → «Спецрежим» page shows «Правка прошлых дней: 1 день» — Видно в журналах: Автозаполнение журналов Автосоздание документов «Скопировать вчерашнее» «Автозаполнить» на главной «Догнать пропуски» Правка прошлых дней: 1 день Изменить
+PASS [AC3-8] switch off: mode off, choice kept (pastDays true, 1 day) — {"enabled":false,"autoFill":true,"autoCreate":true,"copyYesterday":true,"closeDayAutofill":true,"catchUp":true,"pastDays":true,"pastDaysLimit":1}
+PASS [AC3-9] re-enable dialog: previous choice (box ticked, 1 day) — checked 1
+PASS [AC3-10] saved choice without the key → pastDays false (others kept), limit 7 — {"enabled":true,"autoFill":true,"autoCreate":true,"copyYesterday":true,"closeDayAutofill":true,"catchUp":true,"pastDays":false,"pastDaysLimit":7}
+PASS [AC3-11] no saved setting (org created after 2026-10-28) → off, pastDays false — {"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7}
+PASS [setup-1] own point «Кафе e2e верификатор-2 14:54:36» — 200
+PASS [setup-2] own hygiene + cold documents for the month — 201 201
+INFO [setup-3] entries pre-created in the hygiene document — 750
+PASS [AC4-1] mode off: staff yesterday → 403 «только сегодня» — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [AC4-2] mode off: staff today → 200 — 200
+PASS [AC4-3] mode off: «today+14:00» (written as yesterday) → 403 — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [AC4-4] window 3: staff own row yesterday → 200 — 200
+PASS [AC4-5] window 3: 3 days ago (boundary) → 200 — 200
+PASS [AC4-6] window 3: 4 days ago → 403 «за последние 3 дня» — 403 not_today Прошлые записи можно менять только за последние 3 дня.
+PASS [AC4-7] window 3: tomorrow → 403 — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [AC4-8] window 3: colleague's row yesterday → 403 foreign_row — 403 foreign_row Можно заполнять только свою строку
+PASS [AC4-9] «2 days ago T00:00+14:00» → written 3 days ago → 200 — 200 date=2026-11-22T00:00:00.000Z
+PASS [AC4-10] «3 days ago T00:00+14:00» → would be 4 days ago → 403 — 403 not_today Прошлые записи можно менять только за последние 3 дня.
+PASS [AC4-11] «4 days ago T23:00-05:00» → written 3 days ago → 200 — 200 date=2026-11-22T00:00:00.000Z
+PASS [AC4-12] «today T22:00-05:00» → tomorrow → 403 — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [AC4-13] unparsable date → 400 — 400  Некорректная дата
+PASS [AC4-14] bulk window 3: own yesterday + 2 days ago → saved 2 — {"saved":2,"skipped":0}
+PASS [AC4-15] bulk window 3: stroke reaching 4 days ago → 403 — 403 not_today Прошлые записи можно менять только за последние 3 дня.
+PASS [AC4-16] bulk: «3 days ago+14:00» (written 4 days ago) → 403 — 403 not_today Прошлые записи можно менять только за последние 3 дня.
+PASS [AC4-17] bulk: «2 days ago+14:00» → saved on 3 days ago — {"saved":1,"skipped":0}
+PASS [AC4-18] bulk: colleague's row → 403 foreign_row — 403 foreign_row Можно заполнять только свою строку
+PASS [AC4-19] window 1: yesterday → 200 — 200
+PASS [AC4-20] window 1: 2 days ago → 403 «только за вчерашний день» — 403 not_today Прошлые записи можно менять только за вчерашний день.
+PASS [AC4-21] no limit: 2026-11-05 → 200 — 200
+PASS [AC4-22] no limit: tomorrow still 403 — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [AC4-23] box ticked, mode OFF: yesterday → 403 «только сегодня» — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [AC4-24] mode on, box unticked: yesterday → 403 — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [MV-1] staff moves a colleague's yesterday entry onto own row → 403 foreign_row, entry untouched — 403 foreign_row Можно заполнять только свою строку src={"employeeId":"cmwv7iv6x0001x27d874e9a0z","d":"2026-11-24"}
+PASS [MV-2] staff moves own entry from 6 days ago (beyond window 3) to 2 days ago → 403 window text, untouched — 403 not_today Прошлые записи можно менять только за последние 3 дня. src={"employeeId":"cmww4cb620000jh7ddn98zwv0","d":"2026-11-19"}
+PASS [MV-3] staff moves own yesterday entry to 2 days ago (both in window) → 200, same row moved — 200 src={"employeeId":"cmww4cb620000jh7ddn98zwv0","d":"2026-11-23"}
+PASS [MV-4] staff moves own entry to tomorrow → 403 — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал.
+PASS [MV-5] plain edit with entryId (same cell) → 200 — 200
+PASS [MV-6] entryId from another document → 404 «Строка не найдена в этом документе» — 404  Строка не найдена в этом документе
+PASS [MV-7] mode off: staff moves own-row yesterday entry to today → 403 not_today (source), untouched — 403 not_today Заполнять можно только сегодняшний день. За прошлые дни правки вносит ответственный за журнал. src={"employeeId":"cmww4cb620000jh7ddn98zwv0","d":"2026-11-24"}
+PASS [MV-8] org lock: owner moves 6 days ago → 5 days ago (beyond window) → 200; one override audit with both days — 200 dates=["2026-11-20T00:00:00.000Z","2026-11-19T00:00:00.000Z"]
+PASS [MV-9] org lock + window 3: staff own yesterday → 200 (lock does not apply in the window) — 200
+PASS [MV-10] org lock + window 3: staff 5 days ago → 403 — 403 not_today Прошлые записи можно менять только за последние 3 дня.
+PASS [MV-11] org lock: owner move inside the window → 200, no override audit — 200 audits 1→1
+INFO [MV-12] owner moves an entry from a future day (created by PATCH) to today — PATCH 200; move 403 future_day_locked Нельзя заполнять журнал будущим числом: запись вносится в день, когда работа выполнена.; row now {"employeeId":"cmwv7iv6x0001x27d874e9a0z","d":"2026-11-27"}
+PASS [AD-1] automation doc, box unticked: owner yesterday → 403 past_day_locked (lock active) — 403 past_day_locked Прошлые дни закрыты — изменения вносятся день в день
+PASS [AD-2] automation doc, window 3: owner yesterday → 200 — 200
+PASS [AD-3] automation doc, window 3: staff own 2 days ago → 200 — 200
+PASS [AD-4] automation doc, window 3: staff 4 days ago → 403 — 403 not_today Прошлые записи можно менять только за последние 3 дня.
+PASS [AD-5] automation doc: owner moves 6 days ago (locked) → yesterday → 403 past_day_locked (source), untouched — 403 past_day_locked Прошлые дни закрыты — изменения вносятся день в день freedTarget=false
+FAIL [AD-6] automation doc: owner moves 2 days ago → yesterday (both in window) → 200 — 409 entry_slot_taken У этого сотрудника на эту дату уже есть запись. Откройте её и дополните или выберите другую дату.
+PASS [AD-7] automation doc: owner deletes a row 6 days ago → 403 (as before) — 403
+PASS [GR-1] staff grid: off → every non-today day closed «только сегодня»; window 3 → 3 days open, older days show the window text, future still closed — {"gridOff":{"notToday":174,"window":0},"gridOn":{"notToday":30,"window":126},"k":6,"daysBefore":24,"daysAfter":5}
+PASS [GR-2] staff grid: mode off again → as before — {"notToday":174,"window":0}
+PASS [GR-3] mode off: no special-mode hint under «Запретить редактирование…» — 0
+PASS [restore] special mode and org lock restored — {"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}} lock=false
+PASS [errors] no page errors
+
+75/76 PASS
+exit=1

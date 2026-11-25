@@ -1,0 +1,8 @@
+# NOTE (verifier): probe NOT APPLICABLE on this stand — counts are 0 because the page has no per-day lock cells:
+#  hygiene: the document uses the Приложение №1 (v2) QR-signature form — rows appear only after QR signatures, no employee x day grid;
+#  health: «Журнал здоровья» is disabled for the demo organisation («Этот журнал отключён», screens/health-owner-page.png).
+#  Not a product failure; grid coverage = cold-equipment grid (verifier2-e2e GR-1/GR-2) + builder grid check + source-level test.
+FAIL HG-1 staff hygiene grid: off → «только сегодня» on every other day; window 3 → 3 days open, older ones say «за последние 3 дня», future closed — {"cookOff":{"notToday":0,"window":0,"locked":0},"cookOn":{"notToday":0,"window":0,"locked":0},"k":0,"daysBefore":24,"daysAfter":5}
+FAIL HG-2 owner, automation hygiene doc: box off → every past day locked; window 3 → 3 past days open, older still locked — {"ownerOff":{"notToday":0,"window":0,"locked":0},"ownerOn":{"notToday":0,"window":0,"locked":0},"rows":0}
+PASS restore special mode / point / doc — {"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}}
+exit=0

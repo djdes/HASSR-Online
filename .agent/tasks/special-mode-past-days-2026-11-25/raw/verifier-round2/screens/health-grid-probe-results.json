@@ -1,0 +1,17 @@
+[
+  {
+    "name": "HL-1 staff health grid: off → «только сегодня» on every past day; window 3 → 3 past days open, older ones say «за последние 3 дня»",
+    "ok": false,
+    "detail": "{\"cookOff\":{\"notToday\":0,\"window\":0,\"locked\":0},\"cookOn\":{\"notToday\":0,\"window\":0,\"locked\":0},\"k\":0,\"daysBefore\":24,\"daysAfter\":5}"
+  },
+  {
+    "name": "HL-2 owner, automation health doc: box off → every past day locked; window 3 → 3 past days open, older still locked",
+    "ok": false,
+    "detail": "{\"ownerOff\":{\"notToday\":0,\"window\":0,\"locked\":0},\"ownerOn\":{\"notToday\":0,\"window\":0,\"locked\":0},\"rows\":0}"
+  },
+  {
+    "name": "restore special mode / point / doc",
+    "ok": true,
+    "detail": "{\"automation\":{\"enabled\":false,\"autoFill\":false,\"autoCreate\":false,\"copyYesterday\":false,\"closeDayAutofill\":false,\"catchUp\":false,\"pastDays\":false,\"pastDaysLimit\":7},\"sensorCamera\":{\"cold_equipment_control\":false,\"climate_control\":false},\"brakerageSetup\":{}}"
+  }
+]

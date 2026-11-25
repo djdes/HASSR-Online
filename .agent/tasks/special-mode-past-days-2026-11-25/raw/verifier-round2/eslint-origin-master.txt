@@ -1,0 +1,8 @@
+origin/master (55ca86a24) versions of the same files:
+scripts/e2e/new-lists-check.ts |  | warn |  | File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-i
+src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx | 72 | warn | @typescript-eslint/no-unused-vars | 'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u.
+src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx | 189 | warn | @typescript-eslint/no-unused-vars | 'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u.
+src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx | 577 | error | @next/next/no-html-link-for-pages | Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://
+src/components/journals/climate-document-client.tsx | 108 | warn | @typescript-eslint/no-unused-vars | 'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u.
+src/lib/journal-entry-write.ts | 12 | warn | @typescript-eslint/no-unused-vars | 'isManagementRole' is defined but never used. Allowed unused vars must match /^_/u.
+src/lib/special-mode-past-days.test.ts | (new file)

@@ -1,0 +1,6 @@
+PASS DELETE {employeeId, date} of an in-window cell in the automation doc — 403 (candidates are all of the employee's rows, date ignored — pre-existing; the row 6 days ago is locked)
+PASS DELETE {ids} of the in-window cell (form the UI uses) → 200 — 200
+PASS AD-6 redo: owner moves 2 days ago → yesterday in the automation doc (both in window) → 200 — 200 now 2026-11-24
+PASS box unticked: the same move back is refused (past_day_locked) — 403 past_day_locked
+PASS restore special mode — {"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}}
+exit=0
