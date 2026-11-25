@@ -1,14 +1,23 @@
 {
   "task": "special-mode-past-days-2026-11-25",
+  "round": 2,
   "branch": "claude/fervent-brown-ed5apv",
-  "head": "059ad782a (a302f9a04 + merge of origin/master 3de59e22c)",
-  "stand": "next build --webpack (Next 16.2.12) + next start :3000, local PostgreSQL, demo org admin@haccp.local, cook-e2e-special@haccp.local",
+  "head": "01761004f (bd14d54bb fixes + 12686d1c3 title + merge of origin/master afae9db11) + evidence commit",
+  "previous_verdict": "FAIL (verdict.json, problems.md: P1 AC1, P2 AC3, 3 minor)",
+  "stand": "next build --webpack (Next 16.2.12) + next start :3000 from .next-sm, local PostgreSQL, demo org admin@haccp.local, staff cook-e2e-special@haccp.local, tasks.verify staff verify-e2e-special@haccp.local (cook + head_chef preset)",
+  "fixes": {
+    "P1": "NavMenuItem.pageAccess; special item pageAccess fullAccessOr(\"tasks.verify\"); closedNavHrefs uses pageAccess ?? access; page title «Спецрежим» for everyone",
+    "P2": "specialModeDialogPreset(): first open ticks all automation except pastDays; previous choice kept",
+    "minor_date_key": "PUT/bulk check the day that is written (toEntryDateKey of the UTC-midnight date)",
+    "minor_move_source": "PUT with entryId checks the source cell (checkEntryScope + checkEntryWrite) when the row moves to another employee/day",
+    "minor_docblock": "settings page comment updated"
+  },
   "criteria": {
-    "AC1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "src/components/inspection/inspection-pages.test.ts", "raw/stand/e2e-special-mode-output.txt AC1 checks", "raw/stand/screens/01-inspection-card.png"] },
-    "AC2": { "status": "PASS", "evidence": ["src/app/(dashboard)/settings/organization/page.tsx", "raw/stand/e2e-special-mode-output.txt AC2 checks (sync between both places)", "raw/stand/screens/03b-org-card-crop.png"] },
-    "AC3": { "status": "PASS", "evidence": ["src/lib/special-mode-past-days.test.ts", "src/lib/journal-controls.test.ts", "raw/stand/e2e-special-mode-output.txt AC3 checks", "raw/stand/screens/02-dialog-past-days.png", "raw/stand/screens/05-phone-dialog.png"] },
-    "AC4": { "status": "PASS", "evidence": ["src/lib/special-mode-past-days.test.ts (window, boundary, future, foreign row, automation lock, org lock)", "raw/stand/e2e-special-mode-output.txt: cook API yesterday 403→200, 7 days 200, 8 days 403 window message, tomorrow 403, foreign row 403, off → 403", "grid: before notToday 174; after window 102 + notToday 30, 42 cells in window open", "raw/stand/screens/04-cook-grid.png"] },
-    "AC5": { "status": "PASS", "evidence": ["src/i18n/messages/{ru,en,uz}.json", "src/i18n/catalog-validation.test.ts", "src/lib/navigation-localization.test.ts", "src/i18n/organization-profile-localization.test.ts", "raw/stand/e2e-special-mode-output.txt AC5 hint"] },
-    "AC6": { "status": "PASS", "evidence": ["raw/typecheck.txt exit=0", "pre-commit full suite on a302f9a04: 7562/0", "raw/full-tests-summary.txt (after merge)", "eslint: no new findings in changed files", "raw/next-build-summary.txt", "stand 29/29"], "deploy": "after merge; no DB schema change" }
+    "AC1": { "status": "PASS", "evidence": ["src/lib/app-nav.test.ts", "src/components/inspection/inspection-pages.test.ts", "raw/stand/e2e-special-mode-output.txt AC1 checks (owner + tasks.verify user)", "raw/stand/screens/01-inspection-card.png", "raw/stand/screens/06-verify-user-settings.png"] },
+    "AC2": { "status": "PASS", "evidence": ["src/app/(dashboard)/settings/organization/page.tsx", "raw/stand/e2e-special-mode-output.txt AC2 checks", "raw/stand/screens/03-organization-card.png"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/special-mode-past-days.test.ts (dialog preset test)", "src/lib/journal-controls.test.ts", "raw/stand/e2e-special-mode-output.txt AC3 checks (first open: pastDays unchecked)", "raw/stand/screens/02a-dialog-first-open.png", "raw/stand/screens/02-dialog-past-days.png"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/special-mode-past-days.test.ts", "raw/stand/e2e-special-mode-output.txt AC4, offset and move checks", "raw/stand/verifier-probes-rerun.txt (403, were 200)", "raw/stand/screens/04-cook-grid.png"] },
+    "AC5": { "status": "PASS", "evidence": ["src/i18n/messages/{ru,en,uz}.json", "npm run i18n:types after merge", "src/i18n/catalog-validation.test.ts", "src/lib/navigation-localization.test.ts"] },
+    "AC6": { "status": "PENDING", "evidence": ["raw/typecheck.txt", "raw/tests-round2-summary.txt", "raw/eslint-round2.txt", "raw/next-build-round2-summary.txt", "raw/stand/e2e-special-mode-output.txt"], "deploy": "after merge to master; no DB schema change" }
   }
 }
