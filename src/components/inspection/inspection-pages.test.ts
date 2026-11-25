@@ -42,7 +42,11 @@ test("спецрежим у руководителя — в «Пришла пр�
   assert.ok(!guide.includes("special"), "в инструкции нет шага спецрежима");
   assert.match(guide, /\{ n: 3, href: "\/inspection\/visits" \}/);
   // Пункт меню раздела — только руководству.
-  assert.match(read("src/lib/app-nav.ts"), /\{ id: "special", icon: "ShieldCheck", href: "\/inspection\/settings", access: ADMIN \}/);
+  // Пункт — руководителю; страница (как её guard) открыта и тем, кто проверяет задачи.
+  assert.match(
+    read("src/lib/app-nav.ts"),
+    /\{ id: "special", icon: "ShieldCheck", href: "\/inspection\/settings", access: ADMIN, pageAccess: fullAccessOr\("tasks\.verify"\) \}/,
+  );
   // «Информация об организации»: та же карточка, руководителю точки — только просмотр; тексты раздела подгружены.
   const org = read("src/app/(dashboard)/settings/organization/page.tsx");
   assert.match(org, /<InspectionSpecialModeCard canManage=\{!isPointScoped\(session\.user\)\} \/>/);

@@ -11,6 +11,7 @@ import {
   loadEntryWriteContext,
   logPastDayOverride,
   maybeTriggerColdEquipmentCapaDetection,
+  toEntryDateKey,
   toEntryDayUtc,
   toPrismaJsonValue,
   type EntryWriteActor,
@@ -133,13 +134,19 @@ export async function POST(
   // поэтому проверяем каждую ячейку: иначе достаточно было бы захватить
   // штрихом чужую строку или вчерашнюю колонку.
   // Спецрежим «Правка прошлых дней» открывает и прошлые дни в окне.
+  // Проверяем тот день, который запишется (полночь UTC), а не строку как
+  // есть: «…T00:00:00+14:00» проходил как следующий день.
   const writeCtx = await loadEntryWriteContext(doc);
   for (const item of parsed.items) {
+    const day = toEntryDayUtc(item.date);
+    if (!day) {
+      return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
+    }
     const scope = checkEntryScope({
       actor: { id: actor.id, role: actor.role, isRoot: actor.isRoot },
       responsibleUserId: doc.responsibleUserId,
       employeeId: item.employeeId,
-      entryDayKey: String(item.date).slice(0, 10),
+      entryDayKey: toEntryDateKey(day),
       todayKey: writeCtx.todayKey,
       pastDays: writeCtx.pastDays,
     });

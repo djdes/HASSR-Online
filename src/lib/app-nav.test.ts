@@ -365,7 +365,7 @@ test("правило каждой вкладки и карточки повто�
       })),
       ...(section.menu ?? []).flatMap((group) =>
         group.items.flatMap((item) => [
-          { name: `${section.key}/${item.id}`, href: item.href, access: item.access },
+          { name: `${section.key}/${item.id}`, href: item.href, access: item.pageAccess ?? item.access },
           ...(item.tabs ?? []).map((tab) => ({
             name: `${section.key}/${item.id}/${tab.id}`,
             href: tab.href,
@@ -839,9 +839,14 @@ test("«Пришла проверка»: блоки страницы — сво�
     assert.equal(place?.section, "inspection", path);
     assert.equal(place?.menuItemId, id, path);
   }
-  // Сотрудник с «проверкой задач» раздел видит, пункт спецрежима — нет.
+  // Сотрудник с «проверкой задач» раздел видит, пункт спецрежима — нет; страница для
+  // просмотра (тихая ссылка) ему и заведующей открыта, как раньше.
   assert.ok(visibleItemIds(verifyOnly, "inspection").includes("now"));
   assert.ok(!visibleItemIds(verifyOnly, "inspection").includes("special"));
+  for (const actor of [verifyOnly, headChef]) {
+    assert.ok(!deniedNavHrefs(actor, withChecklists).includes("/inspection/settings"));
+  }
+  assert.ok(deniedNavHrefs(cook, withChecklists).includes("/inspection/settings"));
   // «Нормативка» раздела — не пункт ППК: левое меню не переключается.
   assert.notEqual(sectionForPath("/inspection/norms")?.section, "productionControl");
   assert.ok(!keys(cook, withChecklists).includes("inspection"));

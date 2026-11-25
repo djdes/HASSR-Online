@@ -19,6 +19,7 @@ import {
   loadEntryWriteContext,
   logPastDayOverride,
   maybeTriggerColdEquipmentCapaDetection,
+  toEntryDateKey,
   toPrismaJsonValue,
   type EntryWriteActor,
   type EntryWriteDoc,
@@ -100,17 +101,27 @@ export async function PUT(
   //
   // Спецрежим «Правка прошлых дней» (2026-11-25) открывает сотруднику его
   // строку и за прошлые дни в окне — правило в `writeCtx.pastDays`.
+  //
+  // День записи — полночь UTC. Разбираем его до проверки: проверять надо
+  // тот день, который запишется (ключ из строки как есть пропускал
+  // «…T00:00:00+14:00» как следующий день).
+  const dateObj = new Date(date);
+  if (!isValidDate(dateObj)) {
+    return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
+  }
+  dateObj.setUTCHours(0, 0, 0, 0);
   const writeCtx = await loadEntryWriteContext(doc);
+  const scopeActor = {
+    id: session.user.id,
+    role: session.user.role,
+    isRoot: session.user.isRoot === true,
+  };
   {
     const scope = checkEntryScope({
-      actor: {
-        id: session.user.id,
-        role: session.user.role,
-        isRoot: session.user.isRoot === true,
-      },
+      actor: scopeActor,
       responsibleUserId: doc.responsibleUserId,
       employeeId,
-      entryDayKey: String(date).slice(0, 10),
+      entryDayKey: toEntryDateKey(dateObj),
       todayKey: writeCtx.todayKey,
       pastDays: writeCtx.pastDays,
     });
@@ -131,13 +142,6 @@ export async function PUT(
   if (!employee) {
     return NextResponse.json({ error: "Сотрудник не найден" }, { status: 404 });
   }
-
-  // Truncate to date-only (midnight UTC)
-  const dateObj = new Date(date);
-  if (!isValidDate(dateObj)) {
-    return NextResponse.json({ error: "Некорректная дата" }, { status: 400 });
-  }
-  dateObj.setUTCHours(0, 0, 0, 0);
 
   const docDateFrom = new Date(doc.dateFrom);
   docDateFrom.setUTCHours(0, 0, 0, 0);
@@ -167,13 +171,53 @@ export async function PUT(
       { status: 403 }
     );
   }
-  if (decision.isOverride) {
+
+  // Правка строки по `entryId`. Если она уходит к другому сотруднику или на
+  // другой день, меняется и клетка, откуда она уходит, — к ней те же
+  // правила: иначе сотрудник забирал к себе на сегодня чужую запись или
+  // запись закрытого прошлого дня.
+  const editedEntry = entryId
+    ? await db.journalDocumentEntry.findFirst({
+        where: { id: entryId, documentId },
+        select: { data: true, employeeId: true, date: true },
+      })
+    : null;
+  const overrideDates = decision.isOverride ? [dateObj] : [];
+  if (
+    editedEntry &&
+    (editedEntry.employeeId !== employeeId ||
+      editedEntry.date.getTime() !== dateObj.getTime())
+  ) {
+    const sourceScope = checkEntryScope({
+      actor: scopeActor,
+      responsibleUserId: doc.responsibleUserId,
+      employeeId: editedEntry.employeeId,
+      entryDayKey: toEntryDateKey(editedEntry.date),
+      todayKey: writeCtx.todayKey,
+      pastDays: writeCtx.pastDays,
+    });
+    if (!sourceScope.allowed) {
+      return NextResponse.json(
+        { error: sourceScope.error, code: sourceScope.code },
+        { status: 403 }
+      );
+    }
+    const sourceDecision = checkEntryWrite(writeCtx, actor, editedEntry.date);
+    if (!sourceDecision.allowed) {
+      return NextResponse.json(
+        { error: sourceDecision.error, code: sourceDecision.code },
+        { status: 403 }
+      );
+    }
+    if (sourceDecision.isOverride) overrideDates.push(editedEntry.date);
+  }
+  if (overrideDates.length > 0) {
     await logPastDayOverride({
       organizationId: doc.organizationId,
       actor,
       documentId,
       employeeId,
-      dates: [dateObj],
+      dates: overrideDates,
       templateCode: doc.template?.code ?? null,
     });
   }
@@ -181,12 +225,6 @@ export async function PUT(
   // Гигиена: «Допущен» — только после ответа сотрудника о здоровье за
   // этот день (пожелание РПН). Ответ сверяется с записью в базе.
   {
-    const editedEntry = entryId
-      ? await db.journalDocumentEntry.findFirst({
-          where: { id: entryId, documentId },
-          select: { data: true },
-        })
-      : null;
     const admissionError = await findHygieneAdmissionViolation(db, {
       templateCode: doc.template?.code,
       documentId,

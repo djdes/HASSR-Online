@@ -14,6 +14,7 @@ import {
   parseJournalControls,
   pastDaysPolicy,
   readStoredAutomation,
+  specialModeDialogPreset,
 } from "@/lib/journal-controls";
 import {
   NOT_TODAY_MESSAGE,
@@ -23,7 +24,7 @@ import {
   shiftDayKey,
   type PastDaysPolicy,
 } from "@/lib/journal-entry-scope";
-import { checkEntryWrite, type EntryWriteContext } from "@/lib/journal-entry-write";
+import { checkEntryWrite, toEntryDateKey, toEntryDayUtc, type EntryWriteContext } from "@/lib/journal-entry-write";
 
 /*
  * «Правка прошлых дней» спецрежима (владелец, 2026-11-25): по умолчанию прошлые
@@ -169,6 +170,32 @@ test("настройка: галочка и «Насколько назад» п
   assert.match(api, /pastDaysLimit: z\.custom<PastDaysLimit>\(isPastDaysLimit\)\.optional\(\)/);
 });
 
+test("окно включения: впервые — вся автоматика, но «Правка прошлых дней» не отмечена; прежний выбор — как был", () => {
+  // Организация ещё ничего не выбирала (и та, что выключила спецрежим, не сохранив галочек).
+  const fresh = specialModeDialogPreset(AUTOMATION_OFF);
+  assert.equal(fresh.pastDays, false, "прошлые дни открывают только руками");
+  for (const feature of AUTOMATION_FEATURES.filter((feature) => feature !== "pastDays")) {
+    assert.equal(fresh[feature], true, feature);
+  }
+  assert.equal(fresh.pastDaysLimit, DEFAULT_PAST_DAYS_LIMIT);
+  // Прежний выбор возвращается как был — и с «Правкой прошлых дней», и без неё.
+  const withPast = parseJournalControls({ automation: { enabled: false, autoFill: true, pastDays: true, pastDaysLimit: 30 } }).automation;
+  assert.deepEqual(specialModeDialogPreset(withPast), {
+    autoFill: true,
+    autoCreate: false,
+    copyYesterday: false,
+    closeDayAutofill: false,
+    catchUp: false,
+    pastDays: true,
+    pastDaysLimit: 30,
+  });
+  const onlyPast = parseJournalControls({ automation: { enabled: false, pastDays: true, pastDaysLimit: 3 } }).automation;
+  assert.equal(specialModeDialogPreset(onlyPast).pastDays, true);
+  assert.equal(specialModeDialogPreset(onlyPast).autoFill, false);
+  // Карточка открывает окно именно этим выбором.
+  assert.match(read("src/components/inspection/inspection-special-mode-card.tsx"), /setDialog\(specialModeDialogPreset\(automation\)\)/);
+});
+
 test("правило одно для всех путей записи и для сеток журналов", () => {
   for (const file of [
     "src/app/api/journal-documents/[id]/entries/route.ts",
@@ -182,4 +209,36 @@ test("правило одно для всех путей записи и для 
   for (const client of ["hygiene", "health", "cold-equipment", "climate"]) {
     assert.match(read(`src/components/journals/${client}-document-client.tsx`), /pastDayOpen\(pastDays, dateKey, todayKey\)/, client);
   }
+});
+
+test("проверяется тот день, который запишется, и клетка, откуда переносят строку", () => {
+  // Метка со смещением пишется на день раньше — этот день и проверяем.
+  const shifted = toEntryDayUtc("2026-11-24T00:00:00+14:00");
+  assert.ok(shifted);
+  assert.equal(toEntryDateKey(shifted), "2026-11-23");
+  assert.equal(toEntryDateKey(toEntryDayUtc("2026-11-24")!), "2026-11-24");
+  assert.equal(toEntryDayUtc("не дата"), null);
+  const put = read("src/app/api/journal-documents/[id]/entries/route.ts");
+  const bulk = read("src/app/api/journal-documents/[id]/entries/bulk/route.ts");
+  for (const [file, source] of [["PUT", put], ["bulk", bulk]] as const) {
+    assert.doesNotMatch(source, /entryDayKey: String\(/, `${file}: ключ дня не из сырой строки`);
+  }
+  assert.match(put, /entryDayKey: toEntryDateKey\(dateObj\)/);
+  assert.match(bulk, /entryDayKey: toEntryDateKey\(day\)/);
+  // Перенос по entryId: клетка-источник проходит те же правила (своя строка,
+  // день в окне, закрытые дни), override источника — в аудит.
+  assert.match(put, /employeeId: editedEntry\.employeeId,\s*entryDayKey: toEntryDateKey\(editedEntry\.date\)/);
+  assert.match(put, /checkEntryWrite\(writeCtx, actor, editedEntry\.date\)/);
+  assert.match(put, /overrideDates\.push\(editedEntry\.date\)/);
+  // Источник проверяется до записи override и до самой записи.
+  assert.ok(put.indexOf("sourceScope") < put.indexOf("logPastDayOverride({"));
+  assert.ok(put.indexOf("sourceScope") < put.indexOf("journalDocumentEntry.update("));
+  // Правило источника — то же, что у цели: сотрудник не забирает чужую строку
+  // и строку закрытого дня, а в окне спецрежима — свою может перенести.
+  const cook = { id: "cook-1", role: "cook", isRoot: false };
+  const source = (employeeId: string, entryDayKey: string, pastDays?: PastDaysPolicy | null) =>
+    checkEntryScope({ actor: cook, employeeId, entryDayKey, todayKey: TODAY, pastDays }).allowed;
+  assert.equal(source("boss-1", TODAY), false);
+  assert.equal(source(cook.id, "2026-11-05"), false);
+  assert.equal(source(cook.id, YESTERDAY, { allowed: true, limitDays: 7 }), true);
 });

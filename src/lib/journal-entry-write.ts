@@ -120,7 +120,7 @@ export {
 } from "@/lib/journal-entry-scope";
 
 /** Дата ячейки → `YYYY-MM-DD`. Записи хранятся в UTC-полночь дня. */
-function toEntryDateKey(date: Date): string {
+export function toEntryDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 

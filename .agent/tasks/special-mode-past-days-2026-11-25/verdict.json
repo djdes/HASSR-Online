@@ -1,0 +1,70 @@
+{
+  "task": "special-mode-past-days-2026-11-25",
+  "verdict": "FAIL",
+  "judged": {
+    "branch": "claude/fervent-brown-ed5apv",
+    "commit": "f7626c2637ab05e7a332222458ad8d13dc3c2b34",
+    "merge_base_with_origin_master": "3de59e22c5f4d13f4e5152a901046b3240c1e692",
+    "time": "2026-11-25T13:59:32Z",
+    "stand": "next start :3000 (.next-sm, built 13:34 UTC from the merged tree; f7626c263 only adds CSS regeneration and task files on top), local PostgreSQL, demo org admin@haccp.local, staff cook-e2e-special@haccp.local, plus a temporary staff user with tasks.verify (role cook + preset head_chef), created and deleted by the verifier",
+    "verifier": "fresh independent verifier; product code not edited"
+  },
+  "criteria": {
+    "AC1": "FAIL",
+    "AC2": "PASS",
+    "AC3": "FAIL",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS"
+  },
+  "criteria_notes": {
+    "AC1": "Managers: menu item «Спецрежим» (ADMIN) → /inspection/settings, page title «Спецрежим», card with switch/boxes/«Изменить» at the bottom of «К вам пришла проверка» — all confirmed on the stand (builder scenario rerun 29/29). Staff with «проверка задач»: no menu item and no card (confirmed). BUT spec R1 says «остальным — как было (тихая ссылка, страница только для просмотра)»: the new ADMIN menu item puts /inspection/settings into deniedNavHrefs for every non-admin.full user, so SectionFrame now shows «Нет доступа к этому разделу» on that page, while /inspection still shows them the quiet link «Настройки раздела» to it. Before the change they saw the read-only page. Affects staff with tasks.verify and management roles without admin.full (head_chef/technologist presets). See issue AC1-denied-special-page.",
+    "AC2": "Card on /settings/organization (canManage = !isPointScoped), inspectionDay namespace loaded; enabling there shows in «Пришла проверка» (builder scenario rerun) and settings via API show on the org card (verifier V7). Point-scoped managers: page is company-only in the nav, card canManage=false, API PATCH still 403 (route unchanged).",
+    "AC3": "Saved and shown: box + «Насколько назад» (6 options, 7 default), chip «Правка прошлых дней: 7 дней» / «14 дней», saved {pastDays, pastDaysLimit}. Stored defaults are off: parse/AUTOMATION_OFF/AUTOMATION_ALL_ON tests pass; on the stand a saved choice without the key reads pastDays=false and the cook is refused (V3), no stored setting → off (V4). BUT the enable dialog for an organisation without a previous choice (every new org) pre-ticks «Правка прошлых дней» together with all automation boxes (preset() ticks every AUTOMATION_FEATURES entry), so turning the special mode on as offered silently opens past days for 7 days — contradicts R3 «По умолчанию выключена: у новых организаций» and the owner's «то что запрещено по умолчанию, там можно настроить и разрешить». Confirmed on the stand (V2: all six data-state=checked). See issue AC3-enable-dialog-preticks-past-days.",
+    "AC4": "Pure rule pastDayOpen/checkEntryScope/isCellLocked/checkEntryWrite covered by special-mode-past-days.test.ts (window, boundary, 1 day, no limit, today/future, foreign row, automation doc for all roles + ROOT, org lock). Stand (verifier V3–V6 + builder rerun): staff yesterday only with the box on; 7 days ago 200, 8 days ago 403 with window text; limit 1 → 2 days ago 403 «только за вчерашний день»; no limit → 20 days ago 200; tomorrow 403 for staff and owner (future_day_locked); box off or mode off → 403 as before; foreign row 403 (PUT and bulk); bulk stroke beyond window 403; org lock: staff in window 200, staff beyond 403, owner in window 200 without closed_day.override, owner beyond 200 with override audit; automation doc: staff yesterday 200, owner PUT/PATCH beyond window 403, PATCH in window 200, DELETE beyond window 403, DELETE in window 200, mode off → PATCH/PUT 403. Grids (hygiene/health/cold/climate) use the same pastDayOpen; builder grid counts reproduced. Minor pre-existing weaknesses noted (crafted UTC offset shifts a staff write one day; entryId move) — not introduced by this change.",
+    "AC5": "All new/changed keys present in ru/en/uz (pastDays title/hint, pastDaysLimit label/option/any/chip, pastDaysWindow in hygiene.errors and journalWidgets.headerEdit, lockPastDaysSpecialLimited/Any, menu item, route title), ICU args match call sites (days/limit); «нигде, кроме этой страницы» removed; npm run i18n:check 103/103 (contract in sync); borderless/neutral-palette regenerated and their tests pass in the full suite. Dark theme card and dialog readable (screens/v7-*).",
+    "AC6": "npm run typecheck exit 0 (incremental); ESLint on 26 changed src files: 1 error + 4 warnings, all identical at the merge base (pre-existing); npm run test:changed escalated to the full suite (96 related files > 80): 7573 pass / 0 fail; focused tests 116/116; builder stand scenario rerun 29/29; verifier stand 35/37 (the 2 failures are the AC1/AC3 issues). next build not rerun by the verifier (sandbox rule); the stand serves a production build of this code. No Prisma schema change. Deploy is post-merge and not judged here."
+  },
+  "issues": [
+    {
+      "id": "AC1-denied-special-page",
+      "severity": "blocking",
+      "file": "src/lib/app-nav.ts",
+      "line": 547,
+      "description": "New menu item { id: \"special\", href: \"/inspection/settings\", access: ADMIN } replaced hiddenMatch. deniedNavHrefs()/closedNavHrefs() (app-nav.ts:945-982) now list /inspection/settings for every user without admin.full, and SectionFrame (src/components/layout/section-frame.tsx:59) renders «Нет доступа к этому разделу» instead of the page. The page guard itself still admits hasFullWorkspaceAccess || tasks.verify, and /inspection (src/app/(dashboard)/inspection/page.tsx:223-225) still renders the quiet link «Настройки раздела» to it for those users, so the link leads to a dead end. Spec R1: «остальным — как было (тихая ссылка, страница только для просмотра)». The nav rule no longer mirrors the page guard (the token test in app-nav.test.ts only checks that the page mentions \"admin.full\", so it did not catch this).",
+      "repro": "Stand: user with role cook + permissionPreset head_chef (tasks.verify, no admin.full). Open /inspection → quiet link «Настройки раздела» is shown, no card, no menu item (OK). Click it / open /inspection/settings → [data-access-denied=forbidden] «Нет доступа к этому разделу», no [data-inspection-special-mode]. Unit: deniedNavHrefs({ role: \"cook\", permissionPreset: \"head_chef\" }, facts).includes(\"/inspection/settings\") === true (also for role technologist/head_chef). Evidence: raw/verifier/verifier-e2e-output.txt (V1), raw/verifier/screens/v1-verifier-settings-page.png."
+    },
+    {
+      "id": "AC3-enable-dialog-preticks-past-days",
+      "severity": "blocking",
+      "file": "src/components/inspection/inspection-special-mode-card.tsx",
+      "line": 47,
+      "description": "preset() returns every AUTOMATION_FEATURES entry ticked when the organisation has no previous choice (AUTOMATION_OFF — every new organisation and legacy «всё скрыто» ones). Since pastDays was appended to AUTOMATION_FEATURES, the first «Включить» dialog pre-ticks «Правка прошлых дней» (7 days); confirming the dialog as offered opens the last 7 days to staff, opens automation documents and bypasses «Запретить редактирование записей за прошлые дни» for those days. Contradicts R3 «По умолчанию выключена: у новых организаций» and the owner's wording (forbidden by default, allowed explicitly). Past-day editing is a relaxation of a compliance control, not automation, so the «включают ради автоматики целиком» rationale of preset() does not apply to it. No test covers the dialog's initial state; the builder's stand script clicks the box only if it is unticked, so it never observed this.",
+      "repro": "Stand: PATCH /api/settings/journal-controls with all boxes false and enabled false (state of a new org), open /inspection as owner, flip the special-mode switch → [data-special-mode-option=pastDays] has data-state=checked (all six are checked). Press «Включить» → saved {pastDays:true,pastDaysLimit:7}. Evidence: raw/verifier/verifier-e2e-output.txt (V2), raw/verifier/screens/v2-enable-dialog-defaults.png; builder output raw/stand/e2e-special-mode-output.txt shows the same save with all boxes true."
+    },
+    {
+      "id": "scope-day-key-from-raw-date-string",
+      "severity": "minor",
+      "file": "src/app/api/journal-documents/[id]/entries/route.ts",
+      "line": 113,
+      "description": "Pre-existing pattern, inherited by the new window: checkEntryScope gets entryDayKey = String(date).slice(0, 10) while the row is written at new Date(date) normalised to UTC midnight. A crafted timestamp with a positive offset moves the write one day earlier than the checked key, so staff get one extra day beyond the window (and, with the mode off, yesterday instead of today only). Same in bulk/route.ts:142 (String(item.date) vs toEntryDayUtc). The grid never sends such values; a direct API call is needed. Not introduced by this change; fix by deriving the key from the normalised date (dateObj.toISOString().slice(0, 10)) or rejecting non-YYYY-MM-DD dates.",
+      "repro": "Window 1 day, today 2026-11-25: cook PUT date \"2026-11-24T00:00:00+14:00\" → 200, row stored on 2026-11-23 (plain \"2026-11-23\" → 403). Mode off: \"2026-11-25T00:00:00+14:00\" → 200, stored 2026-11-24. Evidence: raw/verifier/offset-probe.txt."
+    },
+    {
+      "id": "entry-move-ignores-source-row",
+      "severity": "minor",
+      "file": "src/app/api/journal-documents/[id]/entries/route.ts",
+      "line": 221,
+      "description": "Pre-existing, out of this task's scope: PUT with entryId moves an existing entry (decideEntryMove checks only that it belongs to the document), and the scope check looks only at the target employee/date. A staff user can move another person's entry from any date (beyond the window, or on a colleague's row) onto their own row today/in the window, which removes it from the original place. Not introduced here; worth a separate fix (apply checkEntryScope/checkEntryWrite to the source entry too).",
+      "repro": "Owner writes own row 2026-11-05; cook PUT {entryId: <that id>, employeeId: cook, date: today} with the special mode off → 200, the row now belongs to the cook on 2026-11-25. Evidence: raw/verifier/move-probe.txt."
+    },
+    {
+      "id": "stale-settings-page-docblock",
+      "severity": "minor",
+      "file": "src/app/(dashboard)/inspection/settings/page.tsx",
+      "line": 14,
+      "description": "The page docblock still says the special mode has no menu item and no card in «Реквизитах» and that the page title is «Настройки раздела» (2026-11-05); after this change it has a menu item, a card on /inspection and on /settings/organization, and the title «Спецрежим».",
+      "repro": "Read the comment above InspectionSpecialModePage."
+    }
+  ]
+}

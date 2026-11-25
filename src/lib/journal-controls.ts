@@ -178,6 +178,23 @@ export function pastDaysPolicy(controls: Pick<JournalControls, "automation">): {
   return { allowed: automationOn(controls, "pastDays"), limitDays: limit === 0 ? null : limit };
 }
 
+/** Выбор в окне спецрежима: галочки и «Насколько назад». */
+export type SpecialModeChoice = Record<AutomationFeature, boolean> & { pastDaysLimit: PastDaysLimit };
+
+/**
+ * С чего открывается окно включения спецрежима: прежний выбор, если он был;
+ * впервые — отмечена вся автоматика (спецрежим обычно включают ради неё
+ * целиком, лишнее снимают), но не «Правка прошлых дней»: её разрешают только
+ * руками (по умолчанию прошлые дни закрыты).
+ */
+export function specialModeDialogPreset(automation: JournalAutomationControls): SpecialModeChoice {
+  const pastDaysLimit = isPastDaysLimit(automation.pastDaysLimit) ? automation.pastDaysLimit : DEFAULT_PAST_DAYS_LIMIT;
+  const previous = Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, automation[feature] === true])) as Record<AutomationFeature, boolean>;
+  if (AUTOMATION_FEATURES.some((feature) => previous[feature])) return { ...previous, pastDaysLimit };
+  const fresh = Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, feature !== "pastDays"])) as Record<AutomationFeature, boolean>;
+  return { ...fresh, pastDaysLimit };
+}
+
 /** Фото датчиков — своя настройка журнала, спецрежим на неё не влияет. */
 export function sensorCameraEnabled(controls: JournalControls, code: unknown): boolean {
   return isSensorJournalCode(code) && controls.sensorCamera[code] === true;

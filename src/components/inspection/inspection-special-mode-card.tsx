@@ -16,9 +16,11 @@ import {
   DEFAULT_PAST_DAYS_LIMIT,
   PAST_DAYS_LIMITS,
   isPastDaysLimit,
+  specialModeDialogPreset,
   type AutomationFeature,
   type JournalAutomationControls,
   type PastDaysLimit,
+  type SpecialModeChoice,
 } from "@/lib/journal-controls";
 
 const FEATURE_ICONS: Record<AutomationFeature, typeof Wand2> = {
@@ -31,24 +33,13 @@ const FEATURE_ICONS: Record<AutomationFeature, typeof Wand2> = {
 };
 
 /** Выбор в окне: галочки и «Насколько назад» для «Правки прошлых дней». */
-type Choice = Record<AutomationFeature, boolean> & { pastDaysLimit: PastDaysLimit };
+type Choice = SpecialModeChoice;
 
 function chosen(automation: JournalAutomationControls): Choice {
   return {
     ...(Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, automation[feature]])) as Record<AutomationFeature, boolean>),
     pastDaysLimit: isPastDaysLimit(automation.pastDaysLimit) ? automation.pastDaysLimit : DEFAULT_PAST_DAYS_LIMIT,
   };
-}
-
-/**
- * Окно включения: прежний выбор, если он был; впервые — отмечено всё
- * (спецрежим обычно включают ради автоматики целиком, лишнее снимают).
- */
-function preset(automation: JournalAutomationControls): Choice {
-  const previous = chosen(automation);
-  return AUTOMATION_FEATURES.some((feature) => previous[feature])
-    ? previous
-    : { ...(Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, true])) as Record<AutomationFeature, boolean>), pastDaysLimit: previous.pastDaysLimit };
 }
 
 /**
@@ -89,7 +80,8 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
   }
 
   function onSwitch(value: boolean) {
-    if (value) setDialog(preset(automation));
+    // Впервые — вся автоматика, кроме «Правки прошлых дней» (её отмечают руками).
+    if (value) setDialog(specialModeDialogPreset(automation));
     else setConfirmOff(true);
   }
 

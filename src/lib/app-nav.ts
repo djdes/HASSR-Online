@@ -157,6 +157,12 @@ export type NavMenuItem = {
   icon: string;
   href: string;
   access: NavAccess;
+  /**
+   * Правило самой страницы, когда она пускает больше людей, чем видят пункт
+   * (спецрежим: пункт — руководству, страница для просмотра — и «проверке
+   * задач»). Нет — страница открыта по `access`.
+   */
+  pageAccess?: NavAccess;
   tabs?: NavMenuTab[];
   /**
    * Другие пути пункта (префиксом): страницы-карточки и подстраницы, у которых
@@ -543,8 +549,9 @@ const INSPECTION_MENU: NavMenuGroup[] = [
       { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
       { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
       // Спецрежим (владелец, 2026-11-25): включить и настроить — пунктом
-      // меню раздела, но только руководству; сотрудники его не видят.
-      { id: "special", icon: "ShieldCheck", href: "/inspection/settings", access: ADMIN },
+      // меню раздела, но только руководству; сотрудники его не видят, а
+      // страница для просмотра им открыта, как раньше (тихая ссылка).
+      { id: "special", icon: "ShieldCheck", href: "/inspection/settings", access: ADMIN, pageAccess: fullAccessOr("tasks.verify") },
     ],
   },
 ];
@@ -972,7 +979,7 @@ function closedNavHrefs(actor: NavActor, facts: NavFacts): string[] {
     for (const tab of section.tabs) visit(tab.href, tab.access);
     for (const group of section.menu ?? []) {
       for (const item of group.items) {
-        visit(item.href, item.access);
+        visit(item.href, item.pageAccess ?? item.access);
         for (const tab of item.tabs ?? []) visit(tab.href, tab.access);
       }
     }
