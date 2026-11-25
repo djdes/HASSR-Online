@@ -10,9 +10,13 @@ import { escapeTelegramHtml } from "@/lib/telegram";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Ключи уже отправленных (или отправляемых) алертов — защита от гонки кликов. */
+const recentAlertKeys = new Set<string>();
+
 /**
  * Низкая оценка — сразу админу в Telegram: позвонить, пока человек не ушёл.
- * Сбой Telegram ответ не ломает; `dedupeKey` не даёт повторить сообщение.
+ * Сбой Telegram ответ не ломает; по `dedupeKey` на ответ уходит не больше
+ * одного «Низкая оценка» и одного «дописал комментарий».
  */
 function alertLowScore(args: {
   organizationId: string;
@@ -26,6 +30,18 @@ function alertLowScore(args: {
   userId: string;
 }): void {
   void (async () => {
+    // Одно сообщение на ответ: человек щёлкает цифры подряд (1 → 5 → 2 → 5 → 1),
+    // и каждый спуск до низкой оценки слал админу новое «Низкая оценка».
+    // Ключ сверяем и в памяти процесса (клики идут быстрее записи в лог),
+    // и в журнале отправок Telegram.
+    if (recentAlertKeys.has(args.dedupeKey)) return;
+    recentAlertKeys.add(args.dedupeKey);
+    if (recentAlertKeys.size > 5000) recentAlertKeys.clear();
+    const alreadySent = await db.telegramLog.findFirst({
+      where: { dedupeKey: args.dedupeKey, status: { not: "failed" } },
+      select: { id: true },
+    });
+    if (alreadySent) return;
     const organization = await db.organization.findUnique({ where: { id: args.organizationId }, select: { name: true } });
     await notifyPlatformAdmin(
       composeLowNpsAlert({
