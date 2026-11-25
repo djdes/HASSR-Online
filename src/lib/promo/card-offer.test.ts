@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  AD_PROMO_CODE,
+  AD_PROMO_RECORD,
   CARD_PROMO_CODE,
   CARD_PROMO_RECORD,
   cardOrderHref,
@@ -22,6 +24,16 @@ describe("акция по визитке", () => {
     assert.equal(CARD_PROMO_RECORD.value, 10);
     assert.equal(CARD_PROMO_RECORD.endsAt, null);
     assert.equal(CARD_PROMO_RECORD.newClientsOnly, true);
+  });
+
+  it("код рекламной акции свой, проходит формат и без срока", () => {
+    assert.notEqual(AD_PROMO_CODE, CARD_PROMO_CODE);
+    assert.equal(normalizePromoCode(AD_PROMO_CODE), AD_PROMO_CODE);
+    assert.equal(isValidPromoCodeFormat(AD_PROMO_CODE), true);
+    assert.equal(AD_PROMO_RECORD.code, AD_PROMO_CODE);
+    assert.equal(AD_PROMO_RECORD.value, 10);
+    assert.equal(AD_PROMO_RECORD.endsAt, null);
+    assert.equal(AD_PROMO_RECORD.newClientsOnly, true);
   });
 
   it("−10 % от годовой цены, в месяц — округлённо", () => {
@@ -47,8 +59,8 @@ describe("акция по визитке", () => {
   });
 
   it("ссылка оплаты: тариф, период и код — только если он действует", () => {
-    assert.equal(cardOrderHref("premium", "year", true), "/order?plan=premium&cycle=year&promo=VIZITKA10");
-    assert.equal(cardOrderHref("standard", "month", false), "/order?plan=standard&cycle=month");
+    assert.equal(cardOrderHref("premium", "year", CARD_PROMO_CODE), "/order?plan=premium&cycle=year&promo=VIZITKA10");
+    assert.equal(cardOrderHref("standard", "month", null), "/order?plan=standard&cycle=month");
   });
 
   it("vCard с обоими телефонами и CRLF", () => {
