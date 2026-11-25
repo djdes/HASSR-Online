@@ -3906,7 +3906,11 @@ function RoomsModeCard(props: RoomsModeCardProps) {
             type="checkbox"
             checked={mode === "rooms"}
             disabled={props.disabled}
-            onChange={(e) => setMode(e.target.checked ? "rooms" : "pairs")}
+            onChange={(e) => {
+              setMode(e.target.checked ? "rooms" : "pairs");
+              // Подробности режима — тостом при включении, не абзацем под заголовком.
+              if (e.target.checked) toast.info(t("raceTasksOnToast"));
+            }}
             className="size-4 cursor-pointer accent-[#5566f6]"
           />
           {t("enable")}
