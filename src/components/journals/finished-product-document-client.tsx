@@ -1984,9 +1984,8 @@ export function FinishedProductDocumentClient({
           <div className="space-y-2">
             <Label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
               {t("settings.timeDefaults")}</Label>
-            <p className="text-[12.5px] leading-[1.45] text-[#6f7282]">
-              {t("settings.timeDescription", { production: config.timeDefaults.productionMinutesAgo, rejection: config.timeDefaults.rejectionAfterProductionMinutes, release: config.timeDefaults.releaseAfterRejectionMinutes })}
-            </p>
+            {/* Подписи полей ниже уже говорят, что значит каждое число —
+                абзац-пересказ под заголовком убран. */}
             <div className="flex flex-wrap gap-3">
               {([
                 ["productionMinutesAgo", t("settings.productionOffset")],

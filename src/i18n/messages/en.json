@@ -57,7 +57,7 @@
     },
     "overview": {
       "title": "Electronic production control program",
-      "lead": "Upload a ready-made program or build it section by section below — we mark what is already filled in.",
+      "lead": "Upload a ready programme or build it section by section",
       "progress": "{done} of {total} blocks completed",
       "fillForYou": "We'll fill it in for you",
       "mapTitle": "Program sections",
@@ -110,7 +110,7 @@
       },
       "procedures": {
         "hint": "Your standard operating procedures (SOPs)",
-        "lead": "Upload your standard procedures: receiving, storage, washing, cleaning. Inspectors review them together with the program."
+        "lead": "Receiving, storage, washing, cleaning — inspected together with the programme"
       },
       "orders": {
         "hint": "Orders on appointments and document approval"
@@ -120,7 +120,7 @@
       },
       "storage": {
         "hint": "Contracts, certificates and other files",
-        "lead": "Everything to keep at hand for an inspection: contracts, certificates, declarations, equipment passports."
+        "lead": "Contracts, certificates, declarations, equipment passports"
       },
       "floor-plans": {
         "hint": "Room layout and separated flows"
@@ -146,11 +146,11 @@
       },
       "package": {
         "hint": "Template orders to print and your own documents",
-        "lead": "The template pack contains orders with your organisation’s details: print them and fill them in. Below are your own documents: upload the ones you already have."
+        "lead": "Standard orders with your details, plus your own documents"
       }
     },
     "products": {
-      "lead": "Describe the products: composition, storage, shelf life and safety indicators. This is the second HACCP step.",
+      "lead": "Composition, storage, shelf life and safety indicators",
       "add": "Add product",
       "emptyTitle": "No products yet",
       "emptyHint": "Start with the dishes you cook most often.",
@@ -189,7 +189,7 @@
       "notFound": "Nothing found"
     },
     "hazards": {
-      "lead": "For each step, note what could harm the guest and assess the risk. A risk of {threshold} or more makes the hazard significant: it needs a CCP or an OPRP.",
+      "lead": "Rate the risk at each step. From {threshold} a CCP or OPRP is needed.",
       "add": "Add hazard",
       "fillTypical": "Fill with typical ones",
       "filled": "Hazards added: {count}",
@@ -326,7 +326,7 @@
       "createFailed": "Could not create the diagram"
     },
     "floorPlans": {
-      "lead": "Draw rooms and flows — raw materials, finished products, waste, staff, dishes — so it is clear they do not cross.",
+      "lead": "Rooms and flows — to show they don’t cross",
       "new": "New plan",
       "name": "Name",
       "namePlaceholder": "For example, Main kitchen",
@@ -347,7 +347,7 @@
       "offline": "No connection to the server"
     },
     "team": {
-      "lead": "Who is responsible for the HACCP system. The team leader signs documents and chairs meetings.",
+      "lead": "Who is responsible for the HACCP system",
       "add": "Add to team",
       "noLeader": "Appoint a team leader — without one the order and regulation cannot be issued.",
       "emptyTitle": "No one in the team yet",
@@ -381,7 +381,7 @@
       "saved": "Saved"
     },
     "policy": {
-      "lead": "The policy is management's promise to produce safe food. Hang the QR sheet in the workshop: staff can read it on their phones.",
+      "lead": "Management’s commitment to safe products",
       "text": "Policy text",
       "approvedBy": "Approved by",
       "approvedAt": "Approval date",
@@ -410,7 +410,7 @@
       "toPolicyText": "Go to the text"
     },
     "controlPoints": {
-      "lead": "Answer 4 questions for each significant hazard — the system will suggest whether a critical control point is needed. For a CCP, set limits, monitoring and a responsible person.",
+      "lead": "Answer 4 questions per significant hazard — we’ll tell you if a CCP is needed",
       "needDecision": "Decision needed",
       "runTree": "Run the decision tree",
       "noHazards": "First mark hazards in the Hazard analysis",
@@ -515,7 +515,7 @@
       "date": "date"
     },
     "audit": {
-      "lead": "The audit checks that the HACCP system works: the yearly plan, audit protocols, the report and actions on findings.",
+      "lead": "Annual plan, reports, findings and follow-up actions",
       "journalsTitle": "Audit logs",
       "lastDoc": "Latest document: {date}",
       "noDocs": "No documents",
@@ -575,7 +575,7 @@
       "done": "Done"
     },
     "lab": {
-      "lead": "What the laboratory checks and how often. The system calculates the next date itself and highlights overdue items.",
+      "lead": "What the lab checks and how often",
       "plan": "Research plan",
       "add": "Add research",
       "fillTypical": "Fill with typical plan",
@@ -628,7 +628,7 @@
       "done": "Done"
     },
     "posters": {
-      "lead": "Posters for workshops and restrooms in your brand style: a frame in your colour, logo on the left, website on the right. Print them and hang them in a visible place.",
+      "lead": "Posters for work areas and washrooms in your style",
       "printAll": "Print all",
       "print": "Print",
       "open": "Open",
@@ -645,7 +645,7 @@
       "selectPoster": "Select poster “{title}”",
       "pointTitle": "Which location to print for",
       "pointSingle": "Printing for this location",
-      "pointHint": "The location name is printed at the top of every sheet, and the “Daily check” QR opens this location’s journal.",
+      "pointHint": "The site name goes on top; the QR opens its journal",
       "pointHeaderHint": "To print for another location, switch it in the top bar.",
       "pointUntitled": "Untitled location",
       "pointsEmptyTitle": "Add a location",
@@ -653,7 +653,7 @@
       "pointsAdd": "Add a location"
     },
     "norms": {
-      "lead": "Mark the documents your establishment works under. They will go into the production control program.",
+      "lead": "Tick the documents your business works by",
       "sanpinLink": "SanPiN standards reference",
       "catalog": "Main documents",
       "recommended": "recommended",
@@ -769,7 +769,7 @@
     },
     "starter": {
       "cardTitle": "Fill the programme with typical data.",
-      "cardLead": "Choose the facility's field — typical plans and regulations appear at once, then adjust them.",
+      "cardLead": "Pick the business type — standard plans and norms appear at once",
       "choose": "Fill with typical data",
       "dialogTitle": "Typical data by field",
       "dialogLead": "Only empty sections are filled — everything can be changed later.",
@@ -835,17 +835,17 @@
       "lockedText": "Orders with your organisation’s details, ready to print. Switch to Premium or order documents made for your site.",
       "upgrade": "Switch to Premium",
       "ownTitle": "Your own documents",
-      "ownLead": "Upload your own orders, instructions and regulations — they are stored here and count towards your plan’s storage.",
+      "ownLead": "Your own orders, instructions and regulations",
       "storageClosed": "Document uploads come with Standard (10 MB), Premium and VIP (1 GB). Files uploaded earlier can still be opened and deleted."
     },
     "individual": {
       "title": "A production control programme for your site",
-      "text": "A specialist will develop the production control programme and document pack for your site: control points, lab testing, responsible staff. Available with any plan.",
+      "text": "A specialist will develop the programme and documents for your production. Any plan.",
       "cta": "Order a custom programme"
     },
     "structure": {
       "title": "Program structure",
-      "lead": "Based on HACCP principles. Tap an item to upload, fill in or check its data.",
+      "lead": "Click an item to fill it in",
       "progress": "{done} of {total} items filled",
       "documentsTitle": "Program documents",
       "sections": {
@@ -862,23 +862,23 @@
       "items": {
         "1-1": {
           "title": "General information about the organization",
-          "source": "Taken from the organization details. Items required for the program are marked with an asterisk; you can skip them with a warning."
+          "source": "From the organisation details"
         },
         "1-2": {
           "title": "Organizational structure",
-          "source": "Diagram builder: positions and reporting lines. You can build a draft from staff positions."
+          "source": "Positions and reporting lines"
         },
         "1-3": {
           "title": "List of main contracts",
-          "source": "Contract name, counterparty, number and date in our template, contract and act files, visibility for inspectors."
+          "source": "Contracts, certificates and their details"
         },
         "1-4": {
           "title": "General information about the production",
-          "source": "Taken from the site details. Items required for the program are marked with an asterisk; you can skip them with a warning."
+          "source": "From the site details"
         },
         "1-5": {
           "title": "List of manufactured products",
-          "source": "Product descriptions; finished products and semi-finished products can be loaded from the product directory."
+          "source": "Can be loaded from the product directory"
         },
         "1-6": {
           "title": "Production floor plan and flow organization",
@@ -902,11 +902,11 @@
         },
         "2-2": {
           "title": "HACCP team regulation",
-          "source": "Ready-made template with the team members: edit, extend, write your own text or upload a scan."
+          "source": "Ready template — edit it or upload a scan"
         },
         "2-3": {
           "title": "HACCP team leader regulation",
-          "source": "Ready-made template: edit, extend, write your own text or upload a scan."
+          "source": "Ready template — edit it or upload a scan"
         },
         "2-4": {
           "title": "Order on the HACCP team",
@@ -934,7 +934,7 @@
         },
         "2-10": {
           "title": "Determination of CCPs and OPRP points",
-          "source": "Decision tree for significant hazards, limits, responsible staff and hazard control plan worksheets."
+          "source": "Decision tree, limits and worksheets"
         },
         "3-1": {
           "title": "Measures to prevent acute intestinal infections and food poisoning",
@@ -1123,12 +1123,12 @@
         "resetTemplate": "Restore template",
         "scanOrText": "Instead of the text, you can upload a scan of your own document below — then the scan goes into the program.",
         "revisionTitle": "Document revision",
-        "revisionHint": "An approved revision gets a programme number. If even one word changes, the programme asks to approve a new revision with a new number.",
+        "revisionHint": "Change a single word and a new revision is needed",
         "draft": "Draft from the AI assistant",
         "drafting": "Preparing a draft…",
         "draftReady": "The draft is ready — check it and press “Save”",
         "draftFailed": "Could not get a draft. Please try again",
-        "draftHint": "The AI assistant drafts the text from the cabinet data: HACCP team, products, hazards, journals. The draft is not saved automatically — check it and press “Save”.",
+        "draftHint": "The AI assistant drafts it from your workspace data",
         "draftReplaceTitle": "Replace the text with a draft?",
         "draftReplaceBody": "The text in the field will be replaced with the AI assistant draft. The saved text does not change until you press “Save”.",
         "draftReplaceConfirm": "Replace",
@@ -1319,7 +1319,7 @@
       "removeBody": "The diagram will be deleted permanently.",
       "createFailed": "Could not create the diagram",
       "fromPositions": "Build from positions",
-      "editorHint": "The diagram is drawn on a separate page: blocks are positions, arrows are reporting lines. Check the draft built from positions: the system has no reporting lines."
+      "editorHint": "Blocks are positions, arrows are reporting lines. Check the draft built from positions."
     },
     "revisions": {
       "approved": "Revision {code} of {date}",
@@ -1340,7 +1340,7 @@
       "emptyHint": "Save the text or upload a scan to approve a revision",
       "registerLink": "Revision register",
       "registerTitle": "Document revision register",
-      "registerLead": "Each approved revision gets the next number. If even one word changes, the document is approved again and the new revision gets a new number; earlier ones stay here.",
+      "registerLead": "Approved revisions of the programme documents",
       "colNumber": "Number",
       "colDocument": "Document",
       "colDate": "Approved",
@@ -1375,7 +1375,7 @@
       "createInstruction": "Write an instruction",
       "createProcedure": "Write a procedure",
       "editTitle": "Edit document",
-      "hint": "The document is printed in the programme with our header and numbering. After an approved document is edited, the programme will ask about a new revision.",
+      "hint": "Printed in the programme with our header and numbering",
       "loading": "Loading…",
       "loadFailed": "Could not load documents",
       "titleLabel": "Title",
@@ -1982,15 +1982,15 @@
       },
       "todayBanner": {
         "detailRows": "({today, number} of {expected, number} rows)",
-        "filledStrictBody": "{name} has been filled in for today{detail}. You can open the document to check or add to the records.",
-        "filledBody": "{name} has already been filled in for today{detail}. You can open the document to continue.",
+        "filledStrictBody": "{name} is filled in for today{detail}",
+        "filledBody": "{name} was filled in today{detail}",
         "filledStrictTitle": "The journal is filled in for today",
         "filledTitle": "The journal has already been filled in today",
         "openToday": "Open today",
-        "noActiveDocument": "There is no active document for today. Create a new document with the “Create document” button above and start filling in the records for the current day.",
-        "partialFill": "{today, number} of {expected, number} rows have been filled in for today. Click “Go to today” and enter the rest — this block will disappear once all mandatory rows are done.",
-        "strictEmpty": "There are no records for today yet. Click “Go to today” and mark each employee — the block will disappear once all mandatory rows are done.",
-        "notStarted": "The journal has not been started for today. Open the document and enter the first record for today — the block will disappear after any row with today’s date.",
+        "noActiveDocument": "No document for today — create one with the button above",
+        "partialFill": "{today, number} of {expected, number} rows filled",
+        "strictEmpty": "Mark every employee",
+        "notStarted": "Add the first entry for today",
         "pendingStrictTitle": "Needs to be filled in today",
         "pendingTitle": "Not started yet",
         "goToday": "Go to today"
@@ -1998,9 +1998,9 @@
       "traceabilityPage": {
         "eyebrow": "HACCP · Batch traceability",
         "batch": "Batch",
-        "emptyDescription": "No records found for this key. Check the key is correct or open it from a goods receiving record.",
-        "foundDescription": "Found {count, plural, one {# record} other {# records}} for this batch. Chronological order — from receiving to dispatch.",
-        "emptyBox": "No records with the batch key “{key}” were found in the current organisation. Check the key is correct or open it from a receiving record in the “Goods receiving and incoming inspection” journal.",
+        "emptyDescription": "No records with this key",
+        "foundDescription": "Found {count, plural, one {# record} other {# records}} — from receiving to dispatch",
+        "emptyBox": "No records with the key “{key}”. Open the batch from a receiving record.",
         "step": "Step {number, number}",
         "supplier": "· supplier: {name}",
         "noteTitle": "HACCP traceability:",
@@ -2031,7 +2031,7 @@
         "loadFailed": "Could not load employees",
         "saveFailed": "Could not save",
         "title": "Who keeps the quality inspection log",
-        "description": "Specify the committee and the person responsible for keeping the log, or decline the setup. Assigning does not add signatures to entries.",
+        "description": "The committee and the person responsible for the log",
         "responsible": "Person responsible for the log",
         "notSelected": "Not selected",
         "commission": "Food inspection committee",
@@ -4904,7 +4904,7 @@
       "objectStickersHint": "A QR sticker for each object in this document: employees scan the object and enter a reading",
       "qrFill": "QR: fill in from a phone",
       "qrFillHint": "QR poster: employees scan it and add an entry to this document without signing in",
-      "qrExplanation": "The main log QR code is permanent — display it in the work area. This document’s QR code links only to this document and stops working after its last day. Set who can add entries in Settings → Log access restrictions.",
+      "qrExplanation": "Display the main QR in the work area — it always works. The document QR works until the document’s last day.",
       "mainQr": "Main log QR code — permanent",
       "documentQr": "This document’s QR code",
       "qrAfterSave": "The QR code will appear after saving the document.",
@@ -4966,7 +4966,7 @@
       "documents": "Journal documents",
       "create": "Create document",
       "emptyTitle": "No document has been created yet",
-      "emptyDescription": "Use the button below to create a document and start keeping journal entries for Rospotrebnadzor inspections.",
+      "emptyDescription": "Create a document to start making entries",
       "actionsTitle": "Document actions",
       "settings": "Settings",
       "print": "Print",
@@ -6072,7 +6072,7 @@
       "newPersonHint": "The person will appear in the “Commission” column on the employees page, with access to finished food inspection. They can sign dishes using this PIN and the journal QR code.",
       "add": "Add to commission",
       "cancel": "Cancel",
-      "nextHint": "Next, the member scans the journal QR code, selects their name and enters their PIN to see today’s dishes. They assess and sign; the signature appears in the “Food inspection commission signature” column.",
+      "nextHint": "The member scans the journal QR, enters their PIN and signs today’s dishes.",
       "close": "Close",
       "save": "Save members",
       "network": "Cannot connect to the server. Please try again.",
@@ -6082,7 +6082,7 @@
       "titlePerishable": "Perishable food inspection commission",
       "descriptionPerishable": "Commission members sign each received item. An inspection record stays open until at least one member signs it, and the log cannot be closed.",
       "newPersonHintPerishable": "The person will appear in the “Commission” column on the employees page, with access to the food inspection logs. They can sign records using this PIN and the journal QR code.",
-      "nextHintPerishable": "Next, the member scans the journal QR code, selects their name and enters their PIN to see today’s items. They assess and sign; the signature appears in the document — next to the record and in the “Inspection commission signatures” block below the table."
+      "nextHintPerishable": "The member scans the journal QR, enters their PIN and signs today’s items."
     },
     "orgDirectory": {
       "failed": "Could not load the directory",
@@ -6132,7 +6132,7 @@
       "linked": "Connected: shared directory with “{name}”",
       "connect": "Connect shared directory",
       "pointCode": "Journal code of “{point}”:",
-      "pointDescription": "Each site has its own journal code. Give it to the master cabinet operator — they will connect exactly this site under Connected sites. Other sites are connected with their own codes."
+      "pointDescription": "Each site has its own code. Give it to the master cabinet operator."
     },
     "columnSettings": {
       "show": "Show column “{label}”",
@@ -6161,7 +6161,7 @@
       "addOption": "Add value",
       "title": "Table columns",
       "applyAll": "Apply to all documents…",
-      "description": "Any column can be hidden from the table and printout while retaining its data. Enable it again to show the data. Use the pencil to rename and arrows to reorder columns in the table and printout.",
+      "description": "A hidden column is not printed; its data is kept",
       "custom": "Custom column",
       "addCustom": "Add custom column",
       "scopeActive": "New and active documents",
@@ -6265,7 +6265,7 @@
       "printTitle": "Filling instructions: {journal}",
       "instruction": "Instructions",
       "eyebrow": "Instructions for a new employee",
-      "description": "Read this page before filling in the journal. It explains the steps, what to bring, common mistakes and SanPiN requirements.",
+      "description": "Read before filling in the journal",
       "print": "Print",
       "fill": "Start filling →",
       "organizationFallback": "Organization",
@@ -8672,7 +8672,7 @@
       "datesLeavePlan": "Will be removed from the plan: {dates}",
       "allMonths": "All months",
       "rowNotLinkedTitle": "This row is not linked to a room",
-      "rowNotLinkedDescription": "Room schedules and tasks in the software module work only with rooms in the directory. Select the row name and link it to a room.",
+      "rowNotLinkedDescription": "No schedule or tasks until linked — click the row name",
       "noRoomScheduleTitle": "This room has no deep-cleaning schedule",
       "noRoomScheduleDescription": "Select the room name and choose its deep-cleaning days to fill the plan.",
       "roomScheduleLabel": "Room schedule:",
@@ -8752,7 +8752,7 @@
       "roomNameLabel": "Room name",
       "linkRoomFromDirectory": "Link to a room in the directory",
       "doNotLinkRoom": "— do not link —",
-      "linkRoomHelp": "After linking, the room name, assignees, and deep-cleaning schedule come from its room record (Settings → Rooms); planned dates are preserved.",
+      "linkRoomHelp": "Name, assignees and schedule will come from the room details",
       "settingsTitle": "Document settings",
       "settingsDescriptionDetailed": "Document title, date, year, and the approver and responsible person roles.",
       "documentTitleLabel": "Document title",
@@ -8799,7 +8799,7 @@
       "completedSummary": "{count, number} completed",
       "overdueCount": "{count, number} overdue",
       "emptyRoomsTitle": "No rooms have been added yet",
-      "emptyRoomsDescription": "The journal currently has its starter rows. Add your actual rooms to build the matrix, cleaning steps, and cleaner tasks from them.",
+      "emptyRoomsDescription": "Add your rooms to build the schedule and tasks",
       "addRooms": "Add rooms",
       "daySignatures": "Cleaning and inspection sign-offs",
       "previousDay": "Previous day",
@@ -8830,7 +8830,7 @@
       "controlResponsiblePosition": "Position responsible for inspection",
       "selectCapitalized": "— Select —",
       "skipDaysOff": "Skip days off",
-      "skipDaysOffDescription": "Automatic filling skips weekends and public holidays in the production calendar, leaving “{mark}” on those days.",
+      "skipDaysOffDescription": "Weekends and holidays keep “{mark}”",
       "pipelineTitle": "Subtasks in the software module",
       "pipelineDescription": "How employees see the checklist in a cleaning task:",
       "currentCleaningSteps": "Shared list — routine cleaning",
@@ -8843,7 +8843,7 @@
       "addGeneralCleaningStep": "Add general-cleaning step",
       "noGeneralSteps": "There are no steps yet. Add the first one below.",
       "saveDefaultTemplate": "Save as the default template",
-      "templateDescription": "Save the current journal settings as a template for the organization. New cleaning journals will be created with these rooms, assignees, steps, and cleaning days.",
+      "templateDescription": "New cleaning journals will be created with these rooms, assignees and steps.",
       "roomsSummary": "• Rooms:",
       "cleanersSummary": "• Cleaning assignees:",
       "controllersSummary": "• Inspection assignees:",
@@ -8866,23 +8866,23 @@
       "balancedModeDescription": "Rooms are split evenly between cleaners. Cleaner 1 handles rooms 0, 2, 4…; cleaner 2 handles 1, 3, 5…",
       "cleaningMode": "Cleaning mode",
       "raceTasks": "Race tasks by room",
-      "raceTasksDescription": "When enabled, each selected room becomes a separate task for every working day. Any selected cleaner can complete it; the first to claim it keeps it, and it disappears for the others. The inspector receives one summary task at the end of the day.",
+      "raceTasksDescription": "Each room is a separate task; the first cleaner takes it",
       "enable": "Enable",
       "roomsForTasks": "Rooms to assign tasks for",
       "noRoomsInBuilding": "There are no rooms in this building. Add rooms in Building settings.",
       "cleanerPool": "Cleaner pool — for rooms without assignees",
-      "cleanerPoolHint": "Rooms with assigned cleaners (in their room details) go to those cleaners. Other rooms go to this pool:",
+      "cleanerPoolHint": "Rooms without their own cleaners go",
       "firstClaimant": "to everyone; the first to claim gets it.",
       "evenly": "split evenly between cleaners.",
       "roomResponsibilities": "Who cleans and checks",
-      "roomResponsibilitiesHint": "Assignments are stored in the room details and shared across documents. Select “Edit” to change cleaners or inspectors.",
+      "roomResponsibilitiesHint": "Shared across documents — edit them in the room details",
       "roomLabel": "Room",
       "journalControllerLabel": "Checked by the journal inspector",
       "openRoomCardLabel": "Open room details",
       "roomOnlyInDocument": "This room exists only in the document. Add it in Settings → Rooms.",
       "pageSuffix": "— on page",
       "roomInspectorsHint": ". Room-specific inspectors are set in its details (select “Edit” above).",
-      "classicPairMode": "Off — the journal uses the standard mode: one cleaner-inspector task pair per day.",
+      "classicPairMode": "Off: one cleaner-inspector task pair per day",
       "savingSettings": "Saving…",
       "saveSettings": "Save settings",
       "dayOffLegend": "Day off or public holiday",
@@ -8898,11 +8898,11 @@
       "refreshTasksFlowTitle": "Sync completion marks from the software module",
       "cleanupTasksMenuLabel": "Delete completed tasks from the software module (journal history will remain)",
       "pipelinePerRoomTitle": "By room (recommended)",
-      "pipelinePerRoomDescription": "Each room has its own steps. For example, cleaning an office can differ from cleaning a storeroom or washroom.",
+      "pipelinePerRoomDescription": "For example, an office and a storeroom differ",
       "pipelineGlobalTitle": "Shared list",
-      "pipelineGlobalDescription": "One set of steps for every room. Best when the procedure is simple and consistent.",
+      "pipelineGlobalDescription": "One list for every room",
       "pipelineLegacyTitle": "No checklist (old format)",
-      "pipelineLegacyDescription": "Employees simply mark the task as done, without steps. No subtasks will be created in the software module.",
+      "pipelineLegacyDescription": "Just “done”, no steps",
       "roomsCount": "Rooms: {count, number}",
       "cleanersCountValue": "Cleaners: {count, number}",
       "zonesCountValue": "Assigned zones: {count, number}",
@@ -8924,13 +8924,14 @@
       "emptyListDescription": "Create a document to start keeping the cleaning journal and recording completed work.",
       "cleanupEmpty": "No completed tasks: the software module archive is empty",
       "cleanupResult": "Completed tasks deleted: {deleted, number}. Already absent from the software module: {missing, number}.",
-      "defaultManagerRole": "Manager"
+      "defaultManagerRole": "Manager",
+      "raceTasksOnToast": "The task goes to all selected cleaners and disappears for the others once someone takes it. The inspector gets a summary task at the end of the day."
     }
   },
   "staffManagement": {
     "pinRequests": {
       "title": "PIN requests · {count, plural, one {# request} other {# requests}}",
-      "description": "The employee created a PIN on the QR page. Once approved, they can use it to confirm entries.",
+      "description": "PINs created by employees on the QR page",
       "saveFailed": "Could not save the decision",
       "approvedToast": "PIN enabled for “{name}”",
       "rejectedToast": "Request from “{name}” rejected",
@@ -8986,7 +8987,7 @@
       "pinPlaceholder": "Your PIN, 4–6 digits",
       "change": "Change",
       "setAction": "Set",
-      "help": "Use one code everywhere: QR journal forms, refrigerators and rooms, and the shared tablet. When a PIN is set, the employee enters it with each entry."
+      "help": "One code for all QR forms and the shared tablet"
     },
     "telegram": {
       "copyFailed": "Could not copy the link",
@@ -9024,7 +9025,7 @@
       "eyebrow": "QR invitation",
       "title": "Invite an employee with a QR code",
       "close": "Close",
-      "description": "The employee enters their name and phone number, chooses a position, and creates a password. After registration, they get access to the logs for their position and, if configured, to tasks in the software module.",
+      "description": "The employee enters name, phone, position and password — and gets access for that position.",
       "positionHintLabel": "Suggested position (optional)",
       "anyPosition": "— any position; they will choose —",
       "labelField": "Label (for administrators, optional)",
@@ -9054,7 +9055,7 @@
       "primaryOn": "“{name}” is the main location. Click to unset",
       "makePrimary": "Make “{name}” the main location: location-based notifications will use it",
       "temporaryTitle": "“{name}” is a temporary location (substitution)",
-      "allEverywhereHint": "“All locations” — the employee appears in the journals and QR codes of every location. Select their location to keep them to it."
+      "allEverywhereHint": "Visible at every location. Pick one to limit it"
     },
     "weekdays": {
       "groupLabel": "Days off each week",
@@ -9087,7 +9088,7 @@
       "printScan": "Scan the QR code with your phone camera and enter your PIN.",
       "printKeepSafe": "Keep this card with you. If it is lost, request a new QR code; this one will stop working.",
       "heading": "Personal QR sign-in",
-      "description": "The employee scans their QR code and enters a PIN to sign in. If they are allowed to change settings, all settings will be available to them.",
+      "description": "Sign in with the QR code and PIN",
       "pinRequired": "Set a PIN above or below first; QR sign-in will not work without one.",
       "activeSince": "Active since {date}",
       "lastUsed": "last sign-in {date}",
@@ -9168,7 +9169,7 @@
       "createFailed": "Could not create the sign-in link",
       "networkError": "Could not connect to the server",
       "title": "Sign in without Telegram",
-      "description": "Show this code to the employee: {name} scans it with a phone camera, creates a password, and signs in. After that, they can sign in with their phone number and password; Telegram is not needed.",
+      "description": "{name} scans the code, creates a password and signs in. Afterwards — phone and password.",
       "employee": "the employee",
       "qrAlt": "Sign-in QR code",
       "linkInfo": "The login will be the phone number <phone>{phoneNumber}</phone>. This single-use link is valid until {expiration}.",
@@ -9210,7 +9211,7 @@
       "cancel": "Cancel",
       "save": "Save",
       "presetTitle": "Permission set",
-      "presetHint": "What the employee sees and can do on the website and in Telegram. By default the set follows the position.",
+      "presetHint": "Follows the position by default",
       "presetAuto": "By position (automatic)",
       "presetAutoHint": "Currently: {preset}",
       "presetGives": "What “{preset}” includes",
@@ -9218,7 +9219,7 @@
       "presetCurrent": "current",
       "presetSelfLocked": "You can't remove “Administrator” from yourself: you would lose access to settings. Ask another administrator.",
       "presetReadOnly": "Only an administrator can change the permission set.",
-      "presetControlGroupNote": "The control group does not fill in journals: it reviews, confirms completed work and assigns tasks to people in its “Hierarchy”.",
+      "presetControlGroupNote": "Doesn’t fill in journals — reviews and assigns tasks within its “Hierarchy”",
       "presetSaveFailed": "Couldn't save the permission set",
       "presets": {
         "admin": {
@@ -9231,7 +9232,7 @@
         },
         "control_group": {
           "label": "Control group",
-          "description": "Sees journals, staff, reports and statistics, confirms completed work and assigns tasks. Does not fill anything in."
+          "description": "Reviews and assigns tasks, fills in nothing"
         },
         "cook": {
           "label": "Employee",
@@ -9286,7 +9287,7 @@
       "successSummary": "Added: {created, number}; skipped because already added: {skipped, number}",
       "genericError": "Error",
       "title": "Add multiple employees",
-      "description": "Fill in the rows or paste data from Excel: copy the “Name”, “Position”, and “Phone” columns, then press Ctrl+V. Employees inherit journal access from their position.",
+      "description": "You can paste “Name”, “Position”, “Phone” columns from Excel (Ctrl+V)",
       "close": "Close",
       "nameColumn": "Name",
       "positionColumn": "Position",
@@ -9342,7 +9343,7 @@
       "bulkAdd": "Add several",
       "inviteQr": "Invite with QR",
       "instruction": "Instructions",
-      "staffWithoutBuilding": "{count, number} {count, plural, one {employee without a location receives tasks} other {employees without a location receive tasks}} for journals at every location. Set locations with the chips in each employee card.",
+      "staffWithoutBuilding": "{count, number} {count, plural, one {employee without a location gets} other {employees without a location get}} tasks from every location",
       "selectedCount": "Selected: {count, number}",
       "positionMissing": "No position is selected for this employee",
       "edit": "Edit",
@@ -9381,11 +9382,11 @@
       "self": "(you)",
       "editEmployee": "Edit employee",
       "addEmployee": "Add",
-      "guideNewMonth": "<strong>The schedule builds itself</strong> for any month from weekly days off (the Mon–Sun chips). Tap a cell to mark a cover shift or day off.",
+      "guideNewMonth": "<strong>The schedule builds itself</strong> from the Mon–Sun days off. Tap a cell for an exception.",
       "guideWorkOff": "No tasks or reminders on a day off; the Hygiene Log shows <strong>“O”</strong>.",
-      "guideVacation": "During vacation, the Hygiene Log marks the day with <strong>“Vac”</strong>. Telegram reminders are paused, and the employee is not counted as having missed tasks on the monitoring panel. Tasks remain available in the app in case they cover a shift.",
-      "guideSickLeave": "During sick leave, the Hygiene Log marks the day with <strong>“S/L”</strong>. Telegram reminders are paused, and the employee is not counted as having missed tasks on the monitoring panel. Tasks remain available in the app if they return early.",
-      "guideDismissal": "On the specified date, the employee moves to the <strong>“Archive”</strong>: they disappear from assignee lists and new journal rows and stop receiving tasks and reminders. Existing records remain available for inspection.",
+      "guideVacation": "The Hygiene Log shows <strong>“Vac”</strong>; no reminders.",
+      "guideSickLeave": "The Hygiene Log shows <strong>“S/L”</strong>; no reminders.",
+      "guideDismissal": "On this date the employee moves to the <strong>“Archive”</strong>; records are kept.",
       "iikoFill": "Days off from iiko",
       "noEmployeesForSchedule": "Add at least one employee to manage the schedule.",
       "employeeName": "Employee name",
@@ -9398,7 +9399,7 @@
       "checkedDay": "O",
       "weekendLegend": "Saturday and Sunday are pale yellow.",
       "tapInstructions": "A faint check is a weekly day off; tapping it makes an exception for that day.",
-      "mouseInstructions": "Click and drag to mark several days. Shift-click selects a rectangle. A translucent check means the weekly rule marks a day off; clicking it creates an exception for that date.",
+      "mouseInstructions": "Drag to mark several days. A faint check is a weekly day off.",
       "vacationDates": "Vacation dates",
       "sickLeaveDates": "Sick-leave dates",
       "dismissalDate": "Dismissal date",
@@ -9464,7 +9465,7 @@
         "employeeCreateFailed": "Could not add the employee",
         "employeeAdded": "Employee added",
         "addedToStaff": "<b>{name}</b> has been added to the staff.",
-        "accessInstructions": "Set up a password login, Telegram sign-in, and journal access in the employee card using “Add access” in the edit window.",
+        "accessInstructions": "Login, Telegram and journal access are in the employee card",
         "done": "Done",
         "addPositionTitle": "Add a position · {category}",
         "positionPlaceholder": "For example, “Administrator”",
@@ -9479,29 +9480,29 @@
         "phonePlaceholder": "Phone · optional",
         "daysOff": "Days off",
         "daysOffAria": "Weekly days off for the new employee",
-        "daysOffHint": "Used for journals and tasks: days off are marked “Off” and tasks are not assigned. Change a day in the schedule.",
+        "daysOffHint": "Days off show “Off” in the journal, no tasks",
         "buildingsAria": "Locations for the new employee",
         "keepsCoreLabel": "Responsible for maintaining core journals",
-        "keepsCoreHint": "From the hygiene journal QR page, opens Staff clearance to see who checked in today and mark them cleared or suspended. At the end of the day, receives a list of people who did not check in and anyone who was not cleared.",
+        "keepsCoreHint": "Clears staff for the shift via the hygiene journal QR",
         "manageSettingsLabel": "Can change settings",
-        "manageSettingsHint": "Opens a manager-level workspace with settings, journals, staff, QR posters, and equipment. Useful for a production manager. Sign in with a personal QR code and PIN issued in the employee card after adding them."
+        "manageSettingsHint": "Manager-level workspace; sign in with a personal QR and PIN"
       },
       "editEmployee": {
         "nameRequired": "Enter a full name (at least 2 characters)",
         "title": "Edit: {name}",
         "namePlaceholder": "Full name",
         "phonePlaceholder": "Phone · {format}",
-        "phoneHint": "Changing the number starts automatic matching by phone in the software module. Leave the field blank to remove the number.",
+        "phoneHint": "Leave empty to remove the number",
         "daysOffAria": "Days off: {name}",
         "daysOffHint": "Applies every week. You can change an individual day in the days-off schedule.",
         "buildingsAria": "Locations: {name}",
         "dishesLabel": "Can edit the dish list in tasting journals",
-        "dishesHint": "Using the journal QR page, can view all dishes for today and correct their names and times. Usually a production manager.",
-        "manageSettingsHint": "Opens a manager-level workspace with settings, journals, staff, QR posters, and equipment. Sign in with a personal QR code and PIN. The employee must sign in again after this permission changes.",
+        "dishesHint": "Corrects dish names and times via the journal QR",
+        "manageSettingsHint": "Manager-level workspace; sign in with a personal QR and PIN",
         "pinSaveFailed": "Could not save the PIN",
         "addAccess": "Add access",
         "emailPlaceholder": "Email · ivanova@mail.ru",
-        "emailHint": "Personal email for letters and reports. It is not a sign-in login. Leave empty to remove it.",
+        "emailHint": "For letters and reports, not a login",
         "emailInvalid": "Invalid email format. Example: ivanova@mail.ru"
       },
       "archive": {
@@ -9573,7 +9574,7 @@
       },
       "headcountLabel": "Planned headcount",
       "headcountPlaceholder": "Not set",
-      "headcountHint": "How many people this position needs according to the staffing plan. Leave empty if you don't track it.",
+      "headcountHint": "Per the staffing plan; optional",
       "headcountInvalid": "Headcount must be a whole number from 0 to 999"
     },
     "positionSuggestions": {
@@ -9722,7 +9723,7 @@
       "created": "{name} is covering until {date}",
       "failed": "Could not assign the substitute",
       "sectionTitle": "Temporarily at another location",
-      "sectionHint": "Cover for a sick colleague or help another location: when the period ends, the locations go back to how they were.",
+      "sectionHint": "Everything reverts when the period ends",
       "pointLabel": "Which location",
       "noPoints": "There are no other locations to send this employee to.",
       "unsavedPoints": "Save the changes in “Works at” first — the substitution starts from the saved locations.",
@@ -13681,7 +13682,7 @@
       "signed": "signed",
       "pending": "awaiting signature",
       "signAsMember": "Sign as a commission member",
-      "signHint": "After saving, your assessment and signature appear in the journal, one minute after the inspection time. The dish leaves the queue after every commission member assesses it.",
+      "signHint": "The dish leaves the queue once the whole commission assesses it",
       "memberHint": "Commission members sign each dish themselves using the journal QR code (PIN) or the checkbox in this window.",
       "signatures": "Commission members’ signatures",
       "fullSignatures": "Food inspection commission members’ signatures",
@@ -13749,7 +13750,6 @@
       "documentTitle": "Document title",
       "description": "Table columns and the note below the journal.",
       "timeDefaults": "Times for a new row",
-      "timeDescription": "Times for a new row: preparation is {production, number} min before the window opens; inspection is {rejection, number} min after preparation; release permission is {release, number} min after inspection. You can always adjust the row’s times manually.",
       "productionOffset": "Preparation, minutes ago",
       "rejectionOffset": "Inspection — N minutes after preparation",
       "releaseOffset": "Release permission — N minutes after inspection",
@@ -13771,7 +13771,7 @@
       "title": "Product list",
       "description": "These products will appear in the dropdown when adding a journal row.",
       "empty": "The list is empty. Enter a product name below and press “+”.",
-      "masterHint": "Items marked “Master workspace” are sent by the back office using the directory code. It is easier to update the menu there.",
+      "masterHint": "“Master workspace” items are easier to change in the master workspace",
       "masterItemHint": "This item was sent by the master directory workspace. If deleted here, it will return with the next update.",
       "master": "Master workspace",
       "remove": "Remove product from list",
@@ -16259,7 +16259,7 @@
     },
     "paste": {
       "title": "Add products from pasted list",
-      "description": "Paste product names, one per line. Each line creates a record with the current arrival date and time. For a paper delivery note or label, use photo recognition to add rows with the manufacturer, supplier and expiry details.",
+      "description": "One product per line. For a paper delivery note, use photo recognition.",
       "placeholder": "Milk 3.2%\nCottage cheese 9%\nSour cream 20%",
       "photoResult": "Added to log",
       "count": "Rows to add: {count, number}"
@@ -16278,7 +16278,7 @@
       "master": "Master workspace",
       "masterHint": "This item was sent by the master directory workspace. If you delete it here, it will return with the next distribution.",
       "photoResult": "Added to product list",
-      "photoHint": "Photograph a delivery note or raw-material list. Products, manufacturers and suppliers will be added to their respective lists. Up to 3 photos.",
+      "photoHint": "Delivery note or raw-material list, up to 3 photos",
       "select": "Select list “{name}”",
       "rename": "List name",
       "delete": "Delete “{name}”",
@@ -16328,7 +16328,7 @@
     "commission": {
       "title": "Commission",
       "members": "Inspection commission: {names}",
-      "notSet": "No commission assigned — records close without its signature. Use the “Commission” button to assign members.",
+      "notSet": "No commission — records close without its signature",
       "waiting": "Awaiting commission signature",
       "signedBy": "Signed: {names}",
       "statusLabel": "Commission signature",
@@ -20817,12 +20817,12 @@
       "allResults": "All inspection results",
       "assigned": {
         "title": "Assigned to you",
-        "description": "Checklists to run today. Press “Start inspection” and answer the questions.",
+        "description": "Inspections for today",
         "results": "Results"
       },
       "typical": {
         "title": "Standard checklists",
-        "description": "Six ready-made inspections. Add the ones you need to your organization, then edit them in the builder.",
+        "description": "Six ready-made inspections — add the ones you need",
         "added": "Already added",
         "counts": "Sections: {sections} · questions: {questions} · critical: {critical}",
         "add": "Add to organization",
@@ -20843,7 +20843,7 @@
       "allResultsHint": "Inspection history, scores, violations, PDF and “Accept result”"
     },
     "assignments": {
-      "description": "Who runs the inspection, how often and by what time, and who accepts the result. Reminders go to Telegram.",
+      "description": "Who runs the inspection, how often and by when",
       "new": "Assign checklist",
       "guide": {
         "title": "How assignments work",
@@ -20887,7 +20887,7 @@
         "title": "Assignments",
         "description": "{count, plural, =0 {No assignments yet} one {# assignment} other {# assignments}}",
         "emptyTitle": "No assignments yet",
-        "emptyHint": "Press “Assign checklist”: choose a template, who, how often and by what time — we’ll guide you through the rest.",
+        "emptyHint": "Press “Assign checklist”",
         "emptyNoTemplates": "First add a template in “Templates” — a standard one or your own."
       },
       "confirmDelete": {
@@ -20909,7 +20909,7 @@
           "schedule": "How often and by what time",
           "scheduleHint": "Time is in the organization’s time zone.",
           "verifier": "Who checks",
-          "verifierHint": "Gets a message when the inspection is completed and accepts the result. We recommend a manager or head chef.",
+          "verifierHint": "Accepts the result after the inspection",
           "remind": "Remind in Telegram",
           "remindHint": "One message on the due day to each recipient with a linked Telegram."
         },
@@ -20947,13 +20947,13 @@
           "none": "No reviewer"
         },
         "remindLabel": "Remind recipients in Telegram",
-        "remindExplain": "On the due day at about {time} (2 hours before the deadline) one message with an “Open checklist” button arrives. Nothing is sent once the inspection is done.",
+        "remindExplain": "Around {time} — one message, unless the inspection is done",
         "live": {
           "recipients": "Recipients: {count, plural, one {# person} other {# people}}",
           "first": "First deadline — {date} by {time}.",
           "remind": "The Telegram reminder arrives on {date} at about {time}.",
           "noRemind": "No Telegram reminders.",
-          "chooseTarget": "Choose who to assign — you’ll see how many people get the checklist and when the reminder arrives."
+          "chooseTarget": "Choose who to assign"
         },
         "andMore": "and {count} more",
         "warn": {
@@ -27430,11 +27430,11 @@
       "namePlaceholder": "For example: Hot kitchen",
       "typeLabel": "Type",
       "cleanersTitle": "Who cleans",
-      "cleanersHint": "Tasks for this room go to these employees. If there are several, whoever closes it first. Changes take effect from tomorrow’s tasks or after “Send tasks”.",
+      "cleanersHint": "If several, whoever closes it first",
       "peopleCount": "{count, number} people",
-      "cleanersEmpty": "Nobody is assigned — the room is handed out from the cleaning journal’s shared pool (first come or in turn).",
+      "cleanersEmpty": "Nobody assigned — handed out from the shared pool",
       "verifiersTitle": "Who verifies (optional)",
-      "verifiersHint": "The first in the list receives the verification task in the software module, the others get the evening summary for this room. If empty, the journal controller verifies.",
+      "verifiersHint": "The first one verifies, the others get a summary",
       "verifiersEmpty": "No dedicated verifier is assigned — the journal controller accepts the result.",
       "primaryBadge": "primary",
       "fillerNoun": "room",
@@ -27443,13 +27443,12 @@
       "climateToggle": "Monitor the climate in this room",
       "temperatureLabel": "Temperature (T)",
       "humidityLabel": "Air humidity (AH)",
-      "climateNormsNote": "The norms are shared by all climate documents that include this room. Out-of-range values are highlighted in the journal and in the task form in the software module.",
-      "qrEmptyHint": "Turn on climate monitoring — a QR code will appear that an employee can use to enter this room’s temperature and humidity from a phone.",
+      "climateNormsNote": "Out-of-range values are highlighted in the journal",
+      "qrEmptyHint": "Turn on climate control to get a QR code",
       "cleaningTitle": "Cleaning — products, photos, scope of routine and deep cleaning",
       "detergentLabel": "Cleaning and disinfecting products",
       "detergentPlaceholder": "For example: Chlorhexidine 0.05% + Sanit",
       "requirePhotoTitle": "📸 Require a photo at every step",
-      "requirePhotoHint": "When on, the cleaner cannot press “Done” in the software module without uploading a photo. This turns the entry from a tick-box into real proof for inspections.",
       "currentScopeTitle": "Scope of routine cleaning",
       "currentScopeHint": "A step-by-step checklist — each step becomes a subtask in the software module.",
       "stepsCount": "{count, plural, one {# step} other {# steps}}",
@@ -27460,14 +27459,14 @@
       "weekly": "Every week",
       "monthly": "On dates of the month",
       "currentWeeklyHint": "Cleaning repeats every week on the selected days.",
-      "currentMonthlyHint": "Choose specific days of the month. Suits an irregular schedule — for example “1st and 15th” or “last day of the month”.",
+      "currentMonthlyHint": "For example, the 1st and 15th or the last day",
       "generalScopeTitle": "Scope of deep cleaning (in addition to routine)",
       "generalScopeHint": "A detailed list — what is washed/disinfected on deep-cleaning day.",
       "generalScopePlaceholder": "For example: Dismantle removable parts and rinse",
       "addGeneralStep": "Add a deep cleaning step",
       "generalStepsEmpty": "There are no deep cleaning steps yet — add the first step below.",
       "generalWeeklyHint": "Usually once a week. For example, Saturday only or Monday only.",
-      "generalMonthlyHint": "Handy for a deep clean “once a month on the last day” or on specific dates — pick a date and/or “Last day of the month”.",
+      "generalMonthlyHint": "For example, the last day of the month",
       "cancel": "Cancel",
       "savingNow": "Saving…",
       "save": "Save",
@@ -27481,7 +27480,9 @@
       "minAria": "{label}: minimum",
       "maxAria": "{label}: maximum",
       "verifiersToggle": "Assign own verifiers",
-      "climateOnHint": "After saving, the room appears in this site's temperature and humidity log, and staff can record readings with the QR code below."
+      "climateOnHint": "The room joins the climate log; readings via the QR below",
+      "cleanersFromTomorrow": "New cleaners get tasks from tomorrow or after “Send tasks”",
+      "requirePhotoOnToast": "Cleaners can’t close the task without a photo — proof for inspections"
     },
     "roomDirectoryPickerDialog": {
       "areaNoEquipment": "workshop · no equipment",
@@ -27602,11 +27603,11 @@
       "monthDec": "Dec",
       "loadError": "Loading error",
       "error": "Error",
-      "filledToast": "{count, plural, one {# entry} other {# entries}} filled",
+      "filledToast": "{count, plural, one {# entry} other {# entries}} filled from the nearest filled day",
       "noSourceToast": "Nothing to copy from — the selected journals have no entries earlier than the selected date.",
       "alreadyFilledToast": "All selected cells were already filled.",
       "title": "Catch up on gaps",
-      "description": "A grid of the last 14 days across all daily journals. Red cells are gaps. Select the ones you need and press “Fill” — the system will copy data from the nearest non-empty day.",
+      "description": "Red cells are gaps over the last 14 days",
       "selectAllMissing": "Select all gaps ({count, number})",
       "reset": "Reset",
       "fillSelected": "Fill selected ({count, number})",
@@ -27689,7 +27690,7 @@
     },
     "consultantCard": {
       "title": "Your consultant",
-      "description": "Looks after your journals and helps with setup. Get in touch directly — it is faster than going through general support.",
+      "description": "Helps with journals and setup",
       "noContacts": "The consultant has not provided contact details yet."
     },
     "dashboardFooter": {
@@ -27712,7 +27713,7 @@
       "clearSearch": "Clear search",
       "found": "Found {found, number} of {total, number}",
       "nothingFound": "Nothing found",
-      "nothingFoundHint": "The search covers journal name, description and code — including those disabled for your organisation.",
+      "nothingFoundHint": "Searching by name and code, including disabled ones",
       "paperJournals": "Paper journals",
       "paperHint": "print and fill in by hand",
       "disabled": "Disabled",
@@ -27753,7 +27754,7 @@
       "journalComplaints": "Complaints",
       "loading": "Loading activity…",
       "title": "Working now",
-      "summary": "{active, plural, one {# task} other {# tasks}} in progress · {completed, number} completed today · refreshes every 15 seconds",
+      "summary": "{active, plural, one {# task} other {# tasks}} in progress · {completed, number} completed today",
       "empty": "Nobody has picked up any tasks yet. Staff can open the mini app and start their shift.",
       "inProgress": "In progress ({count, number})",
       "doneToday": "Done today ({count, number})",
@@ -27798,7 +27799,7 @@
     },
     "pausedBanner": {
       "title": "Account paused",
-      "body": "— there have been no entries for over 100 days. Tasks and reminders are stopped. Your entries and settings are preserved.",
+      "body": "— no entries for over 100 days, tasks and reminders are paused. Your data is kept.",
       "resume": "Resume"
     },
     "quickStartCardClient": {
@@ -27820,7 +27821,7 @@
     },
     "staleCapaNag": {
       "title": "Attention: {count, plural, one {# CAPA record has been} other {# CAPA records have been}} open for over a week",
-      "body": "Close nonconformities (CAPA) that have been open for more than 7 days, or hand them over to a colleague. In a sanitary inspection, overdue items are the main red flag: “you do not respond to your own violations”.",
+      "body": "Close them or hand them over — inspectors treat this as the main red flag.",
       "openCapa": "Open CAPA",
       "remindLater": "Remind me later",
       "close": "Close"
@@ -27958,7 +27959,7 @@
           "equipment": "What equipment is there"
         },
         "subtitles": {
-          "points": "Name, address and type of each site: the address is printed in the logs, and the type defines the journal set",
+          "points": "Name, address and type of each site",
           "staff": "Add employees — they get tasks and their names go into the logs",
           "equipment": "Fridges and freezers go into the temperature log"
         },
@@ -27973,7 +27974,7 @@
         "pointAddressLabel": "Location {index} address",
         "addPoint": "Add location",
         "removePoint": "Remove location {index}",
-        "pointsNote": "You can skip this and add locations later in “My company → Locations”. The site type can be changed there too.",
+        "pointsNote": "You can skip and add them later in “My company → Locations”",
         "pointsSaved": "Locations saved",
         "pointExists": "Location “{name}” already exists",
         "pointsFailed": "Could not save the locations",
@@ -27992,7 +27993,7 @@
         "decrease": "Fewer: {name}",
         "increase": "More: {name}",
         "norm": "norm {range}",
-        "equipmentNote": "Nothing is selected — mark only what is really there. You can skip this and add equipment later in “Equipment”.",
+        "equipmentNote": "Mark only what is really there. You can skip this.",
         "equipmentFailed": "Could not add: {items}",
         "equipmentSaved": "Equipment added: {count}",
         "done": "Your workspace is set up — you can fill in the logs",
@@ -28050,10 +28051,10 @@
       },
       "kindHints": {
         "products": "Product directory: name, supplier, storage conditions and shelf life",
-        "staff": "Staff without a login: full name, position and phone; positions come with their journal access. Managers are not transferred",
-        "objects": "Locations with addresses and their rooms, with cleaning schedules and climate norms. The office is not transferred",
+        "staff": "Name, position and phone. Managers excluded",
+        "objects": "Addresses, rooms, cleaning and climate. Office excluded",
         "equipment": "Equipment together with its workshops. Sensor links are not copied",
-        "journals": "Which journals are on and their automation: auto-creation and auto-fill. Location settings and responsible people are not transferred",
+        "journals": "Enabled journals and automation. No responsible people",
         "checklists": "Checklist templates: title and questions. Assignments and sample files are not transferred"
       },
       "offer": {
@@ -28073,7 +28074,7 @@
         "noSiblings": "The account has only one organisation so far. The exchange appears once you add a second one.",
         "modeLegend": "Method",
         "modeLink": "Link through the master cabinet",
-        "modeLinkHint": "Two-way: a change in one organisation appears in the others. The exchange runs daily and on demand.",
+        "modeLinkHint": "Changes reach all organisations daily and on demand",
         "modeTransfer": "Transfer once",
         "modeTransferHint": "Copy selected items from another organisation into this one. No link is kept.",
         "linkOrganizations": "Which organisations",
@@ -28096,7 +28097,7 @@
         "itemsAllExist": "All items are already in “{name}”",
         "itemsNotFound": "Nothing found",
         "itemsCapped": "Showing the first {count}. Refine the search to find the rest.",
-        "limitsNote": "Plan limits apply: staff take seats, locations take locations on the plan. Whatever does not fit is skipped and shown in the result.",
+        "limitsNote": "Anything over the plan limits is skipped and shown in the result",
         "needOrganization": "Select at least one organisation",
         "needList": "Select at least one list",
         "needItems": "Select at least one item",
@@ -28107,7 +28108,7 @@
         "linkFailed": "Could not link the directories",
         "transferFailed": "Could not transfer the data",
         "left": "“{name}” no longer takes part in the directory exchange",
-        "linkCommonNote": "The exchange is shared by all participants: an organisation that already has a list switched on receives it too, even without a tick here. To remove an organisation from the exchange, open this window in it and press “Turn off the exchange”.",
+        "linkCommonNote": "Organisations that already have the list on get it even without a tick. To leave, use “Turn off the exchange” in that organisation.",
         "menuSeparate": "The exchange does not connect the master cabinet’s menu and raw materials — that is done separately, in the “Master cabinet” section.",
         "journalsSame": "Journal settings are already the same as in “{name}”",
         "journalsReplace": "The journal settings of “{source}” will replace the settings of “{name}”. This transfer cannot be undone."
@@ -28127,10 +28128,10 @@
       },
       "card": {
         "title": "Directory exchange",
-        "description": "Goods and dishes, staff, locations, equipment, journals and checklists are shared between the organisations of the account: a change in one appears in the others.",
+        "description": "Shared directories for the account’s organisations",
         "loading": "Loading the exchange status…",
-        "noSiblings": "The exchange appears once the account has a second organisation: its directories can be linked with this one or transferred once.",
-        "notConfigured": "The exchange is not set up. Link the directories with the other organisations of the account or transfer data once.",
+        "noSiblings": "Appears once the account has a second organisation",
+        "notConfigured": "The exchange is not set up",
         "thisOrganization": "this organisation",
         "lastSync": "Last exchange: {date}",
         "neverSynced": "No exchange yet",
@@ -28204,7 +28205,7 @@
           "disconnected": "The exchange with “{name}” is disconnected",
           "disconnectFailed": "Could not disconnect the participant",
           "codeTitle": "Master cabinet code for other companies",
-          "codeHint": "Give this code to a company that wants to exchange directories with you. It sends a request — you receive it by e-mail, and nothing is passed without your approval.",
+          "codeHint": "Give the code to a company — its request comes to your e-mail",
           "codeCopy": "Copy",
           "codeCopied": "Copied",
           "codeGet": "Get the code",
@@ -28216,10 +28217,10 @@
         },
         "kindHints": {
           "products": "Product directory: name, supplier, storage conditions and shelf life",
-          "staff": "Staff without a login: full name and position only. Phone numbers, position journals and managers are not passed",
-          "objects": "Locations with addresses and their rooms, with cleaning schedules and climate norms. The office is not passed",
+          "staff": "Name and position only",
+          "objects": "Addresses, rooms, cleaning and climate. Office excluded",
           "equipment": "Equipment together with its workshops. Sensor links are not passed",
-          "journals": "Which journals are on and their automation: auto-creation and auto-fill. Location settings and responsible people are not passed",
+          "journals": "Enabled journals and automation. No responsible people",
           "checklists": "Checklist templates: title and questions. Assignments and sample files are not passed"
         },
         "page": {
@@ -28296,7 +28297,7 @@
       },
       "transfers": {
         "title": "Recent transfers",
-        "hint": "A transfer can be undone within 7 days. Only what it created and what has not been used or changed since is undone; replaced journal settings are restored if they have not been changed.",
+        "hint": "A transfer can be undone within 7 days",
         "foreignSource": "Another company",
         "count": "{kind}: {count}",
         "undo": "Undo",
@@ -28338,7 +28339,7 @@
         "count": "Skipped: {count}",
         "review": "Review",
         "title": "Skipped records",
-        "description": "The exchange did not add these records to the organizations. Link them to existing records or stop transferring them.",
+        "description": "Link them to existing records or skip them",
         "reasonLimit": "no free places in the plan",
         "reasonConflict": "this name already exists",
         "limitRetry": "The record will be added at the next exchange once the plan has room.",
@@ -28357,7 +28358,7 @@
         "count": "Exchange history for 30 days: {count}",
         "open": "Open",
         "title": "Exchange history",
-        "description": "What the directory exchange created or changed in this organization over 30 days. Undo works only here — the other organizations keep everything as it is.",
+        "description": "What the exchange created or changed here in 30 days",
         "created": "Created",
         "updated": "Changed",
         "fromCabinet": "master cabinet “{name}”",
@@ -28778,7 +28779,7 @@
     "masterAccessDialog": {
       "loadFailed": "Could not load the access list",
       "title": "Access to the cabinet",
-      "description": "Who manages the menu and raw materials. A person invited by email is attached to the cabinet; an existing employee is given access with a single choice. On the plan, a cabinet counts as +1 employee in every connected catering unit.",
+      "description": "Who manages the menu and raw materials. On the plan — +1 employee in every kitchen.",
       "close": "Close",
       "loading": "Loading…",
       "notFound": "The cabinet was not found among your account’s cabinets."
@@ -28786,7 +28787,7 @@
     "masterBrakerageHistory": {
       "loadFailed": "Could not load the history",
       "heading": "Export history",
-      "note": "Previous exports and their versions. Corrections can be saved in the history only or applied to all or selected catering units. Signed and verified entries are preserved.",
+      "note": "Previous exports and their versions",
       "empty": "There are no saved entries yet.",
       "items": "{count, plural, one {# item} other {# items}}",
       "recipients": "Recipients: {names}",
@@ -28799,10 +28800,10 @@
       "connectFailed": "Could not connect the site",
       "connected": "The site is connected. You can now export the directory to it for the selected date.",
       "title": "Connected sites",
-      "description": "You can export dishes for a date to these sites’ journals and send corrections. Each site has its own journal.",
+      "description": "Dishes for a date and corrections are exported here",
       "empty": "There are no connected sites yet.",
       "connectTitle": "Connect a site’s journal",
-      "connectHint": "At the site you need, open the finished products quality-control journal → settings and copy the journal code. Enter it here — only this site will be connected; other sites of the same organization are connected with their own codes. Existing journal entries are preserved; the dishes are exported separately, with a choice of date.",
+      "connectHint": "The code is in the site’s finished-product quality-control journal settings. Each site has its own code.",
       "codeLabel": "Site journal code",
       "find": "Find the site",
       "alreadyConnected": "The site is already connected to this master cabinet.",
@@ -28820,7 +28821,7 @@
     },
     "renameMasterCabinet": {
       "title": "Master cabinet name",
-      "description": "This is how the cabinet is named in the header, in the list of organisations and in emails to staff. The name does not affect the catering units’ journals.",
+      "description": "Shown in the header, organisation list and emails",
       "label": "Name",
       "placeholder": "For example: Schools master cabinet",
       "save": "Save",
@@ -28859,7 +28860,7 @@
       "serverFailed": "Could not reach the server. Check your connection and try again.",
       "added": "Added {rows} to {kitchens}",
       "addedWithFailures": "{text}; failed — {kitchens}",
-      "topHint": "Type in the dishes, or click a cell and press Ctrl+V — from Excel you can paste the name, yield and time at once. If the menu is in a file, use “Upload Excel/CSV”; if it is on paper, use “From a photo” below the table.",
+      "topHint": "Type the dishes or paste from Excel (Ctrl+V)",
       "uploadFile": "Upload Excel/CSV",
       "targetsQuestion": "Which catering units should receive the export?",
       "deselectAll": "Deselect all",
@@ -28870,11 +28871,11 @@
       "scopeAll": "In all catering units that received this export",
       "scopeSelected": "In the selected catering units",
       "scopeHistory": "Only in the master cabinet history",
-      "correctionsNote": "Signed and verified entries, as well as closed journals, cannot be changed. If the data in a catering unit conflicts with the corrections, saving will stop without a partial update.",
+      "correctionsNote": "Signed entries and closed journals are not changed; on a conflict nothing is saved",
       "dateQuestion": "For which date should the dishes be exported?",
       "dateAria": "Production date",
       "timeMissing": "{rows} without a production time — enter it in the row. The ↓ arrow next to the time will copy it to all the rows below.",
-      "timingNote": "The quality-check time and the release-permission time will be calculated for each catering unit from its journal settings (usually +5 and +5 minutes from production). The responsible person and the inspector come from the catering unit’s document.",
+      "timingNote": "Inspection and release times follow each kitchen’s settings",
       "organolepticLabel": "Organoleptic assessment",
       "organolepticDefault": "As in the catering unit’s journal (first grade)",
       "releaseAllowed": "Release permission: {state}. It is determined automatically from the assessment.",
@@ -28890,7 +28891,7 @@
       "submitExport": "Export to {kitchens}",
       "titleCorrect": "Correct the export",
       "titleExport": "Export to journals",
-      "description": "The dishes from the table will appear as rows in the finished-product quality-control journal of the selected catering units for the chosen date. If there is no document for that date, one will be created. Exporting the same dishes with the same time again will not duplicate the rows. The table is not saved: the next export starts from a blank sheet.",
+      "description": "The dishes will appear in the quality-control journals of the selected kitchens for the chosen date. Re-exporting won’t duplicate rows.",
       "previewTitle": "Check where the rows will go",
       "previewDescription": "Quality control for {date}. Nothing has been written yet.",
       "confirmAdd": "Add {rows} to {kitchens}",
@@ -28966,19 +28967,19 @@
       "step3": "Select the catering units — all by default",
       "step4": "Click “Export” and check where the rows will go",
       "exportTitle": "Exporting dishes to the finished-product quality-control journals",
-      "exportDescription": "The dishes will appear as rows in the finished-product quality-control journal of every selected catering unit for the chosen date. The list is not stored: every export starts with a blank table.",
+      "exportDescription": "The dishes will appear in the selected kitchens’ quality-control journals for this date",
       "exportToJournals": "Export to journals",
       "uploadFile": "Upload Excel/CSV",
       "photoResultExport": "Dishes in the export",
       "noObjectsTitle": "No catering units are connected yet",
-      "noObjectsText": "There is nowhere to export to yet. Connect a catering unit by its journal code, and you will be able to export dishes here.",
+      "noObjectsText": "Connect a kitchen by its journal code",
       "connectKitchen": "Connect a catering unit",
       "stepsAria": "How to export",
-      "listDishDescription": "Add dishes as a list, from Excel or from a photo. Choose the date separately when exporting to journals.",
+      "listDishDescription": "As a list, from Excel or from a photo",
       "listProductDescription": "This list will be received by the {journal} {where}.",
       "emptyTitle": "The list is empty for now",
-      "emptyDishText": "Upload a file, paste a list or recognise a photo. We will show the changes before saving; exporting to journals is done separately.",
-      "emptyProductText": "Upload a file or paste a list — we will show what will be added before saving. After saving, the {journal} {where} will receive it immediately.",
+      "emptyDishText": "Upload a file, paste a list or recognise a photo",
+      "emptyProductText": "Upload a file or paste a list",
       "asList": "As a list",
       "dishListHint": "A “Name — Yield — Time” table; you can paste it from Excel or photograph the menu (“From a photo”):",
       "productListHint": "One item per line — or photograph the delivery note (“From a photo”):",
@@ -29006,12 +29007,12 @@
     "masterCabinetAccessCard": {
       "apiFallbackError": "Something went wrong. Check your connection and try again.",
       "title": "Master cabinets",
-      "intro": "Who manages the menu and raw materials. A person invited by email is tied to the cabinet and sees only that cabinet. An existing employee is given access with a single choice. On the plan, a cabinet with people counts as +1 employee in every connected kitchen. The account owner always has access.",
+      "intro": "Who manages the menu and raw materials. The account owner always has access.",
       "emptyTitle": "No master cabinets yet",
-      "emptyHint": "Create one: profile menu (the circle with initials at the top right) → “Cabinet” section → “Create master cabinet”. Then you can grant access here.",
+      "emptyHint": "Create one in the profile menu, “Cabinet” section",
       "inviteReady": "Invitation ready: {email}",
       "accessGranted": "Access granted: {name}",
-      "accessGrantedDescription": "The “{cabinetName}” cabinet is in their profile menu, under “Cabinet”.",
+      "accessGrantedDescription": "The “{cabinetName}” cabinet is in their profile menu, under “Cabinet”. On the plan, a cabinet with people counts as +1 employee in every kitchen.",
       "accessRevoked": "Access removed: {name}",
       "inviteLinkCopied": "Invitation link copied",
       "copyFailed": "Could not copy — select and copy it manually",

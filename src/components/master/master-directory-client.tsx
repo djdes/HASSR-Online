@@ -711,7 +711,8 @@ function ListPanel({
         <div className="mt-5 rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-5 py-10 text-center sm:px-6">
           <div className="text-[15px] font-medium text-[#0b1024]">{t("emptyTitle")}</div>
           <p className="mx-auto mt-1.5 max-w-[460px] text-[13px] leading-[1.55] text-[#6f7282]">
-            {kind === "dish" ? t("emptyDishText") : t("emptyProductText", { journal: meta.journal, where: inObjects(t, objectsCount) })}
+            {/* Куда уйдёт список, уже сказано в подзаголовке страницы. */}
+            {kind === "dish" ? t("emptyDishText") : t("emptyProductText")}
           </p>
           <div className="mt-5 flex justify-center">{actions}</div>
           <div className="mx-auto mt-6 grid max-w-[640px] gap-3 text-left sm:grid-cols-2">
