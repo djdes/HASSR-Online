@@ -138,4 +138,21 @@ describe("тип «Сообщение»", () => {
     assert.match(r.telegram?.text ?? "", /Для вашего заведения/);
     assert.match(r.max?.text ?? "", /тарифы \(https:\/\/wesetup\.ru\/r\/mr3\.sig\/0\)/);
   });
+  it("картинка над текстом письма (еженедельный выпуск): только https, в мессенджеры не идёт", async () => {
+    const template = getMailingTemplate("message");
+    assert.ok(template);
+    const imageUrl = "https://wesetup.ru/uploads/max-channel/tpl-abc.png";
+    assert.equal(validateMessagePayload({ ...payload, imageUrl: "javascript:alert(1)" }).ok, false);
+    const v = validateMessagePayload({ ...payload, imageUrl });
+    assert.ok(v.ok && v.payload.imageUrl === imageUrl);
+    const { ctx } = buildRecipientContext(
+      { id: "mr4", token: "mr4.sig", email: "ivan@mail.ru", name: "Иван", companyName: null, sphere: null, userId: "u1", organizationId: "o1", contactId: null, links: [], payload: null },
+      "https://wesetup.ru"
+    );
+    const r = await template.render({ ...payload, imageUrl }, ctx);
+    assert.match(r.email?.html ?? "", /<img src="https:\/\/wesetup\.ru\/uploads\/max-channel\/tpl-abc\.png"/);
+    assert.doesNotMatch(r.telegram?.text ?? "", /tpl-abc/);
+    const plain = await template.render(payload, ctx);
+    assert.doesNotMatch(plain.email?.html ?? "", /<img src="https:\/\/wesetup\.ru\/uploads/);
+  });
 });

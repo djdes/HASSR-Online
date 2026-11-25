@@ -153,6 +153,8 @@ async function schedulePosts(row: Row, imagePath: string | null): Promise<void> 
     rubric,
     scheduledAt: row.publishAt,
     channelIds: channels.map((c) => c.id),
+    // Еженедельный выпуск в 09:00 по средам — свой слот, не «частый пост».
+    ignoreSources: ["weekly"],
   }).catch(() => null);
   for (const channel of channels) {
     const post = await db.maxChannelPost.create({

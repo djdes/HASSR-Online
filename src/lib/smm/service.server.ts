@@ -48,6 +48,11 @@ export interface DraftForQuality {
   channelIds: string[];
   /** Пост, который правим, — не сравнивать с самим собой. */
   excludeIds?: string[];
+  /**
+   * Не сравнивать с постами этих источников (частота и дубли): у выпуска
+   * по средам в 09:00 и автопоста в 10:00 свои слоты — друг другу не мешают.
+   */
+  ignoreSources?: string[];
 }
 
 export async function qualityFor(draft: DraftForQuality, now: Date = new Date()): Promise<PostReport> {
@@ -56,6 +61,7 @@ export async function qualityFor(draft: DraftForQuality, now: Date = new Date())
     db.maxChannelPost.findMany({
       where: {
         id: { notIn: draft.excludeIds ?? [] },
+        ...(draft.ignoreSources?.length ? { source: { notIn: draft.ignoreSources } } : {}),
         status: { in: ["sent", "scheduled", "sending"] },
         OR: [
           { sentAt: { gte: new Date(now.getTime() - 60 * 86_400_000) } },

@@ -53,7 +53,12 @@ export const messageTemplate: MailingTemplate<MessagePayload> = {
     const textHtml = toEmailHtml(prepared, { linkHref: ctx.trackUrl });
     const trackedButton = hasButton ? ctx.trackUrl(payload.buttonUrl) : null;
 
+    const imageHtml = payload.imageUrl
+      ? `<p style="margin:0 0 20px"><img src="${escapeHtml(payload.imageUrl)}" alt="" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;border-radius:12px"></p>
+`
+      : "";
     const bodyHtml =
+      imageHtml +
       textHtml +
       (trackedButton
         ? `\n<p style="margin:24px 0 8px"><a href="${escapeHtml(trackedButton)}" style="${BUTTON_STYLE}">${escapeHtml(buttonText)}</a></p>`

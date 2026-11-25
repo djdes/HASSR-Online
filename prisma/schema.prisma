@@ -270,6 +270,47 @@ model ChannelAutopost {
   @@index([status])
 }
 
+/// Еженедельный выпуск (src/lib/weekly-issue): по средам в 09:00 МСК —
+/// пост-напоминание о сервисе в каналы Telegram и MAX (MaxChannelPost,
+/// source "weekly") и то же письмом подписанным клиентам (MailingCampaign).
+/// Собирается заранее: в понедельник крон или кнопка на /root/max-channel.
+model WeeklyIssue {
+  id             String   @id @default(cuid())
+  /// Среда выхода по Москве, YYYY-MM-DD — один выпуск на неделю.
+  weekKey        String   @unique
+  publishAt      DateTime
+  /// queued | text | image | scheduled | review | published | failed | cancelled
+  status         String   @default("queued")
+  /// auto (крон в понедельник) | manual (кнопка «Собрать выпуск на среду»).
+  trigger        String   @default("auto")
+  /// Факты для ИИ на момент сборки (src/lib/weekly-issue/facts.ts → WeeklyFacts).
+  facts          Json?
+  textJobId      String?
+  imageJobId     String?
+  subject        String?
+  text           String?
+  imagePrompt    String?
+  /// Картинка в фирменном шаблоне: max-channel/<file>.png
+  imagePath      String?
+  buttonText     String?
+  buttonUrl      String?
+  qualityScore   Int?
+  qualityVerdict String?
+  /// Id созданных MaxChannelPost (по одному на канал).
+  postIds        String[] @default([])
+  /// Черновик рассылки; запускается в момент выхода поста.
+  campaignId     String?
+  /// none | draft | sent | skipped
+  emailStatus    String   @default("none")
+  emailRecipients Int?
+  error          String?
+  attempts       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+}
+
 model OrganizationMember {
   id             String       @id @default(cuid())
   userId         String
