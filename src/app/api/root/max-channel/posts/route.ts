@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { maxPostDraftSchema } from "@/lib/max/channel-post";
 import { MaxChannelError, publishPost } from "@/lib/max/channel.server";
 import { maxChannelFailure } from "@/lib/max/channel-api.server";
+import { postFields } from "@/lib/smm/post-fields.server";
+import { assertQualityGate, qualityFor } from "@/lib/smm/service.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,24 +40,30 @@ export async function POST(request: Request) {
       if (!scheduledAt) throw new MaxChannelError("Выберите дату и время публикации.");
       if (scheduledAt.getTime() < Date.now() - 60_000) throw new MaxChannelError("Время публикации уже прошло.");
     }
+    // B01/B02: проверка качества; «block» в канал — только с подтверждением.
+    const report = await qualityFor({ ...draft, channelIds, scheduledAt: action === "schedule" ? scheduledAt : new Date() });
+    const review = draft.needsApproval && action !== "draft";
+    if (action !== "draft" && !review) assertQualityGate(report, draft.force);
+    const fields = postFields(draft, report);
     const posts = [];
     for (const channel of channels) {
       posts.push(
         await db.maxChannelPost.create({
           data: {
             channelId: channel.id,
-            text: draft.text,
-            images: draft.images,
-            buttonText: draft.buttonText?.trim() || null,
-            buttonUrl: draft.buttonUrl?.trim() || null,
-            campaign: draft.campaign?.trim() || null,
-            status: action === "schedule" ? "scheduled" : "draft",
-            scheduledAt: action === "schedule" ? scheduledAt : null,
+            ...fields,
+            // Кросспост: короткая ссылка своя у каждой записи.
+            shortCode: fields.shortCode ? `${fields.shortCode}${posts.length || ""}` : null,
+            status: review ? "review" : action === "schedule" ? "scheduled" : "draft",
+            approval: review ? "pending" : "none",
+            scheduledAt: action === "schedule" || review ? scheduledAt : null,
+            forcedById: draft.force && report.verdict === "block" ? session.user.id : null,
             createdById: session.user.id,
           },
         }),
       );
     }
+    if (review) return NextResponse.json({ ids: posts.map((p) => p.id), review: true, quality: report });
     if (action === "publish") {
       const failed: string[] = [];
       for (const post of posts) {
@@ -64,9 +72,9 @@ export async function POST(request: Request) {
         if (!result.ok) failed.push(`«${title}»: ${result.error}`);
       }
       if (failed.length === posts.length) return NextResponse.json({ ids: posts.map((p) => p.id), error: failed.join(" ") }, { status: 502 });
-      return NextResponse.json({ ids: posts.map((p) => p.id), published: posts.length - failed.length, failed });
+      return NextResponse.json({ ids: posts.map((p) => p.id), published: posts.length - failed.length, failed, quality: report });
     }
-    return NextResponse.json({ ids: posts.map((p) => p.id) });
+    return NextResponse.json({ ids: posts.map((p) => p.id), quality: report });
   } catch (error) {
     return maxChannelFailure(error);
   }

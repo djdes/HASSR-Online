@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { maxPostDraftSchema } from "@/lib/max/channel-post";
 import { MaxChannelError, deletePublishedPost, editPublishedPost } from "@/lib/max/channel.server";
 import { maxChannelFailure } from "@/lib/max/channel-api.server";
+import { postFields } from "@/lib/smm/post-fields.server";
+import { assertQualityGate, qualityFor } from "@/lib/smm/service.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +17,7 @@ export const dynamic = "force-dynamic";
  * опубликованный правится прямо в канале.
  */
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireRoot();
+  const session = await requireRoot();
   const { id } = await ctx.params;
   try {
     const post = await db.maxChannelPost.findUnique({ where: { id } });
@@ -25,13 +27,22 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     const raw = (await request.json().catch(() => null)) as Record<string, unknown> | null;
     if (!raw) throw new MaxChannelError("Не удалось прочитать запрос.");
     const draft = maxPostDraftSchema.parse({ ...raw, channelId: post.channelId });
-    const fields = {
-      text: draft.text,
-      images: draft.images,
-      buttonText: draft.buttonText?.trim() || null,
-      buttonUrl: draft.buttonUrl?.trim() || null,
-      campaign: draft.campaign?.trim() || null,
-    };
+    const scheduledFor = draft.scheduledAt ? new Date(draft.scheduledAt) : null;
+    const report = await qualityFor({
+      ...draft,
+      channelIds: [post.channelId],
+      excludeIds: [id],
+      scheduledAt: post.status === "sent" ? null : scheduledFor,
+    });
+    // Вышедший и запланированный пост правим только через шлюз качества (B02).
+    if ((post.status === "sent" || scheduledFor) && !draft.needsApproval) assertQualityGate(report, draft.force);
+    const fields = postFields(draft, report, post.shortCode);
+    // A25: история — старая версия текста, если он поменялся.
+    if (post.text !== fields.text || post.buttonText !== fields.buttonText || post.buttonUrl !== fields.buttonUrl) {
+      await db.maxChannelPostVersion.create({
+        data: { postId: id, text: post.text, buttonText: post.buttonText, buttonUrl: post.buttonUrl, editedById: session.user.id },
+      });
+    }
     if (post.status === "sent") {
       // Сначала в канал, потом в базу: история должна совпадать с каналом.
       const previous = await db.maxChannelPost.update({ where: { id }, data: fields });
@@ -44,15 +55,23 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         });
         throw error;
       }
-      return NextResponse.json({ id: previous.id, edited: true });
+      return NextResponse.json({ id: previous.id, edited: true, quality: report });
     }
-    const scheduledAt = draft.scheduledAt ? new Date(draft.scheduledAt) : null;
+    const scheduledAt = scheduledFor;
     if (scheduledAt && scheduledAt.getTime() < Date.now() - 60_000) throw new MaxChannelError("Время публикации уже прошло.");
+    const review = draft.needsApproval;
     await db.maxChannelPost.update({
       where: { id },
-      data: { ...fields, status: scheduledAt ? "scheduled" : "draft", scheduledAt, error: null },
+      data: {
+        ...fields,
+        status: review ? "review" : scheduledAt ? "scheduled" : "draft",
+        approval: review ? "pending" : post.approval === "approved" ? "approved" : "none",
+        scheduledAt,
+        error: null,
+        forcedById: draft.force && report.verdict === "block" ? session.user.id : post.forcedById,
+      },
     });
-    return NextResponse.json({ id });
+    return NextResponse.json({ id, quality: report });
   } catch (error) {
     return maxChannelFailure(error);
   }

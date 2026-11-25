@@ -41,6 +41,19 @@ export const maxPostDraftSchema = z
       .optional()
       .nullable(),
     scheduledAt: z.string().datetime({ offset: true }).optional().nullable(),
+    /** Рубрика из профиля бренда (A18). */
+    rubric: z.string().trim().max(40).optional().nullable(),
+    /** Параметры отправки (A30). */
+    silent: z.boolean().optional().default(false),
+    pin: z.boolean().optional().default(false),
+    disablePreview: z.boolean().optional().default(false),
+    protect: z.boolean().optional().default(false),
+    /** Автоудаление из канала (A11). */
+    deleteAt: z.string().datetime({ offset: true }).optional().nullable(),
+    /** Отправить на согласование вместо публикации (A24). */
+    needsApproval: z.boolean().optional().default(false),
+    /** Публиковать, даже если проверка качества против (B02). */
+    force: z.boolean().optional().default(false),
   })
   .superRefine((value, ctx) => {
     const text = value.buttonText?.trim() ?? "";
@@ -99,9 +112,29 @@ export function tagSiteLinks(text: string, campaign: string | null | undefined, 
 
 export type MaxImageAttachment = { type: "image"; payload: { token: string } };
 
+/**
+ * Куда ведёт кнопка: короткая ссылка wesetup.ru/api/go/<код> считает переходы
+ * (A16) и сама ставит UTM; без кода — адрес с UTM напрямую.
+ */
+export function buttonHref(
+  post: { buttonUrl?: string | null; campaign?: string | null; shortCode?: string | null },
+  source: UtmSource,
+): string {
+  const url = post.buttonUrl?.trim() ?? "";
+  if (post.shortCode) return `https://wesetup.ru/api/go/${post.shortCode}?c=${source === "telegram" ? "tg" : "max"}`;
+  return withUtm(url, post.campaign, source);
+}
+
 /** Тело `POST /messages` / `PUT /messages` для поста. */
 export function buildMaxPostBody(
-  post: { text: string; buttonText?: string | null; buttonUrl?: string | null; campaign?: string | null },
+  post: {
+    text: string;
+    buttonText?: string | null;
+    buttonUrl?: string | null;
+    campaign?: string | null;
+    shortCode?: string | null;
+    silent?: boolean | null;
+  },
   imageTokens: string[] = [],
 ) {
   const attachments: Array<MaxImageAttachment | { type: "inline_keyboard"; payload: { buttons: unknown[][] } }> =
@@ -110,22 +143,23 @@ export function buildMaxPostBody(
     attachments.push({
       type: "inline_keyboard",
       payload: {
-        buttons: [[{ type: "link", text: post.buttonText.trim(), url: withUtm(post.buttonUrl.trim(), post.campaign) }]],
+        buttons: [[{ type: "link", text: post.buttonText.trim(), url: buttonHref(post, "max") }]],
       },
     });
   }
   return {
     text: tagSiteLinks(post.text, post.campaign).slice(0, MAX_POST_TEXT_LIMIT),
     format: "markdown" as const,
-    notify: true,
+    notify: !post.silent,
     attachments,
   };
 }
 
-export type MaxPostStatus = "draft" | "scheduled" | "sending" | "sent" | "failed" | "deleted";
+export type MaxPostStatus = "draft" | "review" | "scheduled" | "sending" | "sent" | "failed" | "deleted";
 
 export const MAX_POST_STATUS_LABELS: Record<MaxPostStatus, string> = {
   draft: "Черновик",
+  review: "На согласовании",
   scheduled: "Запланирован",
   sending: "Отправляется",
   sent: "Опубликован",

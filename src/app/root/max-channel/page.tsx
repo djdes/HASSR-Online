@@ -23,7 +23,7 @@ export default async function RootMaxChannelPage() {
     channelBotInfo(),
     telegramBotInfo(),
     db.maxChannel.findMany({ orderBy: [{ removed: "asc" }, { createdAt: "asc" }] }),
-    db.maxChannelPost.findMany({ orderBy: { createdAt: "desc" }, take: 60 }),
+    db.maxChannelPost.findMany({ orderBy: { createdAt: "desc" }, take: 120 }),
     db.article.findMany({
       where: { publishedAt: { not: null, lte: new Date() } },
       orderBy: { publishedAt: "desc" },
@@ -61,6 +61,16 @@ export default async function RootMaxChannelPage() {
     error: post.error,
     source: post.source,
     createdAt: post.createdAt.toISOString(),
+    rubric: post.rubric,
+    clicks: post.clicks,
+    qualityScore: post.qualityScore,
+    qualityVerdict: post.qualityVerdict,
+    approval: post.approval,
+    silent: post.silent,
+    pin: post.pin,
+    disablePreview: post.disablePreview,
+    protect: post.protect,
+    deleteAt: post.deleteAt?.toISOString() ?? null,
   }));
 
   return (
