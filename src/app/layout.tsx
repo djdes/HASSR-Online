@@ -26,6 +26,9 @@ import "./neutral-palette.css";
 import "./borderless.css";
 // Notifications panel: theme tokens only, its own enter / leave motion (notifications-bell.tsx).
 import "./notifications-panel.css";
+// Motion round 4 (2026-11-25): numbers/progress, disclosure/toasts/skeletons.
+import "./motion-data.css";
+import "./motion-disclosure.css";
 import { publicMetadataFor } from "@/i18n/public-metadata";
 import { headers } from "next/headers";
 import { isMobileAppUserAgent } from "@/lib/mobile-app";
