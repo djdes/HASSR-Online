@@ -1,0 +1,34 @@
+# next dev :3009 из worktree 7a61af49a (после правки), Next 16.2.12, три свежие организации
+## run 1
+  7166 ms  click apply
+  7292 ms  → POST /api/settings/onboarding-template 
+  7557 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=mM1xr6edhWj9uzx7 (RSC)
+  7601 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=mM1xr6edhWj9uzx7
+  7622 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk (RSC)
+  7737 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk
+  8393 ms  navigated /settings/onboarding-template?done=8.7.6
+  dom@4555  result=false questions=true kindPicker=false
+  dom@4835  result=true questions=false kindPicker=false
+final: {"result":true,"kinds":false,"header":"Меню СР"}
+## run 2
+  7176 ms  click apply
+  7382 ms  → POST /api/settings/onboarding-template 
+  7608 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=mM1xr6edhWj9uzx7 (RSC)
+  7641 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=mM1xr6edhWj9uzx7
+  7670 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk (RSC)
+  7794 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk
+  8492 ms  navigated /settings/onboarding-template?done=8.7.6
+  dom@3923  result=false questions=true kindPicker=false
+  dom@4168  result=true questions=false kindPicker=false
+final: {"result":true,"kinds":false,"header":"Меню СР"}
+## run 3
+  8976 ms  click apply
+  9142 ms  → POST /api/settings/onboarding-template 
+  9329 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=mM1xr6edhWj9uzx7 (RSC)
+  9359 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=mM1xr6edhWj9uzx7
+  9377 ms  → GET /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk (RSC)
+  9469 ms  ← 200 /settings/onboarding-template?done=8.7.6&_rsc=hsH_aeBcfJN09zIk
+ 10073 ms  navigated /settings/onboarding-template?done=8.7.6
+  dom@5284  result=false questions=true kindPicker=false
+  dom@5487  result=true questions=false kindPicker=false
+final: {"result":true,"kinds":false,"header":"Меню СР"}

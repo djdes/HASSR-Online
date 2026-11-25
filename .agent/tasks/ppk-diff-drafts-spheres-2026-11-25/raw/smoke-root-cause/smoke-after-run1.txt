@@ -1,0 +1,55 @@
+==> PostgreSQL
+==> Dependencies and schema
+==> next dev on port 3005 (log: /tmp/smoke-dev.YyUHgV.log)
+==> Waiting for the app
+==> Browser smoke (screenshots: /tmp/claude-0/-home-user-HASSR-Online/d71dfd22-e8ae-5524-a77c-52d9336f142f/scratchpad/smoke/after/shots-1)
+PASS вход руководителя
+PASS 01-quick-setup: открывается (HTTP 200)
+PASS 01-quick-setup: есть «Кафе до 30 мест»
+PASS 01-quick-setup: нет горизонтальной прокрутки
+PASS 01-quick-setup: нет ошибок страницы
+PASS 02-quick-setup-questions: нет горизонтальной прокрутки
+PASS 02-quick-setup-questions: нет ошибок страницы
+PASS мастер: кабинет настроен
+PASS 03-quick-setup-done: нет горизонтальной прокрутки
+PASS 03-quick-setup-done: нет ошибок страницы
+PASS 04-acceptance: открывается (HTTP 200)
+PASS 04-acceptance: есть «ждут приёмки»
+PASS 04-acceptance: нет горизонтальной прокрутки
+PASS 04-acceptance: нет ошибок страницы
+PASS журнал: полоса Меркурия — 2 ждут, 1 просрочен
+PASS журнал: «Оформить» ведёт на «Входящие ВСД»
+PASS журнал: в меню «ВСД из Меркурия» и «Добавить из iiko»
+PASS журнал: iiko подключён — во «Входящие накладные»
+PASS 05-acceptance-iiko: нет горизонтальной прокрутки
+PASS 05-acceptance-iiko: нет ошибок страницы
+PASS УКЭП: плагин подписал PDF (CAdES-BES, откреплённая)
+PASS УКЭП: сервер принял, подписант из сертификата
+PASS 06-ukep-signed: нет горизонтальной прокрутки
+PASS 06-ukep-signed: нет ошибок страницы
+PASS УКЭП: PDF скачивается
+PASS УКЭП: подпись .sig скачивается
+PASS 07-mercury: открывается (HTTP 200)
+PASS 07-mercury: есть «Ждут гашения»
+PASS 07-mercury: нет горизонтальной прокрутки
+PASS 07-mercury: нет ошибок страницы
+PASS «Входящие ВСД»: у погашенного ВСД ссылка «История партии»
+PASS 07b-mercury-processed: нет горизонтальной прокрутки
+PASS 07b-mercury-processed: нет ошибок страницы
+PASS 08-traceability: открывается (HTTP 200)
+PASS 08-traceability: есть «Приёмка по ВСД»
+PASS 08-traceability: нет горизонтальной прокрутки
+PASS 08-traceability: нет ошибок страницы
+PASS история партии: партия, ВСД, ссылка на журнал приёмки
+PASS 09-batch: открывается (HTTP 200)
+PASS 09-batch: есть «История партии»
+PASS 09-batch: нет горизонтальной прокрутки
+PASS 09-batch: нет ошибок страницы
+PASS 10-poster: открывается (HTTP 200)
+PASS 10-poster: есть «Poster № 687409»
+PASS 10-poster: нет горизонтальной прокрутки
+PASS 10-poster: нет ошибок страницы
+PASS Poster: токен не показывается
+PASS бракераж: блюдо из справочника в подсказках
+RESULT: all 48 checks passed
+RESULT: smoke passed
