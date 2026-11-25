@@ -96,6 +96,8 @@ export type LinkTelegramToAuthUserResult =
       ok: true;
       status: "linked" | "already_linked";
       phoneSaved?: string | null;
+      /** Номер из контакта уже у другого сотрудника организации — не записан. */
+      phoneTaken?: boolean;
     }
   | {
       ok: false;
@@ -123,7 +125,17 @@ export type AuthLinkDb = {
  * and no other non-archived user in the same organization uses that number.
  */
 export async function linkTelegramToAuthenticatedUser(
-  args: { userId: string; chatId: string; verifiedPhone?: string },
+  args: {
+    userId: string;
+    chatId: string;
+    verifiedPhone?: string;
+    /**
+     * «Изменить номер» в мини-приложении: номер из контакта Telegram
+     * заменяет сохранённый (и при уже привязанном Telegram). Без флага
+     * номер записывается, только если его ещё нет.
+     */
+    replacePhone?: boolean;
+  },
   client: AuthLinkDb = db as unknown as AuthLinkDb
 ): Promise<LinkTelegramToAuthUserResult> {
   const collision = await client.user.findFirst({
@@ -150,7 +162,8 @@ export async function linkTelegramToAuthenticatedUser(
     return { ok: false, status: "not_found" };
   }
 
-  if (user.telegramChatId === args.chatId) {
+  const alreadyLinked = user.telegramChatId === args.chatId;
+  if (alreadyLinked && !args.replacePhone) {
     return { ok: true, status: "already_linked", phoneSaved: null };
   }
   if (user.telegramChatId && user.telegramChatId !== args.chatId) {
@@ -158,10 +171,11 @@ export async function linkTelegramToAuthenticatedUser(
   }
 
   let phoneSaved: string | null = null;
+  let phoneTaken = false;
   const normalized = args.verifiedPhone
     ? normalizePhone(args.verifiedPhone)
     : null;
-  if (normalized && !user.phone) {
+  if (normalized && (!user.phone || (args.replacePhone && user.phone !== normalized))) {
     const phoneOwner = await client.user.findFirst({
       where: {
         organizationId: user.organizationId,
@@ -173,7 +187,16 @@ export async function linkTelegramToAuthenticatedUser(
     });
     if (!phoneOwner) {
       phoneSaved = normalized;
+    } else if (args.replacePhone) {
+      phoneTaken = true;
     }
+  }
+
+  if (alreadyLinked) {
+    if (phoneSaved) {
+      await client.user.update({ where: { id: user.id }, data: { phone: phoneSaved } });
+    }
+    return { ok: true, status: "already_linked", phoneSaved, ...(phoneTaken ? { phoneTaken } : {}) };
   }
 
   await client.user.update({
@@ -184,5 +207,5 @@ export async function linkTelegramToAuthenticatedUser(
     },
   });
 
-  return { ok: true, status: "linked", phoneSaved };
+  return { ok: true, status: "linked", phoneSaved, ...(phoneTaken ? { phoneTaken } : {}) };
 }
