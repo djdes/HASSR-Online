@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Globe2 } from "lucide-react";
@@ -9,9 +9,15 @@ import { offeredLocales, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 
 /**
  * Язык интерфейса человека. `compact` — низ меню профиля (слева от «Выйти»):
- * без рамки, значок глобуса и название языка.
+ * без рамки, значок глобуса и название языка. `variant="mini"` — строка
+ * карточки профиля мини-приложения: заголовок слева, список справа
+ * (`.mini-row` и `.mini-select` в mini-theme.css, цвета темы приложения).
  */
-export function PersonalLanguageSelect({ compact = false }: { compact?: boolean } = {}) {
+export function PersonalLanguageSelect({
+  compact = false,
+  variant = "site",
+}: { compact?: boolean; variant?: "site" | "mini" } = {}) {
+  const selectId = useId();
   const locale = useLocale();
   const t = useTranslations("language");
   const router = useRouter();
@@ -36,6 +42,33 @@ export function PersonalLanguageSelect({ compact = false }: { compact?: boolean 
     }
   }
 
+  const options = offeredLocales(locale).map((value) => (
+    <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>
+  ));
+
+  if (variant === "mini") {
+    return (
+      <div className="mini-row" data-testid="personal-language">
+        <label htmlFor={selectId} className="mini-card-title">
+          {t("label")}
+        </label>
+        <span className="mini-select-wrap">
+          <select
+            id={selectId}
+            name="locale"
+            value={locale}
+            disabled={saving || refreshing}
+            aria-busy={saving || refreshing}
+            onChange={(event) => void changeLanguage(event.target.value as Locale)}
+            className="mini-select"
+          >
+            {options}
+          </select>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <label
       title={t("label")}
@@ -58,7 +91,7 @@ export function PersonalLanguageSelect({ compact = false }: { compact?: boolean 
             : "min-h-11 max-w-28 bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]"
         }
       >
-        {offeredLocales(locale).map((value) => <option key={value} value={value} lang={value}>{LOCALE_NAMES[value]}</option>)}
+        {options}
       </select>
     </label>
   );

@@ -72,6 +72,7 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
         : null;
 
   const checked = Boolean(state?.subscribed);
+  const mini = variant === "mini";
   const switchEl = (
     <button
       type="button"
@@ -81,9 +82,16 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
       disabled={disabled}
       onClick={() => void toggle(!checked)}
       data-testid="marketing-toggle"
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-        checked ? "bg-[#5566f6]" : "bg-[#e4e5f0]"
-      }`}
+      // В мини-приложении цвета дорожки и кольцо фокуса — от темы
+      // (`.mini-switch` в mini-theme.css): светлая дорожка сайта на тёмной
+      // карточке резала глаз, а белое кольцо-отступ рисовалось поверх неё.
+      className={
+        mini
+          ? "mini-switch"
+          : `relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5566f6]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+              checked ? "bg-[#5566f6]" : "bg-[#e4e5f0]"
+            }`
+      }
     >
       <span
         className={`inline-block size-5 transform rounded-full bg-white shadow-sm transition-transform ${
@@ -93,19 +101,15 @@ export function MarketingEmailToggle({ variant = "site" }: { variant?: "site" | 
     </button>
   );
 
-  if (variant === "mini") {
+  if (mini) {
+    // Общая строка карточки профиля (`.mini-row`): заголовок слева,
+    // тумблер справа по центру — как «Face ID» и «Язык интерфейса».
     return (
       <section className="mini-card p-4" data-testid="marketing-email-mini">
-        <div className="flex items-center justify-between gap-4">
+        <div className="mini-row">
           <div>
-            <h2 className="text-[17px] font-semibold" style={{ color: "var(--mini-text)" }}>
-              {t("title")}
-            </h2>
-            {hint ? (
-              <p className="mt-1 text-[14px] leading-[1.5]" style={{ color: "var(--mini-text-muted)" }}>
-                {hint}
-              </p>
-            ) : null}
+            <h2 className="mini-card-title">{t("title")}</h2>
+            {hint ? <p className="mini-row-hint">{hint}</p> : null}
           </div>
           {switchEl}
         </div>

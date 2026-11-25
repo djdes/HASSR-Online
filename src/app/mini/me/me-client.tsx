@@ -520,13 +520,8 @@ export function MiniMeClient({
 
       {/* Telegram и телефон: статус привязки, привязка из Mini App или через бота, диалог номера */}
       <section className="mini-card p-4" data-testid="mini-telegram-phone">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2
-            className="text-[17px] font-semibold"
-            style={{ color: "var(--mini-text)" }}
-          >
-            {t("telegram.title")}
-          </h2>
+        <div className="mini-row flex-wrap">
+          <h2 className="mini-card-title">{t("telegram.title")}</h2>
           <span
             className="mini-pill"
             data-tone={isTgLinked ? "ok" : "warn"}
@@ -620,19 +615,16 @@ export function MiniMeClient({
 
       {/* «Новости и предложения» — как в настройках уведомлений на сайте (П-3). */}
       <MarketingEmailToggle variant="mini" />
-      <section className="mini-card p-4"><PersonalLanguageSelect /></section>
+      <section className="mini-card p-4">
+        <PersonalLanguageSelect variant="mini" />
+      </section>
 
       {/* Тема — те же три карточки, что в меню профиля на сайте
           («Светлая / Тёмная / Как на устройстве», как блок Appearance в
           приложении Claude): нажал — тема сменилась сразу. Под ними, как на
           сайте, — «Логотип и цвета»: брендинг организации в её настройках. */}
       <section className="mini-card p-4" data-testid="mini-theme">
-        <h2
-          className="mb-3 text-[17px] font-semibold"
-          style={{ color: "var(--mini-text)" }}
-        >
-          {t("theme.title")}
-        </h2>
+        <h2 className="mini-card-title mb-3">{t("theme.title")}</h2>
         <MiniThemeTiles />
         {canEditBranding ? (
           <Link
@@ -650,12 +642,7 @@ export function MiniMeClient({
       {/* «Удобство чтения» — размер текста, контраст, анимация, пояснения:
           те же контролы, что на сайте; настройка этого телефона. */}
       <section className="mini-card p-4" data-testid="mini-readability">
-        <h2
-          className="mb-3 text-[17px] font-semibold"
-          style={{ color: "var(--mini-text)" }}
-        >
-          {tView("title")}
-        </h2>
+        <h2 className="mini-card-title mb-3">{tView("title")}</h2>
         <ReadabilityControls size="touch" />
       </section>
 

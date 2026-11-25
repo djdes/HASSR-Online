@@ -146,12 +146,8 @@ export function AppPushSettings() {
           <BellRing className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[17px] font-semibold" style={{ color: "var(--mini-text)" }}>
-            {t("title")}
-          </div>
-          <div className="mt-0.5 text-[14.5px]" style={{ color: "var(--mini-text-muted)" }}>
-            {t("description")}
-          </div>
+          <h2 className="mini-card-title">{t("title")}</h2>
+          <p className="mini-row-hint">{t("description")}</p>
         </div>
         {state.kind === "ready" ? (
           <Switch

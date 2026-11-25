@@ -350,18 +350,22 @@ export function MiniTopBar({
             </span>
           )}
           <span className="min-w-0 flex-1">
+            {/* Строка над названием — flex по центру: знак, роль и точка на
+                одной оптической линии, между ними `gap` вместо «·».
+                Обрезается подпись, а не знак; точка — раньше роли. */}
             <span className="mini-topbar-eyebrow">
-              {/* Начертание «сетап» маской: цвет — от `.mini-topbar-eyebrow`. */}
-              <BrandLogo height={11} title="" className="mini-topbar-wordmark" />
-              {roleGroup
-                ? ` · ${tMini(roleGroup === "manager" ? "roleManager" : "roleStaff")}`
-                : null}
+              {/* Начертание «сетап» маской: цвет — от `.mini-topbar-wordmark`. */}
+              <BrandLogo height={9} title="" className="mini-topbar-wordmark" />
+              {roleGroup ? (
+                <span className="mini-topbar-meta">
+                  {tMini(roleGroup === "manager" ? "roleManager" : "roleStaff")}
+                </span>
+              ) : null}
               {locationName ? (
-                <>
-                  {" · "}
-                  <MapPin className="-mt-0.5 inline size-3 align-middle" aria-hidden />{" "}
-                  {locationName}
-                </>
+                <span className="mini-topbar-place">
+                  <MapPin aria-hidden />
+                  <span className="mini-topbar-meta">{locationName}</span>
+                </span>
               ) : null}
             </span>
             <span className="mini-topbar-title">{title}</span>

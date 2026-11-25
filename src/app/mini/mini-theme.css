@@ -445,6 +445,236 @@ html[data-keyboard-open] .mini-nav-rail {
   color: var(--mini-text-muted);
 }
 
+/* Карточки профиля — один ритм. `.mini-card-title` — заголовок любой
+   карточки (17px, полужирный); `.mini-row` — строка «заголовок слева,
+   контрол справа», контрол по центру строки, высота не меньше 48px (зона
+   нажатия, как у всех кнопок оболочки). Так собраны «Telegram и телефон», «Face ID / отпечаток»,
+   «Новости и предложения», «Язык интерфейса»: один кегль, одна высота
+   строки, контролы на одной вертикали у правого края карточки. */
+/* Без своего margin: отступ под заголовком задаёт место (`mb-3`). */
+.mini-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--mini-text);
+}
+.mini-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-block-size: 48px;
+}
+/* Текстовая часть сжимается и переносится; контрол — никогда. */
+.mini-row > :first-child {
+  min-inline-size: 0;
+}
+.mini-row > :last-child {
+  flex: none;
+}
+/* Пояснение под заголовком строки. */
+.mini-row-hint {
+  margin: 2px 0 0;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--mini-text-muted);
+}
+/* Что под строкой (список ключей) — отступ только когда оно есть. */
+.mini-row-body {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* Строка списка внутри карточки (ключ входа): тихая подложка. */
+.mini-row-item {
+  gap: 12px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 14px;
+  background: var(--mini-surface-2);
+  color: var(--mini-accent-ink);
+}
+/* Компактная кнопка строки («Добавить»): 48px — палец не промахнётся. */
+.mini-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-block-size: 48px;
+  padding-inline: 14px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--mini-accent);
+  color: var(--mini-on-accent);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--mini-dur-fast) var(--mini-ease);
+}
+.mini-row-btn:active {
+  background: var(--mini-accent-hover);
+}
+.mini-row-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+/* Иконка-кнопка строки (удалить ключ): 48×48. */
+.mini-row-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--mini-danger);
+  cursor: pointer;
+}
+.mini-row-icon-btn:active {
+  background: var(--mini-danger-soft);
+}
+
+/* Тумблер строки: дорожка 48×28 цветами темы; зона нажатия 48px —
+   общая подложка `[role="switch"]::after` ниже. */
+.mini-switch {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  inline-size: 48px;
+  block-size: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mini-divider-strong);
+  cursor: pointer;
+  transition: background-color var(--mini-dur-fast) var(--mini-ease);
+}
+.mini-switch[aria-checked="true"] {
+  background: var(--mini-accent);
+}
+.mini-switch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Кольцо фокуса контролов строки — `outline`: он идёт по скруглению
+   контрола (а не прямоугольником), рисуется только с клавиатуры
+   (`:focus-visible`) и цветом `--mini-accent-ink`, заметным в обеих темах. */
+:is(.mini-row-btn, .mini-row-icon-btn, .mini-switch, .mini-select):focus {
+  outline: none;
+}
+:is(.mini-row-btn, .mini-row-icon-btn, .mini-switch, .mini-select):focus-visible {
+  outline: 2px solid var(--mini-accent-ink);
+  outline-offset: 2px;
+}
+
+/* Выпадающий список строки — нативный `<select>` под тему: своя стрелка
+   (`::after` обёртки, цвет темы), скругление, 16px — iOS не приближает
+   страницу. `color-scheme` наследуется от `.mini-root` (light/dark), и
+   системный список вариантов тоже в теме приложения. */
+.mini-select-wrap {
+  position: relative;
+  display: inline-grid;
+  align-items: center;
+  min-inline-size: 0;
+}
+.mini-select-wrap::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 16px;
+  inline-size: 7px;
+  block-size: 7px;
+  margin-block-start: -4px;
+  border-inline-end: 2px solid var(--mini-text-muted);
+  border-block-end: 2px solid var(--mini-text-muted);
+  rotate: 45deg;
+  pointer-events: none;
+}
+.mini-select {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  block-size: 48px;
+  max-inline-size: 13rem;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 14px 40px;
+  border: 1px solid var(--mini-divider-strong);
+  border-radius: 12px;
+  background: var(--mini-surface-2);
+  color: var(--mini-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--mini-dur-fast) var(--mini-ease);
+}
+/* Варианты в системном списке (Windows, Telegram Desktop) — цветами темы. */
+.mini-select option {
+  background: var(--mini-surface-1);
+  color: var(--mini-text);
+}
+.mini-select:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+/* Настраиваемый `<select>` (Chromium 135+, Safari 27): список вариантов —
+   свой, в цветах и скруглениях темы, вместо светлого системного. Только при
+   мыши: на телефоне остаётся родное колесо/шторка системы. Где не
+   поддерживается — обычный список выше, с `color-scheme` темы. */
+@supports (appearance: base-select) {
+  @media (pointer: fine) {
+    .mini-select,
+    .mini-select::picker(select) {
+      appearance: base-select;
+    }
+    .mini-select {
+      display: inline-flex;
+      align-items: center;
+    }
+    /* Стрелка — своя, у обёртки; встроенную прячем, чтобы не было двух. */
+    .mini-select::picker-icon {
+      display: none;
+    }
+    .mini-select::picker(select) {
+      margin-block: 6px;
+      padding: 6px;
+      border: 1px solid var(--mini-divider-strong);
+      border-radius: 14px;
+      background: var(--mini-surface-1);
+      color: var(--mini-text);
+      box-shadow: 0 18px 40px -18px rgba(11, 16, 36, 0.45);
+    }
+    .mini-select option {
+      min-block-size: 40px;
+      padding-inline: 10px 12px;
+      border-radius: 10px;
+      background: transparent;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .mini-select option:is(:hover, :focus-visible) {
+      background: var(--mini-surface-2);
+      outline: none;
+    }
+    .mini-select option:checked {
+      color: var(--mini-accent-ink);
+      font-weight: 600;
+    }
+    .mini-select option::checkmark {
+      color: var(--mini-accent-ink);
+    }
+  }
+}
+
 /* Поле числа с «−/+» (общий `NumberField` журналов) в карточке задачи:
    между кнопками и полем 8px, а не 6px — под палец. */
 .mini-number-field .gap-1\.5 {
@@ -808,24 +1038,64 @@ html[data-keyboard-open] .mini-nav-rail {
 .mini-topbar-ico img {
   display: block;
 }
+/* Строка над названием: знак «сетап», роль, точка. Flex с `align-items:
+   center` вместо `vertical-align` — знак и капс на одной оптической линии;
+   разделитель — `gap`, а не «·». Знак не сжимается, роль тоже: место
+   отдаёт точка; роль обрезается, только когда сама не помещается рядом
+   со знаком (`max-inline-size`). Сжатие роли «на долю пикселя» съедало
+   бы последние буквы под многоточие. */
 .mini-topbar-eyebrow {
-  display: block;
-  overflow: hidden;
+  --wordmark-h: 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 0;
+  block-size: 16px;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.12em;
+  line-height: 1;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.72);
 }
-/* Знак «сетап» в строке над названием: белый, чуть ярче подписи роли. */
+/* Знак «сетап» — строчные без выносных, файл обрезан по буквам: высота
+   знака чуть больше высоты прописных подписи, белый — ярче роли. */
 .mini-topbar-wordmark {
-  display: inline-block !important;
-  vertical-align: -1px;
-  margin-right: 0.2em;
+  flex: none;
+  --logo-h: var(--wordmark-h);
   color: #ffffff;
+}
+/* Подпись: коробка обрезана по прописным (`text-box`), поэтому flex
+   центрирует сами буквы, а не строку с местом под выносные. Поля сверху
+   и снизу — чтобы `overflow: hidden` (нужен для многоточия) не срезал
+   хвосты «Д/Щ» и надстрочные «Й/Ё». */
+.mini-topbar-meta {
+  flex: none;
+  min-inline-size: 0;
+  /* 3.7636 — пропорция файла знака (WORDMARK_RATIO), 8px — gap. */
+  max-inline-size: calc(100% - var(--wordmark-h) * 3.7636 - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-block: 0.3em;
+  text-box: trim-both cap alphabetic;
+}
+.mini-topbar-place {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 4px;
+  min-inline-size: 0;
+}
+/* Название точки внутри своей строки — сжимается до нуля. */
+.mini-topbar-place .mini-topbar-meta {
+  flex: 0 1 auto;
+  max-inline-size: none;
+}
+.mini-topbar-place svg {
+  flex: none;
+  inline-size: 12px;
+  block-size: 12px;
 }
 .mini-topbar-title {
   display: block;
@@ -1164,6 +1434,13 @@ html:has(#mini-root) {
 }
 
 @container mini-main (inline-size < 34rem) {
+  /* Узкая колонка: строка-карточка плотнее, список языка уже. */
+  #mini-root main .mini-row {
+    column-gap: 12px;
+  }
+  #mini-root main .mini-select {
+    max-inline-size: 10rem;
+  }
   #mini-root main [data-mini-hide],
   #mini-root main kbd {
     display: none !important;
