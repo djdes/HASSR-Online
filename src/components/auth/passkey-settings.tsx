@@ -98,27 +98,43 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
+      {/* В мини-приложении (`dark`) — общая строка карточки профиля
+          (`.mini-row` в mini-theme.css): заголовок того же кегля, что у
+          соседних карточек, кнопка по центру, отступ — только под списком. */}
+      <div className={dark ? "mini-row" : "mb-3 flex items-center justify-between gap-3"}>
         {/* Заголовок понятен сам; что даёт ключ — в тосте после «Добавить». */}
-        <div className="text-[14px] font-semibold" style={{ color: text }}>
-          {t("title")}
-        </div>
+        {dark ? (
+          <h2 className="mini-card-title">{t("title")}</h2>
+        ) : (
+          <div className="text-[14px] font-semibold" style={{ color: text }}>
+            {t("title")}
+          </div>
+        )}
         <button
+          type="button"
           onClick={add}
           disabled={busy}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white disabled:opacity-50"
+          className={
+            dark
+              ? "mini-row-btn mini-press"
+              : "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#5566f6] px-3 text-[13px] font-medium text-white disabled:opacity-50"
+          }
         >
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} {t("add")}
+          {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Plus className="size-4" aria-hidden />} {t("add")}
         </button>
       </div>
       {creds && creds.length > 0 ? (
-        <ul className="space-y-1.5">
+        <ul className={dark ? "mini-row-body" : "space-y-1.5"}>
           {creds.map((c) => (
-            <li key={c.id} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: dark ? "var(--mini-surface-2)" : "#f5f6ff" }}>
-              <Fingerprint className="size-4 text-[#5566f6]" />
+            <li
+              key={c.id}
+              className={dark ? "mini-row mini-row-item" : "flex items-center gap-2 rounded-xl px-3 py-2"}
+              style={dark ? undefined : { background: "#f5f6ff" }}
+            >
+              <Fingerprint className={dark ? "size-5 shrink-0" : "size-4 text-[#5566f6]"} aria-hidden />
               <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-medium" style={{ color: text }}>{c.deviceLabel === null ? t("deviceFallback") : c.deviceLabel}</div>
-                <div className="text-[11px]" style={{ color: muted }}>
+                <div className={dark ? "truncate text-[15px] font-semibold" : "text-[13px] font-medium"} style={{ color: text }}>{c.deviceLabel === null ? t("deviceFallback") : c.deviceLabel}</div>
+                <div className={dark ? "text-[13px]" : "text-[11px]"} style={{ color: muted }}>
                   {t("credentialDates", {
                     createdDate: formatPasskeyDate(c.createdAt, locale),
                     hasLastUsed: c.lastUsedAt ? "yes" : "no",
@@ -126,8 +142,13 @@ export function PasskeySettings({ dark = false }: { dark?: boolean }) {
                   })}
                 </div>
               </div>
-              <button onClick={() => setRemove(c)} className="rounded-lg p-1.5 text-[#a13a32]" aria-label={t("deleteLabel")}>
-                <Trash2 className="size-4" />
+              <button
+                type="button"
+                onClick={() => setRemove(c)}
+                className={dark ? "mini-row-icon-btn mini-press" : "rounded-lg p-1.5 text-[#a13a32]"}
+                aria-label={t("deleteLabel")}
+              >
+                <Trash2 className={dark ? "size-5" : "size-4"} aria-hidden />
               </button>
             </li>
           ))}
