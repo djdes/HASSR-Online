@@ -98,6 +98,7 @@ export function FillRunner({
           <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-[#ececf4]">
             <div
               className="h-full rounded-full bg-[#5566f6] transition-[width] duration-200"
+              data-meter
               style={{ width: `${Math.round(((index + 1) / total) * 100)}%` }}
             />
           </div>

@@ -23,6 +23,7 @@ import {
   showRemindResult,
   type RemindResult,
 } from "@/lib/remind-toast";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 type Task = {
   journalCode: string;
@@ -447,7 +448,7 @@ function Stat({
   return (
     <div className={`rounded-2xl border px-4 py-3 ${colors[accent]}`}>
       <div className="text-[11px] uppercase tracking-[0.16em] opacity-70">{label}</div>
-      <div className="mt-0.5 text-[24px] font-semibold leading-none tabular-nums">{value}</div>
+      <div className="mt-0.5 text-[24px] font-semibold leading-none tabular-nums"><MotionNumber value={value} /></div>
     </div>
   );
 }

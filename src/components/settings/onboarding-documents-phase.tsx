@@ -176,6 +176,7 @@ export function OnboardingDocumentsPhase({
             className={`h-full rounded-full transition-all duration-500 ${
               ordersPercent === 100 ? "bg-emerald-400" : "bg-[#5566f6]"
             }`}
+            data-meter
             style={{ width: `${ordersPercent}%` }}
           />
         </div>

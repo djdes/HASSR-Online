@@ -172,6 +172,7 @@ export function TaskFillChecklist({ taskId, token, onReadyChange }: Props) {
               ? "bg-emerald-500"
               : "bg-gradient-to-r from-[#5566f6] to-[#7a5cff]"
           }`}
+          data-meter
           style={{ width: `${progressPercent}%` }}
         />
       </div>

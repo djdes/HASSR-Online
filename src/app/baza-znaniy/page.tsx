@@ -90,7 +90,7 @@ export default function KnowledgeBaseIndexPage() {
           </LiveGuideStartButton>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
+        <div data-motion-stagger="" className="mt-10 grid gap-4 md:grid-cols-2">
           {KB_GROUPS.map((group) => {
             const Icon = GROUP_ICONS[group.id] ?? BookOpen;
             return (

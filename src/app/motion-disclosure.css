@@ -1,0 +1,215 @@
+/*
+ * Motion, round 4 (2026-11-25): what opens, what is announced, what is loading, what arrives.
+ * The same language as `motion.css` (read its header): colours ease, geometry rides `--spring` /
+ * `--spring-soft` from `globals.css` (overshoot ≤ ~1.5 %), nothing moves on hover, nothing changes
+ * at rest, no glow, gradient or `will-change`. The Mini App (`.mini-root`) is left to its own layer.
+ *
+ * 1. Disclosure: every native `<details>` opens and closes with its height (guide `accordion`:
+ *    `block-size` 0 ↔ auto on `::details-content`, `content-visibility` discretely). Without
+ *    `interpolate-size` (Firefox, Safari) it simply opens, as before. Chevrons in the summary turn.
+ *    The «Подробнее» of `MoreText` fades the rest of the text in.
+ * 2. Toasts (sonner): arrive on the spring with a slight scale, leave quicker than they came.
+ * 3. Loading: the skeleton shows itself after a short beat (a quick load does not flash grey);
+ *    the sheen is slower. Content that replaces a skeleton is round 2 (`motion-presence.ts`, AC1).
+ * 4. Opt-in stagger for card grids (`data-motion-stagger`) on public pages: one after another,
+ *    at most seven steps. The cabinet is not opted in — its pages fade as a whole (round 1 AC8)
+ *    and content after a skeleton already arrives step by step (round 2 AC1).
+ * 5. Error messages (`role="alert"`, the form message) and an empty search result
+ *    (`data-motion-empty`) arrive instead of popping in.
+ *
+ * Off switches at the bottom: `data-view-still` on <html> and `prefers-reduced-motion`.
+ * Guarded by `src/app/motion-disclosure.test.ts`.
+ */
+
+/* ---- 1. Disclosure: <details> ---- */
+:root :where(details:not(.motion-faq, .mini-root *))::details-content {
+  /* Lets block-size travel to and from its natural `auto` (guide `animate-to-intrinsic-sizes`). */
+  interpolate-size: allow-keywords;
+  /* One formatting context in both states: margins of the first and last child do not jump
+     when `content-visibility` toggles at the end of the move. Not `contain: layout` — it would
+     capture `position: fixed` windows rendered inside a section. */
+  display: flow-root;
+  /* Clip only along the height, with room for focus rings; the sides stay visible. */
+  overflow-x: visible;
+  overflow-y: clip;
+  overflow-clip-margin: 6px;
+  transition-property: block-size, opacity, content-visibility;
+  transition-duration: 0.42s, 0.24s, 0.42s;
+  transition-timing-function: var(--spring-soft), ease-out, linear;
+  /* After `transition`, not inside it: older browsers would drop the whole declaration. */
+  transition-behavior: allow-discrete;
+}
+:root :where(details:not(.motion-faq, .mini-root *):not([open]))::details-content {
+  block-size: 0;
+  opacity: 0;
+}
+/* Folding is quicker than opening, and the text goes first. */
+:root :where(details:not(.motion-faq, .mini-root *):not([open]))::details-content {
+  transition-duration: 0.28s, 0.14s, 0.28s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1), ease-in, linear;
+}
+
+/* A chevron in the summary that turns with the open state but was given no transition of its
+   own (`group-open:rotate-180` alone). Those with `transition-transform` ride round 1, section 0. */
+:root
+  :where(summary :is(svg, span)[class*="group-open"]):where(
+    :not([class~="transition"], [class~="transition-all"], [class~="transition-transform"], .mini-root *)
+  ) {
+  transition-property: rotate, translate, scale, color, background-color, border-color;
+  transition-duration: 0.45s, 0.45s, 0.45s, 0.18s, 0.18s, 0.18s;
+  transition-timing-function: var(--spring-soft), var(--spring-soft), var(--spring-soft), ease, ease, ease;
+}
+
+/* «Подробнее» (`MoreText`): the rest of the sentence fades in where it was. Inline text cannot
+   be moved, so opacity only. */
+@keyframes motion-more-in {
+  from {
+    opacity: 0;
+  }
+}
+:root :where([data-more-text-rest]) {
+  animation: motion-more-in 0.32s ease-out;
+}
+
+/* ---- 2. Toasts (sonner). Sonner moves the toast with `transform: var(--y)` and injects its
+   styles after ours, so the selectors here are one class heavier. A finger on the toast
+   (`data-swiping`) and the swipe-out keep sonner's own behaviour. ---- */
+:root
+  :where([data-sonner-toaster]:not(.mini-root *))
+  :where([data-sonner-toast]):not([data-swiping="true"], [data-swipe-out="true"]) {
+  transition-property: transform, opacity, height, box-shadow, scale;
+  transition-duration: 0.5s, 0.3s, 0.45s, 0.2s, 0.5s;
+  transition-timing-function: var(--spring), ease-out, var(--spring-soft), ease, var(--spring);
+}
+/* Arrives from a hair smaller; leaves the same way, quicker. */
+:root :where([data-sonner-toaster]:not(.mini-root *)) :where([data-sonner-toast]):is([data-mounted="false"], [data-removed="true"]) {
+  scale: 0.96;
+}
+:root
+  :where([data-sonner-toaster]:not(.mini-root *))
+  :where([data-sonner-toast])[data-removed="true"]:not([data-swiping="true"], [data-swipe-out="true"]) {
+  transition-duration: 0.24s, 0.18s, 0.3s, 0.2s, 0.24s;
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1), ease-in, var(--spring-soft), ease, cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ---- 3. Loading. A loading surface (`aria-busy` with a skeleton inside) shows itself after a
+   short beat, so a page that loads at once does not flash a grey frame. Only opacity: the
+   page fade of round 1 uses the same property on the same element and wins while it plays. ---- */
+@keyframes motion-busy-in {
+  from {
+    opacity: 0;
+  }
+}
+:root :where([aria-busy="true"]:has(.skeleton-shimmer):not(.mini-root *)) {
+  animation: motion-busy-in 0.24s ease-out 0.12s backwards;
+}
+/* A calmer sheen: slower, the same path. */
+:root :where(.skeleton-shimmer:not(.mini-root *))::after {
+  animation-duration: 1.8s;
+}
+
+/* ---- 4. Stagger for opted-in card grids: each card rises a little after the one before it.
+   Only on first render (CSS animations play when an element is inserted, not on re-render).
+   `sibling-index()` where supported (guide `dynamic-sibling-animations`), `:nth-child()`
+   elsewhere; both are capped at seven steps of 45 ms. ---- */
+@keyframes motion-stagger-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root :where([data-motion-stagger]:not(.mini-root *)) > :where(*) {
+    animation: motion-stagger-in 0.42s var(--spring-soft) backwards;
+  }
+  @supports (animation-delay: calc(sibling-index() * 0.1s)) {
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(*) {
+      animation-delay: calc(min(sibling-index() - 1, 6) * 45ms);
+    }
+  }
+  @supports not (animation-delay: calc(sibling-index() * 0.1s)) {
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(:nth-child(2)) { animation-delay: 45ms; }
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(:nth-child(3)) { animation-delay: 90ms; }
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(:nth-child(4)) { animation-delay: 135ms; }
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(:nth-child(5)) { animation-delay: 180ms; }
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(:nth-child(6)) { animation-delay: 225ms; }
+    :root :where([data-motion-stagger]:not(.mini-root *)) > :where(:nth-child(n + 7)) { animation-delay: 270ms; }
+  }
+}
+
+/* ---- 5. Messages that appear. An error under a field or a form (`role="alert"`, the form
+   message) drops in from 4px above; an empty search result settles from a hair smaller.
+   Elements with their own animation or their own `translate` are left alone. ---- */
+@keyframes motion-note-in {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+@keyframes motion-empty-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root
+    :where([role="alert"], [data-slot="form-message"]):where(
+      :not(
+        .mini-root *,
+        [data-sonner-toaster] *,
+        [class*="animate-"],
+        [class*="translate-"],
+        [data-motion-saved]
+      )
+    ) {
+    animation: motion-note-in 0.28s var(--spring-soft);
+  }
+  :root :where([data-motion-empty]:not(.mini-root *)) {
+    animation: motion-empty-in 0.4s var(--spring-soft);
+  }
+}
+
+/* ---- Off: «Без анимации» and the system «Reduce motion» ---- */
+:root[data-view-still] :where(details)::details-content {
+  transition: none;
+}
+:root[data-view-still] :where(summary :is(svg, span)[class*="group-open"]) {
+  transition-property: color, background-color, border-color;
+}
+:root[data-view-still]
+  :where(
+    [data-more-text-rest],
+    [aria-busy="true"],
+    [data-motion-stagger] > *,
+    [role="alert"],
+    [data-slot="form-message"],
+    [data-motion-empty]
+  ) {
+  animation: none;
+}
+/* The skeleton stays a plain grey plate. */
+:root[data-view-still] :where(.skeleton-shimmer)::after,
+:root[data-view-still] :where(.skeleton-shimmer, .animate-pulse) {
+  animation: none;
+}
+/* Toasts appear and go without moving (what sonner itself does under «Reduce motion»). */
+:root[data-view-still] :where([data-sonner-toast], [data-sonner-toast] > *) {
+  transition: none !important;
+  animation: none !important;
+  scale: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root :where(details)::details-content {
+    transition: none;
+  }
+  :root :where(summary :is(svg, span)[class*="group-open"]) {
+    transition-property: color, background-color, border-color;
+  }
+  :root :where([data-more-text-rest], [aria-busy="true"]) {
+    animation: none;
+  }
+  :root :where([data-sonner-toast]) {
+    scale: none !important;
+  }
+}

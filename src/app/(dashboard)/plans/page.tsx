@@ -164,6 +164,7 @@ export default async function PlansPage() {
                                     ? "bg-[#d9a02a]"
                                     : "bg-[#d95f2a]"
                                 }`}
+                                data-meter
                                 style={{
                                   width: `${Math.min(completion, 100)}%`,
                                 }}

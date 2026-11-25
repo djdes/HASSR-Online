@@ -711,7 +711,7 @@ function TemplateCard({
 function EmptyState({ onReset }: { onReset: () => void }) {
   const ui = useTranslations("journals.ui.browser");
   return (
-    <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-white px-6 py-16 text-center">
+    <div data-motion-empty="" className="rounded-3xl border border-dashed border-[#dcdfed] bg-white px-6 py-16 text-center">
       <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#f5f6ff] text-[#5566f6]">
         <SearchX className="size-7" />
       </div>

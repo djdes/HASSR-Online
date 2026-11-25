@@ -161,3 +161,50 @@ describe("mini-theme: modern-web-guidance", () => {
     assert.ok(CSS.includes(".mini-role-bar {"));
   });
 });
+
+/**
+ * Движение экранов (раунд 4): метки `data-mini-*` оживают только при
+ * `prefers-reduced-motion: no-preference` и без «Без анимации»
+ * (`data-view-still` на <html>). Иначе — статичный экран в конечном
+ * состоянии: общее правило `reduce` выше гасит длительности, но не
+ * задержки, и с `fill-mode: backwards` строки висели бы прозрачными.
+ */
+describe("mini-theme: движение экранов выключается", () => {
+  const start = CSS.indexOf("@keyframes miniEnter");
+  // Без комментариев: в них упоминаются запрещённые приёмы.
+  const layer = CSS.slice(start).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("слой на месте", () => {
+    assert.ok(start > 0, "нет слоя движения экранов");
+    for (const mark of ["data-mini-stagger", "data-mini-done", "data-mini-tick", "data-mini-count", "data-mini-skeleton"]) {
+      assert.ok(layer.includes(`[${mark}]`), `нет правила для ${mark}`);
+    }
+  });
+
+  it("каждое правило с animation — под no-preference и без data-view-still", () => {
+    const blocks = layer.split("@media (prefers-reduced-motion: no-preference)");
+    // До первого блока — только @keyframes, вне блоков анимаций нет.
+    assert.doesNotMatch(blocks[0].replace(/@keyframes[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, ""), /animation(-delay)?:/);
+    const rules = layer.split("}").filter((rule) => /\banimation(-delay)?:/.test(rule));
+    assert.ok(rules.length >= 5);
+    for (const rule of rules) {
+      const head = rule.slice(0, rule.lastIndexOf("{"));
+      const selector = head.slice(head.lastIndexOf("{") + 1);
+      assert.match(selector, /html:not\(\[data-view-still\]\)/, `без выключателя: ${selector.trim()}`);
+    }
+    assert.match(layer, /html:not\(\[data-view-still\]\) \.mini-disclosure::details-content\s*\{\s*transition:/);
+  });
+
+  it("sibling-index() — за @supports с литералом, запас — :nth-child", () => {
+    assert.ok(layer.includes("@supports (animation-delay: calc(sibling-index() * 0.1s))"));
+    assert.ok(layer.includes("@supports not (animation-delay: calc(sibling-index() * 0.1s))"));
+    assert.doesNotMatch(layer, /@supports[^{]*var\(/);
+  });
+
+  it("без will-change, fill-mode both/forwards и отскока сверх пружины", () => {
+    assert.doesNotMatch(layer, /will-change/);
+    assert.doesNotMatch(layer, /animation:[^;]*\b(both|forwards)\b/);
+    assert.doesNotMatch(layer, /cubic-bezier\([^)]*,\s*-|cubic-bezier\([^,]*,\s*[^,]*,\s*[^,]*,\s*1\.[1-9]/);
+    assert.doesNotMatch(layer, /\btransition-behavior:\s*allow-discrete\b[^;]*,|transition:[^;]*allow-discrete/);
+  });
+});

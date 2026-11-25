@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { channelLabel, displayName, formatAgo, formatDateTime, formatDue, itemHeadline } from "./crm-format";
 import { AddLeadButton, SyncButton } from "./crm-toolbar";
 import { CARD, ChannelIcon, CrmHeader, StageBadge, ZONE_TITLE } from "./crm-ui";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,7 @@ function Tile({ href, label, value, sub, tone, icon: Icon }: { href: string; lab
         <Icon className={cn("size-4", tone === "alert" ? "text-[#a13a32]" : tone === "warn" ? "text-[#a16d32]" : "text-[#5566f6]")} />
         {label}
       </span>
-      <span className={cn("text-[30px] font-semibold tabular-nums leading-none tracking-[-0.02em]", tone === "alert" ? "text-[#a13a32]" : "text-[#0b1024]")}>{value}</span>
+      <span className={cn("text-[30px] font-semibold tabular-nums leading-none tracking-[-0.02em]", tone === "alert" ? "text-[#a13a32]" : "text-[#0b1024]")}><MotionNumber value={value} /></span>
       {sub ? <span className="text-[12.5px] text-[#6f7282]">{sub}</span> : null}
     </Link>
   );
@@ -307,7 +308,7 @@ export default async function CrmSummaryPage() {
                           <span className="tabular-nums text-[#0b1024]">{item.count}</span>
                         </span>
                         <span className="mt-1 block h-1.5 rounded-full bg-[#f0f1f8]">
-                          <span className="block h-1.5 rounded-full bg-[#5566f6]" style={{ width: `${Math.max(4, Math.round((item.count / maxChannel) * 100))}%` }} />
+                          <span className="block h-1.5 rounded-full bg-[#5566f6]" data-meter style={{ width: `${Math.max(4, Math.round((item.count / maxChannel) * 100))}%` }} />
                         </span>
                       </Link>
                     </li>

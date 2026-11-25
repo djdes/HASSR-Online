@@ -141,6 +141,7 @@ export function ActivityDrawer({
                       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#f2f3f9]">
                         <div
                           className="h-full rounded-full bg-[#5566f6]"
+                          data-meter
                           style={{
                             width: `${maxCount > 0 ? Math.max(4, (j.count / maxCount) * 100) : 0}%`,
                           }}

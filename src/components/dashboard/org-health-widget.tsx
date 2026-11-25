@@ -121,6 +121,7 @@ export function OrgHealthWidget({
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#ececf4]">
             <div
               className="h-full transition-all duration-300"
+              data-meter
               style={{
                 width: `${scorePercent}%`,
                 backgroundColor: tone.fgColor,

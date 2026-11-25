@@ -89,7 +89,7 @@ export default function OutboxPage() {
   const total = own.length + orphans.length;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 pb-28">
+    <div className="flex flex-1 flex-col gap-4 pb-28" data-mini-stagger>
       <Link
         href={miniHomeHref(session?.user ?? null)}
         className="mini-btn-ghost mini-press -my-1 -ml-3.5 w-fit"
@@ -110,7 +110,9 @@ export default function OutboxPage() {
       </div>
 
       {loading ? (
-        <div className="mini-skeleton-bar" style={{ height: 76, borderRadius: 16 }} />
+        <div data-mini-skeleton>
+          <div className="mini-skeleton-bar" style={{ height: 76, borderRadius: 16 }} />
+        </div>
       ) : total === 0 ? (
         <div
           className="mini-card flex flex-col items-center gap-2 p-8 text-center"

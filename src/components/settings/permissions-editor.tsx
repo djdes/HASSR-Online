@@ -423,6 +423,7 @@ function SummaryChip({
       <div className="mt-2 h-1.5 rounded-full bg-[#f0f2f7]">
         <div
           className="h-full rounded-full bg-[#5566f6]"
+          data-meter
           style={{ width: `${pct}%` }}
         />
       </div>

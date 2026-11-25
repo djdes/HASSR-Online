@@ -11,6 +11,7 @@ import {
   type FunnelRow,
 } from "@/lib/signup-funnel";
 import { loadSignupFunnel } from "@/lib/signup-funnel.server";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -48,7 +49,7 @@ export default async function RootFunnelPage() {
         {FUNNEL_STEPS.map((step) => (
           <div key={step} className="rounded-2xl border border-[#ececf4] bg-white p-4">
             <div className="text-[13px] font-medium text-[#6f7282]">{FUNNEL_STEP_LABELS[step]}</div>
-            <div className="mt-1 text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-[#0b1024]">{total[step]}</div>
+            <div className="mt-1 text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-[#0b1024]"><MotionNumber value={total[step]} /></div>
             <div className="mt-0.5 text-[12px] leading-snug text-[#9b9fb3]">
               {step === "registered" ? FUNNEL_STEP_HINTS[step] : `${formatShare(stepShare(total, step))} · ${FUNNEL_STEP_HINTS[step]}`}
             </div>

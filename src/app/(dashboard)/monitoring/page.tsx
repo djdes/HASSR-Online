@@ -11,6 +11,7 @@ import { metricPercent, type MonitoringMetric } from "@/lib/monitoring";
 import { cn } from "@/lib/utils";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
+import { MotionNumber } from "@/components/motion/motion-number";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +37,13 @@ function MetricRing({ percent, label }: { percent: number | null; label: string 
             strokeWidth="12"
             strokeLinecap="round"
             strokeDasharray={`${filled} ${length}`}
+            data-meter="ring"
           />
         ) : null}
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-[30px] font-semibold tabular-nums tracking-[-0.02em] text-[#0b1024]">
-          {percent === null ? "—" : `${percent}%`}
+          {percent === null ? "—" : <MotionNumber value={percent} suffix="%" />}
         </span>
       </div>
     </div>

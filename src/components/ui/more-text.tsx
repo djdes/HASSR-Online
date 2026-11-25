@@ -24,7 +24,9 @@ export function MoreText({ text, after }: { text: string; after?: ReactNode }) {
   }
   return (
     <>
-      {open ? `${first} ${rest}` : first}
+      {first}
+      {/* `data-more-text-rest`: the rest fades in (motion-disclosure.css). */}
+      {open ? <> <span data-more-text-rest="">{rest}</span></> : null}
       {open && after ? <> {after}</> : null}{" "}
       <button
         type="button"

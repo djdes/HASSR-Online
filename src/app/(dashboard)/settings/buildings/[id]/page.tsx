@@ -592,6 +592,7 @@ export default async function PointPage({ params }: { params: Promise<{ id: stri
                         <div className="h-2 overflow-hidden rounded-full bg-[#ececf4]">
                           <div
                             className={level ? "h-full bg-[#e0445a]" : "h-full bg-[#16a34a]"}
+                            data-meter
                             style={{ width: `${share * 100}%` }}
                           />
                         </div>
