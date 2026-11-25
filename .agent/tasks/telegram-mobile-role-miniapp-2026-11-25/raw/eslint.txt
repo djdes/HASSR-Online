@@ -1,0 +1,4 @@
+Check: eslint (34 files)
+ExitCode: 0
+---
+

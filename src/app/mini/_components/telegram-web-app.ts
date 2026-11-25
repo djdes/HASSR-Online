@@ -6,6 +6,17 @@
  * can swap this out for the official wrapper.
  */
 
+export type TelegramContactRequestedEvent = {
+  status?: string;
+  response?: string;
+  responseUnsafe?: {
+    contact?: {
+      phone_number?: string;
+      user_id?: number;
+    };
+  };
+};
+
 export type TelegramWebApp = {
   initData: string;
   initDataUnsafe?: {
@@ -49,6 +60,9 @@ export type TelegramWebApp = {
     buttons?: Array<{ id?: string; type?: "default" | "ok" | "close" | "cancel" | "destructive"; text: string }>;
   }, callback?: (buttonId: string) => void): void;
   showConfirm(message: string, callback: (confirmed: boolean) => void): void;
+  requestContact?: (
+    callback?: (sent: boolean, event?: TelegramContactRequestedEvent) => void,
+  ) => void;
   HapticFeedback?: {
     impactOccurred(style: "light" | "medium" | "heavy" | "rigid" | "soft"): void;
     notificationOccurred(type: "error" | "success" | "warning"): void;
@@ -132,4 +146,49 @@ export function isInsideTelegram(): boolean {
   }
   const platform = typeof app.platform === "string" ? app.platform.trim() : "";
   return platform.length > 0 && platform !== "unknown";
+}
+
+export type TelegramContactRequestResult =
+  | { status: "sent"; response?: string }
+  | { status: "cancelled" }
+  | { status: "unsupported" };
+
+/**
+ * Request the user's verified Telegram phone contact via Bot API 6.9+.
+ * Guards against double callbacks, exceptions in older WebViews, and hung dialogs.
+ */
+export function requestTelegramContact(
+  timeoutMs = 30_000,
+): Promise<TelegramContactRequestResult> {
+  const app = getTelegramWebApp();
+  if (!app || typeof app.requestContact !== "function") {
+    return Promise.resolve({ status: "unsupported" });
+  }
+  return new Promise<TelegramContactRequestResult>((resolve) => {
+    let settled = false;
+    const finish = (result: TelegramContactRequestResult) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    };
+    const timer = setTimeout(() => {
+      finish({ status: "cancelled" });
+    }, timeoutMs);
+    try {
+      app.requestContact!((sent, event) => {
+        if (sent === true || event?.status === "sent") {
+          const response =
+            typeof event?.response === "string" && event.response.length > 0
+              ? event.response
+              : undefined;
+          finish(response ? { status: "sent", response } : { status: "sent" });
+          return;
+        }
+        finish({ status: "cancelled" });
+      });
+    } catch {
+      finish({ status: "unsupported" });
+    }
+  });
 }

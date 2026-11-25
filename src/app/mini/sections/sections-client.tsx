@@ -91,22 +91,24 @@ export function MiniSectionsClient({
       </header>
 
       {total > 6 ? (
-        <label className="relative block">
-          <Search
-            className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2"
-            style={{ color: "var(--mini-text-muted)" }}
-          />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("search.label")}
-            aria-label={t("search.label")}
-            // Поле QR-страниц: 56px, шрифт 17px (меньше 16px iOS зумит).
-            className="mini-input"
-            style={{ paddingLeft: 46 }}
-          />
-        </label>
+        <search>
+          <label className="relative block">
+            <Search
+              className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2"
+              style={{ color: "var(--mini-text-muted)" }}
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("search.label")}
+              aria-label={t("search.label")}
+              // Поле QR-страниц: 56px, шрифт 17px (меньше 16px iOS зумит).
+              className="mini-input"
+              style={{ paddingLeft: 46 }}
+            />
+          </label>
+        </search>
       ) : null}
 
       {filtered.length === 0 ? (

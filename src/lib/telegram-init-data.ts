@@ -19,6 +19,7 @@ import crypto from "node:crypto";
  */
 
 const AUTH_DATE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CONTACT_RESPONSE_MAX_AGE_MS = 15 * 60 * 1000;
 
 export type TelegramWebAppUser = {
   id: number;
@@ -36,17 +37,38 @@ export type VerifiedInitData = {
   queryId?: string;
 };
 
-export type InitDataVerifyError =
+export type TelegramWebAppContact = {
+  phone_number: string;
+  user_id: number;
+  first_name?: string;
+  last_name?: string;
+};
+
+export type VerifiedContactResponse = {
+  contact: TelegramWebAppContact;
+  authDate: Date;
+};
+
+type SignedPayloadVerifyError =
   | "missing-token"
   | "malformed"
   | "missing-hash"
   | "bad-signature"
-  | "stale"
-  | "missing-user";
+  | "stale";
+
+export type InitDataVerifyError = SignedPayloadVerifyError | "missing-user";
 
 export type InitDataVerifyResult =
   | { ok: true; data: VerifiedInitData }
   | { ok: false; error: InitDataVerifyError };
+
+export type ContactResponseVerifyError =
+  | SignedPayloadVerifyError
+  | "missing-contact";
+
+export type ContactResponseVerifyResult =
+  | { ok: true; data: VerifiedContactResponse }
+  | { ok: false; error: ContactResponseVerifyError };
 
 function constantTimeEqHex(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -57,18 +79,21 @@ function constantTimeEqHex(a: string, b: string): boolean {
   }
 }
 
-export function verifyTelegramInitData(
-  initData: string,
-  botToken: string | undefined = process.env.TELEGRAM_BOT_TOKEN
-): InitDataVerifyResult {
+function verifyWebAppSignedPayload(
+  raw: string,
+  botToken: string | undefined,
+  maxAgeMs: number
+):
+  | { ok: true; params: URLSearchParams; authDate: Date }
+  | { ok: false; error: SignedPayloadVerifyError } {
   if (!botToken) return { ok: false, error: "missing-token" };
-  if (typeof initData !== "string" || initData.length === 0) {
+  if (typeof raw !== "string" || raw.length === 0) {
     return { ok: false, error: "malformed" };
   }
 
   let params: URLSearchParams;
   try {
-    params = new URLSearchParams(initData);
+    params = new URLSearchParams(raw);
   } catch {
     return { ok: false, error: "malformed" };
   }
@@ -103,11 +128,29 @@ export function verifyTelegramInitData(
     return { ok: false, error: "malformed" };
   }
   const authDateMs = authDateSec * 1000;
-  if (Date.now() - authDateMs > AUTH_DATE_MAX_AGE_MS) {
+  if (Date.now() - authDateMs > maxAgeMs) {
     return { ok: false, error: "stale" };
   }
 
-  const userRaw = params.get("user");
+  return {
+    ok: true,
+    params,
+    authDate: new Date(authDateMs),
+  };
+}
+
+export function verifyTelegramInitData(
+  initData: string,
+  botToken: string | undefined = process.env.TELEGRAM_BOT_TOKEN
+): InitDataVerifyResult {
+  const signed = verifyWebAppSignedPayload(
+    initData,
+    botToken,
+    AUTH_DATE_MAX_AGE_MS
+  );
+  if (!signed.ok) return signed;
+
+  const userRaw = signed.params.get("user");
   if (!userRaw) return { ok: false, error: "missing-user" };
 
   let user: TelegramWebAppUser;
@@ -116,7 +159,7 @@ export function verifyTelegramInitData(
   } catch {
     return { ok: false, error: "malformed" };
   }
-  if (typeof user.id !== "number") {
+  if (!user || typeof user !== "object" || typeof user.id !== "number") {
     return { ok: false, error: "missing-user" };
   }
 
@@ -124,8 +167,61 @@ export function verifyTelegramInitData(
     ok: true,
     data: {
       user,
-      authDate: new Date(authDateMs),
-      queryId: params.get("query_id") ?? undefined,
+      authDate: signed.authDate,
+      queryId: signed.params.get("query_id") ?? undefined,
+    },
+  };
+}
+
+/**
+ * Verify a Telegram Mini App `requestContact()` response string.
+ * Uses the same WebAppData HMAC scheme as `initData`, with a tighter
+ * default freshness window (15 minutes).
+ */
+export function verifyTelegramContactResponse(
+  response: string,
+  botToken: string | undefined = process.env.TELEGRAM_BOT_TOKEN,
+  maxAgeMs: number = CONTACT_RESPONSE_MAX_AGE_MS
+): ContactResponseVerifyResult {
+  const signed = verifyWebAppSignedPayload(response, botToken, maxAgeMs);
+  if (!signed.ok) return signed;
+
+  const contactRaw = signed.params.get("contact");
+  if (!contactRaw) return { ok: false, error: "missing-contact" };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(contactRaw);
+  } catch {
+    return { ok: false, error: "malformed" };
+  }
+
+  const contact = parsed as Partial<TelegramWebAppContact> | null;
+  if (
+    !contact ||
+    typeof contact !== "object" ||
+    typeof contact.phone_number !== "string" ||
+    contact.phone_number.trim().length === 0 ||
+    typeof contact.user_id !== "number" ||
+    !Number.isFinite(contact.user_id)
+  ) {
+    return { ok: false, error: "missing-contact" };
+  }
+
+  return {
+    ok: true,
+    data: {
+      contact: {
+        phone_number: contact.phone_number,
+        user_id: contact.user_id,
+        ...(typeof contact.first_name === "string"
+          ? { first_name: contact.first_name }
+          : {}),
+        ...(typeof contact.last_name === "string"
+          ? { last_name: contact.last_name }
+          : {}),
+      },
+      authDate: signed.authDate,
     },
   };
 }

@@ -6,6 +6,8 @@ import { issueSession } from "@/lib/issue-session";
 import { recordLogin } from "@/lib/login-trace";
 import { startTelegramChallenge, twoFactorRequired } from "@/lib/two-factor";
 import { loginRateLimiter } from "@/lib/rate-limit";
+import { verifyTelegramInitData } from "@/lib/telegram-init-data";
+import { linkTelegramToAuthenticatedUser } from "@/lib/telegram-phone-link";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,10 +77,36 @@ export async function POST(request: Request) {
       method: "phone",
     });
 
+    let telegramLinkStatus: string | undefined;
+    if (
+      body?.linkTelegram === true &&
+      typeof body?.initData === "string" &&
+      body.initData.length > 0
+    ) {
+      try {
+        const verified = verifyTelegramInitData(body.initData);
+        if (verified.ok) {
+          const linkResult = await linkTelegramToAuthenticatedUser({
+            userId: user.id,
+            chatId: String(verified.data.user.id),
+          });
+          telegramLinkStatus = linkResult.status;
+        } else {
+          telegramLinkStatus = "invalid_init_data";
+        }
+      } catch (linkError) {
+        console.error("[mini-login] telegram link failed", linkError);
+        telegramLinkStatus = "error";
+      }
+    }
+
     // Успешный вход не тратит лимит (см. /api/auth/login).
     loginRateLimiter.refund(`mini-login:${ip}`);
     return issueSession(
-      NextResponse.json({ success: true }),
+      NextResponse.json({
+        success: true,
+        ...(telegramLinkStatus ? { telegramLinkStatus } : {}),
+      }),
       user,
       user.organization.name,
     );

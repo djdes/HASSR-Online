@@ -4,6 +4,8 @@ import { issueSession } from "@/lib/issue-session";
 import { loginRateLimiter } from "@/lib/rate-limit";
 import { recordLogin } from "@/lib/login-trace";
 import { startTelegramChallenge, twoFactorRequired } from "@/lib/two-factor";
+import { verifyTelegramInitData } from "@/lib/telegram-init-data";
+import { linkTelegramToAuthenticatedUser } from "@/lib/telegram-phone-link";
 
 
 export async function POST(request: Request) {
@@ -66,13 +68,39 @@ export async function POST(request: Request) {
       method: "password",
     });
 
+    let telegramLinkStatus: string | undefined;
+    if (
+      body?.linkTelegram === true &&
+      typeof body?.initData === "string" &&
+      body.initData.length > 0
+    ) {
+      try {
+        const verified = verifyTelegramInitData(body.initData);
+        if (verified.ok) {
+          const linkResult = await linkTelegramToAuthenticatedUser({
+            userId: user.id,
+            chatId: String(verified.data.user.id),
+          });
+          telegramLinkStatus = linkResult.status;
+        } else {
+          telegramLinkStatus = "invalid_init_data";
+        }
+      } catch (linkError) {
+        console.error("[auth-login] telegram link failed", linkError);
+        telegramLinkStatus = "error";
+      }
+    }
+
     // Минт JWT и раскладка кук вынесены в lib/issue-session.ts —
     // мгновенная регистрация выдаёт сессию тем же кодом.
     // Успешный вход не тратит лимит: он защищает от перебора паролей, а за
     // одним роутером кафе входит вся смена.
     loginRateLimiter.refund(rlKey);
     return issueSession(
-      NextResponse.json({ success: true }),
+      NextResponse.json({
+        success: true,
+        ...(telegramLinkStatus ? { telegramLinkStatus } : {}),
+      }),
       user,
       user.organization.name,
     );

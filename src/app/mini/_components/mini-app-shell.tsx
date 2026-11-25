@@ -20,6 +20,7 @@ import { ScopeBoundary } from "@/components/layout/scope-boundary";
 import type { CabinetScope } from "@/lib/cabinet-scope";
 import { appStoreUrl, appUpdateRequirement, needsTelegramSdk } from "@/lib/mobile-app";
 import type { PartnerHintRates } from "@/lib/partners/partner-hint";
+import type { MiniRoleGroup } from "@/lib/mini-role";
 
 import type { MiniNavItem } from "@/app/mini/_lib/nav-items";
 
@@ -70,6 +71,7 @@ export async function MiniAppShell({
   askNps = false,
   canPreviewNps = false,
   authed = false,
+  roleGroup = null,
   scope = null,
 }: {
   children: ReactNode;
@@ -91,6 +93,8 @@ export async function MiniAppShell({
   canPreviewNps?: boolean;
   /** Есть серверная сессия: живые индикаторы и помощник имеют смысл. */
   authed?: boolean;
+  /** Группа роли кабинета для шапки и стилизации (`manager` | `staff`). */
+  roleGroup?: MiniRoleGroup | null;
   /**
    * Область данных (`lib/cabinet-scope.ts`): другая организация — помощник
    * начинает с чистого листа (переписка и карточки действий были про прежнюю).
@@ -144,6 +148,7 @@ export async function MiniAppShell({
           className="mini-root app-shell min-h-dvh"
           data-theme={initialTheme}
           data-app-theme={initialTheme}
+          data-mini-role={roleGroup ?? undefined}
           suppressHydrationWarning
         >
           <MiniThemeBootstrap hasProfileTheme={profileTheme !== null} />
@@ -161,6 +166,7 @@ export async function MiniAppShell({
               partnerHint={partnerHint}
               locationName={locationName}
               showNotifications={authed}
+              roleGroup={authed ? roleGroup : null}
             />
             {/* Безопасные зоны iPhone: сверху notch, снизу
                 home-indicator плюс высота нижнего меню. */}

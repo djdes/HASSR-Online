@@ -15,9 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MiniLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; phone?: string; deleted?: string }>;
+  searchParams: Promise<{ next?: string; phone?: string; deleted?: string; linkTg?: string }>;
 }) {
-  const { next, phone, deleted } = await searchParams;
+  const { next, phone, deleted, linkTg } = await searchParams;
   const t = await getTranslations("miniLogin.page");
 
   return (
@@ -41,7 +41,11 @@ export default async function MiniLoginPage({
           >
             {t("intro")}
           </p>
-          <MiniLoginForm next={next} initialPhone={phone} />
+          <MiniLoginForm
+            next={next}
+            initialPhone={phone}
+            linkTelegramDefault={linkTg === "1"}
+          />
         </div>
       </div>
     </DomainMessagesBoundary>

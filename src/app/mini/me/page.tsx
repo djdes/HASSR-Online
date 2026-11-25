@@ -5,6 +5,7 @@ import { getActiveOrgId, isImpersonating } from "@/lib/auth-helpers";
 import { loadBillingView } from "@/lib/billing-view.server";
 import { isMobileAppRequest } from "@/lib/mobile-app-payments";
 import { effectivePlatformSections } from "@/lib/platform-access";
+import { resolveMiniRole } from "@/lib/mini-role";
 
 import { MiniMeClient } from "./me-client";
 import { DomainMessagesBoundary } from "@/components/i18n/domain-messages-boundary";
@@ -54,6 +55,7 @@ export default async function MiniMePage() {
   const billingAnnouncement = billing?.announcement ?? null;
   // Сотруднику без прав на тариф — тонкая плашка, пока руководитель решает.
   const billingStaffNotice = billing?.staffNotice === true;
+  const role = session?.user ? resolveMiniRole(session.user) : null;
 
   return (
     <DomainMessagesBoundary namespaces={["notificationSettings", "miniProfile", "passkeySettings", "masterCabinetUi", "feedbackDialog", "accountDeletion"]}>
@@ -68,6 +70,7 @@ export default async function MiniMePage() {
       }
       phone={profile?.phone ?? null}
       telegramLinked={Boolean(profile?.telegramChatId)}
+      roleGroup={role?.group ?? "staff"}
       platformPanel={session?.user?.isRoot === true || (profile ? effectivePlatformSections(profile).length > 0 : false)}
     />
     </DomainMessagesBoundary>

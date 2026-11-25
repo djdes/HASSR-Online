@@ -1,6 +1,7 @@
 import { Bot, Composer, type Context } from "grammy";
 import { Agent, ProxyAgent, setGlobalDispatcher } from "undici";
 import { registerStartHandler } from "./handlers/start";
+import { registerContactHandler } from "./handlers/contact";
 import { registerStopHandler } from "./handlers/stop";
 import { registerInlineQueryHandler } from "./handlers/inline";
 import { registerShortcutHandlers } from "./handlers/shortcut";
@@ -92,6 +93,7 @@ export function getInboundBot(): Bot | null {
   registerEditHandlers(composer);
   registerPpkHandlers(composer);
   registerInlineQueryHandler(composer);
+  registerContactHandler(composer);
   // Строго последним из message-обработчиков: catch-all `on("message:text")`
   // ловит всё, что не разобрали команды выше, и отправляет это в поддержку.
   registerSupportHandlers(composer);

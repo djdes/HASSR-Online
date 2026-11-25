@@ -24,6 +24,7 @@ import {
   shouldSetMiniShell,
 } from "@/lib/mini-shell-cookie";
 import { isInsideMobileApp } from "@/lib/mobile-app";
+import type { MiniRoleGroup } from "@/lib/mini-role";
 import { getTelegramWebApp, isInsideTelegram } from "./telegram-web-app";
 import { haptic } from "./use-haptic";
 import { MINI_HERO_COLOR, miniBackgroundColor, useMiniTheme } from "./mini-theme";
@@ -277,6 +278,7 @@ export function MiniTopBar({
   partnerHint = null,
   locationName = null,
   showNotifications = false,
+  roleGroup = null,
 }: {
   /** «Корень» приложения: домашний адрес кабинета. */
   homeHref: string;
@@ -286,6 +288,8 @@ export function MiniTopBar({
   locationName?: string | null;
   /** Колокольчик уведомлений — зеркало шапки сайта; только вошедшим. */
   showNotifications?: boolean;
+  /** Группа роли кабинета (`manager` | `staff`); null — не показывать. */
+  roleGroup?: MiniRoleGroup | null;
 }) {
   const pathname = usePathname();
   const tRoutes = useTranslations("navigation.routes");
@@ -345,6 +349,9 @@ export function MiniTopBar({
           <span className="min-w-0 flex-1">
             <span className="mini-topbar-eyebrow">
               WeSetup
+              {roleGroup
+                ? ` · ${tMini(roleGroup === "manager" ? "roleManager" : "roleStaff")}`
+                : null}
               {locationName ? (
                 <>
                   {" · "}

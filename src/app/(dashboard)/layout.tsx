@@ -107,6 +107,7 @@ import {
 } from "@/lib/mini-shell-cookie";
 import { PARTNER_HEADER_PATH } from "@/lib/partners/request-context";
 import { MiniAppShell } from "@/app/mini/_components/mini-app-shell";
+import { MiniRoleBar } from "@/app/mini/_components/mini-role-bar";
 import { loadMiniShellData } from "@/app/mini/_components/mini-shell-data";
 import { CustomNamesProvider } from "@/components/shared/custom-names-provider";
 import { getOrgCustomNames } from "@/lib/org-custom-names";
@@ -1040,6 +1041,11 @@ async function MiniShellDashboard({ children }: { children: React.ReactNode }) {
                 }}
               />
               <SectionTabs />
+              <MiniRoleBar
+                roleKind={shell.roleKind}
+                roleGroup={shell.roleGroup}
+                quickActions={shell.roleQuickActions}
+              />
               <SectionFrame shell="mini" homeHref={shell.homeHref} scopeKey={shell.scope.data}>{children}</SectionFrame>
               {billing?.gate ? (
                 <BillingTransitionGate

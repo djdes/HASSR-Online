@@ -1,0 +1,87 @@
+=== git status --short ===
+ M src/app/(dashboard)/layout.tsx
+ M src/app/api/auth/login/route.ts
+ M src/app/api/mini/login/route.ts
+ M src/app/api/mini/session/route.ts
+ M src/app/borderless.css
+ M src/app/mini/_components/mini-app-shell.tsx
+ M src/app/mini/_components/mini-shell-data.ts
+ M src/app/mini/_components/mini-shell.tsx
+ M src/app/mini/_components/telegram-web-app.test.ts
+ M src/app/mini/_components/telegram-web-app.ts
+ M src/app/mini/layout.tsx
+ M src/app/mini/login/login-error-presentation.ts
+ M src/app/mini/login/login-form.tsx
+ M src/app/mini/login/page.tsx
+ M src/app/mini/me/me-client.tsx
+ M src/app/mini/me/page.tsx
+ M src/app/mini/mini-theme.css
+ M src/app/mini/mini-theme.test.ts
+ M src/app/mini/page.tsx
+ M src/app/mini/sections/sections-client.tsx
+ M src/app/neutral-palette.css
+ M src/i18n/message-contract.d.ts
+ M src/i18n/messages/confirm/en.json
+ M src/i18n/messages/confirm/ru.json
+ M src/i18n/messages/confirm/uz.json
+ M src/i18n/messages/en.json
+ M src/i18n/messages/errors/en.json
+ M src/i18n/messages/errors/ru.json
+ M src/i18n/messages/errors/uz.json
+ M src/i18n/messages/ru.json
+ M src/i18n/messages/uz.json
+ M src/i18n/pricing-message-contract.d.ts
+ M src/lib/bot/bot-app.ts
+ M src/lib/bot/handlers/start.ts
+ M src/lib/mini-entry-error-presentation.ts
+ M src/lib/mini-home-localization.test.ts
+ M src/lib/telegram-auth-messages.ts
+ M src/lib/telegram-init-data.ts
+?? .agent/tasks/telegram-mobile-role-miniapp-2026-11-25/
+?? src/app/api/mini/link-telegram-phone/
+?? src/app/api/mini/link-telegram/
+?? src/app/mini/_components/mini-role-bar.tsx
+?? src/lib/bot/handlers/contact.test.ts
+?? src/lib/bot/handlers/contact.ts
+?? src/lib/mini-role.test.ts
+?? src/lib/mini-role.ts
+?? src/lib/telegram-init-data.test.ts
+?? src/lib/telegram-phone-link.test.ts
+?? src/lib/telegram-phone-link.ts
+
+=== git diff --stat ===
+ src/app/(dashboard)/layout.tsx                    |   6 +
+ src/app/api/auth/login/route.ts                   |  30 +-
+ src/app/api/mini/login/route.ts                   |  30 +-
+ src/app/api/mini/session/route.ts                 |  16 +-
+ src/app/borderless.css                            |   2 +-
+ src/app/mini/_components/mini-app-shell.tsx       |   6 +
+ src/app/mini/_components/mini-shell-data.ts       |   5 +
+ src/app/mini/_components/mini-shell.tsx           |   7 +
+ src/app/mini/_components/telegram-web-app.test.ts | 103 ++++++-
+ src/app/mini/_components/telegram-web-app.ts      |  59 ++++
+ src/app/mini/layout.tsx                           |  14 +-
+ src/app/mini/login/login-error-presentation.ts    |  25 +-
+ src/app/mini/login/login-form.tsx                 | 213 ++++++++++++-
+ src/app/mini/login/page.tsx                       |  10 +-
+ src/app/mini/me/me-client.tsx                     | 354 +++++++++++++++++++++-
+ src/app/mini/me/page.tsx                          |   3 +
+ src/app/mini/mini-theme.css                       | 175 +++++++++++
+ src/app/mini/mini-theme.test.ts                   |  20 ++
+ src/app/mini/page.tsx                             | 250 ++++++++++++++-
+ src/app/mini/sections/sections-client.tsx         |  34 ++-
+ src/app/neutral-palette.css                       |   2 +-
+ src/i18n/message-contract.d.ts                    | 101 +++++-
+ src/i18n/messages/en.json                         | 101 +++++-
+ src/i18n/messages/ru.json                         | 101 +++++-
+ src/i18n/messages/uz.json                         | 101 +++++-
+ src/lib/bot/bot-app.ts                            |   2 +
+ src/lib/bot/handlers/start.ts                     |  12 +-
+ src/lib/mini-entry-error-presentation.ts          |   5 +
+ src/lib/mini-home-localization.test.ts            |  40 ++-
+ src/lib/telegram-auth-messages.ts                 |   4 +
+ src/lib/telegram-init-data.ts                     | 124 +++++++-
+ 31 files changed, 1858 insertions(+), 97 deletions(-)
+
+=== git diff --stat (confirm/errors/pricing LF-only) ===
+<empty>

@@ -1122,3 +1122,178 @@ html[data-keyboard-open] .mini-nav-rail {
     max-width: 100%;
   }
 }
+
+/* --------------------------------------------------------------------
+ * Modern Web Guidance: scroll-padding, fluid typography, container-query
+ * simplification for embedded site pages, role quick-actions, native
+ * <dialog>, and <details> disclosures.
+ * ------------------------------------------------------------------ */
+html:has(#mini-root) {
+  scroll-padding-top: calc(var(--mini-safe-t) + var(--mini-topbar-h) + 12px);
+  scroll-padding-bottom: calc(var(--mini-safe-b) + var(--mini-nav-h) + 16px);
+}
+
+.mini-root main {
+  container: mini-main / inline-size;
+  overflow-wrap: break-word;
+}
+.mini-root main :where(a, code) {
+  overflow-wrap: anywhere;
+}
+.mini-root main :is(img, video) {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+.mini-root :is(h1, h2, h3, .mini-h1) {
+  text-wrap: balance;
+}
+.mini-root :is(p, li) {
+  text-wrap: pretty;
+}
+#mini-root main h1:not(.mini-h1) {
+  font-size: clamp(1.375rem, 1.15rem + 1.2cqi, 1.625rem);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+@container mini-main (inline-size < 34rem) {
+  #mini-root main [data-mini-hide],
+  #mini-root main kbd {
+    display: none !important;
+  }
+  #mini-root main :is(.grid-cols-3, .grid-cols-4, .sm\:grid-cols-3, .md\:grid-cols-3, .lg\:grid-cols-3, .lg\:grid-cols-4, .xl\:grid-cols-4) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #mini-root main [data-home-page] .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #mini-root main section:where([class*="rounded-3xl"], [class*="rounded-2xl"]) {
+    border-radius: 20px;
+  }
+  #mini-root main :is(p, td, th, dd, dt, label):is(.text-xs, [class*="text-[11px]"], [class*="text-[12px]"]) {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}
+
+/* Role quick-action strip on landing screens */
+.mini-role-bar {
+  background: var(--mini-surface-1);
+  border: 1px solid var(--mini-divider);
+  border-radius: 20px;
+  padding: 12px 14px;
+  box-shadow: var(--mini-card-shadow);
+}
+.mini-role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+.mini-role-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--mini-divider-strong);
+  background: var(--mini-surface-2);
+  color: var(--mini-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+}
+.mini-role-action[aria-current="page"] {
+  border-color: var(--mini-accent);
+  background: var(--mini-accent-soft);
+  color: var(--mini-accent-ink);
+}
+.mini-role-action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--mini-accent-ring);
+}
+
+/* Native HTML <dialog> with smooth entry and safe viewport margins */
+.mini-dialog {
+  margin: auto;
+  max-inline-size: min(calc(100dvw - 24px), 26rem);
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--mini-divider);
+  border-radius: 22px;
+  background: var(--mini-surface-1);
+  color: var(--mini-text);
+  overscroll-behavior: contain;
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    opacity 0.18s var(--mini-ease),
+    transform 0.22s var(--mini-ease),
+    overlay 0.22s allow-discrete,
+    display 0.22s allow-discrete;
+}
+.mini-dialog[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+@starting-style {
+  .mini-dialog[open] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+.mini-dialog::backdrop {
+  background: rgba(11, 16, 36, 0.56);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mini-dialog {
+    transform: none;
+    transition: none;
+  }
+  @starting-style {
+    .mini-dialog[open] {
+      transform: none;
+    }
+  }
+}
+
+/* Native <details> disclosure card */
+.mini-disclosure {
+  border: 1px solid var(--mini-divider);
+  border-radius: 16px;
+  background: var(--mini-surface-2);
+  overflow: hidden;
+}
+.mini-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--mini-text);
+  cursor: pointer;
+  list-style: none;
+}
+.mini-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.mini-disclosure > summary::after {
+  content: "▾";
+  font-size: 14px;
+  color: var(--mini-text-muted);
+  transition: transform var(--mini-dur-fast) var(--mini-ease);
+}
+.mini-disclosure[open] > summary::after {
+  transform: rotate(180deg);
+}
+.mini-disclosure > summary:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--mini-accent-ring);
+}
