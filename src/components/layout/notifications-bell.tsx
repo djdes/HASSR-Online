@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useNewDesign } from "@/components/view-prefs/view-prefs-provider";
 import { BodyScrollLock } from "@/lib/use-body-scroll-lock";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -61,7 +61,7 @@ function NotificationItemText({ item }: { item: NotificationItem }) {
     <>
       <span className="truncate text-[14px] text-[#0b1024]">{item.label}</span>
       {item.hint ? (
-        <span className="truncate text-[12px] text-[#9b9fb3]">{item.hint}</span>
+        <span className="truncate text-[12px] text-[#6f7282]">{item.hint}</span>
       ) : null}
     </>
   );
@@ -102,12 +102,29 @@ function TriStateCheckbox({
       aria-label={ariaLabel}
       checked={state === "all"}
       onChange={onClick}
-      className={`size-4 shrink-0 cursor-pointer rounded border-[#dcdfed] text-[#5566f6] focus:ring-[#5566f6] ${className ?? ""}`}
+      className={cn("notif-check", className)}
     />
   );
 }
 
 const REFRESH_INTERVAL_MS = 60 * 1000;
+/** Самый долгий уход пункта в notifications-panel.css (`.notif-collapse`) и кадр запаса. */
+const LEAVE_MS = 240;
+/** Страховка закрытия окна, если событие конца анимации не придёт. */
+const CLOSE_FAILSAFE_MS = 400;
+
+/** «Без анимации» в настройках или «Уменьшить движение» системы. */
+function motionOff(): boolean {
+  if (typeof window === "undefined") return true;
+  if (document.documentElement.hasAttribute("data-view-still")) return true;
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+}
+
+/** Ждём, пока уходящие пункты доиграют, — иначе ответ API обрывает анимацию. */
+function leavePause(): Promise<void> {
+  if (motionOff()) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, LEAVE_MS));
+}
 /** Ссылка уведомлений поддержки — см. support-threads.ts. */
 const SUPPORT_CHAT_HREF = "/dashboard?support=chat";
 
@@ -145,6 +162,16 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
   // Портал в body есть только на клиенте; до монтирования панель не рисуем.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // Окно доигрывает уход (`data-closing`) и только потом снимается.
+  const [closing, setClosing] = useState(false);
+  // Пункты, которые прямо сейчас уходят после «Прочитать / Удалить»:
+  // row-id для карточки целиком или itemKey для подпункта.
+  const [leaving, setLeaving] = useState<Set<string>>(new Set());
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrolledFallback, setScrolledFallback] = useState(false);
+  // Имя якоря полосы вкладок — своё у каждого экземпляра.
+  const tabAnchor = `--notif-tab-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const loadedLocale = useRef(locale);
   const latestRequest = useRef(0);
 
@@ -204,12 +231,58 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
   });
 
   const openPanel = useCallback(() => {
+    setClosing(false);
     setOpen(true);
   }, []);
   const closePanel = useCallback(() => {
-    setOpen(false);
     setSelected(new Set());
+    setClosing(true);
   }, []);
+
+  // Уход окна: ждём переходы `data-closing` (затемнение и окно), потом
+  // снимаем. Анимаций нет («Без анимации», «Уменьшить движение») — сразу.
+  useEffect(() => {
+    if (!closing) return;
+    let cancelled = false;
+    const finish = () => {
+      if (cancelled) return;
+      setOpen(false);
+      setClosing(false);
+    };
+    const frame = requestAnimationFrame(() => {
+      const animations = overlayRef.current?.getAnimations({ subtree: true }) ?? [];
+      if (motionOff() || animations.length === 0) {
+        finish();
+        return;
+      }
+      void Promise.race([
+        Promise.allSettled(animations.map((animation) => animation.finished)),
+        new Promise((resolve) => setTimeout(resolve, CLOSE_FAILSAFE_MS)),
+      ]).then(finish);
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [closing]);
+
+  // Тень под панелью действий при прокрутке — CSS (scroll-state или
+  // scroll-driven). Старому WebView без обоих — метка `data-scrolled`
+  // от IntersectionObserver на нулевом «маячке» в начале списка.
+  const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    if (typeof CSS !== "undefined" && CSS.supports?.("animation-timeline", "scroll()")) return;
+    const root = scrollRef.current;
+    const sentinel = scrollSentinelRef.current;
+    if (!root || !sentinel || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setScrolledFallback(!entry.isIntersecting),
+      { root },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [open]);
 
   // Шапка живёт между переходами, а панель — нет: без этого сброса
   // уведомления оставались поверх следующего экрана, а вместе с ними
@@ -217,6 +290,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
   const pathname = usePathname();
   useEffect(() => {
     setOpen(false);
+    setClosing(false);
     setSelected(new Set());
   }, [pathname]);
 
@@ -317,8 +391,15 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
       toast.info(t("selectReadPrompt"));
       return;
     }
+    setLeaving(
+      new Set(
+        plansForView.flatMap((p) =>
+          p.mode === "row" ? [p.rowId] : p.itemIds.map((id) => itemKey(p.rowId, id))
+        )
+      )
+    );
     try {
-      const responses = await Promise.all(
+      const [responses] = await Promise.all([Promise.all(
         plansForView.map((p) =>
           fetch(`/api/notifications/${p.rowId}`, {
             method: "PATCH",
@@ -329,7 +410,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                 : JSON.stringify({ dismissedItemIds: p.itemIds }),
           })
         )
-      );
+      ), leavePause()]);
       const failures = responses.filter((r) => !r.ok).length;
       if (failures > 0) {
         toast.error(
@@ -345,6 +426,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     }
     setSelected(new Set());
     await load();
+    setLeaving(new Set());
   }
 
   async function removeSelected() {
@@ -356,12 +438,13 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
       toast.info(t("selectDeletePrompt"));
       return;
     }
+    setLeaving(new Set(rowIds));
     try {
-      const responses = await Promise.all(
+      const [responses] = await Promise.all([Promise.all(
         rowIds.map((id) =>
           fetch(`/api/notifications/${id}`, { method: "DELETE" })
         )
-      );
+      ), leavePause()]);
       const failures = responses.filter((r) => !r.ok).length;
       if (failures > 0) {
         toast.error(
@@ -381,11 +464,13 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     }
     setSelected(new Set());
     await load();
+    setLeaving(new Set());
   }
 
   async function removeAll() {
+    setLeaving(new Set(rows.map((row) => row.id)));
     try {
-      const r = await fetch("/api/notifications", { method: "DELETE" });
+      const [r] = await Promise.all([fetch("/api/notifications", { method: "DELETE" }), leavePause()]);
       if (!r.ok) {
         toast.error(t("deleteAllFailed"));
       } else {
@@ -396,6 +481,7 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
     }
     setSelected(new Set());
     await load();
+    setLeaving(new Set());
   }
 
   return (
@@ -403,12 +489,18 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
       <button
         type="button"
         aria-label={t("title")}
-        onClick={() => (open ? closePanel() : openPanel())}
+        aria-expanded={open && !closing}
+        onClick={() => (open && !closing ? closePanel() : openPanel())}
         className={cn(newDesign ? TRIGGER_CLASS_NEW : TRIGGER_CLASS, triggerClassName)}
       >
         <Bell className={newDesign ? "size-[18px] stroke-[1.75]" : "size-5"} />
         {headerCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-semibold text-white">
+          // `key` — счётчик пересоздаётся при смене числа и «щёлкает»
+          // (`.notif-badge`, только при разрешённом движении).
+          <span
+            key={headerCount}
+            className="notif-badge absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-semibold text-white"
+          >
             {headerCount > 99 ? "99+" : headerCount}
           </span>
         )}
@@ -421,30 +513,43 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
           вместо всего окна, сама панель вела себя как `static` и
           уходила ПОД содержимое страницы — и в приложении, и на сайте.
           z-[60] — поверх нижнего меню приложения (`--mini-z-nav` = 50),
-          как у ConfirmDialog и BottomSheet. Тёмную тему портал берёт от
-          `body:has(.app-shell[data-app-theme="dark"])` в app-theme.css. */}
+          как у ConfirmDialog и BottomSheet. Цвета, отступы и движение —
+          `src/app/notifications-panel.css` (переменные тем `--app-*`,
+          тёмная тема — от `body:has(.app-shell[data-app-theme="dark"])`). */}
       {open &&
         mounted &&
         createPortal(
         <div
-          className="fixed inset-0 z-[60] flex items-start justify-end bg-[#0b1024]/15 p-4 pt-20 sm:p-8 sm:pt-24"
+          ref={overlayRef}
+          data-closing={closing ? "" : undefined}
+          className="notif-overlay fixed inset-0 z-[60] flex items-start justify-end p-2 pt-20 sm:p-8 sm:pt-24"
           onClick={closePanel}
         >
           <BodyScrollLock />
           {/* `data-touch-zone` — окно живёт в <body>, вне `main`; метка
               включает на телефоне правила «крупнее» кабинета (app-theme.css).
-              В мини-приложении метка ничего не делает. */}
+              В мини-приложении метка ничего не делает. `data-slot` — своё
+              движение: общая анимация «самодельных окон» (motion.css §7)
+              его не трогает. */}
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("title")}
+            data-slot="notifications-panel"
             data-touch-zone=""
-            className="flex max-h-[80vh] supports-[height:100dvh]:max-h-[80dvh] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-3xl border border-[#ececf4] bg-white shadow-[0_30px_80px_-20px_rgba(11,16,36,0.35)] sm:max-w-[640px]"
+            data-closing={closing ? "" : undefined}
+            className="notif-panel flex max-h-[80vh] supports-[height:100dvh]:max-h-[80dvh] w-full max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-3xl sm:max-w-[640px]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* HEADER */}
-            <div className="flex items-center justify-between border-b border-[#ececf4] px-6 py-4">
+            <div className="flex items-center justify-between gap-3 px-[var(--notif-pad)] pb-1 pt-4">
               <div className="flex items-center gap-2 text-[22px] font-semibold tracking-[-0.01em]">
                 <span>{t("title")}</span>
                 {headerCount > 0 && (
-                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-[#ff3b30] text-[12px] font-semibold text-white">
+                  <span
+                    key={headerCount}
+                    className="notif-badge inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ff3b30] px-1.5 text-[12px] font-semibold text-white"
+                  >
                     {headerCount}
                   </span>
                 )}
@@ -453,48 +558,45 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                 type="button"
                 aria-label={t("close")}
                 onClick={closePanel}
-                className="flex size-8 items-center justify-center rounded-xl text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
+                className="-mr-2 flex size-11 items-center justify-center rounded-xl text-[#6f7282] transition-colors hover:bg-[#f5f6ff] hover:text-[#0b1024]"
               >
                 <X className="size-5" />
               </button>
             </div>
 
-            {/* TABS */}
-            <div className="flex gap-6 border-b border-[#ececf4] px-6">
-              <button
-                type="button"
-                onClick={() => setTab("unread")}
-                className={`relative py-3 text-[15px] font-medium transition-colors ${
-                  tab === "unread" ? "text-[#0b1024]" : "text-[#9b9fb3]"
-                }`}
-              >
-                {t("tabNew")}
-                {tab === "unread" && (
-                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#5566f6]" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("read")}
-                className={`relative py-3 text-[15px] font-medium transition-colors ${
-                  tab === "read" ? "text-[#0b1024]" : "text-[#9b9fb3]"
-                }`}
-              >
-                {t("tabRead")}
-                {tab === "read" && (
-                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#5566f6]" />
-                )}
-              </button>
+            {/* TABS — полоса под выбранной едет к новой (якорь, notifications-panel.css).
+                `data-liquid="off"`: общая «жидкая» заливка вкладок (motion-runtime)
+                здесь не нужна — своя полоса. */}
+            <div
+              role="tablist"
+              aria-label={t("title")}
+              data-liquid="off"
+              className="notif-tabs flex gap-6 px-[var(--notif-pad)]"
+              style={{ ["--notif-tab-anchor" as string]: tabAnchor } as CSSProperties}
+            >
+              {(["unread", "read"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === id}
+                  onClick={() => setTab(id)}
+                  className="notif-tab text-[15px] font-medium"
+                >
+                  {id === "unread" ? t("tabNew") : t("tabRead")}
+                </button>
+              ))}
             </div>
 
-            {/* ACTIONS */}
+            {/* ACTIONS — вне прокрутки, с зазором до списка. */}
             {rows.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-6 pt-4">
+              <div className="notif-actions">
                 {tab === "unread" && (
                   <button
                     type="button"
                     onClick={markReadSelected}
-                    className="rounded-xl bg-[#eef1ff] px-4 py-2 text-[13px] font-medium text-[#3848c7] transition-colors hover:bg-[#e3e7ff]"
+                    data-kind="read"
+                    className="notif-action"
                   >
                     {t("readSelected")}
                   </button>
@@ -502,114 +604,135 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                 <button
                   type="button"
                   onClick={removeSelected}
-                  className="rounded-xl bg-[#fff4f2] px-4 py-2 text-[13px] font-medium text-[#d2453d] transition-colors hover:bg-[#ffe6e1]"
+                  data-kind="delete"
+                  className="notif-action"
                 >
                   {t("deleteSelected")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmRemoveAllOpen(true)}
-                  className="rounded-xl bg-[#fff4f2] px-4 py-2 text-[13px] font-medium text-[#d2453d] transition-colors hover:bg-[#ffe6e1]"
+                  data-kind="delete-all"
+                  className="notif-action"
                 >
                   {t("deleteAll")}
                 </button>
               </div>
             )}
 
-            {/* BODY */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+            {/* BODY — тень под панелью действий появляется только при прокрутке. */}
+            <div
+              ref={scrollRef}
+              role="tabpanel"
+              aria-label={tab === "unread" ? t("tabNew") : t("tabRead")}
+              data-scrolled={scrolledFallback ? "" : undefined}
+              className="notif-scroll min-h-0 flex-1 overflow-y-auto"
+            >
+              <div ref={scrollSentinelRef} aria-hidden="true" className="h-px" />
               {rows.length === 0 ? (
-                <div className="py-6 text-[14px] text-[#9b9fb3]">
+                <div className="px-[var(--notif-pad)] py-6 text-[14px] text-[#9b9fb3]">
                   {tab === "unread"
                     ? t("emptyNew")
                     : t("emptyRead")}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {rows.map((row) => {
+                <div key={tab} className="notif-list">
+                  {rows.map((row, index) => {
                     const state = rowSelectionState(row);
                     return (
                       <div
                         key={row.id}
-                        className="overflow-hidden rounded-2xl border border-[#ececf4] bg-[#fafbff]"
+                        className="notif-collapse"
+                        data-leaving={leaving.has(row.id) ? "" : undefined}
+                        style={{ ["--notif-i" as string]: index } as CSSProperties}
                       >
-                        <div className="flex items-start gap-3 px-4 py-3.5">
-                          <TriStateCheckbox
-                            state={state}
-                            onClick={() => toggleRow(row)}
-                            ariaLabel={t("selectAllTask")}
-                            className="mt-0.5"
-                          />
-                          <div className="min-w-0 text-[14px] font-medium leading-[1.45] text-[#0b1024]">
-                            {row.title}
-                            {row.linkHref && row.linkLabel && (
-                              <>
-                                {" "}
-                                <Link
-                                  href={row.linkHref}
-                                  className="text-[#5566f6] hover:underline"
-                                  onClick={(event) => {
-                                    // «Открыть чат» открываем на месте, без
-                                    // перехода. Виджет поддержки живёт в
-                                    // layout и при клиентском переходе не
-                                    // перемонтируется — deep-link `?support=chat`
-                                    // он читал один раз при старте и ссылку из
-                                    // панели просто не замечал.
-                                    if (row.linkHref === SUPPORT_CHAT_HREF) {
-                                      event.preventDefault();
-                                      openSupportChat();
-                                    }
-                                    closePanel();
-                                  }}
-                                >
-                                  {row.linkLabel}
-                                </Link>
-                              </>
+                        <div className="notif-card-gap">
+                          <div className="notif-card">
+                            <div className="notif-card-head">
+                              <label className="notif-check-hit">
+                                <TriStateCheckbox
+                                  state={state}
+                                  onClick={() => toggleRow(row)}
+                                  ariaLabel={t("selectAllTask")}
+                                />
+                              </label>
+                              <div className="notif-card-title">
+                                {row.title}
+                                {row.linkHref && row.linkLabel && (
+                                  <>
+                                    {" "}
+                                    <Link
+                                      href={row.linkHref}
+                                      className="notif-link"
+                                      onClick={(event) => {
+                                        // «Открыть чат» открываем на месте, без
+                                        // перехода. Виджет поддержки живёт в
+                                        // layout и при клиентском переходе не
+                                        // перемонтируется — deep-link `?support=chat`
+                                        // он читал один раз при старте и ссылку из
+                                        // панели просто не замечал.
+                                        if (row.linkHref === SUPPORT_CHAT_HREF) {
+                                          event.preventDefault();
+                                          openSupportChat();
+                                        }
+                                        closePanel();
+                                      }}
+                                    >
+                                      {row.linkLabel}
+                                    </Link>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            {row.items.length > 0 && (
+                              <ul className="notif-items">
+                                {row.items.map((item) => {
+                                  const key = itemKey(row.id, item.id);
+                                  const isChecked = selected.has(key);
+                                  // Per-item href: сначала item.href (если
+                                  // notification передал свой линк на каждую
+                                  // подзадачу), иначе общий row.linkHref.
+                                  const href = item.href ?? row.linkHref;
+                                  return (
+                                    <li
+                                      key={item.id}
+                                      className="notif-collapse"
+                                      data-leaving={leaving.has(key) ? "" : undefined}
+                                    >
+                                      <div className="notif-item">
+                                        <label className="notif-check-hit">
+                                          <input
+                                            type="checkbox"
+                                            aria-label={t("readItem", { label: item.label })}
+                                            checked={isChecked}
+                                            onChange={(e) => {
+                                              e.stopPropagation();
+                                              toggleItem(row.id, item.id);
+                                            }}
+                                            className="notif-check"
+                                          />
+                                        </label>
+                                        {href ? (
+                                          <Link
+                                            href={href}
+                                            onClick={closePanel}
+                                            className="notif-item-link"
+                                          >
+                                            <NotificationItemText item={item} />
+                                          </Link>
+                                        ) : (
+                                          <div className="notif-item-link">
+                                            <NotificationItemText item={item} />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
                             )}
                           </div>
                         </div>
-                        {row.items.length > 0 && (
-                          <ul className="divide-y divide-[#ececf4] border-t border-[#ececf4]">
-                            {row.items.map((item) => {
-                              const key = itemKey(row.id, item.id);
-                              const isChecked = selected.has(key);
-                              // Per-item href: сначала item.href (если
-                              // notification передал свой линк на каждую
-                              // подзадачу), иначе общий row.linkHref.
-                              const href = item.href ?? row.linkHref;
-                              return (
-                                <li
-                                  key={item.id}
-                                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/60"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    aria-label={t("readItem", { label: item.label })}
-                                    checked={isChecked}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      toggleItem(row.id, item.id);
-                                    }}
-                                    className="size-4 shrink-0 cursor-pointer rounded border-[#dcdfed] text-[#5566f6] focus:ring-[#5566f6]"
-                                  />
-                                  {href ? (
-                                    <Link
-                                      href={href}
-                                      onClick={closePanel}
-                                      className="flex min-w-0 flex-1 flex-col"
-                                    >
-                                      <NotificationItemText item={item} />
-                                    </Link>
-                                  ) : (
-                                    <div className="flex min-w-0 flex-1 flex-col">
-                                      <NotificationItemText item={item} />
-                                    </div>
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
                       </div>
                     );
                   })}
