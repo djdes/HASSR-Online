@@ -13,6 +13,21 @@ const toMaster = { action: "redirect", location: "/master" };
 const toDashboard = { action: "redirect", location: "/dashboard" };
 const deny = { action: "deny", status: 403, error: DIRECTORY_ONLY_API_ERROR };
 
+test("ad landing stays public with and without a directory session", () => {
+  const url = new URL("https://wesetup.ru/akciya?erid=campaign-token");
+  for (const kind of ["directory", "regular", undefined, null]) {
+    assert.deepEqual(evaluateDirectoryRequest(url.pathname, kind), allow);
+  }
+  assert.equal(url.searchParams.get("erid"), "campaign-token");
+});
+
+test("ad landing exception does not open private or similar-looking paths", () => {
+  for (const path of ["/akciya-private", "/akciya/admin", "/dashboard", "/settings"]) {
+    assert.deepEqual(evaluateDirectoryRequest(path, "directory"), toMaster, path);
+  }
+  assert.deepEqual(evaluateDirectoryRequest("/api/akciya", "directory"), deny);
+});
+
 test("directory session: only /master and its API are open", () => {
   for (const path of ["/master", "/master/objects", "/api/master/directory", "/api/master/directory/preview"]) {
     assert.deepEqual(evaluateDirectoryRequest(path, "directory"), allow, path);

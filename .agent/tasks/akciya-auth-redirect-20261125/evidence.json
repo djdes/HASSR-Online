@@ -1,0 +1,1 @@
+{"criteria":{"AC1":"PASS","AC2":"PASS","AC3":"PASS"},"typecheck":"PASS","gate":"PASS","rawArtifacts":["regression.log","targeted.log","typecheck-final.log","gate-final.log"],"scope":"Exact public campaign pathname exemption in directory guard; defensive Telegram username guard for typecheck"}
