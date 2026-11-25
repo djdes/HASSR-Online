@@ -184,7 +184,7 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 function words(text: string): string[] {
-  return (text.toLowerCase().match(/[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*/gu) ?? []).filter((w) => w.length > 0);
+  return (text.toLowerCase().match(/[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*/gu) ?? ([] as string[])).filter((w) => w.length > 0);
 }
 
 function sentences(text: string): string[] {
@@ -551,7 +551,8 @@ export function analyzePost(post: PostInput, profile: BrandProfile, context: Ana
 
   const phonesInText = plain.match(PHONE_RE) ?? [];
   const knownPhones = new Set(profile.phones.map(digitsOnly));
-  const foreignPhones = phonesInText.filter((p) => !knownPhones.has(digitsOnly(p)));
+  // Эталона нет (у бренда не задан телефон) — сверять не с чем, номер не блокируем.
+  const foreignPhones = knownPhones.size ? phonesInText.filter((p) => !knownPhones.has(digitsOnly(p))) : [];
   add({
     id: "phone",
     feature: "B13",
