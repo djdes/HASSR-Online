@@ -52,6 +52,21 @@ function asItems(raw: unknown): NotificationItem[] {
     .filter((it) => it.id && it.label);
 }
 
+/**
+ * Пункт уведомления — одна строка и подпись под ней. Длинный текст (обращение,
+ * сообщение в чате) не разворачивается в панели: целиком он — по нажатию.
+ */
+function NotificationItemText({ item }: { item: NotificationItem }) {
+  return (
+    <>
+      <span className="truncate text-[14px] text-[#0b1024]">{item.label}</span>
+      {item.hint ? (
+        <span className="truncate text-[12px] text-[#9b9fb3]">{item.hint}</span>
+      ) : null}
+    </>
+  );
+}
+
 /** Стабильный ключ для per-item selection. Notification.id + item.id —
  *  каждый item уникален в рамках своей нотификации. */
 function itemKey(rowId: string, itemId: string) {
@@ -581,27 +596,13 @@ export function NotificationsBell({ triggerClassName }: { triggerClassName?: str
                                     <Link
                                       href={href}
                                       onClick={closePanel}
-                                      className="flex flex-1 items-center gap-3"
+                                      className="flex min-w-0 flex-1 flex-col"
                                     >
-                                      <span className="text-[14px] text-[#0b1024]">
-                                        {item.label}
-                                      </span>
-                                      {item.hint && (
-                                        <span className="ml-auto text-[12px] text-[#9b9fb3]">
-                                          {item.hint}
-                                        </span>
-                                      )}
+                                      <NotificationItemText item={item} />
                                     </Link>
                                   ) : (
-                                    <div className="flex flex-1 items-center gap-3">
-                                      <span className="text-[14px] text-[#0b1024]">
-                                        {item.label}
-                                      </span>
-                                      {item.hint && (
-                                        <span className="ml-auto text-[12px] text-[#9b9fb3]">
-                                          {item.hint}
-                                        </span>
-                                      )}
+                                    <div className="flex min-w-0 flex-1 flex-col">
+                                      <NotificationItemText item={item} />
                                     </div>
                                   )}
                                 </li>

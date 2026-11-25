@@ -96,7 +96,7 @@ async function alertSupportStaff(alert: SupportStaffAlert, item: { id: string; l
         linkHref: alert.href,
         linkLabel: "Открыть",
         linkLabelKey: "open",
-        items: [{ id: item.id, label: item.label, hint: item.hint, href: alert.href }],
+        items: [{ id: item.id, label: item.label, ...(item.hint ? { hint: item.hint } : {}), href: alert.href }],
         // Push в приложение остаётся: прежнее уведомление о чате его слало.
       }).catch((error) => console.error("[support-alerts] notification failed", error)),
     ),
@@ -137,7 +137,9 @@ export async function alertSupportStaffAboutReport(report: {
       phone: report.phone,
     }).catch(() => null),
   };
-  await alertSupportStaff(alert, { id: report.id, label: alert.preview || "—", hint: alert.who });
+  // В колокольчике — только «от кого»: текст обращения открывается по
+  // нажатию, а не растягивает панель на полэкрана.
+  await alertSupportStaff(alert, { id: report.id, label: alert.who || "—", hint: "" });
 }
 
 /** Новое сообщение клиента в онлайн-чате. */
@@ -171,7 +173,7 @@ export async function alertSupportStaffAboutChat(input: {
       phone: thread.phone,
     }).catch(() => null),
   };
-  await alertSupportStaff(alert, { id: message.id, label: alert.preview || "—", hint: alert.who });
+  await alertSupportStaff(alert, { id: message.id, label: alert.who || "—", hint: "" });
 }
 
 /**
