@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { checkCronSecret } from "@/lib/cron-auth";
 import { runAutopostTick } from "@/lib/channel-autopost/service.server";
 import { publishDuePosts } from "@/lib/max/channel.server";
+import { runWeeklyTick } from "@/lib/weekly-issue/service.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 /**
  * GET/POST /api/cron/max-channel — публикует запланированные посты в
  * каналы Telegram и MAX (ROOT → «Каналы Telegram и MAX») и готовит
- * автопосты дня (src/lib/channel-autopost). Повторный запуск безопасен: пост
+ * автопосты дня (src/lib/channel-autopost) и еженедельный выпуск
+ * (src/lib/weekly-issue). Повторный запуск безопасен: пост
  * захватывается статусом «sending» и уходит один раз.
  *
  * Crontab (раз в минуту):
@@ -27,7 +29,12 @@ async function handle(request: Request) {
       console.error("[autopost] tick failed", error instanceof Error ? error.message.slice(0, 200) : "UnknownError");
       return { active: -1 };
     });
-    return NextResponse.json({ ok: true, ...published, autopost });
+    // Еженедельный выпуск (среда 09:00): сборка с понедельника, письмо — после выхода поста.
+    const weekly = await runWeeklyTick().catch((error) => {
+      console.error("[weekly] tick failed", error instanceof Error ? error.message.slice(0, 200) : "UnknownError");
+      return { active: -1 };
+    });
+    return NextResponse.json({ ok: true, ...published, autopost, weekly });
   } catch (error) {
     console.error("[max-channel] cron pass failed", error instanceof Error ? error.name : "UnknownError");
     return NextResponse.json({ ok: false, error: "pass failed" }, { status: 500 });

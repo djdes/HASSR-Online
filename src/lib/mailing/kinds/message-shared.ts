@@ -18,6 +18,11 @@ export type MessagePayload = {
   shortBody: string;
   buttonText: string;
   buttonUrl: string;
+  /**
+   * Картинка над текстом письма (https-адрес). Необязательная: форма её не
+   * показывает, ставит еженедельный выпуск (src/lib/weekly-issue).
+   */
+  imageUrl?: string;
   /** Запасные значения переменных, если у получателя пусто. */
   fallbacks: { name: string; company: string; sphere: string };
 };
@@ -53,6 +58,7 @@ export function coerceMessagePayload(raw: unknown): MessagePayload {
     shortBody: str(r.shortBody, 4000),
     buttonText: str(r.buttonText, 200),
     buttonUrl: str(r.buttonUrl, 2000),
+    ...(typeof r.imageUrl === "string" && r.imageUrl ? { imageUrl: r.imageUrl.slice(0, 2000) } : {}),
     fallbacks: {
       name: typeof f.name === "string" ? f.name.slice(0, 60) : base.fallbacks.name,
       company: typeof f.company === "string" ? f.company.slice(0, 60) : base.fallbacks.company,
@@ -71,6 +77,7 @@ export function validateMessagePayload(
     shortBody: c.shortBody.replace(/\r\n?/g, "\n").trim(),
     buttonText: c.buttonText.trim(),
     buttonUrl: c.buttonUrl.trim(),
+    ...(c.imageUrl?.trim() ? { imageUrl: c.imageUrl.trim() } : {}),
     fallbacks: {
       name: c.fallbacks.name.trim(),
       company: c.fallbacks.company.trim(),
@@ -97,6 +104,9 @@ export function validateMessagePayload(
     if (!isSafeLinkUrl(payload.buttonUrl)) {
       return withMailingDiagnostic({ ok: false, error: "Ссылка кнопки — адрес https://… или путь сайта вида /pricing" }, { version: 1, code: "message.buttonUrlInvalid", params: {  } });
     }
+  }
+  if (payload.imageUrl && !/^https:\/\/[^\s"'<>]+$/i.test(payload.imageUrl)) {
+    return { ok: false, error: "Картинка письма — адрес https://…" };
   }
   return { ok: true, payload };
 }
