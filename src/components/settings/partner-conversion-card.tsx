@@ -74,7 +74,7 @@ export function PartnerConversionCard({ view }: { view: PartnerConversionView })
         {t("partnerConversion.title")}
       </div>
       <p className="mt-1 text-[13px] leading-relaxed text-[#6f7282]">
-        {t("partnerConversion.description", { partnerName: view.partnerBrandName })}
+        {t("partnerConversion.description")}
       </p>
 
       {canConvert ? (
