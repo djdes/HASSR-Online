@@ -184,7 +184,7 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 function words(text: string): string[] {
-  return (text.toLowerCase().match(/[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*/gu) ?? []).filter((w) => w.length > 0);
+  return (text.toLowerCase().match(/[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*/gu) ?? ([] as string[])).filter((w) => w.length > 0);
 }
 
 function sentences(text: string): string[] {
