@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { recordAdCampaignVisit } from "@/lib/ad-campaign.server";
 import { seoRedirectTarget } from "@/content/seo-redirects";
 import { decode } from "next-auth/jwt";
 import { applyVisitorCookie, pageNavigationGuard } from "@/lib/page-navigation-guard";
@@ -118,6 +119,7 @@ async function withRequestContext(
       res.headers.set("Expires", "0");
     }
   }
+  await recordAdCampaignVisit(req, res);
   return res;
 }
 

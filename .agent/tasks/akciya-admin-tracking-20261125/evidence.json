@@ -1,0 +1,1 @@
+{"criteria":{"AC1":"PASS","AC2":"PASS","AC3":"PASS","AC4":"PASS","AC5":"PASS"},"productionVerified":false,"rawArtifacts":["regression-final.log","server-regression.log","targeted-final.log","typecheck-ready.log","i18n.log"],"testSelection":{"maxRelatedFiles":90,"selectedFiles":84,"passed":442,"skippedSelectedTests":0},"freshPass":"Pending sync with latest master"}

@@ -1,4 +1,5 @@
 import { Filter } from "lucide-react";
+import { AdCampaignReport } from "@/components/root/ad-campaign-report";
 
 import { requireRoot } from "@/lib/auth-helpers";
 import {
@@ -55,6 +56,7 @@ export default async function RootFunnelPage() {
         ))}
       </div>
 
+      <AdCampaignReport />
       <FunnelTable title="По неделям регистрации" firstColumn="Неделя" rows={funnel.weeks} testId="funnel-weeks" />
       <FunnelTable
         title="По каналам"

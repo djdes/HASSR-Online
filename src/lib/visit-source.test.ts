@@ -4,6 +4,8 @@ import test from "node:test";
 import { appendAdminClientLines } from "@/lib/admin-client-context";
 import { signupChannel, signupSourceShort, type SignupSourceSnapshot } from "@/lib/signup-channel";
 import { requestSignupSource, visitSourceFromCookieHeader } from "@/lib/visit-source.server";
+import { AD_CAMPAIGN_COOKIE, AD_CAMPAIGN_ID } from "./ad-campaign";
+import { issueAdTouch, readAdTouch } from "./ad-campaign-cookie.server";
 
 /** Источник визита: каналы, коротко для Telegram, cookie первого касания (спека visit-source-2026-11). */
 
@@ -64,4 +66,32 @@ test("уведомление: строка «Источник:» перед ме
   const info = { source: "Поиск Яндекса", location: "🇷🇺 Россия · 09:29", adminUrl: null };
   assert.equal(appendAdminClientLines("📥 Скачивание", info), "📥 Скачивание\nИсточник: Поиск Яндекса\n🇷🇺 Россия · 09:29");
   assert.equal(appendAdminClientLines("Заявка\nИсточник: Директ", info), "Заявка\nИсточник: Директ\n🇷🇺 Россия · 09:29");
+});
+
+test("ad attribution survives registration after an earlier search visit, without replacing first touch", () => {
+  const previous = process.env.NEXTAUTH_SECRET;
+  process.env.NEXTAUTH_SECRET = "campaign-source-test";
+  try {
+    const token = issueAdTouch()!;
+    const search = snap({ landing: "/blog/x", referrer: "https://yandex.ru/" });
+    const cookie = `wesetup_src=${encodeURIComponent(JSON.stringify(search))}; ${AD_CAMPAIGN_COOKIE}=${token}`;
+    for (const path of ["instant-register", "register/confirm"]) {
+      const request = new Request(`https://wesetup.ru/api/auth/${path}`, { headers: { cookie } });
+      const result = requestSignupSource(request, snap({ place: "register", landing: "/register" }), true)!;
+      assert.equal(result.referrer, search.referrer);
+      assert.equal(result.landing, search.landing);
+      assert.deepEqual(result.adCampaign, { id: AD_CAMPAIGN_ID, visitorId: readAdTouch(token)!.visitorId });
+      assert.deepEqual(JSON.parse(JSON.stringify(result)).adCampaign, result.adCampaign);
+    }
+    // A registration with no earlier source is still attributable.
+    const request = new Request("https://wesetup.ru", { headers: { cookie: `${AD_CAMPAIGN_COOKIE}=${token}` } });
+    assert.equal(requestSignupSource(request, null, true)?.adCampaign?.id, AD_CAMPAIGN_ID);
+    // Existing customer demo/contact requests must not become attributed signups.
+    assert.equal(requestSignupSource(request, null)?.adCampaign, undefined);
+    const forged = { ...snap({}), adCampaign: { id: AD_CAMPAIGN_ID, visitorId: readAdTouch(token)!.visitorId } };
+    assert.equal(requestSignupSource(new Request("https://wesetup.ru"), forged)?.adCampaign, undefined);
+  } finally {
+    if (previous === undefined) delete process.env.NEXTAUTH_SECRET;
+    else process.env.NEXTAUTH_SECRET = previous;
+  }
 });
