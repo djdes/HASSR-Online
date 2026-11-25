@@ -24,7 +24,6 @@ import {
   type EntryWriteDoc,
 } from "@/lib/journal-entry-write";
 import { checkEntryScope } from "@/lib/journal-entry-write";
-import { orgTodayKey } from "@/lib/timezone";
 import { decideEntryMove } from "@/lib/tracked-document";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
@@ -98,11 +97,11 @@ export async function PUT(
   //
   // Руководство и ответственный за журнал этим правилом не связаны — им
   // положено исправлять чужие ошибки, в том числе вчерашние.
+  //
+  // Спецрежим «Правка прошлых дней» (2026-11-25) открывает сотруднику его
+  // строку и за прошлые дни в окне — правило в `writeCtx.pastDays`.
+  const writeCtx = await loadEntryWriteContext(doc);
   {
-    const scopeOrg = await db.organization.findUnique({
-      where: { id: getActiveOrgId(session) },
-      select: { timezone: true },
-    });
     const scope = checkEntryScope({
       actor: {
         id: session.user.id,
@@ -112,7 +111,8 @@ export async function PUT(
       responsibleUserId: doc.responsibleUserId,
       employeeId,
       entryDayKey: String(date).slice(0, 10),
-      todayKey: orgTodayKey(scopeOrg?.timezone ?? undefined),
+      todayKey: writeCtx.todayKey,
+      pastDays: writeCtx.pastDays,
     });
     if (!scope.allowed) {
       return NextResponse.json(
@@ -160,7 +160,6 @@ export async function PUT(
     isRoot: session.user.isRoot === true,
     name: session.user.name ?? null,
   };
-  const writeCtx = await loadEntryWriteContext(doc);
   const decision = checkEntryWrite(writeCtx, actor, dateObj);
   if (!decision.allowed) {
     return NextResponse.json(

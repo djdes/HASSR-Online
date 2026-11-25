@@ -136,6 +136,8 @@ import { useTodayKey } from "@/lib/use-today-key";
 import { NO_ROW_EMPLOYEE_MESSAGE, useRosterViewerId } from "@/components/journals/use-roster-viewer";
 import {
   hasFullDocumentAccess,
+  pastDayOpen,
+  type PastDaysPolicy,
 } from "@/lib/journal-entry-scope";
 import { humanizeFetchError } from "@/lib/humanize-fetch-error";
 
@@ -207,6 +209,11 @@ type Props = {
    * предлагала править любой день, а сохранение падало.
    */
   viewer?: { id: string; role: string; isRoot: boolean };
+  /**
+   * «Правка прошлых дней» спецрежима (2026-11-25): прошлые дни в окне
+   * открыты — правило то же, что на сервере (`pastDayOpen`).
+   */
+  pastDays?: PastDaysPolicy | null;
   /** Design v2 toggle. Settings dialog → JournalSettingsModal style. */
   useV2?: boolean;
 };
@@ -1205,6 +1212,7 @@ export function ColdEquipmentDocumentClient({
   config,
   initialEntries,
   viewer,
+  pastDays = null,
   useV2 = false,
 }: Props) {
   const t = useTranslations("coldEquipment");
@@ -1232,7 +1240,11 @@ export function ColdEquipmentDocumentClient({
   /** Причина, по которой день закрыт для зрителя, или null. */
   function dayLockReason(dateKey: string): string | null {
     if (viewerHasFullAccess || !viewer) return null;
-    if (todayKey !== "" && dateKey !== todayKey) return scopeT("notToday");
+    if (todayKey !== "" && dateKey !== todayKey && !pastDayOpen(pastDays, dateKey, todayKey)) {
+      return pastDays?.allowed && pastDays.limitDays !== null && dateKey < todayKey
+        ? scopeT("pastDaysWindow", { days: pastDays.limitDays })
+        : scopeT("notToday");
+    }
     return null;
   }
   const [rows, setRows] = useState<EntryRow[]>(initialEntries);

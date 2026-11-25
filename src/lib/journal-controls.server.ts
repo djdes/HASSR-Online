@@ -4,6 +4,7 @@ import {
   automationDisabledError,
   automationOn,
   parseJournalControls,
+  pastDaysPolicy,
   readStoredAutomation,
   resolveAddedFeature,
   resolveLegacyAutomation,
@@ -73,7 +74,16 @@ async function usedAddedFeature(client: Client, organizationId: string, feature:
         where: { organizationId, action: "journal_entry.copy", details: { path: ["via"], equals: "dashboard.catch_up" } },
         select: { id: true },
       }));
+    case "pastDays":
+      // «Правка прошлых дней» (2026-11-25) — новое разрешение, им ещё никто не
+      // пользовался: у сохранённого выбора без этой галочки она выключена.
+      return false;
   }
+}
+
+/** «Правка прошлых дней» спецрежима организации — правило для записи в журнал. */
+export async function loadPastDaysPolicy(organizationId: string) {
+  return pastDaysPolicy(await getJournalControls(organizationId));
 }
 
 /** Дополняет выбор галочками, которых в нём ещё не было, — по `resolveAddedFeature`. */

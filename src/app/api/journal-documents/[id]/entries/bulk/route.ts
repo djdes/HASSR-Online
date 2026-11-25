@@ -16,7 +16,6 @@ import {
   type EntryWriteActor,
 } from "@/lib/journal-entry-write";
 import { checkEntryScope } from "@/lib/journal-entry-write";
-import { orgTodayKey } from "@/lib/timezone";
 import { HYGIENE_V2_NO_COPY_MESSAGE, readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { findHygieneAdmissionViolation } from "@/lib/hygiene-admission-guard";
 import { canSeeDocumentPoint } from "@/lib/document-point-access";
@@ -133,18 +132,16 @@ export async function POST(
   // сегодняшний день. Покраска мышью шлёт весь штрих одним запросом,
   // поэтому проверяем каждую ячейку: иначе достаточно было бы захватить
   // штрихом чужую строку или вчерашнюю колонку.
-  const scopeOrg = await db.organization.findUnique({
-    where: { id: getActiveOrgId(session) },
-    select: { timezone: true },
-  });
-  const todayKey = orgTodayKey(scopeOrg?.timezone ?? undefined);
+  // Спецрежим «Правка прошлых дней» открывает и прошлые дни в окне.
+  const writeCtx = await loadEntryWriteContext(doc);
   for (const item of parsed.items) {
     const scope = checkEntryScope({
       actor: { id: actor.id, role: actor.role, isRoot: actor.isRoot },
       responsibleUserId: doc.responsibleUserId,
       employeeId: item.employeeId,
       entryDayKey: String(item.date).slice(0, 10),
-      todayKey,
+      todayKey: writeCtx.todayKey,
+      pastDays: writeCtx.pastDays,
     });
     if (!scope.allowed) {
       return NextResponse.json(
@@ -168,8 +165,6 @@ export async function POST(
   docDateFrom.setUTCHours(0, 0, 0, 0);
   const docDateTo = new Date(doc.dateTo);
   docDateTo.setUTCHours(0, 0, 0, 0);
-
-  const writeCtx = await loadEntryWriteContext(doc);
 
   const accepted: Array<{ employeeId: string; date: Date; data: unknown }> = [];
   const overrideDates: Date[] = [];

@@ -6,8 +6,9 @@ import test from "node:test";
 /*
  * «Пришла проверка» (S4, 2026-10-18): блоки страницы `/inspection` стали
  * пунктами меню раздела. Блоки не должны ни потеряться, ни задвоиться, права —
- * остаться прежними. Спецрежим (2026-11-05) вне своей страницы не назван: ни
- * пункта меню, ни шага, ни карточки в «Реквизитах» — только тихая ссылка.
+ * остаться прежними. Спецрежим (владелец, 2026-11-25): руководитель включает и
+ * настраивает его пунктом меню раздела, карточкой внизу «Что делать сейчас» и в
+ * «Информации об организации»; остальным — по-прежнему только тихая ссылка.
  */
 
 const read = (file: string) => readFileSync(path.join(process.cwd(), file), "utf8");
@@ -19,7 +20,7 @@ test("«Что делать сейчас»: инструкция, QR и архи
     assert.ok(now.includes(kept), `${kept} пропал с «Что делать сейчас»`);
   }
   // Блоки, ставшие страницами, целиком не повторяются.
-  for (const moved of ["<InspectionVisitsCard", "<InspectionNormsCard", "<InspectionExpertsCard", "<InspectionSpecialModeCard"]) {
+  for (const moved of ["<InspectionVisitsCard", "<InspectionNormsCard", "<InspectionExpertsCard"]) {
     assert.ok(!now.includes(moved), `${moved} остался на «Что делать сейчас»`);
   }
   for (const href of ['"/inspection/visits"', '"/inspection/settings"', '"/inspection/norms"', '"/inspection/experts"', '"/dashboard/compliance-audit"']) {
@@ -30,15 +31,22 @@ test("«Что делать сейчас»: инструкция, QR и архи
   assert.ok(now.includes('t("readinessScore"'));
 });
 
-test("спецрежим нигде не назван: ни шага, ни статуса, ни карточки в «Реквизитах» — только тихая ссылка", () => {
+test("спецрежим у руководителя — в «Пришла проверка» и в «Информации об организации», остальным — тихая ссылка", () => {
   const now = page("");
-  assert.ok(!/special-mode|SpecialMode|t\("special\./.test(now), "«Что делать сейчас» не говорит о спецрежиме");
+  // «Что делать сейчас»: карточка спецрежима тому, кто им управляет; остальным — ссылка «Настройки раздела».
+  assert.match(now, /const canManageSpecialMode = hasCapability\(session\.user, "admin\.full"\) && !isPointScoped\(session\.user\);/);
+  assert.match(now, /\{canManageSpecialMode \? \(\s*<InspectionSpecialModeCard canManage \/>\s*\) : \(/);
   assert.match(now, /href="\/inspection\/settings"[\s\S]*?\{t\("now\.settingsLink"\)\}/);
+  // Инструкция по-прежнему без шага спецрежима.
   const guide = read("src/components/inspection/inspection-guide.tsx");
   assert.ok(!guide.includes("special"), "в инструкции нет шага спецрежима");
   assert.match(guide, /\{ n: 3, href: "\/inspection\/visits" \}/);
-  assert.ok(!existsSync(path.join(process.cwd(), "src/components/settings/organization-special-mode-card.tsx")));
-  assert.ok(!read("src/app/(dashboard)/settings/organization/page.tsx").includes("SpecialMode"));
+  // Пункт меню раздела — только руководству.
+  assert.match(read("src/lib/app-nav.ts"), /\{ id: "special", icon: "ShieldCheck", href: "\/inspection\/settings", access: ADMIN \}/);
+  // «Информация об организации»: та же карточка, руководителю точки — только просмотр; тексты раздела подгружены.
+  const org = read("src/app/(dashboard)/settings/organization/page.tsx");
+  assert.match(org, /<InspectionSpecialModeCard canManage=\{!isPointScoped\(session\.user\)\} \/>/);
+  assert.match(org, /namespaces=\{\["settingsManagement", "inspectionDay"\]\}/);
   assert.ok(!existsSync(path.join(process.cwd(), "src/app/(dashboard)/inspection/special-mode")), "старого адреса нет");
 });
 

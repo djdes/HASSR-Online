@@ -283,7 +283,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   "/monitoring": "Мониторинг",
   "/journals/points": "Журналы объектов",
   "/inspection/experts": "Консалтинг",
-  "/inspection/settings": "Настройки раздела",
+  "/inspection/settings": "Спецрежим",
   "/production-control": "Программа производственного контроля",
   "/production-control/program": "Сборка программы ППК",
   "/production-control/haccp-plan": "Сборка ХАССП-плана",

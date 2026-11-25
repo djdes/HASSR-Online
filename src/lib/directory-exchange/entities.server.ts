@@ -333,7 +333,8 @@ function journalAutomationFlags(raw: unknown): Record<string, JournalFlags> {
 
 /** Общие переключатели автоматики в постоянном порядке ключей. */
 function automationSwitches(automation: JournalAutomationControls): JournalAutomationControls {
-  const switches = { enabled: automation.enabled } as JournalAutomationControls;
+  // «Насколько назад» для «Правки прошлых дней» переносится вместе с галочками.
+  const switches = { enabled: automation.enabled, pastDaysLimit: automation.pastDaysLimit } as JournalAutomationControls;
   for (const feature of AUTOMATION_FEATURES) switches[feature] = automation[feature] === true;
   return switches;
 }

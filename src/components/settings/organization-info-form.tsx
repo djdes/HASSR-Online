@@ -33,6 +33,8 @@ import {
 } from "@/lib/object-categories";
 import type { LegalProfile } from "@/lib/org-legal-profile";
 import { mapOrganizationProfileApiError } from "@/lib/organization-profile-error-adapter";
+import { useJournalControls } from "@/components/journals/journal-controls-provider";
+import { automationOn } from "@/lib/journal-controls";
 
 /** Список в строке формы — тот же вид, что у полей `.form-input` рядом. */
 const ORG_SELECT_TRIGGER_CLASS =
@@ -91,6 +93,10 @@ export function OrganizationInfoForm({
 }) {
   const t = useTranslations("settingsManagement.organizationProfile");
   const tBilling = useTranslations("common.billing");
+  // «Правка прошлых дней» спецрежима: глубина окна (0 — без ограничения) или null.
+  const { controls: journalControls, loaded: journalControlsLoaded } = useJournalControls();
+  const specialPastDays =
+    journalControlsLoaded && automationOn(journalControls, "pastDays") ? journalControls.automation.pastDaysLimit : null;
   const tc = useTranslations("common");
   const locale = useLocale();
   function localizedPlanLabel(plan: string): string {
@@ -445,7 +451,17 @@ export function OrganizationInfoForm({
         </FormRow>
         <ToggleRow
           label={t("form.lockPastDays")}
-          hint={t("form.lockPastDaysHint")}
+          hint={
+            // Спецрежим «Правка прошлых дней» сильнее запрета на дни в своём окне —
+            // говорим об этом рядом с запретом (карточка спецрежима — на этой же странице).
+            specialPastDays === null
+              ? t("form.lockPastDaysHint")
+              : `${t("form.lockPastDaysHint")} ${
+                  specialPastDays === 0
+                    ? t("form.lockPastDaysSpecialAny")
+                    : t("form.lockPastDaysSpecialLimited", { days: specialPastDays })
+                }`
+          }
           checked={form.lockPastDayEdits}
           onChange={(v) => set("lockPastDayEdits", v)}
         />

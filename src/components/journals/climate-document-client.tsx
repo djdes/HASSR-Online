@@ -63,6 +63,8 @@ import { TimeField } from "@/components/journals/time-field";
 import { parseNumeric } from "@/components/journals/number-field";
 import {
   hasFullDocumentAccess,
+  pastDayOpen,
+  type PastDaysPolicy,
 } from "@/lib/journal-entry-scope";
 import { directoryRoomToEditorInitial } from "@/components/cleaning/room-editor-initial";
 import type { DirectoryBuilding, DirectoryRoom } from "@/lib/room-directory";
@@ -192,6 +194,11 @@ type Props = {
    * показывала все ячейки редактируемыми, а каждая правка падала.
    */
   viewer?: { id: string; role: string; isRoot: boolean };
+  /**
+   * «Правка прошлых дней» спецрежима (2026-11-25): прошлые дни в окне
+   * открыты — правило то же, что на сервере (`pastDayOpen`).
+   */
+  pastDays?: PastDaysPolicy | null;
   /** Design v2 toggle. */
   useV2?: boolean;
 };
@@ -1227,6 +1234,7 @@ export function ClimateDocumentClient({
   config: initialConfig,
   initialEntries,
   viewer,
+  pastDays = null,
   useV2 = false,
 }: Props) {
   const locale = useLocale() as Locale;
@@ -1277,7 +1285,12 @@ export function ClimateDocumentClient({
   function rowLockReason(row: { employeeId: string; date: string }): string | null {
     if (viewerHasFullAccess || !viewer) return null;
     if (row.employeeId !== viewer.id) return scopeT("foreignRow");
-    if (todayKey !== "" && row.date !== todayKey) return scopeT("notToday");
+    const dateKey = row.date;
+    if (todayKey !== "" && dateKey !== todayKey && !pastDayOpen(pastDays, dateKey, todayKey)) {
+      return pastDays?.allowed && pastDays.limitDays !== null && dateKey < todayKey
+        ? scopeT("pastDaysWindow", { days: pastDays.limitDays })
+        : scopeT("notToday");
+    }
     return null;
   }
   const [pickerOpen, setPickerOpen] = useState(false);

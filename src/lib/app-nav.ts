@@ -542,6 +542,9 @@ const INSPECTION_MENU: NavMenuGroup[] = [
       { id: "now", icon: "ShieldAlert", href: "/inspection", access: fullAccessOr("tasks.verify") },
       { id: "visits", icon: "ScrollText", href: "/inspection/visits", access: fullAccessOr("tasks.verify") },
       { id: "readiness", icon: "Gauge", href: "/dashboard/compliance-audit", access: ADMIN },
+      // Спецрежим (владелец, 2026-11-25): включить и настроить — пунктом
+      // меню раздела, но только руководству; сотрудники его не видят.
+      { id: "special", icon: "ShieldCheck", href: "/inspection/settings", access: ADMIN },
     ],
   },
 ];
@@ -717,9 +720,6 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: "ShieldAlert",
     // Проверяющий часто приходит, когда на месте только заведующая.
     access: fullAccessOr("tasks.verify"),
-    // Спецрежим — без пункта меню и вкладки (2026-11-05): вход тихой
-    // ссылкой «Настройки раздела» внизу «Что делать сейчас».
-    hiddenMatch: ["/inspection/settings"],
     tabs: [
       {
         id: "day",

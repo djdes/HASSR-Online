@@ -9,15 +9,31 @@ export type SensorJournalCode = (typeof SENSOR_JOURNAL_CODES)[number];
  *   • autoCreate — автосоздание документов на новый период;
  *   • copyYesterday — «Скопировать вчерашнее» в документах;
  *   • closeDayAutofill — «Автозаполнить» на главной (закрыть день);
- *   • catchUp — «Догнать пропуски» (с 2026-11-05).
+ *   • catchUp — «Догнать пропуски» (с 2026-11-05);
+ *   • pastDays — «Правка прошлых дней» (с 2026-11-25): прошлые дни за
+ *     последние `pastDaysLimit` дней открыты для правки (см.
+ *     `pastDayOpen` в journal-entry-scope.ts).
  * С 2026-11-05 вне спецрежима о нём не говорят нигде: под `autoFill` ещё
  * «Отметить всех «Здоров»», «Заполнить по плану» и типовое заполнение через
  * ИИ-помощника; под `copyYesterday` — «Заполнить как вчера» в задаче.
  * Фото датчиков в спецрежим не входит — у него своя настройка по журналу.
  */
-export const AUTOMATION_FEATURES = ["autoFill", "autoCreate", "copyYesterday", "closeDayAutofill", "catchUp"] as const;
+export const AUTOMATION_FEATURES = ["autoFill", "autoCreate", "copyYesterday", "closeDayAutofill", "catchUp", "pastDays"] as const;
 export type AutomationFeature = (typeof AUTOMATION_FEATURES)[number];
-export type JournalAutomationControls = { enabled: boolean } & Record<AutomationFeature, boolean>;
+
+/**
+ * «Насколько назад» для «Правки прошлых дней»: столько последних дней до
+ * сегодняшнего открыто для правки; 0 — без ограничения.
+ */
+export const PAST_DAYS_LIMITS = [1, 3, 7, 14, 30, 0] as const;
+export type PastDaysLimit = (typeof PAST_DAYS_LIMITS)[number];
+export const DEFAULT_PAST_DAYS_LIMIT: PastDaysLimit = 7;
+
+export function isPastDaysLimit(value: unknown): value is PastDaysLimit {
+  return typeof value === "number" && PAST_DAYS_LIMITS.some((item) => item === value);
+}
+
+export type JournalAutomationControls = { enabled: boolean; pastDaysLimit: PastDaysLimit } & Record<AutomationFeature, boolean>;
 
 export type JournalControls = {
   automation: JournalAutomationControls;
@@ -28,17 +44,22 @@ export type JournalControls = {
 /** Ничего из автоматики не видно и не работает — новая организация. */
 export const AUTOMATION_OFF: Readonly<JournalAutomationControls> = Object.freeze({
   enabled: false, autoFill: false, autoCreate: false, copyYesterday: false, closeDayAutofill: false, catchUp: false,
+  pastDays: false, pastDaysLimit: DEFAULT_PAST_DAYS_LIMIT,
 });
-/** Всё как было до 2026-10-28 — организация, которая автоматикой пользовалась. */
+/**
+ * Всё как было до 2026-10-28 — организация, которая автоматикой пользовалась.
+ * Правки прошлых дней тогда не было — она выключена и здесь.
+ */
 export const AUTOMATION_ALL_ON: Readonly<JournalAutomationControls> = Object.freeze({
   enabled: true, autoFill: true, autoCreate: true, copyYesterday: true, closeDayAutofill: true, catchUp: true,
+  pastDays: false, pastDaysLimit: DEFAULT_PAST_DAYS_LIMIT,
 });
 
 /**
  * Галочки, появившиеся после выкладки «наоборот» (2026-10-28): в уже
  * сохранённом выборе их нет, значение решает {@link resolveAddedFeature}.
  */
-export const ADDED_AUTOMATION_FEATURES = ["catchUp"] as const satisfies readonly AutomationFeature[];
+export const ADDED_AUTOMATION_FEATURES = ["catchUp", "pastDays"] as const satisfies readonly AutomationFeature[];
 export type AddedAutomationFeature = (typeof ADDED_AUTOMATION_FEATURES)[number];
 
 /**
@@ -70,6 +91,8 @@ function parseAutomation(raw: unknown): JournalAutomationControls | null {
     copyYesterday: source.copyYesterday === true,
     closeDayAutofill: source.closeDayAutofill === true,
     catchUp: source.catchUp === true,
+    pastDays: source.pastDays === true,
+    pastDaysLimit: isPastDaysLimit(source.pastDaysLimit) ? source.pastDaysLimit : DEFAULT_PAST_DAYS_LIMIT,
   };
 }
 
@@ -145,6 +168,16 @@ export function automationOn(controls: Pick<JournalControls, "automation">, feat
   return controls.automation.enabled && controls.automation[feature] === true;
 }
 
+/**
+ * «Правка прошлых дней» спецрежима как правило для записи в журнал
+ * (`pastDayOpen`): разрешена ли и на сколько дней назад (null — без
+ * ограничения).
+ */
+export function pastDaysPolicy(controls: Pick<JournalControls, "automation">): { allowed: boolean; limitDays: number | null } {
+  const limit = controls.automation.pastDaysLimit;
+  return { allowed: automationOn(controls, "pastDays"), limitDays: limit === 0 ? null : limit };
+}
+
 /** Фото датчиков — своя настройка журнала, спецрежим на неё не влияет. */
 export function sensorCameraEnabled(controls: JournalControls, code: unknown): boolean {
   return isSensorJournalCode(code) && controls.sensorCamera[code] === true;
@@ -160,6 +193,7 @@ const FEATURE_TITLES: Record<AutomationFeature, string> = {
   copyYesterday: "«Скопировать вчерашнее»",
   closeDayAutofill: "«Автозаполнить» на главной",
   catchUp: "«Догнать пропуски»",
+  pastDays: "«Правка прошлых дней»",
 };
 
 /** Название части автоматики — для журналов сервера и тестов, не для ответа. */

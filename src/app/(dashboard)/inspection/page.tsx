@@ -6,7 +6,7 @@ import { requireAuth, getActiveOrgId } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { hasCapability } from "@/lib/permission-presets";
 import { hasFullWorkspaceAccess } from "@/lib/role-access";
-import { parsePointScope } from "@/lib/point-scope";
+import { isPointScoped, parsePointScope } from "@/lib/point-scope";
 import { loadCabinetInspectorData } from "@/lib/inspector-qr-service";
 import { inspectorPointName, resolveInspectorIssuePointForSession } from "@/lib/inspector-point.server";
 import { buildingTargets } from "@/lib/building-targets";
@@ -14,6 +14,7 @@ import { runComplianceAudit } from "@/lib/compliance-audit";
 import { orgDisplayName } from "@/lib/org-display-name";
 import { InspectionQr } from "@/components/inspection/inspection-qr";
 import { InspectionGuide } from "@/components/inspection/inspection-guide";
+import { InspectionSpecialModeCard } from "@/components/inspection/inspection-special-mode-card";
 import { ComplianceBundleCard } from "@/components/reports/compliance-bundle-card";
 import { SectionPageHeader } from "@/components/layout/section-page-header";
 import { PageGuide } from "@/components/ui/page-guide";
@@ -41,6 +42,9 @@ export default async function InspectionPage() {
   if (!fullAccess && !hasCapability(session.user, "tasks.verify")) forbidden();
   const organizationId = getActiveOrgId(session);
   const showReadiness = hasCapability(session.user, "admin.full");
+  // Спецрежим (владелец, 2026-11-25): тот, кто им управляет, включает и
+  // настраивает его прямо здесь; остальным — прежняя тихая ссылка.
+  const canManageSpecialMode = hasCapability(session.user, "admin.full") && !isPointScoped(session.user);
   // QR проверяющего — на точку из шапки (руководителю точки — его точку),
   // в «Вся организация» — на всю организацию (2026-11-01).
   const issuePoint = await resolveInspectorIssuePointForSession(session, organizationId, undefined);
@@ -209,18 +213,22 @@ export default async function InspectionPage() {
         )}
       </section>
 
-      {/* Вход в спецрежим — без названия и ярлыков (2026-11-05): права те же,
-          что у этой страницы и у страницы настроек. */}
-      <div className="flex justify-end">
-        <Link
-          href="/inspection/settings"
-          className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 text-[12.5px] text-[#9b9fb3] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
-          data-inspection-settings-link
-        >
-          <Settings2 className="size-3.5" aria-hidden />
-          {t("now.settingsLink")}
-        </Link>
-      </div>
+      {canManageSpecialMode ? (
+        <InspectionSpecialModeCard canManage />
+      ) : (
+        // Остальным — вход без названия и ярлыков (2026-11-05): права те же,
+        // что у этой страницы и у страницы настроек.
+        <div className="flex justify-end">
+          <Link
+            href="/inspection/settings"
+            className="inline-flex items-center gap-1.5 rounded-xl px-2 py-1 text-[12.5px] text-[#9b9fb3] transition-colors duration-150 hover:text-[#5566f6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5566f6]/15"
+            data-inspection-settings-link
+          >
+            <Settings2 className="size-3.5" aria-hidden />
+            {t("now.settingsLink")}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

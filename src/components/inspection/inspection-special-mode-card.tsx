@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { CalendarPlus, Check, Copy, History, Loader2, Minus, PowerOff, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
+import { CalendarClock, CalendarPlus, Check, Copy, History, Loader2, Minus, PowerOff, ShieldCheck, Sparkles, Wand2 } from "lucide-react";
 
 import { saveJournalControls, useJournalControls } from "@/components/journals/journal-controls-provider";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { AUTOMATION_FEATURES, type AutomationFeature, type JournalAutomationControls } from "@/lib/journal-controls";
+import {
+  AUTOMATION_FEATURES,
+  DEFAULT_PAST_DAYS_LIMIT,
+  PAST_DAYS_LIMITS,
+  isPastDaysLimit,
+  type AutomationFeature,
+  type JournalAutomationControls,
+  type PastDaysLimit,
+} from "@/lib/journal-controls";
 
 const FEATURE_ICONS: Record<AutomationFeature, typeof Wand2> = {
   autoFill: Wand2,
@@ -19,12 +27,17 @@ const FEATURE_ICONS: Record<AutomationFeature, typeof Wand2> = {
   copyYesterday: Copy,
   closeDayAutofill: Sparkles,
   catchUp: History,
+  pastDays: CalendarClock,
 };
 
-type Choice = Record<AutomationFeature, boolean>;
+/** Выбор в окне: галочки и «Насколько назад» для «Правки прошлых дней». */
+type Choice = Record<AutomationFeature, boolean> & { pastDaysLimit: PastDaysLimit };
 
 function chosen(automation: JournalAutomationControls): Choice {
-  return Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, automation[feature]])) as Choice;
+  return {
+    ...(Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, automation[feature]])) as Record<AutomationFeature, boolean>),
+    pastDaysLimit: isPastDaysLimit(automation.pastDaysLimit) ? automation.pastDaysLimit : DEFAULT_PAST_DAYS_LIMIT,
+  };
 }
 
 /**
@@ -35,7 +48,7 @@ function preset(automation: JournalAutomationControls): Choice {
   const previous = chosen(automation);
   return AUTOMATION_FEATURES.some((feature) => previous[feature])
     ? previous
-    : (Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, true])) as Choice);
+    : { ...(Object.fromEntries(AUTOMATION_FEATURES.map((feature) => [feature, true])) as Record<AutomationFeature, boolean>), pastDaysLimit: previous.pastDaysLimit };
 }
 
 /**
@@ -55,6 +68,10 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
   const on = loaded && automation.enabled;
   const visible = AUTOMATION_FEATURES.filter((feature) => on && automation[feature]);
   const picked = dialog ? AUTOMATION_FEATURES.filter((feature) => dialog[feature]) : [];
+  /** «7 дней» / «Без ограничения» — глубина «Правки прошлых дней». */
+  const limitText = (limit: PastDaysLimit) => (limit === 0 ? t("pastDaysLimit.any") : t("pastDaysLimit.option", { days: limit }));
+  const featureTitle = (feature: AutomationFeature) =>
+    feature === "pastDays" && on ? t("pastDaysLimit.chip", { limit: limitText(automation.pastDaysLimit) }) : t(`features.${feature}.title`);
 
   async function save(next: JournalAutomationControls) {
     setSaving(true);
@@ -131,7 +148,7 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
                 return (
                   <span key={feature} className="inline-flex items-center gap-1.5 rounded-full bg-[#eef1ff] px-3 py-1 text-[13px] font-medium text-[#3848c7]">
                     <Icon className="size-3.5" aria-hidden />
-                    {t(`features.${feature}.title`)}
+                    {featureTitle(feature)}
                   </span>
                 );
               })}
@@ -163,7 +180,7 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
                 <Icon className="size-4" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[13.5px] font-medium text-[#0b1024]">{t(`features.${feature}.title`)}</span>
+                <span className="block text-[13.5px] font-medium text-[#0b1024]">{shown ? featureTitle(feature) : t(`features.${feature}.title`)}</span>
                 <span className="mt-0.5 block text-[12.5px] leading-snug text-[#6f7282]">{t(`features.${feature}.hint`)}</span>
               </span>
               {loaded ? (
@@ -180,7 +197,7 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
       <p className="mt-3 text-[13px] text-[#6f7282]">{canManage ? t("keeps") : t("askManager")}</p>
 
       <Dialog open={dialog !== null} onOpenChange={(open) => { if (!open && !saving) setDialog(null); }}>
-        <DialogContent className="sm:max-w-[480px]" data-special-mode-dialog>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[480px]" data-special-mode-dialog>
           <DialogHeader>
             <DialogTitle>{t("dialogTitle")}</DialogTitle>
             <DialogDescription>{t("dialogLead")}</DialogDescription>
@@ -190,8 +207,8 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
               const Icon = FEATURE_ICONS[feature];
               const checked = dialog?.[feature] === true;
               return (
+                <div key={feature} className="space-y-2">
                 <label
-                  key={feature}
                   className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors duration-150 ${
                     checked ? "border-[#5566f6]/40 bg-[#f5f6ff]" : "border-[#dcdfed] bg-white hover:border-[#5566f6]/30 hover:bg-[#fafbff]"
                   }`}
@@ -208,6 +225,28 @@ export function InspectionSpecialModeCard({ canManage, step }: { canManage: bool
                     <span className="mt-0.5 block text-[12.5px] leading-snug text-[#6f7282]">{t(`features.${feature}.hint`)}</span>
                   </span>
                 </label>
+                {/* «Насколько назад» — вне <label>: клик по списку не снимает галочку. */}
+                {feature === "pastDays" && checked && dialog ? (
+                  <label className="ml-10 flex flex-wrap items-center gap-2 text-[13px] text-[#3c4053]">
+                    {t("pastDaysLimit.label")}
+                    <select
+                      value={dialog.pastDaysLimit}
+                      onChange={(event) => {
+                        const next = Number(event.target.value);
+                        if (isPastDaysLimit(next)) setDialog((current) => (current ? { ...current, pastDaysLimit: next } : current));
+                      }}
+                      className="h-9 rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[13.5px] text-[#0b1024] focus:border-[#5566f6] focus:outline-none focus:ring-4 focus:ring-[#5566f6]/15"
+                      data-special-mode-past-days-limit
+                    >
+                      {PAST_DAYS_LIMITS.map((limit) => (
+                        <option key={limit} value={limit}>
+                          {limitText(limit)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                </div>
               );
             })}
           </div>
