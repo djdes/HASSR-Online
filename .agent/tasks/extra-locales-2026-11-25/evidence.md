@@ -7,3 +7,6 @@
 - AC5: src/i18n/site-locale.ts `indexedLocalesForPath`, src/app/sitemap.ts.
 - AC6: baseLocale() в document-pdf.ts, *-pdf-presentation.ts, journal-pdf-copy.ts, journals-info, journal-samples docx.
 - AC7: typecheck — 0 ошибок; src/i18n/*.test.ts 106/106; test:changed (полный прогон, >25 файлов) — 0 новых падений.
+- AC8/AC9 (2026-11-26): src/i18n/extra-locales.test.ts 4/4; src/i18n/*.test.ts 107/107; confirm/errors после i18n:types без изменений;
+  typecheck 0 ошибок; test:changed — 3 падения, красные и на master, починены здесь же
+  (borderless.css / neutral-palette.css пересобраны штатными командами; journal-entry-source.test.ts — часы зафиксированы на дату теста).

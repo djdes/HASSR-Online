@@ -36,7 +36,10 @@ test("строку с будущего дня руководство перен�
   assert.equal(target.allowed === false && target.code, "future_day_locked");
 });
 
-test("прошлые дни источника — те же запреты, что у цели", () => {
+test("прошлые дни источника — те же запреты, что у цели", (t) => {
+  // Документ автоматики сверяет день с текущими часами: держим их на TODAY,
+  // иначе тест «протухает» на следующий день после написания.
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(`${TODAY}T12:00:00.000Z`) });
   // Запрет организации: сотруднику закрыто, руководству — с записью override.
   assert.deepEqual(checkEntrySourceWrite(context(), cook, day("2026-11-20")), checkEntryWrite(context(), cook, day("2026-11-20")));
   assert.equal(checkEntrySourceWrite(context(), cook, day("2026-11-20")).allowed, false);

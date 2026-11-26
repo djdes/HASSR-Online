@@ -1,4 +1,779 @@
 {
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "loading": "Wird geladen…",
+    "saving": "Wird gespeichert…",
+    "search": "Suchen",
+    "yes": "Ja",
+    "no": "Nein",
+    "empty": "Noch keine Daten",
+    "retry": "Erneut versuchen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "download": "Herunterladen",
+    "print": "Drucken",
+    "select": "Auswählen…",
+    "error": "Die Aktion konnte nicht ausgeführt werden. Bitte versuchen Sie es erneut.",
+    "billing": {
+      "limit": "Alle Plätze im Tarif sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}.",
+      "limitAction": "Alle Plätze im Tarif sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Wechseln Sie in einen höheren Tarif, um Mitarbeiter hinzuzufügen.",
+      "pay": "Tarif wählen",
+      "payStandard": "Zu Standard wechseln",
+      "payPremium": "Zu Premium wechseln",
+      "pointLimit": "Alle Standorte im Tarif sind belegt – {count, plural, one {# Standort} other {# Standorte}}. Jeder neue Standort kostet einen weiteren Tarif: Fügen Sie ihn auf der Tarifseite hinzu.",
+      "journalLimit": "Der kostenlose Tarif umfasst {count, plural, one {# Journal} other {# Journale}}. Wählen Sie Standard, Premium oder VIP, um alle Journale zu behalten.",
+      "storageFull": "Der Dokumentenspeicher Ihres Tarifs ist voll. Löschen Sie nicht mehr benötigte Dateien oder wechseln Sie zu Premium – 1 GB für alle Dokumente.",
+      "storageClosed": "Dokument-Uploads sind in Standard, Premium und VIP enthalten. Früher hochgeladene Dateien können weiterhin geöffnet und gelöscht werden.",
+      "featureLocked": "Diese Funktion ist im Premium-Tarif enthalten.",
+      "unavailable": "Im aktuellen Tarif nicht verfügbar.",
+      "limitToStandard": "Alle Plätze im kostenlosen Tarif sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Wechseln Sie zu Standard – bis zu {seats, number} Mitarbeiter pro Standort.",
+      "limitToPremium": "Alle Plätze in Standard sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Wechseln Sie zu Premium – bis zu {seats, number} Mitarbeiter pro Standort.",
+      "limitContact": "Alle Plätze in Premium sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Mehr als {seats, number} Mitarbeiter pro Standort – nach Vereinbarung: Kontaktieren Sie uns.",
+      "contact": "Kontakt aufnehmen",
+      "contactSubject": "Mehr Mitarbeiter im Premium-Tarif",
+      "orgLocked": "Die kostenlosen 14 Tage dieser Organisation sind abgelaufen. Fügen Sie auf der Tarifseite einen Standort dafür hinzu.",
+      "trialEndedInn": "Diese Steuernummer (INN) und Telefonnummer haben in einem anderen Konto bereits einen Test genutzt, daher ist der Test hier beendet. Wählen Sie einen Tarif oder wenden Sie sich an den Support, falls es sich um einen Irrtum handelt."
+    },
+    "assistant": {
+      "title": "KI-Assistent",
+      "launcher": "SanPiN-KI-Assistent",
+      "hint": "Fragen zu SanPiN, HACCP und Ihren Journalen",
+      "subtitle": "SanPiN, HACCP und Ihre Journale",
+      "starterPage": "Was steht auf dieser Seite?",
+      "starterTemperature": "Welche Temperatur sollte ein Kühlschrank für zubereitete Speisen haben?",
+      "starterOil": "Wie oft sollte Frittieröl gewechselt werden?",
+      "starterHygiene": "Was sollte ein Mitarbeiter-Hygienejournal enthalten?",
+      "thinking": "Denkt nach…",
+      "checkingData": "Ihre Daten werden geprüft…",
+      "checkingRules": "Gleich fertig, die Anforderungen werden geprüft…",
+      "failed": "Der Assistent konnte nicht antworten",
+      "empty": "(leere Antwort)",
+      "replied": "Der KI-Assistent hat geantwortet",
+      "timeout": "Der KI-Assistent hat nicht rechtzeitig geantwortet. Versuchen Sie es erneut.",
+      "actionFailed": "Die Aktion konnte nicht ausgeführt werden",
+      "done": "Erledigt",
+      "resetTitle": "Chatverlauf löschen?",
+      "resetDescription": "Alle Fragen und Antworten des Assistenten auf diesem Gerät werden gelöscht.",
+      "resetWarning": "Der Chatverlauf kann nicht wiederhergestellt werden",
+      "resetRecords": "Journale und Einträge bleiben unberührt",
+      "clear": "Löschen",
+      "close": "Schließen",
+      "question": "Ihre Frage…",
+      "send": "Senden",
+      "cancelled": "Abgebrochen",
+      "execute": "Ausführen",
+      "cancel": "Abbrechen",
+      "confirmation": "Die Aktion wird erst nach Ihrer Bestätigung ausgeführt.",
+      "intro": "Ich beantworte Fragen zu hygienischen Anforderungen, zu Ihrer Organisation und zur aktuell angezeigten Seite. Mit Ihrer Bestätigung kann ich ein Journal ausfüllen oder einen Mitarbeiter hinzufügen. Fragen Sie zum Beispiel:",
+      "advisory": "KI-Antworten sind Empfehlungen. Die endgültige Entscheidung trifft Ihr Lebensmitteltechnologe.",
+      "rateLimit": "Zu viele Anfragen an den Assistenten. Warten Sie eine Minute und versuchen Sie es erneut.",
+      "invalidRequest": "Ungültige Anfrage",
+      "unavailable": "Der Assistent ist vorübergehend nicht verfügbar. Versuchen Sie es später erneut.",
+      "prepareFailed": "Die Aktion konnte nicht vorbereitet werden: {reason}",
+      "actionFailedReason": "Nicht ausgeführt: {reason}"
+    },
+    "theme": {
+      "theme": "Design",
+      "mode": {
+        "light": "Hell",
+        "dark": "Dunkel",
+        "system": "Geräteeinstellung verwenden",
+        "new": "Neu"
+      },
+      "restoreAuto": "Wieder einschalten",
+      "autoScheduleActive": "Das Design wechselt derzeit nach Tageszeit. Wählen Sie ein Design, um den zeitgesteuerten Wechsel auszuschalten.",
+      "autoScheduleDisabled": "Der zeitgesteuerte Designwechsel ist aus.",
+      "autoScheduleLabel": "Nach Tageszeit wechseln",
+      "autoScheduleHint": "Von 7:00 bis 19:00 gilt das helle Design, zu anderen Zeiten das dunkle. Die Wahl einer Designkarte schaltet diese Einstellung aus."
+    },
+    "pageGuide": {
+      "restore": "So funktioniert es",
+      "faq": "Häufig gestellte Fragen",
+      "dismiss": "Verstanden, ausblenden"
+    },
+    "announcementBanner": {
+      "more": "Mehr erfahren",
+      "dismiss": "Ankündigung schließen"
+    },
+    "form": {
+      "emailLabel": "E-Mail"
+    },
+    "viewPrefs": {
+      "title": "Lesbarkeit",
+      "textSize": "Textgröße",
+      "sizes": {
+        "normal": "Normal",
+        "large": "Groß",
+        "xlarge": "Sehr groß"
+      },
+      "contrast": "Hoher Kontrast",
+      "motion": "Bewegung reduzieren",
+      "hints": "Seitenerklärungen",
+      "more": "Kontrast, Bewegung, Erklärungen",
+      "hideHintsEverywhere": "Erklärungen überall ausblenden",
+      "hintsHidden": "Erklärungen ausgeblendet. Im Profilmenü unter „Lesbarkeit“ können Sie sie wieder einblenden.",
+      "skipToContent": "Zum Inhalt springen",
+      "deviceNote": "Einstellungen für dieses Gerät."
+    },
+    "moreText": {
+      "more": "Mehr",
+      "less": "Weniger"
+    },
+    "quickActions": {
+      "share": "Teilen",
+      "shareCopied": "Link kopiert",
+      "shareFailed": "Link konnte nicht kopiert werden",
+      "toTop": "Nach oben",
+      "hotkeysTitle": "Tastenkürzel",
+      "hotkeys": {
+        "palette": "Bereiche und Journale suchen",
+        "search": "Journale auf der Seite suchen",
+        "urgent": "Dringendes Journal",
+        "help": "Diese Hilfe"
+      }
+    },
+    "objectCategories": {
+      "food": "Gastronomie und Lebensmittelproduktion",
+      "medical": "Medizinische Leistungen",
+      "consumer": "Verbraucherdienstleistungen",
+      "sport": "Sport und Erholung"
+    },
+    "objectCategoryHints": {
+      "food": "Cafés und Restaurants, Catering-Betriebe, Kantinen, Lebensmittelproduktion",
+      "medical": "Medizinische Zentren mit mehreren Fachrichtungen, Zahnmedizin",
+      "consumer": "Schönheitssalons und Friseure (Barbershops), Tattoo-Studios, Kosmetik, Maniküre- und Pediküreräume",
+      "sport": "Fitnessstudios, Spa- und Aquazentren, Ferienhäuser und Pensionen, Kinderlager und Wellnesszentren"
+    },
+    "objectCategoryLabel": "Standorttyp",
+    "objectCategoryRequired": "Wählen Sie den Standorttyp",
+    "objectCategoryNone": "Typ nicht gewählt",
+    "objectCategoryChangeHint": "Das Journalset des Standorts hängt von seinem Typ ab: Bei einer Änderung werden die Pflichtjournale des neuen Typs aktiviert, und nichts wird deaktiviert.",
+    "objectCategoryJournalsLimited": "Der Typ wurde gespeichert, aber seine Journale passen nicht in das Limit Ihres Tarifs – aktivieren Sie die benötigten in den Journaleinstellungen."
+  },
+  "language": {
+    "label": "Oberflächensprache",
+    "organizationDefault": "Standard für neue Mitarbeiter",
+    "personalHint": "Diese Einstellung ändert nur Ihre Oberflächensprache.",
+    "saveFailed": "Ihre Sprache konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "invalid": "Wählen Sie Russisch, Englisch oder Usbekisch.",
+    "unauthorized": "Melden Sie sich an, um Ihre Sprache zu ändern.",
+    "saved": "Sprache gespeichert",
+    "exportLabel": "Dokumentsprache",
+    "exportHint": "Standardmäßig wird Ihre Oberflächensprache verwendet."
+  },
+  "journals": {
+    "title": "Journale",
+    "progress": "{filled, number} von {total, number} ausgefüllt",
+    "entryCount": "{count, plural, one {# Eintrag} other {# Einträge}}",
+    "saveEntry": "Eintrag speichern",
+    "saveContinue": "Speichern und fortfahren",
+    "doneToday": "Für heute erledigt",
+    "required": "Pflichtfeld",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "employee": "Mitarbeiter",
+    "notes": "Notizen",
+    "names": {
+      "hygiene": "Personalhygiene-Journal",
+      "health_check": "Gesundheitskontroll-Journal",
+      "climate_control": "Journal für Lagertemperatur und Luftfeuchtigkeit",
+      "cold_equipment_control": "Temperaturjournal für Kühl- und Gefrierschränke",
+      "cleaning_ventilation_checklist": "Checkliste für Raumreinigung und Lüftung",
+      "cleaning": "Reinigungsjournal",
+      "general_cleaning": "Grundreinigungsplan und -journal",
+      "uv_lamp_runtime": "Betriebsstundenjournal der UV-Entkeimungsgeräte",
+      "finished_product": "Journal zur Qualitätskontrolle zubereiteter Speisen",
+      "perishable_rejection": "Journal zur Qualitätskontrolle verderblicher Lebensmittel",
+      "incoming_control": "Journal für Warenannahme und Eingangskontrolle",
+      "fryer_oil": "Journal zur Nutzung von Frittieröl",
+      "med_books": "Persönliche Gesundheitsbücher",
+      "training_plan": "Schulungsplan des Personals",
+      "staff_training": "Journal für Unterweisungen und Schulungen des Personals",
+      "disinfectant_usage": "Journal zur Verwendung von Desinfektionsmitteln",
+      "sanitary_day_control": "Checkliste Sanitärtag",
+      "equipment_maintenance": "Plan zur vorbeugenden Gerätewartung",
+      "breakdown_history": "Störungsverlauf der Geräte",
+      "equipment_calibration": "Plan zur Überprüfung der Messgeräte",
+      "incoming_raw_materials_control": "Journal zur Kontrolle von Rohstoffen, Zutaten und Verpackungen",
+      "ppe_issuance": "Ausgabejournal für persönliche Schutzausrüstung",
+      "accident_journal": "Vorfallsjournal",
+      "complaint_register": "Reklamationsregister",
+      "product_writeoff": "Bericht über ausgesonderte Produkte",
+      "audit_plan": "Interner Auditplan",
+      "audit_protocol": "Internes Auditprotokoll",
+      "audit_report": "Interner Auditbericht",
+      "traceability_test": "Journal zur Produktrückverfolgbarkeit",
+      "metal_impurity": "Journal zu Metallverunreinigungen in Rohstoffen",
+      "equipment_cleaning": "Journal zur Reinigung und Desinfektion der Geräte",
+      "intensive_cooling": "Journal zur Schnellabkühlung warmer Speisen",
+      "glass_items_list": "Liste der Glas- und zerbrechlichen Kunststoffgegenstände",
+      "glass_control": "Kontrolljournal für Glas und zerbrechlichen Kunststoff",
+      "pest_control": "Journal zu Desinfektion sowie Insekten- und Nagerbekämpfung",
+      "daily_samples": "Journal zur täglichen Entnahme und Aufbewahrung von Speiseproben",
+      "vitaminization": "Journal zur Vitaminisierung von Getränken und Desserts",
+      "ration_control": "Protokoll zur Kostüberwachung",
+      "transport_temperature": "Journal zur Überwachung der Transporttemperatur",
+      "tableware_breakage": "Journal für zerbrochenes Geschirr",
+      "pool_water_control": "Journal zur Wasserqualität im Schwimmbad",
+      "inventory_condition": "Journal zum Zustand von Metall- und Kunststoffgeräten",
+      "instrument_sterilization": "Journal zur Sterilisation von Instrumenten",
+      "medical_waste_b": "Journal für medizinische Abfälle der Klasse B",
+      "batch_release": "Journal zur Chargenfreigabe für den Versand",
+      "temp_control": "Temperaturkontrollprotokoll",
+      "ccp_monitoring": "Überwachungsprotokoll für kritische Kontrollpunkte",
+      "cooking_temp": "Protokoll der Hitzebehandlung",
+      "shipment": "Versandprotokoll für Produkte",
+      "uv_lamp_control": "Überwachungsprotokoll der Entkeimungsgeräte",
+      "audit_plan_scan": "Interner Auditplan",
+      "audit_report_scan": "Interner Auditbericht",
+      "audit_protocol_scan": "Internes Auditprotokoll",
+      "metal_impurity_scan": "Journal zu Metallverunreinigungen in Rohstoffen"
+    },
+    "officialName": "Offizieller Name: {name}",
+    "ui": {
+      "browser": {
+        "bulkCreateFailed": "Die Dokumente konnten nicht erstellt werden",
+        "bulkCreated": "Erstellt: {created}",
+        "bulkCreatedSkipped": "Erstellt: {created} · übersprungen: {skipped}",
+        "networkError": "Netzwerkfehler",
+        "searchPlaceholder": "Name, Beschreibung oder Code",
+        "searchAria": "Journale durchsuchen",
+        "clearSearch": "Suche löschen",
+        "found": "{found, number} von {total, number} gefunden",
+        "total": "Journale insgesamt: {total, number}",
+        "bulkAvailable": "Zum Erstellen verfügbar: {count, number}",
+        "bulkSelected": "Ausgewählt: {selected, number} von {total, number}",
+        "selectAll": "Alle auswählen",
+        "clearSelection": "Auswahl aufheben",
+        "bulkPickOne": "Wählen Sie mindestens ein Journal aus",
+        "bulkCreateTitle": "Dokumente für die ausgewählten Journale erstellen",
+        "bulkCreating": "Wird erstellt…",
+        "bulkCreateSelectedCount": "Ausgewählte erstellen ({count, number})",
+        "bulkCreateSelected": "Ausgewählte erstellen",
+        "disabledJournals": "Deaktivierte Journale",
+        "disabledHint": "– nicht in „Heute“ und für Mitarbeiter nicht sichtbar",
+        "enableInSettings": "– in den <link>Einstellungen</link> aktivieren",
+        "settingSaveFailed": "Die Einstellung konnte nicht gespeichert werden",
+        "journalHidden": "Journal ausgeblendet: {name}",
+        "journalEnabled": "Journal aktiviert: {name}",
+        "disabledCardAria": "{name} – in den Einstellungen deaktiviert",
+        "disabledBadge": "Deaktiviert",
+        "enabling": "Wird aktiviert…",
+        "enable": "Aktivieren",
+        "hideFromDashboard": "Aus „Heute“ ausblenden",
+        "hideFromDashboardAria": "„{name}“ aus „Heute“ ausblenden",
+        "hideConfirmTitle": "Journal aus „Heute“ ausblenden?",
+        "hideConfirmDescription": "„{name}“ wird nicht mehr als Pflichtjournal angezeigt.",
+        "hideBullet1": "Es verschwindet aus „Heute“ und aus der Mini-App der Mitarbeiter",
+        "hideBullet2": "Einträge und Dokumente bleiben erhalten – nichts wird gelöscht",
+        "hideBullet3": "Sie können es hier im Bereich „Deaktivierte Journale“ jederzeit wieder aktivieren",
+        "hide": "Ausblenden",
+        "bulkRemoveTitle": "Aus der Sammelerstellung entfernen",
+        "bulkAddTitle": "Zur Sammelerstellung hinzufügen",
+        "bulkSelectAria": "„{name}“ für die Sammelerstellung auswählen",
+        "officialName": "Offizieller Name: {name}",
+        "fillToday": "Heute ausfüllen",
+        "readyToday": "Heute erledigt",
+        "sanpin": "SanPiN",
+        "haccp": "HACCP",
+        "emptyTitle": "Nichts gefunden",
+        "emptyHint": "Ändern Sie Ihre Suchanfrage oder löschen Sie die Suche."
+      },
+      "todayBanner": {
+        "detailRows": "({today, number} von {expected, number} Zeilen)",
+        "filledStrictBody": "{name} ist für heute ausgefüllt{detail}",
+        "filledBody": "{name} wurde heute ausgefüllt{detail}",
+        "filledStrictTitle": "Das Journal ist für heute ausgefüllt",
+        "filledTitle": "Das Journal wurde heute bereits ausgefüllt",
+        "openToday": "Heute öffnen",
+        "noActiveDocument": "Kein Dokument für heute – erstellen Sie eines mit der Schaltfläche oben",
+        "partialFill": "{today, number} von {expected, number} Zeilen ausgefüllt",
+        "strictEmpty": "Alle Mitarbeiter markieren",
+        "notStarted": "Ersten Eintrag für heute hinzufügen",
+        "pendingStrictTitle": "Muss heute ausgefüllt werden",
+        "pendingTitle": "Noch nicht begonnen",
+        "goToday": "Zu heute"
+      },
+      "traceabilityPage": {
+        "eyebrow": "HACCP · Chargenrückverfolgbarkeit",
+        "batch": "Charge",
+        "emptyDescription": "Keine Einträge mit diesem Schlüssel",
+        "foundDescription": "{count, plural, one {# Eintrag} other {# Einträge}} gefunden – vom Wareneingang bis zum Versand",
+        "emptyBox": "Keine Einträge mit dem Schlüssel „{key}“. Öffnen Sie die Charge über einen Wareneingangseintrag.",
+        "step": "Schritt {number, number}",
+        "supplier": "· Lieferant: {name}",
+        "noteTitle": "HACCP-Rückverfolgbarkeit:",
+        "noteBody": "gemäß TR ZU 021/2011 muss der Weg jeder Charge innerhalb einer Minute nachvollziehbar sein. Hier sind alle Einträge mit dem Chargenschlüssel: Wareneingang, Qualitätskontrolle, Versand und Abschreibung.",
+        "batchOnlyDescription": "Die Charge existiert, aber es gibt noch keine Journaleinträge dazu.",
+        "batchSection": "Charge",
+        "vsdSection": "Annahme per VSD",
+        "entriesSection": "Journaleinträge",
+        "supplierLabel": "Lieferant: {name}",
+        "receivedOn": "erhalten am {date}",
+        "openBatch": "Charge öffnen",
+        "vsdUntitled": "Ohne Titel",
+        "vsdNumber": "VSD Nr. {number}",
+        "openAcceptanceJournal": "Wareneingangsjournal öffnen",
+        "batchRejected": "Abgelehnt"
+      },
+      "brakerageDate": {
+        "placeholder": "TT-MM-JJJJ",
+        "invalid": "Geben Sie das Datum im Format TT-MM-JJJJ ein"
+      },
+      "undoRedo": {
+        "undoAria": "Letzte Änderung rückgängig machen",
+        "undoTitle": "Rückgängig (Strg+Z). Nur Ihre Änderungen in diesem Tab werden rückgängig gemacht.",
+        "redoAria": "Rückgängig gemachte Änderung wiederholen",
+        "redoTitle": "Wiederholen (Strg+Umschalt+Z)"
+      },
+      "brakerageSetup": {
+        "loadFailed": "Mitarbeiter konnten nicht geladen werden",
+        "saveFailed": "Speichern fehlgeschlagen",
+        "title": "Wer das Qualitätskontrolljournal führt",
+        "description": "Die Kommission und die für das Journal verantwortliche Person",
+        "responsible": "Für das Journal verantwortliche Person",
+        "notSelected": "Nicht ausgewählt",
+        "commission": "Kommission für die Speisenkontrolle",
+        "emptyUsers": "Fügen Sie Mitarbeiter oder Kommissionsmitglieder hinzu.",
+        "addExternalCommission": "Externe Kommission hinzufügen",
+        "decline": "Einrichtung ablehnen"
+      },
+      "numberField": {
+        "notANumber": "Geben Sie eine Zahl ein, z. B. 3,5",
+        "rangeBetween": "Prüfen Sie den Wert: Zulässig ist ein Bereich von {min} bis {max}{suffix}",
+        "rangeMax": "Prüfen Sie den Wert: Er darf {max}{suffix} nicht überschreiten",
+        "rangeMin": "Prüfen Sie den Wert: Er darf nicht unter {min}{suffix} liegen",
+        "normBetween": "Norm {min}…{max}{suffix}",
+        "normMax": "Norm: nicht über {max}{suffix}",
+        "normMin": "Norm: nicht unter {min}{suffix}",
+        "decrease": "Verringern",
+        "increase": "Erhöhen",
+        "outOfNorm": "Außerhalb des Bereichs · {hint}"
+      },
+      "barcodeScanner": {
+        "cameraDenied": "Kein Kamerazugriff. Erlauben Sie den Zugriff in den Browsereinstellungen.",
+        "initFailed": "Der Scanner konnte nicht initialisiert werden.",
+        "close": "Scanner schließen",
+        "scan": "Barcode scannen",
+        "lookingUp": "Produkt wird anhand des Barcodes gesucht...",
+        "found": "Gefunden:",
+        "barcode": "Barcode:",
+        "notFound": "im Katalog nicht gefunden"
+      },
+      "photoField": {
+        "rules": "JPG, PNG oder WebP, bis 5 MB",
+        "invalidType": "Nur JPG, PNG oder WebP werden akzeptiert",
+        "tooLarge": "Das Foto ist größer als 5 MB – komprimieren oder neu aufnehmen",
+        "uploadError": "Das Foto konnte nicht hochgeladen werden",
+        "networkError": "Keine Verbindung – versuchen Sie es erneut",
+        "required": "erforderlich",
+        "present": "hinzugefügt",
+        "queued": "wird bei Verbindung gesendet",
+        "remove": "Foto entfernen",
+        "uploading": "Wird hochgeladen…",
+        "more": "Weiteres Foto hinzufügen",
+        "take": "Foto aufnehmen",
+        "alt": "Foto {index, number}"
+      },
+      "index": {
+        "description": "Öffnen Sie eines zum Ausfüllen oder Drucken.",
+        "configureSet": "Set konfigurieren",
+        "noAttentionToday": "Heute im Plan: {filled, number} von {total, number}",
+        "guideTitle": "So arbeiten Sie mit Journalen",
+        "greenTickTitle": "Grüner Haken",
+        "greenTickBody": "das Journal wurde heute ausgefüllt – die Kontrolle wird bestanden. Grau – noch nicht ausgefüllt.",
+        "openJournalTitle": "Journal öffnen",
+        "openJournalBody": "klicken Sie auf eine Karte, um das aktive Dokument für den aktuellen Zeitraum (Monat / Halbmonat / Jahr) zu öffnen.",
+        "greyJournalTitle": "Graues Journal",
+        "greyJournalBody": "in den Journaleinstellungen dieser Organisation deaktiviert. Sie können es bei Bedarf wieder aktivieren.",
+        "sendAllTitle": "„An alle senden“",
+        "sendAllBody": "eine Schaltfläche erstellt im Softwaremodul Aufgaben für nicht ausgefüllte Journale. Mitarbeiter sehen sie auf ihren Smartphones.",
+        "qDisabledQ": "Das Journal ist ausgeschaltet, muss aber trotzdem geführt werden",
+        "qDisabledA": "Gehen Sie zu „Einstellungen → Journalset“ und schalten Sie es wieder ein. Prüfen Sie auch „Einstellungen → Journalverantwortliche“ – dort müssen Verantwortliche festgelegt sein.",
+        "qNoAccessQ": "Ein Mitarbeiter hat keinen Zugriff auf ein Journal",
+        "qNoAccessA": "Der Zugriff wird nach Position festgelegt. Öffnen Sie „Einstellungen → Journalzugriff des Personals“ – dort finden Sie die Tabelle „Position × Journal“."
+      },
+      "controlPeriodicity": {
+        "label": "Kontrollhäufigkeit",
+        "placeholder": "Zum Beispiel: jede Schicht vor Arbeitsbeginn"
+      },
+      "dateField": {
+        "placeholder": "TT.MM.JJJJ",
+        "pickDate": "Datum wählen",
+        "openCalendar": "Kalender öffnen",
+        "previousMonth": "Vorheriger Monat",
+        "nextMonth": "Nächster Monat",
+        "month1": "Januar",
+        "month2": "Februar",
+        "month3": "März",
+        "month4": "April",
+        "month5": "Mai",
+        "month6": "Juni",
+        "month7": "Juli",
+        "month8": "August",
+        "month9": "September",
+        "month10": "Oktober",
+        "month11": "November",
+        "month12": "Dezember",
+        "weekday1": "Mo",
+        "weekday2": "Di",
+        "weekday3": "Mi",
+        "weekday4": "Do",
+        "weekday5": "Fr",
+        "weekday6": "Sa",
+        "weekday7": "So"
+      }
+    },
+    "pointRowsNotice": {
+      "equipmentTitle": "Dieses Dokument enthält Ausstattung anderer Standorte: {count}",
+      "roomsTitle": "Dieses Dokument enthält Räume anderer Standorte: {count}",
+      "body": "Das Dokument wurde erstellt, bevor Journale nach Standort getrennt wurden. Der nächste Zeitraum enthält nur die Objekte dieses Standorts. Um es jetzt zu beheben, nutzen Sie „Dokumente neu erstellen“ bei den Journalverantwortlichen.",
+      "action": "„Dokumente neu erstellen“ öffnen"
+    }
+  },
+  "journalForm": {
+    "draft": {
+      "title": "Sie haben einen unfertigen Eintrag",
+      "savedAndCount": "Gespeichert {savedAt}; {count, number} Felder ausgefüllt.",
+      "question": "Möchten Sie ihn fortsetzen oder neu beginnen?",
+      "continue": "Fortsetzen",
+      "startOver": "Neu beginnen",
+      "recently": "vor Kurzem",
+      "todayAt": "heute um {time}",
+      "yesterdayAt": "gestern um {time}",
+      "dateAt": "{date} um {time}"
+    },
+    "validation": {
+      "deviationMissing": "Eine Abweichung von der Norm wurde erfasst. Füllen Sie diese Pflichtfelder aus: {fields}.",
+      "photoRequired": "Sie müssen diesem Journal ein Foto anhängen.",
+      "deviationTitle": "Achtung: Abweichung von der Norm",
+      "fillRequired": "Füllen Sie diese Pflichtfelder aus:",
+      "photoConfirmationLabel": "Fotonachweis",
+      "photoRequiredHint": "Der Eintrag kann ohne Foto nicht gespeichert werden; dieses Journal verlangt eines."
+    },
+    "product": {
+      "recognizeFromPhoto": "Aus Foto erkennen",
+      "chooseFromDirectory": "Aus Verzeichnis wählen",
+      "quickSelectPlaceholder": "Schnellauswahl aus dem Katalog...",
+      "storageTemperature": "Lagertemperatur: {temperature}"
+    },
+    "area": {
+      "label": "Bereich",
+      "placeholder": "Bereich auswählen"
+    },
+    "fields": {
+      "signaturePlaceholder": "Nachname und Initialen",
+      "equipmentPlaceholder": "Gerät auswählen",
+      "employeePlaceholder": "Mitarbeiter auswählen"
+    },
+    "sensor": {
+      "fetching": "Messwert wird abgerufen...",
+      "fromSensor": "Vom Sensor",
+      "fetchError": "Daten konnten nicht vom Sensor abgerufen werden",
+      "dataError": "Daten konnten nicht abgerufen werden",
+      "received": "Daten vom Smart-Sensor empfangen",
+      "temperature": "Temperatur: {temperature, number} °C",
+      "humidity": "Luftfeuchtigkeit: {humidity, number} %"
+    },
+    "save": {
+      "error": "Der Eintrag konnte nicht gespeichert werden",
+      "serverError": "Der Eintrag konnte nicht gespeichert werden",
+      "photoLost": "Das Foto ging verloren. Nehmen Sie es erneut auf.",
+      "photoRejected": "Der Server hat das Foto abgelehnt. Nehmen Sie ein anderes auf.",
+      "offlineSaved": "Eintrag auf diesem Telefon gespeichert. Er wird automatisch gesendet, sobald die Verbindung wieder besteht; Sie können die App schließen.",
+      "offlineToast": "Eintrag gespeichert. Er wird gesendet, sobald die Verbindung wieder besteht."
+    },
+    "rolling": {
+      "filledRemaining": "{count, number} erledigt; noch {remaining, number} bis zum Limit.",
+      "filledReady": "{count, number} erledigt. Bereit für den nächsten Eintrag.",
+      "limitReached": "Das Tageslimit von {limit, number} Einträgen ist erreicht. Der Eintrag wurde gespeichert, aber es wurde keine neue Aufgabe erstellt.",
+      "cycleTitle": "Wiederholen, bis Sie auf „Fertig“ tippen",
+      "instructions": "Füllen Sie den Eintrag aus und tippen Sie auf <continue>„{continueLabel}“</continue>, um die nächste Aufgabe derselben Art zu erstellen. Wenn Ihre Schicht vorbei ist, tippen Sie auf <done>„{doneLabel}“</done>.",
+      "todayCount": "Heute:"
+    },
+    "scan": {
+      "button": "Scannen"
+    },
+    "fieldHint": {
+      "sanpinLabel": "SanPiN-Hinweis"
+    },
+    "fieldWarning": {
+      "below": "Wert {value, number} liegt unter der Norm (Minimum {minimum, number})",
+      "above": "Wert {value, number} liegt über der Norm (Maximum {maximum, number})"
+    },
+    "voice": {
+      "nothingHeard": "Nichts war zu hören. Versuchen Sie es erneut, näher am Telefon.",
+      "permissionDenied": "Erlauben Sie in den Telefoneinstellungen den Zugriff auf Mikrofon und Spracherkennung.",
+      "unavailable": "Spracherkennung ist auf diesem Telefon nicht verfügbar. Geben Sie Ihren Text stattdessen ein.",
+      "speakPrompt": "Sprechen",
+      "interrupted": "Die Aufnahme wurde unerwartet beendet. Versuchen Sie es erneut oder geben Sie Ihren Text ein.",
+      "microphoneDenied": "Der Mikrofonzugriff ist blockiert. Erlauben Sie ihn in den Telefoneinstellungen oder geben Sie Ihren Text ein.",
+      "microphoneUnavailable": "Das Mikrofon ist nicht verfügbar. Geben Sie Ihren Text stattdessen ein.",
+      "networkUnavailable": "Keine Verbindung: Spracherkennung ist nicht verfügbar. Geben Sie Ihren Text stattdessen ein.",
+      "stopRecording": "Aufnahme beenden",
+      "startVoiceInput": "Spracheingabe",
+      "listening": "Ich höre zu…"
+    }
+  },
+  "auth": {
+    "login": {
+      "passkey": {
+        "startFailed": "Anmeldung konnte nicht gestartet werden.",
+        "verificationFailed": "Der Passkey wurde nicht bestätigt.",
+        "cancelled": "Die Anmeldung mit Face ID wurde abgebrochen.",
+        "verifying": "Wird geprüft…",
+        "signIn": "Mit Face ID oder Fingerabdruck anmelden"
+      },
+      "magicLink": {
+        "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein, um einen Anmeldelink zu erhalten.",
+        "expired": "Dieser E-Mail-Link ist abgelaufen. Fordern Sie einen neuen an.",
+        "used": "Dieser Link wurde bereits verwendet. Fordern Sie einen neuen an.",
+        "twoFactorHint": "Für Ihr Konto sind Telegram-Anmeldecodes aktiviert. Melden Sie sich mit Ihrem Passwort an; der E-Mail-Link kann den Code nicht ersetzen.",
+        "invalid": "Dieser Link ist ungültig. Fordern Sie einen neuen an.",
+        "sentNotice": "Falls für diese E-Mail-Adresse ein Konto existiert, wurde ein Anmeldelink gesendet. Er ist 15 Minuten gültig.",
+        "action": "Mit E-Mail-Link anmelden"
+      },
+      "errors": {
+        "connection": "Verbindung zum Server nicht möglich."
+      },
+      "passwordReset": {
+        "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.",
+        "sentNotice": "Falls für diese E-Mail-Adresse ein Konto existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Prüfen Sie Posteingang und Spam-Ordner.",
+        "action": "Passwort vergessen?",
+        "adminHint": "Passwort vergessen? Bitten Sie den Administrator Ihrer Organisation, Ihnen eine neue Einladung zu senden."
+      },
+      "email": {
+        "sendFailed": "E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+        "sending": "E-Mail wird gesendet…"
+      },
+      "brand": {
+        "homeLabel": "WeSetup – Startseite",
+        "regulations": " SanPiN / HACCP"
+      },
+      "marketing": {
+        "heading": "Elektronische Journale für Ihre Organisation",
+        "description": "Überwachen Sie Temperaturen, Reinigung und Geräte an einem Ort. Für medizinische Zentren, Gastronomie, Produktion und andere Organisationen.",
+        "plans": "Tarife Basic und Advanced",
+        "accessControl": "Zugriff nach Rolle und Journal",
+        "telegramAlerts": "Telegram-Benachrichtigungen",
+        "sensorEntries": "Automatische Einträge von Sensoren",
+        "journalCount": "{count, plural, one {# SanPiN-/HACCP-Journal} other {# SanPiN-/HACCP-Journale}}"
+      },
+      "actions": {
+        "registerCompany": "Unternehmen registrieren",
+        "signingIn": "Anmeldung läuft…",
+        "signIn": "Anmelden",
+        "or": "oder"
+      },
+      "heading": "In Ihrem Konto anmelden",
+      "codeStep": {
+        "description": "Schritt zwei: Geben Sie Ihren Telegram-Code ein.",
+        "sentNotice": "Passwort akzeptiert. Wir haben einen Code an Ihr Telegram gesendet. Geben Sie ihn innerhalb von 5 Minuten ein.",
+        "label": "Telegram-Code",
+        "verifying": "Wird geprüft…",
+        "confirm": "Bestätigen",
+        "resend": "Zurück – Code erneut senden"
+      },
+      "form": {
+        "description": "Geben Sie die E-Mail-Adresse und das Passwort ein, die Ihr Unternehmen Ihnen mitgeteilt hat."
+      },
+      "notices": {
+        "accountExists": "Ein Konto verwendet diese E-Mail-Adresse bereits. Geben Sie Ihr Passwort ein. Vergessen? Wählen Sie unten „Passwort vergessen?“.",
+        "accountDeleted": "Ihr Konto wurde gelöscht.",
+        "registrationComplete": "Die Registrierung ist abgeschlossen. Melden Sie sich an, um fortzufahren.",
+        "invitationAccepted": "Einladung angenommen. Melden Sie sich mit Ihrem Passwort an."
+      },
+      "phoneNotice": {
+        "prefix": "Anscheinend haben Sie eine Telefonnummer eingegeben. Diese Seite verwendet die Anmeldung per E-Mail. Mitarbeiter können sich",
+        "link": "mit einer Telefonnummer anmelden"
+      },
+      "password": {
+        "label": "Passwort",
+        "hide": "Passwort verbergen",
+        "show": "Passwort anzeigen"
+      }
+    },
+    "register": {
+      "consent": {
+        "required": "Bitte akzeptieren Sie die Dokumente, um Ihr Konto zu erstellen."
+      },
+      "errors": {
+        "network": "Netzwerk nicht verfügbar. Bitte versuchen Sie es erneut.",
+        "submit": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+      },
+      "brand": {
+        "homeLabel": "WeSetup – Startseite"
+      },
+      "marketing": {
+        "foreverFree": "{trialDays, number} {trialDays, plural, one {Tag} other {Tage}} kostenlos · keine Karte erforderlich",
+        "instantAccount": "Ihr Konto ist sofort bereit",
+        "intro": "Geben Sie Ihre E-Mail-Adresse ein, um Ihr Konto zu eröffnen. Wir senden Ihnen das Passwort per E-Mail; die Angaben zu Ihrer Organisation können Sie später ergänzen.",
+        "whatsIncluded": "Was kostenlos enthalten ist",
+        "moreLogsSuffix": " weitere SanPiN- und HACCP-Journale"
+      },
+      "actions": {
+        "loginExisting": "Sie haben bereits ein Konto? Anmelden",
+        "creating": "Ihr Konto wird erstellt…",
+        "create": "Konto erstellen",
+        "alreadyHaveAccount": "Sie haben bereits ein Konto?",
+        "signIn": "Anmelden"
+      },
+      "referral": {
+        "invitation": "Sie wurden eingeladen: 14 Tage zum Testen und ein Bonus für Ihren Freund"
+      },
+      "promo": {
+        "descriptionSuffix": ". Erstellen Sie ein Konto, der Code wird beim Bezahlen automatisch angewendet."
+      },
+      "blankJournal": {
+        "readySuffix": "“ öffnet sich, sobald Sie sich registrieren"
+      },
+      "heading": {
+        "startFree": "Kostenlos starten"
+      },
+      "form": {
+        "intro": "Sie brauchen nur Ihre E-Mail-Adresse. Wir senden Ihnen das Passwort per E-Mail, damit Sie sich sofort anmelden können. Das Profil Ihrer Organisation können Sie später ausfüllen.",
+        "liveGuide": "Zeigen Sie mir Schritt für Schritt, wo ich klicken muss"
+      },
+      "fields": {
+        "email": "E-Mail-Adresse",
+        "sector": "Branche",
+        "city": "Stadt"
+      },
+      "sector": {
+        "journalsHint": "Wir aktivieren die Journale, die Sie für Ihre Branche brauchen. Sie können dies später ändern."
+      },
+      "templates": {
+        "logCount": "…und {count, plural, one {# weiteres SanPiN-/HACCP-Journal} other {# weitere SanPiN-/HACCP-Journale}}",
+        "promoDescription": "{label}. Erstellen Sie ein Konto, der Code wird beim Bezahlen automatisch angewendet.",
+        "blankJournalReady": "„{journal}“ öffnet sich, sobald Sie sich registrieren"
+      },
+      "city": {
+        "placeholder": "Beginnen Sie, Ihre Stadt einzugeben",
+        "hint": "Journale verwenden die Ortszeit: jetzt {time}"
+      }
+    },
+    "errors": {
+      "passkeySignIn": "Anmeldung mit Face ID nicht möglich.",
+      "emailSend": "E-Mail konnte nicht gesendet werden.",
+      "invalidCredentials": "Falsche E-Mail-Adresse oder falsches Passwort.",
+      "invalidCode": "Falscher Code."
+    },
+    "sectors": {
+      "restaurant": "Restaurant",
+      "cafe": "Café / Coffeeshop",
+      "bar": "Bar / Kneipe",
+      "canteen": "Kantine",
+      "fastfood": "Fast Food",
+      "bakery": "Bäckerei",
+      "catering": "Catering / Lieferservice",
+      "hotel": "Hotel / Pension",
+      "retail": "Lebensmittelgeschäft",
+      "gas_station": "Tankstelle / Raststätte",
+      "education": "Schule / Kindergarten / Camp",
+      "medical": "Medizinisches Zentrum / Krankenhaus / Sanatorium",
+      "production": "Lebensmittelproduktion",
+      "fitness": "Fitnessstudio / Sportverein / Schwimmbad",
+      "beauty": "Schönheitssalon / Barbershop / Nagelstudio",
+      "other": "Sonstiges"
+    },
+    "legal": {
+      "consentSentence": "Ich akzeptiere das <offer>Angebot</offer> und die <terms>Nutzungsvereinbarung</terms>, habe die <privacy>Datenschutzerklärung</privacy> gelesen und erteile meine <consent>Einwilligung zur Verarbeitung personenbezogener Daten</consent>.",
+      "consentShort": "Ich akzeptiere das <offer>Angebot</offer> und die <consent>Datenverarbeitung</consent>",
+      "openOfferTitle": "Angebot öffnen?",
+      "openConsentTitle": "Einwilligung zur Verarbeitung personenbezogener Daten öffnen?",
+      "openHint": "Das Dokument öffnet sich in einem neuen Tab; das Formular bleibt unverändert.",
+      "openYes": "Trotzdem öffnen",
+      "openNo": "Nicht öffnen"
+    },
+    "challenge": {
+      "websiteLabel": "Ihre Website"
+    },
+    "metadata": {
+      "loginTitle": "Anmelden",
+      "loginDescription": "Melden Sie sich bei WeSetup an. Digitale SanPiN- und HACCP-Journale für medizinische Zentren, Gastronomie, Produktion und andere Organisationen.",
+      "registerTitle": "Konto erstellen",
+      "registerDescription": "Erstellen Sie ein WeSetup-Konto. Digitale SanPiN- und HACCP-Journale für medizinische Zentren, Gastronomie, Produktion und andere Organisationen; {trialDays, number} {trialDays, plural, one {Tag} other {Tage}} kostenlos ohne Einschränkungen, keine Karte erforderlich."
+    },
+    "apiErrors": {
+      "loginCredentialsRequired": "Geben Sie Ihre E-Mail-Adresse und Ihr Passwort ein",
+      "loginRateLimited": "Zu viele Anmeldeversuche. Warten Sie {minutes, plural, one {# Minute} other {# Minuten}}.",
+      "loginCodeRateLimited": "Zu viele Versuche. Warten Sie {minutes, plural, one {# Minute} other {# Minuten}}.",
+      "invalidCredentials": "Falsche E-Mail-Adresse oder falsches Passwort",
+      "loginInternal": "Interner Serverfehler",
+      "tooFrequent": "Zu viele Anfragen. Bitte versuchen Sie es in einigen Minuten erneut",
+      "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein",
+      "codeRequired": "Geben Sie den Code ein",
+      "telegramNotLinked": "Telegram ist nicht mit Ihrem Konto verknüpft",
+      "telegramDeliveryFailed": "Der Code konnte nicht über Telegram gesendet werden. Bitte versuchen Sie es später erneut",
+      "challengeExpired": "Der Code ist abgelaufen. Melden Sie sich erneut an",
+      "challengeExpiredRequestNew": "Der Code ist abgelaufen. Melden Sie sich erneut an, dann senden wir einen neuen",
+      "challengeAlreadyUsed": "Dieser Code wurde bereits verwendet. Melden Sie sich erneut an",
+      "challengeAttemptsExceeded": "Zu viele Versuche. Melden Sie sich erneut an, dann senden wir einen neuen Code",
+      "challengeCodeMismatch": "Falscher Code",
+      "accountUnavailable": "Konto nicht verfügbar",
+      "registrationEmailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein",
+      "registrationConsentRequired": "Akzeptieren Sie das Angebot, die Vereinbarung und die Bedingungen zur Verarbeitung personenbezogener Daten",
+      "registrationDomainInvalid": "Diese E-Mail-Domain existiert nicht. Prüfen Sie die Adresse; die E-Mail mit dem Passwort wird nicht zugestellt",
+      "registrationFailed": "Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut"
+    },
+    "emailField": {
+      "errors": {
+        "required": "Geben Sie eine E-Mail-Adresse ein.",
+        "tooLong": "Die E-Mail-Adresse ist zu lang.",
+        "whitespace": "Die E-Mail-Adresse darf keine Leerzeichen enthalten.",
+        "missingAt": "In der Adresse fehlt das @-Zeichen.",
+        "multipleAt": "Die Adresse darf nur ein @-Zeichen enthalten.",
+        "missingLocalPart": "Ergänzen Sie vor dem @-Zeichen einen Postfachnamen.",
+        "missingDomain": "Ergänzen Sie nach dem @-Zeichen eine Domain.",
+        "missingDomainDot": "Die Domain braucht einen Punkt, zum Beispiel in mail.ru.",
+        "malformedDomain": "Prüfen Sie die Schreibweise der Domain.",
+        "invalidDomainCharacters": "Die Domain enthält ungültige Zeichen.",
+        "invalidTld": "Prüfen Sie die Domain-Endung."
+      },
+      "knownTypo": "Die Domain {domain} existiert nicht. Meinten Sie {suggestion}?",
+      "suggestedTypo": "Bitte prüfen Sie die E-Mail-Adresse. Meinten Sie {suggestion}?",
+      "applySuggestion": "{suggestion} verwenden",
+      "domainMissing": "Diese E-Mail-Domain scheint nicht zu existieren. Prüfen Sie die Adresse; eine Anmelde-E-Mail würde sie nicht erreichen.",
+      "domainChecking": "Domain wird geprüft…",
+      "short": {
+        "missingAt": "@-Zeichen ergänzen",
+        "invalid": "Adresse prüfen",
+        "domainMissing": "Domain existiert nicht",
+        "typoChip": "→ {suggestion}"
+      }
+    },
+    "badges": {
+      "title": "Für verschiedene Branchen",
+      "haccp": {
+        "top": "GEFAHRENANALYSE",
+        "bottom": "KRITISCHE KONTROLLPUNKTE",
+        "center": "HACCP"
+      },
+      "sanpin": {
+        "top": "HYGIENEREGELN",
+        "bottom": "2.3/2.4.3590-20",
+        "center": "SanPiN"
+      },
+      "trts": {
+        "top": "SICHERHEIT VON LEBENSMITTELN",
+        "bottom": "TECH. REGLEMENT DER ZU",
+        "center": "TR CU"
+      },
+      "food": {
+        "top": "LEBENSMITTELPRODUKTION",
+        "bottom": "CATERING · EINZELHANDEL"
+      },
+      "forms": "Wählen Sie die Branche Ihrer Organisation, um die passenden Journale einzurichten.",
+      "catering": "Catering",
+      "production": "Produktion",
+      "retail": "Lager und Einzelhandel",
+      "medical": "Medizinische Zentren"
+    }
+  },
   "navigation": {
     "shell": {
       "sections": {
@@ -719,596 +1494,120 @@
       "roleReadonly": "Nur Ansicht"
     }
   },
-  "common": {
-    "save": "Speichern",
-    "cancel": "Abbrechen",
-    "close": "Schließen",
-    "back": "Zurück",
-    "loading": "Wird geladen…",
-    "saving": "Wird gespeichert…",
-    "search": "Suchen",
-    "yes": "Ja",
-    "no": "Nein",
-    "empty": "Noch keine Daten",
-    "retry": "Erneut versuchen",
-    "delete": "Löschen",
-    "edit": "Bearbeiten",
-    "add": "Hinzufügen",
-    "download": "Herunterladen",
-    "print": "Drucken",
-    "select": "Auswählen…",
-    "error": "Die Aktion konnte nicht ausgeführt werden. Bitte versuchen Sie es erneut.",
-    "billing": {
-      "limit": "Alle Plätze im Tarif sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}.",
-      "limitAction": "Alle Plätze im Tarif sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Wechseln Sie in einen höheren Tarif, um Mitarbeiter hinzuzufügen.",
-      "pay": "Tarif wählen",
-      "payStandard": "Zu Standard wechseln",
-      "payPremium": "Zu Premium wechseln",
-      "pointLimit": "Alle Standorte im Tarif sind belegt – {count, plural, one {# Standort} other {# Standorte}}. Jeder neue Standort kostet einen weiteren Tarif: Fügen Sie ihn auf der Tarifseite hinzu.",
-      "journalLimit": "Der kostenlose Tarif umfasst {count, plural, one {# Journal} other {# Journale}}. Wählen Sie Standard, Premium oder VIP, um alle Journale zu behalten.",
-      "storageFull": "Der Dokumentenspeicher Ihres Tarifs ist voll. Löschen Sie nicht mehr benötigte Dateien oder wechseln Sie zu Premium – 1 GB für alle Dokumente.",
-      "storageClosed": "Dokument-Uploads sind in Standard, Premium und VIP enthalten. Früher hochgeladene Dateien können weiterhin geöffnet und gelöscht werden.",
-      "featureLocked": "Diese Funktion ist im Premium-Tarif enthalten.",
-      "unavailable": "Im aktuellen Tarif nicht verfügbar.",
-      "limitToStandard": "Alle Plätze im kostenlosen Tarif sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Wechseln Sie zu Standard – bis zu {seats, number} Mitarbeiter pro Standort.",
-      "limitToPremium": "Alle Plätze in Standard sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Wechseln Sie zu Premium – bis zu {seats, number} Mitarbeiter pro Standort.",
-      "limitContact": "Alle Plätze in Premium sind belegt – {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}. Mehr als {seats, number} Mitarbeiter pro Standort – nach Vereinbarung: Kontaktieren Sie uns.",
-      "contact": "Kontakt aufnehmen",
-      "contactSubject": "Mehr Mitarbeiter im Premium-Tarif",
-      "orgLocked": "Die kostenlosen 14 Tage dieser Organisation sind abgelaufen. Fügen Sie auf der Tarifseite einen Standort dafür hinzu.",
-      "trialEndedInn": "Diese Steuernummer (INN) und Telefonnummer haben in einem anderen Konto bereits einen Test genutzt, daher ist der Test hier beendet. Wählen Sie einen Tarif oder wenden Sie sich an den Support, falls es sich um einen Irrtum handelt."
-    },
-    "assistant": {
-      "title": "KI-Assistent",
-      "launcher": "SanPiN-KI-Assistent",
-      "hint": "Fragen zu SanPiN, HACCP und Ihren Journalen",
-      "subtitle": "SanPiN, HACCP und Ihre Journale",
-      "starterPage": "Was steht auf dieser Seite?",
-      "starterTemperature": "Welche Temperatur sollte ein Kühlschrank für zubereitete Speisen haben?",
-      "starterOil": "Wie oft sollte Frittieröl gewechselt werden?",
-      "starterHygiene": "Was sollte ein Mitarbeiter-Hygienejournal enthalten?",
-      "thinking": "Denkt nach…",
-      "checkingData": "Ihre Daten werden geprüft…",
-      "checkingRules": "Gleich fertig, die Anforderungen werden geprüft…",
-      "failed": "Der Assistent konnte nicht antworten",
-      "empty": "(leere Antwort)",
-      "replied": "Der KI-Assistent hat geantwortet",
-      "timeout": "Der KI-Assistent hat nicht rechtzeitig geantwortet. Versuchen Sie es erneut.",
-      "actionFailed": "Die Aktion konnte nicht ausgeführt werden",
-      "done": "Erledigt",
-      "resetTitle": "Chatverlauf löschen?",
-      "resetDescription": "Alle Fragen und Antworten des Assistenten auf diesem Gerät werden gelöscht.",
-      "resetWarning": "Der Chatverlauf kann nicht wiederhergestellt werden",
-      "resetRecords": "Journale und Einträge bleiben unberührt",
-      "clear": "Löschen",
+  "notifications": {
+    "ui": {
+      "title": "Benachrichtigungen",
       "close": "Schließen",
-      "question": "Ihre Frage…",
-      "send": "Senden",
-      "cancelled": "Abgebrochen",
-      "execute": "Ausführen",
-      "cancel": "Abbrechen",
-      "confirmation": "Die Aktion wird erst nach Ihrer Bestätigung ausgeführt.",
-      "intro": "Ich beantworte Fragen zu hygienischen Anforderungen, zu Ihrer Organisation und zur aktuell angezeigten Seite. Mit Ihrer Bestätigung kann ich ein Journal ausfüllen oder einen Mitarbeiter hinzufügen. Fragen Sie zum Beispiel:",
-      "advisory": "KI-Antworten sind Empfehlungen. Die endgültige Entscheidung trifft Ihr Lebensmitteltechnologe.",
-      "rateLimit": "Zu viele Anfragen an den Assistenten. Warten Sie eine Minute und versuchen Sie es erneut.",
-      "invalidRequest": "Ungültige Anfrage",
-      "unavailable": "Der Assistent ist vorübergehend nicht verfügbar. Versuchen Sie es später erneut.",
-      "prepareFailed": "Die Aktion konnte nicht vorbereitet werden: {reason}",
-      "actionFailedReason": "Nicht ausgeführt: {reason}"
+      "tabNew": "Neu",
+      "tabRead": "Gelesen",
+      "readSelected": "Als gelesen markieren",
+      "deleteSelected": "Löschen",
+      "deleteAll": "Alle löschen",
+      "emptyNew": "Sie haben keine neuen Benachrichtigungen.",
+      "emptyRead": "Sie haben keine gelesenen Benachrichtigungen.",
+      "selectAllTask": "Gesamte Aufgabe auswählen",
+      "readItem": "Als gelesen markieren: {label}",
+      "selectReadPrompt": "Wählen Sie Benachrichtigungen oder Checklistenpunkte über die Kästchen links aus.",
+      "selectDeletePrompt": "Wählen Sie die Benachrichtigungen aus, die Sie löschen möchten.",
+      "readFailedAll": "Benachrichtigungen konnten nicht als gelesen markiert werden. Bitte versuchen Sie es erneut.",
+      "readFailedSome": "Nicht als gelesen markiert: {count, number} von {total, number}.",
+      "readSuccess": "Als gelesen markiert.",
+      "deleteFailedAll": "Die Benachrichtigungen konnten nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+      "deleteFailedSome": "Nicht gelöscht: {count, number} von {total, number}.",
+      "deleteOneSuccess": "Benachrichtigung gelöscht.",
+      "deleteManySuccess": "Gelöschte Benachrichtigungen: {count, number}.",
+      "networkError": "Keine Netzwerkverbindung. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "deleteAllFailed": "Die Benachrichtigungen konnten nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+      "deleteAllSuccess": "Alle Benachrichtigungen gelöscht.",
+      "deleteAllTitle": "Alle Benachrichtigungen löschen?",
+      "deleteAllDescription": "Dadurch werden alle Benachrichtigungen entfernt, gelesene wie ungelesene.",
+      "deleteAllIrreversible": "Gelöschte Benachrichtigungen können nicht wiederhergestellt werden.",
+      "deleteAllDataSafe": "Aufgaben und Journaleinträge selbst werden nicht verändert.",
+      "confirmDeleteAll": "Alle löschen",
+      "cancel": "Abbrechen"
     },
-    "theme": {
-      "theme": "Design",
-      "mode": {
-        "light": "Hell",
-        "dark": "Dunkel",
-        "system": "Geräteeinstellung verwenden",
-        "new": "Neu"
-      },
-      "restoreAuto": "Wieder einschalten",
-      "autoScheduleActive": "Das Design wechselt derzeit nach Tageszeit. Wählen Sie ein Design, um den zeitgesteuerten Wechsel auszuschalten.",
-      "autoScheduleDisabled": "Der zeitgesteuerte Designwechsel ist aus.",
-      "autoScheduleLabel": "Nach Tageszeit wechseln",
-      "autoScheduleHint": "Von 7:00 bis 19:00 gilt das helle Design, zu anderen Zeiten das dunkle. Die Wahl einer Designkarte schaltet diese Einstellung aus."
+    "messages": {
+      "staffJournal": "Mitarbeiter zum Journal hinzufügen",
+      "trainingPlan": "Stellen zum Schulungsplan hinzufügen",
+      "openJournal": "Journal öffnen",
+      "openTrainingPlan": "Schulungsplan öffnen",
+      "pushOpen": "Öffnen Sie die Benachrichtigung, um Details zu sehen",
+      "pushMore": "{first} und {count, plural, one {# weiterer Punkt} other {# weitere Punkte}}",
+      "feedbackReply": "Sie haben eine Antwort auf Ihre Anfrage erhalten",
+      "pinRequests": "PIN-Anfragen von Mitarbeitern",
+      "reviewPinRequests": "Prüfen",
+      "pinRequestItem": "{kind, select, change {{name} – PIN-Änderung} other {{name} – PIN-Vergabe}}",
+      "fromQrPage": "von der QR-Seite",
+      "hygieneAdmission": "Hygienejournal: Mitarbeiter warten auf Zulassung",
+      "hygieneSigned": "{name} – unterschrieben, wartet auf Zulassung",
+      "hygieneComplaints": "{name} – Beschwerden: {complaints}",
+      "ideaStatus": "{status, select, new {Idee „{title}“ – neu} planned {Idee „{title}“ – geplant} in_progress {Idee „{title}“ – in Arbeit} done {Idee „{title}“ – umgesetzt} declined {Idee „{title}“ – abgelehnt} other {Idee „{title}“}}",
+      "ideaStatusLabel": "{status, select, new {Neu} planned {Geplant} in_progress {In Arbeit} done {Umgesetzt} declined {Abgelehnt} other {Unbekannter Status}}",
+      "openIdeas": "Ideen öffnen",
+      "open": "Öffnen",
+      "orgTrialEnding": "{stage, select, tomorrow {Die kostenlosen Tage der Organisation „{name}“ enden morgen} other {Die kostenlosen Tage der Organisation „{name}“ laufen ab}}",
+      "orgTrialLastDay": "Letzter kostenloser Tag – {date}",
+      "addPoint": "Standort hinzufügen",
+      "orgTrialAccountCovers": "Die Guthaben der Organisationen des Kontos reichen aus – Sie können den Standort in einem Schritt vom Guthaben bezahlen.",
+      "supportReport": "Neue Support-Anfrage",
+      "supportChat": "Neue Nachricht im Live-Chat"
     },
-    "pageGuide": {
-      "restore": "So funktioniert es",
-      "faq": "Häufig gestellte Fragen",
-      "dismiss": "Verstanden, ausblenden"
-    },
-    "announcementBanner": {
-      "more": "Mehr erfahren",
-      "dismiss": "Ankündigung schließen"
-    },
-    "form": {
-      "emailLabel": "E-Mail"
-    },
-    "viewPrefs": {
-      "title": "Lesbarkeit",
-      "textSize": "Textgröße",
-      "sizes": {
-        "normal": "Normal",
-        "large": "Groß",
-        "xlarge": "Sehr groß"
-      },
-      "contrast": "Hoher Kontrast",
-      "motion": "Bewegung reduzieren",
-      "hints": "Seitenerklärungen",
-      "more": "Kontrast, Bewegung, Erklärungen",
-      "hideHintsEverywhere": "Erklärungen überall ausblenden",
-      "hintsHidden": "Erklärungen ausgeblendet. Im Profilmenü unter „Lesbarkeit“ können Sie sie wieder einblenden.",
-      "skipToContent": "Zum Inhalt springen",
-      "deviceNote": "Einstellungen für dieses Gerät."
-    },
-    "moreText": {
-      "more": "Mehr",
-      "less": "Weniger"
-    },
-    "quickActions": {
-      "share": "Teilen",
-      "shareCopied": "Link kopiert",
-      "shareFailed": "Link konnte nicht kopiert werden",
-      "toTop": "Nach oben",
-      "hotkeysTitle": "Tastenkürzel",
-      "hotkeys": {
-        "palette": "Bereiche und Journale suchen",
-        "search": "Journale auf der Seite suchen",
-        "urgent": "Dringendes Journal",
-        "help": "Diese Hilfe"
-      }
-    },
-    "objectCategories": {
-      "food": "Gastronomie und Lebensmittelproduktion",
-      "medical": "Medizinische Leistungen",
-      "consumer": "Verbraucherdienstleistungen",
-      "sport": "Sport und Erholung"
-    },
-    "objectCategoryHints": {
-      "food": "Cafés und Restaurants, Catering-Betriebe, Kantinen, Lebensmittelproduktion",
-      "medical": "Medizinische Zentren mit mehreren Fachrichtungen, Zahnmedizin",
-      "consumer": "Schönheitssalons und Friseure (Barbershops), Tattoo-Studios, Kosmetik, Maniküre- und Pediküreräume",
-      "sport": "Fitnessstudios, Spa- und Aquazentren, Ferienhäuser und Pensionen, Kinderlager und Wellnesszentren"
-    },
-    "objectCategoryLabel": "Standorttyp",
-    "objectCategoryRequired": "Wählen Sie den Standorttyp",
-    "objectCategoryNone": "Typ nicht gewählt",
-    "objectCategoryChangeHint": "Das Journalset des Standorts hängt von seinem Typ ab: Bei einer Änderung werden die Pflichtjournale des neuen Typs aktiviert, und nichts wird deaktiviert.",
-    "objectCategoryJournalsLimited": "Der Typ wurde gespeichert, aber seine Journale passen nicht in das Limit Ihres Tarifs – aktivieren Sie die benötigten in den Journaleinstellungen."
-  },
-  "auth": {
-    "login": {
-      "passkey": {
-        "startFailed": "Anmeldung konnte nicht gestartet werden.",
-        "verificationFailed": "Der Passkey wurde nicht bestätigt.",
-        "cancelled": "Die Anmeldung mit Face ID wurde abgebrochen.",
-        "verifying": "Wird geprüft…",
-        "signIn": "Mit Face ID oder Fingerabdruck anmelden"
-      },
-      "magicLink": {
-        "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein, um einen Anmeldelink zu erhalten.",
-        "expired": "Dieser E-Mail-Link ist abgelaufen. Fordern Sie einen neuen an.",
-        "used": "Dieser Link wurde bereits verwendet. Fordern Sie einen neuen an.",
-        "twoFactorHint": "Für Ihr Konto sind Telegram-Anmeldecodes aktiviert. Melden Sie sich mit Ihrem Passwort an; der E-Mail-Link kann den Code nicht ersetzen.",
-        "invalid": "Dieser Link ist ungültig. Fordern Sie einen neuen an.",
-        "sentNotice": "Falls für diese E-Mail-Adresse ein Konto existiert, wurde ein Anmeldelink gesendet. Er ist 15 Minuten gültig.",
-        "action": "Mit E-Mail-Link anmelden"
-      },
-      "errors": {
-        "connection": "Verbindung zum Server nicht möglich."
-      },
-      "passwordReset": {
-        "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.",
-        "sentNotice": "Falls für diese E-Mail-Adresse ein Konto existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet. Prüfen Sie Posteingang und Spam-Ordner.",
-        "action": "Passwort vergessen?",
-        "adminHint": "Passwort vergessen? Bitten Sie den Administrator Ihrer Organisation, Ihnen eine neue Einladung zu senden."
-      },
-      "email": {
-        "sendFailed": "E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
-        "sending": "E-Mail wird gesendet…"
-      },
-      "brand": {
-        "homeLabel": "WeSetup – Startseite",
-        "regulations": " SanPiN / HACCP"
-      },
-      "marketing": {
-        "heading": "Elektronische Journale für Ihre Organisation",
-        "description": "Überwachen Sie Temperaturen, Reinigung und Geräte an einem Ort. Für medizinische Zentren, Gastronomie, Produktion und andere Organisationen.",
-        "plans": "Tarife Basic und Advanced",
-        "accessControl": "Zugriff nach Rolle und Journal",
-        "telegramAlerts": "Telegram-Benachrichtigungen",
-        "sensorEntries": "Automatische Einträge von Sensoren",
-        "journalCount": "{count, plural, one {# SanPiN-/HACCP-Journal} other {# SanPiN-/HACCP-Journale}}"
-      },
-      "actions": {
-        "registerCompany": "Unternehmen registrieren",
-        "signingIn": "Anmeldung läuft…",
-        "signIn": "Anmelden",
-        "or": "oder"
-      },
-      "heading": "In Ihrem Konto anmelden",
-      "codeStep": {
-        "description": "Schritt zwei: Geben Sie Ihren Telegram-Code ein.",
-        "sentNotice": "Passwort akzeptiert. Wir haben einen Code an Ihr Telegram gesendet. Geben Sie ihn innerhalb von 5 Minuten ein.",
-        "label": "Telegram-Code",
-        "verifying": "Wird geprüft…",
-        "confirm": "Bestätigen",
-        "resend": "Zurück – Code erneut senden"
-      },
-      "form": {
-        "description": "Geben Sie die E-Mail-Adresse und das Passwort ein, die Ihr Unternehmen Ihnen mitgeteilt hat."
-      },
-      "notices": {
-        "accountExists": "Ein Konto verwendet diese E-Mail-Adresse bereits. Geben Sie Ihr Passwort ein. Vergessen? Wählen Sie unten „Passwort vergessen?“.",
-        "accountDeleted": "Ihr Konto wurde gelöscht.",
-        "registrationComplete": "Die Registrierung ist abgeschlossen. Melden Sie sich an, um fortzufahren.",
-        "invitationAccepted": "Einladung angenommen. Melden Sie sich mit Ihrem Passwort an."
-      },
-      "phoneNotice": {
-        "prefix": "Anscheinend haben Sie eine Telefonnummer eingegeben. Diese Seite verwendet die Anmeldung per E-Mail. Mitarbeiter können sich",
-        "link": "mit einer Telefonnummer anmelden"
-      },
-      "password": {
-        "label": "Passwort",
-        "hide": "Passwort verbergen",
-        "show": "Passwort anzeigen"
-      }
-    },
-    "register": {
-      "consent": {
-        "required": "Bitte akzeptieren Sie die Dokumente, um Ihr Konto zu erstellen."
-      },
-      "errors": {
-        "network": "Netzwerk nicht verfügbar. Bitte versuchen Sie es erneut.",
-        "submit": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
-      },
-      "brand": {
-        "homeLabel": "WeSetup – Startseite"
-      },
-      "marketing": {
-        "foreverFree": "{trialDays, number} {trialDays, plural, one {Tag} other {Tage}} kostenlos · keine Karte erforderlich",
-        "instantAccount": "Ihr Konto ist sofort bereit",
-        "intro": "Geben Sie Ihre E-Mail-Adresse ein, um Ihr Konto zu eröffnen. Wir senden Ihnen das Passwort per E-Mail; die Angaben zu Ihrer Organisation können Sie später ergänzen.",
-        "whatsIncluded": "Was kostenlos enthalten ist",
-        "moreLogsSuffix": " weitere SanPiN- und HACCP-Journale"
-      },
-      "actions": {
-        "loginExisting": "Sie haben bereits ein Konto? Anmelden",
-        "creating": "Ihr Konto wird erstellt…",
-        "create": "Konto erstellen",
-        "alreadyHaveAccount": "Sie haben bereits ein Konto?",
-        "signIn": "Anmelden"
-      },
-      "referral": {
-        "invitation": "Sie wurden eingeladen: 14 Tage zum Testen und ein Bonus für Ihren Freund"
-      },
-      "promo": {
-        "descriptionSuffix": ". Erstellen Sie ein Konto, der Code wird beim Bezahlen automatisch angewendet."
-      },
-      "blankJournal": {
-        "readySuffix": "“ öffnet sich, sobald Sie sich registrieren"
-      },
-      "heading": {
-        "startFree": "Kostenlos starten"
-      },
-      "form": {
-        "intro": "Sie brauchen nur Ihre E-Mail-Adresse. Wir senden Ihnen das Passwort per E-Mail, damit Sie sich sofort anmelden können. Das Profil Ihrer Organisation können Sie später ausfüllen.",
-        "liveGuide": "Zeigen Sie mir Schritt für Schritt, wo ich klicken muss"
-      },
-      "fields": {
-        "email": "E-Mail-Adresse",
-        "sector": "Branche",
-        "city": "Stadt"
-      },
-      "sector": {
-        "journalsHint": "Wir aktivieren die Journale, die Sie für Ihre Branche brauchen. Sie können dies später ändern."
-      },
-      "templates": {
-        "logCount": "…und {count, plural, one {# weiteres SanPiN-/HACCP-Journal} other {# weitere SanPiN-/HACCP-Journale}}",
-        "promoDescription": "{label}. Erstellen Sie ein Konto, der Code wird beim Bezahlen automatisch angewendet.",
-        "blankJournalReady": "„{journal}“ öffnet sich, sobald Sie sich registrieren"
-      },
-      "city": {
-        "placeholder": "Beginnen Sie, Ihre Stadt einzugeben",
-        "hint": "Journale verwenden die Ortszeit: jetzt {time}"
-      }
-    },
-    "errors": {
-      "passkeySignIn": "Anmeldung mit Face ID nicht möglich.",
-      "emailSend": "E-Mail konnte nicht gesendet werden.",
-      "invalidCredentials": "Falsche E-Mail-Adresse oder falsches Passwort.",
-      "invalidCode": "Falscher Code."
-    },
-    "sectors": {
-      "restaurant": "Restaurant",
-      "cafe": "Café / Coffeeshop",
-      "bar": "Bar / Kneipe",
-      "canteen": "Kantine",
-      "fastfood": "Fast Food",
-      "bakery": "Bäckerei",
-      "catering": "Catering / Lieferservice",
-      "hotel": "Hotel / Pension",
-      "retail": "Lebensmittelgeschäft",
-      "gas_station": "Tankstelle / Raststätte",
-      "education": "Schule / Kindergarten / Camp",
-      "medical": "Medizinisches Zentrum / Krankenhaus / Sanatorium",
-      "production": "Lebensmittelproduktion",
-      "fitness": "Fitnessstudio / Sportverein / Schwimmbad",
-      "beauty": "Schönheitssalon / Barbershop / Nagelstudio",
-      "other": "Sonstiges"
-    },
-    "legal": {
-      "consentSentence": "Ich akzeptiere das <offer>Angebot</offer> und die <terms>Nutzungsvereinbarung</terms>, habe die <privacy>Datenschutzerklärung</privacy> gelesen und erteile meine <consent>Einwilligung zur Verarbeitung personenbezogener Daten</consent>.",
-      "consentShort": "Ich akzeptiere das <offer>Angebot</offer> und die <consent>Datenverarbeitung</consent>",
-      "openOfferTitle": "Angebot öffnen?",
-      "openConsentTitle": "Einwilligung zur Verarbeitung personenbezogener Daten öffnen?",
-      "openHint": "Das Dokument öffnet sich in einem neuen Tab; das Formular bleibt unverändert.",
-      "openYes": "Trotzdem öffnen",
-      "openNo": "Nicht öffnen"
-    },
-    "challenge": {
-      "websiteLabel": "Ihre Website"
-    },
-    "metadata": {
-      "loginTitle": "Anmelden",
-      "loginDescription": "Melden Sie sich bei WeSetup an. Digitale SanPiN- und HACCP-Journale für medizinische Zentren, Gastronomie, Produktion und andere Organisationen.",
-      "registerTitle": "Konto erstellen",
-      "registerDescription": "Erstellen Sie ein WeSetup-Konto. Digitale SanPiN- und HACCP-Journale für medizinische Zentren, Gastronomie, Produktion und andere Organisationen; {trialDays, number} {trialDays, plural, one {Tag} other {Tage}} kostenlos ohne Einschränkungen, keine Karte erforderlich."
-    },
-    "apiErrors": {
-      "loginCredentialsRequired": "Geben Sie Ihre E-Mail-Adresse und Ihr Passwort ein",
-      "loginRateLimited": "Zu viele Anmeldeversuche. Warten Sie {minutes, plural, one {# Minute} other {# Minuten}}.",
-      "loginCodeRateLimited": "Zu viele Versuche. Warten Sie {minutes, plural, one {# Minute} other {# Minuten}}.",
-      "invalidCredentials": "Falsche E-Mail-Adresse oder falsches Passwort",
-      "loginInternal": "Interner Serverfehler",
-      "tooFrequent": "Zu viele Anfragen. Bitte versuchen Sie es in einigen Minuten erneut",
-      "emailRequired": "Geben Sie Ihre E-Mail-Adresse ein",
-      "codeRequired": "Geben Sie den Code ein",
-      "telegramNotLinked": "Telegram ist nicht mit Ihrem Konto verknüpft",
-      "telegramDeliveryFailed": "Der Code konnte nicht über Telegram gesendet werden. Bitte versuchen Sie es später erneut",
-      "challengeExpired": "Der Code ist abgelaufen. Melden Sie sich erneut an",
-      "challengeExpiredRequestNew": "Der Code ist abgelaufen. Melden Sie sich erneut an, dann senden wir einen neuen",
-      "challengeAlreadyUsed": "Dieser Code wurde bereits verwendet. Melden Sie sich erneut an",
-      "challengeAttemptsExceeded": "Zu viele Versuche. Melden Sie sich erneut an, dann senden wir einen neuen Code",
-      "challengeCodeMismatch": "Falscher Code",
-      "accountUnavailable": "Konto nicht verfügbar",
-      "registrationEmailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein",
-      "registrationConsentRequired": "Akzeptieren Sie das Angebot, die Vereinbarung und die Bedingungen zur Verarbeitung personenbezogener Daten",
-      "registrationDomainInvalid": "Diese E-Mail-Domain existiert nicht. Prüfen Sie die Adresse; die E-Mail mit dem Passwort wird nicht zugestellt",
-      "registrationFailed": "Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut"
-    },
-    "emailField": {
-      "errors": {
-        "required": "Geben Sie eine E-Mail-Adresse ein.",
-        "tooLong": "Die E-Mail-Adresse ist zu lang.",
-        "whitespace": "Die E-Mail-Adresse darf keine Leerzeichen enthalten.",
-        "missingAt": "In der Adresse fehlt das @-Zeichen.",
-        "multipleAt": "Die Adresse darf nur ein @-Zeichen enthalten.",
-        "missingLocalPart": "Ergänzen Sie vor dem @-Zeichen einen Postfachnamen.",
-        "missingDomain": "Ergänzen Sie nach dem @-Zeichen eine Domain.",
-        "missingDomainDot": "Die Domain braucht einen Punkt, zum Beispiel in mail.ru.",
-        "malformedDomain": "Prüfen Sie die Schreibweise der Domain.",
-        "invalidDomainCharacters": "Die Domain enthält ungültige Zeichen.",
-        "invalidTld": "Prüfen Sie die Domain-Endung."
-      },
-      "knownTypo": "Die Domain {domain} existiert nicht. Meinten Sie {suggestion}?",
-      "suggestedTypo": "Bitte prüfen Sie die E-Mail-Adresse. Meinten Sie {suggestion}?",
-      "applySuggestion": "{suggestion} verwenden",
-      "domainMissing": "Diese E-Mail-Domain scheint nicht zu existieren. Prüfen Sie die Adresse; eine Anmelde-E-Mail würde sie nicht erreichen.",
-      "domainChecking": "Domain wird geprüft…",
-      "short": {
-        "missingAt": "@-Zeichen ergänzen",
-        "invalid": "Adresse prüfen",
-        "domainMissing": "Domain existiert nicht",
-        "typoChip": "→ {suggestion}"
-      }
-    },
-    "badges": {
-      "title": "Für verschiedene Branchen",
-      "haccp": {
-        "top": "GEFAHRENANALYSE",
-        "bottom": "KRITISCHE KONTROLLPUNKTE",
-        "center": "HACCP"
-      },
-      "sanpin": {
-        "top": "HYGIENEREGELN",
-        "bottom": "2.3/2.4.3590-20",
-        "center": "SanPiN"
-      },
-      "trts": {
-        "top": "SICHERHEIT VON LEBENSMITTELN",
-        "bottom": "TECH. REGLEMENT DER ZU",
-        "center": "TR CU"
-      },
-      "food": {
-        "top": "LEBENSMITTELPRODUKTION",
-        "bottom": "CATERING · EINZELHANDEL"
-      },
-      "forms": "Wählen Sie die Branche Ihrer Organisation, um die passenden Journale einzurichten.",
-      "catering": "Catering",
-      "production": "Produktion",
-      "retail": "Lager und Einzelhandel",
-      "medical": "Medizinische Zentren"
+    "supportAlerts": {
+      "report": "Neue Anfrage",
+      "reportBug": "Neue Anfrage · Fehler",
+      "reportSuggestion": "Neue Anfrage · Vorschlag",
+      "reportPartnership": "Neue Anfrage · Partnerschaft",
+      "chat": "Live-Chat-Nachricht",
+      "open": "Öffnen",
+      "client": "Kunde"
     }
   },
-  "layoutUi": {
-    "buildVersionWatcher": {
-      "title": "Die Website wurde aktualisiert",
-      "description": "Laden Sie die Seite neu, um die neuesten Änderungen zu sehen.",
-      "reload": "Neu laden"
-    },
-    "cabinetPlanCard": {
-      "myCabinet": "Mein Arbeitsbereich",
-      "orgCabinet": "Organisations-Arbeitsbereich",
-      "current": "aktuell",
-      "perMonth": "{price}/Monat",
-      "label": "Organisationstarif:",
-      "change": "Ändern"
-    },
-    "commandPalette": {
-      "closeDayLabel": "Tag abschließen",
-      "closeDayHint": "Gestern → heute für alle Tagesjournale kopieren",
-      "closeDayKeywords": "abschließen,kopieren,gestern,heute,Tag abschließen",
-      "closeDayFailed": "Der Tag konnte nicht abgeschlossen werden",
-      "copiedCount": "{count, plural, one {# Eintrag kopiert} other {# Einträge kopiert}}",
-      "nothingToCopy": "Nichts zu kopieren oder alles ist bereits ausgefüllt.",
-      "error": "Fehler",
-      "catchUpLabel": "Lücken nachholen",
-      "catchUpHint": "14-Tage-Raster × alle Journale",
-      "catchUpKeywords": "nachholen,Lücken,verpasst,Raster",
-      "kindUser": "Personal",
-      "kindTemplate": "Journale",
-      "kindDocument": "Dokumente",
-      "kindEquipment": "Geräte",
-      "groupActions": "Aktionen",
-      "groupSections": "Bereiche",
-      "placeholder": "Journal, Mitarbeiter, Gerät oder Aktion suchen…",
-      "startTyping": "Beginnen Sie zu tippen – Suche in Journalen, Personal und Geräten",
-      "searching": "Suche läuft…",
-      "nothingFound": "Nichts gefunden",
-      "footerNav": "↑↓ navigieren · Enter auswählen",
-      "footerToggle": "⌘K / Strg+K – öffnen/schließen",
-      "kindArea": "Räume",
-      "kindProduct": "Produkte",
-      "results": "{count, plural, one {# Ergebnis} other {# Ergebnisse}}",
-      "filter": "Filter",
-      "filterAll": "Alles",
-      "askAssistant": "KI-Assistenten fragen: „{query}“",
-      "navigate": "Navigieren",
-      "close": "Schließen",
-      "clear": "Löschen",
-      "field": "Suchen…"
-    },
-    "createDemoDialog": {
-      "createFailed": "Die Demo konnte nicht geöffnet werden",
-      "error": "Fehler",
-      "title": "Demo-Organisation öffnen?",
-      "description": "Es ist eine gemeinsame Testorganisation mit Team und Journalen, die für die letzten {days, plural, one {# Tag} other {# Tage}} ausgefüllt sind – mit Abweichungen und Korrekturmaßnahmen wie im echten Leben.",
-      "noteUnchanged": "· Ihre Organisation bleibt unverändert – die Demo existiert getrennt.",
-      "noteSwitch": "· Die Demo wird gemeinsam genutzt: Andere Besucher sehen Ihre Änderungen. Geben Sie keine echten Daten ein.",
-      "noteDelete": "· Einmal täglich wird die Demo mit frischen Daten neu aufgesetzt – Änderungen bleiben nicht erhalten.",
-      "no": "Nein",
-      "preparing": "Demo wird geöffnet…",
-      "confirm": "Ja, öffnen"
-    },
-    "createOrganizationDialog": {
-      "createFailed": "Erstellung nicht möglich",
-      "created": "Organisation „{name}“ erstellt",
-      "error": "Fehler",
-      "title": "Neue Organisation",
-      "description": "Ein separater Standort mit eigenem Personal, eigenen Journalen und Aufgaben.",
-      "nameLabel": "Name",
-      "namePlaceholder": "Café in der Lenin-Straße",
-      "sphereLabel": "Branche",
-      "copyLabel": "Stellen und Journalset von „{name}“ kopieren. Personal wird nicht übertragen.",
-      "afterCreate": "Nach der Erstellung: {count, plural, one {# Organisation} other {# Organisationen}} · das Personallimit gilt für das gesamte Konto.",
-      "submit": "Erstellen und wechseln",
-      "previewOrgTrial": "Die ersten 14 Tage sind kostenlos, bis {date}. Danach benötigt diese Organisation einen bezahlten Standort im Tarif.",
-      "previewAccountTrial": "Läuft innerhalb der Kontotestphase, bis {date}. Danach benötigt diese Organisation einen bezahlten Standort im Tarif.",
-      "previewPaidPoint": "Belegt einen bezahlten Standort im Tarif: {used} von {limit}.",
-      "refusedFreePlan": "Der kostenlose Tarif umfasst eine Organisation. Wählen Sie einen Tarif, um eine weitere hinzuzufügen.",
-      "refusedTrialsUsed": "Alle bezahlten Standorte sind belegt ({limit}), und die kostenlosen 14 Tage wurden bereits für zwei Organisationen genutzt. Fügen Sie dem Tarif einen Standort hinzu.",
-      "refusedLockedOrg": "Die kostenlosen 14 Tage von „{name}“ sind abgelaufen und der Standort ist nicht bezahlt. Fügen Sie zuerst einen Standort dafür hinzu."
-    },
-    "deletionBanner": {
-      "cancelFailed": "Abbruch nicht möglich",
-      "cancelled": "Löschung abgebrochen",
-      "error": "Fehler",
-      "message": "Die Organisation wird am <b>{when}</b> samt allen Journalen und dem Personal gelöscht.",
-      "canCancel": "Bis dahin kann die Löschung abgebrochen werden.",
-      "cannotCancel": "Nur eine Führungskraft kann sie abbrechen.",
-      "cancelling": "Wird abgebrochen…",
-      "cancel": "Löschung abbrechen"
-    },
-    "fabDock": {
-      "helpAriaUnread": "Hilfe · neue Nachrichten: {count, number}",
-      "helpAria": "Hilfe und Tipps",
-      "sheetTitle": "Hilfe",
-      "sheetSubtitle": "Stellen Sie eine Frage, kontaktieren Sie den Support oder lesen Sie die Anleitungen",
-      "actionAriaUnread": "{label} · neue Nachrichten: {count, number}",
-      "contacts": "Kontakte",
-      "contactsHint": "Telefon, Telegram, MAX und E-Mail",
-      "dockTitle": "Kontakte und Hilfe",
-      "close": "Schließen"
-    },
-    "kioskSessionGuard": {
-      "employee": "Mitarbeiter",
-      "leave": "Abmelden"
-    },
-    "offlineIndicator": {
-      "onlinePending": "Online · {count, number} warten auf Versand",
-      "offlineQueued": "Offline · {count, number} in der Warteschlange",
-      "offline": "Offline",
-      "titleOnline": "Einige Einträge wurden noch nicht gesendet. Klicken Sie, um sie jetzt zu senden.",
-      "titleOffline": "Keine Internetverbindung. Einträge werden lokal gespeichert und gesendet, sobald die Verbindung wieder besteht."
-    },
-    "npsBanner": {
-      "saveScoreFailed": "Die Bewertung konnte nicht gespeichert werden",
-      "emailRequired": "Geben Sie die E-Mail-Adresse Ihres Kollegen ein",
-      "scoreNotSaved": "Die Bewertung wurde nicht gespeichert – bitte wählen Sie sie erneut",
-      "sendEmailFailed": "E-Mail konnte nicht gesendet werden",
-      "thanksSent": "Danke! Die E-Mail wurde gesendet",
-      "noConnection": "Keine Verbindung – bitte versuchen Sie es erneut",
-      "reviewTooShort": "Für eine Bewertung schreiben Sie mindestens ein paar Sätze – {min, number} Zeichen oder mehr",
-      "consentRequired": "Die Bewertung kann ohne Einwilligung zur Veröffentlichung nicht veröffentlicht werden",
-      "sendReviewFailed": "Die Bewertung konnte nicht gesendet werden",
-      "sendFailed": "Senden nicht möglich",
-      "thanksNoted": "Danke! Wir werden es berücksichtigen",
-      "regionAria": "Umfrage: Würden Sie WeSetup Kollegen empfehlen",
-      "title": "Würden Sie WeSetup Kollegen empfehlen?",
-      "scaleAria": "Bewertung von 1 bis 5: 1 – nein, 5 – ja",
-      "scoreAria": "{score, number} von 5",
-      "scaleNo": "nein",
-      "scaleYes": "ja",
-      "notNow": "Jetzt nicht",
-      "close": "Schließen",
-      "closeTitle": "Schließen – die Bewertung ist bereits gespeichert",
-      "messageLabel": "Nachricht",
-      "emailLabel": "E-Mail des Kollegen",
-      "fix": "Korrigieren",
-      "sending": "Wird gesendet…",
-      "sendColleague": "An einen Kollegen senden",
-      "consentLabel": "Ich bin mit der Veröffentlichung der Bewertung, meines Namens und meines Betriebs auf wesetup.ru und in sozialen Netzwerken einverstanden.",
-      "leaveReview": "Bewertung schreiben",
-      "letterNote": "Die E-Mail kommt von WeSetup in Ihrem Namen. Nach der Moderation veröffentlichen wir eine Bewertung mit diesem Text und schreiben Ihnen Punkte gut. Wenn Sie das nicht möchten, schließen Sie dies einfach: Ihre Bewertung ist gespeichert.",
-      "improveLabel": "Was sollten wir verbessern?",
-      "improvePlaceholder": "Ein paar Worte – wir lesen jede Nachricht",
-      "send": "Senden",
-      "scoreSaved": "Die Bewertung ist bereits gespeichert.",
-      "reviewDone": "Danke! Die Bewertung wurde zur Moderation gesendet; wir schreiben Punkte gut, sobald sie freigegeben ist",
-      "showStatsLabel": "Neben der Bewertung anzeigen, wie viele Journale und Einträge wir in WeSetup führen – ohne Journalnamen und deren Daten."
-    },
-    "organizationSwitcher": {
-      "label": "Organisationen",
-      "switchFailed": "Wechsel nicht möglich",
-      "error": "Fehler",
-      "openSettingsFailed": "Einstellungen konnten nicht geöffnet werden",
-      "demo": "Demo",
-      "settingsAria": "Einstellungen von {name}",
-      "settingsTitle": "Organisationseinstellungen",
-      "addOrganization": "Organisation hinzufügen",
-      "demoTitle": "Eine gemeinsame Testorganisation mit Personal und ausgefüllten Journalen. Sie wird einmal täglich aktualisiert.",
-      "createDemo": "Demo-Organisation öffnen"
-    },
-    "urgentJournalHotkey": {
-      "failed": "Das dringende Journal konnte nicht ermittelt werden",
-      "urgent": "Dringendes Journal: {code}",
-      "none": "Keine dringenden Aufgaben – Liste wird geöffnet"
-    },
-    "dashboardLayout": {
-      "fallbackOrganization": "Organisation",
-      "fallbackPartner": "Partner",
-      "fallbackUser": "Benutzer"
-    }
-  },
-  "language": {
-    "label": "Oberflächensprache",
-    "organizationDefault": "Standard für neue Mitarbeiter",
-    "personalHint": "Diese Einstellung ändert nur Ihre Oberflächensprache.",
-    "saveFailed": "Ihre Sprache konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
-    "invalid": "Wählen Sie Russisch, Englisch oder Usbekisch.",
-    "unauthorized": "Melden Sie sich an, um Ihre Sprache zu ändern.",
-    "saved": "Sprache gespeichert",
-    "exportLabel": "Dokumentsprache",
-    "exportHint": "Standardmäßig wird Ihre Oberflächensprache verwendet."
+  "publicChrome": {
+    "about": "Über uns",
+    "journals": "Journale",
+    "blog": "Blog",
+    "homeAria": "WeSetup – zur Startseite",
+    "userFallback": "Benutzer",
+    "pricing": "Preise",
+    "login": "Anmelden",
+    "register": "Konto erstellen",
+    "dashboard": "Dashboard öffnen",
+    "profile": "Profil",
+    "footerDescription": "WeSetup: elektronische SanPiN- und HACCP-Journale für medizinische Zentren, Gastronomie, Produktion und andere Organisationen. © 2026 WeSetup.",
+    "details": "Unternehmensangaben",
+    "sections": "Bereiche",
+    "glossary": "Glossar",
+    "comparisons": "Vergleiche",
+    "journalCalculator": "Welche Journale brauchen Sie?",
+    "fineCalculator": "Bußgeldrechner",
+    "whatsNew": "Neuigkeiten",
+    "developers": "Für Entwickler",
+    "contractOffer": "Öffentlicher Angebotsvertrag",
+    "privacyPolicy": "Datenschutzerklärung",
+    "userAgreement": "Nutzungsvereinbarung",
+    "personalDataConsent": "Einwilligung zur Verarbeitung personenbezogener Daten",
+    "forms": "Formulare",
+    "orders": "Anordnungen",
+    "services": "Leistungen",
+    "partners": "Für Partner",
+    "offer": "Angebot",
+    "privacy": "Datenschutz",
+    "nicheLinks": "Nach Betriebsart",
+    "popularJournals": "Beliebte Journale",
+    "features": "Funktionen",
+    "companyTaxIds": "INN {inn} · KPP {kpp}",
+    "companyRegistrationId": "Registrierungsnummer (OGRN) {ogrn}",
+    "securityAndData": "Sicherheit und Daten",
+    "autofillOffer": "Journale, die sich selbst ausfüllen",
+    "sanpin4282": "SanPiN 2.3/2.4.4282-26",
+    "tagline": "Ihr elektronisches HACCP",
+    "knowledgeBase": "Wissensdatenbank",
+    "dashboardShort": "Konto",
+    "groupProduct": "Produkt",
+    "groupResources": "Ressourcen",
+    "groupCompany": "Unternehmen",
+    "groupDocuments": "Dokumente",
+    "allFeatures": "Alle Funktionen"
   },
   "landing": {
     "metadata": {
@@ -1750,53 +2049,6 @@
       }
     }
   },
-  "publicChrome": {
-    "about": "Über uns",
-    "journals": "Journale",
-    "blog": "Blog",
-    "homeAria": "WeSetup – zur Startseite",
-    "userFallback": "Benutzer",
-    "pricing": "Preise",
-    "login": "Anmelden",
-    "register": "Konto erstellen",
-    "dashboard": "Dashboard öffnen",
-    "profile": "Profil",
-    "footerDescription": "WeSetup: elektronische SanPiN- und HACCP-Journale für medizinische Zentren, Gastronomie, Produktion und andere Organisationen. © 2026 WeSetup.",
-    "details": "Unternehmensangaben",
-    "sections": "Bereiche",
-    "glossary": "Glossar",
-    "comparisons": "Vergleiche",
-    "journalCalculator": "Welche Journale brauchen Sie?",
-    "fineCalculator": "Bußgeldrechner",
-    "whatsNew": "Neuigkeiten",
-    "developers": "Für Entwickler",
-    "contractOffer": "Öffentlicher Angebotsvertrag",
-    "privacyPolicy": "Datenschutzerklärung",
-    "userAgreement": "Nutzungsvereinbarung",
-    "personalDataConsent": "Einwilligung zur Verarbeitung personenbezogener Daten",
-    "forms": "Formulare",
-    "orders": "Anordnungen",
-    "services": "Leistungen",
-    "partners": "Für Partner",
-    "offer": "Angebot",
-    "privacy": "Datenschutz",
-    "nicheLinks": "Nach Betriebsart",
-    "popularJournals": "Beliebte Journale",
-    "features": "Funktionen",
-    "companyTaxIds": "INN {inn} · KPP {kpp}",
-    "companyRegistrationId": "Registrierungsnummer (OGRN) {ogrn}",
-    "securityAndData": "Sicherheit und Daten",
-    "autofillOffer": "Journale, die sich selbst ausfüllen",
-    "sanpin4282": "SanPiN 2.3/2.4.4282-26",
-    "tagline": "Ihr elektronisches HACCP",
-    "knowledgeBase": "Wissensdatenbank",
-    "dashboardShort": "Konto",
-    "groupProduct": "Produkt",
-    "groupResources": "Ressourcen",
-    "groupCompany": "Unternehmen",
-    "groupDocuments": "Dokumente",
-    "allFeatures": "Alle Funktionen"
-  },
   "publicNavigation": {
     "niches": {
       "dlya-kafe": "Cafés und Restaurants",
@@ -1842,34 +2094,129 @@
     },
     "allLogsLink": "Alle Journale – {journalCount, number}"
   },
-  "homePage": {
-    "tagline": "Ihr elektronisches HACCP",
-    "contactsTitle": "Wir helfen Ihnen gern",
-    "contacts": {
-      "support": "Support",
-      "sales": "Vertrieb",
-      "consulting": "Beratung"
+  "publicUi": {
+    "cookieConsent": {
+      "ariaLabel": "Hinweis zur Cookie-Nutzung",
+      "longMessage": "Wir verwenden Cookies, damit die Website korrekt und reibungslos funktioniert.",
+      "shortMessage": "Wir verwenden Cookies",
+      "privacyLink": "Mehr erfahren",
+      "accept": "OK"
     },
-    "via": {
-      "telegram": "in Telegram",
-      "support": "Chat auf der Website",
-      "sales": "Tarife und Zahlung",
-      "consulting": "Vorbereitung mit einem Experten"
+    "appStores": {
+      "title": "Mobile App",
+      "description": "Mitarbeiter können auf ihren Telefonen Journale führen und Benachrichtigungen erhalten. Die Apps für iPhone und Android werden für die Stores vorbereitet.",
+      "comingSoon": "demnächst"
     },
-    "phone": "Telefon",
-    "mobile": "Mobil",
-    "setupTitle": "Ersteinrichtung",
-    "setupBody": "Standorte, Personal und Journale",
-    "favorites": {
-      "title": "Favoriten",
-      "add": "Zu Favoriten hinzufügen",
-      "addHint": "Heften Sie eine Seite hier oder mit dem Stern neben einem Menüpunkt an",
-      "remove": "Aus Favoriten entfernen",
-      "pickDescription": "Die Seite erscheint auf dem Startbildschirm – öffnen Sie sie mit einem Klick.",
-      "search": "Seite suchen",
-      "nothing": "Nichts gefunden",
-      "saved": "Favoriten gespeichert",
-      "failed": "Favoriten konnten nicht gespeichert werden"
+    "registrationErrors": {
+      "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein",
+      "consentRequired": "Akzeptieren Sie das Angebot, die Vereinbarung und die Bedingungen zur Verarbeitung personenbezogener Daten",
+      "rateLimited": "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut",
+      "challengeRejected": "Die Überprüfung ist fehlgeschlagen oder abgelaufen. Bitte führen Sie sie erneut durch.",
+      "challengeUnavailable": "Die Registrierungsprüfung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
+      "emailDomainUnavailable": "Diese E-Mail-Domain existiert nicht. Prüfen Sie die Adresse; die E-Mail mit dem Passwort würde sie nicht erreichen.",
+      "registrationFailed": "Das Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+    },
+    "pricing": {
+      "title": "Mit Ausstattung",
+      "intro": "Der Premium-Tarif und ein fertiges Ausstattungsset",
+      "popular": "Beliebt",
+      "subscription": "Premium-Tarif",
+      "perMonth": "/Monat",
+      "bundleSummary": "Paket {name}",
+      "oneTime": "Einmalig",
+      "itemCount": "· {count, plural, one {# Artikel} other {# Artikel}}",
+      "empty": "leer",
+      "payByCard": "Per Karte bezahlen",
+      "confirmBundleInTelegram": "Wir bestätigen den Paketinhalt in Telegram",
+      "orderInTelegram": "Oder über Telegram bestellen",
+      "hideConfigurator": "Konfigurator ausblenden",
+      "configureManually": "Manuell konfigurieren",
+      "manualDescription": "Wählen Sie jeden Artikel selbst. Entfernen Sie das Häkchen, wenn Sie diese Ausstattung bereits haben.",
+      "toggleDevice": "{device} umschalten",
+      "perUnit": "× Stk.",
+      "removeOne": "Einen Artikel entfernen",
+      "addOne": "Einen Artikel hinzufügen",
+      "delivery": "Wir liefern und installieren innerhalb von 3 Werktagen in Moskau und Umgebung.",
+      "bundles": {
+        "solo": {
+          "name": "Solo",
+          "forWhom": "Ein Standort, kleine Schicht",
+          "hook": "Ein Sensor für den Hauptkühlschrank, ein Thermo-Hygrometer in der Küche und NFC-Zugang für die Schicht."
+        },
+        "standard": {
+          "name": "Arbeitsstandort",
+          "forWhom": "Tägliche Arbeit und regelmäßige Kontrollen",
+          "hook": "Sensoren an der wichtigsten Kühltechnik, ein Arbeitsplatz-Tablet und Schlüsselanhänger für die ganze Schicht."
+        },
+        "network": {
+          "name": "Netzwerk",
+          "forWhom": "Ein Netzwerk aus 2–3 Standorten oder ein großer Produktionsbetrieb",
+          "hook": "Zwei Besuche an verschiedenen Adressen, mit erweitertem Sensor- und Ausstattungsset."
+        }
+      },
+      "devices": {
+        "install": {
+          "title": "Installation und Einrichtung vor Ort",
+          "hint": "Ein Techniker kommt zu Ihnen, installiert die Sensoren, richtet Profile ein und schult Ihr Personal."
+        },
+        "temp": {
+          "title": "Temperatursensor",
+          "hint": "Für einen Kühl- oder Gefrierschrank – einer pro Gerät."
+        },
+        "thermo": {
+          "title": "Thermo-Hygrometer",
+          "hint": "Zur Überwachung von Temperatur und Luftfeuchtigkeit im Gastraum oder Produktionsraum."
+        },
+        "tablet": {
+          "title": "Mitarbeiter-Tablet",
+          "hint": "10-Zoll-Bildschirm, Schutzhülle und vorkonfiguriertes Profil. Wandmontage im Produktionsraum möglich."
+        },
+        "nfc": {
+          "title": "NFC-Schlüsselanhänger",
+          "hint": "Zugriffsprotokolle mit einem Tipp – einer für jede aktive Schicht."
+        }
+      }
+    },
+    "demoRequest": {
+      "trigger": "Zeigen Sie es mir in 15 Minuten",
+      "title": "Wir zeigen Ihnen WeSetup in 15 Minuten",
+      "description": "Ein Video- oder Telefonanruf: Wir zeigen die Journale am Beispiel Ihres Betriebs und beantworten Ihre Fragen. Kostenlos und unverbindlich.",
+      "name": "Ihr Name",
+      "namePlaceholder": "Name",
+      "phone": "Telefon",
+      "when": "Wann passt es Ihnen",
+      "when_today": "Heute",
+      "when_tomorrow": "Morgen",
+      "when_week": "Diese Woche",
+      "topic": "Was sollen wir zeigen",
+      "optional": "optional",
+      "topicPlaceholder": "Zum Beispiel: Kühlschranksensoren oder Vorbereitung auf eine Kontrolle",
+      "consent": "Ich erteile meine <consent>Einwilligung zur Verarbeitung personenbezogener Daten</consent> und habe die <privacy>Datenschutzerklärung</privacy> gelesen",
+      "submit": "Demo buchen",
+      "sending": "Wird gesendet…",
+      "errorName": "Sagen Sie uns, wie wir Sie ansprechen dürfen",
+      "errorPhone": "Geben Sie eine Telefonnummer ein, damit wir Sie zurückrufen können",
+      "errorConsent": "Setzen Sie das Häkchen bei der Einwilligung zur Verarbeitung personenbezogener Daten",
+      "errorTooMany": "Zu viele Anfragen hintereinander. Versuchen Sie es später erneut oder rufen Sie uns an",
+      "errorGeneric": "Die Anfrage konnte nicht gesendet werden. Versuchen Sie es erneut oder rufen Sie uns an",
+      "doneTitle": "Anfrage erhalten",
+      "doneBody": "Wir rufen {phone} an, um einen Termin für die Demo zu vereinbaren.",
+      "close": "Schließen",
+      "modeSlot": "Zeit wählen",
+      "modeCallback": "Rückruf anfordern",
+      "slotsLoading": "Freie Termine werden geprüft…",
+      "pickTime": "Demo-Termin",
+      "mskNote": "Moskauer Zeit. Die Demo dauert 15 Minuten per Video oder Telefon.",
+      "email": "E-Mail",
+      "emailHint": "wir senden eine Kalendereinladung",
+      "errorSlot": "Wählen Sie Tag und Uhrzeit für die Demo",
+      "slotTaken": "Dieser Termin wurde gerade vergeben – wählen Sie einen anderen",
+      "noSlots": "Keine freien Termine in den nächsten Tagen – hinterlassen Sie Ihre Telefonnummer, wir rufen Sie an und vereinbaren einen Termin.",
+      "doneBookedTitle": "Sie sind gebucht",
+      "doneBookedBody": "{when} Moskauer Zeit. Wir rufen Sie dann unter {phone} an.",
+      "addToCalendar": "Zum Kalender hinzufügen",
+      "calendarSummary": "WeSetup-Demo in 15 Minuten",
+      "calendarDescription": "Wir rufen zum gebuchten Zeitpunkt an. Zum Verschieben – admin@wesetup.ru"
     }
   },
   "errorSurface": {
@@ -1921,15 +2268,6 @@
     "settings": "Einstellungen werden geladen…",
     "section": "Bereich wird geladen…"
   },
-  "pwaManifest": {
-    "metadataTitle": "WeSetup – Mini-App",
-    "name": "WeSetup – Arbeitsschicht",
-    "description": "SanPiN- und HACCP-Journale: Schichtaufgaben, Einträge und Fotos vom Smartphone",
-    "todayName": "Heute",
-    "todayDescription": "Aufgaben der aktuellen Schicht",
-    "journalsName": "Journale",
-    "journalsDescription": "Liste der Journale"
-  },
   "publicOg": {
     "kind": {
       "page": "WeSetup",
@@ -1945,73 +2283,576 @@
     "fallbackTitle": "Digitale SanPiN- und HACCP-Journale",
     "freeForever": "14 Tage kostenlos"
   },
-  "notifications": {
-    "ui": {
-      "title": "Benachrichtigungen",
-      "close": "Schließen",
-      "tabNew": "Neu",
-      "tabRead": "Gelesen",
-      "readSelected": "Als gelesen markieren",
-      "deleteSelected": "Löschen",
-      "deleteAll": "Alle löschen",
-      "emptyNew": "Sie haben keine neuen Benachrichtigungen.",
-      "emptyRead": "Sie haben keine gelesenen Benachrichtigungen.",
-      "selectAllTask": "Gesamte Aufgabe auswählen",
-      "readItem": "Als gelesen markieren: {label}",
-      "selectReadPrompt": "Wählen Sie Benachrichtigungen oder Checklistenpunkte über die Kästchen links aus.",
-      "selectDeletePrompt": "Wählen Sie die Benachrichtigungen aus, die Sie löschen möchten.",
-      "readFailedAll": "Benachrichtigungen konnten nicht als gelesen markiert werden. Bitte versuchen Sie es erneut.",
-      "readFailedSome": "Nicht als gelesen markiert: {count, number} von {total, number}.",
-      "readSuccess": "Als gelesen markiert.",
-      "deleteFailedAll": "Die Benachrichtigungen konnten nicht gelöscht werden. Bitte versuchen Sie es erneut.",
-      "deleteFailedSome": "Nicht gelöscht: {count, number} von {total, number}.",
-      "deleteOneSuccess": "Benachrichtigung gelöscht.",
-      "deleteManySuccess": "Gelöschte Benachrichtigungen: {count, number}.",
-      "networkError": "Keine Netzwerkverbindung. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-      "deleteAllFailed": "Die Benachrichtigungen konnten nicht gelöscht werden. Bitte versuchen Sie es erneut.",
-      "deleteAllSuccess": "Alle Benachrichtigungen gelöscht.",
-      "deleteAllTitle": "Alle Benachrichtigungen löschen?",
-      "deleteAllDescription": "Dadurch werden alle Benachrichtigungen entfernt, gelesene wie ungelesene.",
-      "deleteAllIrreversible": "Gelöschte Benachrichtigungen können nicht wiederhergestellt werden.",
-      "deleteAllDataSafe": "Aufgaben und Journaleinträge selbst werden nicht verändert.",
-      "confirmDeleteAll": "Alle löschen",
-      "cancel": "Abbrechen"
+  "miniHome": {
+    "entry": {
+      "error": {
+        "heading": "Anmeldung fehlgeschlagen",
+        "timeout": "Telegram braucht länger als erwartet. Prüfen Sie Ihre Verbindung.",
+        "sessionUnavailable": "Es wurde keine Telegram-Anmeldesitzung empfangen.",
+        "expired": "Ihre Telegram-Sitzung ist abgelaufen. Schließen Sie die App und öffnen Sie sie erneut über den Bot.",
+        "notConfirmed": "Telegram konnte Ihre Anmeldung nicht bestätigen. Schließen Sie die App und öffnen Sie sie erneut über den Bot.",
+        "notConfigured": "Die Telegram-Anmeldung ist noch nicht eingerichtet. Wenden Sie sich an Ihre Führungskraft.",
+        "generic": "Wir konnten Sie nicht anmelden. Versuchen Sie es erneut oder melden Sie sich mit Ihrem Telefon an.",
+        "notLinked": "Ihr Telegram-Konto ist noch nicht mit einem Profil im Arbeitsbereich verknüpft."
+      },
+      "action": {
+        "closeApp": "App schließen",
+        "retry": "Erneut versuchen",
+        "phoneLogin": "Mit Telefon anmelden"
+      },
+      "loading": {
+        "heading": "Ihr Arbeitsbereich wird geöffnet…",
+        "description": "Ihre Anmeldung wird geprüft. Das dauert nur wenige Sekunden."
+      },
+      "linkPhone": {
+        "heading": "Über die Telefonnummer verknüpfen",
+        "description": "Wir finden Ihr Profil anhand Ihrer Telegram-Nummer",
+        "shareButton": "Telegram-Telefonnummer teilen",
+        "sharing": "Profil wird verknüpft…",
+        "orPassword": "oder auf die übliche Weise anmelden",
+        "passwordButton": "Mit Telefon und Passwort anmelden",
+        "declined": "Sie haben das Teilen Ihrer Telefonnummer abgebrochen. Tippen Sie erneut auf die Schaltfläche oder melden Sie sich mit Ihrem Passwort an.",
+        "notFound": "Zu dieser Telefonnummer wurde kein Profil gefunden. Melden Sie sich mit Telefon oder E-Mail und Passwort an, um Telegram sofort zu verknüpfen.",
+        "ambiguous": "Mehrere Profile haben diese Telefonnummer. Melden Sie sich mit Telefon und Passwort an, um das richtige Konto zu wählen.",
+        "alreadyLinkedOther": "Dieses Telegram-Konto ist bereits mit einem anderen Mitarbeiter verknüpft. Trennen Sie es dort mit /stop oder melden Sie sich mit Ihrem Passwort an.",
+        "userHasOtherTelegram": "Mit Ihrem Profil ist bereits ein anderes Telegram-Konto verknüpft. Melden Sie sich mit Ihrem Passwort an und aktualisieren Sie es im Profil.",
+        "pendingBot": "Telefonnummer an den Bot gesendet – Anmeldung wird abgeschlossen…",
+        "failed": "Telegram konnte nicht über die Telefonnummer verknüpft werden. Versuchen Sie es erneut oder melden Sie sich mit Ihrem Passwort an.",
+        "success": "Telegram verknüpft! Ihr Arbeitsbereich wird geöffnet…"
+      }
     },
-    "messages": {
-      "staffJournal": "Mitarbeiter zum Journal hinzufügen",
-      "trainingPlan": "Stellen zum Schulungsplan hinzufügen",
-      "openJournal": "Journal öffnen",
-      "openTrainingPlan": "Schulungsplan öffnen",
-      "pushOpen": "Öffnen Sie die Benachrichtigung, um Details zu sehen",
-      "pushMore": "{first} und {count, plural, one {# weiterer Punkt} other {# weitere Punkte}}",
-      "feedbackReply": "Sie haben eine Antwort auf Ihre Anfrage erhalten",
-      "pinRequests": "PIN-Anfragen von Mitarbeitern",
-      "reviewPinRequests": "Prüfen",
-      "pinRequestItem": "{kind, select, change {{name} – PIN-Änderung} other {{name} – PIN-Vergabe}}",
-      "fromQrPage": "von der QR-Seite",
-      "hygieneAdmission": "Hygienejournal: Mitarbeiter warten auf Zulassung",
-      "hygieneSigned": "{name} – unterschrieben, wartet auf Zulassung",
-      "hygieneComplaints": "{name} – Beschwerden: {complaints}",
-      "ideaStatus": "{status, select, new {Idee „{title}“ – neu} planned {Idee „{title}“ – geplant} in_progress {Idee „{title}“ – in Arbeit} done {Idee „{title}“ – umgesetzt} declined {Idee „{title}“ – abgelehnt} other {Idee „{title}“}}",
-      "ideaStatusLabel": "{status, select, new {Neu} planned {Geplant} in_progress {In Arbeit} done {Umgesetzt} declined {Abgelehnt} other {Unbekannter Status}}",
-      "openIdeas": "Ideen öffnen",
-      "open": "Öffnen",
-      "orgTrialEnding": "{stage, select, tomorrow {Die kostenlosen Tage der Organisation „{name}“ enden morgen} other {Die kostenlosen Tage der Organisation „{name}“ laufen ab}}",
-      "orgTrialLastDay": "Letzter kostenloser Tag – {date}",
-      "addPoint": "Standort hinzufügen",
-      "orgTrialAccountCovers": "Die Guthaben der Organisationen des Kontos reichen aus – Sie können den Standort in einem Schritt vom Guthaben bezahlen.",
-      "supportReport": "Neue Support-Anfrage",
-      "supportChat": "Neue Nachricht im Live-Chat"
+    "navigation": {
+      "landmark": "App-Bereiche"
     },
-    "supportAlerts": {
-      "report": "Neue Anfrage",
-      "reportBug": "Neue Anfrage · Fehler",
-      "reportSuggestion": "Neue Anfrage · Vorschlag",
-      "reportPartnership": "Neue Anfrage · Partnerschaft",
-      "chat": "Live-Chat-Nachricht",
-      "open": "Öffnen",
-      "client": "Kunde"
+    "roleBar": {
+      "landmark": "Schnellaktionen nach Rolle",
+      "managerBadge": "Führungsmodus",
+      "supervisorBadge": "Schichtkontrolle",
+      "staffBadge": "Mitarbeitermodus",
+      "readonlyBadge": "Nur Ansicht",
+      "actions": {
+        "todayJournals": "Heutige Journale",
+        "verifications": "Einträge prüfen",
+        "staff": "Mitarbeiter",
+        "reports": "Berichte",
+        "controlBoard": "Kontrolltafel",
+        "myTasks": "Schichtaufgaben",
+        "journals": "Journale",
+        "profile": "Profil"
+      }
     }
+  },
+  "staffPages": {
+    "positions": {
+      "description": "Stellenplan: wie viele Personen jede Stelle braucht und wie viele bereits dort arbeiten.",
+      "toStaff": "Personal",
+      "add": "Stelle",
+      "addInCategory": "Hinzufügen",
+      "readOnly": "Nur eine Führungskraft kann Stellen ändern – diese Seite ist für Sie schreibgeschützt.",
+      "cancel": "Abbrechen",
+      "totals": {
+        "planned": "Geplant: {count}",
+        "occupied": "Besetzt: {count}",
+        "vacancies": "Offene Stellen: {count}",
+        "overstaffed": "Über Plan: {count}",
+        "people": "Im Dienst: {count}",
+        "noPlan": "Stellenzahl nicht festgelegt"
+      },
+      "guide": {
+        "title": "So funktioniert der Stellenplan",
+        "headcountTitle": "Stellenzahl",
+        "headcountBody": "wie viele Personen auf der Stelle arbeiten sollen. Lassen Sie das Feld leer, um nur anzuzeigen, wie viele dort aktuell arbeiten.",
+        "occupiedTitle": "„N von M besetzt“",
+        "occupiedBody": "N ist das aktive Personal auf der Stelle (ohne Archiv), M die Stellenzahl. Grün bedeutet voll besetzt, Gelb offene Stellen, Rot mehr Personen als geplant.",
+        "orderTitle": "Reihenfolge",
+        "orderBody": "nutzen Sie die Pfeile „nach oben“ und „nach unten“ innerhalb einer Gruppe. Die Stellen erscheinen in derselben Reihenfolge auf der Seite „Personal“ und beim Hinzufügen eines Mitarbeiters.",
+        "deleteTitle": "Löschen",
+        "deleteBody": "eine Stelle mit Personen kann nicht gelöscht werden – verschieben Sie diese zuerst auf eine andere Stelle oder ins Archiv."
+      },
+      "categories": {
+        "management": {
+          "title": "Leitung",
+          "hint": "Führungskräfte, Schichtleiter, Technologen – voller Zugriff auf den Arbeitsbereich."
+        },
+        "staff": {
+          "title": "Personal",
+          "hint": "Mitarbeiter erledigen ihre Schichtaufgaben in der App."
+        },
+        "commission": {
+          "title": "Kommission für die Speisenkontrolle",
+          "hint": "Externe Kommissionsmitglieder: Sie signieren Speisenkontrollen mit einer PIN und melden sich nicht im Arbeitsbereich an."
+        }
+      },
+      "empty": {
+        "title": "Noch keine Stellen",
+        "hint": "Fügen Sie die erste hinzu – dann können Sie ihr Mitarbeiter zuordnen.",
+        "hintReadOnly": "Stellen werden von einer Führungskraft angelegt."
+      },
+      "row": {
+        "plan": "Geplant: {count}",
+        "noPlan": "Keine Stellenzahl",
+        "people": "{count, plural, one {# Person} other {# Personen}}",
+        "moveUp": "Nach oben: {name}",
+        "moveUpShort": "Hoch",
+        "moveDown": "Nach unten: {name}",
+        "moveDownShort": "Runter",
+        "edit": "Stelle bearbeiten: {name}",
+        "editShort": "Bearbeiten",
+        "delete": "Stelle löschen: {name}",
+        "deleteShort": "Löschen"
+      },
+      "dialog": {
+        "createTitle": "Neue Stelle",
+        "editTitle": "Stelle bearbeiten",
+        "description": "Die Gruppe bestimmt, welche Berechtigungen die Personen auf dieser Stelle erhalten.",
+        "category": "Gruppe",
+        "name": "Stelle",
+        "namePlaceholder": "Zum Beispiel Administrator",
+        "nameShort": "Der Name muss mindestens 2 Zeichen haben",
+        "headcountInvalid": "Die Stellenzahl muss eine ganze Zahl von 0 bis 999 sein",
+        "create": "Erstellen",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…"
+      },
+      "toast": {
+        "created": "Stelle „{name}“ hinzugefügt",
+        "updated": "Stelle „{name}“ gespeichert",
+        "deleted": "Stelle „{name}“ gelöscht"
+      },
+      "errors": {
+        "forbidden": "Nur eine Führungskraft kann Stellen ändern",
+        "duplicate": "Diese Stelle existiert bereits",
+        "hasPeople": "Auf dieser Stelle arbeiten Personen – verschieben Sie sie zuerst",
+        "notFound": "Stelle nicht gefunden – aktualisieren Sie die Seite",
+        "saveFailed": "Die Stelle konnte nicht gespeichert werden",
+        "deleteFailed": "Die Stelle konnte nicht gelöscht werden",
+        "orderFailed": "Die Reihenfolge konnte nicht gespeichert werden",
+        "network": "Keine Verbindung zum Server – versuchen Sie es erneut"
+      },
+      "delete": {
+        "title": "Stelle „{name}“ löschen?",
+        "description": "Die Stelle verschwindet aus dem Stellenplan.",
+        "gone": "Sie wird beim Hinzufügen eines Mitarbeiters nicht mehr angeboten",
+        "journals": "Für diese Stelle eingerichtete Journale und Berechtigungen werden mit ihr gelöscht",
+        "irreversible": "Eine gelöschte Stelle kann nicht wiederhergestellt, nur neu angelegt werden",
+        "confirm": "Löschen",
+        "blockedTitle": "Auf „{name}“ arbeiten Personen",
+        "blockedDescription": "Eine Stelle kann nur gelöscht werden, wenn niemand darauf arbeitet.",
+        "blockedPeople": "Aktuell auf dieser Stelle: {count, plural, one {# Person} other {# Personen}}",
+        "blockedMove": "Verschieben Sie sie auf der Seite „Personal“ auf eine andere Stelle oder ins Archiv",
+        "blockedAfter": "Kommen Sie danach zurück und löschen Sie die Stelle",
+        "blockedConfirm": "Personal öffnen"
+      }
+    },
+    "access": {
+      "description": "Was jeder im Arbeitsbereich und in der App tun darf: Berechtigungssätze, wer welchen hat und welche Bereiche und Journale offen sind.",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "guide": {
+        "title": "So funktionieren Berechtigungen",
+        "presetTitle": "Berechtigungssatz",
+        "presetBody": "bestimmt, was eine Person tun kann: Journale sehen, erledigte Arbeit prüfen, Aufgaben zuweisen, Einstellungen ändern.",
+        "autoTitle": "Nach Stelle oder manuell",
+        "autoBody": "der Satz ergibt sich aus der Stelle: Die Leitung erhält „Administrator“, Küchenchefs „Küchenchef / Manager“, das Personal „Koch“. Jeder andere Satz kann manuell vergeben werden.",
+        "sectionsTitle": "Menübereiche",
+        "sectionsBody": "öffnen sich automatisch aus dem Berechtigungssatz – sie werden nicht separat konfiguriert.",
+        "journalsTitle": "Journale",
+        "journalsBody": "welche Journale ein Mitarbeiter sieht, wird nach Stelle oder persönlich festgelegt – im Detail auf den Seiten „Journale des Personals“ und „Stelle × Journal“."
+      },
+      "presets": {
+        "title": "Berechtigungssätze",
+        "description": "Was jeder Satz gibt und wer ihn erhält.",
+        "configure": "Sätze konfigurieren",
+        "people": "{count, plural, one {# Person} other {# Personen}}",
+        "byPosition": "Nach Stelle: {positions}.",
+        "byPositionNone": "Niemand erhält ihn nach Stelle – nur manuell.",
+        "more": "und {count} weitere",
+        "manual": "Manuell: {count}."
+      },
+      "people": {
+        "title": "Berechtigungssatz der Mitarbeiter",
+        "description": "Welchen Satz jede Person hat. Mit „Ändern“ wählen Sie einen anderen oder kehren zum Satz der Stelle zurück.",
+        "descriptionReadOnly": "Welchen Satz jede Person hat. Nur ein Administrator kann ihn ändern.",
+        "search": "Mitarbeiter oder Stelle suchen",
+        "emptyTitle": "Noch keine Mitarbeiter",
+        "emptyHint": "Fügen Sie Mitarbeiter hinzu – ihre Berechtigungssätze erscheinen hier.",
+        "toStaff": "Zum Personal",
+        "notFound": "Niemand gefunden",
+        "self": "(Sie)",
+        "noPosition": "Keine Stelle",
+        "manual": "manuell festgelegt",
+        "auto": "nach Stelle",
+        "change": "Ändern",
+        "changeFor": "Berechtigungssatz ändern: {name}",
+        "dialogTitle": "Berechtigungssatz – {name}",
+        "forbidden": "Nur ein Administrator kann den Berechtigungssatz ändern",
+        "saved": "{name}: Satz „{preset}“",
+        "network": "Keine Verbindung zum Server – versuchen Sie es erneut"
+      },
+      "sections": {
+        "title": "Welche Bereiche sie sehen",
+        "description": "Menübereiche öffnen sich aus dem Berechtigungssatz – es gibt keine separate Einstellung. Das ist das Menü für jeden Satz.",
+        "state": {
+          "visible": "sieht",
+          "hidden": "sieht nicht",
+          "depends": "hängt vom persönlichen Zugriff ab"
+        },
+        "group": {
+          "management": "für die Leitung",
+          "staff": "für Mitarbeiter"
+        },
+        "legend": {
+          "visible": "Sieht den Bereich",
+          "hidden": "Sieht ihn nicht",
+          "depends": "Hängt vom persönlichen Zugriff ab (zum Beispiel auf das Checklistenjournal)"
+        },
+        "personTitle": "Mitarbeiter prüfen",
+        "personPlaceholder": "Mitarbeiter wählen",
+        "personHint": "Wählen Sie eine Person, um ihre aktuellen Bereiche zu sehen.",
+        "personPreset": "Satz: „{preset}“,",
+        "personNone": "Keine Bereiche des Arbeitsbereichs – arbeitet mit Aufgaben in der App.",
+        "personSees": "Sieht: {sections}.",
+        "footnote": "Die Leitung (Stellen in der Gruppe Leitung) öffnet einige Bereiche nach Stelle, daher ergibt derselbe Satz für eine Führungskraft und einen Mitarbeiter unterschiedliche Menüs."
+      },
+      "journals": {
+        "title": "Journale",
+        "description": "Wie viele von {total} Journalen jede Stelle hat. Journale können auch für eine Person ausgewählt werden.",
+        "emptyTitle": "Noch keine Stellen",
+        "emptyHint": "Legen Sie Stellen an und öffnen Sie dann Journale für sie.",
+        "toPositions": "Zu den Stellen",
+        "people": "{count, plural, one {# Person} other {# Personen}}",
+        "count": "{count} von {total}",
+        "none": "nicht festgelegt",
+        "personal": "Persönlich gewählte Journale: {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}.",
+        "personalNone": "Bisher hat niemand Journale persönlich gewählt.",
+        "byPerson": "Journale des Personals",
+        "byPosition": "Stelle × Journal"
+      },
+      "visibility": {
+        "title": "Sichtbarkeit von Kollegen",
+        "description": "Wen Personen auf jeder Stelle in der App und im Softwaremodul sehen.",
+        "summary": "Für {configured} von {total} Stellen ist eine Liste festgelegt.",
+        "position": "{name}: sieht {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}",
+        "rest": "Andere Stellen haben keine Liste – sie sehen nur ihre eigenen Aufgaben.",
+        "open": "Sichtbarkeit von Kollegen"
+      },
+      "permissions": {
+        "title": "Berechtigungen für Einstellungen",
+        "description": "Wer Einstellungen des Arbeitsbereichs ändern darf: ein Basispaket für die Gruppe, Sonderrechte für eine Stelle und für eine bestimmte Person.",
+        "open": "Berechtigungen"
+      }
+    },
+    "commission": {
+      "description": "Wer Speisenkontrollen signiert: die Kommission für zubereitete und für verderbliche Speisen.",
+      "guide": {
+        "title": "So funktioniert die Kommission",
+        "whoTitle": "Wer in der Kommission ist",
+        "whoBody": "der Vorsitzende und die Kommissionsmitglieder – Mitarbeiter oder externe Personen. Eine neue Person kann direkt im Kommissionsfenster hinzugefügt werden.",
+        "signTitle": "Signatur",
+        "signBody": "ein Kommissionsmitglied signiert Journaleinträge im Arbeitsbereich oder über den Journal-QR mit einer PIN.",
+        "copyTitle": "Dokumente",
+        "copyBody": "die gespeicherte Kommission wird in aktive Journaldokumente kopiert; neue Dokumente erhalten sie automatisch."
+      },
+      "journals": {
+        "finished_product": {
+          "title": "Kontrolle zubereiteter Speisen",
+          "hint": "Die Kommission prüft und signiert Gerichte vor dem Servieren."
+        },
+        "perishable_rejection": {
+          "title": "Kontrolle verderblicher Speisen",
+          "hint": "Die Kommission signiert eingehende verderbliche Lebensmittel."
+        }
+      },
+      "count": "{count, plural, one {# Person} other {# Personen}}",
+      "loading": "Kommission wird geladen…",
+      "loadFailed": "Die Kommission konnte nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "emptyTitle": "Keine Kommission bestimmt",
+      "emptyHint": "Bestimmen Sie einen Vorsitzenden und Mitglieder – sie signieren Journaleinträge.",
+      "emptyHintReadOnly": "Die Kommission wird von einer Führungskraft bestimmt.",
+      "assign": "Kommission bestimmen",
+      "edit": "Mitglieder ändern",
+      "noPosition": "Keine Stelle",
+      "noPin": "keine PIN",
+      "noPinHint": "Ohne PIN kann die Person keinen Eintrag über den Journal-QR signieren",
+      "copyHint": "Die Kommission wird für die gesamte Organisation gespeichert und in aktive Journaldokumente kopiert.",
+      "openJournal": "Journal öffnen",
+      "journalOff": "Journal ist ausgeschaltet",
+      "enableJournal": "Journal einschalten",
+      "readOnly": "Die Kommission wird von einer Führungskraft geändert."
+    },
+    "haccpGroup": {
+      "description": "Wer für das HACCP-System verantwortlich ist. Das Team wird im Programm zur Produktionskontrolle geführt – hier dient es nur zur Information.",
+      "edit": "Im Programm zur Produktionskontrolle bearbeiten",
+      "membersTitle": "Teammitglieder",
+      "membersHint": "Der Teamleiter signiert HACCP-Dokumente und leitet Besprechungen.",
+      "count": "{count, plural, one {# Person} other {# Personen}}",
+      "emptyTitle": "Das HACCP-Team ist nicht eingerichtet",
+      "emptyHint": "Richten Sie das Team im Programm zur Produktionskontrolle ein: üblicherweise die Führungskraft, der Küchenchef und der Technologe.",
+      "documentsTitle": "Anordnung zum Team",
+      "documentsHint": "Die Anordnung, die Teamordnung und die Besprechungen stehen im Programm zur Produktionskontrolle.",
+      "order": "Anordnung Nr. {number} vom {date}",
+      "noOrder": "Die Anordnung zur Gründung des Teams wurde noch nicht erlassen.",
+      "openPpk": "HACCP-Team im Programm öffnen"
+    },
+    "controlGroup": {
+      "description": "Personen, die die Arbeit überwachen: Sie sehen Journale und Personal, bestätigen erledigte Arbeit und weisen Aufgaben zu, füllen aber selbst keine Journale aus.",
+      "cancel": "Abbrechen",
+      "guide": {
+        "title": "So funktioniert die Kontrollgruppe",
+        "whoTitle": "Wer in der Gruppe ist",
+        "whoBody": "jeder Mitarbeiter mit dem Berechtigungssatz „Kontrollgruppe“. Fügen Sie ihn hier oder im Zugriffsfenster des Mitarbeiters hinzu oder entfernen Sie ihn.",
+        "scopeTitle": "Wen sie sehen",
+        "scopeBody": "standardmäßig alle. Schränken Sie das in der Führungshierarchie ein: Wählen Sie Stellen oder Personen und die Journale, für die sie Aufgaben zuweisen.",
+        "removeTitle": "Entfernen",
+        "removeBody": "die Person erhält den Berechtigungssatz ihrer Stelle zurück."
+      },
+      "rights": {
+        "title": "Was die Kontrollgruppe tun kann",
+        "hint": "Der Berechtigungssatz „Kontrollgruppe“ ist für alle Mitglieder gleich.",
+        "seesTitle": "Sieht alles",
+        "seesBody": "Journale, Personal, Berichte und Statistiken.",
+        "verifyTitle": "Bestätigt",
+        "verifyBody": "prüft erledigte Aufgaben und Einträge.",
+        "assignTitle": "Weist Aufgaben zu",
+        "assignBody": "an Personal ihrer Hierarchie und für ihre Journale.",
+        "fillTitle": "Füllt nicht aus",
+        "fillBody": "die Kontrollgruppe füllt keine Journale und Dokumente aus und schließt sie nicht ab."
+      },
+      "members": {
+        "title": "Mitglieder",
+        "hint": "Wen jedes Mitglied sieht und für welche Journale es Aufgaben zuweist. Schränken Sie das in der Führungshierarchie ein.",
+        "hintNoHierarchy": "Wen jedes Mitglied sieht und für welche Journale es Aufgaben zuweist.",
+        "count": "{count, plural, one {# Person} other {# Personen}}",
+        "emptyTitle": "Die Kontrollgruppe ist leer",
+        "emptyHint": "Fügen Sie unten eine Person hinzu – sie erhält sofort den Berechtigungssatz „Kontrollgruppe“.",
+        "emptyHintReadOnly": "Mitglieder werden von einem Administrator hinzugefügt.",
+        "noPosition": "Keine Stelle",
+        "narrow": "In der Hierarchie einschränken",
+        "remove": "Aus der Gruppe entfernen"
+      },
+      "scope": {
+        "seesDefault": "Sieht alle (Hierarchie nicht festgelegt)",
+        "seesAll": "Sieht alle",
+        "seesNone": "Sieht niemanden",
+        "seesNoPositions": "Sieht niemanden: keine Stellen gewählt",
+        "seesPositions": "Sieht Stellen: {list}",
+        "seesNoUsers": "Sieht niemanden: keine Mitarbeiter gewählt",
+        "seesUsers": "Sieht {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}: {list}",
+        "assignsAll": "Weist Aufgaben für alle Journale zu",
+        "assigns": "Weist Aufgaben zu: {list}",
+        "more": "und {count} weitere"
+      },
+      "add": {
+        "title": "Zur Gruppe hinzufügen",
+        "hint": "Wählen Sie einen Mitarbeiter – er erhält den Berechtigungssatz „Kontrollgruppe“ anstelle des aktuellen.",
+        "readOnly": "Die Kontrollgruppe wird von einem Administrator geändert.",
+        "noCandidates": "Niemand zum Hinzufügen: Alle Mitarbeiter sind bereits in der Gruppe.",
+        "placeholder": "Mitarbeiter wählen",
+        "preview": "Berechtigungssatz: „{from}“ → „{to}“.",
+        "button": "Zur Kontrollgruppe hinzufügen"
+      },
+      "errors": {
+        "forbidden": "Nur ein Administrator kann den Berechtigungssatz ändern",
+        "notFound": "Mitarbeiter nicht gefunden – aktualisieren Sie die Seite",
+        "saveFailed": "Der Berechtigungssatz konnte nicht geändert werden",
+        "network": "Keine Verbindung zum Server – versuchen Sie es erneut"
+      },
+      "toast": {
+        "added": "{name} ist jetzt in der Kontrollgruppe",
+        "removed": "{name}: Berechtigungssatz wieder wie bei der Stelle"
+      },
+      "confirmAdd": {
+        "title": "{name} zur Kontrollgruppe hinzufügen?",
+        "description": "Diese Person hat jetzt den Satz „Administrator“.",
+        "losesAdmin": "Sie verliert den vollen Zugriff: Einstellungen, Abrechnung und Berechtigungsänderungen",
+        "keeps": "Sie sieht alles, bestätigt und weist Aufgaben zu, füllt aber keine Journale aus",
+        "undo": "Zum Rückgängigmachen – „Aus der Gruppe entfernen“: Der Satz kehrt zur Stelle zurück",
+        "confirm": "Hinzufügen"
+      },
+      "confirmRemove": {
+        "title": "{name} aus der Kontrollgruppe entfernen?",
+        "description": "Der Berechtigungssatz kehrt zur Stelle zurück.",
+        "preset": "Neuer Satz: „{preset}“",
+        "rights": "Wenn der Satz der Stelle es nicht erlaubt, sieht die Person keine Journale mehr und kann keine Aufgaben bestätigen oder zuweisen",
+        "confirm": "Entfernen"
+      }
+    },
+    "inspectors": {
+      "description": "Wer Ihre Arbeit prüft: externe Prüfer mit Zugriff auf Journale und Mitarbeiter mit Prüfrollen.",
+      "external": {
+        "title": "Externe Prüfer",
+        "hint": "QR-Codes und Links des Prüferportals: Der Prüfer öffnet Journale ohne Anmeldung.",
+        "issue": "QR für einen Prüfer ausstellen",
+        "emptyTitle": "Noch kein Prüferzugang ausgestellt",
+        "emptyHint": "Stellen Sie einen QR oder Link aus – der Prüfer sieht die Journale des benötigten Zeitraums und signiert das Besuchsprotokoll.",
+        "summary": "{active} von {total} sind aktiv.",
+        "kind": {
+          "qr": "Prüfer-QR",
+          "link": "Prüfer-Link"
+        },
+        "status": {
+          "active": "Aktiv",
+          "expired": "Abgelaufen",
+          "revoked": "Widerrufen"
+        },
+        "period": "Zeitraum:",
+        "periodOpen": "beliebig – vom Prüfer gewählt",
+        "expires": "Gültig bis:",
+        "expired": "Abgelaufen:",
+        "issuedBy": "Ausgestellt von:",
+        "issuedUnknown": "unbekannt",
+        "opened": "Geöffnet:",
+        "openedCount": "{count, plural, one {# Mal} other {# Mal}}, zuletzt – {last}",
+        "openedNever": "noch nie",
+        "visits": "Besuche: {count}",
+        "visitAnonymous": "ohne Namen",
+        "visitJournals": "Journale: {count}"
+      },
+      "internal": {
+        "title": "Interne Prüfer und Auditoren",
+        "hint": "Mitarbeiter, die Journale, Dokumente und Räume prüfen oder Audits durchführen.",
+        "emptyTitle": "Keine internen Prüfer bestimmt",
+        "emptyHint": "Ein Journalprüfer und Auditoren werden unter „Journalverantwortliche“ bestimmt, ein Raumprüfer in der Raumkarte.",
+        "openDocument": "Dokument öffnen",
+        "openRooms": "Räume",
+        "openResponsibles": "Journalverantwortliche",
+        "more": "und {count} weitere"
+      },
+      "roles": {
+        "journal_verifier": "Journalprüfer",
+        "document_verifier": "Dokumentenprüfer",
+        "room_verifier": "Raumprüfer",
+        "audit_auditor": "Auditor für interne Audits",
+        "traceability_auditor": "Auditor für Rückverfolgbarkeit"
+      }
+    }
+  },
+  "miniSections": {
+    "login": {
+      "title": "Zuerst anmelden",
+      "description": "Die für Sie zugänglichen Bereiche hängen von Ihren Berechtigungen ab, daher erscheint die Liste nach der Anmeldung. Öffnen Sie den Anmeldebildschirm; die Telegram-Anmeldung startet dort automatisch.",
+      "action": "Anmelden"
+    },
+    "home": {
+      "eyebrow": "Arbeitsbereich",
+      "title": "Alle Bereiche",
+      "description": "Das sind dieselben Seiten wie auf der Website, hier direkt in der App geöffnet. Sie sehen nur die Bereiche, auf die Sie Zugriff haben."
+    },
+    "search": {
+      "label": "Bereiche durchsuchen"
+    },
+    "emptySearch": "Keine Bereiche gefunden. Versuchen Sie ein anderes Wort, etwa „Journal“, „Bericht“ oder „Mitarbeiter“.",
+    "network": {
+      "label": "Netzwerk",
+      "hint": "Organisationen des Kontos: heutige Journale, Salden, eigene 14 Tage"
+    }
+  },
+  "miniToday": {
+    "title": "Heute",
+    "loading": "Aufgaben werden geladen…",
+    "signIn": "Anmelden",
+    "retry": "Erneut versuchen",
+    "availableCount": "Verfügbar: {count, number}",
+    "mineCount": "Meine: {count, number}",
+    "doneCount": "Erledigt: {count, number}",
+    "groupCount": "{name} ({count, number})",
+    "schedule": {
+      "sick": "Laut Dienstplan sind Sie heute krankgeschrieben",
+      "sickUntil": "Laut Dienstplan sind Sie heute bis {date} krankgeschrieben",
+      "vacation": "Laut Dienstplan haben Sie heute Urlaub",
+      "vacationUntil": "Laut Dienstplan haben Sie heute bis {date} Urlaub",
+      "off": "Heute ist Ihr planmäßiger freier Tag",
+      "offUntil": "Sie haben bis {date} planmäßig frei, heute eingeschlossen",
+      "notice": "{note}. Wenn Sie eine Schicht vertreten, stehen die Aufgaben unten wie gewohnt zur Verfügung."
+    },
+    "stuck": "Unerledigte Aufgabe vom {date}: <task>{name}</task>",
+    "open": "Öffnen",
+    "release": "Zurückgeben",
+    "active": "Sie arbeiten an <task>{name}</task>. Schließen Sie sie ab, bevor Sie eine weitere Aufgabe übernehmen.",
+    "rejected": "Zur Überarbeitung zurückgegeben:",
+    "noComment": "Es wurde kein Kommentar angegeben – fragen Sie den Produktionsleiter.",
+    "empty": "Für heute gibt es noch keine Aufgaben.",
+    "emptyHint": "Fragen Sie Ihre Führungskraft, was zu tun ist.",
+    "lockedStuck": "Schließen Sie zuerst die unerledigte Aufgabe eines früheren Tages ab oder geben Sie sie zurück",
+    "lockedActive": "Schließen Sie zuerst Ihre aktuelle Aufgabe ab",
+    "personDone": "Erledigt · <person>{name}</person>",
+    "personMine": "Ich · <person>{name}</person>",
+    "personTaken": "Übernommen · <person>{name}</person>",
+    "assignedByManager": "Von der Führungskraft zugewiesen",
+    "claim": "Aufgabe übernehmen",
+    "complete": "Abschließen",
+    "released": "Die Aufgabe ist wieder in der gemeinsamen Liste",
+    "errors": {
+      "signIn": "Melden Sie sich an, um die heutigen Aufgaben zu sehen. In Telegram erfolgt die Anmeldung automatisch.",
+      "session": "Ihre Sitzung ist abgelaufen – melden Sie sich erneut an",
+      "loadForbidden": "Sie haben keinen Zugriff auf die heutigen Aufgaben",
+      "load": "Aufgaben konnten nicht geladen werden (HTTP {status, number})",
+      "loadNetwork": "Keine Verbindung zum Server. Prüfen Sie Ihre Internetverbindung und ziehen Sie zum Aktualisieren nach unten",
+      "network": "Keine Verbindung zum Server. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut",
+      "claim": "Die Aufgabe konnte nicht übernommen werden. Versuchen Sie es erneut.",
+      "complete": "Die Aufgabe konnte nicht abgeschlossen werden",
+      "release": "Das hat nicht geklappt. Versuchen Sie es erneut.",
+      "taken": "Jemand anderes hat diese Aufgabe bereits übernommen",
+      "active": "Schließen Sie zuerst „{task}“ ab oder geben Sie sie in die gemeinsame Liste zurück.",
+      "activeUnknown": "Schließen Sie zuerst Ihre aktuelle Aufgabe ab oder geben Sie sie in die gemeinsame Liste zurück.",
+      "scopeCompleted": "Die Aufgabe ist bereits abgeschlossen",
+      "forbidden": "Sie haben keinen Zugriff auf diese Aufgabe",
+      "notFound": "Aufgabe nicht gefunden – möglicherweise bereits geschlossen.",
+      "notOwner": "Ein anderer Mitarbeiter hat diese Aufgabe übernommen – sie gehört nicht mehr Ihnen.",
+      "notActive": "Die Aufgabe ist bereits geschlossen – sie muss nicht erneut erledigt werden.",
+      "validation": "Prüfen Sie die ausgefüllten Felder – etwas wurde falsch eingegeben.",
+      "internal": "Der Server konnte nicht speichern. Versuchen Sie es erneut.",
+      "manual": "In Ihrer Organisation weist Ihre Führungskraft Aufgaben zu. Warten Sie auf eine Zuweisung",
+      "conflict": "Die Aufgabe ist bereits geschlossen oder von einem anderen Mitarbeiter übernommen worden.",
+      "invalidRequest": "Ungültige Anfrage",
+      "invalidDate": "Ungültiges Datum"
+    },
+    "groups": {
+      "hygiene": "Hygiene",
+      "health_check": "Gesundheitskontrollen",
+      "cold_equipment_control": "Kühlgeräte",
+      "climate_control": "Klima",
+      "cleaning": "Reinigung",
+      "incoming_control": "Wareneingang",
+      "finished_product": "Qualitätskontrollen von Speisen",
+      "disinfectant_usage": "Desinfektionsmittel",
+      "fryer_oil": "Frittieröl",
+      "accident_journal": "Vorfälle",
+      "complaint_register": "Reklamationen",
+      "breakdown_history": "Defekte",
+      "ppe_issuance": "PSA",
+      "glass_items_list": "Glas (Liste)",
+      "glass_control": "Glaskontrollen",
+      "metal_impurity": "Metallverunreinigung",
+      "perishable_rejection": "Verderbliche Waren",
+      "product_writeoff": "Abschreibungen",
+      "traceability_test": "Rückverfolgbarkeit",
+      "general_cleaning": "Grundreinigung",
+      "sanitation_day_control": "Sanitärtag",
+      "sanitary_day_control": "Checkliste Sanitärtag",
+      "pest_control": "Nagerbekämpfung",
+      "intensive_cooling": "Schnellabkühlung",
+      "uv_lamp_runtime": "UV-Lampe",
+      "equipment_maintenance": "Wartung",
+      "equipment_calibration": "Überprüfung",
+      "equipment_cleaning": "Gerätereinigung",
+      "audit_plan": "Auditplan",
+      "audit_protocol": "Auditprotokoll",
+      "audit_report": "Auditbericht",
+      "training_plan": "Schulungsplan"
+    },
+    "pendingAck": "Dokumente zum Lesen und Bestätigen:"
+  },
+  "pwaManifest": {
+    "metadataTitle": "WeSetup – Mini-App",
+    "name": "WeSetup – Arbeitsschicht",
+    "description": "SanPiN- und HACCP-Journale: Schichtaufgaben, Einträge und Fotos vom Smartphone",
+    "todayName": "Heute",
+    "todayDescription": "Aufgaben der aktuellen Schicht",
+    "journalsName": "Journale",
+    "journalsDescription": "Liste der Journale"
   },
   "sharedUi": {
     "temperatureChartGraph": {
@@ -2199,90 +3040,6 @@
       "codeCopy": "Code kopieren",
       "codeCopied": "Kopiert",
       "codeHint": "Der Code ist 10 Minuten gültig. Danach bittet der Bot Sie, die Verknüpfung hier zu bestätigen."
-    }
-  },
-  "journalForm": {
-    "draft": {
-      "title": "Sie haben einen unfertigen Eintrag",
-      "savedAndCount": "Gespeichert {savedAt}; {count, number} Felder ausgefüllt.",
-      "question": "Möchten Sie ihn fortsetzen oder neu beginnen?",
-      "continue": "Fortsetzen",
-      "startOver": "Neu beginnen",
-      "recently": "vor Kurzem",
-      "todayAt": "heute um {time}",
-      "yesterdayAt": "gestern um {time}",
-      "dateAt": "{date} um {time}"
-    },
-    "validation": {
-      "deviationMissing": "Eine Abweichung von der Norm wurde erfasst. Füllen Sie diese Pflichtfelder aus: {fields}.",
-      "photoRequired": "Sie müssen diesem Journal ein Foto anhängen.",
-      "deviationTitle": "Achtung: Abweichung von der Norm",
-      "fillRequired": "Füllen Sie diese Pflichtfelder aus:",
-      "photoConfirmationLabel": "Fotonachweis",
-      "photoRequiredHint": "Der Eintrag kann ohne Foto nicht gespeichert werden; dieses Journal verlangt eines."
-    },
-    "product": {
-      "recognizeFromPhoto": "Aus Foto erkennen",
-      "chooseFromDirectory": "Aus Verzeichnis wählen",
-      "quickSelectPlaceholder": "Schnellauswahl aus dem Katalog...",
-      "storageTemperature": "Lagertemperatur: {temperature}"
-    },
-    "area": {
-      "label": "Bereich",
-      "placeholder": "Bereich auswählen"
-    },
-    "fields": {
-      "signaturePlaceholder": "Nachname und Initialen",
-      "equipmentPlaceholder": "Gerät auswählen",
-      "employeePlaceholder": "Mitarbeiter auswählen"
-    },
-    "sensor": {
-      "fetching": "Messwert wird abgerufen...",
-      "fromSensor": "Vom Sensor",
-      "fetchError": "Daten konnten nicht vom Sensor abgerufen werden",
-      "dataError": "Daten konnten nicht abgerufen werden",
-      "received": "Daten vom Smart-Sensor empfangen",
-      "temperature": "Temperatur: {temperature, number} °C",
-      "humidity": "Luftfeuchtigkeit: {humidity, number} %"
-    },
-    "save": {
-      "error": "Der Eintrag konnte nicht gespeichert werden",
-      "serverError": "Der Eintrag konnte nicht gespeichert werden",
-      "photoLost": "Das Foto ging verloren. Nehmen Sie es erneut auf.",
-      "photoRejected": "Der Server hat das Foto abgelehnt. Nehmen Sie ein anderes auf.",
-      "offlineSaved": "Eintrag auf diesem Telefon gespeichert. Er wird automatisch gesendet, sobald die Verbindung wieder besteht; Sie können die App schließen.",
-      "offlineToast": "Eintrag gespeichert. Er wird gesendet, sobald die Verbindung wieder besteht."
-    },
-    "rolling": {
-      "filledRemaining": "{count, number} erledigt; noch {remaining, number} bis zum Limit.",
-      "filledReady": "{count, number} erledigt. Bereit für den nächsten Eintrag.",
-      "limitReached": "Das Tageslimit von {limit, number} Einträgen ist erreicht. Der Eintrag wurde gespeichert, aber es wurde keine neue Aufgabe erstellt.",
-      "cycleTitle": "Wiederholen, bis Sie auf „Fertig“ tippen",
-      "instructions": "Füllen Sie den Eintrag aus und tippen Sie auf <continue>„{continueLabel}“</continue>, um die nächste Aufgabe derselben Art zu erstellen. Wenn Ihre Schicht vorbei ist, tippen Sie auf <done>„{doneLabel}“</done>.",
-      "todayCount": "Heute:"
-    },
-    "scan": {
-      "button": "Scannen"
-    },
-    "fieldHint": {
-      "sanpinLabel": "SanPiN-Hinweis"
-    },
-    "fieldWarning": {
-      "below": "Wert {value, number} liegt unter der Norm (Minimum {minimum, number})",
-      "above": "Wert {value, number} liegt über der Norm (Maximum {maximum, number})"
-    },
-    "voice": {
-      "nothingHeard": "Nichts war zu hören. Versuchen Sie es erneut, näher am Telefon.",
-      "permissionDenied": "Erlauben Sie in den Telefoneinstellungen den Zugriff auf Mikrofon und Spracherkennung.",
-      "unavailable": "Spracherkennung ist auf diesem Telefon nicht verfügbar. Geben Sie Ihren Text stattdessen ein.",
-      "speakPrompt": "Sprechen",
-      "interrupted": "Die Aufnahme wurde unerwartet beendet. Versuchen Sie es erneut oder geben Sie Ihren Text ein.",
-      "microphoneDenied": "Der Mikrofonzugriff ist blockiert. Erlauben Sie ihn in den Telefoneinstellungen oder geben Sie Ihren Text ein.",
-      "microphoneUnavailable": "Das Mikrofon ist nicht verfügbar. Geben Sie Ihren Text stattdessen ein.",
-      "networkUnavailable": "Keine Verbindung: Spracherkennung ist nicht verfügbar. Geben Sie Ihren Text stattdessen ein.",
-      "stopRecording": "Aufnahme beenden",
-      "startVoiceInput": "Spracheingabe",
-      "listening": "Ich höre zu…"
     }
   },
   "dashboardUi": {
@@ -3094,6 +3851,176 @@
       }
     }
   },
+  "layoutUi": {
+    "buildVersionWatcher": {
+      "title": "Die Website wurde aktualisiert",
+      "description": "Laden Sie die Seite neu, um die neuesten Änderungen zu sehen.",
+      "reload": "Neu laden"
+    },
+    "cabinetPlanCard": {
+      "myCabinet": "Mein Arbeitsbereich",
+      "orgCabinet": "Organisations-Arbeitsbereich",
+      "current": "aktuell",
+      "perMonth": "{price}/Monat",
+      "label": "Organisationstarif:",
+      "change": "Ändern"
+    },
+    "commandPalette": {
+      "closeDayLabel": "Tag abschließen",
+      "closeDayHint": "Gestern → heute für alle Tagesjournale kopieren",
+      "closeDayKeywords": "abschließen,kopieren,gestern,heute,Tag abschließen",
+      "closeDayFailed": "Der Tag konnte nicht abgeschlossen werden",
+      "copiedCount": "{count, plural, one {# Eintrag kopiert} other {# Einträge kopiert}}",
+      "nothingToCopy": "Nichts zu kopieren oder alles ist bereits ausgefüllt.",
+      "error": "Fehler",
+      "catchUpLabel": "Lücken nachholen",
+      "catchUpHint": "14-Tage-Raster × alle Journale",
+      "catchUpKeywords": "nachholen,Lücken,verpasst,Raster",
+      "kindUser": "Personal",
+      "kindTemplate": "Journale",
+      "kindDocument": "Dokumente",
+      "kindEquipment": "Geräte",
+      "groupActions": "Aktionen",
+      "groupSections": "Bereiche",
+      "placeholder": "Journal, Mitarbeiter, Gerät oder Aktion suchen…",
+      "startTyping": "Beginnen Sie zu tippen – Suche in Journalen, Personal und Geräten",
+      "searching": "Suche läuft…",
+      "nothingFound": "Nichts gefunden",
+      "footerNav": "↑↓ navigieren · Enter auswählen",
+      "footerToggle": "⌘K / Strg+K – öffnen/schließen",
+      "kindArea": "Räume",
+      "kindProduct": "Produkte",
+      "results": "{count, plural, one {# Ergebnis} other {# Ergebnisse}}",
+      "filter": "Filter",
+      "filterAll": "Alles",
+      "askAssistant": "KI-Assistenten fragen: „{query}“",
+      "navigate": "Navigieren",
+      "close": "Schließen",
+      "clear": "Löschen",
+      "field": "Suchen…"
+    },
+    "createDemoDialog": {
+      "createFailed": "Die Demo konnte nicht geöffnet werden",
+      "error": "Fehler",
+      "title": "Demo-Organisation öffnen?",
+      "description": "Es ist eine gemeinsame Testorganisation mit Team und Journalen, die für die letzten {days, plural, one {# Tag} other {# Tage}} ausgefüllt sind – mit Abweichungen und Korrekturmaßnahmen wie im echten Leben.",
+      "noteUnchanged": "· Ihre Organisation bleibt unverändert – die Demo existiert getrennt.",
+      "noteSwitch": "· Die Demo wird gemeinsam genutzt: Andere Besucher sehen Ihre Änderungen. Geben Sie keine echten Daten ein.",
+      "noteDelete": "· Einmal täglich wird die Demo mit frischen Daten neu aufgesetzt – Änderungen bleiben nicht erhalten.",
+      "no": "Nein",
+      "preparing": "Demo wird geöffnet…",
+      "confirm": "Ja, öffnen"
+    },
+    "createOrganizationDialog": {
+      "createFailed": "Erstellung nicht möglich",
+      "created": "Organisation „{name}“ erstellt",
+      "error": "Fehler",
+      "title": "Neue Organisation",
+      "description": "Ein separater Standort mit eigenem Personal, eigenen Journalen und Aufgaben.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Café in der Lenin-Straße",
+      "sphereLabel": "Branche",
+      "copyLabel": "Stellen und Journalset von „{name}“ kopieren. Personal wird nicht übertragen.",
+      "afterCreate": "Nach der Erstellung: {count, plural, one {# Organisation} other {# Organisationen}} · das Personallimit gilt für das gesamte Konto.",
+      "submit": "Erstellen und wechseln",
+      "previewOrgTrial": "Die ersten 14 Tage sind kostenlos, bis {date}. Danach benötigt diese Organisation einen bezahlten Standort im Tarif.",
+      "previewAccountTrial": "Läuft innerhalb der Kontotestphase, bis {date}. Danach benötigt diese Organisation einen bezahlten Standort im Tarif.",
+      "previewPaidPoint": "Belegt einen bezahlten Standort im Tarif: {used} von {limit}.",
+      "refusedFreePlan": "Der kostenlose Tarif umfasst eine Organisation. Wählen Sie einen Tarif, um eine weitere hinzuzufügen.",
+      "refusedTrialsUsed": "Alle bezahlten Standorte sind belegt ({limit}), und die kostenlosen 14 Tage wurden bereits für zwei Organisationen genutzt. Fügen Sie dem Tarif einen Standort hinzu.",
+      "refusedLockedOrg": "Die kostenlosen 14 Tage von „{name}“ sind abgelaufen und der Standort ist nicht bezahlt. Fügen Sie zuerst einen Standort dafür hinzu."
+    },
+    "deletionBanner": {
+      "cancelFailed": "Abbruch nicht möglich",
+      "cancelled": "Löschung abgebrochen",
+      "error": "Fehler",
+      "message": "Die Organisation wird am <b>{when}</b> samt allen Journalen und dem Personal gelöscht.",
+      "canCancel": "Bis dahin kann die Löschung abgebrochen werden.",
+      "cannotCancel": "Nur eine Führungskraft kann sie abbrechen.",
+      "cancelling": "Wird abgebrochen…",
+      "cancel": "Löschung abbrechen"
+    },
+    "fabDock": {
+      "helpAriaUnread": "Hilfe · neue Nachrichten: {count, number}",
+      "helpAria": "Hilfe und Tipps",
+      "sheetTitle": "Hilfe",
+      "sheetSubtitle": "Stellen Sie eine Frage, kontaktieren Sie den Support oder lesen Sie die Anleitungen",
+      "actionAriaUnread": "{label} · neue Nachrichten: {count, number}",
+      "contacts": "Kontakte",
+      "contactsHint": "Telefon, Telegram, MAX und E-Mail",
+      "dockTitle": "Kontakte und Hilfe",
+      "close": "Schließen"
+    },
+    "kioskSessionGuard": {
+      "employee": "Mitarbeiter",
+      "leave": "Abmelden"
+    },
+    "offlineIndicator": {
+      "onlinePending": "Online · {count, number} warten auf Versand",
+      "offlineQueued": "Offline · {count, number} in der Warteschlange",
+      "offline": "Offline",
+      "titleOnline": "Einige Einträge wurden noch nicht gesendet. Klicken Sie, um sie jetzt zu senden.",
+      "titleOffline": "Keine Internetverbindung. Einträge werden lokal gespeichert und gesendet, sobald die Verbindung wieder besteht."
+    },
+    "npsBanner": {
+      "saveScoreFailed": "Die Bewertung konnte nicht gespeichert werden",
+      "emailRequired": "Geben Sie die E-Mail-Adresse Ihres Kollegen ein",
+      "scoreNotSaved": "Die Bewertung wurde nicht gespeichert – bitte wählen Sie sie erneut",
+      "sendEmailFailed": "E-Mail konnte nicht gesendet werden",
+      "thanksSent": "Danke! Die E-Mail wurde gesendet",
+      "noConnection": "Keine Verbindung – bitte versuchen Sie es erneut",
+      "reviewTooShort": "Für eine Bewertung schreiben Sie mindestens ein paar Sätze – {min, number} Zeichen oder mehr",
+      "consentRequired": "Die Bewertung kann ohne Einwilligung zur Veröffentlichung nicht veröffentlicht werden",
+      "sendReviewFailed": "Die Bewertung konnte nicht gesendet werden",
+      "sendFailed": "Senden nicht möglich",
+      "thanksNoted": "Danke! Wir werden es berücksichtigen",
+      "regionAria": "Umfrage: Würden Sie WeSetup Kollegen empfehlen",
+      "title": "Würden Sie WeSetup Kollegen empfehlen?",
+      "scaleAria": "Bewertung von 1 bis 5: 1 – nein, 5 – ja",
+      "scoreAria": "{score, number} von 5",
+      "scaleNo": "nein",
+      "scaleYes": "ja",
+      "notNow": "Jetzt nicht",
+      "close": "Schließen",
+      "closeTitle": "Schließen – die Bewertung ist bereits gespeichert",
+      "messageLabel": "Nachricht",
+      "emailLabel": "E-Mail des Kollegen",
+      "fix": "Korrigieren",
+      "sending": "Wird gesendet…",
+      "sendColleague": "An einen Kollegen senden",
+      "consentLabel": "Ich bin mit der Veröffentlichung der Bewertung, meines Namens und meines Betriebs auf wesetup.ru und in sozialen Netzwerken einverstanden.",
+      "leaveReview": "Bewertung schreiben",
+      "letterNote": "Die E-Mail kommt von WeSetup in Ihrem Namen. Nach der Moderation veröffentlichen wir eine Bewertung mit diesem Text und schreiben Ihnen Punkte gut. Wenn Sie das nicht möchten, schließen Sie dies einfach: Ihre Bewertung ist gespeichert.",
+      "improveLabel": "Was sollten wir verbessern?",
+      "improvePlaceholder": "Ein paar Worte – wir lesen jede Nachricht",
+      "send": "Senden",
+      "scoreSaved": "Die Bewertung ist bereits gespeichert.",
+      "reviewDone": "Danke! Die Bewertung wurde zur Moderation gesendet; wir schreiben Punkte gut, sobald sie freigegeben ist",
+      "showStatsLabel": "Neben der Bewertung anzeigen, wie viele Journale und Einträge wir in WeSetup führen – ohne Journalnamen und deren Daten."
+    },
+    "organizationSwitcher": {
+      "label": "Organisationen",
+      "switchFailed": "Wechsel nicht möglich",
+      "error": "Fehler",
+      "openSettingsFailed": "Einstellungen konnten nicht geöffnet werden",
+      "demo": "Demo",
+      "settingsAria": "Einstellungen von {name}",
+      "settingsTitle": "Organisationseinstellungen",
+      "addOrganization": "Organisation hinzufügen",
+      "demoTitle": "Eine gemeinsame Testorganisation mit Personal und ausgefüllten Journalen. Sie wird einmal täglich aktualisiert.",
+      "createDemo": "Demo-Organisation öffnen"
+    },
+    "urgentJournalHotkey": {
+      "failed": "Das dringende Journal konnte nicht ermittelt werden",
+      "urgent": "Dringendes Journal: {code}",
+      "none": "Keine dringenden Aufgaben – Liste wird geöffnet"
+    },
+    "dashboardLayout": {
+      "fallbackOrganization": "Organisation",
+      "fallbackPartner": "Partner",
+      "fallbackUser": "Benutzer"
+    }
+  },
   "miniUi": {
     "nativeAppBridge": {
       "title": "Aufgabenbenachrichtigungen",
@@ -3296,943 +4223,6 @@
       "backToday": "Heute"
     }
   },
-  "miniHome": {
-    "entry": {
-      "error": {
-        "heading": "Anmeldung fehlgeschlagen",
-        "timeout": "Telegram braucht länger als erwartet. Prüfen Sie Ihre Verbindung.",
-        "sessionUnavailable": "Es wurde keine Telegram-Anmeldesitzung empfangen.",
-        "expired": "Ihre Telegram-Sitzung ist abgelaufen. Schließen Sie die App und öffnen Sie sie erneut über den Bot.",
-        "notConfirmed": "Telegram konnte Ihre Anmeldung nicht bestätigen. Schließen Sie die App und öffnen Sie sie erneut über den Bot.",
-        "notConfigured": "Die Telegram-Anmeldung ist noch nicht eingerichtet. Wenden Sie sich an Ihre Führungskraft.",
-        "generic": "Wir konnten Sie nicht anmelden. Versuchen Sie es erneut oder melden Sie sich mit Ihrem Telefon an.",
-        "notLinked": "Ihr Telegram-Konto ist noch nicht mit einem Profil im Arbeitsbereich verknüpft."
-      },
-      "action": {
-        "closeApp": "App schließen",
-        "retry": "Erneut versuchen",
-        "phoneLogin": "Mit Telefon anmelden"
-      },
-      "loading": {
-        "heading": "Ihr Arbeitsbereich wird geöffnet…",
-        "description": "Ihre Anmeldung wird geprüft. Das dauert nur wenige Sekunden."
-      },
-      "linkPhone": {
-        "heading": "Über die Telefonnummer verknüpfen",
-        "description": "Wir finden Ihr Profil anhand Ihrer Telegram-Nummer",
-        "shareButton": "Telegram-Telefonnummer teilen",
-        "sharing": "Profil wird verknüpft…",
-        "orPassword": "oder auf die übliche Weise anmelden",
-        "passwordButton": "Mit Telefon und Passwort anmelden",
-        "declined": "Sie haben das Teilen Ihrer Telefonnummer abgebrochen. Tippen Sie erneut auf die Schaltfläche oder melden Sie sich mit Ihrem Passwort an.",
-        "notFound": "Zu dieser Telefonnummer wurde kein Profil gefunden. Melden Sie sich mit Telefon oder E-Mail und Passwort an, um Telegram sofort zu verknüpfen.",
-        "ambiguous": "Mehrere Profile haben diese Telefonnummer. Melden Sie sich mit Telefon und Passwort an, um das richtige Konto zu wählen.",
-        "alreadyLinkedOther": "Dieses Telegram-Konto ist bereits mit einem anderen Mitarbeiter verknüpft. Trennen Sie es dort mit /stop oder melden Sie sich mit Ihrem Passwort an.",
-        "userHasOtherTelegram": "Mit Ihrem Profil ist bereits ein anderes Telegram-Konto verknüpft. Melden Sie sich mit Ihrem Passwort an und aktualisieren Sie es im Profil.",
-        "pendingBot": "Telefonnummer an den Bot gesendet – Anmeldung wird abgeschlossen…",
-        "failed": "Telegram konnte nicht über die Telefonnummer verknüpft werden. Versuchen Sie es erneut oder melden Sie sich mit Ihrem Passwort an.",
-        "success": "Telegram verknüpft! Ihr Arbeitsbereich wird geöffnet…"
-      }
-    },
-    "navigation": {
-      "landmark": "App-Bereiche"
-    },
-    "roleBar": {
-      "landmark": "Schnellaktionen nach Rolle",
-      "managerBadge": "Führungsmodus",
-      "supervisorBadge": "Schichtkontrolle",
-      "staffBadge": "Mitarbeitermodus",
-      "readonlyBadge": "Nur Ansicht",
-      "actions": {
-        "todayJournals": "Heutige Journale",
-        "verifications": "Einträge prüfen",
-        "staff": "Mitarbeiter",
-        "reports": "Berichte",
-        "controlBoard": "Kontrolltafel",
-        "myTasks": "Schichtaufgaben",
-        "journals": "Journale",
-        "profile": "Profil"
-      }
-    }
-  },
-  "miniToday": {
-    "title": "Heute",
-    "loading": "Aufgaben werden geladen…",
-    "signIn": "Anmelden",
-    "retry": "Erneut versuchen",
-    "availableCount": "Verfügbar: {count, number}",
-    "mineCount": "Meine: {count, number}",
-    "doneCount": "Erledigt: {count, number}",
-    "groupCount": "{name} ({count, number})",
-    "schedule": {
-      "sick": "Laut Dienstplan sind Sie heute krankgeschrieben",
-      "sickUntil": "Laut Dienstplan sind Sie heute bis {date} krankgeschrieben",
-      "vacation": "Laut Dienstplan haben Sie heute Urlaub",
-      "vacationUntil": "Laut Dienstplan haben Sie heute bis {date} Urlaub",
-      "off": "Heute ist Ihr planmäßiger freier Tag",
-      "offUntil": "Sie haben bis {date} planmäßig frei, heute eingeschlossen",
-      "notice": "{note}. Wenn Sie eine Schicht vertreten, stehen die Aufgaben unten wie gewohnt zur Verfügung."
-    },
-    "stuck": "Unerledigte Aufgabe vom {date}: <task>{name}</task>",
-    "open": "Öffnen",
-    "release": "Zurückgeben",
-    "active": "Sie arbeiten an <task>{name}</task>. Schließen Sie sie ab, bevor Sie eine weitere Aufgabe übernehmen.",
-    "rejected": "Zur Überarbeitung zurückgegeben:",
-    "noComment": "Es wurde kein Kommentar angegeben – fragen Sie den Produktionsleiter.",
-    "empty": "Für heute gibt es noch keine Aufgaben.",
-    "emptyHint": "Fragen Sie Ihre Führungskraft, was zu tun ist.",
-    "lockedStuck": "Schließen Sie zuerst die unerledigte Aufgabe eines früheren Tages ab oder geben Sie sie zurück",
-    "lockedActive": "Schließen Sie zuerst Ihre aktuelle Aufgabe ab",
-    "personDone": "Erledigt · <person>{name}</person>",
-    "personMine": "Ich · <person>{name}</person>",
-    "personTaken": "Übernommen · <person>{name}</person>",
-    "assignedByManager": "Von der Führungskraft zugewiesen",
-    "claim": "Aufgabe übernehmen",
-    "complete": "Abschließen",
-    "released": "Die Aufgabe ist wieder in der gemeinsamen Liste",
-    "errors": {
-      "signIn": "Melden Sie sich an, um die heutigen Aufgaben zu sehen. In Telegram erfolgt die Anmeldung automatisch.",
-      "session": "Ihre Sitzung ist abgelaufen – melden Sie sich erneut an",
-      "loadForbidden": "Sie haben keinen Zugriff auf die heutigen Aufgaben",
-      "load": "Aufgaben konnten nicht geladen werden (HTTP {status, number})",
-      "loadNetwork": "Keine Verbindung zum Server. Prüfen Sie Ihre Internetverbindung und ziehen Sie zum Aktualisieren nach unten",
-      "network": "Keine Verbindung zum Server. Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut",
-      "claim": "Die Aufgabe konnte nicht übernommen werden. Versuchen Sie es erneut.",
-      "complete": "Die Aufgabe konnte nicht abgeschlossen werden",
-      "release": "Das hat nicht geklappt. Versuchen Sie es erneut.",
-      "taken": "Jemand anderes hat diese Aufgabe bereits übernommen",
-      "active": "Schließen Sie zuerst „{task}“ ab oder geben Sie sie in die gemeinsame Liste zurück.",
-      "activeUnknown": "Schließen Sie zuerst Ihre aktuelle Aufgabe ab oder geben Sie sie in die gemeinsame Liste zurück.",
-      "scopeCompleted": "Die Aufgabe ist bereits abgeschlossen",
-      "forbidden": "Sie haben keinen Zugriff auf diese Aufgabe",
-      "notFound": "Aufgabe nicht gefunden – möglicherweise bereits geschlossen.",
-      "notOwner": "Ein anderer Mitarbeiter hat diese Aufgabe übernommen – sie gehört nicht mehr Ihnen.",
-      "notActive": "Die Aufgabe ist bereits geschlossen – sie muss nicht erneut erledigt werden.",
-      "validation": "Prüfen Sie die ausgefüllten Felder – etwas wurde falsch eingegeben.",
-      "internal": "Der Server konnte nicht speichern. Versuchen Sie es erneut.",
-      "manual": "In Ihrer Organisation weist Ihre Führungskraft Aufgaben zu. Warten Sie auf eine Zuweisung",
-      "conflict": "Die Aufgabe ist bereits geschlossen oder von einem anderen Mitarbeiter übernommen worden.",
-      "invalidRequest": "Ungültige Anfrage",
-      "invalidDate": "Ungültiges Datum"
-    },
-    "groups": {
-      "hygiene": "Hygiene",
-      "health_check": "Gesundheitskontrollen",
-      "cold_equipment_control": "Kühlgeräte",
-      "climate_control": "Klima",
-      "cleaning": "Reinigung",
-      "incoming_control": "Wareneingang",
-      "finished_product": "Qualitätskontrollen von Speisen",
-      "disinfectant_usage": "Desinfektionsmittel",
-      "fryer_oil": "Frittieröl",
-      "accident_journal": "Vorfälle",
-      "complaint_register": "Reklamationen",
-      "breakdown_history": "Defekte",
-      "ppe_issuance": "PSA",
-      "glass_items_list": "Glas (Liste)",
-      "glass_control": "Glaskontrollen",
-      "metal_impurity": "Metallverunreinigung",
-      "perishable_rejection": "Verderbliche Waren",
-      "product_writeoff": "Abschreibungen",
-      "traceability_test": "Rückverfolgbarkeit",
-      "general_cleaning": "Grundreinigung",
-      "sanitation_day_control": "Sanitärtag",
-      "sanitary_day_control": "Checkliste Sanitärtag",
-      "pest_control": "Nagerbekämpfung",
-      "intensive_cooling": "Schnellabkühlung",
-      "uv_lamp_runtime": "UV-Lampe",
-      "equipment_maintenance": "Wartung",
-      "equipment_calibration": "Überprüfung",
-      "equipment_cleaning": "Gerätereinigung",
-      "audit_plan": "Auditplan",
-      "audit_protocol": "Auditprotokoll",
-      "audit_report": "Auditbericht",
-      "training_plan": "Schulungsplan"
-    },
-    "pendingAck": "Dokumente zum Lesen und Bestätigen:"
-  },
-  "journals": {
-    "title": "Journale",
-    "progress": "{filled, number} von {total, number} ausgefüllt",
-    "entryCount": "{count, plural, one {# Eintrag} other {# Einträge}}",
-    "saveEntry": "Eintrag speichern",
-    "saveContinue": "Speichern und fortfahren",
-    "doneToday": "Für heute erledigt",
-    "required": "Pflichtfeld",
-    "date": "Datum",
-    "time": "Uhrzeit",
-    "employee": "Mitarbeiter",
-    "notes": "Notizen",
-    "names": {
-      "hygiene": "Personalhygiene-Journal",
-      "health_check": "Gesundheitskontroll-Journal",
-      "climate_control": "Journal für Lagertemperatur und Luftfeuchtigkeit",
-      "cold_equipment_control": "Temperaturjournal für Kühl- und Gefrierschränke",
-      "cleaning_ventilation_checklist": "Checkliste für Raumreinigung und Lüftung",
-      "cleaning": "Reinigungsjournal",
-      "general_cleaning": "Grundreinigungsplan und -journal",
-      "uv_lamp_runtime": "Betriebsstundenjournal der UV-Entkeimungsgeräte",
-      "finished_product": "Journal zur Qualitätskontrolle zubereiteter Speisen",
-      "perishable_rejection": "Journal zur Qualitätskontrolle verderblicher Lebensmittel",
-      "incoming_control": "Journal für Warenannahme und Eingangskontrolle",
-      "fryer_oil": "Journal zur Nutzung von Frittieröl",
-      "med_books": "Persönliche Gesundheitsbücher",
-      "training_plan": "Schulungsplan des Personals",
-      "staff_training": "Journal für Unterweisungen und Schulungen des Personals",
-      "disinfectant_usage": "Journal zur Verwendung von Desinfektionsmitteln",
-      "sanitary_day_control": "Checkliste Sanitärtag",
-      "equipment_maintenance": "Plan zur vorbeugenden Gerätewartung",
-      "breakdown_history": "Störungsverlauf der Geräte",
-      "equipment_calibration": "Plan zur Überprüfung der Messgeräte",
-      "incoming_raw_materials_control": "Journal zur Kontrolle von Rohstoffen, Zutaten und Verpackungen",
-      "ppe_issuance": "Ausgabejournal für persönliche Schutzausrüstung",
-      "accident_journal": "Vorfallsjournal",
-      "complaint_register": "Reklamationsregister",
-      "product_writeoff": "Bericht über ausgesonderte Produkte",
-      "audit_plan": "Interner Auditplan",
-      "audit_protocol": "Internes Auditprotokoll",
-      "audit_report": "Interner Auditbericht",
-      "traceability_test": "Journal zur Produktrückverfolgbarkeit",
-      "metal_impurity": "Journal zu Metallverunreinigungen in Rohstoffen",
-      "equipment_cleaning": "Journal zur Reinigung und Desinfektion der Geräte",
-      "intensive_cooling": "Journal zur Schnellabkühlung warmer Speisen",
-      "glass_items_list": "Liste der Glas- und zerbrechlichen Kunststoffgegenstände",
-      "glass_control": "Kontrolljournal für Glas und zerbrechlichen Kunststoff",
-      "pest_control": "Journal zu Desinfektion sowie Insekten- und Nagerbekämpfung",
-      "daily_samples": "Journal zur täglichen Entnahme und Aufbewahrung von Speiseproben",
-      "vitaminization": "Journal zur Vitaminisierung von Getränken und Desserts",
-      "ration_control": "Protokoll zur Kostüberwachung",
-      "transport_temperature": "Journal zur Überwachung der Transporttemperatur",
-      "tableware_breakage": "Journal für zerbrochenes Geschirr",
-      "pool_water_control": "Journal zur Wasserqualität im Schwimmbad",
-      "inventory_condition": "Journal zum Zustand von Metall- und Kunststoffgeräten",
-      "instrument_sterilization": "Journal zur Sterilisation von Instrumenten",
-      "medical_waste_b": "Journal für medizinische Abfälle der Klasse B",
-      "batch_release": "Journal zur Chargenfreigabe für den Versand",
-      "temp_control": "Temperaturkontrollprotokoll",
-      "ccp_monitoring": "Überwachungsprotokoll für kritische Kontrollpunkte",
-      "cooking_temp": "Protokoll der Hitzebehandlung",
-      "shipment": "Versandprotokoll für Produkte",
-      "uv_lamp_control": "Überwachungsprotokoll der Entkeimungsgeräte",
-      "audit_plan_scan": "Interner Auditplan",
-      "audit_report_scan": "Interner Auditbericht",
-      "audit_protocol_scan": "Internes Auditprotokoll",
-      "metal_impurity_scan": "Journal zu Metallverunreinigungen in Rohstoffen"
-    },
-    "officialName": "Offizieller Name: {name}",
-    "ui": {
-      "browser": {
-        "bulkCreateFailed": "Die Dokumente konnten nicht erstellt werden",
-        "bulkCreated": "Erstellt: {created}",
-        "bulkCreatedSkipped": "Erstellt: {created} · übersprungen: {skipped}",
-        "networkError": "Netzwerkfehler",
-        "searchPlaceholder": "Name, Beschreibung oder Code",
-        "searchAria": "Journale durchsuchen",
-        "clearSearch": "Suche löschen",
-        "found": "{found, number} von {total, number} gefunden",
-        "total": "Journale insgesamt: {total, number}",
-        "bulkAvailable": "Zum Erstellen verfügbar: {count, number}",
-        "bulkSelected": "Ausgewählt: {selected, number} von {total, number}",
-        "selectAll": "Alle auswählen",
-        "clearSelection": "Auswahl aufheben",
-        "bulkPickOne": "Wählen Sie mindestens ein Journal aus",
-        "bulkCreateTitle": "Dokumente für die ausgewählten Journale erstellen",
-        "bulkCreating": "Wird erstellt…",
-        "bulkCreateSelectedCount": "Ausgewählte erstellen ({count, number})",
-        "bulkCreateSelected": "Ausgewählte erstellen",
-        "disabledJournals": "Deaktivierte Journale",
-        "disabledHint": "– nicht in „Heute“ und für Mitarbeiter nicht sichtbar",
-        "enableInSettings": "– in den <link>Einstellungen</link> aktivieren",
-        "settingSaveFailed": "Die Einstellung konnte nicht gespeichert werden",
-        "journalHidden": "Journal ausgeblendet: {name}",
-        "journalEnabled": "Journal aktiviert: {name}",
-        "disabledCardAria": "{name} – in den Einstellungen deaktiviert",
-        "disabledBadge": "Deaktiviert",
-        "enabling": "Wird aktiviert…",
-        "enable": "Aktivieren",
-        "hideFromDashboard": "Aus „Heute“ ausblenden",
-        "hideFromDashboardAria": "„{name}“ aus „Heute“ ausblenden",
-        "hideConfirmTitle": "Journal aus „Heute“ ausblenden?",
-        "hideConfirmDescription": "„{name}“ wird nicht mehr als Pflichtjournal angezeigt.",
-        "hideBullet1": "Es verschwindet aus „Heute“ und aus der Mini-App der Mitarbeiter",
-        "hideBullet2": "Einträge und Dokumente bleiben erhalten – nichts wird gelöscht",
-        "hideBullet3": "Sie können es hier im Bereich „Deaktivierte Journale“ jederzeit wieder aktivieren",
-        "hide": "Ausblenden",
-        "bulkRemoveTitle": "Aus der Sammelerstellung entfernen",
-        "bulkAddTitle": "Zur Sammelerstellung hinzufügen",
-        "bulkSelectAria": "„{name}“ für die Sammelerstellung auswählen",
-        "officialName": "Offizieller Name: {name}",
-        "fillToday": "Heute ausfüllen",
-        "readyToday": "Heute erledigt",
-        "sanpin": "SanPiN",
-        "haccp": "HACCP",
-        "emptyTitle": "Nichts gefunden",
-        "emptyHint": "Ändern Sie Ihre Suchanfrage oder löschen Sie die Suche."
-      },
-      "todayBanner": {
-        "detailRows": "({today, number} von {expected, number} Zeilen)",
-        "filledStrictBody": "{name} ist für heute ausgefüllt{detail}",
-        "filledBody": "{name} wurde heute ausgefüllt{detail}",
-        "filledStrictTitle": "Das Journal ist für heute ausgefüllt",
-        "filledTitle": "Das Journal wurde heute bereits ausgefüllt",
-        "openToday": "Heute öffnen",
-        "noActiveDocument": "Kein Dokument für heute – erstellen Sie eines mit der Schaltfläche oben",
-        "partialFill": "{today, number} von {expected, number} Zeilen ausgefüllt",
-        "strictEmpty": "Alle Mitarbeiter markieren",
-        "notStarted": "Ersten Eintrag für heute hinzufügen",
-        "pendingStrictTitle": "Muss heute ausgefüllt werden",
-        "pendingTitle": "Noch nicht begonnen",
-        "goToday": "Zu heute"
-      },
-      "traceabilityPage": {
-        "eyebrow": "HACCP · Chargenrückverfolgbarkeit",
-        "batch": "Charge",
-        "emptyDescription": "Keine Einträge mit diesem Schlüssel",
-        "foundDescription": "{count, plural, one {# Eintrag} other {# Einträge}} gefunden – vom Wareneingang bis zum Versand",
-        "emptyBox": "Keine Einträge mit dem Schlüssel „{key}“. Öffnen Sie die Charge über einen Wareneingangseintrag.",
-        "step": "Schritt {number, number}",
-        "supplier": "· Lieferant: {name}",
-        "noteTitle": "HACCP-Rückverfolgbarkeit:",
-        "noteBody": "gemäß TR ZU 021/2011 muss der Weg jeder Charge innerhalb einer Minute nachvollziehbar sein. Hier sind alle Einträge mit dem Chargenschlüssel: Wareneingang, Qualitätskontrolle, Versand und Abschreibung.",
-        "batchOnlyDescription": "Die Charge existiert, aber es gibt noch keine Journaleinträge dazu.",
-        "batchSection": "Charge",
-        "vsdSection": "Annahme per VSD",
-        "entriesSection": "Journaleinträge",
-        "supplierLabel": "Lieferant: {name}",
-        "receivedOn": "erhalten am {date}",
-        "openBatch": "Charge öffnen",
-        "vsdUntitled": "Ohne Titel",
-        "vsdNumber": "VSD Nr. {number}",
-        "openAcceptanceJournal": "Wareneingangsjournal öffnen",
-        "batchRejected": "Abgelehnt"
-      },
-      "brakerageDate": {
-        "placeholder": "TT-MM-JJJJ",
-        "invalid": "Geben Sie das Datum im Format TT-MM-JJJJ ein"
-      },
-      "undoRedo": {
-        "undoAria": "Letzte Änderung rückgängig machen",
-        "undoTitle": "Rückgängig (Strg+Z). Nur Ihre Änderungen in diesem Tab werden rückgängig gemacht.",
-        "redoAria": "Rückgängig gemachte Änderung wiederholen",
-        "redoTitle": "Wiederholen (Strg+Umschalt+Z)"
-      },
-      "brakerageSetup": {
-        "loadFailed": "Mitarbeiter konnten nicht geladen werden",
-        "saveFailed": "Speichern fehlgeschlagen",
-        "title": "Wer das Qualitätskontrolljournal führt",
-        "description": "Die Kommission und die für das Journal verantwortliche Person",
-        "responsible": "Für das Journal verantwortliche Person",
-        "notSelected": "Nicht ausgewählt",
-        "commission": "Kommission für die Speisenkontrolle",
-        "emptyUsers": "Fügen Sie Mitarbeiter oder Kommissionsmitglieder hinzu.",
-        "addExternalCommission": "Externe Kommission hinzufügen",
-        "decline": "Einrichtung ablehnen"
-      },
-      "numberField": {
-        "notANumber": "Geben Sie eine Zahl ein, z. B. 3,5",
-        "rangeBetween": "Prüfen Sie den Wert: Zulässig ist ein Bereich von {min} bis {max}{suffix}",
-        "rangeMax": "Prüfen Sie den Wert: Er darf {max}{suffix} nicht überschreiten",
-        "rangeMin": "Prüfen Sie den Wert: Er darf nicht unter {min}{suffix} liegen",
-        "normBetween": "Norm {min}…{max}{suffix}",
-        "normMax": "Norm: nicht über {max}{suffix}",
-        "normMin": "Norm: nicht unter {min}{suffix}",
-        "decrease": "Verringern",
-        "increase": "Erhöhen",
-        "outOfNorm": "Außerhalb des Bereichs · {hint}"
-      },
-      "barcodeScanner": {
-        "cameraDenied": "Kein Kamerazugriff. Erlauben Sie den Zugriff in den Browsereinstellungen.",
-        "initFailed": "Der Scanner konnte nicht initialisiert werden.",
-        "close": "Scanner schließen",
-        "scan": "Barcode scannen",
-        "lookingUp": "Produkt wird anhand des Barcodes gesucht...",
-        "found": "Gefunden:",
-        "barcode": "Barcode:",
-        "notFound": "im Katalog nicht gefunden"
-      },
-      "photoField": {
-        "rules": "JPG, PNG oder WebP, bis 5 MB",
-        "invalidType": "Nur JPG, PNG oder WebP werden akzeptiert",
-        "tooLarge": "Das Foto ist größer als 5 MB – komprimieren oder neu aufnehmen",
-        "uploadError": "Das Foto konnte nicht hochgeladen werden",
-        "networkError": "Keine Verbindung – versuchen Sie es erneut",
-        "required": "erforderlich",
-        "present": "hinzugefügt",
-        "queued": "wird bei Verbindung gesendet",
-        "remove": "Foto entfernen",
-        "uploading": "Wird hochgeladen…",
-        "more": "Weiteres Foto hinzufügen",
-        "take": "Foto aufnehmen",
-        "alt": "Foto {index, number}"
-      },
-      "index": {
-        "description": "Öffnen Sie eines zum Ausfüllen oder Drucken.",
-        "configureSet": "Set konfigurieren",
-        "noAttentionToday": "Heute im Plan: {filled, number} von {total, number}",
-        "guideTitle": "So arbeiten Sie mit Journalen",
-        "greenTickTitle": "Grüner Haken",
-        "greenTickBody": "das Journal wurde heute ausgefüllt – die Kontrolle wird bestanden. Grau – noch nicht ausgefüllt.",
-        "openJournalTitle": "Journal öffnen",
-        "openJournalBody": "klicken Sie auf eine Karte, um das aktive Dokument für den aktuellen Zeitraum (Monat / Halbmonat / Jahr) zu öffnen.",
-        "greyJournalTitle": "Graues Journal",
-        "greyJournalBody": "in den Journaleinstellungen dieser Organisation deaktiviert. Sie können es bei Bedarf wieder aktivieren.",
-        "sendAllTitle": "„An alle senden“",
-        "sendAllBody": "eine Schaltfläche erstellt im Softwaremodul Aufgaben für nicht ausgefüllte Journale. Mitarbeiter sehen sie auf ihren Smartphones.",
-        "qDisabledQ": "Das Journal ist ausgeschaltet, muss aber trotzdem geführt werden",
-        "qDisabledA": "Gehen Sie zu „Einstellungen → Journalset“ und schalten Sie es wieder ein. Prüfen Sie auch „Einstellungen → Journalverantwortliche“ – dort müssen Verantwortliche festgelegt sein.",
-        "qNoAccessQ": "Ein Mitarbeiter hat keinen Zugriff auf ein Journal",
-        "qNoAccessA": "Der Zugriff wird nach Position festgelegt. Öffnen Sie „Einstellungen → Journalzugriff des Personals“ – dort finden Sie die Tabelle „Position × Journal“."
-      },
-      "controlPeriodicity": {
-        "label": "Kontrollhäufigkeit",
-        "placeholder": "Zum Beispiel: jede Schicht vor Arbeitsbeginn"
-      },
-      "dateField": {
-        "placeholder": "TT.MM.JJJJ",
-        "pickDate": "Datum wählen",
-        "openCalendar": "Kalender öffnen",
-        "previousMonth": "Vorheriger Monat",
-        "nextMonth": "Nächster Monat",
-        "month1": "Januar",
-        "month2": "Februar",
-        "month3": "März",
-        "month4": "April",
-        "month5": "Mai",
-        "month6": "Juni",
-        "month7": "Juli",
-        "month8": "August",
-        "month9": "September",
-        "month10": "Oktober",
-        "month11": "November",
-        "month12": "Dezember",
-        "weekday1": "Mo",
-        "weekday2": "Di",
-        "weekday3": "Mi",
-        "weekday4": "Do",
-        "weekday5": "Fr",
-        "weekday6": "Sa",
-        "weekday7": "So"
-      }
-    },
-    "pointRowsNotice": {
-      "equipmentTitle": "Dieses Dokument enthält Ausstattung anderer Standorte: {count}",
-      "roomsTitle": "Dieses Dokument enthält Räume anderer Standorte: {count}",
-      "body": "Das Dokument wurde erstellt, bevor Journale nach Standort getrennt wurden. Der nächste Zeitraum enthält nur die Objekte dieses Standorts. Um es jetzt zu beheben, nutzen Sie „Dokumente neu erstellen“ bei den Journalverantwortlichen.",
-      "action": "„Dokumente neu erstellen“ öffnen"
-    }
-  },
-  "publicUi": {
-    "cookieConsent": {
-      "ariaLabel": "Hinweis zur Cookie-Nutzung",
-      "longMessage": "Wir verwenden Cookies, damit die Website korrekt und reibungslos funktioniert.",
-      "shortMessage": "Wir verwenden Cookies",
-      "privacyLink": "Mehr erfahren",
-      "accept": "OK"
-    },
-    "appStores": {
-      "title": "Mobile App",
-      "description": "Mitarbeiter können auf ihren Telefonen Journale führen und Benachrichtigungen erhalten. Die Apps für iPhone und Android werden für die Stores vorbereitet.",
-      "comingSoon": "demnächst"
-    },
-    "registrationErrors": {
-      "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein",
-      "consentRequired": "Akzeptieren Sie das Angebot, die Vereinbarung und die Bedingungen zur Verarbeitung personenbezogener Daten",
-      "rateLimited": "Zu viele Versuche. Bitte versuchen Sie es in einigen Minuten erneut",
-      "challengeRejected": "Die Überprüfung ist fehlgeschlagen oder abgelaufen. Bitte führen Sie sie erneut durch.",
-      "challengeUnavailable": "Die Registrierungsprüfung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
-      "emailDomainUnavailable": "Diese E-Mail-Domain existiert nicht. Prüfen Sie die Adresse; die E-Mail mit dem Passwort würde sie nicht erreichen.",
-      "registrationFailed": "Das Konto konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
-    },
-    "pricing": {
-      "title": "Mit Ausstattung",
-      "intro": "Der Premium-Tarif und ein fertiges Ausstattungsset",
-      "popular": "Beliebt",
-      "subscription": "Premium-Tarif",
-      "perMonth": "/Monat",
-      "bundleSummary": "Paket {name}",
-      "oneTime": "Einmalig",
-      "itemCount": "· {count, plural, one {# Artikel} other {# Artikel}}",
-      "empty": "leer",
-      "payByCard": "Per Karte bezahlen",
-      "confirmBundleInTelegram": "Wir bestätigen den Paketinhalt in Telegram",
-      "orderInTelegram": "Oder über Telegram bestellen",
-      "hideConfigurator": "Konfigurator ausblenden",
-      "configureManually": "Manuell konfigurieren",
-      "manualDescription": "Wählen Sie jeden Artikel selbst. Entfernen Sie das Häkchen, wenn Sie diese Ausstattung bereits haben.",
-      "toggleDevice": "{device} umschalten",
-      "perUnit": "× Stk.",
-      "removeOne": "Einen Artikel entfernen",
-      "addOne": "Einen Artikel hinzufügen",
-      "delivery": "Wir liefern und installieren innerhalb von 3 Werktagen in Moskau und Umgebung.",
-      "bundles": {
-        "solo": {
-          "name": "Solo",
-          "forWhom": "Ein Standort, kleine Schicht",
-          "hook": "Ein Sensor für den Hauptkühlschrank, ein Thermo-Hygrometer in der Küche und NFC-Zugang für die Schicht."
-        },
-        "standard": {
-          "name": "Arbeitsstandort",
-          "forWhom": "Tägliche Arbeit und regelmäßige Kontrollen",
-          "hook": "Sensoren an der wichtigsten Kühltechnik, ein Arbeitsplatz-Tablet und Schlüsselanhänger für die ganze Schicht."
-        },
-        "network": {
-          "name": "Netzwerk",
-          "forWhom": "Ein Netzwerk aus 2–3 Standorten oder ein großer Produktionsbetrieb",
-          "hook": "Zwei Besuche an verschiedenen Adressen, mit erweitertem Sensor- und Ausstattungsset."
-        }
-      },
-      "devices": {
-        "install": {
-          "title": "Installation und Einrichtung vor Ort",
-          "hint": "Ein Techniker kommt zu Ihnen, installiert die Sensoren, richtet Profile ein und schult Ihr Personal."
-        },
-        "temp": {
-          "title": "Temperatursensor",
-          "hint": "Für einen Kühl- oder Gefrierschrank – einer pro Gerät."
-        },
-        "thermo": {
-          "title": "Thermo-Hygrometer",
-          "hint": "Zur Überwachung von Temperatur und Luftfeuchtigkeit im Gastraum oder Produktionsraum."
-        },
-        "tablet": {
-          "title": "Mitarbeiter-Tablet",
-          "hint": "10-Zoll-Bildschirm, Schutzhülle und vorkonfiguriertes Profil. Wandmontage im Produktionsraum möglich."
-        },
-        "nfc": {
-          "title": "NFC-Schlüsselanhänger",
-          "hint": "Zugriffsprotokolle mit einem Tipp – einer für jede aktive Schicht."
-        }
-      }
-    },
-    "demoRequest": {
-      "trigger": "Zeigen Sie es mir in 15 Minuten",
-      "title": "Wir zeigen Ihnen WeSetup in 15 Minuten",
-      "description": "Ein Video- oder Telefonanruf: Wir zeigen die Journale am Beispiel Ihres Betriebs und beantworten Ihre Fragen. Kostenlos und unverbindlich.",
-      "name": "Ihr Name",
-      "namePlaceholder": "Name",
-      "phone": "Telefon",
-      "when": "Wann passt es Ihnen",
-      "when_today": "Heute",
-      "when_tomorrow": "Morgen",
-      "when_week": "Diese Woche",
-      "topic": "Was sollen wir zeigen",
-      "optional": "optional",
-      "topicPlaceholder": "Zum Beispiel: Kühlschranksensoren oder Vorbereitung auf eine Kontrolle",
-      "consent": "Ich erteile meine <consent>Einwilligung zur Verarbeitung personenbezogener Daten</consent> und habe die <privacy>Datenschutzerklärung</privacy> gelesen",
-      "submit": "Demo buchen",
-      "sending": "Wird gesendet…",
-      "errorName": "Sagen Sie uns, wie wir Sie ansprechen dürfen",
-      "errorPhone": "Geben Sie eine Telefonnummer ein, damit wir Sie zurückrufen können",
-      "errorConsent": "Setzen Sie das Häkchen bei der Einwilligung zur Verarbeitung personenbezogener Daten",
-      "errorTooMany": "Zu viele Anfragen hintereinander. Versuchen Sie es später erneut oder rufen Sie uns an",
-      "errorGeneric": "Die Anfrage konnte nicht gesendet werden. Versuchen Sie es erneut oder rufen Sie uns an",
-      "doneTitle": "Anfrage erhalten",
-      "doneBody": "Wir rufen {phone} an, um einen Termin für die Demo zu vereinbaren.",
-      "close": "Schließen",
-      "modeSlot": "Zeit wählen",
-      "modeCallback": "Rückruf anfordern",
-      "slotsLoading": "Freie Termine werden geprüft…",
-      "pickTime": "Demo-Termin",
-      "mskNote": "Moskauer Zeit. Die Demo dauert 15 Minuten per Video oder Telefon.",
-      "email": "E-Mail",
-      "emailHint": "wir senden eine Kalendereinladung",
-      "errorSlot": "Wählen Sie Tag und Uhrzeit für die Demo",
-      "slotTaken": "Dieser Termin wurde gerade vergeben – wählen Sie einen anderen",
-      "noSlots": "Keine freien Termine in den nächsten Tagen – hinterlassen Sie Ihre Telefonnummer, wir rufen Sie an und vereinbaren einen Termin.",
-      "doneBookedTitle": "Sie sind gebucht",
-      "doneBookedBody": "{when} Moskauer Zeit. Wir rufen Sie dann unter {phone} an.",
-      "addToCalendar": "Zum Kalender hinzufügen",
-      "calendarSummary": "WeSetup-Demo in 15 Minuten",
-      "calendarDescription": "Wir rufen zum gebuchten Zeitpunkt an. Zum Verschieben – admin@wesetup.ru"
-    }
-  },
-  "staffPages": {
-    "positions": {
-      "description": "Stellenplan: wie viele Personen jede Stelle braucht und wie viele bereits dort arbeiten.",
-      "toStaff": "Personal",
-      "add": "Stelle",
-      "addInCategory": "Hinzufügen",
-      "readOnly": "Nur eine Führungskraft kann Stellen ändern – diese Seite ist für Sie schreibgeschützt.",
-      "cancel": "Abbrechen",
-      "totals": {
-        "planned": "Geplant: {count}",
-        "occupied": "Besetzt: {count}",
-        "vacancies": "Offene Stellen: {count}",
-        "overstaffed": "Über Plan: {count}",
-        "people": "Im Dienst: {count}",
-        "noPlan": "Stellenzahl nicht festgelegt"
-      },
-      "guide": {
-        "title": "So funktioniert der Stellenplan",
-        "headcountTitle": "Stellenzahl",
-        "headcountBody": "wie viele Personen auf der Stelle arbeiten sollen. Lassen Sie das Feld leer, um nur anzuzeigen, wie viele dort aktuell arbeiten.",
-        "occupiedTitle": "„N von M besetzt“",
-        "occupiedBody": "N ist das aktive Personal auf der Stelle (ohne Archiv), M die Stellenzahl. Grün bedeutet voll besetzt, Gelb offene Stellen, Rot mehr Personen als geplant.",
-        "orderTitle": "Reihenfolge",
-        "orderBody": "nutzen Sie die Pfeile „nach oben“ und „nach unten“ innerhalb einer Gruppe. Die Stellen erscheinen in derselben Reihenfolge auf der Seite „Personal“ und beim Hinzufügen eines Mitarbeiters.",
-        "deleteTitle": "Löschen",
-        "deleteBody": "eine Stelle mit Personen kann nicht gelöscht werden – verschieben Sie diese zuerst auf eine andere Stelle oder ins Archiv."
-      },
-      "categories": {
-        "management": {
-          "title": "Leitung",
-          "hint": "Führungskräfte, Schichtleiter, Technologen – voller Zugriff auf den Arbeitsbereich."
-        },
-        "staff": {
-          "title": "Personal",
-          "hint": "Mitarbeiter erledigen ihre Schichtaufgaben in der App."
-        },
-        "commission": {
-          "title": "Kommission für die Speisenkontrolle",
-          "hint": "Externe Kommissionsmitglieder: Sie signieren Speisenkontrollen mit einer PIN und melden sich nicht im Arbeitsbereich an."
-        }
-      },
-      "empty": {
-        "title": "Noch keine Stellen",
-        "hint": "Fügen Sie die erste hinzu – dann können Sie ihr Mitarbeiter zuordnen.",
-        "hintReadOnly": "Stellen werden von einer Führungskraft angelegt."
-      },
-      "row": {
-        "plan": "Geplant: {count}",
-        "noPlan": "Keine Stellenzahl",
-        "people": "{count, plural, one {# Person} other {# Personen}}",
-        "moveUp": "Nach oben: {name}",
-        "moveUpShort": "Hoch",
-        "moveDown": "Nach unten: {name}",
-        "moveDownShort": "Runter",
-        "edit": "Stelle bearbeiten: {name}",
-        "editShort": "Bearbeiten",
-        "delete": "Stelle löschen: {name}",
-        "deleteShort": "Löschen"
-      },
-      "dialog": {
-        "createTitle": "Neue Stelle",
-        "editTitle": "Stelle bearbeiten",
-        "description": "Die Gruppe bestimmt, welche Berechtigungen die Personen auf dieser Stelle erhalten.",
-        "category": "Gruppe",
-        "name": "Stelle",
-        "namePlaceholder": "Zum Beispiel Administrator",
-        "nameShort": "Der Name muss mindestens 2 Zeichen haben",
-        "headcountInvalid": "Die Stellenzahl muss eine ganze Zahl von 0 bis 999 sein",
-        "create": "Erstellen",
-        "save": "Speichern",
-        "saving": "Wird gespeichert…"
-      },
-      "toast": {
-        "created": "Stelle „{name}“ hinzugefügt",
-        "updated": "Stelle „{name}“ gespeichert",
-        "deleted": "Stelle „{name}“ gelöscht"
-      },
-      "errors": {
-        "forbidden": "Nur eine Führungskraft kann Stellen ändern",
-        "duplicate": "Diese Stelle existiert bereits",
-        "hasPeople": "Auf dieser Stelle arbeiten Personen – verschieben Sie sie zuerst",
-        "notFound": "Stelle nicht gefunden – aktualisieren Sie die Seite",
-        "saveFailed": "Die Stelle konnte nicht gespeichert werden",
-        "deleteFailed": "Die Stelle konnte nicht gelöscht werden",
-        "orderFailed": "Die Reihenfolge konnte nicht gespeichert werden",
-        "network": "Keine Verbindung zum Server – versuchen Sie es erneut"
-      },
-      "delete": {
-        "title": "Stelle „{name}“ löschen?",
-        "description": "Die Stelle verschwindet aus dem Stellenplan.",
-        "gone": "Sie wird beim Hinzufügen eines Mitarbeiters nicht mehr angeboten",
-        "journals": "Für diese Stelle eingerichtete Journale und Berechtigungen werden mit ihr gelöscht",
-        "irreversible": "Eine gelöschte Stelle kann nicht wiederhergestellt, nur neu angelegt werden",
-        "confirm": "Löschen",
-        "blockedTitle": "Auf „{name}“ arbeiten Personen",
-        "blockedDescription": "Eine Stelle kann nur gelöscht werden, wenn niemand darauf arbeitet.",
-        "blockedPeople": "Aktuell auf dieser Stelle: {count, plural, one {# Person} other {# Personen}}",
-        "blockedMove": "Verschieben Sie sie auf der Seite „Personal“ auf eine andere Stelle oder ins Archiv",
-        "blockedAfter": "Kommen Sie danach zurück und löschen Sie die Stelle",
-        "blockedConfirm": "Personal öffnen"
-      }
-    },
-    "access": {
-      "description": "Was jeder im Arbeitsbereich und in der App tun darf: Berechtigungssätze, wer welchen hat und welche Bereiche und Journale offen sind.",
-      "cancel": "Abbrechen",
-      "save": "Speichern",
-      "saving": "Wird gespeichert…",
-      "guide": {
-        "title": "So funktionieren Berechtigungen",
-        "presetTitle": "Berechtigungssatz",
-        "presetBody": "bestimmt, was eine Person tun kann: Journale sehen, erledigte Arbeit prüfen, Aufgaben zuweisen, Einstellungen ändern.",
-        "autoTitle": "Nach Stelle oder manuell",
-        "autoBody": "der Satz ergibt sich aus der Stelle: Die Leitung erhält „Administrator“, Küchenchefs „Küchenchef / Manager“, das Personal „Koch“. Jeder andere Satz kann manuell vergeben werden.",
-        "sectionsTitle": "Menübereiche",
-        "sectionsBody": "öffnen sich automatisch aus dem Berechtigungssatz – sie werden nicht separat konfiguriert.",
-        "journalsTitle": "Journale",
-        "journalsBody": "welche Journale ein Mitarbeiter sieht, wird nach Stelle oder persönlich festgelegt – im Detail auf den Seiten „Journale des Personals“ und „Stelle × Journal“."
-      },
-      "presets": {
-        "title": "Berechtigungssätze",
-        "description": "Was jeder Satz gibt und wer ihn erhält.",
-        "configure": "Sätze konfigurieren",
-        "people": "{count, plural, one {# Person} other {# Personen}}",
-        "byPosition": "Nach Stelle: {positions}.",
-        "byPositionNone": "Niemand erhält ihn nach Stelle – nur manuell.",
-        "more": "und {count} weitere",
-        "manual": "Manuell: {count}."
-      },
-      "people": {
-        "title": "Berechtigungssatz der Mitarbeiter",
-        "description": "Welchen Satz jede Person hat. Mit „Ändern“ wählen Sie einen anderen oder kehren zum Satz der Stelle zurück.",
-        "descriptionReadOnly": "Welchen Satz jede Person hat. Nur ein Administrator kann ihn ändern.",
-        "search": "Mitarbeiter oder Stelle suchen",
-        "emptyTitle": "Noch keine Mitarbeiter",
-        "emptyHint": "Fügen Sie Mitarbeiter hinzu – ihre Berechtigungssätze erscheinen hier.",
-        "toStaff": "Zum Personal",
-        "notFound": "Niemand gefunden",
-        "self": "(Sie)",
-        "noPosition": "Keine Stelle",
-        "manual": "manuell festgelegt",
-        "auto": "nach Stelle",
-        "change": "Ändern",
-        "changeFor": "Berechtigungssatz ändern: {name}",
-        "dialogTitle": "Berechtigungssatz – {name}",
-        "forbidden": "Nur ein Administrator kann den Berechtigungssatz ändern",
-        "saved": "{name}: Satz „{preset}“",
-        "network": "Keine Verbindung zum Server – versuchen Sie es erneut"
-      },
-      "sections": {
-        "title": "Welche Bereiche sie sehen",
-        "description": "Menübereiche öffnen sich aus dem Berechtigungssatz – es gibt keine separate Einstellung. Das ist das Menü für jeden Satz.",
-        "state": {
-          "visible": "sieht",
-          "hidden": "sieht nicht",
-          "depends": "hängt vom persönlichen Zugriff ab"
-        },
-        "group": {
-          "management": "für die Leitung",
-          "staff": "für Mitarbeiter"
-        },
-        "legend": {
-          "visible": "Sieht den Bereich",
-          "hidden": "Sieht ihn nicht",
-          "depends": "Hängt vom persönlichen Zugriff ab (zum Beispiel auf das Checklistenjournal)"
-        },
-        "personTitle": "Mitarbeiter prüfen",
-        "personPlaceholder": "Mitarbeiter wählen",
-        "personHint": "Wählen Sie eine Person, um ihre aktuellen Bereiche zu sehen.",
-        "personPreset": "Satz: „{preset}“,",
-        "personNone": "Keine Bereiche des Arbeitsbereichs – arbeitet mit Aufgaben in der App.",
-        "personSees": "Sieht: {sections}.",
-        "footnote": "Die Leitung (Stellen in der Gruppe Leitung) öffnet einige Bereiche nach Stelle, daher ergibt derselbe Satz für eine Führungskraft und einen Mitarbeiter unterschiedliche Menüs."
-      },
-      "journals": {
-        "title": "Journale",
-        "description": "Wie viele von {total} Journalen jede Stelle hat. Journale können auch für eine Person ausgewählt werden.",
-        "emptyTitle": "Noch keine Stellen",
-        "emptyHint": "Legen Sie Stellen an und öffnen Sie dann Journale für sie.",
-        "toPositions": "Zu den Stellen",
-        "people": "{count, plural, one {# Person} other {# Personen}}",
-        "count": "{count} von {total}",
-        "none": "nicht festgelegt",
-        "personal": "Persönlich gewählte Journale: {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}.",
-        "personalNone": "Bisher hat niemand Journale persönlich gewählt.",
-        "byPerson": "Journale des Personals",
-        "byPosition": "Stelle × Journal"
-      },
-      "visibility": {
-        "title": "Sichtbarkeit von Kollegen",
-        "description": "Wen Personen auf jeder Stelle in der App und im Softwaremodul sehen.",
-        "summary": "Für {configured} von {total} Stellen ist eine Liste festgelegt.",
-        "position": "{name}: sieht {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}",
-        "rest": "Andere Stellen haben keine Liste – sie sehen nur ihre eigenen Aufgaben.",
-        "open": "Sichtbarkeit von Kollegen"
-      },
-      "permissions": {
-        "title": "Berechtigungen für Einstellungen",
-        "description": "Wer Einstellungen des Arbeitsbereichs ändern darf: ein Basispaket für die Gruppe, Sonderrechte für eine Stelle und für eine bestimmte Person.",
-        "open": "Berechtigungen"
-      }
-    },
-    "commission": {
-      "description": "Wer Speisenkontrollen signiert: die Kommission für zubereitete und für verderbliche Speisen.",
-      "guide": {
-        "title": "So funktioniert die Kommission",
-        "whoTitle": "Wer in der Kommission ist",
-        "whoBody": "der Vorsitzende und die Kommissionsmitglieder – Mitarbeiter oder externe Personen. Eine neue Person kann direkt im Kommissionsfenster hinzugefügt werden.",
-        "signTitle": "Signatur",
-        "signBody": "ein Kommissionsmitglied signiert Journaleinträge im Arbeitsbereich oder über den Journal-QR mit einer PIN.",
-        "copyTitle": "Dokumente",
-        "copyBody": "die gespeicherte Kommission wird in aktive Journaldokumente kopiert; neue Dokumente erhalten sie automatisch."
-      },
-      "journals": {
-        "finished_product": {
-          "title": "Kontrolle zubereiteter Speisen",
-          "hint": "Die Kommission prüft und signiert Gerichte vor dem Servieren."
-        },
-        "perishable_rejection": {
-          "title": "Kontrolle verderblicher Speisen",
-          "hint": "Die Kommission signiert eingehende verderbliche Lebensmittel."
-        }
-      },
-      "count": "{count, plural, one {# Person} other {# Personen}}",
-      "loading": "Kommission wird geladen…",
-      "loadFailed": "Die Kommission konnte nicht geladen werden.",
-      "retry": "Erneut versuchen",
-      "emptyTitle": "Keine Kommission bestimmt",
-      "emptyHint": "Bestimmen Sie einen Vorsitzenden und Mitglieder – sie signieren Journaleinträge.",
-      "emptyHintReadOnly": "Die Kommission wird von einer Führungskraft bestimmt.",
-      "assign": "Kommission bestimmen",
-      "edit": "Mitglieder ändern",
-      "noPosition": "Keine Stelle",
-      "noPin": "keine PIN",
-      "noPinHint": "Ohne PIN kann die Person keinen Eintrag über den Journal-QR signieren",
-      "copyHint": "Die Kommission wird für die gesamte Organisation gespeichert und in aktive Journaldokumente kopiert.",
-      "openJournal": "Journal öffnen",
-      "journalOff": "Journal ist ausgeschaltet",
-      "enableJournal": "Journal einschalten",
-      "readOnly": "Die Kommission wird von einer Führungskraft geändert."
-    },
-    "haccpGroup": {
-      "description": "Wer für das HACCP-System verantwortlich ist. Das Team wird im Programm zur Produktionskontrolle geführt – hier dient es nur zur Information.",
-      "edit": "Im Programm zur Produktionskontrolle bearbeiten",
-      "membersTitle": "Teammitglieder",
-      "membersHint": "Der Teamleiter signiert HACCP-Dokumente und leitet Besprechungen.",
-      "count": "{count, plural, one {# Person} other {# Personen}}",
-      "emptyTitle": "Das HACCP-Team ist nicht eingerichtet",
-      "emptyHint": "Richten Sie das Team im Programm zur Produktionskontrolle ein: üblicherweise die Führungskraft, der Küchenchef und der Technologe.",
-      "documentsTitle": "Anordnung zum Team",
-      "documentsHint": "Die Anordnung, die Teamordnung und die Besprechungen stehen im Programm zur Produktionskontrolle.",
-      "order": "Anordnung Nr. {number} vom {date}",
-      "noOrder": "Die Anordnung zur Gründung des Teams wurde noch nicht erlassen.",
-      "openPpk": "HACCP-Team im Programm öffnen"
-    },
-    "controlGroup": {
-      "description": "Personen, die die Arbeit überwachen: Sie sehen Journale und Personal, bestätigen erledigte Arbeit und weisen Aufgaben zu, füllen aber selbst keine Journale aus.",
-      "cancel": "Abbrechen",
-      "guide": {
-        "title": "So funktioniert die Kontrollgruppe",
-        "whoTitle": "Wer in der Gruppe ist",
-        "whoBody": "jeder Mitarbeiter mit dem Berechtigungssatz „Kontrollgruppe“. Fügen Sie ihn hier oder im Zugriffsfenster des Mitarbeiters hinzu oder entfernen Sie ihn.",
-        "scopeTitle": "Wen sie sehen",
-        "scopeBody": "standardmäßig alle. Schränken Sie das in der Führungshierarchie ein: Wählen Sie Stellen oder Personen und die Journale, für die sie Aufgaben zuweisen.",
-        "removeTitle": "Entfernen",
-        "removeBody": "die Person erhält den Berechtigungssatz ihrer Stelle zurück."
-      },
-      "rights": {
-        "title": "Was die Kontrollgruppe tun kann",
-        "hint": "Der Berechtigungssatz „Kontrollgruppe“ ist für alle Mitglieder gleich.",
-        "seesTitle": "Sieht alles",
-        "seesBody": "Journale, Personal, Berichte und Statistiken.",
-        "verifyTitle": "Bestätigt",
-        "verifyBody": "prüft erledigte Aufgaben und Einträge.",
-        "assignTitle": "Weist Aufgaben zu",
-        "assignBody": "an Personal ihrer Hierarchie und für ihre Journale.",
-        "fillTitle": "Füllt nicht aus",
-        "fillBody": "die Kontrollgruppe füllt keine Journale und Dokumente aus und schließt sie nicht ab."
-      },
-      "members": {
-        "title": "Mitglieder",
-        "hint": "Wen jedes Mitglied sieht und für welche Journale es Aufgaben zuweist. Schränken Sie das in der Führungshierarchie ein.",
-        "hintNoHierarchy": "Wen jedes Mitglied sieht und für welche Journale es Aufgaben zuweist.",
-        "count": "{count, plural, one {# Person} other {# Personen}}",
-        "emptyTitle": "Die Kontrollgruppe ist leer",
-        "emptyHint": "Fügen Sie unten eine Person hinzu – sie erhält sofort den Berechtigungssatz „Kontrollgruppe“.",
-        "emptyHintReadOnly": "Mitglieder werden von einem Administrator hinzugefügt.",
-        "noPosition": "Keine Stelle",
-        "narrow": "In der Hierarchie einschränken",
-        "remove": "Aus der Gruppe entfernen"
-      },
-      "scope": {
-        "seesDefault": "Sieht alle (Hierarchie nicht festgelegt)",
-        "seesAll": "Sieht alle",
-        "seesNone": "Sieht niemanden",
-        "seesNoPositions": "Sieht niemanden: keine Stellen gewählt",
-        "seesPositions": "Sieht Stellen: {list}",
-        "seesNoUsers": "Sieht niemanden: keine Mitarbeiter gewählt",
-        "seesUsers": "Sieht {count, plural, one {# Mitarbeiter} other {# Mitarbeiter}}: {list}",
-        "assignsAll": "Weist Aufgaben für alle Journale zu",
-        "assigns": "Weist Aufgaben zu: {list}",
-        "more": "und {count} weitere"
-      },
-      "add": {
-        "title": "Zur Gruppe hinzufügen",
-        "hint": "Wählen Sie einen Mitarbeiter – er erhält den Berechtigungssatz „Kontrollgruppe“ anstelle des aktuellen.",
-        "readOnly": "Die Kontrollgruppe wird von einem Administrator geändert.",
-        "noCandidates": "Niemand zum Hinzufügen: Alle Mitarbeiter sind bereits in der Gruppe.",
-        "placeholder": "Mitarbeiter wählen",
-        "preview": "Berechtigungssatz: „{from}“ → „{to}“.",
-        "button": "Zur Kontrollgruppe hinzufügen"
-      },
-      "errors": {
-        "forbidden": "Nur ein Administrator kann den Berechtigungssatz ändern",
-        "notFound": "Mitarbeiter nicht gefunden – aktualisieren Sie die Seite",
-        "saveFailed": "Der Berechtigungssatz konnte nicht geändert werden",
-        "network": "Keine Verbindung zum Server – versuchen Sie es erneut"
-      },
-      "toast": {
-        "added": "{name} ist jetzt in der Kontrollgruppe",
-        "removed": "{name}: Berechtigungssatz wieder wie bei der Stelle"
-      },
-      "confirmAdd": {
-        "title": "{name} zur Kontrollgruppe hinzufügen?",
-        "description": "Diese Person hat jetzt den Satz „Administrator“.",
-        "losesAdmin": "Sie verliert den vollen Zugriff: Einstellungen, Abrechnung und Berechtigungsänderungen",
-        "keeps": "Sie sieht alles, bestätigt und weist Aufgaben zu, füllt aber keine Journale aus",
-        "undo": "Zum Rückgängigmachen – „Aus der Gruppe entfernen“: Der Satz kehrt zur Stelle zurück",
-        "confirm": "Hinzufügen"
-      },
-      "confirmRemove": {
-        "title": "{name} aus der Kontrollgruppe entfernen?",
-        "description": "Der Berechtigungssatz kehrt zur Stelle zurück.",
-        "preset": "Neuer Satz: „{preset}“",
-        "rights": "Wenn der Satz der Stelle es nicht erlaubt, sieht die Person keine Journale mehr und kann keine Aufgaben bestätigen oder zuweisen",
-        "confirm": "Entfernen"
-      }
-    },
-    "inspectors": {
-      "description": "Wer Ihre Arbeit prüft: externe Prüfer mit Zugriff auf Journale und Mitarbeiter mit Prüfrollen.",
-      "external": {
-        "title": "Externe Prüfer",
-        "hint": "QR-Codes und Links des Prüferportals: Der Prüfer öffnet Journale ohne Anmeldung.",
-        "issue": "QR für einen Prüfer ausstellen",
-        "emptyTitle": "Noch kein Prüferzugang ausgestellt",
-        "emptyHint": "Stellen Sie einen QR oder Link aus – der Prüfer sieht die Journale des benötigten Zeitraums und signiert das Besuchsprotokoll.",
-        "summary": "{active} von {total} sind aktiv.",
-        "kind": {
-          "qr": "Prüfer-QR",
-          "link": "Prüfer-Link"
-        },
-        "status": {
-          "active": "Aktiv",
-          "expired": "Abgelaufen",
-          "revoked": "Widerrufen"
-        },
-        "period": "Zeitraum:",
-        "periodOpen": "beliebig – vom Prüfer gewählt",
-        "expires": "Gültig bis:",
-        "expired": "Abgelaufen:",
-        "issuedBy": "Ausgestellt von:",
-        "issuedUnknown": "unbekannt",
-        "opened": "Geöffnet:",
-        "openedCount": "{count, plural, one {# Mal} other {# Mal}}, zuletzt – {last}",
-        "openedNever": "noch nie",
-        "visits": "Besuche: {count}",
-        "visitAnonymous": "ohne Namen",
-        "visitJournals": "Journale: {count}"
-      },
-      "internal": {
-        "title": "Interne Prüfer und Auditoren",
-        "hint": "Mitarbeiter, die Journale, Dokumente und Räume prüfen oder Audits durchführen.",
-        "emptyTitle": "Keine internen Prüfer bestimmt",
-        "emptyHint": "Ein Journalprüfer und Auditoren werden unter „Journalverantwortliche“ bestimmt, ein Raumprüfer in der Raumkarte.",
-        "openDocument": "Dokument öffnen",
-        "openRooms": "Räume",
-        "openResponsibles": "Journalverantwortliche",
-        "more": "und {count} weitere"
-      },
-      "roles": {
-        "journal_verifier": "Journalprüfer",
-        "document_verifier": "Dokumentenprüfer",
-        "room_verifier": "Raumprüfer",
-        "audit_auditor": "Auditor für interne Audits",
-        "traceability_auditor": "Auditor für Rückverfolgbarkeit"
-      }
-    }
-  },
   "moreUi": {
     "page": {
       "openCapa": "offene Verstöße",
@@ -4240,24 +4230,34 @@
       "weekLosses": "Verluste diese Woche"
     }
   },
-  "miniSections": {
-    "login": {
-      "title": "Zuerst anmelden",
-      "description": "Die für Sie zugänglichen Bereiche hängen von Ihren Berechtigungen ab, daher erscheint die Liste nach der Anmeldung. Öffnen Sie den Anmeldebildschirm; die Telegram-Anmeldung startet dort automatisch.",
-      "action": "Anmelden"
+  "homePage": {
+    "tagline": "Ihr elektronisches HACCP",
+    "contactsTitle": "Wir helfen Ihnen gern",
+    "contacts": {
+      "support": "Support",
+      "sales": "Vertrieb",
+      "consulting": "Beratung"
     },
-    "home": {
-      "eyebrow": "Arbeitsbereich",
-      "title": "Alle Bereiche",
-      "description": "Das sind dieselben Seiten wie auf der Website, hier direkt in der App geöffnet. Sie sehen nur die Bereiche, auf die Sie Zugriff haben."
+    "via": {
+      "telegram": "in Telegram",
+      "support": "Chat auf der Website",
+      "sales": "Tarife und Zahlung",
+      "consulting": "Vorbereitung mit einem Experten"
     },
-    "search": {
-      "label": "Bereiche durchsuchen"
-    },
-    "emptySearch": "Keine Bereiche gefunden. Versuchen Sie ein anderes Wort, etwa „Journal“, „Bericht“ oder „Mitarbeiter“.",
-    "network": {
-      "label": "Netzwerk",
-      "hint": "Organisationen des Kontos: heutige Journale, Salden, eigene 14 Tage"
+    "phone": "Telefon",
+    "mobile": "Mobil",
+    "setupTitle": "Ersteinrichtung",
+    "setupBody": "Standorte, Personal und Journale",
+    "favorites": {
+      "title": "Favoriten",
+      "add": "Zu Favoriten hinzufügen",
+      "addHint": "Heften Sie eine Seite hier oder mit dem Stern neben einem Menüpunkt an",
+      "remove": "Aus Favoriten entfernen",
+      "pickDescription": "Die Seite erscheint auf dem Startbildschirm – öffnen Sie sie mit einem Klick.",
+      "search": "Seite suchen",
+      "nothing": "Nichts gefunden",
+      "saved": "Favoriten gespeichert",
+      "failed": "Favoriten konnten nicht gespeichert werden"
     }
   }
 }

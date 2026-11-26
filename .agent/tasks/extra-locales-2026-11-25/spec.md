@@ -18,3 +18,10 @@
   (частичные переводы не отдаются в индекс).
 - AC6. PDF/DOCX и контент, существующий только на ru/en/uz, берут язык-подстраховку (`baseLocale`).
 - AC7. `npm run typecheck` и `npm run test:changed` зелёные.
+
+## Доработка 2026-11-26: без полных копий каталогов
+Деплой #355 упал на сборке Next (heap ~8 ГБ). Полные `messages/{tg,hy,ky,de,fr}.json` (≈11 МБ,
+87% — копия ru/en) удалены; в сборку идут только `translated/<locale>.json` (≈0,3 МБ каждый),
+недостающее накладывает `loadBaseMessages` (`overlay-messages.ts`) из языка-подстраховки.
+- AC8. Полных копий нет; `loadBaseMessages(tg|hy|ky|de|fr)` даёт каталог без расхождений с ru (validateCatalog).
+- AC9. `npm run i18n:locales --check` ловит неочищенные translated-файлы; confirm/errors для новых языков не меняются.
