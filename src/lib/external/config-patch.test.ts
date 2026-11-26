@@ -37,6 +37,26 @@ test("rows: строка с известным id обновляется, ост
   assert.equal("note" in current.rows[0], false);
 });
 
+test("подписи и ключ источника строки — серверные: запрос их не меняет и новой строке не ставит", () => {
+  const signatures = [{ userId: "chair", signedAt: "2026-11-26T10:00:00.000Z" }];
+  const next = mergeConfigPatch(
+    { rows: [{ id: "a", productName: "Суп", signatures, sourceRowKey: "employee-u1#qr-1" }] },
+    {
+      rows: [
+        // Клиент прислал строку, прочитанную до подписи комиссии.
+        { id: "a", productName: "Суп", note: "x", signatures: [], sourceRowKey: "чужой" },
+        { id: "b", productName: "Каша", signatures: [{ userId: "fake" }], sourceRowKey: "employee-u2" },
+      ],
+    }
+  );
+  assert.deepEqual(next, {
+    rows: [
+      { id: "a", productName: "Суп", signatures, sourceRowKey: "employee-u1#qr-1", note: "x" },
+      { id: "b", productName: "Каша" },
+    ],
+  });
+});
+
 test("rows без id дописываются, повтор строки с тем же id не создаёт дубль", () => {
   const once = mergeConfigPatch({ rows: [{ id: "a", productName: "Суп" }] }, { rows: [{ productName: "Каша" }, { id: "n1", productName: "Чай" }] });
   const twice = mergeConfigPatch(once, { rows: [{ id: "n1", productName: "Чай" }] });

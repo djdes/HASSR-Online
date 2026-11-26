@@ -191,35 +191,37 @@ export const intensiveCoolingAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     const doc = await db.journalDocument.findUnique({
       where: { id: documentId },
-      select: { config: true, organizationId: true },
+      select: { organizationId: true },
     });
     const emp = await findTaskEmployee({
       employeeId,
       organizationId: doc?.organizationId,
     });
-    // Подтягиваем previously saved row (если задачу выполняли раньше),
-    // чтобы форма открылась с теми же значениями. UX «нажал на круг
-    // выполненной → редактирую данные».
-    const cfg = (doc?.config as { rows?: IntensiveCoolingRow[] }) ?? {};
-    const existing = Array.isArray(cfg.rows)
-      ? cfg.rows.find((r) => r.sourceRowKey === rowKey) ?? null
-      : null;
-    return buildForm(emp?.name ?? null, existing);
+    // Форма всегда пустая: каждая отправка задачи — новая строка
+    // (`rowKeyForTaskSubmission`). Подстановка строки с ключом задачи
+    // показывала «Сохранить изменения», а сохранение дописывало новую строку.
+    return buildForm(emp?.name ?? null, null);
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {
-    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
-    // записывать нечего: раньше оно стирало поля строки с тем же ключом.
-    if (!completed || !values) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow,
+    // подтверждение задачи с `values: {}`) — записывать нечего: раньше оно
+    // стирало поля строки с тем же ключом.
+    if (!completed || !values || Object.keys(values).length === 0) return false;
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
+
+    // Сотрудник — до блокировки: запрос в пул из транзакции с блокировкой
+    // при пачке отправок ждал бы второго соединения. Организация документа
+    // не меняется, это чтение не устаревает.
+    const owner = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: owner?.organizationId });
+    if (!employee) return false;
 
     // Под блокировкой документа: конфиг читается внутри неё, иначе две
     // одновременные отправки (QR, TasksFlow, сайт) теряли одну из строк.
     const written = await withDocumentConfigLock(documentId, async (doc) => {
       if (doc.templateCode !== TEMPLATE_CODE) return null;
-      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-      if (!employee) return null;
       const currentConfig = (doc.config as { rows?: IntensiveCoolingRow[] }) ?? {};
       const existingRows = Array.isArray(currentConfig.rows)
         ? currentConfig.rows

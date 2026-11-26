@@ -18,8 +18,8 @@ C:\Users\Ralph\.t3\worktrees\Wesetup.ru\t3-700684e9-e03d55882365d280\src\lib\tas
 
 C:\Users\Ralph\.t3\worktrees\Wesetup.ru\t3-700684e9-e03d55882365d280\src\lib\tasksflow-adapters\metal-impurity.ts
    94:13  warning  'config' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
-  157:13  warning  'material' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-  158:13  warning  'supplier' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  162:13  warning  'material' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  163:13  warning  'supplier' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 C:\Users\Ralph\.t3\worktrees\Wesetup.ru\t3-700684e9-e03d55882365d280\src\lib\tasksflow-adapters\ppe-issuance.ts
   28:53  warning  'rowKeyForEmployee' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars

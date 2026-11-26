@@ -104,9 +104,10 @@ export const auditPlanAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, values }) {
-    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
-    // записывать нечего: раньше оно сбрасывало поля строки в пустые.
-    if (!completed || !values) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow,
+    // подтверждение задачи с `values: {}`) — записывать нечего: раньше оно
+    // сбрасывало поля строки в пустые.
+    if (!completed || !values || Object.keys(values).length === 0) return false;
     const rowId = rowKey.startsWith("audit-") ? rowKey.slice(6) : undefined;
     if (!rowId) return false;
 

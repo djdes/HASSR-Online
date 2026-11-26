@@ -145,3 +145,16 @@ test("complete из TasksFlow: строчный журнал — новая ст
   assert.equal((await personal.submit({ status: "healthy" })).status, 200);
   assert.deepEqual(personal.rowKeys, ["employee-user1"]);
 });
+
+test("complete из TasksFlow: повтор того же запроса до записи дедупа попадает в ту же строку", async () => {
+  // TasksFlow повторяет запрос через 30 с; первый ещё идёт (ждёт блокировку
+  // документа) — отметки дедупа нет. Ключ строки — от содержимого запроса,
+  // поэтому повтор обновляет ту же строку, а не дописывает вторую.
+  const fixture = completeRoute("finished_product");
+  assert.equal((await fixture.submit({ productName: "Суп" })).status, 200);
+  await pause();
+  assert.equal((await fixture.submit({ productName: "Суп" })).status, 200);
+  assert.equal(fixture.rowKeys.length, 2);
+  assert.equal(fixture.rowKeys[0], fixture.rowKeys[1]);
+  assert.ok(fixture.rowKeys[0].startsWith("employee-user1#"));
+});

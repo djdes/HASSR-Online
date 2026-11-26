@@ -2,22 +2,85 @@
   "task": "overwrite-fix-d-2026-11-26",
   "branch": "fix/overwrite-d-config-writers",
   "acceptance": {
-    "AC1": { "status": "PASS", "tests": ["src/lib/tasksflow-adapters/row-key-qr.test.ts", "src/lib/tasksflow-task-submission-rowkey.test.ts", "src/lib/tasksflow-adapters/config-lock.test.ts"] },
-    "AC2": { "status": "PASS", "tests": ["src/lib/tasksflow-adapters/config-lock.test.ts"] },
-    "AC3": { "status": "PASS", "tests": ["src/lib/tasksflow-adapters/config-lock.test.ts"], "raw": ["raw/d2-prefix-lost-update.txt"] },
-    "AC4": { "status": "PASS", "tests": ["src/lib/external/config-patch.test.ts", "src/lib/external/dispatch-config-lock.test.ts"] },
-    "AC5": { "status": "PASS", "tests": ["src/lib/config-cascades-lock.test.ts"] },
-    "AC6": { "status": "PASS", "raw": ["raw/related-tests.txt", "raw/tsc.txt", "raw/eslint.txt"] }
+    "AC1": {
+      "status": "PASS",
+      "tests": [
+        "src/lib/tasksflow-adapters/row-key-qr.test.ts",
+        "src/lib/tasksflow-task-submission-rowkey.test.ts",
+        "src/lib/tasksflow-adapters/config-lock.test.ts"
+      ]
+    },
+    "AC2": {
+      "status": "PASS",
+      "tests": [
+        "src/lib/tasksflow-adapters/config-lock.test.ts"
+      ]
+    },
+    "AC3": {
+      "status": "PASS",
+      "tests": [
+        "src/lib/tasksflow-adapters/config-lock.test.ts"
+      ],
+      "raw": [
+        "raw/d2-prefix-lost-update.txt"
+      ]
+    },
+    "AC4": {
+      "status": "PASS",
+      "tests": [
+        "src/lib/external/config-patch.test.ts",
+        "src/lib/external/dispatch-config-lock.test.ts"
+      ]
+    },
+    "AC5": {
+      "status": "PASS",
+      "tests": [
+        "src/lib/config-cascades-lock.test.ts"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "raw": [
+        "raw/related-tests.txt",
+        "raw/tsc.txt",
+        "raw/eslint.txt"
+      ]
+    }
   },
   "checks": {
-    "relatedTests": { "files": 56, "pass": 466, "fail": 0 },
-    "testChanged": { "files": 13, "pass": 94, "fail": 0 },
-    "tsc": { "scope": "changed files via temporary tsconfig", "errors": 0 },
-    "eslint": { "errors": 0, "warnings": 11, "newWarnings": 0 }
+    "relatedTests": {
+      "files": 56,
+      "pass": 468,
+      "fail": 0
+    },
+    "testChanged": {
+      "files": 13,
+      "pass": 94,
+      "fail": 0
+    },
+    "tsc": {
+      "scope": "changed files via temporary tsconfig",
+      "errors": 0
+    },
+    "eslint": {
+      "errors": 0,
+      "warnings": 11,
+      "newWarnings": 0
+    }
   },
   "outOfScope": [
     "web PATCH route, brakerage-row-merge.ts, entries routes (group C)",
     "JournalDocumentEntry upsert writers",
     "pure append adapters append an empty row on value-less completion (no data loss)"
-  ]
+  ],
+  "verification": {
+    "verifier": "fresh general-purpose agent, spec + diff only",
+    "verdict": "PASS",
+    "problems": 5,
+    "problemsResolved": 5,
+    "files": [
+      "verdict.json",
+      "problems.md"
+    ]
+  }
 }

@@ -109,9 +109,10 @@ export const trainingPlanAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, values }) {
-    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
-    // записывать нечего: раньше оно сбрасывало поля строки в пустые.
-    if (!completed || !values) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow,
+    // подтверждение задачи с `values: {}`) — записывать нечего: раньше оно
+    // сбрасывало поля строки в пустые.
+    if (!completed || !values || Object.keys(values).length === 0) return false;
     const match = rowKey.match(/^position-(.+)-topic-(.+)$/);
     if (!match) return false;
     const [, positionId, topicId] = match;

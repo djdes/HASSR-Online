@@ -24,7 +24,7 @@ import type { JournalAdapter } from "./types";
  */
 
 type Config = Record<string, unknown>;
-type Store = { templateCode: string; config: Config; directWrites: number };
+type Store = { templateCode: string; config: Config; directWrites: number; lookupsInLock?: number };
 type LockedDoc = {
   id: string;
   organizationId: string;
@@ -42,9 +42,11 @@ const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
 
 function environment(store: Store) {
   let chain: Promise<unknown> = Promise.resolve();
+  let inLock = false;
   const withDocumentConfigLock = (documentId: string, mutate: (doc: LockedDoc, tx: unknown) => Promise<LockOut>) => {
     const run = chain.then(async () => {
       await tick();
+      inLock = true;
       const out = await mutate(
         {
           id: documentId,
@@ -57,7 +59,9 @@ function environment(store: Store) {
           templateCode: store.templateCode,
         },
         {}
-      );
+      ).finally(() => {
+        inLock = false;
+      });
       if (!out) return null;
       await tick();
       if (out.config !== undefined) store.config = clone(out.config) as Config;
@@ -84,8 +88,12 @@ function environment(store: Store) {
     },
     room: { findMany: async () => [] },
   };
-  const findTaskEmployee = async ({ employeeId }: { employeeId: string | null }) =>
-    employeeId ? { id: employeeId, name: `Сотрудник ${employeeId}`, positionTitle: "Повар" } : null;
+  // Запрос сотрудника в пул из транзакции с блокировкой при пачке отправок
+  // ждал бы второго соединения — считаем такие вызовы.
+  const findTaskEmployee = async ({ employeeId }: { employeeId: string | null }) => {
+    if (inLock) store.lookupsInLock = (store.lookupsInLock ?? 0) + 1;
+    return employeeId ? { id: employeeId, name: `Сотрудник ${employeeId}`, positionTitle: "Повар" } : null;
+  };
   return {
     "@/lib/db": { db },
     "@/lib/document-config-lock": { withDocumentConfigLock },
@@ -400,6 +408,7 @@ for (const fixture of FIXTURES) {
     );
     assert.deepEqual(results, fixture.calls.map(() => true));
     assert.equal(store.directWrites, 0, "конфиг пишется только под блокировкой документа");
+    assert.equal(store.lookupsInLock ?? 0, 0, "сотрудник ищется до блокировки");
     fixture.check(store.config);
   });
 }
@@ -487,9 +496,26 @@ for (const journal of BRAKERAGE) {
     const adapter = loadAdapter(journal.file, BRAKERAGE_SOURCES[journal.file], journal.exportName, environment(store));
     const changed = await adapter.applyRemoteCompletion({ documentId: "doc-1", rowKey: "employee-u1", completed: true, todayKey: TODAY });
     assert.equal(changed, false);
+    const empty = await adapter.applyRemoteCompletion({ documentId: "doc-1", rowKey: "employee-u1", completed: true, todayKey: TODAY, values: {} });
+    assert.equal(empty, false);
     assert.deepEqual(store.config, legacy);
   });
 }
+
+test("интенсивное охлаждение: форма задачи открывается пустой, строка с ключом задачи не подставляется", async () => {
+  const legacy = { rows: [{ id: "legacy", dishName: "Борщ", startTemperature: "80", sourceRowKey: "employee-u1" }] };
+  const store: Store = { templateCode: "intensive_cooling", config: clone(legacy), directWrites: 0 };
+  const adapter = loadAdapter(
+    "src/lib/tasksflow-adapters/intensive-cooling.ts",
+    BRAKERAGE_SOURCES["src/lib/tasksflow-adapters/intensive-cooling.ts"],
+    "intensiveCoolingAdapter",
+    environment(store)
+  );
+  const form = await adapter.getTaskForm?.({ documentId: "doc-1", rowKey: "employee-u1" });
+  assert.ok(form);
+  assert.equal(form.submitLabel, "Сохранить замер");
+  assert.equal(form.fields.find((field) => field.key === "dishName")?.defaultValue, undefined);
+});
 
 for (const fixture of FIXTURES.filter((item) => ["план аудита", "протокол аудита", "план обучения"].includes(item.name))) {
   test(`${fixture.name}: выполнение задачи без значений не сбрасывает строку`, async () => {
@@ -500,6 +526,9 @@ for (const fixture of FIXTURES.filter((item) => ["план аудита", "пр�
     const written = clone(store.config);
     const changed = await adapter.applyRemoteCompletion({ documentId: "doc-1", rowKey: fixture.calls[0].rowKey, completed: true, todayKey: TODAY });
     assert.equal(changed, false);
+    // Подтверждение задачи в TasksFlow без формы приходит с `values: {}`.
+    const empty = await adapter.applyRemoteCompletion({ documentId: "doc-1", rowKey: fixture.calls[0].rowKey, completed: true, todayKey: TODAY, values: {} });
+    assert.equal(empty, false);
     assert.deepEqual(store.config, written);
   });
 }

@@ -105,17 +105,18 @@ export const complaintRegisterAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
+    // Сотрудник — до блокировки: запрос в пул из транзакции с блокировкой
+    // при пачке отправок ждал бы второго соединения. Организация документа
+    // не меняется, это чтение не устаревает. Жалобу принимает только
+    // сотрудник организации документа: id пришёл из rowKey внешнего сервиса.
+    const owner = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: owner?.organizationId });
+    if (!employee) return false;
+
     // Под блокировкой документа: конфиг читается внутри неё, иначе две
     // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
     const written = await withDocumentConfigLock(documentId, async (doc) => {
       if (doc.templateCode !== TEMPLATE_CODE) return null;
-      // Жалобу принимает только сотрудник организации документа: id пришёл
-      // из rowKey внешнего сервиса.
-      const employee = await findTaskEmployee({
-        employeeId,
-        organizationId: doc.organizationId,
-      });
-      if (!employee) return null;
 
       const currentConfig = normalizeComplaintConfig(doc.config) as ComplaintDocumentConfig;
 

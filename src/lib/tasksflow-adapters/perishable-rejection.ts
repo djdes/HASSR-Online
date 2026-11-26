@@ -192,9 +192,10 @@ export const perishableRejectionAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {
-    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
-    // записывать нечего: раньше оно стирало поля строки с тем же ключом.
-    if (!completed || !values) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow,
+    // подтверждение задачи с `values: {}`) — записывать нечего: раньше оно
+    // стирало поля строки с тем же ключом.
+    if (!completed || !values || Object.keys(values).length === 0) return false;
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
     // Сотрудник из rowKey (внешний сервис) — только своей организации.

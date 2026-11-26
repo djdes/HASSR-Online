@@ -1,0 +1,52 @@
+{
+  "overall": "PASS",
+  "verifiedCommit": "10aec29e (diff 50f35a89..HEAD)",
+  "criteria": {
+    "AC1": {
+      "status": "PASS",
+      "notes": "rowKeyForTaskSubmission (src/lib/tasksflow-adapters/row-key.ts:48-51) adds '#tf-<ms>' only when journalFillHints(code).append === true (finished_product, intensive_cooling, perishable_rejection, incoming_control, incoming_raw_materials_control, product_writeoff); used in src/app/api/task-fill/[taskId]/route.ts:214 and src/app/api/integrations/tasksflow/complete/route.ts:172. QR_APPEND_SUFFIX_RE now /#(?:qr|tf)-\\d+$/ (row-key.ts:33), so extractEmployeeId strips it (employee- and freetask: forms checked). Upsert adapters (appendFinishedProductRows / appendPerishableRows / intensive-cooling) key rows by sourceRowKey, so dish B becomes a new row and signed row A is untouched (config-lock.test.ts brakerage cases, tasksflow-task-submission-rowkey.test.ts). Non-append journals keep link.rowKey. Side effect on intensive-cooling getTaskForm prefill: see problems.md #1."
+    },
+    "AC2": {
+      "status": "PASS",
+      "notes": "finished-product.ts:249, perishable-rejection.ts:197, intensive-cooling.ts:213, audit-plan.ts:109, audit-protocol.ts:105, training-plan.ts:114 return false on !values before touching the document; pull (tasksflow-sync.ts:197) and webhook (tasksflow-sync.ts:278) pass values undefined. Verified with a harness that pre-fix finished_product pull wiped productName and HEAD does not. Residual (pre-existing, not in the AC's listed paths): TasksFlow /complete with values {} still resets an audit-plan row — problems.md #4."
+    },
+    "AC3": {
+      "status": "PASS",
+      "notes": "All 19 listed adapters (acceptance, accident-journal, audit-plan, audit-protocol, audit-report, breakdown-history, cleaning pairs-matrix, complaint-register, disinfectant-usage, equipment-calibration, equipment-maintenance, glass-list, intensive-cooling, metal-impurity, ppe-issuance, product-writeoff, staff-training, traceability, training-plan) now read doc.config from the LockedDocument inside withDocumentConfigLock and return {config, result:true}; null paths (wrong template, unknown employee, row not found, unchanged mark) map to false, so 'true only when written' is preserved. grep finds no journalDocument.update/updateMany left in src/lib/tasksflow-adapters. Template-code checks, findTaskEmployee org checks, normalizers and completed=false paths retained. config-lock.test.ts fails on pre-fix code (confirmed with a harness: pre-fix accident adapter lost 1 of 2 concurrent rows)."
+    },
+    "AC4": {
+      "status": "PASS",
+      "notes": "dispatch.ts:924-928: SELECT … FOR UPDATE then tx.journalDocument.findUnique inside the same db.$transaction that writes; documentConfig and writeConfigEntries use the re-read doc. mergeConfigPatch moved to src/lib/external/config-patch.ts: rows/receipts/consumptions/findings merged by id (shallow {...existing, ...item}), unknown ids appended, absent rows kept, appendX and other keys unchanged. Only caller is src/app/api/external/entries/route.ts. /developers, /settings/api and the v1 OpenAPI route do not document rows replacement. Residual: request can still overwrite server-owned row fields (signatures) by sending them — problems.md #3."
+    },
+    "AC5": {
+      "status": "PASS",
+      "notes": "journal-responsibles-cascade.ts:511-551 computes isEmpty/baseCfg/patched from locked.config and writes config+responsible columns via withDocumentConfigLock (data typed Prisma.JournalDocumentUpdateInput; responsibleUserId/verifierUserId are plain columns, tsc OK). point-document-rows-sync.ts:342-356 pre-checks on the list snapshot, then re-trims from locked.config and re-checks status/buildingId. config-cascades-lock.test.ts covers both (fails on pre-fix direct updates)."
+    },
+    "AC6": {
+      "status": "PASS",
+      "notes": "Personal journals keep link.rowKey (tests). appendFinishedProductRows/appendPerishableRows unchanged, so same-key resubmission still updates its row. Specified 9 test files: 66/66 pass; 13 more test files importing/reading changed modules: 178/178 pass. Temporary tsc over the 34 changed .ts files: exit 0, no errors. ESLint over changed files: 0 errors, 11 warnings (pre-existing unused vars)."
+    }
+  },
+  "commands": [
+    {
+      "cmd": "node --import tsx --test src/lib/tasksflow-adapters/config-lock.test.ts src/lib/tasksflow-task-submission-rowkey.test.ts src/lib/tasksflow-adapters/row-key-qr.test.ts src/lib/external/config-patch.test.ts src/lib/external/dispatch-config-lock.test.ts src/lib/config-cascades-lock.test.ts src/lib/task-fill-api-localization.test.ts src/domain/journal/adapter-contract.test.ts src/lib/point-document-rows-sync.test.ts",
+      "result": "tests 66, pass 66, fail 0"
+    },
+    {
+      "cmd": "node --import tsx --test src/lib/cleaning-siblings-cleanup.test.ts src/lib/journal-responsibles-org.smoke.test.ts src/lib/journal-responsibles-point-first.test.ts src/lib/office-journals.test.ts src/lib/task-fill-page-localization.test.ts src/lib/tasksflow-adapters/cleaning-control-rowkey.test.ts src/lib/tasksflow-adapters/generic-localization.test.ts src/lib/finished-product-bulk.test.ts src/lib/brakerage-qr-post.test.ts src/lib/brakerage-row-merge.test.ts src/lib/journal-fill.test.ts src/lib/journal-fill-scope.test.ts src/lib/brakerage-commission.test.ts",
+      "result": "tests 178, pass 178, fail 0"
+    },
+    {
+      "cmd": "node ./node_modules/eslint/bin/eslint.js <34 changed src .ts files>",
+      "result": "0 errors, 11 warnings (unused vars, pre-existing)"
+    },
+    {
+      "cmd": "node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit --skipLibCheck -p tsconfig.verify-d.tmp.json (extends ./tsconfig.json, incremental=false, include = src/types/next-typecheck.d.ts + 34 changed .ts files; temp file deleted afterwards)",
+      "result": "exit 0, no diagnostics"
+    },
+    {
+      "cmd": "node --import tsx D:/tmp/verify-d/check.cjs <worktree> <prefix accident-journal.ts / finished-product.ts from git show 50f35a89> vs HEAD files (same in-memory lock/db harness as config-lock.test.ts)",
+      "result": "pre-fix: 2 concurrent accident submissions -> 1 row, 2 direct writes; pull without values -> finished_product productName wiped. HEAD: 2 rows, 0 direct writes; pull returns false, row intact"
+    }
+  ]
+}

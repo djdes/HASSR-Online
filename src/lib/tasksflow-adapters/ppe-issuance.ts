@@ -113,12 +113,17 @@ export const ppeIssuanceAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
+    // Сотрудник — до блокировки: запрос в пул из транзакции с блокировкой
+    // при пачке отправок ждал бы второго соединения. Организация документа
+    // не меняется, это чтение не устаревает.
+    const owner = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: owner?.organizationId });
+    if (!employee) return false;
+
     // Под блокировкой документа: конфиг читается внутри неё, иначе две
     // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
     const written = await withDocumentConfigLock(documentId, async (doc) => {
       if (doc.templateCode !== TEMPLATE_CODE) return null;
-      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-      if (!employee) return null;
 
       // Защита от пустого doc.config — без `?? {}` `[...currentConfig.rows]`
       // падает с null.

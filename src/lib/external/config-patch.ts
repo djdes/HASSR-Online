@@ -14,6 +14,19 @@
  * список `x` — как раньше.
  */
 const RECORD_LIST_KEYS = new Set(["rows", "receipts", "consumptions", "findings"]);
+/**
+ * Поля строки, которые ставит только сервер (подписи комиссии, ключ
+ * источника QR/TasksFlow): у известной строки остаются сохранённые, новой
+ * строке из запроса не ставятся — как при сохранении с сайта.
+ */
+const SERVER_OWNED_ROW_KEYS = ["signatures", "sourceRowKey"] as const;
+
+function withoutServerOwned(value: unknown): unknown {
+  if (!isRecord(value)) return value;
+  const next = { ...value };
+  for (const key of SERVER_OWNED_ROW_KEYS) delete next[key];
+  return next;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -30,7 +43,8 @@ function mergeRecordList(current: unknown[], incoming: unknown[]): unknown[] {
     const id = recordId(item);
     if (id !== null && !indexById.has(id)) indexById.set(id, index);
   });
-  for (const item of incoming) {
+  for (const raw of incoming) {
+    const item = withoutServerOwned(raw);
     const id = recordId(item);
     const at = id === null ? undefined : indexById.get(id);
     if (at === undefined) {
