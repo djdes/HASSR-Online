@@ -7,7 +7,7 @@
     "AC2": { "status": "PASS", "evidence": ["src/lib/health-qr-flow.ts health-submit", "guard test in src/lib/hygiene-v2.test.ts"] },
     "AC3": { "status": "PASS", "evidence": ["src/lib/health-qr-flow.ts", "src/lib/hygiene-declaration-notify.ts awaitingAdmission", "src/lib/health-qr-html.test.ts", "problems.md"] },
     "AC4": { "status": "PASS", "evidence": ["src/lib/tasksflow-adapters/hygiene.test.ts unchanged and green"] },
-    "AC5": { "status": "PASS", "evidence": ["raw/tests.txt 50/50", "raw/eslint.txt 0 errors (1 pre-existing warning)", "typecheck: PR CI"] }
+    "AC5": { "status": "PASS", "evidence": ["raw/tests.txt 50/50", "raw/eslint.txt 0 errors (1 pre-existing warning)", "raw/typecheck.txt: tsc on changed files + import graph, 0 errors", "full typecheck: deploy CI"] }
   },
   "prod_data": {
     "restored": 21,

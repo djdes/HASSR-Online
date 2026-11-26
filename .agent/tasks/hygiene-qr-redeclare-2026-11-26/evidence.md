@@ -36,12 +36,12 @@
 
 `src/lib/tasksflow-adapters/hygiene.test.ts` без правок, все тесты зелёные (`raw/tests.txt`).
 
-## AC5 — проверки — PASS (typecheck — CI)
+## AC5 — проверки — PASS
 
 - Тесты затронутых модулей: 50/50 (`raw/tests.txt`); все файлы тестов, что импортируют изменённые модули: 85/85.
 - ESLint изменённых файлов: 0 ошибок, 1 предупреждение `CATEGORY` в `tasksflow-adapters/hygiene.ts` — есть и на
   `origin/master` (`raw/eslint.txt`).
-- `npm run typecheck` — в CI PR.
+- TypeScript по изменённым файлам и всему их графу импортов: 0 ошибок (`raw/typecheck.txt`); полный `npm run typecheck` — в CI выкладки (шаг перед деплоем).
 
 ## Данные на проде
 
