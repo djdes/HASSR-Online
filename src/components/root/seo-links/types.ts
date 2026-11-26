@@ -1,4 +1,5 @@
 import type { GglAnchorKind, GglSchedulableFormat, ScoredTargetPage } from "@/lib/seo/gogetlinks-planner";
+import type { CompetitorBenchmarkReport } from "@/lib/seo/similarweb-client";
 
 export interface SeoLinksViewerCapabilities {
   userId: string;
@@ -280,13 +281,27 @@ export interface GglOverviewResponse {
   metrics: GglOverviewMetrics;
 }
 
+export interface SimilarwebConnectionStatusDto {
+  configured: boolean;
+  hasCookies: boolean;
+  hasApiKey: boolean;
+  cookieCount: number;
+  cookieNames: string[];
+  updatedAt: string | null;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+  operations: string[];
+}
+
 export interface SimilarwebMatrixResponse {
   snapshots: SimilarwebSnapshotDto[];
   priorityMatrix: ScoredTargetPage[];
+  benchmark?: CompetitorBenchmarkReport;
   topvisor: {
     configured: boolean;
     error: string | null;
   };
+  similarwebConnection?: SimilarwebConnectionStatusDto | null;
 }
 
 export const SEO_CARD_CLASS =

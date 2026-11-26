@@ -1,0 +1,39 @@
+{
+  "taskId": "similarweb-api-anything",
+  "status": "PASS",
+  "timestamp": "2026-11-26T10:35:00+03:00",
+  "acceptanceCriteria": {
+    "AC1": { "status": "PASS", "files": ["config/api-anything/sites/similarweb.json"] },
+    "AC2": { "status": "PASS", "files": ["src/lib/seo/similarweb-client.ts"] },
+    "AC3": { "status": "PASS", "files": ["src/lib/seo/similarweb-client.server.ts"] },
+    "AC4": { "status": "PASS", "files": ["src/app/api/root/gogetlinks/similarweb/route.ts"] },
+    "AC5": {
+      "status": "PASS",
+      "files": [
+        "src/components/root/seo-subnav.tsx",
+        "src/app/root/seo/competitors/page.tsx",
+        "src/components/root/seo-links/SimilarwebCompetitorsWorkspace.tsx",
+        "src/components/root/seo-links/DemandAndAccountTab.tsx",
+        "src/app/root/seo/links/links-client.tsx"
+      ]
+    },
+    "AC6": {
+      "status": "PASS",
+      "files": [
+        "src/lib/seo/gogetlinks-planner.ts",
+        "src/lib/seo/gogetlinks-orders.server.ts",
+        "src/app/api/root/gogetlinks/overview/route.ts",
+        "src/lib/seo/similarweb-client.test.ts"
+      ]
+    }
+  },
+  "commands": [
+    { "command": "npm run typecheck", "exitCode": 0 },
+    { "command": "npm run test:changed", "exitCode": 0, "summary": "9 files, pass=107, fail=0, duration=7.6s" },
+    {
+      "command": "node --import tsx --test src/lib/seo/similarweb-client.test.ts src/lib/seo/gogetlinks-planner.test.ts src/lib/platform-access.test.ts",
+      "exitCode": 0,
+      "summary": "pass=30, fail=0"
+    }
+  ]
+}

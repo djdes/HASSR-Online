@@ -1,0 +1,170 @@
+{
+  "name": "similarweb",
+  "displayName": "Similarweb",
+  "baseUrl": "https://www.similarweb.com",
+  "description": "Similarweb competitive traffic intelligence, engagement metrics, and search keyword clusters",
+  "loginCookies": [
+    "aws-waf-token",
+    "sw_Session",
+    "sw_token",
+    ".SGTOKEN",
+    "sg_token"
+  ],
+  "operations": [
+    {
+      "name": "getDomainOverview",
+      "description": "Fetch monthly visits, engagement metrics, traffic sources share, and top search keywords for a domain from Similarweb data API",
+      "request": {
+        "method": "GET",
+        "url": "https://data.similarweb.com/api/v1/data?domain=haccp-online.ru",
+        "headers": {
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+          "referer": "https://www.similarweb.com/",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-site",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "domain",
+          "at": [
+            "query:domain"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://www.similarweb.com/website/{domain}/"
+      },
+      "match": {
+        "method": "GET",
+        "host": "data.similarweb.com",
+        "path": "/api/v1/data"
+      },
+      "response": {
+        "format": "json",
+        "contentType": "application/json"
+      },
+      "params": [
+        {
+          "name": "domain",
+          "type": "string",
+          "required": true,
+          "description": "Target domain to inspect (e.g. haccp-online.ru, checkoffice.ru, wesetup.ru)",
+          "example": "haccp-online.ru"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": false,
+      "learnedAt": "2026-11-26T06:00:00.000Z"
+    },
+    {
+      "name": "getWebsiteAnalysis",
+      "description": "Extract embedded preloaded website traffic and keyword analytics state from Similarweb public website overview page",
+      "request": {
+        "method": "GET",
+        "url": "https://www.similarweb.com/website/haccp-online.ru/",
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "none",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "domain",
+          "at": [
+            "path:1"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://www.similarweb.com/website/{domain}/"
+      },
+      "match": {
+        "method": "GET",
+        "host": "www.similarweb.com",
+        "path": "/website/*/"
+      },
+      "response": {
+        "format": "embedded",
+        "contentType": "text/html; charset=utf-8",
+        "embedded": {
+          "regex": "(?:window\\.__INITIAL_DATA__|window\\.__PRELOADED_STATE__|__SW_DATA__)\\s*=\\s*(\\{)"
+        }
+      },
+      "params": [
+        {
+          "name": "domain",
+          "type": "string",
+          "required": true,
+          "description": "Target domain to inspect (e.g. haccp-online.ru)",
+          "example": "haccp-online.ru"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": false,
+      "learnedAt": "2026-11-26T06:00:00.000Z"
+    },
+    {
+      "name": "getProSearchKeywords",
+      "description": "Fetch organic and paid search keyword clusters with traffic shares from Similarweb Pro widget API",
+      "request": {
+        "method": "GET",
+        "url": "https://pro.similarweb.com/widgetApi/SearchKeywords/NewSearchKeywords/Table?country=999&includeSubDomains=true&isWindow=false&keys=haccp-online.ru&limits=25&orderBy=TotalShare%20desc&timeGranularity=Monthly",
+        "headers": {
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+          "referer": "https://pro.similarweb.com/",
+          "x-requested-with": "XMLHttpRequest",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        }
+      },
+      "slots": [
+        {
+          "param": "domain",
+          "at": [
+            "query:keys"
+          ]
+        }
+      ],
+      "volatile": [],
+      "trigger": {
+        "url": "https://pro.similarweb.com/#/digitalsuite/websiteanalysis/overview/website-performance/*/999/3m?webSource=Total&key={domain}"
+      },
+      "match": {
+        "method": "GET",
+        "host": "pro.similarweb.com",
+        "path": "/widgetApi/SearchKeywords/NewSearchKeywords/Table"
+      },
+      "response": {
+        "format": "json",
+        "contentType": "application/json"
+      },
+      "params": [
+        {
+          "name": "domain",
+          "type": "string",
+          "required": true,
+          "description": "Target domain to fetch search keywords for",
+          "example": "haccp-online.ru"
+        }
+      ],
+      "readOnly": true,
+      "minTier": 1,
+      "learnedLoggedIn": true,
+      "learnedAt": "2026-11-26T06:00:00.000Z"
+    }
+  ]
+}
