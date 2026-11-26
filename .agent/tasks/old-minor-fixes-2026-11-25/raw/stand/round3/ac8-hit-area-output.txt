@@ -1,0 +1,4 @@
+# зона касания мобильной скрепки, iPhone 13
+{"box":[28,28],"center":true,"left9":true,"right9":true,"up9":true,"down9":true,"outside12":false}
+pressed after tap beside: true
+pressed after second tap: false

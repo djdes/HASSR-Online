@@ -1,0 +1,23 @@
+## origin/master: src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx
+/home/user/HASSR-Online/src/app/(dashboard)/journals/[code]/documents/[docId]/page.tsx
+   73:3  warning  'ACCEPTANCE_DOCUMENT_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                      @typescript-eslint/no-unused-vars
+  190:3  warning  'SANITARY_DAY_CHECKLIST_TEMPLATE_CODE' is defined but never used. Allowed unused vars must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+  578:9  error    Do not use an `<a>` element to navigate to `/settings/journals/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+✖ 3 problems (1 error, 2 warnings)
+exit=1
+## origin/master: src/components/journals/climate-document-client.tsx
+/home/user/HASSR-Online/src/components/journals/climate-document-client.tsx
+  110:8  warning  'RecordCardItem' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+✖ 1 problem (0 errors, 1 warning)
+exit=0
+## origin/master: src/lib/journal-entry-write.ts
+/home/user/HASSR-Online/src/lib/journal-entry-write.ts
+  12:10  warning  'isManagementRole' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+✖ 1 problem (0 errors, 1 warning)
+exit=0
+## origin/master: src/app/api/journal-documents/[id]/entries/route.ts
+exit=0
+## origin/master: src/app/(dashboard)/settings/buildings/buildings-client.tsx
+exit=0
+## origin/master: src/lib/ppk/revisions.server.ts
+exit=0

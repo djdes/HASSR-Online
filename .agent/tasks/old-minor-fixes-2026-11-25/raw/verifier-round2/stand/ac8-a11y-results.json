@@ -1,0 +1,167 @@
+[
+  {
+    "name": "setup: test point",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "320px: exactly one h2 named «Кафе «Проверка» 22:12:19» (accessible name = object name)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "320px: exactly one pin button in the accessibility tree",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "320px: Tab reaches the pin exactly once, and it is visible when focused",
+    "ok": true,
+    "detail": "[\"button[pin in h2]:Закрепить «Кафе «Проверка» 22:12:19» первым\",\"a:Открыть объект\",\"button:Переименовать объект и адрес\",\"button:Удалить объект\",\"button:Изменить\",\"button:Добавить помещение\"]"
+  },
+  {
+    "name": "320px: the focused pin is inside the heading",
+    "ok": true,
+    "detail": "{\"tag\":\"button\",\"label\":\"Закрепить «Кафе «Проверка» 22:12:19» первым\",\"pin\":true,\"inH2\":true,\"visible\":true,\"opacity\":\"1\"}"
+  },
+  {
+    "name": "390px: exactly one h2 named «Кафе «Проверка» 22:12:19» (accessible name = object name)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "390px: exactly one pin button in the accessibility tree",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "390px: Tab reaches the pin exactly once, and it is visible when focused",
+    "ok": true,
+    "detail": "[\"button[pin in h2]:Закрепить «Кафе «Проверка» 22:12:19» первым\",\"a:Открыть объект\",\"button:Переименовать объект и адрес\",\"button:Удалить объект\",\"button:Изменить\",\"button:Добавить помещение\"]"
+  },
+  {
+    "name": "390px: the focused pin is inside the heading",
+    "ok": true,
+    "detail": "{\"tag\":\"button\",\"label\":\"Закрепить «Кафе «Проверка» 22:12:19» первым\",\"pin\":true,\"inH2\":true,\"visible\":true,\"opacity\":\"1\"}"
+  },
+  {
+    "name": "639px: exactly one h2 named «Кафе «Проверка» 22:12:19» (accessible name = object name)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "639px: exactly one pin button in the accessibility tree",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "639px: Tab reaches the pin exactly once, and it is visible when focused",
+    "ok": true,
+    "detail": "[\"button[pin in h2]:Закрепить «Кафе «Проверка» 22:12:19» первым\",\"a:Открыть объект\",\"button:Переименовать объект и адрес\",\"button:Удалить объект\",\"button:Изменить\",\"button:Добавить помещение\"]"
+  },
+  {
+    "name": "639px: the focused pin is inside the heading",
+    "ok": true,
+    "detail": "{\"tag\":\"button\",\"label\":\"Закрепить «Кафе «Проверка» 22:12:19» первым\",\"pin\":true,\"inH2\":true,\"visible\":true,\"opacity\":\"1\"}"
+  },
+  {
+    "name": "640px: exactly one h2 named «Кафе «Проверка» 22:12:19» (accessible name = object name)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "640px: exactly one pin button in the accessibility tree",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "640px: Tab reaches the pin exactly once, and it is visible when focused",
+    "ok": true,
+    "detail": "[\"button[pin]:Закрепить «Кафе «Проверка» 22:12:19» первым\",\"a:Открыть объект\",\"button:Переименовать объект и адрес\",\"button:Удалить объект\",\"button:Изменить\",\"button:Добавить помещение\"]"
+  },
+  {
+    "name": "640px: the focused pin is outside the heading",
+    "ok": true,
+    "detail": "{\"tag\":\"button\",\"label\":\"Закрепить «Кафе «Проверка» 22:12:19» первым\",\"pin\":true,\"inH2\":false,\"visible\":true,\"opacity\":\"1\"}"
+  },
+  {
+    "name": "1024px: exactly one h2 named «Кафе «Проверка» 22:12:19» (accessible name = object name)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "1024px: exactly one pin button in the accessibility tree",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "1024px: Tab reaches the pin exactly once, and it is visible when focused",
+    "ok": true,
+    "detail": "[\"button[pin]:Закрепить «Кафе «Проверка» 22:12:19» первым\",\"a:Открыть объект\",\"button:Переименовать объект и адрес\",\"button:Удалить объект\",\"button:Изменить\",\"button:Добавить помещение\"]"
+  },
+  {
+    "name": "1024px: the focused pin is outside the heading",
+    "ok": true,
+    "detail": "{\"tag\":\"button\",\"label\":\"Закрепить «Кафе «Проверка» 22:12:19» первым\",\"pin\":true,\"inH2\":false,\"visible\":true,\"opacity\":\"1\"}"
+  },
+  {
+    "name": "1280px: exactly one h2 named «Кафе «Проверка» 22:12:19» (accessible name = object name)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "1280px: exactly one pin button in the accessibility tree",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "1280px: Tab reaches the pin exactly once, and it is visible when focused",
+    "ok": true,
+    "detail": "[\"button[pin]:Закрепить «Кафе «Проверка» 22:12:19» первым\",\"a:Открыть объект\",\"button:Переименовать объект и адрес\",\"button:Удалить объект\",\"button:Изменить\",\"button:Добавить помещение\"]"
+  },
+  {
+    "name": "1280px: the focused pin is outside the heading",
+    "ok": true,
+    "detail": "{\"tag\":\"button\",\"label\":\"Закрепить «Кафе «Проверка» 22:12:19» первым\",\"pin\":true,\"inH2\":false,\"visible\":true,\"opacity\":\"1\"}"
+  },
+  {
+    "name": "390px keyboard: focus stays on the pin after Enter",
+    "ok": true,
+    "detail": "Открепить «Кафе «Проверка» 22:12:19»"
+  },
+  {
+    "name": "390px keyboard: Enter on the pin inside the heading pins the object (aria-pressed, saved)",
+    "ok": true,
+    "detail": "true [\"cmwwoikbo00nzy87dp6w4dld6\"]"
+  },
+  {
+    "name": "390px: pinned label «Открепить «…»»",
+    "ok": true,
+    "detail": "Открепить «Кафе «Проверка» 22:12:19»"
+  },
+  {
+    "name": "390px mouse: click on the pin inside the heading unpins (saved)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "1280px: unpinned pin invisible until the card is hovered, visible on hover",
+    "ok": true,
+    "detail": "0 → 1"
+  },
+  {
+    "name": "1280px: the phone pin inside the heading is display:none",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "1280px: pinned pin visible without hover",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "cleanup: test point deleted, pinned list restored",
+    "ok": true,
+    "detail": "200"
+  }
+]

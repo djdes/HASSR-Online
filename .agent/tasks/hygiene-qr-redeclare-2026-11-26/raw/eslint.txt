@@ -1,0 +1,7 @@
+
+C:\Users\Ralph\.t3\worktrees\Wesetup.ru\t3-7f16bc0a-f3da2b48cfc9ee21\src\lib\tasksflow-adapters\hygiene.ts
+  52:7  warning  'CATEGORY' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit 0

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "AC3 disabled journal screen: settings link present with the same href and text",
+    "ok": true,
+    "detail": "Открыть настройки набора журналов → /settings/journals"
+  },
+  {
+    "name": "AC3 link navigates to /settings/journals",
+    "ok": true,
+    "detail": "http://localhost:3000/settings/journals"
+  }
+]

@@ -82,9 +82,12 @@ ${params.error ? `<div class="err">${esc(params.error)}</div>` : ""}
 }
 
 export function renderHealthSuspended(params: { who: string; complaints: string[]; timeLabel: string; backHref: string }): string {
-  return `${HEALTH_CSS}${params.who}<div class="hq-bad" role="status" aria-live="polite"><b>Сегодня вы не допущены к работе</b>Причина: ${esc(
-    params.complaints.join(", ")
-  )}.<br>Заведующий производством уже получил уведомление — дождитесь его решения. Отметка записана в ${esc(params.timeLabel)}.</div>
+  // Жалоб нет — отстранил ответственный, и повторная подпись его решение не меняет (2026-11-26).
+  const reason =
+    params.complaints.length > 0
+      ? `Причина: ${esc(params.complaints.join(", "))}.<br>Заведующий производством уже получил уведомление — дождитесь его решения.`
+      : "Ответственный отстранил вас от работы на сегодня — обратитесь к нему.";
+  return `${HEALTH_CSS}${params.who}<div class="hq-bad" role="status" aria-live="polite"><b>Сегодня вы не допущены к работе</b>${reason} Отметка записана в ${esc(params.timeLabel)}.</div>
 <div class="sticky"><a class="btn second" href="${esc(params.backHref)}">Исправить отметку</a></div>`;
 }
 

@@ -107,7 +107,6 @@ import {
 import {
   RecordCardsView,
   type RecordCardField,
-  type RecordCardItem,
 } from "@/components/journals/record-cards-view";
 import { ReadingPhotoView } from "@/components/journals/reading-photo-view";
 

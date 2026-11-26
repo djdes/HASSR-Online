@@ -1,0 +1,8 @@
+# origin/master version of src/site-locale-proxy.test.ts (imports re-pointed), WITH .env
+not ok 4 - prefetching another language does not overwrite the visitor preference
+not ok 6 - partners and privacy trust their six explicit URLs without rewriting navigation
+# pass 4
+# fail 2
+# same, WITHOUT .env
+# pass 6
+# fail 0

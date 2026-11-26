@@ -1,0 +1,53 @@
+== buildings
+cmwv8ulhe0001cn7dn05z8fvg|Клиника на Садовой|point|medical|2026-11-24 22:06:00.77
+cmwv8ulic0002cn7dvo0patzk|Офис|office||2026-11-24 22:06:00.804
+cmwv8ulj50004cn7dullmqits|Кафе «Ромашка»|point|food|2026-11-24 22:06:00.833
+cmwv9fd4i000hye7duwz934zr|Клиника e2e 22:22:09|point|medical|2026-11-24 22:22:09.714
+cmwv9mnno00011q7dezhqwxz0|Клиника e2e 22:27:49|point|medical|2026-11-24 22:27:49.956
+cmwva8hpb001e1q7d9a9quxit|Клиника e2e 22:44:48|point|medical|2026-11-24 22:44:48.671
+cmwvb4avj0001gw7da590diu0|Клиника e2e 23:09:32|point|medical|2026-11-24 23:09:32.815
+cmwvbh7g7001fgw7db4c1f4eg|Клиника e2e 23:19:34|point|medical|2026-11-24 23:19:34.903
+cmwvbl8e8003jgw7dh1a8vnok|Клиника verify 23:22:42|point|medical|2026-11-24 23:22:42.752
+cmwvbsya40001u77dqi4hqtfr|Клиника e2e 23:28:42|point|medical|2026-11-24 23:28:42.892
+cmwvbuson0017u77dge62nqo1|Клиника e2e 23:30:08|point|medical|2026-11-24 23:30:08.951
+cmwvbxa8f002iu77dh5iiy9ec|Клиника e2e 23:32:04|point|medical|2026-11-24 23:32:05.007
+cmwvpz4ua0001hd7dxso1aiok|Поликлиника e2e 06:05:25|point|medical|2026-11-25 06:05:25.954
+cmwvq92pl002ahd7dpcq5pjkg|Поликлиника e2e 06:13:09|point|medical|2026-11-25 06:13:09.753
+cmwvr277b0075hd7dmtrjl9g5|Спорт verify 06:35:48|point|sport|2026-11-25 06:35:48.599
+cmwvrl0ph0001i57d5i35n1rk|Поликлиника e2e 06:50:26|point|medical|2026-11-25 06:50:26.645
+cmww61yxj00kqu57d6bzum6mx|Кафе e2e спецрежим 13:35:32|point|food|2026-11-25 13:35:32.119
+cmww632qm015fu57d5fqtr7qn|Кафе пробы здоровья|point|food|2026-11-25 13:36:23.71
+cmww640f401pmu57dc7wbf6xu|Кафе пробы здоровья 27328|point|food|2026-11-25 13:37:07.36
+cmww64eh6029wu57d1zyee3mt|Кафе пробы здоровья 45546|point|food|2026-11-25 13:37:25.578
+cmww655i002axu57dwmj03vnx|Кафе e2e спецрежим 13:38:00|point|food|2026-11-25 13:38:00.6
+cmww6m42v02whu57d55kvtv36|Кафе e2e спецрежим 13:51:11|point|food|2026-11-25 13:51:11.911
+cmww6pe2t03ixu57dini83uv7|Кафе e2e верификатор 13:53:44|point|food|2026-11-25 13:53:44.837
+cmww6q50b044du57dhtbxfsb3|Кафе e2e верификатор 13:54:19|point|food|2026-11-25 13:54:19.739
+cmww6q6dk04pqu57dhzwoqqsy|Кафе e2e верификатор авто 13:54:21|point|food|2026-11-25 13:54:21.512
+cmww6qkcv05avu57d1fy82w9y|Кафе e2e верификатор 13:54:39|point|food|2026-11-25 13:54:39.631
+cmww6qlrh05w8u57d9lb1ej4e|Кафе e2e верификатор авто 13:54:41|point|food|2026-11-25 13:54:41.453
+cmww7jetf00028r7dxrmbzido|Кафе e2e спецрежим 14:17:05|point|food|2026-11-25 14:17:05.475
+cmww7kt1u00mk8r7d1jmttcol|Кафе e2e спецрежим 14:18:10|point|food|2026-11-25 14:18:10.578
+cmww87xkj0002g57dfbb696rh|Кафе e2e спецрежим 14:36:04|point|food|2026-11-25 14:36:09.523
+cmww8vo3v000dpf7d954kmh9m|Кафе e2e верификатор-2 14:54:36|point|food|2026-11-25 14:54:37.003
+cmww8ysrj00nkpf7dkf9uuzhx|Кафе e2e спецрежим 14:57:02|point|food|2026-11-25 14:57:03.007
+== org settings cols
+planAutoUpgradedAt
+autoJournalCodes
+shiftEndHour
+lockPastDayEdits
+bulkAssignRespectShifts
+journalAutomationJson
+kioskIdleLockSeconds
+== org
+f|0|{}|[]
+== ppk revisions
+11
+== journal docs autoFill true
+0
+== doc count
+28
+== entries count
+11022
+org-journal-controls:cmwv7iv6e0000x27drxkm0q2a|{"automation":{"enabled":false,"autoFill":false,"autoCreate":false,"copyYesterday":false,"closeDayAutofill":false,"catchUp":false,"pastDays":false,"pastDaysLimit":7},"sensorCamera":{"cold_equipment_control":false,"climate_control":false},"brakerageSetup":{}}|2026-11-25 21:46:53.688
+436|434

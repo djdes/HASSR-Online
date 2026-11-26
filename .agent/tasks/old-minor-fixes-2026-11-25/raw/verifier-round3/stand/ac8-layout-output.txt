@@ -1,0 +1,37 @@
+cards: 63 (own 31)
+zoom150-pixel7-275: measured 62 cards
+fold-cover-280: measured 62 cards
+shotBox anomaly {"card":{"x":16,"y":25309.734375,"width":256,"height":638.140625},"h2":{"x":37,"y":25331.734375,"width":138,"height":78},"vp":{"width":288,"height":624},"scrollY":0}
+zoom125-360-288: measured 62 cards
+galaxy-s9p-320: measured 62 cards
+galaxy-s24-360: measured 62 cards
+pixel5-393: measured 62 cards
+pixel7-412: measured 62 cards
+galaxy-a55-480: measured 62 cards
+iphone-se-landscape-568: measured 62 cards
+nexus7-600: measured 62 cards
+w630: measured 62 cards
+s9p-landscape-658: measured 62 cards
+s8-landscape-740: measured 62 cards
+w1024: measured 62 cards
+w1280: measured 62 cards
+COUNTS {"regressions":0,"improvementsVsMaster":4,"bothCut":64,"pinAloneJustified":38,"pinAloneUnjustified":1,"pinNotInH2":0,"pinCountNot1":0,"a11yPinCountNot1":0,"headingName":0,"overflow":0,"orderDiff":0,"iconAloneBranchOnly":10,"iconAloneMasterOnly":305,"hitZone":64,"hitZoneOverlaps":3,"chipNotBelowMultiline":0,"desktopPinInH2":0,"misc":16}
+regressions: []
+pinAloneUnjustified: [{"profile":"pixel5-393","width":393,"name":"Склад-овощехранилище","lastWord":"Склад-овощехранилище","lastWordWidth":213.6,"lastSegment":"овощехранилище","lastSegmentWidth":152.6,"pinOuter":32,"lineWidth":243,"wordPlusPin":184.6}]
+pinCountNot1: []
+a11yPinCountNot1: []
+headingName: []
+overflow: []
+orderDiff: []
+hitZone: [{"profile":"zoom150-pixel7-275","width":275,"name":"Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза","hitZone":{"w":1,"h":1,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"zoom125-360-288","width":288,"name":"Кулинария «Вкусноежка»","hitZone":{"w":1,"h":1,"corners":[false,false,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"pixel5-393","width":393,"name":"Кафе «Сладкоежка»","hitZone":{"w":1,"h":1,"corners":[false,false,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"galaxy-a55-480","width":480,"name":"Кафе «Сладкоежка»","hitZone":{"w":1,"h":1,"corners":[false,false,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"name":"Цех полуфабрикатов","hitZone":{"w":48,"h":47,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"name":"Склад-овощехранилище","hitZone":{"w":48,"h":47,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"name":"Цех мясоперерабатывающий","hitZone":{"w":48,"h":47,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"name":"Завод рыбоперерабатывающий","hitZone":{"w":48,"h":47,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"name":"Комбинат сельскохозяйственный","hitZone":{"w":48,"h":47,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"name":"Кафе-кондитерская","hitZone":{"w":48,"h":47,"corners":[true,true,false,false],"outside":[false,false,false,false],"before":{"position":"absolute","content":"\"\"","top":"-10px","left":"-10px","right":"-10px","bottom":"-10px"}}},{"profile":"iphone-se-landscape-568","width":568,"nam
+hitZoneOverlaps: [{"profile":"zoom150-pixel7-275","width":275,"name":"Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза","overlaps":[{"tag":"a","label":"Добавить объект","ix":48,"iy":22.2}],"stolen":[]},{"profile":"iphone-se-landscape-568","width":568,"name":"Ресторан высокой кухни «Восточный экспресс»","overlaps":[{"tag":"a","label":"Добавить объект","ix":48,"iy":8.1}],"stolen":[]},{"profile":"iphone-se-landscape-568","width":568,"name":"Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза","overlaps":[{"tag":"a","label":"Добавить объект","ix":48,"iy":34.5}],"stolen":[]}]
+pinNotInH2: []
+desktopPinInH2: []
+chipNotBelowMultiline: []
+iconAloneBranchOnly: [{"profile":"zoom150-pixel7-275","width":275,"name":"Choyxona","firstWordLine":125},{"profile":"fold-cover-280","width":280,"name":"Choyxona","firstWordLine":130},{"profile":"zoom125-360-288","width":288,"name":"Choyxona","firstWordLine":138},{"profile":"galaxy-s9p-320","width":320,"name":"Кондитерская","firstWordLine":170},{"profile":"galaxy-s9p-320","width":320,"name":"Пищекомбинат","firstWordLine":170},{"profile":"galaxy-s24-360","width":360,"name":"Кафе-кондитерская","firstWordLine":210},{"profile":"galaxy-s24-360","width":360,"name":"Овощехранилище","firstWordLine":210},{"profile":"pixel5-393","width":393,"name":"Склад-овощехранилище","firstWordLine":243},{"profile":"pixel7-412","width":412,"name":"Склад-овощехранилище","firstWordLine":262},{"profile":"pixel7-412","width":412,"name":"Мясоперерабатывающий","firstWordLine":262}]
+misc: ["zoom150-pixel7-275: not on page \"Офис\"","fold-cover-280: not on page \"Офис\"","zoom125-360-288: not on page \"Офис\"","galaxy-s9p-320: not on page \"Офис\"","galaxy-s24-360: not on page \"Офис\"","pixel5-393: not on page \"Офис\"","pixel7-412: not on page \"Офис\"","galaxy-a55-480: not on page \"Офис\"","iphone-se-landscape-568: not on page \"Офис\"","nexus7-600: not on page \"Офис\"","w630: not on page \"Офис\"","s9p-landscape-658: not on page \"Офис\"","s8-landscape-740: not on page \"Офис\"","w1024: not on page \"Офис\"","w1280: not on page \"Офис\"","cleanup: own points left 0 of 31"]
+
+real	10m53.806s
+user	0m25.547s
+sys	0m7.072s
+exit=0

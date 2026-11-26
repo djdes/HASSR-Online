@@ -1,0 +1,12 @@
+docKey text:text-terms (org cmwv7iv6…, revisions [1,2]) — equal
+docKey knowledge:cmwv7o56n000b5x7dbkwhpikl (org cmwv7iv6…, revisions [3,4]) — equal
+docKey knowledge:cmwv7o9t4000i5x7dqmjgq1ok (org cmwv7iv6…, revisions [5]) — equal
+docKey text:text-terms@cmwvpz4ua0001hd7dxso1aiok (org cmwv7iv6…, revisions [6,7]) — equal
+docKey text:text-terms@cmwvq92pl002ahd7dpcq5pjkg (org cmwv7iv6…, revisions [8,9]) — equal
+docKey text:text-terms@cmwvrl0ph0001i57d5i35n1rk (org cmwv7iv6…, revisions [10,11]) — equal
+docKey text:text-terms@cmwv8ulhe0001cn7dn05z8fvg (org cmwv7iv6…, revisions []) — equal
+docKey garbage (org cmwv7iv6…, revisions []) — equal
+docKey knowledge:doesnotexist000000000000 (org cmwv7iv6…, revisions []) — equal
+
+EQUIVALENT: 747 calls (261 ok [130 without current text], 486 errors by code {"revision_not_found":188,"no_current_text":39,"doc_not_found":203,"no_revisions":56})
+exit=0

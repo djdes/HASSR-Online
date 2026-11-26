@@ -1,0 +1,19 @@
+{
+  "task": "hygiene-qr-redeclare-2026-11-26",
+  "branch": "fix/hygiene-qr-keeps-admission",
+  "base": "origin/master 43f88b54",
+  "criteria": {
+    "AC1": { "status": "PASS", "evidence": ["src/lib/hygiene-v2.test.ts (RED 4 failing before the fix, GREEN after)", "raw/tests.txt"] },
+    "AC2": { "status": "PASS", "evidence": ["src/lib/health-qr-flow.ts health-submit", "guard test in src/lib/hygiene-v2.test.ts"] },
+    "AC3": { "status": "PASS", "evidence": ["src/lib/health-qr-flow.ts", "src/lib/hygiene-declaration-notify.ts awaitingAdmission", "src/lib/health-qr-html.test.ts", "problems.md"] },
+    "AC4": { "status": "PASS", "evidence": ["src/lib/tasksflow-adapters/hygiene.test.ts unchanged and green"] },
+    "AC5": { "status": "PASS", "evidence": ["raw/tests.txt 50/50", "raw/eslint.txt 0 errors (1 pre-existing warning)", "raw/typecheck.txt: tsc on changed files + import graph, 0 errors", "full typecheck: deploy CI"] }
+  },
+  "prod_data": {
+    "restored": 21,
+    "skipped_signatures_changed": 3,
+    "backup": "~/backups/hygiene-admission-restore-20261126/entries-before.csv",
+    "audit_action": "journal.hygiene_admission_restored"
+  },
+  "verification": "fresh independent verifier (Claude Code subagent), round 1 PASS with 2 behaviour findings fixed (problems.md)"
+}

@@ -1,0 +1,4540 @@
+{
+ "stamp": "22:45:58",
+ "counts": {
+  "regressions": 0,
+  "improvementsVsMaster": 4,
+  "bothCut": 64,
+  "pinAloneJustified": 38,
+  "pinAloneUnjustified": 1,
+  "pinNotInH2": 0,
+  "pinCountNot1": 0,
+  "a11yPinCountNot1": 0,
+  "headingName": 0,
+  "overflow": 0,
+  "orderDiff": 0,
+  "iconAloneBranchOnly": 10,
+  "iconAloneMasterOnly": 305,
+  "hitZone": 64,
+  "hitZoneOverlaps": 3,
+  "chipNotBelowMultiline": 0,
+  "desktopPinInH2": 0,
+  "misc": 16
+ },
+ "regressions": [],
+ "improvementsVsMaster": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "ООО «Продторг»",
+   "word": "«Продторг»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "ООО «Продторг»",
+   "word": "«Продторг»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "ООО «Продторг»",
+   "word": "«Продторг»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе «Шоколадница»",
+   "word": "«Шоколадница»"
+  }
+ ],
+ "bothCut": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе «Сладкоежка»",
+   "word": "«Сладкоежка»",
+   "lineWidth": 125,
+   "wordWidth": 127.3
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех полуфабрикатов",
+   "word": "полуфабрикатов",
+   "lineWidth": 125,
+   "wordWidth": 145.2
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Склад-овощехранилище",
+   "word": "Склад-овощехранилище",
+   "lineWidth": 125,
+   "wordWidth": 213.6
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех мясоперерабатывающий",
+   "word": "мясоперерабатывающий",
+   "lineWidth": 125,
+   "wordWidth": 218.6
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Завод рыбоперерабатывающий",
+   "word": "рыбоперерабатывающий",
+   "lineWidth": 125,
+   "wordWidth": 220
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Комбинат сельскохозяйственный",
+   "word": "сельскохозяйственный",
+   "lineWidth": 125,
+   "wordWidth": 204.6
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе-кондитерская",
+   "word": "Кафе-кондитерская",
+   "lineWidth": 125,
+   "wordWidth": 174.7
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кофейня Coffee&Breakfast",
+   "word": "Coffee&Breakfast",
+   "lineWidth": 125,
+   "wordWidth": 149.8
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Пищекомбинат",
+   "word": "Пищекомбинат",
+   "lineWidth": 125,
+   "wordWidth": 131.3
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Овощехранилище",
+   "word": "Овощехранилище",
+   "lineWidth": 125,
+   "wordWidth": 155
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Мясоперерабатывающий",
+   "word": "Мясоперерабатывающий",
+   "lineWidth": 125,
+   "wordWidth": 221.1
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе «Шоколадница»",
+   "word": "«Шоколадница»",
+   "lineWidth": 125,
+   "wordWidth": 141.8
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "Муниципальное",
+   "lineWidth": 125
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательное",
+   "lineWidth": 125
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательная",
+   "lineWidth": 125
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "word": "«Общеобразовательная»",
+   "lineWidth": 125,
+   "wordWidth": 221
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех №2 (кондитерский)",
+   "word": "(кондитерский)",
+   "lineWidth": 125,
+   "wordWidth": 138.8
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор-2 14:54:36",
+   "word": "верификатор-2",
+   "lineWidth": 125
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех полуфабрикатов",
+   "word": "полуфабрикатов",
+   "lineWidth": 130,
+   "wordWidth": 145.2
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Склад-овощехранилище",
+   "word": "Склад-овощехранилище",
+   "lineWidth": 130,
+   "wordWidth": 213.6
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех мясоперерабатывающий",
+   "word": "мясоперерабатывающий",
+   "lineWidth": 130,
+   "wordWidth": 218.6
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Завод рыбоперерабатывающий",
+   "word": "рыбоперерабатывающий",
+   "lineWidth": 130,
+   "wordWidth": 220
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Комбинат сельскохозяйственный",
+   "word": "сельскохозяйственный",
+   "lineWidth": 130,
+   "wordWidth": 204.6
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе-кондитерская",
+   "word": "Кафе-кондитерская",
+   "lineWidth": 130,
+   "wordWidth": 174.7
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кофейня Coffee&Breakfast",
+   "word": "Coffee&Breakfast",
+   "lineWidth": 130,
+   "wordWidth": 149.8
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Пищекомбинат",
+   "word": "Пищекомбинат",
+   "lineWidth": 130,
+   "wordWidth": 131.3
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Овощехранилище",
+   "word": "Овощехранилище",
+   "lineWidth": 130,
+   "wordWidth": 155
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Мясоперерабатывающий",
+   "word": "Мясоперерабатывающий",
+   "lineWidth": 130,
+   "wordWidth": 221.1
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе «Шоколадница»",
+   "word": "«Шоколадница»",
+   "lineWidth": 130,
+   "wordWidth": 141.8
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "Муниципальное",
+   "lineWidth": 130
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательное",
+   "lineWidth": 130
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательная",
+   "lineWidth": 130
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "word": "«Общеобразовательная»",
+   "lineWidth": 130,
+   "wordWidth": 221
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех №2 (кондитерский)",
+   "word": "(кондитерский)",
+   "lineWidth": 130,
+   "wordWidth": 138.8
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор-2 14:54:36",
+   "word": "верификатор-2",
+   "lineWidth": 130
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех полуфабрикатов",
+   "word": "полуфабрикатов",
+   "lineWidth": 138,
+   "wordWidth": 145.2
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Склад-овощехранилище",
+   "word": "Склад-овощехранилище",
+   "lineWidth": 138,
+   "wordWidth": 213.6
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех мясоперерабатывающий",
+   "word": "мясоперерабатывающий",
+   "lineWidth": 138,
+   "wordWidth": 218.6
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Завод рыбоперерабатывающий",
+   "word": "рыбоперерабатывающий",
+   "lineWidth": 138,
+   "wordWidth": 220
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Комбинат сельскохозяйственный",
+   "word": "сельскохозяйственный",
+   "lineWidth": 138,
+   "wordWidth": 204.6
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе-кондитерская",
+   "word": "Кафе-кондитерская",
+   "lineWidth": 138,
+   "wordWidth": 174.7
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кофейня Coffee&Breakfast",
+   "word": "Coffee&Breakfast",
+   "lineWidth": 138,
+   "wordWidth": 149.8
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Овощехранилище",
+   "word": "Овощехранилище",
+   "lineWidth": 138,
+   "wordWidth": 155
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Мясоперерабатывающий",
+   "word": "Мясоперерабатывающий",
+   "lineWidth": 138,
+   "wordWidth": 221.1
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе «Шоколадница»",
+   "word": "«Шоколадница»",
+   "lineWidth": 138,
+   "wordWidth": 141.8
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "Муниципальное",
+   "lineWidth": 138
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательное",
+   "lineWidth": 138
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательная",
+   "lineWidth": 138
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "word": "«Общеобразовательная»",
+   "lineWidth": 138,
+   "wordWidth": 221
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех №2 (кондитерский)",
+   "word": "(кондитерский)",
+   "lineWidth": 138,
+   "wordWidth": 138.8
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Склад-овощехранилище",
+   "word": "Склад-овощехранилище",
+   "lineWidth": 170,
+   "wordWidth": 213.6
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех мясоперерабатывающий",
+   "word": "мясоперерабатывающий",
+   "lineWidth": 170,
+   "wordWidth": 218.6
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Завод рыбоперерабатывающий",
+   "word": "рыбоперерабатывающий",
+   "lineWidth": 170,
+   "wordWidth": 220
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Комбинат сельскохозяйственный",
+   "word": "сельскохозяйственный",
+   "lineWidth": 170,
+   "wordWidth": 204.6
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе-кондитерская",
+   "word": "Кафе-кондитерская",
+   "lineWidth": 170,
+   "wordWidth": 174.7
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Мясоперерабатывающий",
+   "word": "Мясоперерабатывающий",
+   "lineWidth": 170,
+   "wordWidth": 221.1
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательное",
+   "lineWidth": 170
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "word": "общеобразовательная",
+   "lineWidth": 170
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "word": "«Общеобразовательная»",
+   "lineWidth": 170,
+   "wordWidth": 221
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Склад-овощехранилище",
+   "word": "Склад-овощехранилище",
+   "lineWidth": 210,
+   "wordWidth": 213.6
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Цех мясоперерабатывающий",
+   "word": "мясоперерабатывающий",
+   "lineWidth": 210,
+   "wordWidth": 218.6
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Завод рыбоперерабатывающий",
+   "word": "рыбоперерабатывающий",
+   "lineWidth": 210,
+   "wordWidth": 220
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Мясоперерабатывающий",
+   "word": "Мясоперерабатывающий",
+   "lineWidth": 210,
+   "wordWidth": 221.1
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "word": "«Общеобразовательная»",
+   "lineWidth": 210,
+   "wordWidth": 221
+  }
+ ],
+ "pinAloneJustified": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кулинария «Вкусноежка»",
+   "lastWord": "«Вкусноежка»",
+   "lastWordWidth": 124.2,
+   "lastSegment": "«Вкусноежка»",
+   "lastSegmentWidth": 124.2,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 156.2
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех мясоперерабатывающий",
+   "lastWord": "мясоперерабатывающий",
+   "lastWordWidth": 218.6,
+   "lastSegment": "мясоперерабатывающий",
+   "lastSegmentWidth": 218.6,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 250.6
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Завод рыбоперерабатывающий",
+   "lastWord": "рыбоперерабатывающий",
+   "lastWordWidth": 220,
+   "lastSegment": "рыбоперерабатывающий",
+   "lastSegmentWidth": 220,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 252
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе-кондитерская",
+   "lastWord": "Кафе-кондитерская",
+   "lastWordWidth": 174.7,
+   "lastSegment": "кондитерская",
+   "lastSegmentWidth": 122.3,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 154.3
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Детский сад №125 «Солнышко»",
+   "lastWord": "«Солнышко»",
+   "lastWordWidth": 111.7,
+   "lastSegment": "«Солнышко»",
+   "lastSegmentWidth": 111.7,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 143.7
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Oshxona «Toshkent»",
+   "lastWord": "«Toshkent»",
+   "lastWordWidth": 98,
+   "lastSegment": "«Toshkent»",
+   "lastSegmentWidth": 98,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 130
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кондитерская",
+   "lastWord": "Кондитерская",
+   "lastWordWidth": 123.7,
+   "lastSegment": "Кондитерская",
+   "lastSegmentWidth": 123.7,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 155.7
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Мясоперерабатывающий",
+   "lastWord": "Мясоперерабатывающий",
+   "lastWordWidth": 221.1,
+   "lastSegment": "Мясоперерабатывающий",
+   "lastSegmentWidth": 221.1,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 253.1
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех  кондитерский",
+   "lastWord": "кондитерский",
+   "lastWordWidth": 123.2,
+   "lastSegment": "кондитерский",
+   "lastSegmentWidth": 123.2,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 155.2
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "ООО «Продторг»",
+   "lastWord": "«Продторг»",
+   "lastWordWidth": 104.3,
+   "lastSegment": "«Продторг»",
+   "lastSegmentWidth": 104.3,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 136.3
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "lastWord": "«Общеобразовательная»",
+   "lastWordWidth": 221,
+   "lastSegment": "«Общеобразовательная»",
+   "lastSegmentWidth": 221,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 253
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе «Ромашка»",
+   "lastWord": "«Ромашка»",
+   "lastWordWidth": 98,
+   "lastSegment": "«Ромашка»",
+   "lastSegmentWidth": 98,
+   "pinOuter": 32,
+   "lineWidth": 125,
+   "wordPlusPin": 130
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе «Сладкоежка»",
+   "lastWord": "«Сладкоежка»",
+   "lastWordWidth": 127.3,
+   "lastSegment": "«Сладкоежка»",
+   "lastSegmentWidth": 127.3,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 159.3
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кулинария «Вкусноежка»",
+   "lastWord": "«Вкусноежка»",
+   "lastWordWidth": 124.2,
+   "lastSegment": "«Вкусноежка»",
+   "lastSegmentWidth": 124.2,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 156.2
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе-кондитерская",
+   "lastWord": "Кафе-кондитерская",
+   "lastWordWidth": 174.7,
+   "lastSegment": "кондитерская",
+   "lastSegmentWidth": 122.3,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 154.3
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Детский сад №125 «Солнышко»",
+   "lastWord": "«Солнышко»",
+   "lastWordWidth": 111.7,
+   "lastSegment": "«Солнышко»",
+   "lastSegmentWidth": 111.7,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 143.7
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Oshxona «Toshkent»",
+   "lastWord": "«Toshkent»",
+   "lastWordWidth": 98,
+   "lastSegment": "«Toshkent»",
+   "lastSegmentWidth": 98,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 130
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кондитерская",
+   "lastWord": "Кондитерская",
+   "lastWordWidth": 123.7,
+   "lastSegment": "Кондитерская",
+   "lastSegmentWidth": 123.7,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 155.7
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех  кондитерский",
+   "lastWord": "кондитерский",
+   "lastWordWidth": 123.2,
+   "lastSegment": "кондитерский",
+   "lastSegmentWidth": 123.2,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 155.2
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "ООО «Продторг»",
+   "lastWord": "«Продторг»",
+   "lastWordWidth": 104.3,
+   "lastSegment": "«Продторг»",
+   "lastSegmentWidth": 104.3,
+   "pinOuter": 32,
+   "lineWidth": 130,
+   "wordPlusPin": 136.3
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе «Сладкоежка»",
+   "lastWord": "«Сладкоежка»",
+   "lastWordWidth": 127.3,
+   "lastSegment": "«Сладкоежка»",
+   "lastSegmentWidth": 127.3,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 159.3
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кулинария «Вкусноежка»",
+   "lastWord": "«Вкусноежка»",
+   "lastWordWidth": 124.2,
+   "lastSegment": "«Вкусноежка»",
+   "lastSegmentWidth": 124.2,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 156.2
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе-кондитерская",
+   "lastWord": "Кафе-кондитерская",
+   "lastWordWidth": 174.7,
+   "lastSegment": "кондитерская",
+   "lastSegmentWidth": 122.3,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 154.3
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Детский сад №125 «Солнышко»",
+   "lastWord": "«Солнышко»",
+   "lastWordWidth": 111.7,
+   "lastSegment": "«Солнышко»",
+   "lastSegmentWidth": 111.7,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 143.7
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кондитерская",
+   "lastWord": "Кондитерская",
+   "lastWordWidth": 123.7,
+   "lastSegment": "Кондитерская",
+   "lastSegmentWidth": 123.7,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 155.7
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Пищекомбинат",
+   "lastWord": "Пищекомбинат",
+   "lastWordWidth": 131.3,
+   "lastSegment": "Пищекомбинат",
+   "lastSegmentWidth": 131.3,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 163.3
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех  кондитерский",
+   "lastWord": "кондитерский",
+   "lastWordWidth": 123.2,
+   "lastSegment": "кондитерский",
+   "lastSegmentWidth": 123.2,
+   "pinOuter": 32,
+   "lineWidth": 138,
+   "wordPlusPin": 155.2
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех полуфабрикатов",
+   "lastWord": "полуфабрикатов",
+   "lastWordWidth": 145.2,
+   "lastSegment": "полуфабрикатов",
+   "lastSegmentWidth": 145.2,
+   "pinOuter": 32,
+   "lineWidth": 170,
+   "wordPlusPin": 177.2
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Склад-овощехранилище",
+   "lastWord": "Склад-овощехранилище",
+   "lastWordWidth": 213.6,
+   "lastSegment": "овощехранилище",
+   "lastSegmentWidth": 152.6,
+   "pinOuter": 32,
+   "lineWidth": 170,
+   "wordPlusPin": 184.6
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кофейня Coffee&Breakfast",
+   "lastWord": "Coffee&Breakfast",
+   "lastWordWidth": 149.8,
+   "lastSegment": "Coffee&Breakfast",
+   "lastSegmentWidth": 149.8,
+   "pinOuter": 32,
+   "lineWidth": 170,
+   "wordPlusPin": 181.8
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Овощехранилище",
+   "lastWord": "Овощехранилище",
+   "lastWordWidth": 155,
+   "lastSegment": "Овощехранилище",
+   "lastSegmentWidth": 155,
+   "pinOuter": 32,
+   "lineWidth": 170,
+   "wordPlusPin": 187
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе «Шоколадница»",
+   "lastWord": "«Шоколадница»",
+   "lastWordWidth": 141.8,
+   "lastSegment": "«Шоколадница»",
+   "lastSegmentWidth": 141.8,
+   "pinOuter": 32,
+   "lineWidth": 170,
+   "wordPlusPin": 173.8
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех №2 (кондитерский)",
+   "lastWord": "(кондитерский)",
+   "lastWordWidth": 138.8,
+   "lastSegment": "(кондитерский)",
+   "lastSegmentWidth": 138.8,
+   "pinOuter": 32,
+   "lineWidth": 170,
+   "wordPlusPin": 170.8
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Комбинат сельскохозяйственный",
+   "lastWord": "сельскохозяйственный",
+   "lastWordWidth": 204.6,
+   "lastSegment": "сельскохозяйственный",
+   "lastSegmentWidth": 204.6,
+   "pinOuter": 32,
+   "lineWidth": 210,
+   "wordPlusPin": 236.6
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Цех мясоперерабатывающий",
+   "lastWord": "мясоперерабатывающий",
+   "lastWordWidth": 218.6,
+   "lastSegment": "мясоперерабатывающий",
+   "lastSegmentWidth": 218.6,
+   "pinOuter": 32,
+   "lineWidth": 243,
+   "wordPlusPin": 250.6
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Завод рыбоперерабатывающий",
+   "lastWord": "рыбоперерабатывающий",
+   "lastWordWidth": 220,
+   "lastSegment": "рыбоперерабатывающий",
+   "lastSegmentWidth": 220,
+   "pinOuter": 32,
+   "lineWidth": 243,
+   "wordPlusPin": 252
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Мясоперерабатывающий",
+   "lastWord": "Мясоперерабатывающий",
+   "lastWordWidth": 221.1,
+   "lastSegment": "Мясоперерабатывающий",
+   "lastSegmentWidth": 221.1,
+   "pinOuter": 32,
+   "lineWidth": 243,
+   "wordPlusPin": 253.1
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "lastWord": "«Общеобразовательная»",
+   "lastWordWidth": 221,
+   "lastSegment": "«Общеобразовательная»",
+   "lastSegmentWidth": 221,
+   "pinOuter": 32,
+   "lineWidth": 243,
+   "wordPlusPin": 253
+  }
+ ],
+ "pinAloneUnjustified": [
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Склад-овощехранилище",
+   "lastWord": "Склад-овощехранилище",
+   "lastWordWidth": 213.6,
+   "lastSegment": "овощехранилище",
+   "lastSegmentWidth": 152.6,
+   "pinOuter": 32,
+   "lineWidth": 243,
+   "wordPlusPin": 184.6
+  }
+ ],
+ "pinNotInH2": [],
+ "pinCountNot1": [],
+ "a11yPinCountNot1": [],
+ "headingName": [],
+ "overflow": [],
+ "orderDiff": [],
+ "iconAloneBranchOnly": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Choyxona",
+   "firstWordLine": 125
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Choyxona",
+   "firstWordLine": 130
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Choyxona",
+   "firstWordLine": 138
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кондитерская",
+   "firstWordLine": 170
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Пищекомбинат",
+   "firstWordLine": 170
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе-кондитерская",
+   "firstWordLine": 210
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Овощехранилище",
+   "firstWordLine": 210
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Склад-овощехранилище",
+   "firstWordLine": 243
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Склад-овощехранилище",
+   "firstWordLine": 262
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Мясоперерабатывающий",
+   "firstWordLine": 262
+  }
+ ],
+ "iconAloneMasterOnly": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе «Сладкоежка»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кулинария «Вкусноежка»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех полуфабрикатов"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Ресторан «Белуга» 2"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Столовая №1"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Буфет — школьный"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кофейня Coffee&Breakfast"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Oshxona «Toshkent»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех  кондитерский"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "ООО «Продторг»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе «Шоколадница»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Пекарня 🥐🥖"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Цех №2 (кондитерский)"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе им. А. С. Пушкина."
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника на Садовой"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе «Ромашка»"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 22:22:09"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 22:27:49"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 22:44:48"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 23:09:32"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 23:19:34"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника verify 23:22:42"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 23:28:42"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 23:30:08"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Клиника e2e 23:32:04"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Спорт verify 06:35:48"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе пробы здоровья"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе «Сладкоежка»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кулинария «Вкусноежка»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех полуфабрикатов"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Ресторан «Белуга» 2"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Столовая №1"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Буфет — школьный"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кофейня Coffee&Breakfast"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Oshxona «Toshkent»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех  кондитерский"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "ООО «Продторг»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе «Шоколадница»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Пекарня 🥐🥖"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Цех №2 (кондитерский)"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе им. А. С. Пушкина."
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника на Садовой"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе «Ромашка»"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 22:22:09"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 22:27:49"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 22:44:48"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 23:09:32"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 23:19:34"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника verify 23:22:42"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 23:28:42"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 23:30:08"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Клиника e2e 23:32:04"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Спорт verify 06:35:48"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе пробы здоровья"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "fold-cover-280",
+   "width": 280,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе «Сладкоежка»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кулинария «Вкусноежка»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех полуфабрикатов"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Ресторан «Белуга» 2"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Столовая №1"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Буфет — школьный"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кофейня Coffee&Breakfast"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Oshxona «Toshkent»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех  кондитерский"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "ООО «Продторг»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе «Шоколадница»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Пекарня 🥐🥖"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Цех №2 (кондитерский)"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе им. А. С. Пушкина."
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника на Садовой"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе «Ромашка»"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 22:22:09"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 22:27:49"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 22:44:48"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 23:09:32"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 23:19:34"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника verify 23:22:42"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 23:28:42"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 23:30:08"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Клиника e2e 23:32:04"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Спорт verify 06:35:48"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе пробы здоровья"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе «Сладкоежка»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кулинария «Вкусноежка»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех полуфабрикатов"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Ресторан «Белуга» 2"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Буфет — школьный"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кофейня Coffee&Breakfast"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Oshxona «Toshkent»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех  кондитерский"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "ООО «Продторг»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе «Шоколадница»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Цех №2 (кондитерский)"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе им. А. С. Пушкина."
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника на Садовой"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе «Ромашка»"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 22:22:09"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 22:27:49"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 22:44:48"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 23:09:32"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 23:19:34"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника verify 23:22:42"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 23:28:42"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 23:30:08"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Клиника e2e 23:32:04"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Поликлиника e2e 06:05:25"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Поликлиника e2e 06:13:09"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Спорт verify 06:35:48"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Поликлиника e2e 06:50:26"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе пробы здоровья"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "galaxy-s9p-320",
+   "width": 320,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кулинария «Вкусноежка»"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кофейня Coffee&Breakfast"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе «Шоколадница»"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Цех №2 (кондитерский)"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе им. А. С. Пушкина."
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Клиника verify 23:22:42"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Поликлиника e2e 06:05:25"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Поликлиника e2e 06:13:09"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Поликлиника e2e 06:50:26"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе пробы здоровья"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "galaxy-s24-360",
+   "width": 360,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кулинария «Вкусноежка»"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кофейня Coffee&Breakfast"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Поликлиника e2e 06:05:25"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Поликлиника e2e 06:13:09"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Поликлиника e2e 06:50:26"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Цех мясоперерабатывающий"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Завод рыбоперерабатывающий"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Комбинат сельскохозяйственный"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Пиццерия «Додо» (ТЦ Мега)"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Детский сад №125 «Солнышко»"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Склад (холодильная камера)"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Столовая «Березка» корпус Б"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 13:35:32"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе пробы здоровья 27328"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе пробы здоровья 45546"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 13:38:00"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 13:51:11"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e верификатор 13:53:44"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e верификатор 13:54:19"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e верификатор 13:54:39"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 14:17:05"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 14:18:10"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 14:36:04"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e верификатор-2 14:54:36"
+  },
+  {
+   "profile": "pixel7-412",
+   "width": 412,
+   "name": "Кафе e2e спецрежим 14:57:02"
+  },
+  {
+   "profile": "galaxy-a55-480",
+   "width": 480,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "galaxy-a55-480",
+   "width": 480,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "galaxy-a55-480",
+   "width": 480,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»"
+  },
+  {
+   "profile": "galaxy-a55-480",
+   "width": 480,
+   "name": "Кафе e2e верификатор авто 13:54:21"
+  },
+  {
+   "profile": "galaxy-a55-480",
+   "width": 480,
+   "name": "Кафе e2e верификатор авто 13:54:41"
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Ресторан высокой кухни «Восточный экспресс»"
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "nexus7-600",
+   "width": 600,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  },
+  {
+   "profile": "w630",
+   "width": 630,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза"
+  }
+ ],
+ "hitZone": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "hitZone": {
+    "w": 1,
+    "h": 1,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "zoom125-360-288",
+   "width": 288,
+   "name": "Кулинария «Вкусноежка»",
+   "hitZone": {
+    "w": 1,
+    "h": 1,
+    "corners": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "pixel5-393",
+   "width": 393,
+   "name": "Кафе «Сладкоежка»",
+   "hitZone": {
+    "w": 1,
+    "h": 1,
+    "corners": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "galaxy-a55-480",
+   "width": 480,
+   "name": "Кафе «Сладкоежка»",
+   "hitZone": {
+    "w": 1,
+    "h": 1,
+    "corners": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Цех полуфабрикатов",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Склад-овощехранилище",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Цех мясоперерабатывающий",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Завод рыбоперерабатывающий",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Комбинат сельскохозяйственный",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе-кондитерская",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Пиццерия «Додо» (ТЦ Мега)",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Ресторан «Белуга» 2",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Столовая №1",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Детский сад №125 «Солнышко»",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Буфет — школьный",
+   "hitZone": {
+    "w": 48,
+    "h": 46,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кофейня Coffee&Breakfast",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Oshxona «Toshkent»",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Choyxona",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кондитерская",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Пищекомбинат",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Овощехранилище",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Мясоперерабатывающий",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Ресторан высокой кухни «Восточный экспресс»",
+   "hitZone": {
+    "w": 48,
+    "h": 33,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Цех  кондитерский",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "ООО «Продторг»",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе «Шоколадница»",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "hitZone": {
+    "w": 1,
+    "h": 1,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "МБОУ СОШ №15 «Общеобразовательная»",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Пекарня 🥐🥖",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Склад (холодильная камера)",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Цех №2 (кондитерский)",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе им. А. С. Пушкина.",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Столовая «Березка» корпус Б",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника на Садовой",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе «Ромашка»",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 22:22:09",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 22:27:49",
+   "hitZone": {
+    "w": 48,
+    "h": 46,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 22:44:48",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 23:09:32",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 23:19:34",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника verify 23:22:42",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 23:28:42",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 23:30:08",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Клиника e2e 23:32:04",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Поликлиника e2e 06:05:25",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Поликлиника e2e 06:13:09",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Спорт verify 06:35:48",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Поликлиника e2e 06:50:26",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 13:35:32",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе пробы здоровья",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе пробы здоровья 27328",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе пробы здоровья 45546",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 13:38:00",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 13:51:11",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e верификатор 13:53:44",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e верификатор 13:54:19",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e верификатор авто 13:54:21",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e верификатор 13:54:39",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e верификатор авто 13:54:41",
+   "hitZone": {
+    "w": 48,
+    "h": 46,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 14:17:05",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 14:18:10",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 14:36:04",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e верификатор-2 14:54:36",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Кафе e2e спецрежим 14:57:02",
+   "hitZone": {
+    "w": 48,
+    "h": 47,
+    "corners": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "outside": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "before": {
+     "position": "absolute",
+     "content": "\"\"",
+     "top": "-10px",
+     "left": "-10px",
+     "right": "-10px",
+     "bottom": "-10px"
+    }
+   }
+  }
+ ],
+ "hitZoneOverlaps": [
+  {
+   "profile": "zoom150-pixel7-275",
+   "width": 275,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "overlaps": [
+    {
+     "tag": "a",
+     "label": "Добавить объект",
+     "ix": 48,
+     "iy": 22.2
+    }
+   ],
+   "stolen": []
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Ресторан высокой кухни «Восточный экспресс»",
+   "overlaps": [
+    {
+     "tag": "a",
+     "label": "Добавить объект",
+     "ix": 48,
+     "iy": 8.1
+    }
+   ],
+   "stolen": []
+  },
+  {
+   "profile": "iphone-se-landscape-568",
+   "width": 568,
+   "name": "Муниципальное бюджетное общеобразовательное учреждение общеобразовательная школа №15 имени Героя Советского Союза",
+   "overlaps": [
+    {
+     "tag": "a",
+     "label": "Добавить объект",
+     "ix": 48,
+     "iy": 34.5
+    }
+   ],
+   "stolen": []
+  }
+ ],
+ "chipNotBelowMultiline": [],
+ "desktopPinInH2": [],
+ "misc": [
+  "zoom150-pixel7-275: not on page \"Офис\"",
+  "fold-cover-280: not on page \"Офис\"",
+  "zoom125-360-288: not on page \"Офис\"",
+  "galaxy-s9p-320: not on page \"Офис\"",
+  "galaxy-s24-360: not on page \"Офис\"",
+  "pixel5-393: not on page \"Офис\"",
+  "pixel7-412: not on page \"Офис\"",
+  "galaxy-a55-480: not on page \"Офис\"",
+  "iphone-se-landscape-568: not on page \"Офис\"",
+  "nexus7-600: not on page \"Офис\"",
+  "w630: not on page \"Офис\"",
+  "s9p-landscape-658: not on page \"Офис\"",
+  "s8-landscape-740: not on page \"Офис\"",
+  "w1024: not on page \"Офис\"",
+  "w1280: not on page \"Офис\"",
+  "cleanup: own points left 0 of 31"
+ ]
+}

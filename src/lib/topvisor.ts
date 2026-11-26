@@ -689,6 +689,178 @@ export async function deleteKeywords(ids: number[]): Promise<number> {
 
 // ─────────────────────────── позиции ───────────────────────────
 
+export type TopvisorCompetitor = {
+  id: number;
+  name: string;
+  site: string;
+  url: string;
+  on: number;
+};
+
+/**
+ * Список конкурентов проекта в Topvisor (`get/projects_2/competitors`).
+ */
+export async function listTopvisorCompetitors(): Promise<TopvisorCompetitor[]> {
+  const { projectId } = config();
+  const rows = await tvRequest<
+    Array<{
+      id?: number | string;
+      name?: string;
+      site?: string;
+      url?: string;
+      on?: number | string;
+    }>
+  >("get/projects_2/competitors", { project_id: projectId });
+  if (!Array.isArray(rows)) return [];
+  const out: TopvisorCompetitor[] = [];
+  for (const r of rows) {
+    const id = Number(r?.id);
+    const site = String(r?.site ?? r?.url ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/.*$/, "");
+    if (!Number.isFinite(id) || id <= 0 || !site) continue;
+    out.push({
+      id,
+      name: String(r?.name ?? site).trim(),
+      site,
+      url: String(r?.url ?? site).trim(),
+      on: Number(r?.on ?? 0) ? 1 : 0,
+    });
+  }
+  return out;
+}
+
+/**
+ * Гарантирует, что домен конкурента (`rushaccp.ru`, `haccp-online.ru`, `checkoffice.ru` и т.д.)
+ * добавлен и включён (`on: 1`) в проекте Topvisor, чтобы Topvisor автоматически снимал
+ * позиции этого конкурента по всем 198+ запросам проекта бесплатно при каждом съёме.
+ */
+export async function ensureTopvisorCompetitor(
+  domainInput: string
+): Promise<TopvisorCompetitor | null> {
+  const cleanDomain = String(domainInput ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/.*$/, "");
+  if (!cleanDomain || !cleanDomain.includes(".") || cleanDomain === "wesetup.ru") {
+    return null;
+  }
+
+  const { projectId } = config();
+  let list = await listTopvisorCompetitors();
+  let match = list.find((c) => c.site === cleanDomain) ?? null;
+
+  if (!match) {
+    await tvRequest("add/projects_2/competitors", {
+      project_id: projectId,
+      urls: [cleanDomain],
+    }).catch(() => null);
+    list = await listTopvisorCompetitors();
+    match = list.find((c) => c.site === cleanDomain) ?? null;
+  }
+
+  if (match && match.on !== 1) {
+    await tvRequest("edit/projects_2/competitors/on", {
+      project_id: projectId,
+      ids: [match.id],
+      on: 1,
+    }).catch(() => null);
+    match.on = 1;
+  }
+
+  return match;
+}
+
+export type CompetitorSerpRow = {
+  phrase: string;
+  position: number;
+  url: string | null;
+};
+
+/**
+ * Возвращает реальные позиции и ранжирующиеся URL конкурента из Topvisor
+ * по семантическому ядру проекта wesetup.ru (`get/positions_2/history` с `competitors_ids`).
+ */
+export async function getCompetitorPositionsFromTopvisor(
+  domainInput: string
+): Promise<{
+  competitor: TopvisorCompetitor | null;
+  latestDate: string | null;
+  totalKeywords: number;
+  rankedRows: CompetitorSerpRow[];
+}> {
+  const competitor = await ensureTopvisorCompetitor(domainInput);
+  if (!competitor) {
+    return { competitor: null, latestDate: null, totalKeywords: 0, rankedRows: [] };
+  }
+
+  const { projectId } = config();
+  const now = new Date();
+  const from = new Date(now.getTime() - 35 * 86_400_000);
+  const date1 = from.toISOString().slice(0, 10);
+  const date2 = now.toISOString().slice(0, 10);
+
+  const { regionIndexes } = await resolveHistoryRegionIndexes([1, 2], {
+    autoProvision: false,
+  });
+  const targetRegions = regionIndexes.length > 0 ? regionIndexes : [1, 2];
+
+  const raw = await tvRequest<RawHistory>("get/positions_2/history", {
+    project_id: projectId,
+    regions_indexes: targetRegions,
+    date1,
+    date2,
+    positions_fields: ["position", "relevant_url"],
+    competitors_ids: [competitor.id],
+    show_headers: 1,
+  });
+
+  const dates = Array.isArray(raw?.headers?.dates)
+    ? [...raw.headers!.dates!].sort().reverse()
+    : [];
+  const latestDate = dates[0] ?? null;
+  const keywords = raw?.keywords ?? [];
+  const rankedRows: CompetitorSerpRow[] = [];
+
+  for (const kw of keywords) {
+    const phrase = (kw?.name ?? "").trim();
+    if (!phrase) continue;
+    let bestPos: number | null = null;
+    let bestUrl: string | null = null;
+
+    for (const [key, cell] of Object.entries(kw?.positionsData ?? {})) {
+      const parsed = parsePositionKey(key);
+      if (!parsed || parsed.projectId !== competitor.id) continue;
+      const pos = parsePosition(cell?.position);
+      if (pos !== null && (bestPos === null || pos < bestPos)) {
+        bestPos = pos;
+        bestUrl = (cell?.relevant_url ?? "").trim() || null;
+      }
+    }
+
+    if (bestPos !== null) {
+      rankedRows.push({
+        phrase,
+        position: bestPos,
+        url: bestUrl,
+      });
+    }
+  }
+
+  rankedRows.sort((a, b) => a.position - b.position);
+  return {
+    competitor,
+    latestDate,
+    totalKeywords: keywords.length,
+    rankedRows,
+  };
+}
+
 /** Сырой ответ get/positions_2/history — только те поля, что мы читаем. */
 type RawHistory = {
   headers?: {

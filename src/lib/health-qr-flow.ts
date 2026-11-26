@@ -7,7 +7,7 @@ import { HEALTH_CONFIRMATIONS, dayMarkFromEntry, healthDecision, isRealHygieneEn
 import { ADMISSION_NEEDS_HEALTH_ANSWER_MESSAGE, canAdmitEmployee } from "@/lib/hygiene-admission";
 import { renderHealthDay, renderHealthForm, renderHealthSuspended, renderHealthTabs } from "@/lib/health-qr-html";
 import { notifyHygieneDeclaration } from "@/lib/hygiene-declaration-notify";
-import { applyHygieneVerification, hygieneV2View } from "@/lib/hygiene-v2";
+import { applyHygieneVerification, hygieneDeclarationEntry, hygieneV2View, type HygieneV2View } from "@/lib/hygiene-v2";
 import { renderResult } from "@/lib/journal-fill-html";
 import { ensureQrPeriodDocuments } from "@/lib/journal-qr-rollover";
 import { listFillEmployees, type JournalFillEmployee } from "@/lib/journal-fill";
@@ -341,10 +341,24 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
     const decision = healthDecision(checked);
     const at = hhmm(ctx.timezone);
     const common = { confirmations: decision.confirmations, source: "qr", confirmedAt: at };
-    if (pair.hygieneId) await upsertEntry(pair.hygieneId, ctx.employee.id, ctx.todayKey, { ...decision.hygiene, ...common });
-    if (pair.healthId) await upsertEntry(pair.healthId, ctx.employee.id, ctx.todayKey, { ...decision.health, ...common });
-    if (decision.admitted) await markShiftStarted(ctx.orgId, ctx.employee.id, ctx.todayKey).catch(() => null);
-    const medExpired = decision.admitted ? await expiredMedBook(ctx.orgId, ctx.employee.id, ctx.todayKey).catch(() => false) : false;
+    // Повторная отметка за день теми же подписями не снимает допуск
+    // ответственного (2026-11-26): раньше запись переписывалась целиком.
+    let keptVerification: HygieneV2View["result"] = null;
+    if (pair.hygieneId) {
+      const previous = await db.journalDocumentEntry.findUnique({
+        where: { documentId_employeeId_date: { documentId: pair.hygieneId, employeeId: ctx.employee.id, date: dayDate(ctx.todayKey) } },
+        select: { data: true },
+      });
+      const hygiene = hygieneDeclarationEntry({ decision, previous: previous?.data ?? null, at, source: "qr" });
+      keptVerification = hygieneV2View(hygiene).result;
+      await upsertEntry(pair.hygieneId, ctx.employee.id, ctx.todayKey, hygiene);
+    }
+    // Допуск остался — ответы те же, запись журнала здоровья (с пометками ответственного) не трогаем.
+    if (pair.healthId && !keptVerification) await upsertEntry(pair.healthId, ctx.employee.id, ctx.todayKey, { ...decision.health, ...common });
+    // Решение ответственного сильнее повторной подписи: отстранённый остаётся отстранённым.
+    const admitted = keptVerification ? keptVerification.result === "admitted" : decision.admitted;
+    if (admitted) await markShiftStarted(ctx.orgId, ctx.employee.id, ctx.todayKey).catch(() => null);
+    const medExpired = admitted ? await expiredMedBook(ctx.orgId, ctx.employee.id, ctx.todayKey).catch(() => false) : false;
 
     await recordQrFillAudit({
       request: ctx.request,
@@ -376,8 +390,10 @@ export async function handleHealthQr(ctx: HealthCtx): Promise<NextResponse> {
       decision,
       via: "QR",
       medExpired,
+      // Допуск уже стоит — «ждёт допуска» не шлём, тревога о медкнижке остаётся.
+      awaitingAdmission: !keptVerification,
     });
-    return redirect({ view: "me", done: decision.admitted ? "admitted" : "suspended", med: medExpired ? "1" : null });
+    return redirect({ view: "me", done: admitted ? "admitted" : "suspended", med: medExpired ? "1" : null });
   }
 
   // ---- форма

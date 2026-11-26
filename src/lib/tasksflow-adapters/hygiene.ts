@@ -34,12 +34,7 @@ import {
   type HygieneEntryData,
   type HygieneStatus,
 } from "@/lib/hygiene-document";
-import {
-  applyHygieneVerification,
-  hygieneV2View,
-  readHygieneFormVersion,
-  type HygieneVerification,
-} from "@/lib/hygiene-v2";
+import { hygieneDeclarationEntry, readHygieneFormVersion } from "@/lib/hygiene-v2";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import { stampFor } from "@/lib/quick-values";
 import {
@@ -175,10 +170,8 @@ export function readHygieneV2Checked(
 
 /**
  * Запись дня по новой форме из подписи в задаче — как отметка по QR
- * (`health-qr-flow.ts`, health-submit): решение по трём графам, подписи,
- * время, источник. Допуск ответственного (`verification`) остаётся, только
- * если сотрудник подписал то же самое, — статус дня тогда по-прежнему
- * следует за допуском. Подпись изменилась — нужен новый допуск.
+ * (`health-qr-flow.ts`, health-submit), правило одно: `hygieneDeclarationEntry`.
+ * Допуск ответственного остаётся, только если сотрудник подписал то же самое.
  */
 export function hygieneV2DeclarationEntry(input: {
   decision: HealthDecision;
@@ -187,20 +180,7 @@ export function hygieneV2DeclarationEntry(input: {
   /** «ЧЧ:ММ» по поясу организации. */
   at: string;
 }): Record<string, unknown> {
-  const declaration: Record<string, unknown> = {
-    ...input.decision.hygiene,
-    confirmations: input.decision.confirmations,
-    source: "tasksflow",
-    confirmedAt: input.at,
-  };
-  const before = hygieneV2View(input.previous);
-  const sameSignatures =
-    before.declared &&
-    HEALTH_CONFIRMATIONS.every((item) => before.signatures[item.key] === input.decision.confirmations[item.key]);
-  if (!sameSignatures || !before.result) return declaration;
-  // `before.result` есть — значит, `verification` в прежней записи валиден.
-  const { verification } = input.previous as { verification: HygieneVerification };
-  return applyHygieneVerification(declaration, verification);
+  return hygieneDeclarationEntry({ ...input, source: "tasksflow" });
 }
 
 /**

@@ -1,0 +1,12 @@
+# AC6 approval race (branch vs origin/master copy), local DB, 2026-11-25T21:06:12Z
+org max revision number before: 11
+BRANCH approveRevision: 60 approvals during 107 edits → {"created":21,"409 doc_changed":39}
+BRANCH approveRevision: created revisions=21, text≠fingerprint=0, without text=0
+origin/master approveRevision (control): 60 approvals during 132 edits → {"created":60}
+origin/master approveRevision (control): created revisions=60, text≠fingerprint=34, without text=0
+QUIET branch approval: first=created second=same content="Спокойная версия: ККТ определяются по дереву решений."
+
+AC6 race: branch mismatches=0 (409 doc_changed=39, created=21); control mismatches=34 → PASS
+exit=0
+cleanup: removed 82 revisions and 1 records for text:text-ccp-method@cmwv9fd4i000hye7duwz934zr
+11|11

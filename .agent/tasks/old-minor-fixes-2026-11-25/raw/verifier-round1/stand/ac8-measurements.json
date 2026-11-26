@@ -1,0 +1,680 @@
+[
+  {
+    "width": 320,
+    "label": "long",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 10,
+    "name": {
+      "top": 315,
+      "bottom": 585,
+      "left": 61,
+      "right": 151
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 159,
+      "right": 207
+    },
+    "chip": {
+      "top": 589,
+      "bottom": 656,
+      "left": 37,
+      "right": 207
+    },
+    "docW": 320,
+    "vw": 320
+  },
+  {
+    "width": 320,
+    "label": "short",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 134,
+      "right": 182
+    },
+    "chip": {
+      "top": 478,
+      "bottom": 545,
+      "left": 37,
+      "right": 207
+    },
+    "docW": 320,
+    "vw": 320
+  },
+  {
+    "width": 320,
+    "label": "broken-words",
+    "now": [
+      "верификатор (Кафе e2e верификатор 13:53:4)",
+      "верификатор (Кафе e2e верификатор 13:54:1)",
+      "верификатор (Кафе e2e верификатор 13:54:3)",
+      "верификатор (Кафе e2e верификатор авто 13)",
+      "верификатор (Кафе e2e верификатор авто 13)",
+      "верификатор-2 (Кафе e2e верификатор-2 14:54)",
+      "спецрежим (Кафе e2e спецрежим 13:35:32)",
+      "спецрежим (Кафе e2e спецрежим 13:38:00)",
+      "спецрежим (Кафе e2e спецрежим 13:51:11)",
+      "спецрежим (Кафе e2e спецрежим 14:17:05)",
+      "спецрежим (Кафе e2e спецрежим 14:18:10)",
+      "спецрежим (Кафе e2e спецрежим 14:36:04)",
+      "спецрежим (Кафе e2e спецрежим 14:57:02)",
+      "«Ромашка» (Кафе «Ромашка»)",
+      "Поликлиника (Поликлиника e2e 06:05:25)",
+      "Поликлиника (Поликлиника e2e 06:13:09)",
+      "Поликлиника (Поликлиника e2e 06:50:26)",
+      "машиностроительном (Столовая при машиностроитель)",
+      "промышленной (Столовая при машиностроитель)"
+    ],
+    "old": [
+      "машиностроительном (Столовая при машиностроитель)"
+    ]
+  },
+  {
+    "width": 360,
+    "label": "long",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 6,
+    "name": {
+      "top": 369,
+      "bottom": 531,
+      "left": 61,
+      "right": 191
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 199,
+      "right": 247
+    },
+    "chip": {
+      "top": 535,
+      "bottom": 602,
+      "left": 37,
+      "right": 247
+    },
+    "docW": 360,
+    "vw": 360
+  },
+  {
+    "width": 360,
+    "label": "short",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 134,
+      "right": 182
+    },
+    "chip": {
+      "top": 478,
+      "bottom": 545,
+      "left": 37,
+      "right": 247
+    },
+    "docW": 360,
+    "vw": 360
+  },
+  {
+    "width": 360,
+    "label": "broken-words",
+    "now": [
+      "верификатор-2 (Кафе e2e верификатор-2 14:54)",
+      "машиностроительном (Столовая при машиностроитель)",
+      "промышленной (Столовая при машиностроитель)"
+    ],
+    "old": []
+  },
+  {
+    "width": 375,
+    "label": "long",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 6,
+    "name": {
+      "top": 369,
+      "bottom": 531,
+      "left": 61,
+      "right": 206
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 214,
+      "right": 262
+    },
+    "chip": {
+      "top": 535,
+      "bottom": 602,
+      "left": 37,
+      "right": 262
+    },
+    "docW": 375,
+    "vw": 375
+  },
+  {
+    "width": 375,
+    "label": "short",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 134,
+      "right": 182
+    },
+    "chip": {
+      "top": 478,
+      "bottom": 545,
+      "left": 37,
+      "right": 262
+    },
+    "docW": 375,
+    "vw": 375
+  },
+  {
+    "width": 375,
+    "label": "broken-words",
+    "now": [
+      "машиностроительном (Столовая при машиностроитель)"
+    ],
+    "old": []
+  },
+  {
+    "width": 390,
+    "label": "long",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 6,
+    "name": {
+      "top": 369,
+      "bottom": 531,
+      "left": 61,
+      "right": 221
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 229,
+      "right": 277
+    },
+    "chip": {
+      "top": 535,
+      "bottom": 582,
+      "left": 37,
+      "right": 277
+    },
+    "docW": 390,
+    "vw": 390
+  },
+  {
+    "width": 390,
+    "label": "short",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 134,
+      "right": 182
+    },
+    "chip": {
+      "top": 478,
+      "bottom": 525,
+      "left": 37,
+      "right": 277
+    },
+    "docW": 390,
+    "vw": 390
+  },
+  {
+    "width": 390,
+    "label": "broken-words",
+    "now": [
+      "машиностроительном (Столовая при машиностроитель)"
+    ],
+    "old": []
+  },
+  {
+    "width": 430,
+    "label": "long",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 4,
+    "name": {
+      "top": 396,
+      "bottom": 504,
+      "left": 61,
+      "right": 261
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 269,
+      "right": 317
+    },
+    "chip": {
+      "top": 508,
+      "bottom": 555,
+      "left": 37,
+      "right": 317
+    },
+    "docW": 430,
+    "vw": 430
+  },
+  {
+    "width": 430,
+    "label": "short",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 134,
+      "right": 182
+    },
+    "chip": {
+      "top": 478,
+      "bottom": 525,
+      "left": 37,
+      "right": 317
+    },
+    "docW": 430,
+    "vw": 430
+  },
+  {
+    "width": 430,
+    "label": "broken-words",
+    "now": [],
+    "old": []
+  },
+  {
+    "width": 639,
+    "label": "long",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 2,
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 61,
+      "right": 470
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 478,
+      "right": 526
+    },
+    "chip": {
+      "top": 481,
+      "bottom": 509,
+      "left": 37,
+      "right": 436
+    },
+    "docW": 639,
+    "vw": 639
+  },
+  {
+    "width": 639,
+    "label": "short",
+    "groupDisplay": "flex",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 426,
+      "bottom": 474,
+      "left": 134,
+      "right": 182
+    },
+    "chip": {
+      "top": 478,
+      "bottom": 506,
+      "left": 37,
+      "right": 436
+    },
+    "docW": 639,
+    "vw": 639
+  },
+  {
+    "width": 639,
+    "label": "broken-words",
+    "now": [],
+    "old": []
+  },
+  {
+    "width": 640,
+    "label": "long",
+    "groupDisplay": "contents",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 2,
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 37,
+      "right": 531
+    },
+    "icon": {
+      "top": 403,
+      "bottom": 419,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 509,
+      "left": 415,
+      "right": 443
+    },
+    "chip": {
+      "top": 482,
+      "bottom": 508,
+      "left": 37,
+      "right": 407
+    },
+    "docW": 640,
+    "vw": 640
+  },
+  {
+    "width": 640,
+    "label": "short",
+    "groupDisplay": "contents",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 468,
+      "bottom": 496,
+      "left": 37,
+      "right": 65
+    },
+    "chip": {
+      "top": 437,
+      "bottom": 463,
+      "left": 134,
+      "right": 504
+    },
+    "docW": 640,
+    "vw": 640
+  },
+  {
+    "width": 700,
+    "label": "long",
+    "groupDisplay": "contents",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 2,
+    "name": {
+      "top": 423,
+      "bottom": 477,
+      "left": 37,
+      "right": 591
+    },
+    "icon": {
+      "top": 403,
+      "bottom": 419,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 481,
+      "bottom": 509,
+      "left": 415,
+      "right": 443
+    },
+    "chip": {
+      "top": 482,
+      "bottom": 508,
+      "left": 37,
+      "right": 407
+    },
+    "docW": 700,
+    "vw": 700
+  },
+  {
+    "width": 700,
+    "label": "short",
+    "groupDisplay": "contents",
+    "pinInGroup": true,
+    "pinOpacity": "1",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 61,
+      "right": 126
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 37,
+      "right": 53
+    },
+    "pin": {
+      "top": 436,
+      "bottom": 464,
+      "left": 512,
+      "right": 540
+    },
+    "chip": {
+      "top": 437,
+      "bottom": 463,
+      "left": 134,
+      "right": 504
+    },
+    "docW": 700,
+    "vw": 700
+  },
+  {
+    "width": 1280,
+    "label": "long",
+    "groupDisplay": "contents",
+    "pinInGroup": true,
+    "pinOpacity": "0",
+    "nameLines": 1,
+    "name": {
+      "top": 449,
+      "bottom": 476,
+      "left": 333,
+      "right": 1024
+    },
+    "icon": {
+      "top": 455,
+      "bottom": 471,
+      "left": 309,
+      "right": 325
+    },
+    "pin": {
+      "top": 480,
+      "bottom": 508,
+      "left": 687,
+      "right": 715
+    },
+    "chip": {
+      "top": 481,
+      "bottom": 507,
+      "left": 309,
+      "right": 679
+    },
+    "docW": 1280,
+    "vw": 1280
+  },
+  {
+    "width": 1280,
+    "label": "short",
+    "groupDisplay": "contents",
+    "pinInGroup": true,
+    "pinOpacity": "0",
+    "nameLines": 1,
+    "name": {
+      "top": 437,
+      "bottom": 464,
+      "left": 333,
+      "right": 398
+    },
+    "icon": {
+      "top": 442,
+      "bottom": 458,
+      "left": 309,
+      "right": 325
+    },
+    "pin": {
+      "top": 436,
+      "bottom": 464,
+      "left": 784,
+      "right": 812
+    },
+    "chip": {
+      "top": 437,
+      "bottom": 463,
+      "left": 406,
+      "right": 776
+    },
+    "docW": 1280,
+    "vw": 1280
+  }
+]

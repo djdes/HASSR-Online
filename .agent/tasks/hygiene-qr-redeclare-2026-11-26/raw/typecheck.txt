@@ -1,0 +1,2 @@
+tsc --noEmit --skipLibCheck (tsconfig.json; include = 7 changed files + src/types/next-typecheck.d.ts, all imports followed)
+exit 0, no errors, 2m19s

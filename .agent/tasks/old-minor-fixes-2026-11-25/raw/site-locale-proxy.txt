@@ -1,0 +1,7 @@
+# src/site-locale-proxy.test.ts без .env и с загруженным .env
+## без .env
+# pass 6
+# fail 0
+## с .env
+# pass 6
+# fail 0

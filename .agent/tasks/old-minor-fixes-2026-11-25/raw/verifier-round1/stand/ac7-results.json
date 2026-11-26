@@ -1,0 +1,172 @@
+[
+  {
+    "name": "setup: test point",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "setup: point PPK seeded by the first PPK request",
+    "ok": true,
+    "detail": "404"
+  },
+  {
+    "name": "API compare: empty docKey — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API compare: docKey of 201 chars — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API compare: from=abc — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API compare: to=xyz — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API compare: garbage key — 404 doc_not_found",
+    "ok": true,
+    "detail": "404 {\"error\":\"Документ не найден\",\"code\":\"doc_not_found\"}"
+  },
+  {
+    "name": "API compare: no revisions — 404 no_revisions",
+    "ok": true,
+    "detail": "404 {\"error\":\"У документа нет утверждённых редакций\",\"code\":\"no_revisions\"}"
+  },
+  {
+    "name": "API compare: from=999 — 404 revision_not_found",
+    "ok": true,
+    "detail": "404 {\"error\":\"Редакция не найдена\",\"code\":\"revision_not_found\"}"
+  },
+  {
+    "name": "API compare: other point's doc → current side unavailable — 404 no_current_text",
+    "ok": true,
+    "detail": "404 {\"error\":\"Текущего текста документа нет\",\"code\":\"no_current_text\"}"
+  },
+  {
+    "name": "API compare: success body unchanged (history, from/to, diff; no code)",
+    "ok": true,
+    "detail": "200"
+  },
+  {
+    "name": "API approve: {} — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API approve: garbage key — 404 doc_not_found",
+    "ok": true,
+    "detail": "404 {\"error\":\"Документ не найден\",\"code\":\"doc_not_found\"}"
+  },
+  {
+    "name": "API approve: empty text doc — 400 doc_empty",
+    "ok": true,
+    "detail": "400 {\"error\":\"Документ пуст: сохраните текст или загрузите скан\",\"code\":\"doc_empty\"}"
+  },
+  {
+    "name": "API draft: {} — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API draft: unknown block — 400 bad_request",
+    "ok": true,
+    "detail": "400 {\"error\":\"Неверный запрос\",\"code\":\"bad_request\"}"
+  },
+  {
+    "name": "API draft: AI not configured on the stand — 503 ai_not_configured",
+    "ok": true,
+    "detail": "503 {\"error\":\"ИИ-помощник не подключён: черновик сейчас недоступен\",\"code\":\"ai_not_configured\"}"
+  },
+  {
+    "name": "API access: cook → compare — 403 forbidden",
+    "ok": true,
+    "detail": "403 {\"error\":\"Нет доступа к разделу\",\"code\":\"forbidden\"}"
+  },
+  {
+    "name": "API access: cook → approve — 403 forbidden",
+    "ok": true,
+    "detail": "403 {\"error\":\"Нет доступа к разделу\",\"code\":\"forbidden\"}"
+  },
+  {
+    "name": "API access: cook → draft — 403 forbidden",
+    "ok": true,
+    "detail": "403 {\"error\":\"Нет доступа к разделу\",\"code\":\"forbidden\"}"
+  },
+  {
+    "name": "UI en: page is in English (draft button)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "UI en: draft error (real 503 ai_not_configured) → English text by code",
+    "ok": true,
+    "detail": "The AI assistant is not connected: drafts are unavailable right now"
+  },
+  {
+    "name": "UI en: approve 409 doc_changed → «The document changed during approval — approve it again»",
+    "ok": true,
+    "detail": "The document changed during approval — approve it again"
+  },
+  {
+    "name": "UI en: approve with an unknown code → server text",
+    "ok": true,
+    "detail": "Серверный текст с новым кодом"
+  },
+  {
+    "name": "UI en: approve without a JSON body → local fallback «Could not approve the revision»",
+    "ok": true,
+    "detail": "Could not approve the revision"
+  },
+  {
+    "name": "UI en: real approval still works (revision created)",
+    "ok": true,
+    "detail": "Revision ППК 012 approved / revisions=1"
+  },
+  {
+    "name": "UI en: compare 404 revision_not_found → «Revision not found»",
+    "ok": true,
+    "detail": "Close | Compare revisions: | Before | After |  | Revision not found"
+  },
+  {
+    "name": "UI en: compare 403 choose_point → English text",
+    "ok": true,
+    "detail": "Close | Compare revisions: | Before | After |  | Choose your site in the header: the production control program is kept for each site"
+  },
+  {
+    "name": "UI en: compare with an unknown code → server text",
+    "ok": true,
+    "detail": "Close | Compare revisions: | Before | After |  | Сервер: новая ошибка сравнения"
+  },
+  {
+    "name": "UI en: real compare opens without an error",
+    "ok": true,
+    "detail": "Close | Compare revisions: Основные понятия и определения | Before | ППК 012 of 26.11.2026 | After | Current text | ППК 012 of 26.11.2026 | The text has not changed | added | rem"
+  },
+  {
+    "name": "UI uz: draft error → «AI-yordamchi ulanmagan: qoralama hozircha mavjud emas»",
+    "ok": true,
+    "detail": "AI-yordamchi ulanmagan: qoralama hozircha mavjud emas"
+  },
+  {
+    "name": "UI uz: approve 409 doc_changed → «Tasdiqlash vaqtida hujjat oʻzgardi — yana tasdiqlang»",
+    "ok": true,
+    "detail": "Tasdiqlash vaqtida hujjat oʻzgardi — yana tasdiqlang"
+  },
+  {
+    "name": "cleanup: point revisions removed and test point deleted",
+    "ok": true,
+    "detail": "revisions=1, delete 200"
+  },
+  {
+    "name": "cleanup: owner locale and active point restored",
+    "ok": true,
+    "detail": "{\"locale\":null,\"lastActiveBuildingId\":\"cmwwloahs00l7cf7d23jbg9pt\"}"
+  }
+]

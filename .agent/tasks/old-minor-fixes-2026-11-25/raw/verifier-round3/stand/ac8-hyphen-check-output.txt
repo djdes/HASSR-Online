@@ -1,0 +1,46 @@
+{
+ "name": "Склад-овощехранилище",
+ "width": 393,
+ "branch": {
+  "icon": [
+   37,
+   316,
+   16,
+   16
+  ],
+  "textLineTops": [
+   336
+  ],
+  "pin": [
+   41,
+   364,
+   28,
+   28
+  ],
+  "rowWidth": 243,
+  "pinAlone": true,
+  "iconAlone": true
+ },
+ "master": {
+  "icon": [
+   37,
+   317,
+   16,
+   16
+  ],
+  "textLineTops": [
+   313
+  ],
+  "pin": [
+   37,
+   343,
+   48,
+   48
+  ],
+  "rowWidth": 243,
+  "pinAlone": true,
+  "iconAlone": false
+ }
+}
+cleanup delete 200
+exit=0

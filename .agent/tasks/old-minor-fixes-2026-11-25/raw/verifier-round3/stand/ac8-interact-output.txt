@@ -1,0 +1,43 @@
+PASS setup: own test point — 200 Пекарня «Каравай» 225316
+PASS phone 360: one visible pin, inside the heading, 28×28 box — {"count":1,"x":100.640625,"y":389.9375,"w":28,"h":28,"cx":114.640625,"cy":403.9375,"pressed":"false","inH2":true,"opacity":"1"}
+PASS phone 360: tap at (-23, -23) from the pin centre toggles it — {"target":"button[pin]:Закрепить «Пекарня «Каравай» 2","pressed":"true","saved":true}
+PASS phone 360: tap at (+23, -23) from the pin centre toggles it — {"target":"button[pin]:Открепить «Пекарня «Каравай» 2","pressed":"false","saved":false}
+PASS phone 360: tap at (-23, +23) from the pin centre toggles it — {"target":"button[pin]:Закрепить «Пекарня «Каравай» 2","pressed":"true","saved":true}
+PASS phone 360: tap at (+23, +23) from the pin centre toggles it — {"target":"button[pin]:Открепить «Пекарня «Каравай» 2","pressed":"false","saved":false}
+PASS phone 360: tap at (+0, +0) from the pin centre toggles it — {"target":"button[pin]:Закрепить «Пекарня «Каравай» 2","pressed":"true","saved":true}
+PASS phone 360: tap at (-20, +0) from the pin centre toggles it — {"target":"button[pin]:Открепить «Пекарня «Каравай» 2","pressed":"false","saved":false}
+PASS phone 360: tap at (+20, +0) from the pin centre toggles it — {"target":"button[pin]:Закрепить «Пекарня «Каравай» 2","pressed":"true","saved":true}
+PASS phone 360: tap at (+0, -20) from the pin centre toggles it — {"target":"button[pin]:Открепить «Пекарня «Каравай» 2","pressed":"false","saved":false}
+PASS phone 360: tap at (+0, +20) from the pin centre toggles it — {"target":"button[pin]:Закрепить «Пекарня «Каравай» 2","pressed":"true","saved":true}
+PASS phone 360: exact-point tap at (-23, -23) — inside the 48×48 zone — toggles — {"saved":false}
+PASS phone 360: exact-point tap at (23, 23) — inside the 48×48 zone — toggles — {"saved":true}
+PASS phone 360: exact-point tap at (23, -23) — inside the 48×48 zone — toggles — {"saved":false}
+PASS phone 360: exact-point tap at (-23, 23) — inside the 48×48 zone — toggles — {"saved":true}
+INFO exact tap at (-26, 0) on span(text): reached the pin (touch adjustment)
+INFO exact tap at (26, 0) on div(text): reached the pin (touch adjustment)
+INFO exact tap at (0, -26) on h2(text): reached the pin (touch adjustment)
+INFO exact tap at (0, 26) on span(text): reached the pin (touch adjustment)
+INFO exact tap at (-30, 0) on span(text): reached the pin (touch adjustment)
+INFO exact tap at (-37, 0) on span(text): no toggle
+INFO exact tap at (0, 37) on span(text): no toggle
+INFO exact tap at (37, 0) on div(text): no toggle
+INFO exact tap at (-44, 0) on span(text): no toggle
+INFO ordinary tap at (-26, 0) on plain text next to the pin: snapped to the pin by Chrome touch adjustment
+INFO ordinary tap at (0, 26) on plain text next to the pin: snapped to the pin by Chrome touch adjustment
+PASS phone 360 keyboard: Tab from just before the card lands on the pin inside the heading, visible with a focus ring — {"pin":true,"inH2":true,"label":"Открепить «Пекарня «Каравай» 225316»","opacity":"1","ring":"rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, lab(48.4271 29.0378 -75.7175 / 0.15) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px","focusVisible":true}
+PASS phone 360 keyboard: Space toggles the focused pin (and it is saved) — {"saved":false}
+PASS phone 360 keyboard: Enter toggles it back (and it is saved) — {"saved":true}
+PASS phone 360: left unpinned for the next part
+PASS landscape 740 (touch): one visible pin, outside the heading, opaque without hover — {"count":1,"x":415.21875,"y":197.484375,"w":28,"h":28,"cx":429.21875,"cy":211.484375,"pressed":"false","inH2":false,"opacity":"1"}
+PASS landscape 740 (touch): tap toggles the pin (saved) — {"saved":true}
+PASS landscape 740 (touch): second tap toggles back — {"saved":false}
+PASS desktop 1280: the phone pin inside the heading is display:none; one visible pin outside it — {"phonePin":{"display":"none"},"pin":{"count":1,"x":952.53125,"y":435.6875,"w":28,"h":28,"cx":966.53125,"cy":449.6875,"pressed":"false","inH2":false,"opacity":"0"}}
+PASS desktop 1280: unpinned pin hidden until the card is hovered, visible on hover — {"hidden":"0","shown":"1"}
+PASS desktop 1280: click pins the object (saved) — {"saved":true}
+PASS desktop 1280: pinned pin visible without hover — 1
+PASS desktop 1280: second click unpins (saved) — {"saved":false}
+PASS desktop 1280: Tab reaches the pin once, first in the card — ["button[pin]","a","button","button","button","button"]
+PASS cleanup: test point deleted, pinned list restored — 200
+
+29/29 PASS
+exit=0

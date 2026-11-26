@@ -44,15 +44,15 @@ export async function POST(request: Request) {
   const auth = await requirePpkAccess();
   if (!auth.ok) return auth.response;
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Неверный запрос", code: "bad_request" }, { status: 400 });
   // Документ базы знаний утверждает тот, кто управляет базой знаний (spec, Р5).
   const doc = (await resolveRevisionDocs(auth.scope, [parsed.data.docKey])).get(parsed.data.docKey);
   if (doc?.knowledgeBase && !hasCapability(auth.session.user, "admin.full")) {
-    return NextResponse.json({ error: "Утверждать документы базы знаний может тот, кто ею управляет" }, { status: 403 });
+    return NextResponse.json({ error: "Утверждать документы базы знаний может тот, кто ею управляет", code: "kb_forbidden" }, { status: 403 });
   }
   const actor = { id: auth.session.user.id, name: auth.session.user.name ?? "" };
   const result = await approveRevision(auth.scope, actor, parsed.data.docKey);
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  if (!result.ok) return NextResponse.json({ error: result.error, code: result.code }, { status: result.status });
   if (result.created) {
     await recordAuditLog({
       request,

@@ -1,0 +1,96 @@
+{
+ "task": "old-minor-fixes-2026-11-25",
+ "round": 3,
+ "verdict": "PASS",
+ "judged": {
+  "branch": "claude/fervent-brown-ed5apv",
+  "commit": "7eeaccbfe8d71b6ec93a52efc022d4049ea1137f",
+  "base": "origin/master dd898d48722204e3c98a1ab34caaabb7227069c6 (merge-base; after git fetch the branch is 0 behind, 6 ahead)",
+  "time": "2026-11-25T23:06:24Z",
+  "stand": "next dev :3000 on the clean working tree of HEAD, local PostgreSQL 16, demo org admin@haccp.local (owner); Chromium 1243 via Playwright 1.63.0 (no WebKit/Firefox binaries in the sandbox); own test points deleted and the owner's pinned list restored; DB snapshot before/after identical (raw/verifier-round3/db-before.txt, db-after.txt)",
+  "verifier": "fresh independent verifier, round 3 (Claude Code subagent)"
+ },
+ "criteria": {
+  "AC1": "PASS",
+  "AC2": "PASS",
+  "AC3": "PASS",
+  "AC4": "PASS",
+  "AC5": "PASS",
+  "AC6": "PASS",
+  "AC7": "PASS",
+  "AC8": "PASS",
+  "AC9": "PASS"
+ },
+ "criteria_notes": {
+  "scope": "Since round 2 (1855c0269) only the object card changed: git diff 1855c0269..HEAD outside .agent/ = buildings-client.tsx and buildings-card-layout.test.ts (raw/verifier-round3/diff-since-round2.txt). AC1–AC7 code is byte-identical to what round 2 verified on the stand; for them the cheap checks were re-run on current code.",
+  "AC1": "journal-entry-delete.test.ts 6/6 on current code ({employeeId,date} = that day's row only, {ids} exact, {employeeId} whole row, malformed ids and bad date 400, the route locks and deletes the same row set). Route unchanged since round 2, whose stand run gave yesterday 200 / outside the window 403 / bad date 400.",
+  "AC2": "journal-entry-source.test.ts 3/3 and special-mode-past-days.test.ts 8/8 on current code (source cell: past-day locks only, not the future rule; write into a future day still locked). Unchanged since round 2 (stand: manager move from the day after tomorrow 200, staff 403, into a future day 403).",
+  "AC3": "npx eslint on the 22 changed src files (incl. journals/[code]/documents/[docId]/page.tsx, climate-document-client.tsx, journal-entry-write.ts): exit 0, no messages (raw/verifier-round3/eslint.txt).",
+  "AC4": "src/site-locale-proxy.test.ts 6/6 with an empty environment (env -i) and 6/6 with .env loaded (NEXTAUTH_SECRET set) (raw/verifier-round3/site-locale-proxy.txt).",
+  "AC5": "revision-minors.test.ts on current code: compare reads text only of the two compared revisions, side rules unchanged (tests 14–17 ok). Code unchanged since round 2.",
+  "AC6": "revision-minors.test.ts: one retry then console.error (not silent); text and fingerprint of one document version, otherwise 409 and nothing saved (tests 18–19 ok). Code unchanged since round 2.",
+  "AC7": "revision-minors.test.ts: codes → ru/en/uz texts, unknown code → server text, every code in all three catalogs, API/access return code + text (tests 20–22 ok); npm run i18n:check 103/103 with the message contract up to date. Code unchanged since round 2 (stand: codes and English toast verified there).",
+  "AC8": "Independent probe (raw/verifier-round3/stand/ac8-layout.mjs, summary ac8-summary.txt): 31 own names (none from round 2: long quoted/compound last words, single words, hyphenated, NBSP-glued «ООО «…»», Latin/Uzbek, emoji, parentheses, a 113-character name) + the 31 real demo cards, 15 Chromium profiles: emulated 150 %/125 % page zoom (275/288 px), 280 px fold cover, Galaxy S9+ 320, Galaxy S24 360, Pixel 5 393, Pixel 7 412, Galaxy A55 480, iPhone SE landscape 568 (phone layout), Nexus 7 600, 630, Galaxy S9+ landscape 658 and Galaxy S8 landscape 740 (≥640 on touch), 1024, 1280 — 930 card×profile measurements, each compared with origin/master dd898d487's header markup rebuilt in the same page. Result: 0 words cut that master keeps whole (64 cut in both = words wider than the whole line or hyphen breaks; 4 cut only by master: NBSP-glued names at 275–320 px); 0 overflow past the card or page h-scroll; exactly one visible pin and one pin in the accessibility tree per card in every profile; heading accessible name = object name everywhere; phone pin inside the h2 in all 620 phone measurements, desktop pin outside it in all 310 ≥640 measurements; ≥640 px reading order name → sphere → pin and identical to master-sim (0 differences). Pin on its own line: 39 phone cases, all with «last word + pin» wider than the line (the spec's accepted case, 39/39); one of them is a hyphenated word («Склад-овощехранилище», 393 px) whose part after the hyphen would fit with the pin — still the spec's condition, informational. Touch zone (ac8-hitzone-recheck.mjs, page chrome hidden while measuring): 480/480 phone measurements give a 48×48 hit zone (::before absolute −10 px on each side), all four corners at ±23.5 px hit, ±25.5 px miss, no other control under the zone, the card's own controls keep their taps, min gap zone → pencil 2 px. Real input (ac8-interact.mjs, 29/29): Galaxy S24 touch taps at the zone's corners/edges toggle and save; Tab from just before the card lands on the pin first, visible with a focus ring, Space and Enter toggle and save; Galaxy S8 landscape 740 (touch, ≥640) separate pin visible and tap-toggles; 1280 mouse: phone pin display:none, unpinned pin hidden until hover, click pins/unpins, pinned stays visible, one Tab stop. Round-2 verifier probes re-run on current code: ac8-a11y.mjs 33/33; ac8-names.mjs 64 cards × 13 widths (320–1280 px) = 832 measurements: 0 words cut that master-sim keeps whole, 0 overflow, 0 cards with visible pins ≠ 1, 0 order differences, pin on its own line 7×, every time with last word + pin wider than the line (7/7) (other pin problems 0). Spec-width screenshots of current code: raw/verifier-round3/stand/screens/ac8-width-{320,360,375,390,430,700,1280}.png.",
+  "AC9": "npm run typecheck exit 0; npm run test:gate in targeted mode (80 related test files incl. buildings-card-layout.test.ts, no escalation) pass 371 fail 0; focused tests 36/36; ESLint of the 22 changed src files clean; i18n:check 103/103; design guards (borderless, neutral-palette, one-accent) 12/12; no Prisma schema change; branch up to date with origin/master. Merge and deploy follow a PASS verdict."
+ },
+ "round2_issue": "fixed",
+ "round2_issue_note": "AC8-last-word-cut: the pin now travels with the whole last word (inline-block max-w-full, 28 px in the line), so a long last word is never cut to keep the pin beside it. Round-2 repro names on current code (rerun of the round-2 probe ac8-names.mjs; cut words / pin): «Цех кондитерский» 320:whole, 360:whole, 375:whole, 390:whole; «Кафе «Шоколадница»» 320:whole (pin on own line), 360:whole, 375:whole, 390:whole; «Цех производственный» 320:whole (pin on own line), 360:whole, 375:whole, 390:whole; «Столовая общеобразовательная» 320:cut общеобразовательная, 360:whole (pin on own line), 375:whole (pin on own line), 390:whole; «Склад продовольственный» 320:cut продовольственный, 360:whole (pin on own line), 375:whole, 390:whole; «Пекарня «Хлебосольная»» 320:whole (pin on own line), 360:whole, 375:whole, 390:whole. The two 320-px cuts are words wider than the whole 170-px line («общеобразовательная» 198 px, «продовольственный» 179 px) — origin/master's markup cuts them too. Across both probes (930 + 832 card×width measurements) there is no word cut on the branch that origin/master's markup keeps whole.",
+ "issues": [
+  {
+   "id": "AC8-icon-alone-single-word",
+   "severity": "minor",
+   "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+   "line": 683,
+   "description": "On 320–639 px a one-word name that, together with the 32-px pin, does not fit beside the 24-px building icon wraps under the icon and leaves the icon alone on the first line, although the word alone would fit beside it; origin/master kept icon + name together and put the pin alone below instead. 10 of 620 phone measurements (275–288 px «Choyxona»; 320 px «Кондитерская», «Пищекомбинат»; 360 px «Кафе-кондитерская», «Овощехранилище»; 393/412 px «Склад-овощехранилище»; 412 px «Мясоперерабатывающий»). Master's markup leaves the icon alone in 305 of the same measurements, so it is much rarer than before; not among the AC8 check criteria. Not blocking.",
+   "repro": "Create a point «Кондитерская» (sphere food), open /settings/buildings at 320×658 (Galaxy S9+): line 1 = icon only, line 2 = «Кондитерская 📎» (master: «🏢 Кондитерская» / 📎). Same with «Склад-овощехранилище» at 393 px: branch icon / name / pin on three lines, master icon+name / pin (ac8-hyphen-check-output.txt, screens/hyphen-393-{branch,master-sim}.png; screens/galaxy-s9p-320-Кондитерская-{branch,master-sim}.png). Optional fix: when nameHead is empty, put the icon inside the same inline-block as the word and the pin, so a one-word name breaks like master (icon + word, pin below) instead of orphaning the icon."
+  },
+  {
+   "id": "AC8-hyphenated-last-word",
+   "severity": "info",
+   "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+   "line": 373,
+   "description": "splitForPin splits at whitespace only, so a hyphenated last word travels with the pin as one unit: «Склад-овощехранилище» at 393 px (213.6 + 32 > 243) puts the pin on its own line although «овощехранилище» + pin would fit after a break at the hyphen (greedy line breaking keeps the whole word on one line). This is the spec's accepted case (last word + pin wider than the line); origin/master's markup also puts the pin alone below the name there (measured: ac8-hyphen-check-output.txt), the branch additionally leaves the icon alone (see AC8-icon-alone-single-word).",
+   "repro": "Point «Склад-овощехранилище», /settings/buildings at 393×727 (Pixel 5)."
+  },
+  {
+   "id": "AC8-touch-adjustment",
+   "severity": "info",
+   "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+   "line": 701,
+   "description": "The geometric touch zone is exactly 48×48, but Chrome's touch adjustment also routes taps on the plain text of the name up to ~30 px from the pin's centre to the pin (exact CDP taps at 26–30 px toggled, at 37–44 px did not). Platform behaviour that applies to any button (also to master's pin); means a tap on the last letters of the name pins/unpins the object.",
+   "repro": "raw/verifier-round3/stand/ac8-interact-output.txt (INFO lines)."
+  },
+  {
+   "id": "labelled-heading-with-button",
+   "severity": "minor",
+   "file": "src/app/(dashboard)/settings/buildings/buildings-client.tsx",
+   "line": 686,
+   "description": "Carried over from round 2, still untested: no WebKit in the sandbox, so VoiceOver on iPhone with <h2 aria-label> that contains the pin button was not checked (some screen readers in browse mode read only the heading's label). In Chromium the pin is in the accessibility tree (1 per card) and in the Tab order.",
+   "repro": "n/a in this sandbox (needs Safari/VoiceOver)."
+  },
+  {
+   "id": "evidence-staleness",
+   "severity": "minor",
+   "file": ".agent/tasks/old-minor-fixes-2026-11-25/evidence.md",
+   "line": 1,
+   "description": "Builder evidence nits: evidence.md is titled «раунд 2»; evidence.json has head \"74b12baa0 + evidence commit\" and AC9 cites test:gate «на 74b12baa0»; the spec-width screenshots raw/stand/screens/after3-*.png were taken at 21:47, before the round-3 markup (commit 622cd47f2, 22:30). Current numbers match (test:gate 371/0 on 7eeaccbfe); fresh spec-width screenshots are in raw/verifier-round3/stand/screens/ac8-width-*.png.",
+   "repro": "ls -l --time-style=full-iso .agent/tasks/old-minor-fixes-2026-11-25/raw/stand/screens/after3-*.png; git log -1 --format=%ci 622cd47f2"
+  },
+  {
+   "id": "pre-existing-carried-over",
+   "severity": "minor",
+   "file": "src/app/api/journal-documents/[id]/entries/route.ts",
+   "line": 0,
+   "description": "Carried over from round 2, outside the spec, code unchanged since then (not re-run): DELETE …/entries with the JSON body null → 500 (master the same); the automation lock counts «today» in UTC while the window uses the organization's timezone.",
+   "repro": "See verdict-round2.json issues delete-null-body-500, automation-lock-utc-day."
+  },
+  {
+   "id": "stand-scroll-reset",
+   "severity": "info",
+   "file": "n/a",
+   "line": 0,
+   "description": "Observed on the dev stand, unrelated to this diff and not investigated: /settings/buildings scrolls itself back to the top once shortly after load in Chromium phone profiles (a scrollIntoView done right after load is undone within ~100 ms). Only affected probe timing; the probes wait for it.",
+   "repro": "raw/verifier-round3/stand/scroll-reset-check.mjs (+ -output.txt): Galaxy S9+ profile, scrollIntoView on card 5 right after networkidle → scrollY 3190 → 0 within 100 ms; landscape-chrome-check-output.txt shows the fixed bottom bar over the zone in a 320-px-tall viewport."
+  }
+ ]
+}

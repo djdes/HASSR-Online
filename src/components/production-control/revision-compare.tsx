@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { PPK_COMPARE_ERROR_CODES, ppkErrorText } from "@/lib/ppk/api-errors";
 import { GitCompareArrows, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -75,10 +76,11 @@ export function RevisionCompareDialog({
     setError(null);
     fetch(`${API}?${params}`, { cache: "no-store" })
       .then(async (response) => {
-        const body = (await response.json().catch(() => null)) as (CompareResponse & { error?: string }) | null;
+        const body = (await response.json().catch(() => null)) as (CompareResponse & { error?: string; code?: string }) | null;
         if (!alive) return;
         if (!response.ok || !body?.history) {
-          setError(body?.error || t("failed"));
+          // Текст по коду — на языке интерфейса; неизвестный код — текст сервера.
+          setError(ppkErrorText(body, PPK_COMPARE_ERROR_CODES, (key) => t(`errors.${key}`), t("failed")));
           return;
         }
         setData(body);

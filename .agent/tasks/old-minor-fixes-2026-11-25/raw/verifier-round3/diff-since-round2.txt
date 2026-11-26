@@ -1,0 +1,16 @@
+## git diff --stat 1855c0269..HEAD -- src/ scripts/ prisma/ package.json package-lock.json tsconfig*.json next.config.ts
+ .../buildings/buildings-card-layout.test.ts        | 25 +++++++++++------
+ .../settings/buildings/buildings-client.tsx        | 32 +++++++++++++---------
+ 2 files changed, 35 insertions(+), 22 deletions(-)
+
+## files changed 1855c0269..HEAD outside .agent/
+src/app/(dashboard)/settings/buildings/buildings-card-layout.test.ts
+src/app/(dashboard)/settings/buildings/buildings-client.tsx
+
+## branch vs master (dd898d487) product files
+ src/lib/special-mode-past-days.test.ts             |   3 +-
+ src/site-locale-proxy.test.ts                      |   9 +-
+ 27 files changed, 772 insertions(+), 147 deletions(-)
+
+## prisma schema changed vs master?
+no

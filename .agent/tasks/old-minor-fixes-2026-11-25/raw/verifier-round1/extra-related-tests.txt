@@ -1,0 +1,53 @@
+# extra related tests (string-reading tests not selected by the import graph), 2026-11-25T21:00:49Z
+src/lib/access-smoke.test.ts
+src/lib/ai-assistant/localization.test.ts
+src/lib/journal-entry-scope.test.ts
+src/lib/climate-room-membership.test.ts
+src/lib/room-kinds.test.ts
+src/components/journals/document-toolbar-row.test.ts
+src/components/journals/journal-table-scroll.test.ts
+src/lib/no-blank-word.test.ts
+src/lib/journal-controls.test.ts
+src/lib/document-point-access.test.ts
+src/lib/paper-journal-point.test.ts
+src/lib/acceptance-sources.test.ts
+src/lib/localized-api-error.test.ts
+src/lib/journal-api-errors.test.ts
+src/app/borderless.test.ts
+src/app/neutral-palette.test.ts
+src/app/one-accent.test.ts
+src/lib/platform-roles.test.ts
+src/lib/ppk/scope.test.ts
+src/app/api/settings/buildings/[id]/icon/route.test.ts
+src/app/motion-data.test.ts
+src/components/inspection/inspection-pages.test.ts
+src/components/production-control/poster-sheet.test.ts
+src/components/production-control/ppk-icons.test.ts
+src/components/settings/organization-pages.test.ts
+src/lib/app-nav.test.ts
+src/lib/header-point.test.ts
+src/lib/home-page.test.ts
+src/lib/inspector-portal-extras.test.ts
+src/lib/organization-office.test.ts
+src/lib/point-company-routes.test.ts
+src/lib/point-objects-routes.test.ts
+src/lib/point-people-routes.test.ts
+src/lib/point-scope.test.ts
+src/lib/point-section-sync.test.ts
+src/lib/ppk/compliance.test.ts
+src/lib/ppk/posters.test.ts
+src/lib/ppk/registry.test.ts
+src/lib/ppk/structure.test.ts
+src/lib/qr-object-journal-status.test.ts
+src/lib/qr-posters-request.test.ts
+src/lib/route-overlay.test.ts
+src/lib/section-jumps.test.ts
+src/lib/settings-cards.test.ts
+src/lib/ppk/text-drafts.test.ts
+src/lib/ppk/overview-view.test.ts
+src/lib/tracked-document.test.ts
+src/lib/hygiene-admission-guard.test.ts
+# tests 373
+# pass 373
+# fail 0
+exit=0

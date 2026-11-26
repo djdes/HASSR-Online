@@ -1,0 +1,57 @@
+== current: cut 20, pin alone 0, overflow 0 (of 96 card×width)
+  320px "Цех кондитерский" cut=[кондитерский] pinAlone=false overflow=-134 pinW=48
+  320px "Цех производственный" cut=[производственный] pinAlone=false overflow=-90 pinW=48
+  320px "Склад продовольственный" cut=[продовольственный] pinAlone=false overflow=-78 pinW=48
+  320px "Столовая общеобразовательная" cut=[общеобразовательная] pinAlone=false overflow=-79 pinW=48
+  320px "Кафе «Шоколадница»" cut=[«Шоколадница»] pinAlone=false overflow=-115 pinW=48
+  320px "Магазин «Перекрёсток»" cut=[«Перекрёсток»] pinAlone=false overflow=-123 pinW=48
+  320px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-79 pinW=48
+  360px "Цех производственный" cut=[производственный] pinAlone=false overflow=-130 pinW=48
+  360px "Склад продовольственный" cut=[продовольственный] pinAlone=false overflow=-118 pinW=48
+  360px "Столовая общеобразовательная" cut=[общеобразовательная] pinAlone=false overflow=-99 pinW=48
+  360px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-77 pinW=48
+  375px "Склад продовольственный" cut=[продовольственный] pinAlone=false overflow=-133 pinW=48
+  375px "Столовая общеобразовательная" cut=[общеобразовательная] pinAlone=false overflow=-114 pinW=48
+  375px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-81 pinW=48
+  390px "Столовая общеобразовательная" cut=[общеобразовательная] pinAlone=false overflow=-129 pinW=48
+  390px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-86 pinW=48
+  412px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-78 pinW=48
+  430px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-87 pinW=48
+  600px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-81 pinW=48
+  639px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-120 pinW=48
+== wordBlock: cut 9, pin alone 13, overflow 0 (of 96 card×width)
+  320px "Цех кондитерский" cut=[] pinAlone=true overflow=-124 pinW=48
+  320px "Цех производственный" cut=[] pinAlone=true overflow=-79 pinW=48
+  320px "Склад продовольственный" cut=[продовольственный] pinAlone=false overflow=-78 pinW=48
+  320px "Столовая общеобразовательная" cut=[общеобразовательная] pinAlone=false overflow=-79 pinW=48
+  320px "Кафе «Шоколадница»" cut=[] pinAlone=true overflow=-105 pinW=48
+  320px "Магазин «Перекрёсток»" cut=[] pinAlone=true overflow=-113 pinW=48
+  320px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=true overflow=-79 pinW=48
+  360px "Цех производственный" cut=[] pinAlone=true overflow=-119 pinW=48
+  360px "Склад продовольственный" cut=[] pinAlone=true overflow=-108 pinW=48
+  360px "Столовая общеобразовательная" cut=[] pinAlone=true overflow=-89 pinW=48
+  360px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-77 pinW=48
+  375px "Склад продовольственный" cut=[] pinAlone=true overflow=-123 pinW=48
+  375px "Столовая общеобразовательная" cut=[] pinAlone=true overflow=-104 pinW=48
+  375px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-81 pinW=48
+  390px "Столовая общеобразовательная" cut=[] pinAlone=true overflow=-119 pinW=48
+  390px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=true overflow=-86 pinW=48
+  412px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-78 pinW=48
+  430px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-87 pinW=48
+  600px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-81 pinW=48
+  639px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[] pinAlone=true overflow=-109 pinW=48
+== wordBlockCompact: cut 9, pin alone 6, overflow 0 (of 96 card×width)
+  320px "Цех производственный" cut=[] pinAlone=true overflow=-79 pinW=28
+  320px "Склад продовольственный" cut=[продовольственный] pinAlone=false overflow=-78 pinW=28
+  320px "Столовая общеобразовательная" cut=[общеобразовательная] pinAlone=false overflow=-79 pinW=28
+  320px "Кафе «Шоколадница»" cut=[] pinAlone=true overflow=-105 pinW=28
+  320px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-79 pinW=28
+  360px "Склад продовольственный" cut=[] pinAlone=true overflow=-108 pinW=28
+  360px "Столовая общеобразовательная" cut=[] pinAlone=true overflow=-89 pinW=28
+  360px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-77 pinW=28
+  375px "Столовая общеобразовательная" cut=[] pinAlone=true overflow=-104 pinW=28
+  375px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-81 pinW=28
+  390px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=true overflow=-86 pinW=28
+  412px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-78 pinW=28
+  430px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-87 pinW=28
+  600px "Сверхдлинноеназваниеобъектабезединогопробела" cut=[Сверхдлинноеназваниеобъектабезединогопробела] pinAlone=false overflow=-81 pinW=28

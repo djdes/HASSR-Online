@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
   HYGIENE_V2_COLUMNS,
   applyHygieneVerification,
+  hygieneDeclarationEntry,
   hygieneV2View,
   readHygieneFormVersion,
 } from "./hygiene-v2";
+import { healthDecision } from "./health-qr";
 
 /**
  * Гигиенический журнал по форме Приложения №1: сотрудник подписывает три
@@ -121,4 +124,65 @@ test("печать: ✓/✗ — словами, если шрифт PDF не з�
   assert.equal(hygieneV2PdfMark("✓"), "да");
   assert.equal(hygieneV2PdfMark("✗"), "нет");
   assert.equal(hygieneV2PdfMark(""), "");
+});
+
+/**
+ * Повторная отметка по QR после допуска (2026-11-26, ООО «Ранкон»):
+ * сотрудник отметился утром, ответственный допустил, днём сотрудник снова
+ * отметился теми же подписями — запись перезаписывалась целиком, допуск
+ * пропадал, в журнале снова «Ждёт проверки».
+ */
+const ALL_THREE = ["temperature", "infection", "respiratorySkin"];
+const MORNING_ADMISSION = {
+  result: "admitted" as const,
+  byUserId: "keeper-1",
+  byName: "Курбанова Т. А.",
+  byTitle: "Заведующий производством",
+  at: "09:12",
+  method: "qr" as const,
+};
+const ADMITTED_MORNING_ENTRY = {
+  status: "healthy",
+  temperatureAbove37: false,
+  confirmations: { temperature: true, infection: true, respiratorySkin: true },
+  source: "qr",
+  confirmedAt: "09:11",
+  verification: MORNING_ADMISSION,
+};
+
+test("повторная отметка по QR с теми же подписями оставляет допуск ответственного", () => {
+  const data = hygieneDeclarationEntry({
+    decision: healthDecision(ALL_THREE),
+    previous: ADMITTED_MORNING_ENTRY,
+    at: "17:00",
+    source: "qr",
+  });
+  assert.deepEqual(data.verification, MORNING_ADMISSION);
+  assert.equal(data.status, "healthy");
+  assert.equal(data.source, "qr");
+  assert.equal(hygieneV2View(data).result?.result, "admitted");
+});
+
+test("повторная отметка по QR с жалобой снимает допуск — нужен новый", () => {
+  const data = hygieneDeclarationEntry({
+    decision: healthDecision(["infection", "respiratorySkin"]),
+    previous: ADMITTED_MORNING_ENTRY,
+    at: "17:00",
+    source: "qr",
+  });
+  assert.equal("verification" in data, false);
+  assert.equal(data.status, "suspended");
+});
+
+test("первая отметка по QR — та же запись, что писалась раньше", () => {
+  const decision = healthDecision(ALL_THREE);
+  const data = hygieneDeclarationEntry({ decision, previous: null, at: "08:05", source: "qr" });
+  assert.deepEqual(data, { ...decision.hygiene, confirmations: decision.confirmations, source: "qr", confirmedAt: "08:05" });
+});
+
+test("QR «Гигиена и здоровье» пишет отметку сотрудника через hygieneDeclarationEntry", () => {
+  const source = readFileSync(new URL("./health-qr-flow.ts", import.meta.url), "utf8");
+  const submit = source.slice(source.indexOf('"health-submit"'), source.indexOf("// ---- форма"));
+  assert.match(submit, /hygieneDeclarationEntry\(/);
+  assert.doesNotMatch(submit, /upsertEntry\(pair\.hygieneId, ctx\.employee\.id, ctx\.todayKey, \{ \.\.\.decision\.hygiene/);
 });

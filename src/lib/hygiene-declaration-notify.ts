@@ -19,6 +19,8 @@ export async function notifyHygieneDeclaration(params: {
   decision: Pick<HealthDecision, "admitted" | "complaints">;
   via: "QR" | "TasksFlow";
   medExpired?: boolean;
+  /** false — допуск уже стоит (повторная подпись теми же ответами): «ждут допуска» не нужен, тревоги остаются. */
+  awaitingAdmission?: boolean;
 }): Promise<void> {
   const { organizationId, hygieneDocumentId, employee, todayKey, at, decision, via } = params;
   // В тексте — название, которое видит клиент: сервис задач — «программный модуль».
@@ -26,7 +28,7 @@ export async function notifyHygieneDeclaration(params: {
   const recipients = await listCoreJournalRecipients(organizationId, hygieneDocumentId).catch(() => []);
   const linkHref = hygieneDocumentId ? `/journals/hygiene/documents/${hygieneDocumentId}` : "/journals";
 
-  if (hygieneDocumentId) {
+  if (hygieneDocumentId && params.awaitingAdmission !== false) {
     await Promise.all(
       recipients.map((recipient) =>
         upsertNotification({

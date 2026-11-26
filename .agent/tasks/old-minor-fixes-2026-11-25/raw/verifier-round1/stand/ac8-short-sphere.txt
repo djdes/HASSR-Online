@@ -1,0 +1,7 @@
+320px «Медицинские услуги»: chip below the name row
+360px «Медицинские услуги»: chip below the name row
+390px «Медицинские услуги»: chip below the name row
+430px «Медицинские услуги»: chip below the name row
+639px «Медицинские услуги»: chip on the name row (left 210, pin left 154)
+640px «Медицинские услуги»: chip on the name row (left 154, pin left 304)
+1280px «Медицинские услуги»: chip on the name row (left 426, pin left 576)

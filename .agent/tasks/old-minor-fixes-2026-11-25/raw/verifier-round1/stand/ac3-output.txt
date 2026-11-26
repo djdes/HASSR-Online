@@ -1,0 +1,6 @@
+# Verifier stand AC3 behaviour (disabled journal «health_check» document), 2026-11-25T21:29:15Z
+PASS AC3 disabled journal screen: settings link present with the same href and text — Открыть настройки набора журналов → /settings/journals
+PASS AC3 link navigates to /settings/journals — http://localhost:3000/settings/journals
+
+2/2 PASS
+exit=0
