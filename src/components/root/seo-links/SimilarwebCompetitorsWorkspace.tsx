@@ -5,14 +5,18 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   ImageUp,
   KeyRound,
   Loader2,
   Plus,
   RefreshCw,
+  Rocket,
   Save,
-  Scale,
+  Sparkles,
   Trash2,
   TrendingUp,
 } from "lucide-react";
@@ -96,17 +100,6 @@ function formatVerdictTone(
   }
 }
 
-function formatSourceKind(kind: string): string {
-  switch (kind) {
-    case "screenshot_ocr":
-      return "OCR скриншота";
-    case "agent_import":
-      return "Similarweb (api-anything)";
-    default:
-      return "Ручной ввод";
-  }
-}
-
 export function SimilarwebCompetitorsWorkspace({
   initialSnapshots = [],
   onAfterChange,
@@ -119,7 +112,7 @@ export function SimilarwebCompetitorsWorkspace({
   const [uploadingOcr, setUploadingOcr] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [apiDomainInput, setApiDomainInput] = useState("haccp-online.ru");
+  const [apiDomainInput, setApiDomainInput] = useState("rushaccp.ru");
   const [syncingApiDomain, setSyncingApiDomain] = useState<string | null>(null);
   const [swSettingsOpen, setSwSettingsOpen] = useState(false);
   const [swCookieInput, setSwCookieInput] = useState("");
@@ -128,6 +121,7 @@ export function SimilarwebCompetitorsWorkspace({
 
   const [verdictFilter, setVerdictFilter] = useState<VerdictFilterKey>("all");
   const [domainFilter, setDomainFilter] = useState<string>("all");
+  const [showDetailedMatrix, setShowDetailedMatrix] = useState(false);
 
   const [manualOpen, setManualOpen] = useState(false);
   const [manualDomain, setManualDomain] = useState("haccp-online.ru");
@@ -193,6 +187,17 @@ export function SimilarwebCompetitorsWorkspace({
   const benchmark = matrixData?.benchmark ?? null;
   const swConn = matrixData?.similarwebConnection ?? null;
 
+  const clustersByDomain = useMemo(() => {
+    const map = new Map<string, SimilarwebClusterDto[]>();
+    for (const snap of snapshots) {
+      const d = snap.domain.trim().toLowerCase();
+      if (!map.has(d)) {
+        map.set(d, parseClusters(snap.clusters));
+      }
+    }
+    return map;
+  }, [snapshots]);
+
   const filteredGaps = useMemo(() => {
     const allGaps = benchmark?.clusterGaps ?? [];
     return allGaps.filter((row) => {
@@ -219,7 +224,7 @@ export function SimilarwebCompetitorsWorkspace({
       .map((d) => d.trim().toLowerCase())
       .filter(Boolean);
     if (cleanList.length === 0) {
-      toast.error("Укажите домен для загрузки через api-anything");
+      toast.error("Укажите домен конкурента");
       return;
     }
 
@@ -245,20 +250,19 @@ export function SimilarwebCompetitorsWorkspace({
           setSwSettingsOpen(true);
         }
         throw new Error(
-          data?.error ??
-            "Не удалось загрузить срез Similarweb через api-anything",
+          data?.error ?? "Не удалось загрузить срез конкурента",
         );
       }
       const syncedCount = data.snapshots?.length ?? 1;
       toast.success(
         syncedCount > 1
-          ? `Через api-anything обновлено срезов Similarweb: ${syncedCount}`
-          : `Срез ${data.snapshot?.domain} (${data.snapshot?.periodLabel}) загружен через api-anything`,
+          ? `Обновлено доменов: ${syncedCount}`
+          : `Домен ${data.snapshot?.domain} проанализирован и добавлен в сверку`,
       );
       await notifyChange();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Ошибка синхронизации Similarweb",
+        err instanceof Error ? err.message : "Ошибка синхронизации домена",
       );
     } finally {
       setSyncingApiDomain(null);
@@ -291,8 +295,8 @@ export function SimilarwebCompetitorsWorkspace({
       setSwApiKeyInput("");
       toast.success(
         clear
-          ? "Сессия Similarweb (api-anything) очищена"
-          : "Сессия Similarweb (api-anything) сохранена",
+          ? "Сессия Similarweb очищена"
+          : "Сессия Similarweb сохранена",
       );
       await loadMatrix();
     } catch (err) {
@@ -330,7 +334,7 @@ export function SimilarwebCompetitorsWorkspace({
         );
       }
       toast.success(
-        `Срез Similarweb (${data.snapshot.domain}, ${data.snapshot.periodLabel}) распознан и сохранён`,
+        `Скриншот ${data.snapshot.domain} (${data.snapshot.periodLabel}) распознан`,
       );
       await notifyChange();
     } catch (err) {
@@ -382,7 +386,7 @@ export function SimilarwebCompetitorsWorkspace({
         error?: string;
       } | null;
       if (!response.ok || !data?.snapshot) {
-        throw new Error(data?.error ?? "Не удалось сохранить срез Similarweb");
+        throw new Error(data?.error ?? "Не удалось сохранить срез");
       }
       toast.success(
         `Срез ${data.snapshot.domain} (${data.snapshot.periodLabel}) сохранён`,
@@ -398,17 +402,57 @@ export function SimilarwebCompetitorsWorkspace({
 
   return (
     <div className="space-y-6">
-      {/* 1. Similarweb api-anything sync & snapshots card */}
+      {/* Compact Toolbar: Add / Sync Competitor Domain */}
       <section className={SEO_CARD_CLASS}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              <BarChart3 className="size-4 text-[#5566f6]" />
-              Срезы трафика и спроса Similarweb (api-anything)
-            </div>
-            <p className="mt-0.5 text-[13px] text-[#6f7282]">
-              Загружайте актуальную статистику конкурентов (haccp-online.ru, checkoffice.ru и любых других доменов) через api-anything, по скриншоту или вручную.
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] font-semibold text-[#0b1024]">
+              Проверить конкурента:
+            </span>
+            <input
+              type="text"
+              value={apiDomainInput}
+              onChange={(e) => setApiDomainInput(e.target.value)}
+              placeholder="Например, rushaccp.ru"
+              className={`${SEO_INPUT_CLASS} !h-9 !w-52 !text-[13px]`}
+            />
+            <button
+              type="button"
+              disabled={syncingApiDomain !== null}
+              onClick={() => void handleSyncViaApiAnything([apiDomainInput])}
+              className={SEO_BTN_PRIMARY_CLASS}
+            >
+              {syncingApiDomain === apiDomainInput.trim().toLowerCase() ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+              Анализировать домен
+            </button>
+
+            <div className="hidden h-5 w-px bg-[#dcdfed] sm:block" />
+
+            {(
+              [
+                "wesetup.ru",
+                "haccp-online.ru",
+                "checkoffice.ru",
+                "rushaccp.ru",
+              ] as const
+            ).map((presetDomain) => (
+              <button
+                key={presetDomain}
+                type="button"
+                disabled={syncingApiDomain !== null}
+                onClick={() => {
+                  setApiDomainInput(presetDomain);
+                  void handleSyncViaApiAnything([presetDomain]);
+                }}
+                className="inline-flex h-8 items-center rounded-xl border border-[#dcdfed] bg-[#fafbff] px-2.5 text-[12px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
+              >
+                {presetDomain}
+              </button>
+            ))}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -424,103 +468,32 @@ export function SimilarwebCompetitorsWorkspace({
               type="button"
               disabled={uploadingOcr}
               onClick={() => fileInputRef.current?.click()}
-              className={SEO_BTN_PRIMARY_CLASS}
+              className={SEO_BTN_SM_CLASS}
             >
               {uploadingOcr ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
               ) : (
-                <ImageUp className="size-4" />
+                <ImageUp className="size-3.5 text-[#5566f6]" />
               )}
-              {uploadingOcr
-                ? "Распознаём через ИИ-воркер…"
-                : "Распознать скриншот Similarweb"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSwSettingsOpen((v) => !v)}
-              className={SEO_BTN_OUTLINE_CLASS}
-            >
-              <KeyRound className="size-4 text-[#5566f6]" />
-              {swConn?.configured
-                ? `Сессия api-anything (${swConn.cookieCount} кук)`
-                : "Сессия api-anything"}
+              {uploadingOcr ? "Распознаём…" : "Загрузить скриншот"}
             </button>
 
             <button
               type="button"
               onClick={() => setManualOpen((v) => !v)}
-              className={SEO_BTN_OUTLINE_CLASS}
-            >
-              <Plus className="size-4" />
-              Внести кластеры вручную
-            </button>
-          </div>
-        </div>
-
-        {/* api-anything live sync bar */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[12px] font-semibold text-[#0b1024]">
-              api-anything (Similarweb):
-            </span>
-            <input
-              type="text"
-              value={apiDomainInput}
-              onChange={(e) => setApiDomainInput(e.target.value)}
-              placeholder="haccp-online.ru"
-              className={`${SEO_INPUT_CLASS} !h-8 !w-48 !text-[12.5px]`}
-            />
-            <button
-              type="button"
-              disabled={syncingApiDomain !== null}
-              onClick={() => void handleSyncViaApiAnything([apiDomainInput])}
               className={SEO_BTN_SM_CLASS}
             >
-              {syncingApiDomain === apiDomainInput.trim().toLowerCase() ? (
-                <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
-              ) : (
-                <RefreshCw className="size-3.5 text-[#5566f6]" />
-              )}
-              Загрузить домен
+              <Plus className="size-3.5" />
+              Вручную
             </button>
-            {(["wesetup.ru", "haccp-online.ru", "checkoffice.ru"] as const).map(
-              (presetDomain) => (
-                <button
-                  key={presetDomain}
-                  type="button"
-                  disabled={syncingApiDomain !== null}
-                  onClick={() => {
-                    setApiDomainInput(presetDomain);
-                    void handleSyncViaApiAnything([presetDomain]);
-                  }}
-                  className="inline-flex h-7 items-center rounded-xl border border-[#dcdfed] bg-white px-2.5 text-[11.5px] font-medium text-[#3c4053] hover:border-[#5566f6]/40 hover:bg-[#f5f6ff] disabled:opacity-50"
-                >
-                  {presetDomain}
-                </button>
-              ),
-            )}
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={syncingApiDomain !== null}
-              onClick={() =>
-                void handleSyncViaApiAnything([
-                  "wesetup.ru",
-                  "haccp-online.ru",
-                  "checkoffice.ru",
-                ])
-              }
+              onClick={() => setSwSettingsOpen((v) => !v)}
               className={SEO_BTN_SM_CLASS}
             >
-              {syncingApiDomain === "all" ? (
-                <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
-              ) : (
-                <RefreshCw className="size-3.5" />
-              )}
-              Обновить все 3 домена
+              <KeyRound className="size-3.5 text-[#6f7282]" />
+              Куки / API
             </button>
           </div>
         </div>
@@ -529,50 +502,40 @@ export function SimilarwebCompetitorsWorkspace({
           <form
             method="post"
             onSubmit={(e) => void handleSaveSwConnection(e, false)}
-            className="mt-3 space-y-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
+            className="mt-4 space-y-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-[13px] font-semibold text-[#0b1024]">
-                  Настройка сессии Similarweb для api-anything (Tier 1)
+                  Дополнительные настройки api-anything (Similarweb)
                 </div>
                 <p className="mt-0.5 text-[12px] text-[#6f7282]">
-                  Similarweb защищён CloudFront / AWS WAF. Вставьте заголовок{" "}
-                  <code>Cookie</code> или JSON-массив кук из браузера (включая{" "}
-                  <code>aws-waf-token</code>, <code>sw_Session</code> /{" "}
-                  <code>.SGTOKEN</code>), либо официальный{" "}
-                  <code>SIMILARWEB_API_KEY</code>. Куки шифруются AES-256-GCM.
+                  Если Similarweb закрыт защитой CloudFront, система автоматически переключается на живую SERP-сверку через Topvisor и анализ структуры сайта конкурента.
                 </p>
               </div>
               {swConn ? (
                 <span
                   className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeToneClass(
-                    swConn.configured ? "emerald" : "amber",
+                    swConn.configured ? "emerald" : "slate",
                   )}`}
                 >
                   {swConn.configured
-                    ? `Активно (${swConn.cookieCount} кук${swConn.hasApiKey ? " + API key" : ""})`
-                    : "Куки не заданы"}
+                    ? `Кук сохранено: ${swConn.cookieCount}`
+                    : "Авторежим (Topvisor SERP + api-anything)"}
                 </span>
               ) : null}
             </div>
 
-            {swConn?.lastError ? (
-              <div className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3 py-2 text-[12px] text-[#92400e]">
-                Последний ответ Similarweb: {swConn.lastError}
-              </div>
-            ) : null}
-
             <div className="grid gap-3 md:grid-cols-3">
               <div className="md:col-span-2">
                 <label className="mb-1 block text-[11.5px] font-medium text-[#6f7282]">
-                  Сессионные куки Similarweb (Cookie header или JSON массив из DevTools)
+                  Сессионные куки Similarweb (необязательно)
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={swCookieInput}
                   onChange={(e) => setSwCookieInput(e.target.value)}
-                  placeholder="aws-waf-token=...; sw_Session=...; .SGTOKEN=..."
+                  placeholder="Cookie header или JSON массив кук"
                   className={SEO_TEXTAREA_CLASS}
                 />
               </div>
@@ -590,11 +553,6 @@ export function SimilarwebCompetitorsWorkspace({
                   }
                   className={SEO_INPUT_CLASS}
                 />
-                {swConn?.cookieNames && swConn.cookieNames.length > 0 ? (
-                  <div className="mt-2 text-[11px] text-[#6f7282]">
-                    Сохранены куки: {swConn.cookieNames.join(", ")}
-                  </div>
-                ) : null}
               </div>
             </div>
 
@@ -606,7 +564,7 @@ export function SimilarwebCompetitorsWorkspace({
                   onClick={(e) => void handleSaveSwConnection(e, true)}
                   className={SEO_BTN_OUTLINE_CLASS}
                 >
-                  Очистить сессию
+                  Очистить
                 </button>
               ) : null}
               <button
@@ -621,12 +579,8 @@ export function SimilarwebCompetitorsWorkspace({
                 disabled={savingSwConn}
                 className={SEO_BTN_PRIMARY_CLASS}
               >
-                {savingSwConn ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-                Сохранить сессию api-anything
+                <Save className="size-4" />
+                Сохранить
               </button>
             </div>
           </form>
@@ -639,7 +593,7 @@ export function SimilarwebCompetitorsWorkspace({
             className="mt-4 space-y-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
           >
             <div className="text-[13px] font-semibold text-[#0b1024]">
-              Ручной импорт среза и поисковых кластеров Similarweb
+              Ручной ввод среза конкурента
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div>
@@ -715,7 +669,7 @@ export function SimilarwebCompetitorsWorkspace({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-[#6f7282]">
-                  Кластеры спроса и целевые страницы wesetup.ru
+                  Поисковые запросы и посадочные wesetup.ru
                 </span>
                 <button
                   type="button"
@@ -733,7 +687,7 @@ export function SimilarwebCompetitorsWorkspace({
                   className={SEO_BTN_SM_CLASS}
                 >
                   <Plus className="size-3.5" />
-                  Добавить кластер
+                  Добавить запрос
                 </button>
               </div>
               {manualClusters.map((cluster, idx) => (
@@ -838,226 +792,324 @@ export function SimilarwebCompetitorsWorkspace({
                 disabled={savingManual}
                 className={SEO_BTN_PRIMARY_CLASS}
               >
-                {savingManual ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
+                <Save className="size-4" />
                 Сохранить срез
               </button>
             </div>
           </form>
         ) : null}
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {snapshots.map((snap) => {
-            const clusters = parseClusters(snap.clusters);
-            const isOwn = snap.domain === "wesetup.ru";
-            return (
-              <div
-                key={snap.id}
-                className={`rounded-2xl border p-4 ${
-                  isOwn
-                    ? "border-[#d8deff] bg-[#eef1ff]/45"
-                    : "border-[#dcdfed] bg-[#fafbff]"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[15px] font-semibold text-[#0b1024]">
-                    {snap.domain}
-                    {isOwn ? (
-                      <span className="ml-2 rounded-full bg-[#5566f6] px-2 py-0.5 text-[10.5px] font-medium text-white">
-                        Мы
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-0.5 text-[11px] font-medium text-[#6f7282]">
-                    {snap.periodLabel}
-                  </span>
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-[#3c4053]">
-                  <span>
-                    Визиты/мес:{" "}
-                    <strong className="text-[#0b1024]">
-                      {snap.visitsMonthly.toLocaleString("ru-RU")}
-                    </strong>
-                  </span>
-                  {snap.organicSharePct !== null ? (
-                    <span>Органика: {snap.organicSharePct}%</span>
-                  ) : null}
-                  {snap.paidSharePct !== null ? (
-                    <span>Реклама: {snap.paidSharePct}%</span>
-                  ) : null}
-                </div>
-
-                <div className="mt-1 text-[11.5px] text-[#6f7282]">
-                  Источник: {formatSourceKind(snap.sourceKind)}
-                  {snap.bouncePct !== null
-                    ? ` · отказы ${snap.bouncePct}%`
-                    : ""}
-                  {snap.pagesPerVisit !== null
-                    ? ` · стр./визит ${snap.pagesPerVisit}`
-                    : ""}
-                </div>
-
-                {clusters.length > 0 ? (
-                  <div className="mt-3 space-y-1 border-t border-[#dcdfed]/70 pt-2.5">
-                    {clusters.slice(0, 5).map((cl, i) => (
-                      <div
-                        key={`${cl.phrase}-${i}`}
-                        className="flex items-center justify-between gap-2 text-[12px]"
-                      >
-                        <span className="truncate text-[#0b1024]">
-                          {cl.phrase}
-                        </span>
-                        <span className="shrink-0 text-[11px] font-medium text-[#3848c7]">
-                          {cl.trafficSharePct}% →{" "}
-                          {shortWesetupPath(cl.mappedTargetUrl)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
       </section>
 
-      {/* 2. Side-by-side Competitor Benchmark Table (wesetup.ru vs competitors) */}
+      {/* SECTION 1: КАНАЛЫ ПРИВЛЕЧЕНИЯ КОНКУРЕНТОВ (Простая и наглядная раскладка) */}
       {benchmark && benchmark.domains.length > 0 ? (
         <section className={SEO_CARD_CLASS}>
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                <Scale className="size-4 text-[#5566f6]" />
-                Сводная сверка доменов: wesetup.ru против конкурентов
+                <BarChart3 className="size-4 text-[#5566f6]" />
+                1. Каналы привлечения трафика конкурентов (Откуда они берут клиентов)
               </div>
               <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Сравнение месячного трафика, доли органического и платного поиска, вовлечённости и числа поисковых кластеров, где конкуренты обходят wesetup.ru.
+                Разбивка месячного трафика каждого сайта по источникам (SEO-органика, Яндекс.Директ, прямые/реферальные переходы) и главный вывод по их стратегии.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-[12px]">
-              <span className="rounded-full border border-[#d8deff] bg-[#eef1ff] px-3 py-1 font-medium text-[#3848c7]">
-                Зона дожима (ТОП 4–30):{" "}
-                <strong>{benchmark.summary.pushTop3Count}</strong>
-              </span>
-              <span className="rounded-full border border-[#fde68a] bg-[#fffbeb] px-3 py-1 font-medium text-[#92400e]">
-                Упущенные кластеры:{" "}
-                <strong>{benchmark.summary.gapNoRankCount}</strong>
-              </span>
-              <span className="rounded-full border border-[#bbf7d0] bg-[#ecfdf5] px-3 py-1 font-medium text-[#116b2a]">
-                Мы в ТОП-3: <strong>{benchmark.summary.leaderCount}</strong>
-              </span>
-            </div>
+            <button
+              type="button"
+              disabled={syncingApiDomain !== null}
+              onClick={() =>
+                void handleSyncViaApiAnything([
+                  "wesetup.ru",
+                  "haccp-online.ru",
+                  "checkoffice.ru",
+                  "rushaccp.ru",
+                ])
+              }
+              className={SEO_BTN_SM_CLASS}
+            >
+              {syncingApiDomain === "all" ? (
+                <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
+              ) : (
+                <RefreshCw className="size-3.5 text-[#5566f6]" />
+              )}
+              Обновить все домены
+            </button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#ececf4]">
-            <table className="w-full min-w-[860px] text-[13px]">
-              <thead>
-                <tr className="bg-[#fafbff] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                  <th className="px-4 py-3">Домен</th>
-                  <th className="px-4 py-3">Период</th>
-                  <th className="px-4 py-3">Визиты / мес</th>
-                  <th className="px-4 py-3">К wesetup.ru</th>
-                  <th className="px-4 py-3">Органика</th>
-                  <th className="px-4 py-3">Реклама</th>
-                  <th className="px-4 py-3">Отказы / Глубина</th>
-                  <th className="px-4 py-3">Кластеров / Точек роста</th>
-                </tr>
-              </thead>
-              <tbody>
-                {benchmark.domains.map((row) => (
-                  <tr
-                    key={row.domain}
-                    className={`border-t border-[#ececf4] ${
-                      row.isWesetup
-                        ? "bg-[#eef1ff]/40 font-medium"
-                        : "hover:bg-[#fafbff]/60"
-                    }`}
-                  >
-                    <td className="px-4 py-2.5">
+          <div className="grid gap-4 md:grid-cols-2">
+            {benchmark.domains.map((dom) => {
+              const orgWidth = Math.max(0, Math.min(100, dom.organicSharePct ?? 0));
+              const paidWidth = Math.max(
+                0,
+                Math.min(100 - orgWidth, dom.paidSharePct ?? 0),
+              );
+              const otherWidth = Math.max(0, 100 - orgWidth - paidWidth);
+              const topClusters = clustersByDomain.get(dom.domain) ?? [];
+
+              return (
+                <div
+                  key={dom.domain}
+                  className={`flex flex-col justify-between rounded-2xl border p-4 ${
+                    dom.isWesetup
+                      ? "border-[#d8deff] bg-[#eef1ff]/45"
+                      : "border-[#dcdfed] bg-[#fafbff]"
+                  }`}
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[#0b1024]">
-                          {row.domain}
+                        <span className="text-[16px] font-semibold text-[#0b1024]">
+                          {dom.domain}
                         </span>
-                        {row.isWesetup ? (
-                          <span className="rounded-full bg-[#5566f6] px-2 py-0.5 text-[10.5px] font-semibold text-white">
+                        {dom.isWesetup ? (
+                          <span className="rounded-full bg-[#5566f6] px-2.5 py-0.5 text-[11px] font-medium text-white">
                             Наш сайт
                           </span>
+                        ) : (
+                          <span className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-0.5 text-[11px] font-semibold text-[#0b1024]">
+                            {dom.visitsRatioVsWesetup}× к нашему трафику
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11.5px] text-[#6f7282]">
+                        {dom.periodLabel}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
+                      <div>
+                        <span className="text-[22px] font-semibold text-[#0b1024]">
+                          {dom.visitsMonthly.toLocaleString("ru-RU")}
+                        </span>{" "}
+                        <span className="text-[12.5px] text-[#6f7282]">
+                          визитов / мес
+                        </span>
+                      </div>
+                      <span className="text-[12px] font-semibold text-[#3848c7]">
+                        {dom.primaryChannelLabel}
+                      </span>
+                    </div>
+
+                    {/* Visual stacked channel bar */}
+                    <div className="mt-3">
+                      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-[#e4e7f5]">
+                        {orgWidth > 0 ? (
+                          <div
+                            style={{ width: `${orgWidth}%` }}
+                            className="bg-[#116b2a]"
+                            title={`SEO Органика: ${orgWidth}%`}
+                          />
+                        ) : null}
+                        {paidWidth > 0 ? (
+                          <div
+                            style={{ width: `${paidWidth}%` }}
+                            className="bg-[#d97706]"
+                            title={`Платная реклама: ${paidWidth}%`}
+                          />
+                        ) : null}
+                        {otherWidth > 0 ? (
+                          <div
+                            style={{ width: `${otherWidth}%` }}
+                            className="bg-[#8b92b2]"
+                            title={`Прямые / Реферальные / Брендовые: ${otherWidth}%`}
+                          />
                         ) : null}
                       </div>
-                    </td>
-                    <td className="px-4 py-2.5 text-[#6f7282]">
-                      {row.periodLabel}
-                    </td>
-                    <td className="px-4 py-2.5 font-semibold text-[#0b1024]">
-                      {row.visitsMonthly.toLocaleString("ru-RU")}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {row.isWesetup ? (
-                        <span className="text-[#6f7282]">1.0× (база)</span>
-                      ) : (
-                        <span className="inline-flex rounded-full border border-[#dcdfed] bg-white px-2.5 py-0.5 text-[11.5px] font-semibold text-[#0b1024]">
-                          {row.visitsRatioVsWesetup}× больше
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {row.organicSharePct !== null
-                        ? `${row.organicSharePct}%`
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {row.paidSharePct !== null ? `${row.paidSharePct}%` : "—"}
-                    </td>
-                    <td className="px-4 py-2.5 text-[#3c4053]">
-                      {row.bouncePct !== null ? `${row.bouncePct}%` : "—"} /{" "}
-                      {row.pagesPerVisit !== null
-                        ? `${row.pagesPerVisit} стр.`
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className="font-semibold text-[#0b1024]">
-                        {row.clustersCount}
-                      </span>
-                      {!row.isWesetup && row.gapClustersCount > 0 ? (
-                        <span className="ml-1.5 text-[12px] text-[#3848c7]">
-                          ({row.gapClustersCount} точек роста для нас)
-                        </span>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-[11.5px]">
+                        <div className="rounded-xl border border-[#dcdfed]/70 bg-white px-2.5 py-1.5">
+                          <div className="flex items-center gap-1.5 text-[#6f7282]">
+                            <span className="size-2 rounded-full bg-[#116b2a]" />
+                            SEO Органика
+                          </div>
+                          <div className="mt-0.5 font-semibold text-[#0b1024]">
+                            {dom.organicSharePct !== null
+                              ? `${dom.organicSharePct}%`
+                              : "—"}{" "}
+                            <span className="font-normal text-[#6f7282]">
+                              (~{dom.estimatedOrganicVisits.toLocaleString("ru-RU")})
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-[#dcdfed]/70 bg-white px-2.5 py-1.5">
+                          <div className="flex items-center gap-1.5 text-[#6f7282]">
+                            <span className="size-2 rounded-full bg-[#d97706]" />
+                            Реклама (Директ)
+                          </div>
+                          <div className="mt-0.5 font-semibold text-[#0b1024]">
+                            {dom.paidSharePct !== null
+                              ? `${dom.paidSharePct}%`
+                              : "0%"}{" "}
+                            <span className="font-normal text-[#6f7282]">
+                              (~{dom.estimatedPaidVisits.toLocaleString("ru-RU")})
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-[#dcdfed]/70 bg-white px-2.5 py-1.5">
+                          <div className="flex items-center gap-1.5 text-[#6f7282]">
+                            <span className="size-2 rounded-full bg-[#8b92b2]" />
+                            Прямые / Прочие
+                          </div>
+                          <div className="mt-0.5 font-semibold text-[#0b1024]">
+                            {dom.otherSharePct}%{" "}
+                            <span className="font-normal text-[#6f7282]">
+                              (~{dom.estimatedOtherVisits.toLocaleString("ru-RU")})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Clear diagnostic takeaway */}
+                    <div className="mt-3 rounded-xl border border-[#dcdfed]/80 bg-white p-3 text-[12.5px] leading-snug text-[#3c4053]">
+                      <strong className="text-[#0b1024]">Вывод по каналу:</strong>{" "}
+                      {dom.channelStrategySummary}
+                    </div>
+                  </div>
+
+                  {/* Top 3 search queries of this domain */}
+                  {topClusters.length > 0 ? (
+                    <div className="mt-3 space-y-1 border-t border-[#dcdfed]/70 pt-2.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6f7282]">
+                        Главные точки входа из поиска:
+                      </div>
+                      {topClusters.slice(0, 3).map((cl, i) => (
+                        <div
+                          key={`${cl.phrase}-${i}`}
+                          className="flex items-center justify-between gap-2 text-[12px]"
+                        >
+                          <span className="truncate text-[#0b1024]">
+                            • {cl.phrase}
+                          </span>
+                          <span className="shrink-0 text-[11px] font-medium text-[#3848c7]">
+                            {cl.trafficSharePct}% →{" "}
+                            {shortWesetupPath(cl.mappedTargetUrl)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </section>
       ) : null}
 
-      {/* 3. Cluster Gap Analysis (Сверка поисковых кластеров конкурентов с нашими позициями и страницами) */}
+      {/* SECTION 2: ЧТО НАМ СДЕЛАТЬ ПО SEO (Конкретный план улучшений по результатам сверки) */}
+      {benchmark && benchmark.actionPlan && benchmark.actionPlan.length > 0 ? (
+        <section className={SEO_CARD_CLASS}>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+                <Sparkles className="size-4 text-[#5566f6]" />
+                2. Рекомендации и план улучшений SEO для wesetup.ru
+              </div>
+              <p className="mt-0.5 text-[13px] text-[#6f7282]">
+                Готовый список действий по приоритету: какие страницы дожать ссылками в ТОП-3, какие платные запросы конкурентов перехватить бесплатной органикой и какой контент расширить.
+              </p>
+            </div>
+
+            {benchmark.summary.totalPotentialMonthlyVisits > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#bbf7d0] bg-[#ecfdf5] px-3.5 py-1 text-[12.5px] font-semibold text-[#116b2a]">
+                <Rocket className="size-3.5" />
+                Потенциал перехвата: +
+                {benchmark.summary.totalPotentialMonthlyVisits.toLocaleString(
+                  "ru-RU",
+                )}{" "}
+                целевых визитов/мес
+              </span>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {benchmark.actionPlan.map((act, index) => (
+              <div
+                key={act.id}
+                className="flex flex-col justify-between rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span
+                      className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badgeToneClass(
+                        act.priority === "high" ? "indigo" : "amber",
+                      )}`}
+                    >
+                      Шаг {index + 1} · {act.badgeLabel}
+                    </span>
+                    <span className="text-[12px] font-semibold text-[#116b2a]">
+                      ~{act.potentialVisitsMonthly.toLocaleString("ru-RU")} виз./мес у{" "}
+                      {act.competitorDomain}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 text-[15px] font-semibold text-[#0b1024]">
+                    {act.title}
+                  </div>
+
+                  <p className="mt-1 text-[12.5px] leading-snug text-[#3c4053]">
+                    {act.whyText}
+                  </p>
+
+                  <div className="mt-3 space-y-1.5 rounded-xl border border-[#dcdfed]/80 bg-white p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6f7282]">
+                      Что конкретно сделать:
+                    </div>
+                    {act.actionSteps.map((step, sIdx) => (
+                      <div
+                        key={sIdx}
+                        className="flex items-start gap-2 text-[12.5px] text-[#0b1024]"
+                      >
+                        <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#dcdfed]/70 pt-3">
+                  <div className="flex items-center gap-3 text-[12px] text-[#6f7282]">
+                    <a
+                      href={`https://wesetup.ru${act.targetUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-[#3848c7] hover:underline"
+                    >
+                      {act.targetUrl}
+                      <ExternalLink className="size-3" />
+                    </a>
+                    <span>
+                      Яндекс: <strong>{act.yandexPos ?? "—"}</strong> · Ссылок:{" "}
+                      <strong>{act.purchasedLinksCount}</strong>
+                    </span>
+                  </div>
+
+                  <Link href={act.ctaHref} className={SEO_BTN_SM_CLASS}>
+                    {act.ctaLabel}
+                    <ArrowRight className="size-3.5 text-[#5566f6]" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* SECTION 3: СВЕРКА ПО ЗАПРОСАМ (Понятная таблица сравнения) */}
       {benchmark && benchmark.clusterGaps.length > 0 ? (
         <section className={SEO_CARD_CLASS}>
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
                 <TrendingUp className="size-4 text-[#5566f6]" />
-                Сверка по поисковым кластерам (Gap-анализ конкурентов)
+                3. Сверка по запросам: где конкуренты получают трафик и на каком месте мы
               </div>
               <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Показывает, какие запросы приносят трафик конкурентам, какая страница wesetup.ru отвечает за этот запрос, на каком месте мы в Topvisor и что нужно сделать (контент или ссылки).
+                Каждый запрос конкурента сопоставлен с нашей посадочной страницей и текущим местом в Яндексе и Google.
               </p>
             </div>
-
-            <Link
-              href="/root/seo/links"
-              className={SEO_BTN_SM_CLASS}
-            >
-              Перейти к закупке ссылок (GoGetLinks)
-              <ArrowRight className="size-3.5 text-[#5566f6]" />
-            </Link>
           </div>
 
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -1066,23 +1118,19 @@ export function SimilarwebCompetitorsWorkspace({
                 [
                   {
                     key: "all",
-                    label: `Все кластеры · ${benchmark.clusterGaps.length}`,
+                    label: `Все запросы · ${benchmark.clusterGaps.length}`,
                   },
                   {
                     key: "push_top3",
-                    label: `Дожим в ТОП-3 · ${benchmark.summary.pushTop3Count}`,
+                    label: `Быстрый дожим в ТОП-3 · ${benchmark.summary.pushTop3Count}`,
                   },
                   {
                     key: "gap_no_rank",
-                    label: `Упущенные кластеры · ${benchmark.summary.gapNoRankCount}`,
-                  },
-                  {
-                    key: "need_links",
-                    label: `Нужен дожим · ${benchmark.summary.needLinksCount}`,
+                    label: `Упущенные запросы · ${benchmark.summary.gapNoRankCount}`,
                   },
                   {
                     key: "leader",
-                    label: `Мы в ТОП-3 · ${benchmark.summary.leaderCount}`,
+                    label: `Мы уже в ТОП-3 · ${benchmark.summary.leaderCount}`,
                   },
                 ] as Array<{ key: VerdictFilterKey; label: string }>
               ).map((f) => (
@@ -1103,7 +1151,7 @@ export function SimilarwebCompetitorsWorkspace({
 
             {competitorDomains.length > 1 ? (
               <div className="flex items-center gap-1.5">
-                <span className="text-[12px] text-[#6f7282]">Конкурент:</span>
+                <span className="text-[12px] text-[#6f7282]">Сайт конкурента:</span>
                 <select
                   value={domainFilter}
                   onChange={(e) => setDomainFilter(e.target.value)}
@@ -1121,15 +1169,14 @@ export function SimilarwebCompetitorsWorkspace({
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-[#ececf4]">
-            <table className="w-full min-w-[980px] text-[13px]">
+            <table className="w-full min-w-[940px] text-[13px]">
               <thead>
                 <tr className="bg-[#fafbff] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                  <th className="px-4 py-3">Кластер спроса конкурента</th>
-                  <th className="px-4 py-3">Конкурент и трафик кластера</th>
-                  <th className="px-4 py-3">Наша посадочная wesetup.ru</th>
-                  <th className="px-4 py-3">Наши позиции (Я / G)</th>
-                  <th className="px-4 py-3">Ссылок</th>
-                  <th className="px-4 py-3">Статус сверки и рекомендация</th>
+                  <th className="px-4 py-3">Поисковый запрос</th>
+                  <th className="px-4 py-3">Трафик у конкурента</th>
+                  <th className="px-4 py-3">Наша страница wesetup.ru</th>
+                  <th className="px-4 py-3">Наше место (Я / G)</th>
+                  <th className="px-4 py-3">Что делать</th>
                 </tr>
               </thead>
               <tbody>
@@ -1143,10 +1190,9 @@ export function SimilarwebCompetitorsWorkspace({
                         «{gap.phrase}»
                       </div>
                       <div className="mt-0.5 text-[11.5px] text-[#6f7282]">
-                        Канал у конкурента:{" "}
                         {gap.competitorChannel === "paid"
-                          ? "Платный поиск (Директ)"
-                          : "Органика"}
+                          ? "Конкурент покупает в Директе"
+                          : "Конкурент получает из SEO"}
                       </div>
                     </td>
 
@@ -1155,9 +1201,11 @@ export function SimilarwebCompetitorsWorkspace({
                         {gap.competitorDomain}
                       </div>
                       <div className="mt-0.5 text-[12px] text-[#3848c7]">
-                        <strong>{gap.competitorTrafficSharePct}%</strong> (~
-                        {gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")}{" "}
-                        виз./мес)
+                        <strong>
+                          ~{gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")}{" "}
+                          виз./мес
+                        </strong>{" "}
+                        ({gap.competitorTrafficSharePct}%)
                       </div>
                     </td>
 
@@ -1171,28 +1219,22 @@ export function SimilarwebCompetitorsWorkspace({
                         {gap.mappedTargetUrl}
                         <ExternalLink className="size-3" />
                       </a>
-                      {gap.wesetupSharePct !== null ? (
-                        <div className="mt-0.5 text-[11.5px] text-[#116b2a]">
-                          Доля в нашем трафике: {gap.wesetupSharePct}%
-                        </div>
-                      ) : null}
+                      <div className="mt-0.5 text-[11.5px] text-[#6f7282]">
+                        Куплено ссылок: <strong>{gap.purchasedLinksCount}</strong>
+                      </div>
                     </td>
 
                     <td className="whitespace-nowrap px-4 py-2.5 text-[12.5px]">
                       <span className="font-semibold text-[#0b1024]">
-                        {gap.yandexPos ?? "—"}
+                        {gap.yandexPos ? `#${gap.yandexPos}` : "вне ТОП-50"}
                       </span>{" "}
                       <span className="text-[#9b9fb3]">/</span>{" "}
                       <span className="text-[#3c4053]">
-                        {gap.googlePos ?? "—"}
+                        {gap.googlePos ? `#${gap.googlePos}` : "—"}
                       </span>
                     </td>
 
-                    <td className="whitespace-nowrap px-4 py-2.5 font-semibold text-[#0b1024]">
-                      {gap.purchasedLinksCount}
-                    </td>
-
-                    <td className="max-w-[340px] px-4 py-2.5">
+                    <td className="max-w-[360px] px-4 py-2.5">
                       <span
                         className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeToneClass(
                           formatVerdictTone(gap.verdict),
@@ -1200,7 +1242,7 @@ export function SimilarwebCompetitorsWorkspace({
                       >
                         {gap.verdictLabel}
                       </span>
-                      <div className="mt-1 text-[11.5px] leading-snug text-[#6f7282]">
+                      <div className="mt-1 text-[12px] leading-snug text-[#3c4053]">
                         {gap.recommendation}
                       </div>
                     </td>
@@ -1212,52 +1254,56 @@ export function SimilarwebCompetitorsWorkspace({
         </section>
       ) : null}
 
-      {/* 4. Priority Matrix: Similarweb x Topvisor x Purchased Links */}
+      {/* SECTION 4: Свернутая детальная матрица всех 25 посадочных (для глубокого просмотра по клику) */}
       <section className={SEO_CARD_CLASS}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Итоговый рейтинг посадочных wesetup.ru: Спрос Similarweb × Позиция Topvisor × Ссылки
+              Полный рейтинг всех посадочных страниц wesetup.ru ({priorityMatrix.length})
             </div>
             <p className="mt-0.5 text-[13px] text-[#6f7282]">
-              Ранжированный список наших страниц по потенциалу прироста органического трафика.
+              Детальная таблица скоринга для планировщика закупок ссылок.
             </p>
           </div>
-          <button
-            type="button"
-            disabled={loadingMatrix}
-            onClick={() => void loadMatrix()}
-            className={SEO_BTN_SM_CLASS}
-          >
-            <RefreshCw
-              className={`size-3.5 ${loadingMatrix ? "animate-spin" : ""}`}
-            />
-            Пересчитать сверку
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={loadingMatrix}
+              onClick={() => void loadMatrix()}
+              className={SEO_BTN_SM_CLASS}
+            >
+              <RefreshCw
+                className={`size-3.5 ${loadingMatrix ? "animate-spin" : ""}`}
+              />
+              Обновить
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDetailedMatrix((v) => !v)}
+              className={SEO_BTN_SM_CLASS}
+            >
+              {showDetailedMatrix ? (
+                <>
+                  <ChevronUp className="size-3.5" />
+                  Скрыть таблицу
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-3.5" />
+                  Показать все страницы
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {matrixData?.topvisor.error ? (
-          <div className="mb-3 rounded-2xl border border-[#fde68a] bg-[#fffbeb] px-4 py-2.5 text-[12.5px] text-[#92400e]">
-            Topvisor вернул предупреждение: {matrixData.topvisor.error}. Скоринг рассчитан по кластерам Similarweb и текущим ссылкам.
-          </div>
-        ) : null}
-
-        {loadingMatrix && priorityMatrix.length === 0 ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-[13.5px] text-[#6f7282]">
-            <Loader2 className="size-4 animate-spin text-[#5566f6]" />
-            Сводим кластеры Similarweb с живыми позициями Topvisor…
-          </div>
-        ) : priorityMatrix.length === 0 ? (
-          <div className="py-10 text-center text-[13.5px] text-[#6f7282]">
-            Нет данных для расчёта приоритетов.
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-[#ececf4]">
+        {showDetailedMatrix ? (
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-[#ececf4]">
             <table className="w-full min-w-[920px] text-[13px]">
               <thead>
                 <tr className="bg-[#fafbff] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
                   <th className="px-4 py-3">Посадочная wesetup.ru</th>
-                  <th className="px-4 py-3">Кластер Similarweb</th>
+                  <th className="px-4 py-3">Кластер спроса</th>
                   <th className="px-4 py-3">Topvisor (Я / G)</th>
                   <th className="px-4 py-3">Куплено ссылок</th>
                   <th className="px-4 py-3">Приоритет и скоринг</th>
@@ -1339,7 +1385,7 @@ export function SimilarwebCompetitorsWorkspace({
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </section>
     </div>
   );

@@ -76,6 +76,12 @@ export interface CompetitorDomainSummaryRow {
   visitsRatioVsWesetup: number;
   organicSharePct: number | null;
   paidSharePct: number | null;
+  otherSharePct: number;
+  estimatedOrganicVisits: number;
+  estimatedPaidVisits: number;
+  estimatedOtherVisits: number;
+  primaryChannelLabel: string;
+  channelStrategySummary: string;
   bouncePct: number | null;
   pagesPerVisit: number | null;
   clustersCount: number;
@@ -83,11 +89,37 @@ export interface CompetitorDomainSummaryRow {
   sourceKind: string;
 }
 
+export type SeoImprovementActionKind =
+  | "push_top3_links"
+  | "capture_paid_via_seo"
+  | "create_or_expand_content"
+  | "engagement_and_pf";
+
+export interface SeoImprovementActionItem {
+  id: string;
+  priority: "high" | "medium";
+  kind: SeoImprovementActionKind;
+  badgeLabel: string;
+  title: string;
+  competitorDomain: string;
+  targetUrl: string;
+  keyword: string;
+  potentialVisitsMonthly: number;
+  yandexPos: number | null;
+  googlePos: number | null;
+  purchasedLinksCount: number;
+  whyText: string;
+  actionSteps: string[];
+  ctaLabel: string;
+  ctaHref: string;
+}
+
 export interface CompetitorBenchmarkReport {
   ownDomain: string;
   ownVisitsMonthly: number;
   domains: CompetitorDomainSummaryRow[];
   clusterGaps: CompetitorClusterGapRow[];
+  actionPlan: SeoImprovementActionItem[];
   summary: {
     totalCompetitors: number;
     leaderVisitsDomain: string | null;
@@ -96,6 +128,7 @@ export interface CompetitorBenchmarkReport {
     pushTop3Count: number;
     needLinksCount: number;
     leaderCount: number;
+    totalPotentialMonthlyVisits: number;
   };
 }
 
@@ -1077,14 +1110,79 @@ export function buildCompetitorBenchmarkReport(input: {
           : isWesetup
             ? 1
             : 0;
+
+      // Derive channel shares from snapshot fields or cluster channels if null
+      let orgPct = snap.organicSharePct;
+      let paidPct = snap.paidSharePct;
+      if (orgPct === null && paidPct === null && clustersArr.length > 0) {
+        let orgClusterSum = 0;
+        let paidClusterSum = 0;
+        for (const c of clustersArr) {
+          if (!c || typeof c !== "object") continue;
+          const r = c as Record<string, unknown>;
+          const s = Math.max(0, Number(r.trafficSharePct ?? 0) || 0);
+          if (r.channel === "paid") paidClusterSum += s;
+          else orgClusterSum += s;
+        }
+        if (orgClusterSum + paidClusterSum > 0) {
+          orgPct = Math.min(100, Math.round(orgClusterSum * 10) / 10);
+          paidPct = Math.min(
+            100 - orgPct,
+            Math.round(paidClusterSum * 10) / 10,
+          );
+        }
+      }
+
+      const safeOrg = Math.max(0, Math.min(100, orgPct ?? 0));
+      const safePaid = Math.max(0, Math.min(100 - safeOrg, paidPct ?? 0));
+      const otherSharePct = Math.max(
+        0,
+        Math.round((100 - safeOrg - safePaid) * 10) / 10,
+      );
+
+      const estimatedOrganicVisits = Math.round(
+        (snap.visitsMonthly * safeOrg) / 100,
+      );
+      const estimatedPaidVisits = Math.round(
+        (snap.visitsMonthly * safePaid) / 100,
+      );
+      const estimatedOtherVisits = Math.max(
+        0,
+        snap.visitsMonthly - estimatedOrganicVisits - estimatedPaidVisits,
+      );
+
+      let primaryChannelLabel = "Смешанный трафик";
+      let channelStrategySummary = "";
+
+      if (isWesetup) {
+        primaryChannelLabel = "Наш сайт (SEO + Прямой)";
+        channelStrategySummary =
+          "Усиливаем SEO-охваты коммерческих посадочных (/journals-info/*, /sanpin-2-3-2-4-4282-26) вечными ссылками и экспертным блогом, чтобы забрать трафик у конкурентов без переплаты в Директе.";
+      } else if (safePaid >= 15 && safePaid >= safeOrg * 0.8) {
+        primaryChannelLabel = "Платная реклама (Директ) + Брендовый трафик";
+        channelStrategySummary = `Конкурент покупает ~${estimatedPaidVisits.toLocaleString("ru-RU")} виз./мес (${safePaid}%) через контекстную рекламу по коммерческим запросам журналов ХАССП и СанПиН. Вывод наших страниц в ТОП-3 SEO позволит забирать эти же лиды бесплатно.`;
+      } else if (safeOrg >= 45) {
+        primaryChannelLabel = "Контентное SEO (Органика блога и шаблонов)";
+        channelStrategySummary = `Конкурент получает ~${estimatedOrganicVisits.toLocaleString("ru-RU")} виз./мес (${safeOrg}%) за счёт широкой сетки информационных статей, чек-листов и шаблонов в поиске. Нам нужно расширять блог (/blog/*) и калькуляторы (/calc/*) под их трафиковые темы.`;
+      } else {
+        primaryChannelLabel = "Прямые заходы + Поисковая органика";
+        channelStrategySummary = `Трафик делится между прямыми/реферальными переходами (${otherSharePct}%) и поисковой органикой (${safeOrg}%). Точка перехвата — дожим наших коммерческих страниц журналов в ТОП-3.`;
+      }
+
       return {
         domain: snap.domain,
         isWesetup,
         periodLabel: snap.periodLabel,
         visitsMonthly: snap.visitsMonthly,
         visitsRatioVsWesetup: ratio,
-        organicSharePct: snap.organicSharePct,
-        paidSharePct: snap.paidSharePct,
+        organicSharePct: orgPct,
+        paidSharePct: paidPct,
+        otherSharePct,
+        estimatedOrganicVisits,
+        estimatedPaidVisits,
+        estimatedOtherVisits,
+        primaryChannelLabel,
+        channelStrategySummary,
         bouncePct: snap.bouncePct,
         pagesPerVisit: snap.pagesPerVisit,
         clustersCount: clustersArr.length,
@@ -1097,14 +1195,104 @@ export function buildCompetitorBenchmarkReport(input: {
       return b.visitsMonthly - a.visitsMonthly;
     });
 
+  // Build concrete, human-friendly SEO Improvement Action Plan (top actionable recommendations)
+  const actionPlan: SeoImprovementActionItem[] = [];
+  const seenActionTargets = new Set<string>();
+
+  for (const gap of clusterGaps) {
+    if (gap.verdict === "leader") continue;
+    const dedupeKey = `${gap.mappedTargetUrl}::${gap.verdict}`;
+    if (seenActionTargets.has(dedupeKey)) continue;
+    seenActionTargets.add(dedupeKey);
+
+    const bestPos = gap.yandexPos ?? gap.googlePos;
+
+    if (gap.verdict === "push_top3") {
+      actionPlan.push({
+        id: `act_${actionPlan.length + 1}`,
+        priority: "high",
+        kind: "push_top3_links",
+        badgeLabel: `Быстрая победа · Позиция #${bestPos}`,
+        title: `Дожать «${gap.phrase}» с #${bestPos} в ТОП-3`,
+        competitorDomain: gap.competitorDomain,
+        targetUrl: gap.mappedTargetUrl,
+        keyword: gap.phrase,
+        potentialVisitsMonthly: Math.max(40, gap.estimatedMonthlyTraffic),
+        yandexPos: gap.yandexPos,
+        googlePos: gap.googlePos,
+        purchasedLinksCount: gap.purchasedLinksCount,
+        whyText: `Страница ${gap.mappedTargetUrl} уже ранжируется на #${bestPos} месте, а у ${gap.competitorDomain} этот кластер даёт ${gap.competitorTrafficSharePct}% трафика (~${gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")} виз./мес).`,
+        actionSteps: [
+          `Купить 1–2 тематические статейные ссылки в GoGetLinks на ${gap.mappedTargetUrl} (50% бренд wesetup.ru / 50% разбавленный анкор «${gap.phrase}»).`,
+          `Проверить наличие блока FAQ, кнопки скачивания образца PDF/Word и внутренней перелинковки из блога на ${gap.mappedTargetUrl}.`,
+        ],
+        ctaLabel: "Усилить ссылкой в GoGetLinks",
+        ctaHref: "/root/seo/links",
+      });
+    } else if (gap.competitorChannel === "paid" && gap.estimatedMonthlyTraffic >= 100) {
+      actionPlan.push({
+        id: `act_${actionPlan.length + 1}`,
+        priority: "high",
+        kind: "capture_paid_via_seo",
+        badgeLabel: "Перехват платного спроса конкурента",
+        title: `Забрать через SEO платный кластер «${gap.phrase}»`,
+        competitorDomain: gap.competitorDomain,
+        targetUrl: gap.mappedTargetUrl,
+        keyword: gap.phrase,
+        potentialVisitsMonthly: gap.estimatedMonthlyTraffic,
+        yandexPos: gap.yandexPos,
+        googlePos: gap.googlePos,
+        purchasedLinksCount: gap.purchasedLinksCount,
+        whyText: `${gap.competitorDomain} тратит рекламный бюджет в Директе на запрос «${gap.phrase}» (~${gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")} виз./мес, ${gap.competitorTrafficSharePct}% трафика) — значит запрос даёт прямые регистрации и оплаты.`,
+        actionSteps: [
+          `Вывести посадочную ${gap.mappedTargetUrl} в ТОП-5 органики: добавить точное вхождение «${gap.phrase}» в H2/FAQ и интерактивный предпросмотр журнала.`,
+          `Запланировать стартовую вечную ссылку на ${gap.mappedTargetUrl}, чтобы получать этот коммерческий трафик бесплатно.`,
+        ],
+        ctaLabel: "Запланировать ссылку",
+        ctaHref: "/root/seo/links",
+      });
+    } else {
+      const isBlogTarget = gap.mappedTargetUrl.startsWith("/blog/");
+      actionPlan.push({
+        id: `act_${actionPlan.length + 1}`,
+        priority: "medium",
+        kind: "create_or_expand_content",
+        badgeLabel: isBlogTarget ? "Контент блога + SEO" : "Точка роста посадочной",
+        title: `Раскрыть кластер «${gap.phrase}» на ${gap.mappedTargetUrl}`,
+        competitorDomain: gap.competitorDomain,
+        targetUrl: gap.mappedTargetUrl,
+        keyword: gap.phrase,
+        potentialVisitsMonthly: Math.max(30, gap.estimatedMonthlyTraffic),
+        yandexPos: gap.yandexPos,
+        googlePos: gap.googlePos,
+        purchasedLinksCount: gap.purchasedLinksCount,
+        whyText: `У ${gap.competitorDomain} запрос «${gap.phrase}» приносит ~${gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")} виз./мес (${gap.competitorTrafficSharePct}%), а наша страница ${gap.mappedTargetUrl} сейчас ${bestPos ? `на #${bestPos} месте` : "вне ТОП-50"}.`,
+        actionSteps: [
+          isBlogTarget
+            ? `Расширить статью ${gap.mappedTargetUrl}: добавить таблицу требований СанПиН 2.3/2.4.4282-26, чек-лист для скачивания и прямой CTA-переход в электронный журнал.`
+            : `Дополнить страницу ${gap.mappedTargetUrl} примером заполнения журнала, ответами на частые вопросы инспектора Роспотребнадзора и 1 внешней ссылкой.`,
+        ],
+        ctaLabel: isBlogTarget ? "Открыть блог" : "К плану ссылок",
+        ctaHref: isBlogTarget ? "/root/blog" : "/root/seo/links",
+      });
+    }
+
+    if (actionPlan.length >= 6) break;
+  }
+
   const competitorsOnly = domains.filter((d) => !d.isWesetup);
   const leader = competitorsOnly[0] ?? null;
+  const totalPotentialMonthlyVisits = actionPlan.reduce(
+    (sum, item) => sum + item.potentialVisitsMonthly,
+    0,
+  );
 
   return {
     ownDomain: "wesetup.ru",
     ownVisitsMonthly: ownVisits,
     domains,
     clusterGaps,
+    actionPlan,
     summary: {
       totalCompetitors: competitorsOnly.length,
       leaderVisitsDomain: leader?.domain ?? null,
@@ -1113,6 +1301,7 @@ export function buildCompetitorBenchmarkReport(input: {
       pushTop3Count: clusterGaps.filter((c) => c.verdict === "push_top3").length,
       needLinksCount: clusterGaps.filter((c) => c.verdict === "need_links").length,
       leaderCount: clusterGaps.filter((c) => c.verdict === "leader").length,
+      totalPotentialMonthlyVisits,
     },
   };
 }
