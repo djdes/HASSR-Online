@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CalendarClock,
   Check,
+  ChevronDown,
   ExternalLink,
   FileText,
+  Filter,
   Loader2,
   Pause,
   Play,
@@ -16,6 +18,8 @@ import {
   Save,
   ShieldCheck,
   SkipForward,
+  Target,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { GglSchedulableFormat } from "@/lib/seo/gogetlinks-planner";
@@ -57,6 +61,8 @@ export interface PlannerTabProps {
   slots: GglPlannedSlotDto[];
   threads?: GglThreadDto[];
   viewer: SeoLinksViewerCapabilities;
+  initialTargetUrlFilter?: string | null;
+  initialTargetKeyword?: string | null;
   onJumpToThread?: (threadId: string | null, donorDomain?: string) => void;
   onRefresh: () => Promise<void> | void;
 }
@@ -624,6 +630,8 @@ export function PlannerTab({
   slots,
   threads = [],
   viewer,
+  initialTargetUrlFilter = null,
+  initialTargetKeyword = null,
   onJumpToThread,
   onRefresh,
 }: PlannerTabProps) {
@@ -648,11 +656,26 @@ export function PlannerTab({
     () => plans[0]?.id ?? "new",
   );
   const [slotFilter, setSlotFilter] = useState<SlotFilterKey>("all");
+  const [targetUrlFilter, setTargetUrlFilter] = useState<string>(() =>
+    initialTargetUrlFilter ? shortWesetupPath(initialTargetUrlFilter) : "all",
+  );
+  const [targetKeywordHint, setTargetKeywordHint] = useState<string | null>(
+    () => initialTargetKeyword?.trim() || null,
+  );
   const [drawerSlotId, setDrawerSlotId] = useState<string | null>(null);
   const [busySlotId, setBusySlotId] = useState<string | null>(null);
   const [donorSwapMenuSlotId, setDonorSwapMenuSlotId] = useState<string | null>(
     null,
   );
+
+  useEffect(() => {
+    if (initialTargetUrlFilter) {
+      setTargetUrlFilter(shortWesetupPath(initialTargetUrlFilter));
+    }
+    if (initialTargetKeyword) {
+      setTargetKeywordHint(initialTargetKeyword.trim());
+    }
+  }, [initialTargetUrlFilter, initialTargetKeyword]);
 
   // Stable client idempotency key per slot approval attempt to prevent double-spend on retries
   const approveKeysRef = useRef<Map<string, string>>(new Map());
@@ -667,16 +690,61 @@ export function PlannerTab({
     [slots, drawerSlotId],
   );
 
+  const targetPageOptions = useMemo(() => {
+    const countsByTarget = new Map<string, number>();
+    for (const s of slots) {
+      if (!s.targetUrl) continue;
+      const cleanPath = shortWesetupPath(s.targetUrl);
+      countsByTarget.set(cleanPath, (countsByTarget.get(cleanPath) ?? 0) + 1);
+    }
+    if (targetUrlFilter !== "all" && !countsByTarget.has(targetUrlFilter)) {
+      countsByTarget.set(targetUrlFilter, 0);
+    }
+    return [...countsByTarget.entries()].sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return a[0].localeCompare(b[0], "ru");
+    });
+  }, [slots, targetUrlFilter]);
+
+  const slotsForTargetFilter = useMemo(() => {
+    if (targetUrlFilter === "all") return slots;
+    return slots.filter(
+      (s) => s.targetUrl && shortWesetupPath(s.targetUrl) === targetUrlFilter,
+    );
+  }, [slots, targetUrlFilter]);
+
   const filteredSlots = useMemo(() => {
-    return slotFilter === "all" ? slots : slots.filter((slot) => getPlannerSlotCategory(slot) === slotFilter);
-  }, [slots, slotFilter]);
+    return slotsForTargetFilter.filter((slot) =>
+      slotFilter === "all" ? true : getPlannerSlotCategory(slot) === slotFilter,
+    );
+  }, [slotsForTargetFilter, slotFilter]);
+
+  const nextAssignableSlot = useMemo(() => {
+    if (targetUrlFilter === "all") return null;
+    const mutable = slots.filter((slot) => {
+      const planCampaign = slot.plan?.campaignId
+        ? campaignById.get(slot.plan.campaignId)
+        : undefined;
+      const isWesetupSlot = planCampaign ? planCampaign.isWesetup : true;
+      return (
+        isWesetupSlot &&
+        slot.status !== "preparing" &&
+        slot.status !== "ordered" &&
+        slot.status !== "approved_sending" &&
+        slot.status !== "skipped" &&
+        (!slot.targetUrl || shortWesetupPath(slot.targetUrl) !== targetUrlFilter)
+      );
+    });
+    const plannedFirst = mutable.find((s) => s.status === "planned");
+    return plannedFirst ?? mutable[0] ?? null;
+  }, [slots, targetUrlFilter, campaignById]);
 
   const counts = useMemo(() => {
     let pending = 0;
     let upcoming = 0;
     let ordered = 0;
     let other = 0;
-    for (const s of slots) {
+    for (const s of slotsForTargetFilter) {
       const category = getPlannerSlotCategory(s);
       if (category === "pending_approval") pending += 1;
       else if (category === "upcoming") upcoming += 1;
@@ -684,7 +752,7 @@ export function PlannerTab({
       else other += 1;
     }
     return { pending, upcoming, ordered, other };
-  }, [slots]);
+  }, [slotsForTargetFilter]);
 
   async function handleApproveSlot(slot: GglPlannedSlotDto) {
     let key = approveKeysRef.current.get(slot.id);
@@ -782,6 +850,46 @@ export function PlannerTab({
     }
   }
 
+  async function handleAssignTargetToSlot(
+    slot: GglPlannedSlotDto,
+    targetUrl: string,
+    targetKeyword?: string | null,
+  ) {
+    setBusySlotId(slot.id);
+    try {
+      const response = await fetch(
+        `/api/root/gogetlinks/slots/${encodeURIComponent(slot.id)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "assign_target",
+            targetUrl,
+            ...(targetKeyword ? { targetKeyword } : {}),
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (!response.ok) {
+        throw new Error(
+          data?.error ?? "Не удалось назначить посадочную страницу на слот",
+        );
+      }
+      toast.success(
+        `Посадочная ${shortWesetupPath(targetUrl)} назначена на слот ${formatRuShortDate(slot.scheduledDate)}`,
+      );
+      await onRefresh();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Ошибка назначения посадочной",
+      );
+    } finally {
+      setBusySlotId(null);
+    }
+  }
+
   return (
     <div className="space-y-5">
       {/* Human-in-the-loop financial safety callout */}
@@ -870,7 +978,10 @@ export function PlannerTab({
           <div className="flex flex-wrap items-center gap-1.5">
             {(
               [
-                { key: "all", label: `Все слоты · ${slots.length}` },
+                {
+                  key: "all",
+                  label: `Все слоты · ${slotsForTargetFilter.length}`,
+                },
                 {
                   key: "pending_approval",
                   label: `Ждут подтверждения · ${counts.pending}`,
@@ -897,7 +1008,112 @@ export function PlannerTab({
               </button>
             ))}
           </div>
+
+          {/* Landing Page Filter */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#6f7282]">
+              <Filter className="size-3.5 text-[#5566f6]" />
+              <span>Посадочная:</span>
+            </div>
+            <select
+              value={targetUrlFilter}
+              onChange={(e) => {
+                setTargetUrlFilter(e.target.value);
+                if (e.target.value === "all") {
+                  setTargetKeywordHint(null);
+                }
+              }}
+              aria-label="Фильтр слотов по посадочной странице"
+              className={`${SEO_INPUT_CLASS} !h-9 !w-64 !text-[12.5px]`}
+            >
+              <option value="all">Все посадочные ({slots.length})</option>
+              {targetPageOptions.map(([path, count]) => (
+                <option key={path} value={path}>
+                  {path} ({count})
+                </option>
+              ))}
+            </select>
+            {targetUrlFilter !== "all" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetUrlFilter("all");
+                  setTargetKeywordHint(null);
+                }}
+                className={SEO_BTN_SM_CLASS}
+                title="Показать слоты всех посадочных страниц"
+              >
+                <X className="size-3.5" />
+                Все посадочные
+              </button>
+            ) : null}
+          </div>
         </div>
+
+        {/* Active Target Page Callout Banner (especially when navigating from Competitor Benchmark) */}
+        {targetUrlFilter !== "all" ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#d8deff] bg-[#eef1ff]/75 px-4 py-3 text-[13px] text-[#0b1024]">
+            <div className="flex items-start gap-2.5">
+              <Target className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
+              <div>
+                <div className="font-semibold text-[#0b1024]">
+                  Фильтр по посадочной:{" "}
+                  <a
+                    href={`https://wesetup.ru${targetUrlFilter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[#3848c7] underline-offset-2 hover:underline"
+                  >
+                    {targetUrlFilter}
+                    <ExternalLink className="size-3" />
+                  </a>
+                  {targetKeywordHint ? (
+                    <span className="ml-2 font-normal text-[#3c4053]">
+                      (запрос: «<strong>{targetKeywordHint}</strong>»)
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-0.5 text-[12px] text-[#3c4053]">
+                  {slotsForTargetFilter.length > 0
+                    ? `В расписании найдено слотов для этой страницы: ${slotsForTargetFilter.length}.`
+                    : "В текущем расписании эта посадочная ещё не назначена ни на один слот — назначьте её на ближайший свободный слот одним кликом."}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {nextAssignableSlot ? (
+                <button
+                  type="button"
+                  disabled={busySlotId === nextAssignableSlot.id}
+                  onClick={() =>
+                    void handleAssignTargetToSlot(
+                      nextAssignableSlot,
+                      targetUrlFilter,
+                      targetKeywordHint,
+                    )
+                  }
+                  className={SEO_BTN_PRIMARY_CLASS}
+                >
+                  {busySlotId === nextAssignableSlot.id ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Target className="size-4" />
+                  )}
+                  Назначить на слот{" "}
+                  {formatRuShortDate(nextAssignableSlot.scheduledDate)}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setTargetUrlFilter("all")}
+                className={SEO_BTN_OUTLINE_CLASS}
+              >
+                Показать все слоты ({slots.length})
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {filteredSlots.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#dcdfed] bg-[#fafbff] px-6 py-12 text-center text-[14px] text-[#6f7282]">
@@ -1034,9 +1250,33 @@ export function PlannerTab({
                           </div>
                         ) : null}
                         {slot.selectionReason ? (
-                          <div className="mt-1 text-[11.5px] leading-snug text-[#6f7282]">
+                          <div
+                            className="mt-1 line-clamp-2 text-[11.5px] leading-snug text-[#6f7282]"
+                            title={slot.selectionReason}
+                          >
                             {slot.selectionReason}
                           </div>
+                        ) : null}
+                        {canMutateSlot &&
+                        initialTargetUrlFilter &&
+                        (!slot.targetUrl ||
+                          shortWesetupPath(slot.targetUrl) !==
+                            shortWesetupPath(initialTargetUrlFilter)) ? (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() =>
+                              void handleAssignTargetToSlot(
+                                slot,
+                                shortWesetupPath(initialTargetUrlFilter),
+                                targetKeywordHint ?? initialTargetKeyword,
+                              )
+                            }
+                            className="mt-1.5 inline-flex items-center gap-1 rounded-lg border border-[#d8deff] bg-[#eef1ff] px-2 py-0.5 text-[11px] font-semibold text-[#3848c7] hover:bg-[#dfe5ff] disabled:opacity-50"
+                          >
+                            <Target className="size-3" />
+                            Назначить {shortWesetupPath(initialTargetUrlFilter)}
+                          </button>
                         ) : null}
                       </td>
 
@@ -1077,21 +1317,31 @@ export function PlannerTab({
                               </span>
                             </div>
                             {donorFit ? (
-                              <div className="mt-2 space-y-0.5 text-[11.5px] text-[#6f7282]">
-                                <p className="font-medium">{t(donorFit.level)}</p>
-                                {donorFit.reviewReason ? <p className="max-w-[280px]">{donorFit.reviewReason}</p> : null}
-                                {donorFit.publications.map((publication) => (
-                                  <a
-                                    key={publication.url}
-                                    href={publication.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block underline underline-offset-2"
-                                  >
-                                    {publication.title}
-                                  </a>
-                                ))}
-                              </div>
+                              <details className="group mt-1.5 text-[11.5px] text-[#6f7282]">
+                                <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-lg border border-[#dcdfed] bg-[#fafbff] px-2 py-0.5 font-medium text-[#3c4053] hover:border-[#5566f6]/40">
+                                  <span>{t(donorFit.level)}</span>
+                                  <ChevronDown className="size-3 text-[#6f7282] transition-transform group-open:rotate-180" />
+                                </summary>
+                                <div className="mt-1.5 max-w-[280px] space-y-1 rounded-xl border border-[#ececf4] bg-[#fafbff] p-2.5">
+                                  {donorFit.reviewReason ? (
+                                    <p className="leading-snug text-[#3c4053]">
+                                      {donorFit.reviewReason}
+                                    </p>
+                                  ) : null}
+                                  {donorFit.publications.map((publication) => (
+                                    <a
+                                      key={publication.url}
+                                      href={publication.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block truncate text-[#3848c7] underline underline-offset-2"
+                                      title={publication.title}
+                                    >
+                                      {publication.title}
+                                    </a>
+                                  ))}
+                                </div>
+                              </details>
                             ) : null}
 
                             {planCampaign?.isWesetup && slot.status === "pending_approval" && slot.donorSiteId ? (

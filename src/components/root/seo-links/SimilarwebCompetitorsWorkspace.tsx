@@ -1235,13 +1235,26 @@ export function SimilarwebCompetitorsWorkspace({
                     </td>
 
                     <td className="max-w-[360px] px-4 py-2.5">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeToneClass(
-                          formatVerdictTone(gap.verdict),
-                        )}`}
-                      >
-                        {gap.verdictLabel}
-                      </span>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeToneClass(
+                            formatVerdictTone(gap.verdict),
+                          )}`}
+                        >
+                          {gap.verdictLabel}
+                        </span>
+                        {gap.verdict !== "leader" ? (
+                          <Link
+                            href={`/root/seo/links?targetUrl=${encodeURIComponent(
+                              gap.mappedTargetUrl,
+                            )}&keyword=${encodeURIComponent(gap.phrase)}`}
+                            className="inline-flex items-center gap-1 rounded-xl border border-[#d8deff] bg-[#eef1ff] px-2.5 py-1 text-[11.5px] font-semibold text-[#3848c7] transition-colors hover:bg-[#dfe5ff]"
+                          >
+                            Усилить ссылкой
+                            <ArrowRight className="size-3" />
+                          </Link>
+                        ) : null}
+                      </div>
                       <div className="mt-1 text-[12px] leading-snug text-[#3c4053]">
                         {gap.recommendation}
                       </div>

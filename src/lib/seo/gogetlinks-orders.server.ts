@@ -2646,8 +2646,10 @@ export async function createManualGglOrder(
 export async function mutatePlannedSlot(
   input: {
     slotId: string;
-    action: "skip" | "swap_donor" | "update_article";
+    action: "skip" | "swap_donor" | "update_article" | "assign_target";
     donorSiteId?: number;
+    targetUrl?: string;
+    targetKeyword?: string;
     articlePatch?: ArticlePatch;
     actor: PlatformActor;
   },
@@ -2704,6 +2706,53 @@ export async function mutatePlannedSlot(
         scheduledDate: slot.scheduledDate,
         donorDomain: slot.donorDomain,
         targetUrl: slot.targetUrl,
+      },
+    });
+    return updated;
+  }
+
+  if (input.action === "assign_target") {
+    const resolvedTarget = resolvePublicSeoTargetPath(input.targetUrl);
+    if (!resolvedTarget) {
+      throw new GglOrderError(
+        400,
+        "Укажите корректную публичную посадочную страницу wesetup.ru",
+      );
+    }
+    const cleanKeyword =
+      input.targetKeyword?.trim() || slot.targetKeyword || resolvedTarget;
+    const selectedAnchor = selectAnchorForTarget({
+      targetUrl: resolvedTarget,
+      keyword: cleanKeyword,
+      existingAnchors: [],
+      minBrandPct: 50,
+    });
+
+    const updated = await client.gglPlannedSlot.update({
+      where: { id: slot.id, status: slot.status, updatedAt: slot.updatedAt },
+      data: {
+        targetUrl: resolvedTarget,
+        targetKeyword: cleanKeyword,
+        anchor: selectedAnchor.anchor,
+        anchorKind: selectedAnchor.anchorKind,
+        selectionReason: `Назначено вручную из сверки конкурентов: «${cleanKeyword}» → ${resolvedTarget}`,
+        ...(slot.status === "skipped" || slot.status === "failed"
+          ? { status: "planned" }
+          : {}),
+      },
+    });
+
+    await writeAudit({
+      action: "ggl.slot.assign_target",
+      entity: "GglPlannedSlot",
+      entityId: slot.id,
+      actor: { id: input.actor.id, name: input.actor.name },
+      details: {
+        scheduledDate: slot.scheduledDate,
+        previousTargetUrl: slot.targetUrl,
+        targetUrl: resolvedTarget,
+        targetKeyword: cleanKeyword,
+        anchor: selectedAnchor.anchor,
       },
     });
     return updated;

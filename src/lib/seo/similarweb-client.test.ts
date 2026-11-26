@@ -611,6 +611,10 @@ test("buildCompetitorBenchmarkReport compares wesetup.ru against competitors and
   assert.ok(report.actionPlan.length >= 2);
   assert.equal(report.actionPlan[0].kind, "push_top3_links");
   assert.equal(report.actionPlan[0].targetUrl, "/journals-info/fryer_oil");
+  assert.match(
+    report.actionPlan[0].ctaHref,
+    /^\/root\/seo\/links\?targetUrl=%2Fjournals-info%2Ffryer_oil&keyword=/,
+  );
   assert.ok(report.summary.totalPotentialMonthlyVisits > 0);
 
   // Cluster gaps:

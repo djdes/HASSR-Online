@@ -26,8 +26,25 @@ export const metadata = {
  * 3. Двусторонние чаты с вебмастерами и приёмка/доработка размещений.
  * 4. Срезы конкурентов Similarweb + позиции Topvisor + подключение GoGetLinks.
  */
-export default async function RootSeoLinksPage() {
-  const session = await requireRoot();
+export default async function RootSeoLinksPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [session, resolvedSearchParams] = await Promise.all([
+    requireRoot(),
+    searchParams ? searchParams : Promise.resolve({} as Record<string, string | string[] | undefined>),
+  ]);
+  const rawTargetUrl = resolvedSearchParams?.targetUrl;
+  const rawKeyword = resolvedSearchParams?.keyword;
+  const initialTargetUrl =
+    typeof rawTargetUrl === "string" && rawTargetUrl.trim()
+      ? rawTargetUrl.trim()
+      : null;
+  const initialTargetKeyword =
+    typeof rawKeyword === "string" && rawKeyword.trim()
+      ? rawKeyword.trim()
+      : null;
   const viewer = await platformViewerForSession(session);
 
   const isSuperadmin = viewer.superadmin;
@@ -101,6 +118,8 @@ export default async function RootSeoLinksPage() {
         initialHasPendingSlots={pendingSlots > 0}
         initialAccountConnected={accountConnected}
         initialAllowSeoApprove={allowSeoApproveWithinPlan}
+        initialTargetUrl={initialTargetUrl}
+        initialTargetKeyword={initialTargetKeyword}
       />
     </DomainMessagesBoundary>
   );

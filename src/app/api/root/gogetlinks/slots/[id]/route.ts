@@ -25,8 +25,10 @@ const articlePatchSchema = z.object({
 });
 
 const mutateSlotBodySchema = z.object({
-  action: z.enum(["skip", "swap_donor", "update_article"]),
+  action: z.enum(["skip", "swap_donor", "update_article", "assign_target"]),
   donorSiteId: z.number().int().positive().optional(),
+  targetUrl: z.string().trim().min(1).max(300).optional(),
+  targetKeyword: z.string().trim().max(200).optional(),
   articlePatch: articlePatchSchema.optional(),
 });
 
@@ -55,6 +57,8 @@ export async function PATCH(
       slotId: id,
       action: parsed.data.action,
       donorSiteId: parsed.data.donorSiteId,
+      targetUrl: parsed.data.targetUrl,
+      targetKeyword: parsed.data.targetKeyword,
       articlePatch: parsed.data.articlePatch,
       actor,
     });
