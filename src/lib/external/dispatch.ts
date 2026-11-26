@@ -8,6 +8,7 @@ import { documentBuildingTargets } from "@/lib/building-targets";
 import { isOfficeBuilding, withBuildingSuffix, workBuildingsForUser } from "@/lib/building-scope";
 import { officeJournalTarget } from "@/lib/office-journals";
 import { staffAtBuildingWhere, worksAtBuilding } from "@/lib/building-settings";
+import { mergeConfigPatch } from "@/lib/external/config-patch";
 import { resolveExternalEntryPoint } from "@/lib/external/entry-point";
 import {
   normalizeJournalStaffBoundConfig,
@@ -565,29 +566,6 @@ function normalizeEntryPayload(
   }
 }
 
-function mergeConfigPatch(currentConfig: unknown, patch: unknown) {
-  if (!isRecord(currentConfig) || !isRecord(patch)) {
-    return patch;
-  }
-
-  const next: Record<string, unknown> = { ...currentConfig };
-  for (const [key, value] of Object.entries(patch)) {
-    if (key.startsWith("append") && key.length > 6) {
-      const targetKey = key.charAt(6).toLowerCase() + key.slice(7);
-      if (Array.isArray(value)) {
-        next[targetKey] = [...(Array.isArray(next[targetKey]) ? (next[targetKey] as unknown[]) : []), ...value];
-        continue;
-      }
-      next[targetKey] = [...(Array.isArray(next[targetKey]) ? (next[targetKey] as unknown[]) : []), value];
-      continue;
-    }
-
-    next[key] = value;
-  }
-
-  return next;
-}
-
 const CONFIG_WRITER_NORMALIZERS = new Map<string, ConfigNormalizer>([
   [
     ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
@@ -943,7 +921,11 @@ export async function dispatchExternalEntries(params: {
 
   let written = 0;
   await db.$transaction(async (tx) => {
-    let currentDoc = initialDoc;
+    // Документ — под блокировкой строки и заново прочитанный в транзакции
+    // записи: конфиг, прочитанный выше, мог устареть (строку дописали с
+    // сайта, по QR или из TasksFlow), а запись от него стирала эту правку.
+    await tx.$queryRaw`SELECT id FROM "JournalDocument" WHERE id = ${initialDoc.id} FOR UPDATE`;
+    let currentDoc = (await tx.journalDocument.findUnique({ where: { id: initialDoc.id } })) ?? initialDoc;
     let documentConfig: unknown = currentDoc.config;
     if (shouldPersistEntryConfig(template.code)) {
       documentConfig = normalizeEntryDocumentConfig(template.code, currentDoc.config, docUsers);

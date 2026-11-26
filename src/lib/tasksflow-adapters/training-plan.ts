@@ -5,7 +5,10 @@
  *   • adapter row  = position + topic (rowKey = position-<posId>-topic-<topicId>)
  *   • completion   = mark TrainingCell as required and set date
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   TRAINING_PLAN_TEMPLATE_CODE,
   type TrainingPlanConfig,
@@ -106,37 +109,39 @@ export const trainingPlanAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, values }) {
-    if (!completed) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
+    // записывать нечего: раньше оно сбрасывало поля строки в пустые.
+    if (!completed || !values) return false;
     const match = rowKey.match(/^position-(.+)-topic-(.+)$/);
     if (!match) return false;
     const [, positionId, topicId] = match;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    // Защита от пустого doc.config — без guard `.rows.map` падает с null.
-    const rawConfig = (doc.config ?? {}) as Partial<TrainingPlanConfig>;
-    const currentConfig: TrainingPlanConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-      topics: Array.isArray(rawConfig.topics) ? rawConfig.topics : [],
-    } as TrainingPlanConfig;
-    const nextRows = currentConfig.rows.map((pos: TrainingPositionRow) => {
-      if (pos.id !== positionId) return pos;
-      return {
-        ...pos,
-        cells: {
-          ...pos.cells,
-          [topicId]: { required: true, date: typeof values?.plannedDate === "string" ? values.plannedDate : "" },
-        },
-      };
-    });
+      // Защита от пустого doc.config — без guard `.rows.map` падает с null.
+      const rawConfig = (doc.config ?? {}) as Partial<TrainingPlanConfig>;
+      const currentConfig: TrainingPlanConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+        topics: Array.isArray(rawConfig.topics) ? rawConfig.topics : [],
+      } as TrainingPlanConfig;
+      const nextRows = currentConfig.rows.map((pos: TrainingPositionRow) => {
+        if (pos.id !== positionId) return pos;
+        return {
+          ...pos,
+          cells: {
+            ...pos.cells,
+            [topicId]: { required: true, date: typeof values?.plannedDate === "string" ? values.plannedDate : "" },
+          },
+        };
+      });
 
-    const nextConfig: TrainingPlanConfig = { ...currentConfig, rows: nextRows };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+      const nextConfig: TrainingPlanConfig = { ...currentConfig, rows: nextRows };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
+    });
+    return written === true;
   },
 };

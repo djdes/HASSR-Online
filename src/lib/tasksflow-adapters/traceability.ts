@@ -5,7 +5,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new TraceabilityRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   TRACEABILITY_DOCUMENT_TEMPLATE_CODE,
   type TraceabilityDocumentConfig,
@@ -147,46 +150,46 @@ export const traceabilityAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+      if (!employee) return null;
+
+      // Защита от пустого doc.config — иначе spread `[...currentConfig.rows]`
+      // падает с «rows is not iterable». Document может быть auto-create'нут без формы.
+      const rawConfig = (doc.config ?? {}) as Partial<TraceabilityDocumentConfig>;
+      const currentConfig: TraceabilityDocumentConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+        defaultResponsibleRole:
+          rawConfig.defaultResponsibleRole ?? "Сотрудник",
+      } as TraceabilityDocumentConfig;
+
+      const newRow: TraceabilityRow = createTraceabilityRow({
+        date: todayKey,
+        incoming: {
+          rawMaterialName: typeof values?.rawMaterialName === "string" ? values.rawMaterialName : "",
+          batchNumber: typeof values?.batchNumber === "string" ? values.batchNumber : "",
+          packagingDate: typeof values?.packagingDate === "string" ? values.packagingDate : todayKey,
+          quantityPieces: safeNumber(values?.quantityPieces),
+          quantityKg: safeNumber(values?.quantityKg),
+        },
+        outgoing: {
+          productName: typeof values?.productName === "string" ? values.productName : "",
+          quantityPacksPieces: safeNumber(values?.quantityPacksPieces),
+          quantityPacksKg: safeNumber(values?.quantityPacksKg),
+          shockTemp: safeNumber(values?.shockTemp),
+        },
+        responsibleRole: employee?.positionTitle ?? currentConfig.defaultResponsibleRole,
+        responsibleEmployeeId: employeeId,
+        responsibleEmployee: employee?.name ?? "",
+      });
+
+      const nextConfig: TraceabilityDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-    if (!employee) return false;
-
-    // Защита от пустого doc.config — иначе spread `[...currentConfig.rows]`
-    // падает с «rows is not iterable». Document может быть auto-create'нут без формы.
-    const rawConfig = (doc.config ?? {}) as Partial<TraceabilityDocumentConfig>;
-    const currentConfig: TraceabilityDocumentConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-      defaultResponsibleRole:
-        rawConfig.defaultResponsibleRole ?? "Сотрудник",
-    } as TraceabilityDocumentConfig;
-
-    const newRow: TraceabilityRow = createTraceabilityRow({
-      date: todayKey,
-      incoming: {
-        rawMaterialName: typeof values?.rawMaterialName === "string" ? values.rawMaterialName : "",
-        batchNumber: typeof values?.batchNumber === "string" ? values.batchNumber : "",
-        packagingDate: typeof values?.packagingDate === "string" ? values.packagingDate : todayKey,
-        quantityPieces: safeNumber(values?.quantityPieces),
-        quantityKg: safeNumber(values?.quantityKg),
-      },
-      outgoing: {
-        productName: typeof values?.productName === "string" ? values.productName : "",
-        quantityPacksPieces: safeNumber(values?.quantityPacksPieces),
-        quantityPacksKg: safeNumber(values?.quantityPacksKg),
-        shockTemp: safeNumber(values?.shockTemp),
-      },
-      responsibleRole: employee?.positionTitle ?? currentConfig.defaultResponsibleRole,
-      responsibleEmployeeId: employeeId,
-      responsibleEmployee: employee?.name ?? "",
-    });
-
-    const nextConfig: TraceabilityDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

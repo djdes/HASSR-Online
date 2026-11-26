@@ -6,7 +6,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new AcceptanceRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   ACCEPTANCE_DOCUMENT_TEMPLATE_CODE,
   RAW_MATERIAL_ACCEPTANCE_TEMPLATE_CODE,
@@ -101,40 +104,40 @@ function makeAdapter(templateCode: string, label: string, description: string, i
       const employeeId = employeeIdFromRowKey(rowKey);
       if (!employeeId) return false;
 
-      const doc = await db.journalDocument.findUnique({
-        where: { id: documentId },
-        select: { config: true, organizationId: true, template: { select: { code: true } } },
+      // Под блокировкой документа: конфиг читается внутри неё, иначе две
+      // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+      const written = await withDocumentConfigLock(documentId, async (doc) => {
+        if (!TEMPLATE_CODES.includes(doc.templateCode)) return null;
+        const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+        if (!employee) return null;
+
+        // Защита от пустого doc.config — без `?? {}` `currentConfig.rows`
+        // падает с «Cannot read properties of null».
+        const rawConfig = (doc.config ?? {}) as Partial<AcceptanceDocumentConfig>;
+        const currentConfig: AcceptanceDocumentConfig = {
+          ...rawConfig,
+          rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+        } as AcceptanceDocumentConfig;
+
+        const newRow: AcceptanceRow = createAcceptanceRow({
+          deliveryDate: todayKey,
+          deliveryHour: String(new Date().getHours()).padStart(2, "0"),
+          deliveryMinute: String(new Date().getMinutes()).padStart(2, "0"),
+          productName: typeof values?.productName === "string" ? values.productName : "",
+          manufacturer: typeof values?.manufacturer === "string" ? values.manufacturer : "",
+          supplier: typeof values?.supplier === "string" ? values.supplier : "",
+          transportCondition: values?.transportCondition === "unsatisfactory" ? "unsatisfactory" : "satisfactory",
+          packagingCompliance: values?.packagingCompliance === "non_compliant" ? "non_compliant" : "compliant",
+          organolepticResult: values?.organolepticResult === "unsatisfactory" ? "unsatisfactory" : "satisfactory",
+          note: typeof values?.note === "string" ? values.note : "",
+          responsibleTitle: employee?.name ?? "",
+          responsibleUserId: employeeId,
+        });
+
+        const nextConfig: AcceptanceDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+        return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
       });
-      if (!doc || !TEMPLATE_CODES.includes(doc.template.code)) return false;
-      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-      if (!employee) return false;
-
-      // Защита от пустого doc.config — без `?? {}` `currentConfig.rows`
-      // падает с «Cannot read properties of null».
-      const rawConfig = (doc.config ?? {}) as Partial<AcceptanceDocumentConfig>;
-      const currentConfig: AcceptanceDocumentConfig = {
-        ...rawConfig,
-        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-      } as AcceptanceDocumentConfig;
-
-      const newRow: AcceptanceRow = createAcceptanceRow({
-        deliveryDate: todayKey,
-        deliveryHour: String(new Date().getHours()).padStart(2, "0"),
-        deliveryMinute: String(new Date().getMinutes()).padStart(2, "0"),
-        productName: typeof values?.productName === "string" ? values.productName : "",
-        manufacturer: typeof values?.manufacturer === "string" ? values.manufacturer : "",
-        supplier: typeof values?.supplier === "string" ? values.supplier : "",
-        transportCondition: values?.transportCondition === "unsatisfactory" ? "unsatisfactory" : "satisfactory",
-        packagingCompliance: values?.packagingCompliance === "non_compliant" ? "non_compliant" : "compliant",
-        organolepticResult: values?.organolepticResult === "unsatisfactory" ? "unsatisfactory" : "satisfactory",
-        note: typeof values?.note === "string" ? values.note : "",
-        responsibleTitle: employee?.name ?? "",
-        responsibleUserId: employeeId,
-      });
-
-      const nextConfig: AcceptanceDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-      await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-      return true;
+      return written === true;
     },
   };
 }

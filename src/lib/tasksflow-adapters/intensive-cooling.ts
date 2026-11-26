@@ -16,7 +16,10 @@
  *   • form         = текст блюда + 2 числа (t° начальная и конечная) +
  *                    текст времени «ЧЧ:ММ» + комментарий.
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   INTENSIVE_COOLING_TEMPLATE_CODE,
   snapshotIntensiveCoolingRow,
@@ -205,99 +208,98 @@ export const intensiveCoolingAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {
-    if (!completed) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
+    // записывать нечего: раньше оно стирало поля строки с тем же ключом.
+    if (!completed || !values) return false;
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-    if (!employee) return false;
-    const currentConfig = (doc.config as { rows?: IntensiveCoolingRow[] }) ?? {};
-    const existingRows = Array.isArray(currentConfig.rows)
-      ? currentConfig.rows
-      : [];
-
-    const { hour, minute } = splitTime(values?.productionTime);
-    // Upsert-by-sourceRowKey: if this TF task already produced a row
-    // here, update it in place; otherwise append. Prevents duplicate
-    // rows when TF task gets re-completed (admin un- then re-marks,
-    // worker taps «Готово» twice, etc.).
-    const existingIndex = existingRows.findIndex(
-      (r) => r.sourceRowKey === rowKey
-    );
-    const existingRow =
-      existingIndex >= 0 ? existingRows[existingIndex] : null;
-    const existingId =
-      existingRow?.id ??
-      `cooling-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const baseRow: IntensiveCoolingRow = {
-      id: existingId,
-      productionDate: todayKey,
-      productionHour: hour,
-      productionMinute: minute,
-      dishName:
-        typeof values?.dishName === "string" ? values.dishName.trim() : "",
-      startTemperature:
-        values?.startTemperature !== null && values?.startTemperature !== undefined
-          ? String(values.startTemperature)
-          : "",
-      endTemperature:
-        values?.endTemperature !== null && values?.endTemperature !== undefined
-          ? String(values.endTemperature)
-          : "",
-      correctiveAction:
-        typeof values?.comment === "string" ? values.comment : "",
-      comment: typeof values?.comment === "string" ? values.comment : "",
-      responsibleTitle: employee?.positionTitle ?? "",
-      responsibleUserId: employeeId,
-      sourceRowKey: rowKey,
-    };
-
-    // Audit trail: when re-completing an existing row with values
-    // that actually differ, push the OLD snapshot into history before
-    // overwriting. We DON'T append a history entry if values are
-    // identical (e.g. worker tapped «Готово» twice with no edits).
-    let row: IntensiveCoolingRow = baseRow;
-    if (existingRow) {
-      const prevSnapshot = snapshotIntensiveCoolingRow(existingRow);
-      const nextSnapshot = snapshotIntensiveCoolingRow(baseRow);
-      const changed = (Object.keys(prevSnapshot) as Array<
-        keyof typeof prevSnapshot
-      >).some((k) => prevSnapshot[k] !== nextSnapshot[k]);
-      const previousHistory = Array.isArray(existingRow.history)
-        ? existingRow.history
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из строк.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+      if (!employee) return null;
+      const currentConfig = (doc.config as { rows?: IntensiveCoolingRow[] }) ?? {};
+      const existingRows = Array.isArray(currentConfig.rows)
+        ? currentConfig.rows
         : [];
-      const nextHistory: IntensiveCoolingRowHistoryEntry[] = changed
-        ? [
-            ...previousHistory,
-            {
-              at: new Date().toISOString(),
-              by: employeeId,
-              byName: employee?.name ?? null,
-              prev: prevSnapshot,
-            },
-          ]
-        : previousHistory;
-      row = nextHistory.length > 0 ? { ...baseRow, history: nextHistory } : baseRow;
-    }
 
-    const nextRows =
-      existingIndex >= 0
-        ? existingRows.map((r, i) => (i === existingIndex ? row : r))
-        : [...existingRows, row];
-    const nextConfig = {
-      ...currentConfig,
-      rows: nextRows,
-    };
+      const { hour, minute } = splitTime(values?.productionTime);
+      // Upsert-by-sourceRowKey: if this TF task already produced a row
+      // here, update it in place; otherwise append. Prevents duplicate
+      // rows when TF task gets re-completed (admin un- then re-marks,
+      // worker taps «Готово» twice, etc.).
+      const existingIndex = existingRows.findIndex(
+        (r) => r.sourceRowKey === rowKey
+      );
+      const existingRow =
+        existingIndex >= 0 ? existingRows[existingIndex] : null;
+      const existingId =
+        existingRow?.id ??
+        `cooling-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const baseRow: IntensiveCoolingRow = {
+        id: existingId,
+        productionDate: todayKey,
+        productionHour: hour,
+        productionMinute: minute,
+        dishName:
+          typeof values?.dishName === "string" ? values.dishName.trim() : "",
+        startTemperature:
+          values?.startTemperature !== null && values?.startTemperature !== undefined
+            ? String(values.startTemperature)
+            : "",
+        endTemperature:
+          values?.endTemperature !== null && values?.endTemperature !== undefined
+            ? String(values.endTemperature)
+            : "",
+        correctiveAction:
+          typeof values?.comment === "string" ? values.comment : "",
+        comment: typeof values?.comment === "string" ? values.comment : "",
+        responsibleTitle: employee?.positionTitle ?? "",
+        responsibleUserId: employeeId,
+        sourceRowKey: rowKey,
+      };
 
-    await db.journalDocument.update({
-      where: { id: documentId },
-      data: { config: nextConfig },
+      // Audit trail: when re-completing an existing row with values
+      // that actually differ, push the OLD snapshot into history before
+      // overwriting. We DON'T append a history entry if values are
+      // identical (e.g. worker tapped «Готово» twice with no edits).
+      let row: IntensiveCoolingRow = baseRow;
+      if (existingRow) {
+        const prevSnapshot = snapshotIntensiveCoolingRow(existingRow);
+        const nextSnapshot = snapshotIntensiveCoolingRow(baseRow);
+        const changed = (Object.keys(prevSnapshot) as Array<
+          keyof typeof prevSnapshot
+        >).some((k) => prevSnapshot[k] !== nextSnapshot[k]);
+        const previousHistory = Array.isArray(existingRow.history)
+          ? existingRow.history
+          : [];
+        const nextHistory: IntensiveCoolingRowHistoryEntry[] = changed
+          ? [
+              ...previousHistory,
+              {
+                at: new Date().toISOString(),
+                by: employeeId,
+                byName: employee?.name ?? null,
+                prev: prevSnapshot,
+              },
+            ]
+          : previousHistory;
+        row = nextHistory.length > 0 ? { ...baseRow, history: nextHistory } : baseRow;
+      }
+
+      const nextRows =
+        existingIndex >= 0
+          ? existingRows.map((r, i) => (i === existingIndex ? row : r))
+          : [...existingRows, row];
+      const nextConfig = {
+        ...currentConfig,
+        rows: nextRows,
+      };
+
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    return true;
+    return written === true;
   },
 };

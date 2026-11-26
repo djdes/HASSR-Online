@@ -1,8 +1,11 @@
+import type { Prisma } from "@prisma/client";
+
 import { buildingTargets } from "@/lib/building-targets";
 import { CLEANING_DOCUMENT_TEMPLATE_CODE } from "@/lib/cleaning-document";
 import { CLIMATE_DOCUMENT_TEMPLATE_CODE } from "@/lib/climate-document";
 import { COLD_EQUIPMENT_DOCUMENT_TEMPLATE_CODE, createColdEquipmentConfigItem } from "@/lib/cold-equipment-document";
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { EQUIPMENT_CALIBRATION_TEMPLATE_CODE } from "@/lib/equipment-calibration-document";
 import { EQUIPMENT_MAINTENANCE_TEMPLATE_CODE } from "@/lib/equipment-maintenance-document";
 import { SANITATION_DAY_TEMPLATE_CODE } from "@/lib/sanitation-day-document";
@@ -337,11 +340,19 @@ export async function syncPointDocumentRows(
   };
   let fixed = 0;
   for (const document of documents) {
-    if (!document.buildingId) continue;
-    const trimmed = trimPointDocumentConfig(document.template.code, document.config, document.buildingId, directory);
-    if (!trimmed) continue;
-    await db.journalDocument.update({ where: { id: document.id }, data: { config: trimmed.config as never } });
-    fixed += 1;
+    const pointId = document.buildingId;
+    if (!pointId) continue;
+    // Список выше — только чтобы не блокировать документы, где менять нечего.
+    if (!trimPointDocumentConfig(document.template.code, document.config, pointId, directory)) continue;
+    // Пишем от конфига, прочитанного под блокировкой документа: пока шла
+    // синхронизация, в строку могли записать уборку (такую строку не убираем)
+    // или дописать строки — запись от старого чтения их стирала.
+    const trimmed = await withDocumentConfigLock(document.id, async (locked) => {
+      if (locked.status !== "active" || locked.buildingId !== pointId) return null;
+      const next = trimPointDocumentConfig(locked.templateCode, locked.config, pointId, directory);
+      return next ? { config: next.config as Prisma.InputJsonValue, result: true } : null;
+    });
+    if (trimmed) fixed += 1;
   }
   return fixed;
 }

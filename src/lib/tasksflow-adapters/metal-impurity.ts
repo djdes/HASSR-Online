@@ -6,7 +6,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new MetalImpurityRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   METAL_IMPURITY_TEMPLATE_CODE,
   type MetalImpurityDocumentConfig,
@@ -132,44 +135,44 @@ export const metalImpurityAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+      if (!employee) return null;
+
+      // Защита от пустого doc.config — при auto-create rows/materials/suppliers
+      // отсутствуют, и .find() / spread падают.
+      const rawConfig = (doc.config ?? {}) as Partial<MetalImpurityDocumentConfig>;
+      const currentConfig: MetalImpurityDocumentConfig = {
+        ...rawConfig,
+        materials: Array.isArray(rawConfig.materials) ? rawConfig.materials : [],
+        suppliers: Array.isArray(rawConfig.suppliers) ? rawConfig.suppliers : [],
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+        responsiblePosition:
+          rawConfig.responsiblePosition ?? "Сотрудник",
+      } as MetalImpurityDocumentConfig;
+
+      const material = currentConfig.materials.find((m) => m.id === (values?.materialId as string));
+      const supplier = currentConfig.suppliers.find((s) => s.id === (values?.supplierId as string));
+
+      const newRow: MetalImpurityRow = createMetalImpurityRow({
+        date: todayKey,
+        materialId: typeof values?.materialId === "string" ? values.materialId : "",
+        supplierId: typeof values?.supplierId === "string" ? values.supplierId : "",
+        consumedQuantityKg: typeof values?.consumedQuantityKg === "string" ? values.consumedQuantityKg : "",
+        impurityQuantityG: typeof values?.impurityQuantityG === "string" ? values.impurityQuantityG : "",
+        impurityCharacteristic: typeof values?.impurityCharacteristic === "string" ? values.impurityCharacteristic : "",
+        // Должность исполнителя из справочника, не ответственного документа.
+        responsibleRole: employee?.positionTitle ?? "",
+        responsibleEmployeeId: employeeId,
+        responsibleName: employee?.name ?? "",
+      });
+
+      const nextConfig: MetalImpurityDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-    if (!employee) return false;
-
-    // Защита от пустого doc.config — при auto-create rows/materials/suppliers
-    // отсутствуют, и .find() / spread падают.
-    const rawConfig = (doc.config ?? {}) as Partial<MetalImpurityDocumentConfig>;
-    const currentConfig: MetalImpurityDocumentConfig = {
-      ...rawConfig,
-      materials: Array.isArray(rawConfig.materials) ? rawConfig.materials : [],
-      suppliers: Array.isArray(rawConfig.suppliers) ? rawConfig.suppliers : [],
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-      responsiblePosition:
-        rawConfig.responsiblePosition ?? "Сотрудник",
-    } as MetalImpurityDocumentConfig;
-
-    const material = currentConfig.materials.find((m) => m.id === (values?.materialId as string));
-    const supplier = currentConfig.suppliers.find((s) => s.id === (values?.supplierId as string));
-
-    const newRow: MetalImpurityRow = createMetalImpurityRow({
-      date: todayKey,
-      materialId: typeof values?.materialId === "string" ? values.materialId : "",
-      supplierId: typeof values?.supplierId === "string" ? values.supplierId : "",
-      consumedQuantityKg: typeof values?.consumedQuantityKg === "string" ? values.consumedQuantityKg : "",
-      impurityQuantityG: typeof values?.impurityQuantityG === "string" ? values.impurityQuantityG : "",
-      impurityCharacteristic: typeof values?.impurityCharacteristic === "string" ? values.impurityCharacteristic : "",
-      // Должность исполнителя из справочника, не ответственного документа.
-      responsibleRole: employee?.positionTitle ?? "",
-      responsibleEmployeeId: employeeId,
-      responsibleName: employee?.name ?? "",
-    });
-
-    const nextConfig: MetalImpurityDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

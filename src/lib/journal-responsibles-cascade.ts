@@ -1,5 +1,8 @@
+import type { Prisma } from "@prisma/client";
+
 import { withNewHygieneFormVersion } from "@/lib/hygiene-v2";
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { allowsImplicitJournalResponsible } from "@/lib/journal-controls";
 import { parseOrgColumnDefaults, withOrgColumnDefault } from "@/lib/journal-columns";
 import { withOrgCommission } from "@/lib/brakerage-commission-org";
@@ -485,31 +488,7 @@ export async function applyResponsiblesToDocuments(input: {
     const primaryUserId = slotUsers[primarySlotId] ?? null;
     if (!primaryUserId && !hasDocumentConfigPatcher(journalCode)) continue;
 
-    // Если существующий config пустой ({}), подменяем дефолтным от
-    // соответствующей default-функции, чтобы у документа появились
-    // строки/зоны/оборудование. Это backfill для документов,
-    // созданных ДО prefill-фикса. Не трогаем конфиги где уже есть
-    // данные — иначе затрём пользовательские правки.
-    const cfgObj =
-      doc.config && typeof doc.config === "object" && !Array.isArray(doc.config)
-        ? (doc.config as Record<string, unknown>)
-        : {};
-    // Документ с записями, но пустым конфигом, не «досеиваем»: его уже
-    // вели, и подсунутые строки дефолта перемешались бы с реальными
-    // данными. Такому документу только проставляем людей.
-    const isEmpty = Object.keys(cfgObj).length === 0 && doc._count.entries === 0;
-    const baseCfg = isEmpty
-      ? getDefaultConfigForJournal(journalCode, await cascadeOrgDataFor(doc.buildingId))
-      : cfgObj;
-
-    const patched = hasDocumentConfigPatcher(journalCode)
-      ? patchDocumentConfig(journalCode, baseCfg, slotUsers, {
-          getName: (id) => (id ? userNameMap.get(id) ?? "" : ""),
-          getPositionTitle: (id) => (id ? userPosMap.get(id) ?? "" : ""),
-        })
-      : null;
-
-    const data: Record<string, unknown> = {};
+    const data: Prisma.JournalDocumentUpdateInput = {};
     if (primaryUserId) {
       data.responsibleUserId = primaryUserId;
       // Также синхронизируем `responsibleTitle` (название должности
@@ -529,17 +508,47 @@ export async function applyResponsiblesToDocuments(input: {
     } else if (input.explicitSlotIds?.has(verifierSlotId) || group.dropped.includes(verifierSlotId)) {
       data.verifierUserId = null;
     }
-    if (patched) {
-      data.config = patched as never;
-    } else if (isEmpty && Object.keys(baseCfg).length > 0) {
-      // Patcher отсутствует, но дефолт для журнала есть — записываем
-      // его, чтобы документ перестал быть пустым.
-      data.config = baseCfg as never;
-    }
-    if (Object.keys(data).length === 0) continue;
 
-    await db.journalDocument.update({ where: { id: doc.id }, data });
-    documentsUpdated += 1;
+    // Конфиг — прочитанный под блокировкой документа, а не из списка выше:
+    // пока каскад обходит документы, в них пишут QR, TasksFlow и сайт, и
+    // запись от старого чтения стирала эти строки (аудит перезаписи 2026-11-26).
+    const written = await withDocumentConfigLock(doc.id, async (locked) => {
+      // Если существующий config пустой ({}), подменяем дефолтным от
+      // соответствующей default-функции, чтобы у документа появились
+      // строки/зоны/оборудование. Это backfill для документов,
+      // созданных ДО prefill-фикса. Не трогаем конфиги где уже есть
+      // данные — иначе затрём пользовательские правки.
+      const cfgObj =
+        locked.config && typeof locked.config === "object" && !Array.isArray(locked.config)
+          ? (locked.config as Record<string, unknown>)
+          : {};
+      // Документ с записями, но пустым конфигом, не «досеиваем»: его уже
+      // вели, и подсунутые строки дефолта перемешались бы с реальными
+      // данными. Такому документу только проставляем людей.
+      const isEmpty = Object.keys(cfgObj).length === 0 && doc._count.entries === 0;
+      const baseCfg = isEmpty
+        ? getDefaultConfigForJournal(journalCode, await cascadeOrgDataFor(doc.buildingId))
+        : cfgObj;
+
+      const patched = hasDocumentConfigPatcher(journalCode)
+        ? patchDocumentConfig(journalCode, baseCfg, slotUsers, {
+            getName: (id) => (id ? userNameMap.get(id) ?? "" : ""),
+            getPositionTitle: (id) => (id ? userPosMap.get(id) ?? "" : ""),
+          })
+        : null;
+
+      let config: Prisma.InputJsonValue | undefined;
+      if (patched) {
+        config = patched as Prisma.InputJsonValue;
+      } else if (isEmpty && Object.keys(baseCfg).length > 0) {
+        // Patcher отсутствует, но дефолт для журнала есть — записываем
+        // его, чтобы документ перестал быть пустым.
+        config = baseCfg as Prisma.InputJsonValue;
+      }
+      if (config === undefined && Object.keys(data).length === 0) return null;
+      return { config, data, result: true };
+    });
+    if (written) documentsUpdated += 1;
   }
   return documentsUpdated;
 }

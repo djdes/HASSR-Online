@@ -1,0 +1,12 @@
+Pre-fix reproduction (2026-11-26): config-lock.test.ts fixture «аварии» run against
+`git show HEAD:src/lib/tasksflow-adapters/accident-journal.ts` (direct-write assertion
+replaced by a log line):
+
+RAW аварии directWrites 2 1
+✖ аварии: две одновременные отправки сохраняют обе, запись — под блокировкой документа
+  + actual - expected
+    actual: [ 'Цех 2' ],
+    expected: [ 'Цех 1', 'Цех 2' ],
+
+=> two concurrent TasksFlow submissions into one accident journal document: the
+   first row («Цех 1») is lost. Same test passes after the fix (lock + fresh read).

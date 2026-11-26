@@ -5,7 +5,10 @@
  *   • adapter row  = audit item (rowKey = audit-<rowId>)
  *   • completion   = check the item and fill auditor comment
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   AUDIT_PLAN_TEMPLATE_CODE,
   type AuditPlanConfig,
@@ -101,37 +104,39 @@ export const auditPlanAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, values }) {
-    if (!completed) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow) —
+    // записывать нечего: раньше оно сбрасывало поля строки в пустые.
+    if (!completed || !values) return false;
     const rowId = rowKey.startsWith("audit-") ? rowKey.slice(6) : undefined;
     if (!rowId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    // Защита от пустого doc.config — `as` не проверяет рантайм, и без
-    // `?? {}` `.rows.map` / `.columns[0]` падают с null.
-    const rawConfig = (doc.config ?? {}) as Partial<AuditPlanConfig>;
-    const currentConfig: AuditPlanConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-      columns: Array.isArray(rawConfig.columns) ? rawConfig.columns : [],
-    } as AuditPlanConfig;
-    const nextRows = currentConfig.rows.map((row: AuditPlanRow) => {
-      if (row.id !== rowId) return row;
-      const comment = typeof values?.comment === "string" ? values.comment : "";
-      const auditorColumnId = currentConfig.columns[0]?.id ?? "auditor";
-      return {
-        ...row,
-        checked: values?.checked === true || values?.checked === "true",
-        values: { ...row.values, [auditorColumnId]: comment },
-      };
-    });
+      // Защита от пустого doc.config — `as` не проверяет рантайм, и без
+      // `?? {}` `.rows.map` / `.columns[0]` падают с null.
+      const rawConfig = (doc.config ?? {}) as Partial<AuditPlanConfig>;
+      const currentConfig: AuditPlanConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+        columns: Array.isArray(rawConfig.columns) ? rawConfig.columns : [],
+      } as AuditPlanConfig;
+      const nextRows = currentConfig.rows.map((row: AuditPlanRow) => {
+        if (row.id !== rowId) return row;
+        const comment = typeof values?.comment === "string" ? values.comment : "";
+        const auditorColumnId = currentConfig.columns[0]?.id ?? "auditor";
+        return {
+          ...row,
+          checked: values?.checked === true || values?.checked === "true",
+          values: { ...row.values, [auditorColumnId]: comment },
+        };
+      });
 
-    const nextConfig: AuditPlanConfig = { ...currentConfig, rows: nextRows };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+      const nextConfig: AuditPlanConfig = { ...currentConfig, rows: nextRows };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
+    });
+    return written === true;
   },
 };

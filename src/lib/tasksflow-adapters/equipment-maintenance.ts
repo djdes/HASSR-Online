@@ -7,8 +7,9 @@
  *   • completion   = mark current month's fact cell with "✓"
  *   • schedule     = recurring monthly (1st of month)
  */
-import type { TasksFlowIntegration } from "@prisma/client";
+import type { Prisma, TasksFlowIntegration } from "@prisma/client";
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   EQUIPMENT_MAINTENANCE_TEMPLATE_CODE,
   type EquipmentMaintenanceConfig,
@@ -247,29 +248,26 @@ export const equipmentMaintenanceAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey }) {
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      include: { template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+
+      const config = normalizeEquipmentMaintenanceConfig(
+        doc.config
+      ) as EquipmentMaintenanceConfig;
+      const rowIndex = config.rows.findIndex((r) => r.id === rowKey);
+      if (rowIndex < 0) return null;
+
+      const monthKey = currentMonthKey() as keyof typeof config.rows[typeof rowIndex]["fact"];
+      const before = config.rows[rowIndex].fact[monthKey] ?? "";
+      const next = completed ? MARK : "";
+      if (before === next) return null;
+
+      (config.rows[rowIndex].fact as Record<string, string>)[monthKey] = next;
+      return { config: config as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-
-    const config = normalizeEquipmentMaintenanceConfig(
-      doc.config
-    ) as EquipmentMaintenanceConfig;
-    const rowIndex = config.rows.findIndex((r) => r.id === rowKey);
-    if (rowIndex < 0) return false;
-
-    const monthKey = currentMonthKey() as keyof typeof config.rows[typeof rowIndex]["fact"];
-    const before = config.rows[rowIndex].fact[monthKey] ?? "";
-    const next = completed ? MARK : "";
-    if (before === next) return false;
-
-    (config.rows[rowIndex].fact as Record<string, string>)[monthKey] = next;
-    await db.journalDocument.update({
-      where: { id: documentId },
-      data: { config },
-    });
-    return true;
+    return written === true;
   },
 
   /**

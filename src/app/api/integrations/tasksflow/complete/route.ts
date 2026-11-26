@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createHash } from "crypto";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/tasksflow-adapters";
+import { rowKeyForTaskSubmission } from "@/lib/tasksflow-adapters/row-key";
 import { buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
 import { toDateKey } from "@/lib/hygiene-document";
 import {
@@ -166,7 +167,9 @@ export async function POST(request: Request) {
 
   const changed = await adapter.applyRemoteCompletion({
     documentId: link.journalDocumentId,
-    rowKey: link.rowKey,
+    // Строчный журнал: каждая отправка — новая строка (повтор того же
+    // запроса отсекает дедуп выше), иначе она переписывала прошлую.
+    rowKey: rowKeyForTaskSubmission(link.journalCode, link.rowKey),
     completed: payload.isCompleted,
     todayKey,
     values: sanitized,

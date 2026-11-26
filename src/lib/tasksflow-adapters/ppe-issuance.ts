@@ -5,7 +5,10 @@
  *   • adapter row  = employee receiving PPE (rowKey = ppe-employee-<userId>)
  *   • completion   = append a new PpeIssuanceRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   PPE_ISSUANCE_TEMPLATE_CODE,
   type PpeIssuanceConfig,
@@ -110,37 +113,37 @@ export const ppeIssuanceAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+      if (!employee) return null;
+
+      // Защита от пустого doc.config — без `?? {}` `[...currentConfig.rows]`
+      // падает с null.
+      const rawConfig = (doc.config ?? {}) as Partial<PpeIssuanceConfig>;
+      const currentConfig: PpeIssuanceConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+      } as PpeIssuanceConfig;
+
+      const newRow: PpeIssuanceRow = createPpeIssuanceRow({
+        issueDate: todayKey,
+        recipientUserId: employeeId,
+        recipientTitle: employee?.positionTitle ?? "",
+        issuerUserId: employeeId,
+        issuerTitle: employee?.positionTitle ?? "",
+        maskCount: safeNumber(values?.maskCount),
+        gloveCount: safeNumber(values?.gloveCount),
+        shoePairsCount: safeNumber(values?.shoePairsCount),
+        clothingSetsCount: safeNumber(values?.clothingSetsCount),
+        capCount: safeNumber(values?.capCount),
+      });
+
+      const nextConfig: PpeIssuanceConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-    if (!employee) return false;
-
-    // Защита от пустого doc.config — без `?? {}` `[...currentConfig.rows]`
-    // падает с null.
-    const rawConfig = (doc.config ?? {}) as Partial<PpeIssuanceConfig>;
-    const currentConfig: PpeIssuanceConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-    } as PpeIssuanceConfig;
-
-    const newRow: PpeIssuanceRow = createPpeIssuanceRow({
-      issueDate: todayKey,
-      recipientUserId: employeeId,
-      recipientTitle: employee?.positionTitle ?? "",
-      issuerUserId: employeeId,
-      issuerTitle: employee?.positionTitle ?? "",
-      maskCount: safeNumber(values?.maskCount),
-      gloveCount: safeNumber(values?.gloveCount),
-      shoePairsCount: safeNumber(values?.shoePairsCount),
-      clothingSetsCount: safeNumber(values?.clothingSetsCount),
-      capCount: safeNumber(values?.capCount),
-    });
-
-    const nextConfig: PpeIssuanceConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

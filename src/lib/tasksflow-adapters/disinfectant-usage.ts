@@ -5,7 +5,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new ReceiptRow to config.receipts[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   DISINFECTANT_TEMPLATE_CODE,
   type DisinfectantDocumentConfig,
@@ -114,39 +117,39 @@ export const disinfectantUsageAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+      if (!employee) return null;
+
+      // Документ может быть создан с пустым `config` (auto-create cron
+      // или ручное создание без формы). В этом случае спрэд `[...currentConfig.receipts]`
+      // падает с «receipts is not iterable». Гарантируем массив.
+      const rawConfig = (doc.config ?? {}) as Partial<DisinfectantDocumentConfig>;
+      const currentConfig: DisinfectantDocumentConfig = {
+        ...rawConfig,
+        receipts: Array.isArray(rawConfig.receipts) ? rawConfig.receipts : [],
+        responsibleRole: rawConfig.responsibleRole ?? "Сотрудник",
+      } as DisinfectantDocumentConfig;
+
+      // Должность исполнителя из справочника (findTaskEmployee), а не
+      // ответственного документа: строка принадлежит исполнителю.
+      const newRow: ReceiptRow = createEmptyReceipt(
+        employee?.positionTitle ?? "",
+        employee?.name ?? "",
+        employeeId
+      );
+      newRow.date = todayKey;
+      newRow.disinfectantName = typeof values?.disinfectantName === "string" ? values.disinfectantName : "";
+      newRow.quantity = safeNumberFromString(values?.quantity);
+      newRow.unit = (typeof values?.unit === "string" ? values.unit : "kg") as MeasureUnit;
+      newRow.expiryDate = typeof values?.expiryDate === "string" ? values.expiryDate : todayKey;
+
+      const nextConfig: DisinfectantDocumentConfig = { ...currentConfig, receipts: [...currentConfig.receipts, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-    if (!employee) return false;
-
-    // Документ может быть создан с пустым `config` (auto-create cron
-    // или ручное создание без формы). В этом случае спрэд `[...currentConfig.receipts]`
-    // падает с «receipts is not iterable». Гарантируем массив.
-    const rawConfig = (doc.config ?? {}) as Partial<DisinfectantDocumentConfig>;
-    const currentConfig: DisinfectantDocumentConfig = {
-      ...rawConfig,
-      receipts: Array.isArray(rawConfig.receipts) ? rawConfig.receipts : [],
-      responsibleRole: rawConfig.responsibleRole ?? "Сотрудник",
-    } as DisinfectantDocumentConfig;
-
-    // Должность исполнителя из справочника (findTaskEmployee), а не
-    // ответственного документа: строка принадлежит исполнителю.
-    const newRow: ReceiptRow = createEmptyReceipt(
-      employee?.positionTitle ?? "",
-      employee?.name ?? "",
-      employeeId
-    );
-    newRow.date = todayKey;
-    newRow.disinfectantName = typeof values?.disinfectantName === "string" ? values.disinfectantName : "";
-    newRow.quantity = safeNumberFromString(values?.quantity);
-    newRow.unit = (typeof values?.unit === "string" ? values.unit : "kg") as MeasureUnit;
-    newRow.expiryDate = typeof values?.expiryDate === "string" ? values.expiryDate : todayKey;
-
-    const nextConfig: DisinfectantDocumentConfig = { ...currentConfig, receipts: [...currentConfig.receipts, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

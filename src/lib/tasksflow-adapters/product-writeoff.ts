@@ -6,7 +6,10 @@
  *   • completion   = append a new ProductWriteoffRow to config.rows[]
  *   • form         = product + batch + quantity + discrepancy + action
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   PRODUCT_WRITEOFF_TEMPLATE_CODE,
   type ProductWriteoffConfig,
@@ -146,37 +149,34 @@ export const productWriteoffAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+
+      const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+      if (!employee) return null;
+      const currentConfig = normalizeProductWriteoffConfig(doc.config) as ProductWriteoffConfig;
+
+      const newRow: ProductWriteoffRow = {
+        id: `writeoff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        productName: typeof values?.productName === "string" ? values.productName : "",
+        batchNumber: typeof values?.batchNumber === "string" ? values.batchNumber : "",
+        productionDate: todayKey,
+        quantity: typeof values?.quantity === "string" ? values.quantity : "",
+        discrepancyDescription:
+          typeof values?.discrepancyDescription === "string"
+            ? values.discrepancyDescription
+            : "",
+        action: typeof values?.action === "string" ? values.action : "",
+      };
+
+      const nextConfig: ProductWriteoffConfig = {
+        ...currentConfig,
+        rows: [...currentConfig.rows, newRow],
+      };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
-    if (!employee) return false;
-    const currentConfig = normalizeProductWriteoffConfig(doc.config) as ProductWriteoffConfig;
-
-    const newRow: ProductWriteoffRow = {
-      id: `writeoff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      productName: typeof values?.productName === "string" ? values.productName : "",
-      batchNumber: typeof values?.batchNumber === "string" ? values.batchNumber : "",
-      productionDate: todayKey,
-      quantity: typeof values?.quantity === "string" ? values.quantity : "",
-      discrepancyDescription:
-        typeof values?.discrepancyDescription === "string"
-          ? values.discrepancyDescription
-          : "",
-      action: typeof values?.action === "string" ? values.action : "",
-    };
-
-    const nextConfig: ProductWriteoffConfig = {
-      ...currentConfig,
-      rows: [...currentConfig.rows, newRow],
-    };
-    await db.journalDocument.update({
-      where: { id: documentId },
-      data: { config: nextConfig },
-    });
-    return true;
+    return written === true;
   },
 };
