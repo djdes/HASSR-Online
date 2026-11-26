@@ -81,7 +81,7 @@ export function assetUrl(view: Pick<PromoMailView, "origin">, path: string): str
 }
 
 /** Тёмный знак — для светлого фона, белый — для тёмного. Высота ~24 px при пропорциях 900 × 239. */
-export function logo(view: PromoMailView, tone: "dark-on-light" | "white-on-dark", height = 24): string {
+export function logo(view: Pick<PromoMailView, "origin">, tone: "dark-on-light" | "white-on-dark", height = 24): string {
   const width = Math.round((height * 900) / 239);
   const dark = assetUrl(view, "/brand/wordmark-dark.png");
   const white = assetUrl(view, "/brand/wordmark.png");
@@ -133,7 +133,7 @@ export function spacer(px: number): string {
 export type FooterTone = "dark" | "light";
 
 /** Подвал: почему пришло письмо, отписка (без учёта кликов), строка о продукте. */
-export function footer(view: PromoMailView, tone: FooterTone): string {
+export function footer(view: Pick<PromoMailView, "unsubscribeUrl">, tone: FooterTone): string {
   const text = tone === "dark" ? "#7f86a8" : C.muted;
   const link = tone === "dark" ? "#a5b0ff" : C.indigoDeep;
   const cls = tone === "dark" ? "" : " d-muted";
@@ -193,7 +193,8 @@ body,.d-page{background:#0b1024!important}
 `;
 
 export type DocumentOptions = {
-  view: PromoMailView;
+  /** Нужны только тема и прехедер — каркасом пользуется и письмо «Постер». */
+  view: Pick<PromoMailView, "subject" | "preheader">;
   bodyBg: string;
   /** Светлый дизайн: добавить тёмную схему и класс `d-page`. */
   light: boolean;
