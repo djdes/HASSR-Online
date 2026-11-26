@@ -2,6 +2,7 @@ import { registerMailingTemplate } from "@/lib/mailing/templates";
 
 import { kpTemplate } from "./kp";
 import { messageTemplate } from "./message";
+import { posterTemplate } from "./poster";
 import { promoTemplate } from "./promo";
 
 /**
@@ -13,6 +14,7 @@ import { promoTemplate } from "./promo";
 registerMailingTemplate(messageTemplate);
 registerMailingTemplate(kpTemplate);
 registerMailingTemplate(promoTemplate);
+registerMailingTemplate(posterTemplate);
 
 export {
   getMailingTemplate,

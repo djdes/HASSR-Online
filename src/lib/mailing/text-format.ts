@@ -186,6 +186,9 @@ export function escapeHtmlText(value: string): string {
 type RenderOptions = {
   /** Во что превратить адрес ссылки (учёт клика, абсолютный адрес). */
   linkHref?: (url: string) => string;
+  /** Стиль абзаца и ссылки в письме (тёмные дизайны); по умолчанию — как в остальных письмах. */
+  paragraphStyle?: string;
+  linkStyle?: string;
 };
 
 /** Ссылка, в адресе которой оказалась переменная, — просто текст. */
@@ -202,7 +205,7 @@ function inlineToHtml(nodes: Inline[], prepared: PreparedText, opts: RenderOptio
       const label = inlineToHtml(node.c, prepared, opts);
       if (!linkUsable(node.url)) return label;
       const href = opts.linkHref ? opts.linkHref(node.url) : node.url;
-      return `<a href="${escapeHtmlText(href)}" style="color:#3848c7;text-decoration:underline">${label}</a>`;
+      return `<a href="${escapeHtmlText(href)}" style="${opts.linkStyle ?? "color:#3848c7;text-decoration:underline"}">${label}</a>`;
     })
     .join("");
 }
@@ -212,7 +215,7 @@ const EMAIL_P_STYLE = "margin:0 0 16px;color:#3f3f46;line-height:1.6;font-size:1
 /** HTML тела письма: абзацы `<p>` со стилями, как в остальных письмах. */
 export function toEmailHtml(prepared: PreparedText, opts: RenderOptions = {}): string {
   return prepared.doc
-    .map((p) => `<p style="${EMAIL_P_STYLE}">${inlineToHtml(p, prepared, opts)}</p>`)
+    .map((p) => `<p style="${opts.paragraphStyle ?? EMAIL_P_STYLE}">${inlineToHtml(p, prepared, opts)}</p>`)
     .join("\n");
 }
 
