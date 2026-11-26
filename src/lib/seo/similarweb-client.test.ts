@@ -8,6 +8,7 @@ import { parseSite } from "api-anything";
 import { isPublicSeoTargetAllowed } from "@/lib/seo/gogetlinks-planner";
 import {
   buildCompetitorBenchmarkReport,
+  buildCompetitorSnapshotFromSerpAndSite,
   mapSimilarwebPhraseToWesetupUrl,
   parseSimilarwebApiPayload,
   parseSimilarwebCookieInput,
@@ -623,4 +624,44 @@ test("buildCompetitorBenchmarkReport compares wesetup.ru against competitors and
   assert.equal(report.summary.gapNoRankCount, 1);
   assert.equal(report.summary.leaderCount, 1);
 });
+
+test("buildCompetitorSnapshotFromSerpAndSite builds automated competitor snapshot from Topvisor SERP rows or niche presets", () => {
+  const fromSerp = buildCompetitorSnapshotFromSerpAndSite({
+    domain: "haccp-online.ru",
+    latestDate: "2026-11-19",
+    totalKeywords: 198,
+    rankedRows: [
+      {
+        phrase: "бракеражный журнал готовой продукции",
+        position: 2,
+        url: "https://haccp-online.ru/journals/brakerazh",
+      },
+      {
+        phrase: "бактерицидный журнал",
+        position: 5,
+        url: "https://haccp-online.ru/journals/uv",
+      },
+    ],
+  });
+
+  assert.equal(fromSerp.domain, "haccp-online.ru");
+  assert.equal(fromSerp.periodLabel, "SERP 2026-11-19");
+  assert.ok(fromSerp.visitsMonthly >= 150);
+  assert.equal(fromSerp.clusters.length, 2);
+  assert.equal(
+    fromSerp.clusters[0].mappedTargetUrl,
+    "/journals-info/finished_product",
+  );
+  assert.match(fromSerp.clusters[0].notes ?? "", /SERP Topvisor: #2/);
+
+  const fromPreset = buildCompetitorSnapshotFromSerpAndSite({
+    domain: "rushaccp.ru",
+    totalKeywords: 198,
+    rankedRows: [],
+  });
+  assert.equal(fromPreset.domain, "rushaccp.ru");
+  assert.ok(fromPreset.clusters.length >= 4);
+  assert.equal(fromPreset.clusters[0].mappedTargetUrl, "/uslugi");
+});
+
 
