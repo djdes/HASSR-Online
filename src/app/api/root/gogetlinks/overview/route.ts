@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { decimalToNumber, serializeGglAccount } from "@/lib/seo/gogetlinks-sync.server";
 import { getCachedWesetupApplicationsCount } from "@/lib/seo/gogetlinks-applications.server";
 import { isGglSlotReadyForApproval } from "@/lib/seo/gogetlinks-site-fit";
+import { resolvePublicSeoTargetPath } from "@/lib/seo/gogetlinks-planner";
 import { ensureDefaultSimilarwebSnapshots } from "@/lib/seo/similarweb-seed";
 
 export const runtime = "nodejs";
@@ -229,35 +230,44 @@ export async function GET(request: Request) {
     updatedAt: toIso(p.updatedAt),
   }));
 
-  const slots = slotsRaw.map((s) => ({
-    id: s.id,
-    planId: s.planId,
-    plan: s.plan ?? null,
-    scheduledDate: s.scheduledDate,
-    maxPriceRub: s.maxPriceRub,
-    estimatedPriceRub: s.estimatedPriceRub,
-    targetUrl: s.targetUrl,
-    targetKeyword: s.targetKeyword,
-    sourceSnapshotId: s.sourceSnapshotId,
-    topvisorPosSnapshot: s.topvisorPosSnapshot,
-    selectionReason: s.selectionReason,
-    donorSiteId: s.donorSiteId,
-    donorDomain: s.donorDomain,
-    donorMetricsJson: s.donorMetricsJson,
-    placementFormat: s.placementFormat,
-    anchor: s.anchor,
-    anchorKind: s.anchorKind,
-    articleId: s.articleId,
-    article: s.article ?? null,
-    briefText: s.briefText,
-    alternativeDonorsJson: s.alternativeDonorsJson,
-    status: s.status,
-    approvedByUserId: s.approvedByUserId,
-    approvedByName: s.approvedByName,
-    approvedAt: toIso(s.approvedAt),
-    createdAt: toIso(s.createdAt),
-    updatedAt: toIso(s.updatedAt),
-  }));
+  const slots = slotsRaw.map((s) => {
+    const canonicalTargetUrl = s.targetUrl
+      ? resolvePublicSeoTargetPath(s.targetUrl) ?? s.targetUrl
+      : null;
+    const canonicalReason =
+      s.selectionReason && s.targetUrl && canonicalTargetUrl && canonicalTargetUrl !== s.targetUrl
+        ? s.selectionReason.replaceAll(s.targetUrl, canonicalTargetUrl)
+        : s.selectionReason;
+    return {
+      id: s.id,
+      planId: s.planId,
+      plan: s.plan ?? null,
+      scheduledDate: s.scheduledDate,
+      maxPriceRub: s.maxPriceRub,
+      estimatedPriceRub: s.estimatedPriceRub,
+      targetUrl: canonicalTargetUrl,
+      targetKeyword: s.targetKeyword,
+      sourceSnapshotId: s.sourceSnapshotId,
+      topvisorPosSnapshot: s.topvisorPosSnapshot,
+      selectionReason: canonicalReason,
+      donorSiteId: s.donorSiteId,
+      donorDomain: s.donorDomain,
+      donorMetricsJson: s.donorMetricsJson,
+      placementFormat: s.placementFormat,
+      anchor: s.anchor,
+      anchorKind: s.anchorKind,
+      articleId: s.articleId,
+      article: s.article ?? null,
+      briefText: s.briefText,
+      alternativeDonorsJson: s.alternativeDonorsJson,
+      status: s.status,
+      approvedByUserId: s.approvedByUserId,
+      approvedByName: s.approvedByName,
+      approvedAt: toIso(s.approvedAt),
+      createdAt: toIso(s.createdAt),
+      updatedAt: toIso(s.updatedAt),
+    };
+  });
 
   const articles = articlesRaw.map((a) => ({
     id: a.id,

@@ -82,7 +82,7 @@ export function SeoLinksHeaderMetrics({
             </span>
           ) : (
             <span>
-              Кабинет GoGetLinks ещё не подключён — настройте доступ во вкладке «Спрос Similarweb и подключение».
+              Кабинет GoGetLinks ещё не подключён — настройте доступ во вкладке «Подключение GoGetLinks».
             </span>
           )}
           {account?.lastError ? (

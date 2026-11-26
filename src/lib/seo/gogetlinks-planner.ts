@@ -190,6 +190,10 @@ export function resolvePublicSeoTargetPath(rawUrl: string | null | undefined): s
   if (!norm) return null;
   const directRemap = PRIVATE_WORKSPACE_TO_PUBLIC_SEO_MAP[norm];
   if (directRemap) return directRemap;
+  const redirected = seoRedirectTarget(norm);
+  if (redirected) {
+    return isPublicCacheablePage(redirected) ? redirected : null;
+  }
   if (norm.startsWith("/journals/")) {
     const sub = norm.slice("/journals/".length).split("/")[0]?.trim();
     if (sub && sub !== "points" && sub !== "sets" && sub !== "traceability") {

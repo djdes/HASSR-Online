@@ -536,6 +536,14 @@ export function serializePlannedSlot(slot: {
   createdAt?: Date | string | null;
   updatedAt?: Date | string | null;
 }) {
+  const canonicalTargetUrl = slot.targetUrl
+    ? resolvePublicSeoTargetPath(slot.targetUrl) ?? slot.targetUrl
+    : null;
+  const canonicalSelectionReason =
+    slot.selectionReason && slot.targetUrl && canonicalTargetUrl && canonicalTargetUrl !== slot.targetUrl
+      ? slot.selectionReason.replaceAll(slot.targetUrl, canonicalTargetUrl)
+      : slot.selectionReason;
+
   return {
     id: slot.id,
     planId: slot.planId,
@@ -543,11 +551,11 @@ export function serializePlannedSlot(slot: {
     scheduledDate: slot.scheduledDate,
     maxPriceRub: slot.maxPriceRub,
     estimatedPriceRub: slot.estimatedPriceRub,
-    targetUrl: slot.targetUrl,
+    targetUrl: canonicalTargetUrl,
     targetKeyword: slot.targetKeyword,
     sourceSnapshotId: slot.sourceSnapshotId,
     topvisorPosSnapshot: slot.topvisorPosSnapshot,
-    selectionReason: slot.selectionReason,
+    selectionReason: canonicalSelectionReason,
     donorSiteId: slot.donorSiteId,
     donorDomain: slot.donorDomain,
     donorMetricsJson: slot.donorMetricsJson,

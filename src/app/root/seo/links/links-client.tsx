@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  BarChart3,
   CalendarClock,
+  KeyRound,
   ListChecks,
   Loader2,
   MessageSquare,
@@ -282,8 +282,8 @@ export function SeoLinksClient({
     },
     {
       key: "demand",
-      label: "Спрос Similarweb и подключение",
-      icon: BarChart3,
+      label: "Подключение GoGetLinks",
+      icon: KeyRound,
     },
   ];
 
