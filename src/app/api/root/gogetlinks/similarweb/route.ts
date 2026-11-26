@@ -25,6 +25,17 @@ import {
 } from "@/lib/seo/gogetlinks-planner";
 import { ensureDefaultSimilarwebSnapshots } from "@/lib/seo/similarweb-seed";
 import {
+  buildCompetitorBenchmarkReport,
+  type SimilarwebConnectionStatus,
+} from "@/lib/seo/similarweb-client";
+import {
+  fetchSimilarwebSnapshotViaApiAnything,
+  getSimilarwebConnectionStatus,
+  saveSimilarwebConnection,
+  SimilarwebAuthError,
+  SimilarwebCallError,
+} from "@/lib/seo/similarweb-client.server";
+import {
   getPositionsHistory,
   isTopvisorConfigured,
   type PositionMatrix,
@@ -57,6 +68,20 @@ const jsonSnapshotSchema = z.object({
     .optional()
     .default("manual"),
   clusters: z.array(clusterInputSchema).max(100).default([]),
+});
+
+const syncDomainActionSchema = z.object({
+  action: z.literal("sync_domain"),
+  domain: z.string().trim().min(2).max(200).optional(),
+  domains: z.array(z.string().trim().min(2).max(200)).min(1).max(10).optional(),
+  periodLabel: z.string().trim().min(2).max(100).optional(),
+});
+
+const saveConnectionActionSchema = z.object({
+  action: z.literal("save_connection"),
+  cookieInput: z.string().max(50_000).nullable().optional(),
+  apiKey: z.string().max(500).nullable().optional(),
+  clear: z.boolean().optional(),
 });
 
 function isFileLike(value: FormDataEntryValue): value is File {
@@ -283,13 +308,29 @@ export async function GET(_request: Request) {
     candidatePages,
   });
 
+  let similarwebConnection: SimilarwebConnectionStatus | null = null;
+  try {
+    similarwebConnection = getSimilarwebConnectionStatus();
+  } catch {
+    similarwebConnection = null;
+  }
+
+  const serializedSnapshots = snapshotsRaw.map(serializeSnapshot);
+  const benchmark = buildCompetitorBenchmarkReport({
+    snapshots: serializedSnapshots,
+    topvisorRows: topvisor.rows,
+    existingOrders: ordersRaw,
+  });
+
   return NextResponse.json({
-    snapshots: snapshotsRaw.map(serializeSnapshot),
+    snapshots: serializedSnapshots,
     priorityMatrix,
+    benchmark,
     topvisor: {
       configured: topvisor.configured,
       error: topvisor.error,
     },
+    similarwebConnection,
   });
 }
 
@@ -372,6 +413,175 @@ export async function POST(request: Request) {
       };
     } else {
       const rawJson = await request.json().catch(() => null);
+
+      // 1. Handle api-anything session/connection configuration save
+      if (
+        rawJson &&
+        typeof rawJson === "object" &&
+        (rawJson as { action?: unknown }).action === "save_connection"
+      ) {
+        const parsedConn = saveConnectionActionSchema.safeParse(rawJson);
+        if (!parsedConn.success) {
+          return NextResponse.json(
+            {
+              error:
+                parsedConn.error.issues[0]?.message ??
+                "Некорректные параметры сессии Similarweb",
+            },
+            { status: 400 },
+          );
+        }
+
+        const connection = saveSimilarwebConnection({
+          cookieInput: parsedConn.data.cookieInput,
+          apiKey: parsedConn.data.apiKey,
+          clear: parsedConn.data.clear,
+        });
+
+        await audit({
+          orgId: platformOrgId(),
+          action: "ggl.similarweb.connection",
+          entity: "SeoCompetitorSnapshot",
+          entityId: "similarweb-api-anything",
+          actor: {
+            id: session.user.id,
+            name: session.user.name ?? session.user.email ?? "root",
+          },
+          details: {
+            configured: connection.configured,
+            cookieCount: connection.cookieCount,
+            hasApiKey: connection.hasApiKey,
+            cleared: Boolean(parsedConn.data.clear),
+          },
+        });
+
+        return NextResponse.json({
+          similarwebConnection: connection,
+        });
+      }
+
+      // 2. Handle live domain sync via api-anything
+      if (
+        rawJson &&
+        typeof rawJson === "object" &&
+        (rawJson as { action?: unknown }).action === "sync_domain"
+      ) {
+        const parsedSync = syncDomainActionSchema.safeParse(rawJson);
+        if (!parsedSync.success) {
+          return NextResponse.json(
+            {
+              error:
+                parsedSync.error.issues[0]?.message ??
+                "Укажите домен для синхронизации через api-anything",
+            },
+            { status: 400 },
+          );
+        }
+
+        const requestedDomains = [
+          ...(parsedSync.data.domains ?? []),
+          ...(parsedSync.data.domain ? [parsedSync.data.domain] : []),
+        ]
+          .map((d) => normalizeDomainName(d))
+          .filter((d) => Boolean(d && d.includes(".")));
+
+        const uniqueDomains = [...new Set(requestedDomains)];
+        if (uniqueDomains.length === 0) {
+          return NextResponse.json(
+            { error: "Укажите корректный домен сайта (например, haccp-online.ru)" },
+            { status: 400 },
+          );
+        }
+
+        const blogArticles = db.article
+          ? await db.article
+              .findMany({
+                where: { publishedAt: { not: null } },
+                select: { slug: true, title: true, excerpt: true, tags: true },
+              })
+              .catch(() => [])
+          : [];
+
+        const candidatePages = buildDefaultCandidateSitePages(
+          blogArticles.map((art) => ({
+            url: `/blog/${art.slug}`,
+            title: art.title,
+            facts: art.excerpt ? [art.excerpt] : [],
+            keywords: art.tags ?? [],
+          })),
+        );
+
+        const savedSnapshots = [];
+        for (const targetDomain of uniqueDomains) {
+          const fetched = await fetchSimilarwebSnapshotViaApiAnything(
+            targetDomain,
+            { candidatePages },
+          );
+          const periodLabel =
+            parsedSync.data.periodLabel?.trim() || fetched.periodLabel;
+          const clustersJson =
+            fetched.clusters as unknown as Prisma.InputJsonValue;
+
+          const saved = await db.seoCompetitorSnapshot.upsert({
+            where: {
+              domain_periodLabel: {
+                domain: fetched.domain,
+                periodLabel,
+              },
+            },
+            create: {
+              domain: fetched.domain,
+              periodLabel,
+              visitsMonthly: fetched.visitsMonthly,
+              organicSharePct: fetched.organicSharePct,
+              paidSharePct: fetched.paidSharePct,
+              bouncePct: fetched.bouncePct,
+              pagesPerVisit: fetched.pagesPerVisit,
+              clusters: clustersJson,
+              sourceKind: "agent_import",
+              createdByUserId: session.user.id ?? null,
+            },
+            update: {
+              visitsMonthly: fetched.visitsMonthly,
+              organicSharePct: fetched.organicSharePct,
+              paidSharePct: fetched.paidSharePct,
+              bouncePct: fetched.bouncePct,
+              pagesPerVisit: fetched.pagesPerVisit,
+              clusters: clustersJson,
+              sourceKind: "agent_import",
+              createdByUserId: session.user.id ?? null,
+            },
+          });
+
+          await audit({
+            orgId: platformOrgId(),
+            action: "ggl.similarweb.import",
+            entity: "SeoCompetitorSnapshot",
+            entityId: saved.id,
+            actor: {
+              id: session.user.id,
+              name: session.user.name ?? session.user.email ?? "root",
+            },
+            details: {
+              domain: saved.domain,
+              periodLabel: saved.periodLabel,
+              visitsMonthly: saved.visitsMonthly,
+              clustersCount: fetched.clusters.length,
+              sourceKind: "agent_import",
+              via: "api-anything",
+            },
+          });
+
+          savedSnapshots.push(serializeSnapshot(saved));
+        }
+
+        return NextResponse.json({
+          snapshot: savedSnapshots[0] ?? null,
+          snapshots: savedSnapshots,
+          similarwebConnection: getSimilarwebConnectionStatus(),
+        });
+      }
+
       const parsed = jsonSnapshotSchema.safeParse(rawJson);
       if (!parsed.success) {
         return NextResponse.json(
@@ -471,6 +681,26 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: err.message, code: err.code },
         { status: err.status },
+      );
+    }
+    if (err instanceof SimilarwebAuthError) {
+      return NextResponse.json(
+        { error: err.message, code: "SIMILARWEB_AUTH" },
+        { status: 401 },
+      );
+    }
+    if (err instanceof SimilarwebCallError) {
+      const status =
+        err.swClass === "input"
+          ? 400
+          : err.swClass === "rate"
+            ? 429
+            : err.swClass === "blocked"
+              ? 502
+              : 502;
+      return NextResponse.json(
+        { error: err.message, code: err.swClass ?? "SIMILARWEB_CALL" },
+        { status },
       );
     }
     console.error("[ggl-similarweb] unexpected error:", err);
