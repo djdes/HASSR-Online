@@ -604,6 +604,14 @@ test("buildCompetitorBenchmarkReport compares wesetup.ru against competitors and
   assert.equal(report.domains[0].domain, "wesetup.ru");
   assert.equal(report.domains[1].domain, "haccp-online.ru");
   assert.equal(report.domains[1].visitsRatioVsWesetup, 20);
+  assert.equal(report.domains[1].estimatedOrganicVisits, 5120);
+  assert.equal(report.domains[1].estimatedPaidVisits, 4480);
+  assert.equal(report.domains[1].otherSharePct, 40);
+  assert.ok(report.domains[1].channelStrategySummary.includes("4"));
+  assert.ok(report.actionPlan.length >= 2);
+  assert.equal(report.actionPlan[0].kind, "push_top3_links");
+  assert.equal(report.actionPlan[0].targetUrl, "/journals-info/fryer_oil");
+  assert.ok(report.summary.totalPotentialMonthlyVisits > 0);
 
   // Cluster gaps:
   // 1) "журнал учета фритюрных жиров" -> mapped from 301 /zhurnal-frityurnyh-zhirov to /journals-info/fryer_oil, pos #9 -> push_top3
