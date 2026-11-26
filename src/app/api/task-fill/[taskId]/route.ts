@@ -8,7 +8,7 @@ import {
 } from "@/lib/tasksflow-client";
 import { getAdapter } from "@/lib/tasksflow-adapters";
 import { buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
-import { extractEmployeeId } from "@/lib/tasksflow-adapters/row-key";
+import { extractEmployeeId, rowKeyForTaskSubmission } from "@/lib/tasksflow-adapters/row-key";
 import { toDateKey } from "@/lib/hygiene-document";
 import { isManagementRole } from "@/lib/user-roles";
 import { orgLockedResponse } from "@/lib/org-trial.server";
@@ -208,7 +208,10 @@ export async function POST(
   const todayKey = toDateKey(new Date());
   const applied = await adapter.applyRemoteCompletion({
     documentId: link.journalDocumentId,
-    rowKey: link.rowKey,
+    // Строчный журнал (бракераж, скоропорт, охлаждение…): каждая отправка —
+    // новая строка, как по QR. С ключом задачи вторая отправка переписывала
+    // первую строку сотрудника вместе с подписями комиссии.
+    rowKey: rowKeyForTaskSubmission(link.journalCode, link.rowKey),
     completed: true,
     todayKey,
     values: sanitized,

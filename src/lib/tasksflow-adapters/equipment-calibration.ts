@@ -5,7 +5,10 @@
  *   • adapter row  = equipment item (rowKey = equipment-<rowId>)
  *   • completion   = update lastCalibrationDate and note on existing row
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   EQUIPMENT_CALIBRATION_TEMPLATE_CODE,
   type EquipmentCalibrationConfig,
@@ -101,29 +104,29 @@ export const equipmentCalibrationAdapter: JournalAdapter = {
     const rowId = rowKey.startsWith("equipment-") ? rowKey.slice(10) : undefined;
     if (!rowId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    // Защита от пустого doc.config — без `?? {}` `.rows.map` падает с null.
-    const rawConfig = (doc.config ?? {}) as Partial<EquipmentCalibrationConfig>;
-    const currentConfig: EquipmentCalibrationConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-    } as EquipmentCalibrationConfig;
-    const nextRows = currentConfig.rows.map((row: CalibrationRow) => {
-      if (row.id !== rowId) return row;
-      return {
-        ...row,
-        lastCalibrationDate: typeof values?.lastCalibrationDate === "string" ? values.lastCalibrationDate : row.lastCalibrationDate,
-        note: typeof values?.note === "string" ? values.note : row.note,
-      };
-    });
+      // Защита от пустого doc.config — без `?? {}` `.rows.map` падает с null.
+      const rawConfig = (doc.config ?? {}) as Partial<EquipmentCalibrationConfig>;
+      const currentConfig: EquipmentCalibrationConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+      } as EquipmentCalibrationConfig;
+      const nextRows = currentConfig.rows.map((row: CalibrationRow) => {
+        if (row.id !== rowId) return row;
+        return {
+          ...row,
+          lastCalibrationDate: typeof values?.lastCalibrationDate === "string" ? values.lastCalibrationDate : row.lastCalibrationDate,
+          note: typeof values?.note === "string" ? values.note : row.note,
+        };
+      });
 
-    const nextConfig: EquipmentCalibrationConfig = { ...currentConfig, rows: nextRows };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+      const nextConfig: EquipmentCalibrationConfig = { ...currentConfig, rows: nextRows };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
+    });
+    return written === true;
   },
 };

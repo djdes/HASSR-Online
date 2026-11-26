@@ -7,7 +7,10 @@
  *   Since GlassList is a static inventory list, completion marks an inspection
  *   by updating the item's quantity or adding a check date.
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   GLASS_LIST_TEMPLATE_CODE,
   type GlassListConfig,
@@ -111,44 +114,44 @@ export const glassListAdapter: JournalAdapter = {
   async applyRemoteCompletion({ documentId, rowKey, completed, todayKey, values }) {
     if (!completed) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+
+      // Защита от пустого doc.config — без `?? {}` `.rows.map` / `.some`
+      // падают с null.
+      const rawConfig = (doc.config ?? {}) as Partial<GlassListConfig>;
+      const currentConfig: GlassListConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+      } as GlassListConfig;
+      const glassItemId = rowKey.startsWith("glass-") ? rowKey.slice(6) : undefined;
+
+      const nextRows = currentConfig.rows.map((row) => {
+        if (row.id !== glassItemId) return row;
+        return {
+          ...row,
+          quantity: typeof values?.quantity === "string" ? values.quantity : row.quantity,
+        };
+      });
+
+      // If item not found, optionally append a new row
+      const itemExists = currentConfig.rows.some((r) => r.id === glassItemId);
+      if (!itemExists && glassItemId) {
+        nextRows.push(
+          createGlassListRow({
+            id: glassItemId,
+            location: typeof values?.note === "string" ? values.note : "",
+            itemName: "Новое изделие",
+            quantity: typeof values?.quantity === "string" ? values.quantity : "1",
+          })
+        );
+      }
+
+      const nextConfig: GlassListConfig = { ...currentConfig, rows: nextRows };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-
-    // Защита от пустого doc.config — без `?? {}` `.rows.map` / `.some`
-    // падают с null.
-    const rawConfig = (doc.config ?? {}) as Partial<GlassListConfig>;
-    const currentConfig: GlassListConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-    } as GlassListConfig;
-    const glassItemId = rowKey.startsWith("glass-") ? rowKey.slice(6) : undefined;
-
-    const nextRows = currentConfig.rows.map((row) => {
-      if (row.id !== glassItemId) return row;
-      return {
-        ...row,
-        quantity: typeof values?.quantity === "string" ? values.quantity : row.quantity,
-      };
-    });
-
-    // If item not found, optionally append a new row
-    const itemExists = currentConfig.rows.some((r) => r.id === glassItemId);
-    if (!itemExists && glassItemId) {
-      nextRows.push(
-        createGlassListRow({
-          id: glassItemId,
-          location: typeof values?.note === "string" ? values.note : "",
-          itemName: "Новое изделие",
-          quantity: typeof values?.quantity === "string" ? values.quantity : "1",
-        })
-      );
-    }
-
-    const nextConfig: GlassListConfig = { ...currentConfig, rows: nextRows };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

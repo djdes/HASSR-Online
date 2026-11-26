@@ -5,7 +5,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new AccidentRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   ACCIDENT_DOCUMENT_TEMPLATE_CODE,
   type AccidentDocumentConfig,
@@ -100,34 +103,39 @@ export const accidentJournalAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+    // Сотрудник — до блокировки: запрос в пул из транзакции с блокировкой
+    // при пачке отправок ждал бы второго соединения. Организация документа
+    // не меняется, это чтение не устаревает.
+    const owner = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: owner?.organizationId });
     if (!employee) return false;
-    const currentConfig = normalizeAccidentDocumentConfig(doc.config) as AccidentDocumentConfig;
 
-    const now = new Date();
-    const newRow: AccidentRow = {
-      id: `accident-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      accidentDate: todayKey,
-      accidentHour: String(now.getHours()).padStart(2, "0"),
-      accidentMinute: String(now.getMinutes()).padStart(2, "0"),
-      locationName: typeof values?.locationName === "string" ? values.locationName : "",
-      accidentDescription: typeof values?.accidentDescription === "string" ? values.accidentDescription : "",
-      affectedProducts: typeof values?.affectedProducts === "string" ? values.affectedProducts : "",
-      resolvedDate: todayKey,
-      resolvedHour: String(now.getHours()).padStart(2, "0"),
-      resolvedMinute: String(now.getMinutes()).padStart(2, "0"),
-      responsiblePeople: employee?.name ?? "",
-      correctiveActions: typeof values?.correctiveActions === "string" ? values.correctiveActions : "",
-    };
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    const nextConfig: AccidentDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+      const currentConfig = normalizeAccidentDocumentConfig(doc.config) as AccidentDocumentConfig;
+
+      const now = new Date();
+      const newRow: AccidentRow = {
+        id: `accident-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        accidentDate: todayKey,
+        accidentHour: String(now.getHours()).padStart(2, "0"),
+        accidentMinute: String(now.getMinutes()).padStart(2, "0"),
+        locationName: typeof values?.locationName === "string" ? values.locationName : "",
+        accidentDescription: typeof values?.accidentDescription === "string" ? values.accidentDescription : "",
+        affectedProducts: typeof values?.affectedProducts === "string" ? values.affectedProducts : "",
+        resolvedDate: todayKey,
+        resolvedHour: String(now.getHours()).padStart(2, "0"),
+        resolvedMinute: String(now.getMinutes()).padStart(2, "0"),
+        responsiblePeople: employee?.name ?? "",
+        correctiveActions: typeof values?.correctiveActions === "string" ? values.correctiveActions : "",
+      };
+
+      const nextConfig: AccidentDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
+    });
+    return written === true;
   },
 };

@@ -5,7 +5,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new BreakdownRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   BREAKDOWN_HISTORY_TEMPLATE_CODE,
   type BreakdownHistoryDocumentConfig,
@@ -101,36 +104,41 @@ export const breakdownHistoryAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-
-    const employee = await findTaskEmployee({ employeeId, organizationId: doc.organizationId });
+    // Сотрудник — до блокировки: запрос в пул из транзакции с блокировкой
+    // при пачке отправок ждал бы второго соединения. Организация документа
+    // не меняется, это чтение не устаревает.
+    const owner = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: owner?.organizationId });
     if (!employee) return false;
-    const currentConfig = normalizeBreakdownHistoryDocumentConfig(doc.config) as BreakdownHistoryDocumentConfig;
 
-    const newRow: BreakdownRow = {
-      id: `breakdown-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      startDate: todayKey,
-      startHour: String(new Date().getHours()).padStart(2, "0"),
-      startMinute: String(new Date().getMinutes()).padStart(2, "0"),
-      // Задача из TF приходит текстом — со справочником не связана.
-      sourceEquipmentId: null,
-      equipmentName: typeof values?.equipmentName === "string" ? values.equipmentName : "",
-      breakdownDescription: typeof values?.breakdownDescription === "string" ? values.breakdownDescription : "",
-      repairPerformed: typeof values?.repairPerformed === "string" ? values.repairPerformed : "",
-      partsReplaced: typeof values?.partsReplaced === "string" ? values.partsReplaced : "",
-      endDate: todayKey,
-      endHour: String(new Date().getHours()).padStart(2, "0"),
-      endMinute: String(new Date().getMinutes()).padStart(2, "0"),
-      downtimeHours: typeof values?.downtimeHours === "string" ? values.downtimeHours : "",
-      responsiblePerson: employee?.name ?? "",
-    };
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    const nextConfig: BreakdownHistoryDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+      const currentConfig = normalizeBreakdownHistoryDocumentConfig(doc.config) as BreakdownHistoryDocumentConfig;
+
+      const newRow: BreakdownRow = {
+        id: `breakdown-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        startDate: todayKey,
+        startHour: String(new Date().getHours()).padStart(2, "0"),
+        startMinute: String(new Date().getMinutes()).padStart(2, "0"),
+        // Задача из TF приходит текстом — со справочником не связана.
+        sourceEquipmentId: null,
+        equipmentName: typeof values?.equipmentName === "string" ? values.equipmentName : "",
+        breakdownDescription: typeof values?.breakdownDescription === "string" ? values.breakdownDescription : "",
+        repairPerformed: typeof values?.repairPerformed === "string" ? values.repairPerformed : "",
+        partsReplaced: typeof values?.partsReplaced === "string" ? values.partsReplaced : "",
+        endDate: todayKey,
+        endHour: String(new Date().getHours()).padStart(2, "0"),
+        endMinute: String(new Date().getMinutes()).padStart(2, "0"),
+        downtimeHours: typeof values?.downtimeHours === "string" ? values.downtimeHours : "",
+        responsiblePerson: employee?.name ?? "",
+      };
+
+      const nextConfig: BreakdownHistoryDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
+    });
+    return written === true;
   },
 };

@@ -5,7 +5,10 @@
  *   • adapter row  = protocol item (rowKey = protocol-<rowId>)
  *   • completion   = set result and note
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   AUDIT_PROTOCOL_TEMPLATE_CODE,
   type AuditProtocolConfig,
@@ -97,36 +100,39 @@ export const auditProtocolAdapter: JournalAdapter = {
   },
 
   async applyRemoteCompletion({ documentId, rowKey, completed, values }) {
-    if (!completed) return false;
+    // Выполнение без значений формы (pull-синхронизация, вебхук TasksFlow,
+    // подтверждение задачи с `values: {}`) — записывать нечего: раньше оно
+    // сбрасывало поля строки в пустые.
+    if (!completed || !values || Object.keys(values).length === 0) return false;
     const rowId = rowKey.startsWith("protocol-") ? rowKey.slice(9) : undefined;
     if (!rowId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    // Защита от пустого doc.config — `as` не проверяет рантайм, и без
-    // `?? {}` `.rows.map` падает с «Cannot read properties of null».
-    const rawConfig = (doc.config ?? {}) as Partial<AuditProtocolConfig>;
-    const currentConfig: AuditProtocolConfig = {
-      ...rawConfig,
-      rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
-      sections: Array.isArray(rawConfig.sections) ? rawConfig.sections : [],
-      signatures: Array.isArray(rawConfig.signatures) ? rawConfig.signatures : [],
-    } as AuditProtocolConfig;
-    const nextRows = currentConfig.rows.map((row: AuditProtocolRow) => {
-      if (row.id !== rowId) return row;
-      return {
-        ...row,
-        result: ((values?.result === "yes" || values?.result === "no") ? values.result : "") as "" | "yes" | "no",
-        note: typeof values?.note === "string" ? values.note : row.note,
-      };
-    });
+      // Защита от пустого doc.config — `as` не проверяет рантайм, и без
+      // `?? {}` `.rows.map` падает с «Cannot read properties of null».
+      const rawConfig = (doc.config ?? {}) as Partial<AuditProtocolConfig>;
+      const currentConfig: AuditProtocolConfig = {
+        ...rawConfig,
+        rows: Array.isArray(rawConfig.rows) ? rawConfig.rows : [],
+        sections: Array.isArray(rawConfig.sections) ? rawConfig.sections : [],
+        signatures: Array.isArray(rawConfig.signatures) ? rawConfig.signatures : [],
+      } as AuditProtocolConfig;
+      const nextRows = currentConfig.rows.map((row: AuditProtocolRow) => {
+        if (row.id !== rowId) return row;
+        return {
+          ...row,
+          result: ((values?.result === "yes" || values?.result === "no") ? values.result : "") as "" | "yes" | "no",
+          note: typeof values?.note === "string" ? values.note : row.note,
+        };
+      });
 
-    const nextConfig: AuditProtocolConfig = { ...currentConfig, rows: nextRows };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+      const nextConfig: AuditProtocolConfig = { ...currentConfig, rows: nextRows };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
+    });
+    return written === true;
   },
 };

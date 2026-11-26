@@ -5,7 +5,10 @@
  *   • adapter row  = employee (rowKey = employee-<userId>)
  *   • completion   = append a new ComplaintRow to config.rows[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import {
   COMPLAINT_REGISTER_TEMPLATE_CODE,
@@ -102,33 +105,34 @@ export const complaintRegisterAdapter: JournalAdapter = {
     const employeeId = employeeIdFromRowKey(rowKey);
     if (!employeeId) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, organizationId: true, template: { select: { code: true } } },
-    });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-    // Жалобу принимает только сотрудник организации документа: id пришёл
-    // из rowKey внешнего сервиса.
-    const employee = await findTaskEmployee({
-      employeeId,
-      organizationId: doc.organizationId,
-    });
+    // Сотрудник — до блокировки: запрос в пул из транзакции с блокировкой
+    // при пачке отправок ждал бы второго соединения. Организация документа
+    // не меняется, это чтение не устаревает. Жалобу принимает только
+    // сотрудник организации документа: id пришёл из rowKey внешнего сервиса.
+    const owner = await db.journalDocument.findUnique({ where: { id: documentId }, select: { organizationId: true } });
+    const employee = await findTaskEmployee({ employeeId, organizationId: owner?.organizationId });
     if (!employee) return false;
 
-    const currentConfig = normalizeComplaintConfig(doc.config) as ComplaintDocumentConfig;
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
 
-    const newRow = buildComplaintRow({
-      receiptDate: todayKey,
-      applicantName: typeof values?.applicantName === "string" ? values.applicantName : "",
-      complaintReceiptForm: typeof values?.complaintReceiptForm === "string" ? values.complaintReceiptForm : COMPLAINT_RECEIPT_OPTIONS[0].value,
-      applicantDetails: typeof values?.applicantDetails === "string" ? values.applicantDetails : "",
-      complaintContent: typeof values?.complaintContent === "string" ? values.complaintContent : "",
-      decisionDate: todayKey,
-      decisionSummary: typeof values?.decisionSummary === "string" ? values.decisionSummary : "",
+      const currentConfig = normalizeComplaintConfig(doc.config) as ComplaintDocumentConfig;
+
+      const newRow = buildComplaintRow({
+        receiptDate: todayKey,
+        applicantName: typeof values?.applicantName === "string" ? values.applicantName : "",
+        complaintReceiptForm: typeof values?.complaintReceiptForm === "string" ? values.complaintReceiptForm : COMPLAINT_RECEIPT_OPTIONS[0].value,
+        applicantDetails: typeof values?.applicantDetails === "string" ? values.applicantDetails : "",
+        complaintContent: typeof values?.complaintContent === "string" ? values.complaintContent : "",
+        decisionDate: todayKey,
+        decisionSummary: typeof values?.decisionSummary === "string" ? values.decisionSummary : "",
+      });
+
+      const nextConfig: ComplaintDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-
-    const nextConfig: ComplaintDocumentConfig = { ...currentConfig, rows: [...currentConfig.rows, newRow] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

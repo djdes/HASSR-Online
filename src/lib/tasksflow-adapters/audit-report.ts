@@ -5,7 +5,10 @@
  *   • adapter row  = new finding (rowKey = new-finding)
  *   • completion   = append a new AuditReportFinding to config.findings[]
  */
+import type { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import {
   AUDIT_REPORT_TEMPLATE_CODE,
   type AuditReportConfig,
@@ -98,31 +101,31 @@ export const auditReportAdapter: JournalAdapter = {
   async applyRemoteCompletion({ documentId, completed, values }) {
     if (!completed) return false;
 
-    const doc = await db.journalDocument.findUnique({
-      where: { id: documentId },
-      select: { config: true, template: { select: { code: true } } },
+    // Под блокировкой документа: конфиг читается внутри неё, иначе две
+    // одновременные отправки (QR, TasksFlow, сайт) теряли одну из записей.
+    const written = await withDocumentConfigLock(documentId, async (doc) => {
+      if (doc.templateCode !== TEMPLATE_CODE) return null;
+
+      // Защита от пустого doc.config — `as` не проверяет рантайм, и без
+      // `?? {}` spread `[...currentConfig.findings]` падает с null.
+      const rawConfig = (doc.config ?? {}) as Partial<AuditReportConfig>;
+      const currentConfig: AuditReportConfig = {
+        ...rawConfig,
+        findings: Array.isArray(rawConfig.findings) ? rawConfig.findings : [],
+      } as AuditReportConfig;
+
+      const newFinding: AuditReportFinding = createAuditReportFinding({
+        nonConformity: typeof values?.nonConformity === "string" ? values.nonConformity : "",
+        correctionActions: typeof values?.correctionActions === "string" ? values.correctionActions : "",
+        correctiveActions: typeof values?.correctiveActions === "string" ? values.correctiveActions : "",
+        responsibleName: typeof values?.responsibleName === "string" ? values.responsibleName : "",
+        responsiblePosition: typeof values?.responsiblePosition === "string" ? values.responsiblePosition : "",
+        dueDatePlan: typeof values?.dueDatePlan === "string" ? values.dueDatePlan : new Date().toISOString().slice(0, 10),
+      });
+
+      const nextConfig: AuditReportConfig = { ...currentConfig, findings: [...currentConfig.findings, newFinding] };
+      return { config: nextConfig as unknown as Prisma.InputJsonValue, result: true };
     });
-    if (!doc || doc.template.code !== TEMPLATE_CODE) return false;
-
-    // Защита от пустого doc.config — `as` не проверяет рантайм, и без
-    // `?? {}` spread `[...currentConfig.findings]` падает с null.
-    const rawConfig = (doc.config ?? {}) as Partial<AuditReportConfig>;
-    const currentConfig: AuditReportConfig = {
-      ...rawConfig,
-      findings: Array.isArray(rawConfig.findings) ? rawConfig.findings : [],
-    } as AuditReportConfig;
-
-    const newFinding: AuditReportFinding = createAuditReportFinding({
-      nonConformity: typeof values?.nonConformity === "string" ? values.nonConformity : "",
-      correctionActions: typeof values?.correctionActions === "string" ? values.correctionActions : "",
-      correctiveActions: typeof values?.correctiveActions === "string" ? values.correctiveActions : "",
-      responsibleName: typeof values?.responsibleName === "string" ? values.responsibleName : "",
-      responsiblePosition: typeof values?.responsiblePosition === "string" ? values.responsiblePosition : "",
-      dueDatePlan: typeof values?.dueDatePlan === "string" ? values.dueDatePlan : new Date().toISOString().slice(0, 10),
-    });
-
-    const nextConfig: AuditReportConfig = { ...currentConfig, findings: [...currentConfig.findings, newFinding] };
-    await db.journalDocument.update({ where: { id: documentId }, data: { config: nextConfig } });
-    return true;
+    return written === true;
   },
 };

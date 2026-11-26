@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createHash } from "crypto";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/tasksflow-adapters";
+import { rowKeyForTaskSubmission } from "@/lib/tasksflow-adapters/row-key";
 import { buildCompletionValidator } from "@/lib/tasksflow-adapters/task-form";
 import { toDateKey } from "@/lib/hygiene-document";
 import {
@@ -166,7 +167,11 @@ export async function POST(request: Request) {
 
   const changed = await adapter.applyRemoteCompletion({
     documentId: link.journalDocumentId,
-    rowKey: link.rowKey,
+    // Строчный журнал: каждая отправка — новая строка, иначе она
+    // переписывала прошлую. Хвост ключа — от `eventId` (содержимое запроса),
+    // а не от времени: повтор TasksFlow, пришедший до записи дедупа (первый
+    // запрос ещё ждёт блокировку документа), попадает в ту же строку.
+    rowKey: rowKeyForTaskSubmission(link.journalCode, link.rowKey, parseInt(eventId.slice(0, 12), 16)),
     completed: payload.isCompleted,
     todayKey,
     values: sanitized,

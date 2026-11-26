@@ -11,8 +11,9 @@
  * Any new journal adapter follows the same shape (register in
  * `index.ts` to expose it to the API + UI).
  */
-import type { TasksFlowIntegration } from "@prisma/client";
+import type { Prisma, TasksFlowIntegration } from "@prisma/client";
 import { db } from "@/lib/db";
+import { withDocumentConfigLock } from "@/lib/document-config-lock";
 import { findTaskEmployee } from "@/lib/journal-roster-db";
 import {
   CLEANING_DOCUMENT_TEMPLATE_CODE,
@@ -418,20 +419,22 @@ export const cleaningAdapter: JournalAdapter = {
       });
     }
 
-    // Старая логика — pairs-mode: пишем mark в matrix.
-    config.matrix = config.matrix ?? {};
-    config.matrix[rowKey] = config.matrix[rowKey] ?? {};
-    const before = config.matrix[rowKey][todayKey] ?? "";
-    const next = completed
-      ? config.autoFill?.defaultRoomMark || "✓"
-      : "";
-    if (before === next) return false;
-    config.matrix[rowKey][todayKey] = next;
-    await db.journalDocument.update({
-      where: { id: doc.id },
-      data: { config },
+    // Старая логика — pairs-mode: пишем mark в matrix. Под блокировкой
+    // документа и от конфига, прочитанного внутри неё: иначе одновременная
+    // отметка другой пары (или правка с сайта) пропадала.
+    const marked = await withDocumentConfigLock(doc.id, async (locked) => {
+      const fresh = normalizeCleaningDocumentConfig(locked.config) as CleaningDocumentConfig;
+      fresh.matrix = fresh.matrix ?? {};
+      fresh.matrix[rowKey] = fresh.matrix[rowKey] ?? {};
+      const before = fresh.matrix[rowKey][todayKey] ?? "";
+      const next = completed
+        ? fresh.autoFill?.defaultRoomMark || "✓"
+        : "";
+      if (before === next) return null;
+      fresh.matrix[rowKey][todayKey] = next;
+      return { config: fresh as unknown as Prisma.InputJsonValue, result: true };
     });
-    return true;
+    return marked === true;
   },
 
   async getTaskForm({ documentId, rowKey }) {
