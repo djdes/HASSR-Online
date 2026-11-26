@@ -1148,7 +1148,17 @@
         "draftReplaceTitle": "Replace the text with a draft?",
         "draftReplaceBody": "The text in the field will be replaced with the AI assistant draft. The saved text does not change until you press “Save”.",
         "draftReplaceConfirm": "Replace",
-        "draftReplaceCancel": "Cancel"
+        "draftReplaceCancel": "Cancel",
+        "draftErrors": {
+          "forbidden": "You have no access to this section",
+          "choosePoint": "Choose your site in the header: the production control program is kept for each site",
+          "badRequest": "Invalid request",
+          "rateLimited": "Too many requests. Please wait a minute",
+          "aiNotConfigured": "The AI assistant is not connected: drafts are unavailable right now",
+          "aiTimeout": "The AI assistant did not answer in time. Please try again",
+          "aiFailed": "The AI assistant could not prepare a draft. Please try again",
+          "aiEmpty": "The AI assistant returned an empty draft. Please try again"
+        }
       },
       "order": {
         "ordersTitle": "Order establishing the HACCP team",
@@ -1384,7 +1394,25 @@
         "legendRemoved": "removed",
         "collapsed": "… unchanged: {count} chars …",
         "showAll": "Show the whole text",
-        "withPrevious": "Compare with {code}"
+        "withPrevious": "Compare with {code}",
+        "errors": {
+          "forbidden": "You have no access to this section",
+          "choosePoint": "Choose your site in the header: the production control program is kept for each site",
+          "badRequest": "Invalid request",
+          "docNotFound": "Document not found",
+          "noRevisions": "The document has no approved revisions",
+          "revisionNotFound": "Revision not found",
+          "noCurrentText": "The document has no current text"
+        }
+      },
+      "errors": {
+        "forbidden": "You have no access to this section",
+        "choosePoint": "Choose your site in the header: the production control program is kept for each site",
+        "badRequest": "Invalid request",
+        "kbForbidden": "Knowledge base documents are approved by whoever manages the knowledge base",
+        "docNotFound": "Document not found",
+        "docEmpty": "The document is empty: save the text or upload a scan",
+        "docChanged": "The document changed during approval — approve it again"
       }
     },
     "textDocs": {
