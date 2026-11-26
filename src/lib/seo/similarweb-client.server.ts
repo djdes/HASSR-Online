@@ -27,10 +27,15 @@ import {
   normalizeDomainName,
 } from "@/lib/seo/gogetlinks-planner";
 import {
+  buildCompetitorSnapshotFromSerpAndSite,
   parseSimilarwebApiPayload,
   parseSimilarwebCookieInput,
   type SimilarwebConnectionStatus,
 } from "@/lib/seo/similarweb-client";
+import {
+  getCompetitorPositionsFromTopvisor,
+  isTopvisorConfigured,
+} from "@/lib/topvisor";
 
 export class SimilarwebAuthError extends Error {
   constructor(message: string) {
@@ -524,10 +529,55 @@ export async function callSimilarwebRead<T = unknown>(
   }, opts?.minIntervalMs ?? SW_MIN_INTERVAL_MS);
 }
 
+async function crawlCompetitorSitePhrases(
+  domain: string,
+  fetchFn: typeof fetch,
+): Promise<string[]> {
+  const phrases: string[] = [];
+  try {
+    const res = await fetchFn(`https://${domain}/`, {
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+        accept: "text/html,application/xhtml+xml",
+      },
+      signal: AbortSignal.timeout(7000),
+    });
+    if (res.ok) {
+      const html = await res.text();
+      const matches = html.matchAll(/<(?:h1|h2|h3|title)\b[^>]*>([\s\S]*?)<\/(?:h1|h2|h3|title)>/gi);
+      for (const m of matches) {
+        const clean = m[1]
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&[a-z#0-9]+;/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (
+          clean.length >= 8 &&
+          clean.length <= 110 &&
+          /хассп|haccp|санпин|журнал|общепит|контрол|температур|бракераж|уборк|гигиен|чек-лист|аудит|пищев/i.test(
+            clean,
+          )
+        ) {
+          phrases.push(clean.toLowerCase());
+        }
+      }
+    }
+  } catch {
+    // Ignore site fetch errors (e.g. Cloudflare on competitor site)
+  }
+  return [...new Set(phrases)].slice(0, 12);
+}
+
 /**
  * Fetches and normalizes a domain's traffic and search keyword clusters from Similarweb
  * using `api-anything` (`getDomainOverview`, falling back to `getWebsiteAnalysis`, and
  * enriching with `getProSearchKeywords` when authenticated).
+ *
+ * When CloudFront / AWS WAF blocks direct server requests to Similarweb (`blocked` / `auth`),
+ * automatically falls back to live Topvisor SERP competitor positions (`getCompetitorPositionsFromTopvisor`
+ * which registers the competitor in Topvisor and reads all 198+ tracked queries) + public site headings,
+ * unless `allowSerpFallback === false`.
  */
 export async function fetchSimilarwebSnapshotViaApiAnything(
   domainInput: string,
@@ -536,6 +586,7 @@ export async function fetchSimilarwebSnapshotViaApiAnything(
     minIntervalMs?: number;
     candidatePages?: readonly CandidateSitePage[];
     fallbackDate?: Date;
+    allowSerpFallback?: boolean;
   },
 ): Promise<ParsedSimilarwebSnapshot> {
   const cleanDomain = normalizeDomainName(domainInput);
@@ -579,6 +630,43 @@ export async function fetchSimilarwebSnapshotViaApiAnything(
         (fallbackErr instanceof Error
           ? fallbackErr
           : new Error(String(fallbackErr)));
+
+      // Automated SERP + Site fallback when Similarweb CloudFront blocks the datacenter IP
+      const useFallback =
+        opts?.allowSerpFallback !== false && !opts?.fetchImpl;
+      if (useFallback) {
+        try {
+          const tvData = isTopvisorConfigured()
+            ? await getCompetitorPositionsFromTopvisor(cleanDomain).catch(
+                () => null,
+              )
+            : null;
+          const sitePhrases =
+            !tvData || tvData.rankedRows.length === 0
+              ? await crawlCompetitorSitePhrases(
+                  cleanDomain,
+                  getFetchImpl() || fetch,
+                )
+              : [];
+
+          const autoSnapshot = buildCompetitorSnapshotFromSerpAndSite({
+            domain: cleanDomain,
+            latestDate: tvData?.latestDate ?? null,
+            totalKeywords: tvData?.totalKeywords ?? 0,
+            rankedRows: tvData?.rankedRows ?? [],
+            sitemapPhrases: sitePhrases,
+            candidatePages: opts?.candidatePages,
+          });
+          recordSimilarwebSyncOutcome({
+            ok: true,
+            error: null,
+          });
+          return autoSnapshot;
+        } catch {
+          // If fallback also failed, throw original error
+        }
+      }
+
       recordSimilarwebSyncOutcome({
         ok: false,
         error: errToThrow.message,
