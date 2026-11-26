@@ -3,11 +3,11 @@
  *
  * Источник правды для перевода — `src/i18n/messages/translated/<locale>.json`
  * (и `translated/pricing/<locale>.json`): только уже переведённые строки.
- * Скрипт собирает полный каталог `messages/<locale>.json`: переведённая
- * строка, если её аргументы ICU совпадают с русским исходником, иначе —
- * строка языка-подстраховки (`FALLBACK_LOCALE`: ru для tg/hy/ky, en для de/fr).
- * Так у каждого языка всегда полный набор ключей, а сайт не показывает
- * «сырые» ключи там, где перевода ещё нет.
+ * Скрипт чистит эти файлы (ключи и порядок как в ru, только строки с теми же
+ * аргументами ICU). Полный каталог в репозиторий не кладётся: недостающее
+ * подставляет загрузчик (src/i18n/messages.ts) из языка-подстраховки
+ * (`FALLBACK_LOCALE`: ru для tg/hy/ky, en для de/fr). Исключение — крошечные
+ * pricing-каталоги, они импортируются статически и собираются целиком.
  *
  *   npx tsx scripts/i18n-seed-locales.ts            — пересобрать каталоги
  *   npx tsx scripts/i18n-seed-locales.ts --check    — проверить, что не устарели
@@ -32,18 +32,34 @@ function sameArgs(a: string, b: string): boolean {
   try { return JSON.stringify(messageArguments(a)) === JSON.stringify(messageArguments(b)); } catch { return false; }
 }
 
-/** Keys and order follow ru; values: translated when valid, else fallback. */
-function build(ru: Tree, fallback: Tree, translated: Tree, stats: { done: number; total: number }): Tree {
+/**
+ * Только переведённое: ключи из ru, в порядке ru, с непустым значением и теми же
+ * аргументами ICU. Неизвестные и битые строки выбрасываются (и считаются).
+ */
+function normalize(ru: Tree, translated: Tree, stats: { done: number; total: number; dropped: number }): Tree {
+  const out: Tree = {};
+  for (const [key, value] of Object.entries(ru)) {
+    const t = translated?.[key];
+    if (typeof value === "string") {
+      stats.total++;
+      if (typeof t === "string" && t.trim() && sameArgs(value, t)) { out[key] = t; stats.done++; }
+      else if (t !== undefined) stats.dropped++;
+    } else {
+      const child = normalize(value, (t && typeof t === "object" ? t : {}) as Tree, stats);
+      if (Object.keys(child).length) out[key] = child;
+    }
+  }
+  return out;
+}
+
+/** Full catalog (only for the tiny pricing catalogs, imported statically). */
+function fill(ru: Tree, fallback: Tree, translated: Tree): Tree {
   const out: Tree = {};
   for (const [key, value] of Object.entries(ru)) {
     if (typeof value === "string") {
-      stats.total++;
       const t = translated?.[key];
-      if (typeof t === "string" && t.trim() && sameArgs(value, t)) { out[key] = t; stats.done++; }
-      else out[key] = (typeof fallback?.[key] === "string" ? fallback[key] : value) as string;
-    } else {
-      out[key] = build(value, (fallback?.[key] as Tree) ?? {}, (translated?.[key] as Tree) ?? {}, stats);
-    }
+      out[key] = typeof t === "string" ? t : (typeof fallback?.[key] === "string" ? fallback[key] : value) as string;
+    } else out[key] = fill(value, (fallback?.[key] as Tree) ?? {}, (translated?.[key] as Tree) ?? {});
   }
   return out;
 }
@@ -51,19 +67,24 @@ function build(ru: Tree, fallback: Tree, translated: Tree, stats: { done: number
 export function buildCatalogs(check: boolean): string[] {
   const report: string[] = [];
   const stale: string[] = [];
+  const write = (path: string, data: Tree) => {
+    const content = JSON.stringify(data, null, 2) + "\n";
+    const target = new URL(path, ROOT);
+    if (check) { if (!existsSync(target) || readFileSync(target, "utf8") !== content) stale.push(path); }
+    else { mkdirSync(new URL(".", target), { recursive: true }); writeFileSync(target, content); }
+  };
   for (const folder of FOLDERS) {
     const ru = read(`${folder}ru.json`);
     for (const locale of EXTRA_LOCALES) {
-      const stats = { done: 0, total: 0 };
-      const full = build(ru, read(`${folder}${FALLBACK_LOCALE[locale]}.json`), readOptional(`translated/${folder}${locale}.json`), stats);
-      const content = JSON.stringify(full, null, 2) + "\n";
-      const target = new URL(`${folder}${locale}.json`, ROOT);
-      if (check) { if (!existsSync(target) || readFileSync(target, "utf8") !== content) stale.push(`${folder}${locale}.json`); }
-      else writeFileSync(target, content);
-      report.push(`${folder}${locale}: ${stats.done}/${stats.total} переведено (${Math.round((stats.done / stats.total) * 100)}%)`);
+      const stats = { done: 0, total: 0, dropped: 0 };
+      const translated = normalize(ru, readOptional(`translated/${folder}${locale}.json`), stats);
+      write(`translated/${folder}${locale}.json`, translated);
+      if (folder === "pricing/") write(`${folder}${locale}.json`, fill(ru, read(`${folder}${FALLBACK_LOCALE[locale]}.json`), translated));
+      report.push(`${folder}${locale}: ${stats.done}/${stats.total} переведено (${Math.round((stats.done / stats.total) * 100)}%)` +
+        (stats.dropped ? `, отброшено ${stats.dropped} (нет в ru или другие аргументы ICU)` : ""));
     }
   }
-  if (stale.length) throw new Error(`Stale locale catalogs: ${stale.join(", ")}. Run npx tsx scripts/i18n-seed-locales.ts`);
+  if (stale.length) throw new Error(`Stale locale catalogs: ${stale.join(", ")}. Run npm run i18n:locales`);
   return report;
 }
 
