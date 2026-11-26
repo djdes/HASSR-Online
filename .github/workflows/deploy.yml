@@ -648,7 +648,10 @@ jobs:
             # памяти на сервере. Действует только на сборку в этом шаге:
             # pm2 перезапускается в шаге 3 из другой оболочки.
             # Замеры: .agent/tasks/deps-update-2026-11-10/raw/step6-build-memory.md
-            export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"
+            # 26.11.2026: после пяти новых языков (#355) сборка упёрлась в 8 ГБ
+            # (два деплоя подряд — OOM на ~8030 МБ). Свободно ~33 ГБ — даём 12 ГБ,
+            # как tsc в CI.
+            export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=12288"
             # Клиент Prisma уже актуализирован в шаге 1/3; пропускаем prebuild (`prisma generate`)
             # при вызове `npm run build`, чтобы не перезаписывать mtime в `node_modules/.prisma/client`
             # прямо перед инкрементальной сборкой Webpack.
