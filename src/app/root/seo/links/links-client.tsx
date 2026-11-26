@@ -37,6 +37,8 @@ export interface SeoLinksClientProps {
   initialHasPendingSlots: boolean;
   initialAccountConnected: boolean;
   initialAllowSeoApprove: boolean;
+  initialTargetUrl?: string | null;
+  initialTargetKeyword?: string | null;
 }
 
 export function SeoLinksClient({
@@ -45,8 +47,11 @@ export function SeoLinksClient({
   initialHasPendingSlots,
   initialAccountConnected,
   initialAllowSeoApprove,
+  initialTargetUrl = null,
+  initialTargetKeyword = null,
 }: SeoLinksClientProps) {
   const [activeTab, setActiveTab] = useState<SeoLinksWorkspaceTab>(() => {
+    if (initialTargetUrl) return "planner";
     if (initialHasPendingSlots) return "planner";
     if (!initialAccountConnected) return "demand";
     return "planner";
@@ -56,7 +61,7 @@ export function SeoLinksClient({
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [focusedThreadId, setFocusedThreadId] = useState<string | null>(null);
-  const didApplyInitialTabRuleRef = useRef(false);
+  const didApplyInitialTabRuleRef = useRef(Boolean(initialTargetUrl));
   const [liveApplicationsCount, setLiveApplicationsCount] = useState<number | null>(null);
 
   const handleOpenTab = useCallback((nextTab: SeoLinksWorkspaceTab) => {
@@ -397,6 +402,8 @@ export function SeoLinksClient({
               slots={overview?.slots ?? []}
               threads={overview?.threads ?? []}
               viewer={effectiveViewer}
+              initialTargetUrlFilter={initialTargetUrl}
+              initialTargetKeyword={initialTargetKeyword}
               onJumpToThread={handleJumpToThread}
               onRefresh={() => loadOverview(includeOtherProjects, true)}
             />

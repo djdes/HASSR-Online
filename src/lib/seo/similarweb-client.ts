@@ -1227,7 +1227,7 @@ export function buildCompetitorBenchmarkReport(input: {
           `Проверить наличие блока FAQ, кнопки скачивания образца PDF/Word и внутренней перелинковки из блога на ${gap.mappedTargetUrl}.`,
         ],
         ctaLabel: "Усилить ссылкой в GoGetLinks",
-        ctaHref: "/root/seo/links",
+        ctaHref: `/root/seo/links?targetUrl=${encodeURIComponent(gap.mappedTargetUrl)}&keyword=${encodeURIComponent(gap.phrase)}`,
       });
     } else if (gap.competitorChannel === "paid" && gap.estimatedMonthlyTraffic >= 100) {
       actionPlan.push({
@@ -1249,7 +1249,7 @@ export function buildCompetitorBenchmarkReport(input: {
           `Запланировать стартовую вечную ссылку на ${gap.mappedTargetUrl}, чтобы получать этот коммерческий трафик бесплатно.`,
         ],
         ctaLabel: "Запланировать ссылку",
-        ctaHref: "/root/seo/links",
+        ctaHref: `/root/seo/links?targetUrl=${encodeURIComponent(gap.mappedTargetUrl)}&keyword=${encodeURIComponent(gap.phrase)}`,
       });
     } else {
       const isBlogTarget = gap.mappedTargetUrl.startsWith("/blog/");
@@ -1273,7 +1273,9 @@ export function buildCompetitorBenchmarkReport(input: {
             : `Дополнить страницу ${gap.mappedTargetUrl} примером заполнения журнала, ответами на частые вопросы инспектора Роспотребнадзора и 1 внешней ссылкой.`,
         ],
         ctaLabel: isBlogTarget ? "Открыть блог" : "К плану ссылок",
-        ctaHref: isBlogTarget ? "/root/blog" : "/root/seo/links",
+        ctaHref: isBlogTarget
+          ? "/root/blog"
+          : `/root/seo/links?targetUrl=${encodeURIComponent(gap.mappedTargetUrl)}&keyword=${encodeURIComponent(gap.phrase)}`,
       });
     }
 
