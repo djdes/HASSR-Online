@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { renderHealthDay, renderHealthForm } from "./health-qr-html";
+import { renderHealthDay, renderHealthForm, renderHealthSuspended } from "./health-qr-html";
 import { hygieneV2View } from "./hygiene-v2";
 
 test("форма сотрудника: предупреждение, три графы не отмечены, «Подписать»", () => {
@@ -71,4 +71,15 @@ test("не отметившиеся — ярко-красные (пожелан�
   assert.match(html, /background:#fee2e2;color:#b91c1c">не отметились 2/);
   // Ответившая Иванова — обычная карточка.
   assert.match(html, /<div class="hq-row"><div><div class="hq-n">Иванова/);
+});
+
+test("не допущен: с жалобами — причина и «ждите решения», без жалоб — решение ответственного", () => {
+  const byComplaint = renderHealthSuspended({ who: "", complaints: ["температура выше 37"], timeLabel: "08:10", backHref: "/x" });
+  assert.match(byComplaint, /Причина: температура выше 37./);
+  assert.match(byComplaint, /дождитесь его решения/);
+  // Ответственный отстранил, сотрудник снова подписал всё (2026-11-26): пустой причины и «уже получил уведомление» нет.
+  const byKeeper = renderHealthSuspended({ who: "", complaints: [], timeLabel: "17:00", backHref: "/x" });
+  assert.doesNotMatch(byKeeper, /Причина: ./);
+  assert.doesNotMatch(byKeeper, /дождитесь его решения/);
+  assert.match(byKeeper, /Ответственный отстранил вас от работы на сегодня/);
 });

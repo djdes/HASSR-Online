@@ -13,6 +13,8 @@
  * документы); текущие дорабатывают свой период в прежнем виде.
  */
 
+import { HEALTH_CONFIRMATIONS, type HealthDecision } from "@/lib/health-qr";
+
 export const HYGIENE_FORM_VERSION_KEY = "hygieneFormVersion";
 
 export function readHygieneFormVersion(config: unknown): 1 | 2 {
@@ -134,6 +136,40 @@ export function applyHygieneVerification(data: unknown, verification: HygieneVer
     status: verification.result === "admitted" ? "healthy" : "suspended",
     verification,
   };
+}
+
+/**
+ * Запись дня из подписи сотрудника — одна для QR «Гигиена и здоровье» и
+ * задачи программного модуля: решение по трём графам, подписи, время,
+ * источник. Допуск ответственного (`verification`) остаётся, только если
+ * сотрудник подписал то же самое, — статус дня тогда по-прежнему следует за
+ * допуском. Подпись изменилась — нужен новый допуск.
+ *
+ * До 2026-11-26 так делала только задача: повторная отметка по QR после
+ * допуска стирала допуск, и в журнале снова было «Ждёт проверки» (ООО «Ранкон»).
+ */
+export function hygieneDeclarationEntry(input: {
+  decision: Pick<HealthDecision, "confirmations" | "hygiene">;
+  /** Запись этого дня до подписи; null — записи не было. */
+  previous: unknown;
+  /** «ЧЧ:ММ» по поясу организации. */
+  at: string;
+  source: "qr" | "tasksflow";
+}): Record<string, unknown> {
+  const declaration: Record<string, unknown> = {
+    ...input.decision.hygiene,
+    confirmations: input.decision.confirmations,
+    source: input.source,
+    confirmedAt: input.at,
+  };
+  const before = hygieneV2View(input.previous);
+  const sameSignatures =
+    before.declared &&
+    HEALTH_CONFIRMATIONS.every((item) => before.signatures[item.key] === input.decision.confirmations[item.key]);
+  if (!sameSignatures || !before.result) return declaration;
+  // `before.result` есть — значит, `verification` в прежней записи валиден.
+  const { verification } = input.previous as { verification: HygieneVerification };
+  return applyHygieneVerification(declaration, verification);
 }
 
 /** «✓» / «✗» / пусто для графы подписи в бланке и таблице. */
