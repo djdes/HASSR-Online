@@ -1,3 +1,4 @@
+import { baseLocale } from "@/i18n/locales";
 import Link from "@/components/i18n/localized-link";
 import { notFound } from "next/navigation";
 import {
@@ -108,11 +109,11 @@ export default async function JournalInfoDetailPage({
   const { download, expired } = await searchParams;
   // Общие вопросы шаблона + вопросы именно этого журнала в тех формулировках,
   // в каких их ищут (seo-speed-pack-2026-11, п. 14).
-  const faq = [...publicJournalDetailFaq(info, journalName, locale, messages), ...journalFaqExtra(code, locale)];
+  const faq = [...publicJournalDetailFaq(info, journalName, locale, messages), ...journalFaqExtra(code, baseLocale(locale))];
   // Блоки вовлечения (спеки journal-page-engagement-2026-11,
   // journal-page-content-i18n-2026-11): образец, разделы и штрафы — на языке
   // сайта; ниши — только на ru; отзывы и счётчик — на всех языках.
-  const pageContent = journalPageContent(code, locale);
+  const pageContent = journalPageContent(code, baseLocale(locale));
   const audience =
     locale === "ru"
       ? Object.values(NICHES)
@@ -129,7 +130,7 @@ export default async function JournalInfoDetailPage({
   const relatedForDownload = related.slice(0, 3).map((item) => ({ code: item.code, name: messages.journals.names[item.code as keyof typeof messages.journals.names] ?? item.tagline }));
   const hasSample = SAMPLE_CODES.has(code);
   const canonical = `https://wesetup.ru${localizedHref(`/journals-info/${code}`, locale)}`;
-  const language = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale];
+  const language = { ru: "ru-RU", en: "en-GB", uz: "uz-Latn", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" }[locale];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -279,7 +280,7 @@ export default async function JournalInfoDetailPage({
             <p className="mt-1 text-[12px] text-white/45" data-testid="journal-updated">
               <time dateTime={JOURNAL_PAGES_UPDATED}>
                 {t("updatedLine", {
-                  date: new Intl.DateTimeFormat({ ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale], { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${JOURNAL_PAGES_UPDATED}T12:00:00Z`)),
+                  date: new Intl.DateTimeFormat({ ru: "ru-RU", en: "en-GB", uz: "uz-Latn", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" }[locale], { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${JOURNAL_PAGES_UPDATED}T12:00:00Z`)),
                   author: t("editorialName"),
                 })}
               </time>

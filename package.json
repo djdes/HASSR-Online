@@ -7,6 +7,7 @@
   },
   "scripts": {
     "i18n:types": "node scripts/i18n-types.mjs",
+    "i18n:locales": "tsx scripts/i18n-seed-locales.ts",
     "i18n:check": "node scripts/i18n-types.mjs --check && node --import tsx --test src/i18n/*.test.ts",
     "i18n:inventory": "tsx scripts/i18n-inventory.ts",
     "seo:indexnow": "node scripts/submit-indexnow.mjs --strict",

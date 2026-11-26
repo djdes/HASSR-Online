@@ -47,7 +47,7 @@ test("history comes from audit rows and skips broken ones", () => {
   const items = historyItemsFromAudit([
     { id: "1", action: "translation.update", details: { locale: "en", key: "a.b", before: "Save", after: "Store" }, userName: "Алексей", createdAt: at },
     { id: "2", action: "translation.reset", details: { locale: "uz", key: "a.b", before: "X", after: "Saqlash" }, userName: null, createdAt: at },
-    { id: "3", action: "translation.update", details: { locale: "de", before: "a", after: "b" }, userName: null, createdAt: at },
+    { id: "3", action: "translation.update", details: { locale: "es", before: "a", after: "b" }, userName: null, createdAt: at },
     { id: "4", action: "translation.update", details: null, userName: null, createdAt: at },
     { id: "5", action: "translation.update", details: { locale: "ru", before: 1, after: "b" }, userName: null, createdAt: at },
   ]);

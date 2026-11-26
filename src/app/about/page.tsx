@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       siteName: "WeSetup",
-      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale],
+      locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale],
       url,
       title,
       description,

@@ -1,0 +1,23 @@
+{
+  "price": {
+    "regularBeforePromotion": "Regulärer Preis vor der Aktion",
+    "regularBeforeDiscount": "Regulärer Preis vor dem Rabatt",
+    "discountedPrice": "Rabattierter Preis"
+  },
+  "promotion": {
+    "month": "{month, select, 0 {Januar} 1 {Februar} 2 {März} 3 {April} 4 {Mai} 5 {Juni} 6 {Juli} 7 {August} 8 {September} 9 {Oktober} 10 {November} 11 {Dezember} other {Monat}}",
+    "endDate": "bis {day, number}. {month}",
+    "endDateTimeLabel": "bis {day, number}. {month}, {time}",
+    "endDateTime": "{date}, {time}",
+    "badge": "−{percent, number} % {end}",
+    "endHint": "Die Aktion endet am {dateTime} Moskauer Zeit"
+  },
+  "discount": {
+    "percent": "−{value, number} %",
+    "fixed": "−{value, number} ₽",
+    "lifetime": "Ihr dauerhafter Rabatt {amount}",
+    "promoCode": "{lifetime, select, yes {Aktionscode {code}: {amount} dauerhaft} no {Aktionscode {code}: {amount}} other {Aktionscode {code}: {amount}}}",
+    "lifetimeUntil": "Ihr Rabatt {amount} bis {date}",
+    "promoCodeMonths": "Aktionscode {code}: {amount} für {months, plural, one {# Monat} other {# Monate}}"
+  }
+}

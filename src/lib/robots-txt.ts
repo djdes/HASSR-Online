@@ -182,7 +182,7 @@ export function isPublicCacheablePage(pathname: string): boolean {
     return false;
   }
   const localized = publicLocaleRoute(pathname);
-  if (/^\/(en|uz)(?:\/|$)/.test(pathname) && !localized) {
+  if (/^\/(en|uz|tg|hy|ky|de|fr)(?:\/|$)/.test(pathname) && !localized) {
     return false;
   }
   const basePath = localized ? localized.pathname : pathname;

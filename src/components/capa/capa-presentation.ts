@@ -68,7 +68,7 @@ export function capaErrorKey(error: unknown, status?: number, code?: unknown, fa
 
 /** Preserve regulatory context and user data while selecting output language. */
 export function capaSuggestionLanguageInstruction(locale: Locale): string {
-  const language = { ru: "Russian", en: "English", uz: "Uzbek using the Latin alphabet" }[locale];
+  const language = { ru: "Russian", en: "English", uz: "Uzbek using the Latin alphabet", tg: "Tajik (Cyrillic)", hy: "Armenian", ky: "Kyrgyz (Cyrillic)", de: "German", fr: "French" }[locale];
   return `Write every suggestion title and text in ${language}. Keep JSON property names unchanged. Preserve user-provided names, identifiers, numeric values and the existing regulatory context; do not substitute another jurisdiction's requirements.`;
 }
 

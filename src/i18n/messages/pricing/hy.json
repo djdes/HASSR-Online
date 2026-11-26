@@ -1,0 +1,23 @@
+{
+  "price": {
+    "regularBeforePromotion": "Սովորական գինը մինչև ակցիան",
+    "regularBeforeDiscount": "Սովորական գինը մինչև զեղչը",
+    "discountedPrice": "Զեղչված գին"
+  },
+  "promotion": {
+    "month": "{month, select, 0 {հունվարի} 1 {փետրվարի} 2 {մարտի} 3 {ապրիլի} 4 {մայիսի} 5 {հունիսի} 6 {հուլիսի} 7 {օգոստոսի} 8 {սեպտեմբերի} 9 {հոկտեմբերի} 10 {նոյեմբերի} 11 {դեկտեմբերի} other {ամսի}}",
+    "endDate": "մինչև {month} {day, number}",
+    "endDateTimeLabel": "մինչև {month} {day, number}, {time}",
+    "endDateTime": "{date}, {time}",
+    "badge": "−{percent, number} % {end}",
+    "endHint": "Ակցիան ավարտվում է {dateTime}-ին՝ Մոսկվայի ժամանակով"
+  },
+  "discount": {
+    "percent": "−{value, number} %",
+    "fixed": "−{value, number} ₽",
+    "lifetime": "Ձեր ցմահ զեղչը՝ {amount}",
+    "promoCode": "{lifetime, select, yes {Պրոմոկոդ {code}՝ {amount} ցմահ} no {Պրոմոկոդ {code}՝ {amount}} other {Պրոմոկոդ {code}՝ {amount}}}",
+    "lifetimeUntil": "Ձեր զեղչը՝ {amount}, մինչև {date}",
+    "promoCodeMonths": "Պրոմոկոդ {code}՝ {amount} {months, plural, one {# ամիս} other {# ամիս}}"
+  }
+}

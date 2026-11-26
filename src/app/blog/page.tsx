@@ -28,7 +28,7 @@ export async function generateMetadata() {
         "application/rss+xml": `https://wesetup.ru${localizedHref("/blog/feed.xml", locale)}`,
         "text/markdown": `https://wesetup.ru${alternateMarkdownPath(localizedHref("/blog", locale))}`,
       } },
-    openGraph: { type: "website" as const, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", url, title, description, images: DEFAULT_OG_IMAGES },
+    openGraph: { type: "website" as const, locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], siteName: "WeSetup", url, title, description, images: DEFAULT_OG_IMAGES },
     twitter: { card: DEFAULT_TWITTER_CARD, title, description, images: DEFAULT_TWITTER_IMAGES },
   };
 }

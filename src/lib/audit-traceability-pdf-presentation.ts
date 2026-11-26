@@ -7,10 +7,11 @@ import { getAuditPlanDefaultConfig, getAuditPlanPrintDateLabel, type AuditPlanCo
 import { getDefaultAuditProtocolConfig } from "@/lib/audit-protocol-document";
 import { normalizeUserRole } from "@/lib/user-roles";
 import type { PersonDisplayUser } from "@/lib/approver-display";
+import { baseLocale } from "@/i18n/locales";
 
 type AuditPdfKey = keyof typeof ru.auditTraceabilityPdf;
 export function auditPdfCopy(locale: Locale = "ru") {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].auditTraceabilityPdf });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].auditTraceabilityPdf });
 }
 export function auditHas(source: unknown, field: string) {
   return Boolean(source && typeof source === "object" && !Array.isArray(source) && Object.hasOwn(source, field));

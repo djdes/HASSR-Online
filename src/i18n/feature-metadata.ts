@@ -23,7 +23,7 @@ export async function featureMetadata(locale: Locale, slug?: string): Promise<Me
     description,
     alternates: { canonical: url, languages: siteLanguageAlternates(pathname) },
     openGraph: {
-      type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup",
+      type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], siteName: "WeSetup",
       url, title, description, images: ogImages(image),
     },
     twitter: { card: DEFAULT_TWITTER_CARD, title, description, images: twitterImages(image) },

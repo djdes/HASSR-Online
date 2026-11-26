@@ -5,10 +5,11 @@ import en from "@/i18n/messages/en.json";
 import uz from "@/i18n/messages/uz.json";
 import { HYGIENE_DEMO_TEAM_V2, getHygieneUserPositionLabel, type HygieneRosterUser } from "@/lib/hygiene-document";
 import { normalizeUserRole } from "@/lib/user-roles";
+import { baseLocale } from "@/i18n/locales";
 
 export type SpecializedPdfKey = keyof typeof ru.specializedHygieneGlassPdf;
 export function specializedPdfCopy(locale: Locale = "ru") {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].specializedHygieneGlassPdf });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].specializedHygieneGlassPdf });
 }
 export function specializedPdfTitle(value: string, kind: "hygiene" | "glass", locale: Locale = "ru") {
   return value || specializedPdfCopy(locale)(kind === "hygiene" ? "hygieneTitle" : "glassTitle");

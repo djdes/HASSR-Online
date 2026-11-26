@@ -5,7 +5,7 @@ for (const { folder, file, name } of [
   { folder: "", file: "message-contract.d.ts", name: "MessageContract" },
   { folder: "pricing/", file: "pricing-message-contract.d.ts", name: "PricingMessageContract" },
 ]) {
-  const catalogs = Object.fromEntries(["ru", "en", "uz"].map((locale) => [locale,
+  const catalogs = Object.fromEntries(["ru", "en", "uz", "tg", "hy", "ky", "de", "fr"].map((locale) => [locale,
     parseCatalogSource(readFileSync(new URL(`../src/i18n/messages/${folder}${locale}.json`, import.meta.url), "utf8"), `${folder}${locale}.json`),
   ]));
   const target = new URL(`../src/i18n/${file}`, import.meta.url);

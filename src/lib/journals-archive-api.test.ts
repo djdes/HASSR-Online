@@ -57,7 +57,7 @@ test("archive management/rate/date/locale/error paths localize and cannot genera
     for (const scenario of [
       { management: false, query: "", status: 403, code: "forbidden" },
       { limited: true, query: "", status: 429, code: "rateLimited" },
-      { query: "?locale=de", status: 400, code: "invalidLocale" },
+      { query: "?locale=es", status: 400, code: "invalidLocale" },
       { query: "?from=2026-10-15&to=2026-10-01", status: 400, code: "reversedDates" },
       { query: "?from=2020-01-01&to=2026-10-01", status: 400, code: "periodTooLong" },
       { fail: true, query: "", status: 500, code: "failed" },

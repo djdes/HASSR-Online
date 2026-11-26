@@ -7,10 +7,11 @@ import { defaultSdcConfig } from "@/lib/sanitary-day-checklist-document";
 import { getDefaultCleaningVentilationConfig } from "@/lib/cleaning-ventilation-checklist-document";
 import { formatQuantityWithUnit, sumDisinfectantQuantities, MEASURE_UNIT_LABELS, type MeasureUnit } from "@/lib/disinfectant-document";
 import { normalizeUserRole } from "@/lib/user-roles";
+import { baseLocale } from "@/i18n/locales";
 
 export type SanitationPdfKey = keyof typeof ru.sanitationPestPdf;
 export function sanitationPdfCopy(locale: Locale = "ru") {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].sanitationPestPdf });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].sanitationPestPdf });
 }
 export function sanitationHas(source: unknown, key: string) {
   return Boolean(source && typeof source === "object" && !Array.isArray(source) && Object.hasOwn(source, key));

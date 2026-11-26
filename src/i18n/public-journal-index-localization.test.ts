@@ -148,7 +148,7 @@ test("actual index aliases, metadata and sitemap include translated detail route
     assert.equal(routing.localizedHref("/features/qr?q=1#steps", locale), `${locale === "ru" ? "" : `/${locale}`}/features/qr?q=1#steps`);
     for (const unchanged of ["/blanki?code=hygiene", "/api/journal-samples/hygiene/pdf?inline=1#toolbar=0", "/dlya-kafe", "/zhurnal-haccp", "/journals/hygiene"]) assert.equal(routing.localizedHref(unchanged, locale), unchanged);
     assert.equal(routing.localizedHref("/journals-info/hygiene?download=pdf#preview", locale), `${locale === "ru" ? "" : `/${locale}`}/journals-info/hygiene?download=pdf#preview`);
-    assert.deepEqual(Array.from(routing.publicLocalesForPath("/journals-info/hygiene")), ["ru", "en", "uz"]);
+    assert.deepEqual(Array.from(routing.publicLocalesForPath("/journals-info/hygiene")), ["ru", "en", "uz", "tg", "hy", "ky", "de", "fr"]);
     const pageModule = fixture(locale)<{ default: () => Promise<ReactNode>; generateMetadata: () => Promise<Metadata> }>(`src/app/${locale === "ru" ? "" : `${locale}/`}journals-info/page.tsx`);
     assert.equal(typeof pageModule.default, "function");
     const meta = await pageModule.generateMetadata();
@@ -158,7 +158,7 @@ test("actual index aliases, metadata and sitemap include translated detail route
     assert.equal(meta.alternates?.canonical, `https://wesetup.ru${path}`);
     assert.deepEqual(JSON.parse(JSON.stringify(meta.alternates?.languages)), JSON.parse(JSON.stringify(routing.siteLanguageAlternates("/journals-info"))));
     const og = meta.openGraph as { locale: string; url: string; images: Array<{ url: string }> };
-    assert.equal(og.locale, { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale]);
+    assert.equal(og.locale, { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale]);
     assert.equal(og.url, `https://wesetup.ru${path}`);
     assert.equal(new URL(og.images[0].url).searchParams.get("l"), locale);
     assert.equal(new URL((meta.twitter?.images as string[])[0]).searchParams.get("l"), locale);

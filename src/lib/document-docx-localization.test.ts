@@ -19,7 +19,7 @@ const batch = path.resolve(".agent/tasks/english-version-1375e736/batches/docx-s
 const artifacts = process.env.DOCX_SAMPLE_ARTIFACT_DIR;
 if (artifacts) fs.mkdirSync(artifacts, { recursive: true });
 const requireModule = createRequire(import.meta.url);
-const locales: Locale[] = ["ru", "en", "uz"];
+const locales = ["ru", "en", "uz"] as const;
 
 function messagesFor(locale: Locale): Messages {
   const messages = JSON.parse(fs.readFileSync(path.resolve(`src/i18n/messages/${locale}.json`), "utf8"));

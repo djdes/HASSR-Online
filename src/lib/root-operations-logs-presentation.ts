@@ -3,9 +3,10 @@ import type { Locale } from "@/i18n/locales";
 import ru from "@/i18n/messages/ru.json";
 import en from "@/i18n/messages/en.json";
 import uz from "@/i18n/messages/uz.json";
+import { baseLocale } from "@/i18n/locales";
 
 export function rootOperationsCopy(locale: Locale) {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].rootOperationsLogs });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].rootOperationsLogs });
 }
 
 export function formatRootTimingDuration(ms: number, locale: Locale): string {

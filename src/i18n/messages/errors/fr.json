@@ -1,0 +1,33 @@
+{
+  "errorSurface": {
+    "updating": "Mise à jour de l’application",
+    "updatingDescription": "Chargement de la dernière version. Cette page s’actualisera automatiquement.",
+    "errorTitle": "Une erreur s’est produite",
+    "errorDescription": "L’action n’a pas pu être effectuée. Réessayez ou retournez à la page d’accueil.",
+    "globalTitle": "Erreur de l’application",
+    "globalDescription": "L’application n’a pas pu être chargée. Réessayez ou retournez à la page d’accueil.",
+    "code": "Code : {code}",
+    "home": "Accueil",
+    "retry": "Réessayer",
+    "notFoundTitle": "Page introuvable",
+    "notFoundDescription": "Le lien est périmé ou la section a été déplacée. Retournez à la page d’accueil pour continuer.",
+    "about": "À propos du service",
+    "returnHome": "Retour à l’accueil",
+    "miniTitle": "Cet écran n’a pas pu être ouvert",
+    "miniDescription": "Réessayez. Si cela ne suffit pas, fermez et rouvrez l’application. Les saisies enregistrées précédemment resteront disponibles.",
+    "loading": "Chargement…",
+    "openingWorkspace": "Ouverture de votre espace…",
+    "loadingDocuments": "Chargement des documents du registre…",
+    "loadingDocument": "Chargement du document…",
+    "loadingJournals": "Chargement des registres…",
+    "backToJournals": "Retour aux registres",
+    "journalTitle": "Impossible de charger le registre",
+    "journalDescription": "Le serveur n’a pas renvoyé les données. Réessayez — les saisies enregistrées précédemment resteront disponibles.",
+    "journalsTitle": "Impossible de charger la liste des registres",
+    "journalsDescription": "La liste des registres n’a pas pu être chargée. Essayez de recharger la page.",
+    "documentsTitle": "Impossible de charger les documents du registre",
+    "documentsDescription": "La liste des documents n’a pas pu être chargée. Réessayez.",
+    "documentTitle": "Impossible d’ouvrir le document",
+    "documentDescription": "Le document n’a pas pu être chargé. Les saisies enregistrées précédemment sont toujours disponibles. Réessayez."
+  }
+}

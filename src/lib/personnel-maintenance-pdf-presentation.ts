@@ -1,5 +1,5 @@
 import { createTranslator } from "use-intl/core";
-import { FORMAT_LOCALES, type Locale } from "@/i18n/locales";
+import { FORMAT_LOCALES, type Locale, baseLocale } from "@/i18n/locales";
 import ru from "@/i18n/messages/ru.json";
 import en from "@/i18n/messages/en.json";
 import uz from "@/i18n/messages/uz.json";
@@ -11,7 +11,7 @@ import type { PersonDisplayUser } from "@/lib/approver-display";
 
 export type PersonnelPdfKey = keyof typeof ru.personnelMaintenancePdf;
 export function personnelPdfCopy(locale: Locale = "ru") {
-  return createTranslator({ locale, messages: { ru, en, uz }[locale].personnelMaintenancePdf });
+  return createTranslator({ locale, messages: { ru, en, uz }[baseLocale(locale)].personnelMaintenancePdf });
 }
 
 /** Presence, not value equality, controls provenance. Explicit empty/invalid values remain explicit. */

@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: url, languages: siteLanguageAlternates("/privacy") },
-    openGraph: { type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], siteName: "WeSetup", url, title, description, images: locale === "ru" ? [...DEFAULT_OG_IMAGES] : ogImages(image) },
+    openGraph: { type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], siteName: "WeSetup", url, title, description, images: locale === "ru" ? [...DEFAULT_OG_IMAGES] : ogImages(image) },
     twitter: { card: DEFAULT_TWITTER_CARD, title, description, images: locale === "ru" ? [...DEFAULT_TWITTER_IMAGES] : twitterImages(image) },
   };
 }

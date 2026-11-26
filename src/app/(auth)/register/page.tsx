@@ -53,7 +53,7 @@ export async function generateMetadata() {
     // он только размывает набор страниц. Ссылки с него поисковик проходит.
     robots: { index: false, follow: true },
     alternates: { canonical: url, languages: siteLanguageAlternates("/register") },
-    openGraph: { ...russianMetadata.openGraph, title, description, url, locale: { ru: "ru_RU", en: "en_US", uz: "uz_UZ" }[locale], images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
+    openGraph: { ...russianMetadata.openGraph, title, description, url, locale: { ru: "ru_RU", en: "en_US", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_OG_IMAGES },
     twitter: { ...russianMetadata.twitter, title, description, images: locale === "en" ? ["https://wesetup.ru/og/english"] : DEFAULT_TWITTER_IMAGES },
   };
 }

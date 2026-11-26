@@ -1,5 +1,5 @@
 import { isPublicJournalDetailPath } from "./public-journal-detail-codes";
-import { isLocale, resolveLocale, type Locale } from "./locales";
+import { BASE_LOCALES, LOCALES, isLocale, resolveLocale, type Locale } from "./locales";
 export type SiteLocale = Locale;
 export const SITE_LOCALE_HEADER = "x-wesetup-site-locale";
 export const SITE_LOCALE_COOKIE = "wesetup.site-locale";
@@ -28,6 +28,11 @@ const PUBLIC_ROUTES_BY_LOCALE: Record<SiteLocale, readonly string[]> = {
   ru: TRANSLATED_PUBLIC_ROUTES,
   en: TRANSLATED_PUBLIC_ROUTES,
   uz: TRANSLATED_PUBLIC_ROUTES,
+  tg: TRANSLATED_PUBLIC_ROUTES,
+  hy: TRANSLATED_PUBLIC_ROUTES,
+  ky: TRANSLATED_PUBLIC_ROUTES,
+  de: TRANSLATED_PUBLIC_ROUTES,
+  fr: TRANSLATED_PUBLIC_ROUTES,
 };
 
 function hasPublicAlias(path: string, locale: SiteLocale): boolean {
@@ -39,7 +44,7 @@ export function parseSiteLocale(value: unknown): SiteLocale {
 }
 
 export function publicLocaleRoute(pathname: string): { locale: SiteLocale; pathname: string } | null {
-  const prefix = /^\/(en|uz)(?=\/|$)/.exec(pathname);
+  const prefix = /^\/(en|uz|tg|hy|ky|de|fr)(?=\/|$)/.exec(pathname);
   const locale = prefix ? prefix[1] as SiteLocale : "ru";
   const path = prefix ? pathname.slice(prefix[0].length) || "/" : pathname;
   if (!hasPublicAlias(path, locale)) return null;
@@ -48,7 +53,17 @@ export function publicLocaleRoute(pathname: string): { locale: SiteLocale; pathn
 
 export function publicLocalesForPath(pathname: string): SiteLocale[] {
   const route = publicLocaleRoute(pathname);
-  return route ? (["ru", "en", "uz"] as const).filter((locale) => hasPublicAlias(route.pathname, locale)) : [];
+  return route ? LOCALES.filter((locale) => hasPublicAlias(route.pathname, locale)) : [];
+}
+
+/**
+ * Языки, которые отдаём поисковикам (hreflang, sitemap). Таджикский,
+ * армянский, киргизский, немецкий и французский переведены частично
+ * (остальное подставляется из ru/en), поэтому их адреса работают для
+ * людей, но в индекс не предлагаются, чтобы не плодить дубли.
+ */
+export function indexedLocalesForPath(pathname: string): SiteLocale[] {
+  return publicLocalesForPath(pathname).filter((locale) => (BASE_LOCALES as readonly string[]).includes(locale));
 }
 
 /** Localize known public pages only; never rewrite APIs, callbacks or private routes. */
@@ -66,7 +81,7 @@ export function localizedHref(href: string, locale: SiteLocale): string {
 
 export function siteLanguageAlternates(pathname: string): Record<string, string> {
   return {
-    ...Object.fromEntries(publicLocalesForPath(pathname).map((locale) => [locale, `https://wesetup.ru${localizedHref(pathname, locale)}`])),
+    ...Object.fromEntries(indexedLocalesForPath(pathname).map((locale) => [locale, `https://wesetup.ru${localizedHref(pathname, locale)}`])),
     "x-default": `https://wesetup.ru${localizedHref(pathname, "ru")}`,
   };
 }

@@ -9,6 +9,11 @@ const loaders = {
   ru: () => import("./messages/ru.json").then((m) => m.default),
   en: () => import("./messages/en.json").then((m) => m.default),
   uz: () => import("./messages/uz.json").then((m) => m.default),
+  tg: () => import("./messages/tg.json").then((m) => m.default),
+  hy: () => import("./messages/hy.json").then((m) => m.default),
+  ky: () => import("./messages/ky.json").then((m) => m.default),
+  de: () => import("./messages/de.json").then((m) => m.default),
+  fr: () => import("./messages/fr.json").then((m) => m.default),
 } satisfies Record<Locale, () => Promise<typeof ru>>;
 
 /** The catalog files as shipped, without editor overrides. */

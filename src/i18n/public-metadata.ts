@@ -22,7 +22,7 @@ export async function publicMetadataFor(locale: Locale): Promise<Metadata> {
     ] } },
     applicationName: "WeSetup",
     authors: [{ name: "WeSetup" }],
-    openGraph: { type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ" }[locale], url: `https://wesetup.ru${localizedHref("/", locale)}`, siteName: "WeSetup", title, description, images: [image] },
+    openGraph: { type: "website", locale: { ru: "ru_RU", en: "en_GB", uz: "uz_UZ", tg: "tg_TJ", hy: "hy_AM", ky: "ky_KG", de: "de_DE", fr: "fr_FR" }[locale], url: `https://wesetup.ru${localizedHref("/", locale)}`, siteName: "WeSetup", title, description, images: [image] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
     robots: { index: true, follow: true },
   };

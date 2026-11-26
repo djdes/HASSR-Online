@@ -215,8 +215,7 @@ export async function listEntries(query: EntryQuery): Promise<EntryPage | null> 
     offset,
     entries: matched.slice(offset, offset + limit).map((entry) => finishEntry(entry, categoryOf)),
     candidates: {
-      en: matched.filter((entry) => isAutoCandidate(entry, "en")).length,
-      uz: matched.filter((entry) => isAutoCandidate(entry, "uz")).length,
+      ...(Object.fromEntries((["en", "uz", "tg", "hy", "ky", "de", "fr"] as const).map((locale) => [locale, matched.filter((entry) => isAutoCandidate(entry, locale)).length])) as Record<AutoLocale, number>),
     },
   };
 }

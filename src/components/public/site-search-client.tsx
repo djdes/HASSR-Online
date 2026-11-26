@@ -57,7 +57,7 @@ const POPULAR_PATHS = [
 type Status = "idle" | "loading" | "ready" | "error";
 
 function pathOf(href: string): string {
-  return href.replace(/^\/(en|uz)(?=\/|$)/, "") || "/";
+  return href.replace(/^\/(en|uz|tg|hy|ky|de|fr)(?=\/|$)/, "") || "/";
 }
 
 export function SiteSearchClient({ variant = "header" }: { variant?: "header" | "home" }) {

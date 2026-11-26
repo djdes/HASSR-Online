@@ -66,7 +66,7 @@ interface ChartData {
 type Period = "24h" | "7d" | "30d";
 
 const PERIODS: Period[] = ["24h", "7d", "30d"];
-const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ" };
+const DATE_LOCALES: Record<string, string> = { ru: "ru-RU", en: "en-GB", uz: "uz-UZ", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" };
 
 function formatTime(isoString: string, period: Period, locale: string): string {
   const date = new Date(isoString);

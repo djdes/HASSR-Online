@@ -12,6 +12,7 @@ const RUSSIAN_INPUT: Record<string, string> = {
 };
 const SELECTED_INPUT: Record<Locale, Record<string, string>> = {
   ru: {}, en: { btl: "bottle" }, uz: { dona: "pcs", flakon: "bottle", qadoq: "pack" },
+  tg: {}, hy: {}, ky: {}, de: {}, fr: {},
 };
 
 export function productPageUnit(value: string, copy: UnitCopy): string {

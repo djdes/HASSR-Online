@@ -23,7 +23,7 @@ const ListQuery = z.object({
   filter: z.enum(TRANSLATION_FILTERS).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
-  candidates: z.enum(["en", "uz"]).optional(),
+  candidates: z.enum(["en", "uz", "tg", "hy", "ky", "de", "fr"]).optional(),
   key: z.string().min(1).max(300).optional(),
 });
 

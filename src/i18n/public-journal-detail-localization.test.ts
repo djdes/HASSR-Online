@@ -123,7 +123,7 @@ for (const locale of ["ru", "en", "uz"] as const) {
     faqItems += faq.mainEntity.length;
     if (locale === "ru") assert.deepEqual(faq.mainEntity.map((value: { name: string; acceptedAnswer: { text: string } }) => ({ q: value.name, a: value.acceptedAnswer.text })), [...buildJournalFaq(JOURNAL_INFO[code], detail.name), ...journalFaqExtra(code, "ru")]);
     const article = jsonLd.find(value => value["@type"] === "Article"); assert.ok(article);
-    assert.equal(article.inLanguage, { ru: "ru-RU", en: "en-GB", uz: "uz-Latn" }[locale]);
+    assert.equal(article.inLanguage, { ru: "ru-RU", en: "en-GB", uz: "uz-Latn", tg: "tg-TJ", hy: "hy-AM", ky: "ky-KG", de: "de-DE", fr: "fr-FR" }[locale]);
     assert.equal(article.url, `https://wesetup.ru${routing.localizedHref(`/journals-info/${code}`, locale)}`);
     assert.equal(new URL(article.image[0]).searchParams.get("l"), locale);
     const guide = getFillingGuide(code); const howTo = jsonLd.find(value => value["@type"] === "HowTo");

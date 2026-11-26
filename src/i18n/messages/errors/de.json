@@ -1,0 +1,33 @@
+{
+  "errorSurface": {
+    "updating": "App wird aktualisiert",
+    "updatingDescription": "Die neueste Version wird geladen. Diese Seite aktualisiert sich automatisch.",
+    "errorTitle": "Etwas ist schiefgelaufen",
+    "errorDescription": "Die Aktion konnte nicht ausgeführt werden. Versuchen Sie es erneut oder kehren Sie zur Startseite zurück.",
+    "globalTitle": "Anwendungsfehler",
+    "globalDescription": "Die App konnte nicht geladen werden. Versuchen Sie es erneut oder kehren Sie zur Startseite zurück.",
+    "code": "Code: {code}",
+    "home": "Start",
+    "retry": "Erneut versuchen",
+    "notFoundTitle": "Seite nicht gefunden",
+    "notFoundDescription": "Der Link ist veraltet oder der Bereich wurde verschoben. Kehren Sie zur Startseite zurück, um fortzufahren.",
+    "about": "Über den Dienst",
+    "returnHome": "Zur Startseite",
+    "miniTitle": "Dieser Bildschirm konnte nicht geöffnet werden",
+    "miniDescription": "Versuchen Sie es erneut. Wenn das nicht hilft, schließen Sie die App und öffnen Sie sie neu. Zuvor gespeicherte Einträge bleiben verfügbar.",
+    "loading": "Wird geladen…",
+    "openingWorkspace": "Ihr Arbeitsbereich wird geöffnet…",
+    "loadingDocuments": "Journaldokumente werden geladen…",
+    "loadingDocument": "Dokument wird geladen…",
+    "loadingJournals": "Journale werden geladen…",
+    "backToJournals": "Zurück zu den Journalen",
+    "journalTitle": "Das Journal konnte nicht geladen werden",
+    "journalDescription": "Der Server hat keine Daten zurückgegeben. Versuchen Sie es erneut – zuvor gespeicherte Einträge bleiben verfügbar.",
+    "journalsTitle": "Die Journalliste konnte nicht geladen werden",
+    "journalsDescription": "Die Journalliste konnte nicht geladen werden. Laden Sie die Seite erneut.",
+    "documentsTitle": "Die Journaldokumente konnten nicht geladen werden",
+    "documentsDescription": "Die Dokumentliste konnte nicht geladen werden. Versuchen Sie es erneut.",
+    "documentTitle": "Das Dokument konnte nicht geöffnet werden",
+    "documentDescription": "Das Dokument konnte nicht geladen werden. Zuvor gespeicherte Einträge sind weiterhin verfügbar. Versuchen Sie es erneut."
+  }
+}

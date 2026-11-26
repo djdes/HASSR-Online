@@ -74,7 +74,7 @@ export type FeedbackReplyDeps = {
     replyMessage: string;
     originalMessage: string;
     respondedByName: string;
-    locale?: "ru" | "en" | "uz";
+    locale?: import("@/i18n/locales").Locale;
   }) => Promise<boolean>;
 };
 
