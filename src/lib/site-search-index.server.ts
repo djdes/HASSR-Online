@@ -138,6 +138,7 @@ export async function buildSiteSearchIndex(locale: SiteLocale): Promise<SiteSear
     [chrome.partners, "/partners", "партнёрская программа"],
     [chrome.whatsNew, "/whats-new", "обновления новое"],
     [chrome.developers, "/developers", "api интеграция"],
+    [chrome.softwareRegistry, "/reestr-po", "реестр отечественного российского по минцифры документация руководство пользователя установка функциональные характеристики"],
     [chrome.register, "/register", "регистрация попробовать бесплатно"],
     [chrome.login, "/login", "вход войти кабинет"],
   ];

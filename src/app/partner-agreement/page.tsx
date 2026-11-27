@@ -144,7 +144,7 @@ export default function PartnerAgreementPage() {
       </p>
 
       <h2>8. Реквизиты Компании</h2>
-      <LegalRequisites />
+      <LegalRequisites showGooglePlayAuth={false} />
     </LegalArticle>
   );
 }

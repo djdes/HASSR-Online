@@ -147,6 +147,7 @@ const DOCUMENTS = [
   { href: "/consent", label: "Согласие на обработку персональных данных" },
   { href: "/oferta", label: "Договор-оферта" },
   { href: "/terms", label: "Пользовательское соглашение" },
+  { href: "/reestr-po", label: "Реестр ПО и документация" },
 ];
 
 export default function SecurityPage() {

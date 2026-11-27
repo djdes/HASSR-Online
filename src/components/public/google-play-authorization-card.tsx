@@ -21,7 +21,7 @@ const DEFAULT_COPY: GooglePlayAuthorizationCopy = {
   signatureAlt:
     "Подпись Генерального директора ООО «БФС» Волкова Д. В. и печать организации",
   pageLinkLabel: "Официальная страница разрешения",
-  pdfLinkLabel: "Скачать бланк с подписью и печатью (PDF)",
+  pdfLinkLabel: "Скачать документ с подписью и печатью (PDF)",
 };
 
 export function GooglePlayAuthorizationCard({

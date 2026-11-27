@@ -6478,6 +6478,7 @@
     "companyTaxIds": "Soliq raqami (INN) {inn} · KPP {kpp}",
     "companyRegistrationId": "Ro‘yxatdan o‘tish raqami (OGRN) {ogrn}",
     "securityAndData": "Xavfsizlik va ma’lumotlar",
+    "softwareRegistry": "Dastur reestri va hujjatlar",
     "autofillOffer": "O‘zi to‘ldiriladigan jurnallar",
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Sizning elektron HACCP tizimingiz",

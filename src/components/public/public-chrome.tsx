@@ -256,6 +256,7 @@ export async function PublicFooter({ omitRows = [] }: { omitRows?: ReadonlyArray
         { href: "/terms", label: t("userAgreement") },
         { href: "/consent", label: t("personalDataConsent") },
         { href: "/security", label: t("securityAndData") },
+        { href: "/reestr-po", label: t("softwareRegistry") },
       ],
     },
   ];

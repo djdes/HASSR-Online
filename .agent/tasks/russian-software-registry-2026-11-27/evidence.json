@@ -1,0 +1,22 @@
+{
+  "taskId": "russian-software-registry-2026-11-27",
+  "status": "PASS",
+  "criteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS"
+  },
+  "checks": {
+    "i18nTypes": "PASS",
+    "i18nLocales": "PASS",
+    "borderless": "PASS",
+    "paletteNeutral": "PASS",
+    "typecheck": "PASS",
+    "testChanged": {
+      "files": 76,
+      "passed": 328,
+      "failed": 0
+    }
+  }
+}

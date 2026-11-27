@@ -6478,6 +6478,7 @@
     "companyTaxIds": "Tax ID (INN) {inn} · KPP {kpp}",
     "companyRegistrationId": "Registration number (OGRN) {ogrn}",
     "securityAndData": "Security and data",
+    "softwareRegistry": "Software registry & docs",
     "autofillOffer": "Logs that fill themselves",
     "sanpin4282": "SanPiN 2.3/2.4.4282-26",
     "tagline": "Your electronic HACCP",
