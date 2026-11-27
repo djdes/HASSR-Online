@@ -1,4 +1,8 @@
 import type { ReactNode } from "react";
+import {
+  GooglePlayAuthorizationCard,
+  type GooglePlayAuthorizationCopy,
+} from "@/components/public/google-play-authorization-card";
 import { PublicHeader, PublicFooter } from "@/components/public/public-chrome";
 import { COMPANY_EMAIL, COMPANY_PHONES } from "@/lib/company-contacts";
 
@@ -79,15 +83,22 @@ export function LegalArticle({
  * Карточка реквизитов оператора — общая для оферты и политики,
  * чтобы данные ООО «БФС» жили в одном месте.
  */
-export function LegalRequisites({ copy }: { copy?: {
-  heading: string;
-  taxIds: string;
-  registrationId: string;
-  address: string;
-  telephone: ReactNode;
-  email: ReactNode;
-  website: ReactNode;
-} } = {}) {
+export function LegalRequisites({
+  copy,
+  showGooglePlayAuth = true,
+}: {
+  copy?: {
+    heading: string;
+    taxIds: string;
+    registrationId: string;
+    address: string;
+    telephone: ReactNode;
+    email: ReactNode;
+    website: ReactNode;
+    googlePlayAuth?: GooglePlayAuthorizationCopy;
+  };
+  showGooglePlayAuth?: boolean;
+} = {}) {
   return (
     <div className="mt-8 rounded-2xl border border-[#ececf4] bg-[#fafbff] p-5 text-[14px] leading-[1.7] text-[#3c4053] md:p-6">
       <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9b9fb3]">{copy?.heading ?? "Реквизиты"}</div>
@@ -129,6 +140,9 @@ export function LegalRequisites({ copy }: { copy?: {
           wesetup.ru
         </a>
       </>}</div>
+      {showGooglePlayAuth ? (
+        <GooglePlayAuthorizationCard compact copy={copy?.googlePlayAuth} />
+      ) : null}
     </div>
   );
 }

@@ -6532,6 +6532,13 @@
       "title": "Company and contact details",
       "description": "WeSetup is developed by BFS LLC. Contact us for help choosing logs, setting up sites or moving your records online."
     },
+    "googlePlayAuth": {
+      "heading": "Rightsholder authorization for Google Play",
+      "statement": "“I, Denis Vladimirovich Volkov, acting on behalf of BFS LLC, authorize Olga Karakyanova to publish and update the Setup Helper application on Google Play under the identifier app.wedo4u.setuphelper, distribute it free of charge to users, and use the name, icon, and screenshots in the store listing.”",
+      "signatureAlt": "Signature of General Director Denis Volkov and corporate seal of BFS LLC",
+      "pageLinkLabel": "Official authorization notice",
+      "pdfLinkLabel": "Download signed letter with seal (PDF)"
+    },
     "start": {
       "title": "Start with one log",
       "description": "Create a workspace, choose a log you already use and make your first entry. Then add the rest of your logs and invite your team.",
@@ -23866,7 +23873,14 @@
     "address": "Address: {address}",
     "telephone": "Telephones: <officeLink>{office}</officeLink>, <mobileLink>{mobile}</mobileLink>",
     "email": "Email: <emailLink>admin@wesetup.ru</emailLink>",
-    "website": "Website: <siteLink>wesetup.ru</siteLink>"
+    "website": "Website: <siteLink>wesetup.ru</siteLink>",
+    "googlePlayAuth": {
+      "heading": "Rightsholder authorization for Google Play",
+      "statement": "“I, Denis Vladimirovich Volkov, acting on behalf of BFS LLC, authorize Olga Karakyanova to publish and update the Setup Helper application on Google Play under the identifier app.wedo4u.setuphelper, distribute it free of charge to users, and use the name, icon, and screenshots in the store listing.”",
+      "signatureAlt": "Signature of General Director Denis Volkov and corporate seal of BFS LLC",
+      "pageLinkLabel": "Official authorization notice",
+      "pdfLinkLabel": "Download signed letter with seal (PDF)"
+    }
   },
   "rootMailingShellAudience": {
     "page": {

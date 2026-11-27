@@ -6532,6 +6532,13 @@
       "title": "Kompaniya va aloqa ma’lumotlari",
       "description": "WeSetup xizmatini BFS MChJ ishlab chiqadi. Jurnallarni tanlash, obyektlarni sozlash yoki yozuvlarni elektron shaklga o‘tkazishda yordam kerak bo‘lsa, bizga yozing."
     },
+    "googlePlayAuth": {
+      "heading": "Google Play uchun huquq egasining ruxsatnomasi",
+      "statement": "«Men, Volkov Denis Vladimirovich, BFS MChJ nomidan ish yuritib, Olga Karakyanovaga Setup Helper ilovasini Google Play do‘konida app.wedo4u.setuphelper identifikatori ostida joylashtirish va yangilashga, uni foydalanuvchilar uchun bepul tarqatishga hamda do‘kon sahifasida nom, belgi va skrinshotlardan foydalanishga ruxsat beraman.»",
+      "signatureAlt": "BFS MChJ bosh direktori D. V. Volkov imzosi va tashkilot muhri",
+      "pageLinkLabel": "Rasmiy ruxsatnoma sahifasi",
+      "pdfLinkLabel": "Imzo va muhrli blankni yuklab olish (PDF)"
+    },
     "start": {
       "title": "Bitta jurnaldan boshlang",
       "description": "Ish maydonini yarating, tanish jurnalni tanlang va birinchi qaydni kiriting. Keyin qolgan jurnallarni qo‘shing va hamkasblaringizni taklif qiling.",
@@ -23866,7 +23873,14 @@
     "address": "Manzil: {address}",
     "telephone": "Telefonlar: <officeLink>{office}</officeLink>, <mobileLink>{mobile}</mobileLink>",
     "email": "Elektron pochta: <emailLink>admin@wesetup.ru</emailLink>",
-    "website": "Sayt: <siteLink>wesetup.ru</siteLink>"
+    "website": "Sayt: <siteLink>wesetup.ru</siteLink>",
+    "googlePlayAuth": {
+      "heading": "Google Play uchun huquq egasining ruxsatnomasi",
+      "statement": "«Men, Volkov Denis Vladimirovich, BFS MChJ nomidan ish yuritib, Olga Karakyanovaga Setup Helper ilovasini Google Play do‘konida app.wedo4u.setuphelper identifikatori ostida joylashtirish va yangilashga, uni foydalanuvchilar uchun bepul tarqatishga hamda do‘kon sahifasida nom, belgi va skrinshotlardan foydalanishga ruxsat beraman.»",
+      "signatureAlt": "BFS MChJ bosh direktori D. V. Volkov imzosi va tashkilot muhri",
+      "pageLinkLabel": "Rasmiy ruxsatnoma sahifasi",
+      "pdfLinkLabel": "Imzo va muhrli blankni yuklab olish (PDF)"
+    }
   },
   "rootMailingShellAudience": {
     "page": {

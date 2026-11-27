@@ -4,6 +4,7 @@ import { ArrowRight, ClipboardList, QrCode, ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import Link from "@/components/i18n/localized-link";
+import { GooglePlayAuthorizationCard } from "@/components/public/google-play-authorization-card";
 import { PublicBreadcrumbs } from "@/components/public/public-breadcrumbs";
 import { PublicFooter, PublicHeader } from "@/components/public/public-chrome";
 import { localizedHref, siteLanguageAlternates } from "@/i18n/site-locale";
@@ -178,6 +179,16 @@ export default async function AboutPage() {
             <Link href="/privacy" className="inline-flex min-h-11 items-center text-sm font-medium text-[#3848c7] hover:underline">
               {chrome("privacyPolicy")}
             </Link>
+            <GooglePlayAuthorizationCard
+              compact
+              copy={{
+                heading: t("googlePlayAuth.heading"),
+                statement: t("googlePlayAuth.statement"),
+                signatureAlt: t("googlePlayAuth.signatureAlt"),
+                pageLinkLabel: t("googlePlayAuth.pageLinkLabel"),
+                pdfLinkLabel: t("googlePlayAuth.pdfLinkLabel"),
+              }}
+            />
           </section>
         </div>
 

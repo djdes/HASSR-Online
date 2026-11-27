@@ -72,6 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/oferta`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/setup-helper/privacy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE}/setup-helper/google-play-authorization`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE}/terms`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE}/consent`, changeFrequency: "yearly", priority: 0.3 },
   ];
