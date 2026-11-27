@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { GooglePlayAuthorizationCard } from "@/components/public/google-play-authorization-card";
 import { LegalArticle, LegalRequisites } from "@/components/public/legal-article";
 
 /**
@@ -45,7 +46,7 @@ export default function SetupHelperPrivacyPage() {
   return (
     <LegalArticle
       title={TITLE}
-      revision="Редакция от 3 ноября 2026 года"
+      revision="Редакция от 27 ноября 2026 года"
       intro="«Сетап помощник» — бесплатное Android-приложение WeSetup для печати этикеток маркировки на Bluetooth-принтер в заведениях общепита и на пищевых производствах. Приложение работает без регистрации и входа и не собирает персональные данные пользователей."
     >
       <h2>1. Оператор и область действия</h2>
@@ -107,7 +108,10 @@ export default function SetupHelperPrivacyPage() {
         .
       </p>
 
-      <LegalRequisites />
+      <h2>7. Разрешение правообладателя ООО «БФС» на публикацию в Google Play</h2>
+      <GooglePlayAuthorizationCard />
+
+      <LegalRequisites showGooglePlayAuth={false} />
     </LegalArticle>
   );
 }

@@ -212,6 +212,13 @@ export default async function PrivacyPage() {
         }),
         email: legal.rich("email", { emailLink: (chunks) => <a href={`mailto:${COMPANY_EMAIL}`} className="break-all text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a> }),
         website: legal.rich("website", { siteLink: (chunks) => <a href="https://wesetup.ru" className="text-[#3848c7] transition-colors hover:text-[#0b1024]">{chunks}</a> }),
+        googlePlayAuth: {
+          heading: legal("googlePlayAuth.heading"),
+          statement: legal("googlePlayAuth.statement"),
+          signatureAlt: legal("googlePlayAuth.signatureAlt"),
+          pageLinkLabel: legal("googlePlayAuth.pageLinkLabel"),
+          pdfLinkLabel: legal("googlePlayAuth.pdfLinkLabel"),
+        },
       }} />
       <p>{t.rich("clause14_contact", { supportLink: (chunks) => <a href={`mailto:${COMPANY_EMAIL}`}>{chunks}</a> })}</p>
     </LegalArticle>

@@ -70,6 +70,7 @@ describe("robots.txt crawl rules", () => {
       "/consent",
       "/delete-account",
       "/setup-helper/privacy",
+      "/setup-helper/google-play-authorization",
       "/og-default",
       "/og/landing/ru",
       "/b/demo-badge",
