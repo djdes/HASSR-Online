@@ -176,9 +176,14 @@ export default async function AboutPage() {
                 <a href={COMPANY_TELEGRAM.url} className="inline-flex min-h-11 items-center text-[#3848c7] hover:underline">Telegram</a>
               </div>
             </address>
-            <Link href="/privacy" className="inline-flex min-h-11 items-center text-sm font-medium text-[#3848c7] hover:underline">
-              {chrome("privacyPolicy")}
-            </Link>
+            <div className="flex flex-wrap gap-x-5">
+              <Link href="/privacy" className="inline-flex min-h-11 items-center text-sm font-medium text-[#3848c7] hover:underline">
+                {chrome("privacyPolicy")}
+              </Link>
+              <Link href="/reestr-po" className="inline-flex min-h-11 items-center text-sm font-medium text-[#3848c7] hover:underline">
+                {chrome("softwareRegistry")}
+              </Link>
+            </div>
             <GooglePlayAuthorizationCard
               compact
               copy={{

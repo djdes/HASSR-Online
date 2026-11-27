@@ -112,7 +112,7 @@ export default function SetupHelperGooglePlayAuthorizationPage() {
         </Link>{" "}
         и в{" "}
         <a href={GOOGLE_PLAY_AUTH_PDF_PATH} target="_blank" rel="noopener noreferrer">
-          подписанном PDF-документе на бланке ООО «БФС»
+          подписанном PDF-документе ООО «БФС»
         </a>
         . По вопросам проверки полномочий обращайтесь на{" "}
         <a href="mailto:admin@wesetup.ru">admin@wesetup.ru</a>.

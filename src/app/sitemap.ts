@@ -63,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Оффер «журналы заполняются сами» и ответ про безопасность данных (2026-11-01).
     { url: `${SITE}/avtozapolnenie`, changeFrequency: "monthly", priority: 0.85 },
     { url: `${SITE}/security`, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${SITE}/reestr-po`, changeFrequency: "monthly", priority: 0.7 },
     // Норматив, под который ведутся журналы (2026-11-01).
     { url: `${SITE}/sanpin-2-3-2-4-4282-26`, changeFrequency: "monthly", priority: 0.8 },
     // /login и /register в sitemap не входят: это служебные экраны без

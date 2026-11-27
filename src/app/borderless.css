@@ -6,7 +6,7 @@
  * transparent; surfaces differ by fill. Borders stay on form fields, tables,
  * journal grids, pictures, swatches and on hovered / focused / selected /
  * invalid states. Opt out: `data-keep-border`.
- * 60 neutral border colours from 4071 files (src/).
+ * 60 neutral border colours from 4074 files (src/).
  */
 :root,
 .app-shell {

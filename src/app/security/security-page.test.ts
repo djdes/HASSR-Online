@@ -38,7 +38,7 @@ describe("страница «Безопасность и данные»", () => 
   it("доступы, журнал действий, копии, оплата и удаление — как в коде", () => {
     const schema = read("prisma/schema.prisma");
     assert.match(page, /ссылка с ограниченным сроком действия/);
-    assert.match(schema, /model InspectorToken \{[\s\S]*?expiresAt\s+DateTime\n/);
+    assert.match(schema, /model InspectorToken \{[\s\S]*?expiresAt\s+DateTime\r?\n/);
     assert.match(page, /Правку прошлых дней можно запретить/);
     assert.match(schema, /lockPastDayEdits\s+Boolean/);
     assert.match(read("src/lib/audit-labels.ts"), /"journal\.entry\.update"/);

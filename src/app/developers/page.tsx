@@ -8,7 +8,7 @@ import { DEFAULT_TWITTER_CARD } from "@/lib/meta-defaults";
 import { ogImages, twitterImages } from "@/lib/og-image";
 
 const TITLE = "API WeSetup для разработчиков";
-const DESCRIPTION = "Открытый API электронных журналов ХАССП: MCP для ChatGPT и Claude, REST API v1 с описанием OpenAPI, записи в журналы, показания датчиков, сводка за день, вебхуки.";
+const DESCRIPTION = "Открытый API электронных журналов ХАССП: REST API v1 с описанием OpenAPI, протокол MCP для корпоративных ИИ-ассистентов, записи в журналы, показания датчиков, сводка за день, вебхуки.";
 
 // Те же шесть операций — у MCP-инструментов и REST API v1 (src/lib/public-api/tools).
 const V1_METHODS = [
@@ -85,16 +85,16 @@ export default function DevelopersPage() {
         <section className="mt-10 rounded-3xl border border-[#dfe3ff] bg-[linear-gradient(135deg,#f5f6ff_0%,#ffffff_60%,#f0edff_100%)] p-6 md:p-7">
           <div className="flex items-center gap-2 text-[15px] font-semibold">
             <Bot className="size-4 text-[#5566f6]" />
-            ИИ-ассистенты (MCP)
+            ИИ-ассистенты (протокол MCP)
           </div>
           <p className="mt-2 text-[14px] leading-[1.65] text-[#3c4053]">
-            WeSetup — MCP-сервер: ChatGPT, Claude, Cursor и другие ассистенты сами узнают статус журналов, отмечают ячейки и добавляют сотрудников по просьбе пользователя. Ключ действует с правами его владельца и только в его организации; каждая запись видна в журнале действий. Поддерживаются спецификации MCP 2026-07-28 и 2025-03-26…2025-11-25 (Streamable HTTP).
+            WeSetup поддерживает открытый протокол MCP (Model Context Protocol): корпоративные и локальные ИИ-ассистенты сами узнают статус журналов, отмечают ячейки и добавляют сотрудников по поручению пользователя. Ключ действует с правами его владельца и только в его организации; каждая запись видна в журнале действий. Поддерживаются спецификации MCP 2026-07-28 и 2025-03-26…2025-11-25 (Streamable HTTP).
           </p>
-          <pre className={`mt-3 ${CODE}`}>{`# ключ в заголовке — Claude Code, Cursor, свой клиент
+          <pre className={`mt-3 ${CODE}`}>{`# ключ в заголовке — стандартный MCP-клиент или корпоративный агент
 POST https://wesetup.ru/api/mcp
 Authorization: Bearer wsk_…
 
-# ключ в ссылке — коннекторы claude.ai и ChatGPT
+# ключ в ссылке — подключение через URL-коннектор
 POST https://wesetup.ru/api/mcp/wsk_…`}</pre>
           <ul className="mt-3 grid gap-1.5 text-[13.5px] text-[#3c4053] sm:grid-cols-2">
             {V1_METHODS.map((m) => (

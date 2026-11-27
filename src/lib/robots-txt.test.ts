@@ -37,6 +37,7 @@ describe("robots.txt crawl rules", () => {
       "/sanpin-2-3-2-4-4282-26",
       "/avtozapolnenie",
       "/security",
+      "/reestr-po",
       "/status",
       "/pricing",
       "/blanki",
