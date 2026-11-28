@@ -235,6 +235,13 @@ export interface SimilarwebClusterDto {
   channel: "organic" | "paid";
   mappedTargetUrl: string;
   notes?: string;
+  volume?: number | null;
+  cpcUsd?: number | null;
+  organicSharePct?: number | null;
+  paidSharePct?: number | null;
+  competitorUrl?: string | null;
+  competitorPos?: number | null;
+  changePct?: number | null;
 }
 
 export interface SimilarwebSnapshotDto {

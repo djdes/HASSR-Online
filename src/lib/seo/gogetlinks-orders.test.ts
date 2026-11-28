@@ -976,6 +976,40 @@ test("mutatePlannedSlot supports skip, swap_donor, and update_article while bloc
   assert.equal(skipped.status, "skipped");
   assert.ok(audits.some((a) => a.action === "ggl.slot.skip"));
 
+  // 3b. assign_target and prepare_now
+  const assigned = await mutatePlannedSlot(
+    {
+      slotId: "slot_m1",
+      action: "assign_target",
+      targetUrl: "/journals-info/fridge_temperature",
+      targetKeyword: "журнал температур холодильников",
+      prepareNow: true,
+      actor: seoActor,
+    },
+    {
+      prismaClient: mockPrisma as never,
+      writeAudit: async (entry) => {
+        audits.push({ action: entry.action, entityId: entry.entityId });
+      },
+    },
+  );
+  assert.equal(assigned.targetUrl, "/journals-info/fridge_temperature");
+  assert.equal(assigned.targetKeyword, "журнал температур холодильников");
+  assert.equal(assigned.status, "planned");
+
+  const preparedNow = await mutatePlannedSlot(
+    {
+      slotId: "slot_m1",
+      action: "prepare_now",
+      actor: seoActor,
+    },
+    {
+      prismaClient: mockPrisma as never,
+      writeAudit: async () => {},
+    },
+  );
+  assert.equal(preparedNow.id, "slot_m1");
+
   // 4. Blocking mutation when status === "ordered"
   currentSlot.status = "ordered";
   await assert.rejects(

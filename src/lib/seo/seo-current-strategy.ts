@@ -4,7 +4,7 @@
  *
  * Keep synchronized with `docs/seo/current-state.md`.
  */
-export const GGL_SEO_CURRENT_STRATEGY_UPDATED_AT = "2026-11-19";
+export const GGL_SEO_CURRENT_STRATEGY_UPDATED_AT = "2026-11-27";
 
 export const GGL_WEBMASTER_CURRENT_SEO_BRIEF = [
   `Актуальный SEO/ПФ-контекст wesetup.ru (срез ${GGL_SEO_CURRENT_STRATEGY_UPDATED_AT}, подробности в docs/seo/current-state.md):`,

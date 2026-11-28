@@ -73,6 +73,63 @@ export interface ParsedSimilarwebCluster {
   channel: "organic" | "paid";
   mappedTargetUrl: string;
   notes?: string;
+  volume?: number | null;
+  cpcUsd?: number | null;
+  organicSharePct?: number | null;
+  paidSharePct?: number | null;
+  competitorUrl?: string | null;
+  competitorPos?: number | null;
+  changePct?: number | null;
+}
+
+export interface ParsedSimilarwebReferralSite {
+  domain: string;
+  sharePct: number;
+}
+
+export interface ParsedSimilarwebSimilarSite {
+  domain: string;
+  affinityPct?: number | null;
+  rank?: number | null;
+}
+
+export interface ParsedSimilarwebTopPage {
+  urlPath: string;
+  sharePct: number;
+  changePct?: number | null;
+}
+
+export interface ParsedSimilarwebSubfolder {
+  subfolder: string;
+  sharePct: number;
+  changePct?: number | null;
+}
+
+export interface ParsedSimilarwebCountryShare {
+  countryCode: string;
+  countryName?: string;
+  sharePct: number;
+}
+
+export interface ParsedSimilarwebTelemetry {
+  avgVisitDurationSec?: number | null;
+  visitsTrendPct?: number | null;
+  brandedSharePct?: number | null;
+  nonBrandedSharePct?: number | null;
+  globalRank?: number | null;
+  countryRank?: number | null;
+  categoryRank?: number | null;
+  category?: string | null;
+  directSharePct?: number | null;
+  referralsSharePct?: number | null;
+  socialSharePct?: number | null;
+  mailSharePct?: number | null;
+  displaySharePct?: number | null;
+  topReferrals?: ParsedSimilarwebReferralSite[];
+  similarSites?: ParsedSimilarwebSimilarSite[];
+  topPages?: ParsedSimilarwebTopPage[];
+  topSubfolders?: ParsedSimilarwebSubfolder[];
+  topCountries?: ParsedSimilarwebCountryShare[];
 }
 
 export interface ParsedSimilarwebSnapshot {
@@ -84,6 +141,7 @@ export interface ParsedSimilarwebSnapshot {
   bouncePct: number | null;
   pagesPerVisit: number | null;
   clusters: ParsedSimilarwebCluster[];
+  telemetry?: ParsedSimilarwebTelemetry;
 }
 
 export interface ExtractSimilarwebSnapshotDeps {

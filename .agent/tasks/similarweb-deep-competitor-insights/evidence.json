@@ -1,0 +1,27 @@
+{
+  "taskId": "similarweb-deep-competitor-insights",
+  "status": "PASS",
+  "verifiedAt": "2026-11-28T09:07:00+03:00",
+  "checks": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    "unitTests": {
+      "command": "node --import tsx --test src/lib/seo/similarweb-client.test.ts src/lib/seo/gogetlinks-sync.test.ts src/lib/seo/gogetlinks-planner.test.ts src/lib/seo/gogetlinks-orders.test.ts",
+      "passed": 40,
+      "failed": 0,
+      "exitCode": 0,
+      "status": "PASS"
+    }
+  },
+  "acceptanceCriteria": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS"
+  }
+}

@@ -667,6 +667,18 @@ export function PlannerTab({
   const [donorSwapMenuSlotId, setDonorSwapMenuSlotId] = useState<string | null>(
     null,
   );
+  const [agentRun, setAgentRun] = useState<{
+    active: boolean;
+    slotId: string | null;
+    targetUrl: string;
+    keyword: string | null;
+    stepIndex: number;
+    startedAtMs: number;
+    elapsedSec: number;
+    completedReady: boolean;
+    error: string | null;
+  } | null>(null);
+  const autoCheckedKeysRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (initialTargetUrlFilter) {
@@ -676,6 +688,23 @@ export function PlannerTab({
       setTargetKeywordHint(initialTargetKeyword.trim());
     }
   }, [initialTargetUrlFilter, initialTargetKeyword]);
+
+  useEffect(() => {
+    if (!agentRun?.active) return;
+    const timer = window.setInterval(() => {
+      setAgentRun((prev) => {
+        if (!prev || !prev.active) return prev;
+        const elapsedSec = Math.max(
+          1,
+          Math.floor((Date.now() - prev.startedAtMs) / 1000),
+        );
+        const stepIndex =
+          elapsedSec < 2 ? 0 : elapsedSec < 5 ? 1 : elapsedSec < 9 ? 2 : 3;
+        return { ...prev, elapsedSec, stepIndex };
+      });
+    }, 800);
+    return () => window.clearInterval(timer);
+  }, [agentRun?.active]);
 
   // Stable client idempotency key per slot approval attempt to prevent double-spend on retries
   const approveKeysRef = useRef<Map<string, string>>(new Map());
@@ -854,8 +883,22 @@ export function PlannerTab({
     slot: GglPlannedSlotDto,
     targetUrl: string,
     targetKeyword?: string | null,
+    autoTriggered = false,
   ) {
+    const cleanTarget = shortWesetupPath(targetUrl);
+    const cleanKw = targetKeyword?.trim() || slot.targetKeyword || null;
     setBusySlotId(slot.id);
+    setAgentRun({
+      active: true,
+      slotId: slot.id,
+      targetUrl: cleanTarget,
+      keyword: cleanKw,
+      stepIndex: 0,
+      startedAtMs: Date.now(),
+      elapsedSec: 0,
+      completedReady: false,
+      error: null,
+    });
     try {
       const response = await fetch(
         `/api/root/gogetlinks/slots/${encodeURIComponent(slot.id)}`,
@@ -864,12 +907,14 @@ export function PlannerTab({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "assign_target",
-            targetUrl,
-            ...(targetKeyword ? { targetKeyword } : {}),
+            targetUrl: cleanTarget,
+            prepareNow: true,
+            ...(cleanKw ? { targetKeyword: cleanKw } : {}),
           }),
         },
       );
       const data = (await response.json().catch(() => null)) as {
+        slot?: GglPlannedSlotDto;
         error?: string;
       } | null;
       if (!response.ok) {
@@ -877,18 +922,150 @@ export function PlannerTab({
           data?.error ?? "Не удалось назначить посадочную страницу на слот",
         );
       }
-      toast.success(
-        `Посадочная ${shortWesetupPath(targetUrl)} назначена на слот ${formatRuShortDate(slot.scheduledDate)}`,
+      const ready = data?.slot ? isGglSlotReadyForApproval(data.slot) : false;
+      setAgentRun((prev) =>
+        prev
+          ? {
+              ...prev,
+              active: false,
+              stepIndex: ready ? 4 : 3,
+              completedReady: ready,
+              error: null,
+            }
+          : null,
       );
+      if (!autoTriggered) {
+        toast.success(
+          ready
+            ? `ИИ-агент проверил ${cleanTarget} и подобрал площадку для слота ${formatRuShortDate(slot.scheduledDate)}`
+            : `Посадочная ${cleanTarget} назначена на слот ${formatRuShortDate(slot.scheduledDate)}, ИИ-агент проверяет доноров`,
+        );
+      }
       await onRefresh();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Ошибка назначения посадочной",
+      const message =
+        err instanceof Error ? err.message : "Ошибка назначения посадочной";
+      setAgentRun((prev) =>
+        prev ? { ...prev, active: false, error: message } : null,
       );
+      toast.error(message);
     } finally {
       setBusySlotId(null);
     }
   }
+
+  async function handlePrepareSlotNow(
+    slot: GglPlannedSlotDto,
+    autoTriggered = false,
+  ) {
+    const cleanTarget = slot.targetUrl
+      ? shortWesetupPath(slot.targetUrl)
+      : targetUrlFilter !== "all"
+        ? targetUrlFilter
+        : "/journals-info";
+    const cleanKw = slot.targetKeyword || targetKeywordHint || null;
+    setBusySlotId(slot.id);
+    setAgentRun({
+      active: true,
+      slotId: slot.id,
+      targetUrl: cleanTarget,
+      keyword: cleanKw,
+      stepIndex: 0,
+      startedAtMs: Date.now(),
+      elapsedSec: 0,
+      completedReady: false,
+      error: null,
+    });
+    try {
+      const response = await fetch(
+        `/api/root/gogetlinks/slots/${encodeURIComponent(slot.id)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "prepare_now",
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => null)) as {
+        slot?: GglPlannedSlotDto;
+        error?: string;
+      } | null;
+      if (!response.ok) {
+        throw new Error(
+          data?.error ?? "Не удалось запустить проверку слота ИИ-агентом",
+        );
+      }
+      const ready = data?.slot ? isGglSlotReadyForApproval(data.slot) : false;
+      setAgentRun((prev) =>
+        prev
+          ? {
+              ...prev,
+              active: false,
+              stepIndex: ready ? 4 : 3,
+              completedReady: ready,
+              error: null,
+            }
+          : null,
+      );
+      if (!autoTriggered) {
+        toast.success(
+          ready
+            ? `ИИ-агент завершил проверку слота ${formatRuShortDate(slot.scheduledDate)} — донор ${data?.slot?.donorDomain ?? ""} готов к подтверждению`
+            : `ИИ-агент проверил посадочную и конкурентов для слота ${formatRuShortDate(slot.scheduledDate)}`,
+        );
+      }
+      await onRefresh();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Ошибка проверки ИИ-агентом";
+      setAgentRun((prev) =>
+        prev ? { ...prev, active: false, error: message } : null,
+      );
+      if (!autoTriggered) {
+        toast.error(message);
+      }
+    } finally {
+      setBusySlotId(null);
+    }
+  }
+
+  // Auto-run AI agent check when user enters by filter or selects a filtered targetUrl
+  useEffect(() => {
+    if (targetUrlFilter === "all" || busySlotId !== null || agentRun?.active) {
+      return;
+    }
+    const autoKey = `${targetUrlFilter}::${targetKeywordHint ?? ""}`;
+    if (autoCheckedKeysRef.current.has(autoKey)) {
+      return;
+    }
+    const unreadySlotForTarget = slotsForTargetFilter.find(
+      (s) =>
+        !isGglSlotReadyForApproval(s) &&
+        (s.status === "planned" || s.status === "pending_approval"),
+    );
+    if (unreadySlotForTarget) {
+      autoCheckedKeysRef.current.add(autoKey);
+      void handlePrepareSlotNow(unreadySlotForTarget, true);
+      return;
+    }
+    if (slotsForTargetFilter.length === 0 && nextAssignableSlot) {
+      autoCheckedKeysRef.current.add(autoKey);
+      void handleAssignTargetToSlot(
+        nextAssignableSlot,
+        targetUrlFilter,
+        targetKeywordHint,
+        true,
+      );
+    }
+  }, [
+    targetUrlFilter,
+    targetKeywordHint,
+    slotsForTargetFilter,
+    nextAssignableSlot,
+    busySlotId,
+    agentRun?.active,
+  ]);
 
   return (
     <div className="space-y-5">
@@ -1052,65 +1229,180 @@ export function PlannerTab({
 
         {/* Active Target Page Callout Banner (especially when navigating from Competitor Benchmark) */}
         {targetUrlFilter !== "all" ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#d8deff] bg-[#eef1ff]/75 px-4 py-3 text-[13px] text-[#0b1024]">
-            <div className="flex items-start gap-2.5">
-              <Target className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
-              <div>
-                <div className="font-semibold text-[#0b1024]">
-                  Фильтр по посадочной:{" "}
-                  <a
-                    href={`https://wesetup.ru${targetUrlFilter}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[#3848c7] underline-offset-2 hover:underline"
-                  >
-                    {targetUrlFilter}
-                    <ExternalLink className="size-3" />
-                  </a>
-                  {targetKeywordHint ? (
-                    <span className="ml-2 font-normal text-[#3c4053]">
-                      (запрос: «<strong>{targetKeywordHint}</strong>»)
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-0.5 text-[12px] text-[#3c4053]">
-                  {slotsForTargetFilter.length > 0
-                    ? `В расписании найдено слотов для этой страницы: ${slotsForTargetFilter.length}.`
-                    : "В текущем расписании эта посадочная ещё не назначена ни на один слот — назначьте её на ближайший свободный слот одним кликом."}
+          <div className="space-y-2.5 rounded-2xl border border-[#d8deff] bg-[#eef1ff]/75 px-4 py-3 text-[13px] text-[#0b1024]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <Target className="mt-0.5 size-4 shrink-0 text-[#5566f6]" />
+                <div>
+                  <div className="font-semibold text-[#0b1024]">
+                    Фильтр по посадочной:{" "}
+                    <a
+                      href={`https://wesetup.ru${targetUrlFilter}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[#3848c7] underline-offset-2 hover:underline"
+                    >
+                      {targetUrlFilter}
+                      <ExternalLink className="size-3" />
+                    </a>
+                    {targetKeywordHint ? (
+                      <span className="ml-2 font-normal text-[#3c4053]">
+                        (запрос: «<strong>{targetKeywordHint}</strong>»)
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-0.5 text-[12px] text-[#3c4053]">
+                    {slotsForTargetFilter.length > 0
+                      ? `В расписании найдено слотов для этой страницы: ${slotsForTargetFilter.length}. ИИ-агент автоматически проверяет посадочную и конкурентов по выбранному фильтру.`
+                      : "В расписании эта посадочная ещё не назначена — ИИ-агент автоматически закрепляет её за ближайшим свободным слотом и запускает проверку."}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {nextAssignableSlot ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {slotsForTargetFilter[0] &&
+                !isGglSlotReadyForApproval(slotsForTargetFilter[0]) ? (
+                  <button
+                    type="button"
+                    disabled={busySlotId !== null}
+                    onClick={() =>
+                      void handlePrepareSlotNow(slotsForTargetFilter[0]!, false)
+                    }
+                    className={SEO_BTN_PRIMARY_CLASS}
+                  >
+                    {busySlotId === slotsForTargetFilter[0].id ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Rocket className="size-4" />
+                    )}
+                    Проверить ИИ-агентом сейчас
+                  </button>
+                ) : null}
+                {nextAssignableSlot ? (
+                  <button
+                    type="button"
+                    disabled={busySlotId === nextAssignableSlot.id}
+                    onClick={() =>
+                      void handleAssignTargetToSlot(
+                        nextAssignableSlot,
+                        targetUrlFilter,
+                        targetKeywordHint,
+                        false,
+                      )
+                    }
+                    className={
+                      slotsForTargetFilter.length === 0
+                        ? SEO_BTN_PRIMARY_CLASS
+                        : SEO_BTN_OUTLINE_CLASS
+                    }
+                  >
+                    {busySlotId === nextAssignableSlot.id ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Target className="size-4" />
+                    )}
+                    Назначить на слот{" "}
+                    {formatRuShortDate(nextAssignableSlot.scheduledDate)}
+                  </button>
+                ) : null}
                 <button
                   type="button"
-                  disabled={busySlotId === nextAssignableSlot.id}
-                  onClick={() =>
-                    void handleAssignTargetToSlot(
-                      nextAssignableSlot,
-                      targetUrlFilter,
-                      targetKeywordHint,
-                    )
-                  }
-                  className={SEO_BTN_PRIMARY_CLASS}
+                  onClick={() => setTargetUrlFilter("all")}
+                  className={SEO_BTN_OUTLINE_CLASS}
                 >
-                  {busySlotId === nextAssignableSlot.id ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Target className="size-4" />
-                  )}
-                  Назначить на слот{" "}
-                  {formatRuShortDate(nextAssignableSlot.scheduledDate)}
+                  Показать все слоты ({slots.length})
                 </button>
-              ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Step-by-Step AI Agent Progress Loader */}
+        {agentRun ? (
+          <div className="rounded-2xl border border-[#c7d2fe] bg-white px-4 py-3 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[12.5px] font-semibold text-[#0b1024]">
+                {agentRun.active ? (
+                  <Loader2 className="size-4 animate-spin text-[#5566f6]" />
+                ) : agentRun.error ? (
+                  <X className="size-4 text-[#b91c1c]" />
+                ) : (
+                  <Check className="size-4 text-[#116b2a]" />
+                )}
+                <span>
+                  {agentRun.active
+                    ? `ИИ-агент проверяет фильтр ${agentRun.targetUrl} (${agentRun.elapsedSec} сек)…`
+                    : agentRun.error
+                      ? `Ошибка проверки ${agentRun.targetUrl}: ${agentRun.error}`
+                      : agentRun.completedReady
+                        ? `ИИ-агент завершил проверку ${agentRun.targetUrl} — площадка-донор и статья готовы к подтверждению`
+                        : `ИИ-агент проверил посадочную ${agentRun.targetUrl} и конкурентов — ожидается ответ редактора по донорам`}
+                </span>
+              </div>
               <button
                 type="button"
-                onClick={() => setTargetUrlFilter("all")}
-                className={SEO_BTN_OUTLINE_CLASS}
+                onClick={() => setAgentRun(null)}
+                className="text-[11.5px] text-[#6f7282] hover:text-[#0b1024]"
               >
-                Показать все слоты ({slots.length})
+                Скрыть
               </button>
+            </div>
+
+            <div className="mt-2.5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  idx: 0,
+                  title: "1. Посадочная ссылка wesetup.ru",
+                  desc: `Проверка ${agentRun.targetUrl} (200 OK, канонический URL без редиректов)`,
+                },
+                {
+                  idx: 1,
+                  title: "2. Сайт конкурента и Topvisor",
+                  desc: `Сверка кластера «${agentRun.keyword ?? agentRun.targetUrl}» в Similarweb и позиций Я/G`,
+                },
+                {
+                  idx: 2,
+                  title: "3. Площадки-доноры GoGetLinks",
+                  desc: "Отбор по TF/CF, Трасту и проверка тематики публикаций сайта-донора",
+                },
+                {
+                  idx: 3,
+                  title: "4. Анкор и черновик статьи / ТЗ",
+                  desc: "Расчёт безопасного анкора (50/30/20) и подготовка материала",
+                },
+              ].map((step) => {
+                const isDone =
+                  !agentRun.error &&
+                  (agentRun.completedReady || agentRun.stepIndex > step.idx);
+                const isCurrent =
+                  agentRun.active && agentRun.stepIndex === step.idx;
+                return (
+                  <div
+                    key={step.idx}
+                    className={`rounded-xl border px-3 py-2 text-[11.5px] transition-colors ${
+                      isCurrent
+                        ? "border-[#5566f6] bg-[#eef1ff]/80 text-[#0b1024]"
+                        : isDone
+                          ? "border-[#bbf7d0] bg-[#ecfdf5]/70 text-[#0b1024]"
+                          : "border-[#ececf4] bg-[#fafbff] text-[#6f7282]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      {isCurrent ? (
+                        <Loader2 className="size-3.5 shrink-0 animate-spin text-[#5566f6]" />
+                      ) : isDone ? (
+                        <Check className="size-3.5 shrink-0 text-[#116b2a]" />
+                      ) : (
+                        <span className="inline-block size-2 rounded-full bg-[#c4c8db]" />
+                      )}
+                      <span className="truncate">{step.title}</span>
+                    </div>
+                    <div className="mt-0.5 line-clamp-2 text-[11px] text-[#6f7282]">
+                      {step.desc}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : null}
@@ -1256,27 +1548,6 @@ export function PlannerTab({
                           >
                             {slot.selectionReason}
                           </div>
-                        ) : null}
-                        {canMutateSlot &&
-                        initialTargetUrlFilter &&
-                        (!slot.targetUrl ||
-                          shortWesetupPath(slot.targetUrl) !==
-                            shortWesetupPath(initialTargetUrlFilter)) ? (
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() =>
-                              void handleAssignTargetToSlot(
-                                slot,
-                                shortWesetupPath(initialTargetUrlFilter),
-                                targetKeywordHint ?? initialTargetKeyword,
-                              )
-                            }
-                            className="mt-1.5 inline-flex items-center gap-1 rounded-lg border border-[#d8deff] bg-[#eef1ff] px-2 py-0.5 text-[11px] font-semibold text-[#3848c7] hover:bg-[#dfe5ff] disabled:opacity-50"
-                          >
-                            <Target className="size-3" />
-                            Назначить {shortWesetupPath(initialTargetUrlFilter)}
-                          </button>
                         ) : null}
                       </td>
 
@@ -1448,7 +1719,39 @@ export function PlannerTab({
                             ) : null}
                           </div>
                         ) : (
-                          <span className="text-[#9b9fb3]">—</span>
+                          <div className="space-y-1 text-[11.5px] text-[#6f7282]">
+                            {isBusy ? (
+                              <div className="inline-flex items-center gap-1.5 font-medium text-[#3848c7]">
+                                <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
+                                <span>
+                                  ИИ-агент проверяет посадочную, конкурента и доноров…
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  {slot.targetUrl
+                                    ? "Ожидает проверки площадки-донора ИИ-агентом"
+                                    : "Ожидает назначения посадочной и подбора донора"}
+                                </div>
+                                {canMutateSlot &&
+                                (slot.status === "planned" ||
+                                  slot.status === "pending_approval") ? (
+                                  <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() =>
+                                      void handlePrepareSlotNow(slot, false)
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-lg border border-[#d8deff] bg-[#eef1ff] px-2 py-0.5 text-[11px] font-semibold text-[#3848c7] hover:bg-[#dfe5ff] disabled:opacity-50"
+                                  >
+                                    <Rocket className="size-3" />
+                                    Проверить ИИ-агентом
+                                  </button>
+                                ) : null}
+                              </>
+                            )}
+                          </div>
                         )}
                       </td>
 

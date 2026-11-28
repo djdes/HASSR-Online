@@ -2646,10 +2646,11 @@ export async function createManualGglOrder(
 export async function mutatePlannedSlot(
   input: {
     slotId: string;
-    action: "skip" | "swap_donor" | "update_article" | "assign_target";
+    action: "skip" | "swap_donor" | "update_article" | "assign_target" | "prepare_now";
     donorSiteId?: number;
     targetUrl?: string;
     targetKeyword?: string;
+    prepareNow?: boolean;
     articlePatch?: ArticlePatch;
     actor: PlatformActor;
   },
@@ -2711,6 +2712,27 @@ export async function mutatePlannedSlot(
     return updated;
   }
 
+  if (input.action === "prepare_now") {
+    const canRunPrepare = !deps?.prismaClient;
+    if (canRunPrepare && (slot.status === "planned" || slot.status === "pending_approval")) {
+      await prepareUpcomingPlannedSlots(new Date(), 35).catch((err) => {
+        console.warn("[ggl-slot-mutate] prepare_now background pass failed:", err);
+      });
+    }
+    const refreshed = await client.gglPlannedSlot.findUnique({
+      where: { id: slot.id },
+      include: {
+        plan: {
+          include: {
+            campaign: { select: { id: true, isWesetup: true } },
+          },
+        },
+        article: true,
+      },
+    });
+    return refreshed ?? slot;
+  }
+
   if (input.action === "assign_target") {
     const resolvedTarget = resolvePublicSeoTargetPath(input.targetUrl);
     if (!resolvedTarget) {
@@ -2735,7 +2757,7 @@ export async function mutatePlannedSlot(
         targetKeyword: cleanKeyword,
         anchor: selectedAnchor.anchor,
         anchorKind: selectedAnchor.anchorKind,
-        selectionReason: `Назначено вручную из сверки конкурентов: «${cleanKeyword}» → ${resolvedTarget}`,
+        selectionReason: `Назначено из сверки конкурентов: «${cleanKeyword}» → ${resolvedTarget}`,
         ...(slot.status === "skipped" || slot.status === "failed"
           ? { status: "planned" }
           : {}),
@@ -2755,6 +2777,25 @@ export async function mutatePlannedSlot(
         anchor: selectedAnchor.anchor,
       },
     });
+
+    if (input.prepareNow && !deps?.prismaClient) {
+      await prepareUpcomingPlannedSlots(new Date(), 35).catch((err) => {
+        console.warn("[ggl-slot-mutate] assign_target prepareNow pass failed:", err);
+      });
+      const refreshed = await client.gglPlannedSlot.findUnique({
+        where: { id: slot.id },
+        include: {
+          plan: {
+            include: {
+              campaign: { select: { id: true, isWesetup: true } },
+            },
+          },
+          article: true,
+        },
+      });
+      if (refreshed) return refreshed;
+    }
+
     return updated;
   }
 
