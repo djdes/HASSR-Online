@@ -101,10 +101,13 @@ test("reconcileSyncedOrder preserves Wesetup human attribution on existing order
 test("DEFAULT_SIMILARWEB_SNAPSHOTS covers Jul–Sep 2026 audit domains and ensureDefaultSimilarwebSnapshots is idempotent", async () => {
   assert.deepEqual(
     DEFAULT_SIMILARWEB_SNAPSHOTS.map((s) => s.domain),
-    ["wesetup.ru", "haccp-online.ru", "checkoffice.ru"],
+    ["wesetup.ru", "haccp-online.ru", "checkoffice.ru", "rushaccp.ru"],
   );
   const haccp = DEFAULT_SIMILARWEB_SNAPSHOTS.find((s) => s.domain === "haccp-online.ru")!;
   assert.ok(haccp.clusters.every((c) => c.mappedTargetUrl.startsWith("/")));
+  assert.ok(haccp.clusters.length >= 10);
+  assert.ok((haccp.telemetry?.topReferrals?.length ?? 0) >= 3);
+  assert.ok((haccp.telemetry?.similarSites?.length ?? 0) >= 3);
 
   const store = new Map<string, Record<string, unknown>>();
   const mockPrisma = {
@@ -125,9 +128,9 @@ test("DEFAULT_SIMILARWEB_SNAPSHOTS covers Jul–Sep 2026 audit domains and ensur
 
   const count1 = await ensureDefaultSimilarwebSnapshots(mockPrisma as never);
   const count2 = await ensureDefaultSimilarwebSnapshots(mockPrisma as never);
-  assert.equal(count1, 3);
-  assert.equal(count2, 3);
-  assert.equal(store.size, 3);
+  assert.equal(count1, 4);
+  assert.equal(count2, 4);
+  assert.equal(store.size, 4);
 });
 
 test("syncGglCabinet keeps campaigns 'closed' when listActiveCampaigns redirects to view_closed on zero-active-campaign account", async () => {

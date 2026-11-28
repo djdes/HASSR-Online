@@ -9,6 +9,8 @@ import { isPublicSeoTargetAllowed } from "@/lib/seo/gogetlinks-planner";
 import {
   buildCompetitorBenchmarkReport,
   buildCompetitorSnapshotFromSerpAndSite,
+  decodeSimilarwebClustersPayload,
+  encodeSimilarwebClustersPayload,
   mapSimilarwebPhraseToWesetupUrl,
   parseSimilarwebApiPayload,
   parseSimilarwebCookieInput,
@@ -71,6 +73,13 @@ test("config/api-anything/sites/similarweb.json passes api-anything parseSite va
     "getDomainOverview",
     "getWebsiteAnalysis",
     "getProSearchKeywords",
+    "getProSearchBrandedSplit",
+    "getProTrafficSources",
+    "getProPopularPages",
+    "getProSubfolders",
+    "getProIncomingReferrals",
+    "getProSimilarSites",
+    "getProAudienceInterests",
   ]);
   for (const op of site.operations) {
     assert.equal(op.readOnly, true);
@@ -674,6 +683,103 @@ test("buildCompetitorSnapshotFromSerpAndSite builds automated competitor snapsho
   assert.equal(fromPreset.domain, "rushaccp.ru");
   assert.ok(fromPreset.clusters.length >= 4);
   assert.equal(fromPreset.clusters[0].mappedTargetUrl, "/uslugi");
+});
+
+test("parseSimilarwebApiPayload and encode/decodeSimilarwebClustersPayload preserve full Similarweb telemetry, referrals, similar sites, and keyword volume/CPC", () => {
+  const snapshot = parseSimilarwebApiPayload(
+    "haccp-online.ru",
+    {
+      SiteName: "haccp-online.ru",
+      GlobalRank: { Rank: 1894500 },
+      CountryRank: { Rank: 92400 },
+      CategoryRank: { Rank: 412, Category: "Business_and_Consumer_Services" },
+      Engagments: {
+        Visits: 14240,
+        BounceRate: 0.416,
+        PagePerVisit: 2.34,
+        TimeOnSite: 154,
+        Month: "09",
+        Year: "2026",
+      },
+      TrafficSources: {
+        "Organic Search": 0.248,
+        "Paid Search": 0.2327,
+        Direct: 0.421,
+        Referrals: 0.064,
+        Social: 0.028,
+        Mail: 0.0063,
+      },
+      TopCountryShares: [{ CountryCode: "643", Value: 0.924 }],
+      TopReferringSites: [
+        { Site: "restoranoff.ru", Value: 0.284 },
+        { Site: "pitportal.ru", Value: 0.216 },
+      ],
+      SimilarSites: [
+        { Site: "rushaccp.ru", Similarity: 0.864, Rank: 1540000 },
+        { Site: "checkoffice.ru", Similarity: 0.742 },
+      ],
+      TopPages: [{ Url: "/journals/brakeryjournal", Share: 0.186 }],
+      TopKeywords: [
+        {
+          Name: "бракеражный журнал готовой продукции",
+          Share: 0.1461,
+          Volume: 4858,
+          Cpc: 1.28,
+          DestUrl: "https://haccp-online.ru/journals/brakeryjournal",
+          Position: 2,
+        },
+      ],
+    },
+  );
+
+  assert.equal(snapshot.telemetry?.avgVisitDurationSec, 154);
+  assert.equal(snapshot.telemetry?.globalRank, 1894500);
+  assert.equal(snapshot.telemetry?.countryRank, 92400);
+  assert.equal(snapshot.telemetry?.directSharePct, 42.1);
+  assert.equal(snapshot.telemetry?.referralsSharePct, 6.4);
+  assert.equal(snapshot.telemetry?.topReferrals?.length, 2);
+  assert.equal(snapshot.telemetry?.topReferrals?.[0]?.domain, "restoranoff.ru");
+  assert.equal(snapshot.telemetry?.similarSites?.length, 2);
+  assert.equal(snapshot.telemetry?.similarSites?.[0]?.domain, "rushaccp.ru");
+  assert.equal(snapshot.telemetry?.similarSites?.[0]?.affinityPct, 86.4);
+  assert.equal(snapshot.clusters[0]?.volume, 4858);
+  assert.equal(snapshot.clusters[0]?.cpcUsd, 1.28);
+  assert.equal(snapshot.clusters[0]?.competitorPos, 2);
+
+  const encoded = encodeSimilarwebClustersPayload(
+    snapshot.clusters,
+    snapshot.telemetry,
+  );
+  const decoded = decodeSimilarwebClustersPayload(encoded);
+  assert.equal(decoded.clusters.length, 1);
+  assert.equal(decoded.clusters[0]?.phrase, "бракеражный журнал готовой продукции");
+  assert.equal(decoded.clusters[0]?.volume, 4858);
+  assert.equal(decoded.telemetry.directSharePct, 42.1);
+  assert.equal(decoded.telemetry.topReferrals?.[0]?.domain, "restoranoff.ru");
+
+  const benchmark = buildCompetitorBenchmarkReport({
+    snapshots: [
+      {
+        id: "s1",
+        domain: "haccp-online.ru",
+        periodLabel: snapshot.periodLabel,
+        visitsMonthly: snapshot.visitsMonthly,
+        organicSharePct: snapshot.organicSharePct,
+        paidSharePct: snapshot.paidSharePct,
+        bouncePct: snapshot.bouncePct,
+        pagesPerVisit: snapshot.pagesPerVisit,
+        clusters: encoded,
+        sourceKind: "agent_import",
+      },
+    ],
+  });
+
+  assert.equal(benchmark.domains[0]?.avgVisitDurationFormatted, "02:34");
+  assert.equal(benchmark.domains[0]?.directSharePct, 42.1);
+  assert.equal(benchmark.discoveredReferrals.length, 2);
+  assert.equal(benchmark.discoveredSimilarSites.length, 2);
+  assert.equal(benchmark.clusterGaps[0]?.volume, 4858);
+  assert.equal(benchmark.clusterGaps[0]?.cpcUsd, 1.28);
 });
 
 

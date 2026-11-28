@@ -25,10 +25,11 @@ const articlePatchSchema = z.object({
 });
 
 const mutateSlotBodySchema = z.object({
-  action: z.enum(["skip", "swap_donor", "update_article", "assign_target"]),
+  action: z.enum(["skip", "swap_donor", "update_article", "assign_target", "prepare_now"]),
   donorSiteId: z.number().int().positive().optional(),
   targetUrl: z.string().trim().min(1).max(300).optional(),
   targetKeyword: z.string().trim().max(200).optional(),
+  prepareNow: z.boolean().optional(),
   articlePatch: articlePatchSchema.optional(),
 });
 
@@ -59,6 +60,7 @@ export async function PATCH(
       donorSiteId: parsed.data.donorSiteId,
       targetUrl: parsed.data.targetUrl,
       targetKeyword: parsed.data.targetKeyword,
+      prepareNow: parsed.data.prepareNow,
       articlePatch: parsed.data.articlePatch,
       actor,
     });

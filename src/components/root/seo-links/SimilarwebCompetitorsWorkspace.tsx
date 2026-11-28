@@ -5,17 +5,24 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
-  CheckCircle2,
+  Check,
   ChevronDown,
   ChevronUp,
+  Compass,
+  Copy,
   ExternalLink,
+  Flame,
+  FolderTree,
+  Globe,
   ImageUp,
   KeyRound,
+  Link2,
   Loader2,
   Plus,
   RefreshCw,
   Rocket,
   Save,
+  Search,
   Sparkles,
   Trash2,
   TrendingUp,
@@ -23,7 +30,10 @@ import {
 import { toast } from "sonner";
 import type { ScoredTargetPage } from "@/lib/seo/gogetlinks-planner";
 import { badgeToneClass } from "@/lib/seo/gogetlinks-ui-format";
-import type { CompetitorBenchmarkVerdict } from "@/lib/seo/similarweb-client";
+import {
+  type CompetitorBenchmarkVerdict,
+  decodeSimilarwebClustersPayload,
+} from "@/lib/seo/similarweb-client";
 import {
   SEO_BTN_OUTLINE_CLASS,
   SEO_BTN_PRIMARY_CLASS,
@@ -43,26 +53,11 @@ export interface SimilarwebCompetitorsWorkspaceProps {
 }
 
 type VerdictFilterKey = "all" | CompetitorBenchmarkVerdict;
+type ChannelFilterKey = "all" | "organic" | "paid";
 
 function parseClusters(raw: unknown): SimilarwebClusterDto[] {
-  if (!Array.isArray(raw)) return [];
-  const out: SimilarwebClusterDto[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const rec = item as Record<string, unknown>;
-    if (typeof rec.phrase !== "string" || !rec.phrase.trim()) continue;
-    out.push({
-      phrase: rec.phrase.trim(),
-      trafficSharePct: Number(rec.trafficSharePct ?? 0) || 0,
-      channel: rec.channel === "paid" ? "paid" : "organic",
-      mappedTargetUrl:
-        typeof rec.mappedTargetUrl === "string"
-          ? rec.mappedTargetUrl
-          : "/journals-info",
-      notes: typeof rec.notes === "string" ? rec.notes : undefined,
-    });
-  }
-  return out;
+  const { clusters } = decodeSimilarwebClustersPayload(raw);
+  return clusters;
 }
 
 function formatPriorityTier(tier: ScoredTargetPage["priorityTier"]): {
@@ -71,14 +66,14 @@ function formatPriorityTier(tier: ScoredTargetPage["priorityTier"]): {
 } {
   switch (tier) {
     case "push_top3":
-      return { label: "Дожим в ТОП-3 (поз. 4–30)", tone: "indigo" };
+      return { label: "Дожим ТОП-3", tone: "indigo" };
     case "zero_links":
-      return { label: "Стартовый вес (0 ссылок)", tone: "amber" };
+      return { label: "0 ссылок", tone: "amber" };
     case "growth":
-      return { label: "Усиление кластера", tone: "emerald" };
+      return { label: "Усиление", tone: "emerald" };
     case "baseline":
     default:
-      return { label: "Базовый приоритет", tone: "slate" };
+      return { label: "Базовый", tone: "slate" };
   }
 }
 
@@ -114,13 +109,27 @@ export function SimilarwebCompetitorsWorkspace({
 
   const [apiDomainInput, setApiDomainInput] = useState("rushaccp.ru");
   const [syncingApiDomain, setSyncingApiDomain] = useState<string | null>(null);
+  const [syncProgress, setSyncProgress] = useState<{
+    active: boolean;
+    targetLabel: string;
+    stepIndex: number;
+    startedAtMs: number;
+    elapsedSec: number;
+    completedCount: number | null;
+    error: string | null;
+  } | null>(null);
   const [swSettingsOpen, setSwSettingsOpen] = useState(false);
   const [swCookieInput, setSwCookieInput] = useState("");
   const [swApiKeyInput, setSwApiKeyInput] = useState("");
   const [savingSwConn, setSavingSwConn] = useState(false);
 
   const [verdictFilter, setVerdictFilter] = useState<VerdictFilterKey>("all");
+  const [channelFilter, setChannelFilter] = useState<ChannelFilterKey>("all");
   const [domainFilter, setDomainFilter] = useState<string>("all");
+  const [risingOnlyFilter, setRisingOnlyFilter] = useState(false);
+  const [exclusiveOnlyFilter, setExclusiveOnlyFilter] = useState(false);
+  const [keywordSearch, setKeywordSearch] = useState("");
+  const [expandedDomains, setExpandedDomains] = useState<Record<string, boolean>>({});
   const [showDetailedMatrix, setShowDetailedMatrix] = useState(false);
 
   const [manualOpen, setManualOpen] = useState(false);
@@ -200,14 +209,41 @@ export function SimilarwebCompetitorsWorkspace({
 
   const filteredGaps = useMemo(() => {
     const allGaps = benchmark?.clusterGaps ?? [];
+    const q = keywordSearch.trim().toLowerCase();
     return allGaps.filter((row) => {
       if (verdictFilter !== "all" && row.verdict !== verdictFilter) return false;
+      if (channelFilter !== "all" && row.competitorChannel !== channelFilter) {
+        return false;
+      }
       if (domainFilter !== "all" && row.competitorDomain !== domainFilter) {
+        return false;
+      }
+      if (risingOnlyFilter && !(row.changePct !== null && row.changePct > 0)) {
+        return false;
+      }
+      if (exclusiveOnlyFilter && !row.isExclusiveToCompetitors) {
+        return false;
+      }
+      if (
+        q &&
+        !row.phrase.toLowerCase().includes(q) &&
+        !row.mappedTargetUrl.toLowerCase().includes(q) &&
+        !row.competitorDomain.toLowerCase().includes(q) &&
+        !(row.competitorUrl ?? "").toLowerCase().includes(q)
+      ) {
         return false;
       }
       return true;
     });
-  }, [benchmark, verdictFilter, domainFilter]);
+  }, [
+    benchmark,
+    verdictFilter,
+    channelFilter,
+    domainFilter,
+    risingOnlyFilter,
+    exclusiveOnlyFilter,
+    keywordSearch,
+  ]);
 
   const competitorDomains = useMemo(() => {
     return (benchmark?.domains ?? [])
@@ -219,6 +255,23 @@ export function SimilarwebCompetitorsWorkspace({
     await Promise.all([loadMatrix(), onAfterChange?.()]);
   }
 
+  useEffect(() => {
+    if (!syncProgress?.active) return;
+    const timer = window.setInterval(() => {
+      setSyncProgress((prev) => {
+        if (!prev || !prev.active) return prev;
+        const elapsedSec = Math.max(
+          1,
+          Math.floor((Date.now() - prev.startedAtMs) / 1000),
+        );
+        const stepIndex =
+          elapsedSec < 2 ? 0 : elapsedSec < 4 ? 1 : elapsedSec < 7 ? 2 : 3;
+        return { ...prev, elapsedSec, stepIndex };
+      });
+    }, 800);
+    return () => window.clearInterval(timer);
+  }, [syncProgress?.active]);
+
   async function handleSyncViaApiAnything(domainsToSync: string[]) {
     const cleanList = domainsToSync
       .map((d) => d.trim().toLowerCase())
@@ -228,8 +281,21 @@ export function SimilarwebCompetitorsWorkspace({
       return;
     }
 
-    const label = cleanList.length === 1 ? cleanList[0] : "all";
+    const label = cleanList.length === 1 ? cleanList[0]! : "all";
+    const displayLabel =
+      cleanList.length === 1
+        ? cleanList[0]!
+        : `${cleanList.length} доменов (${cleanList.join(", ")})`;
     setSyncingApiDomain(label);
+    setSyncProgress({
+      active: true,
+      targetLabel: displayLabel,
+      stepIndex: 0,
+      startedAtMs: Date.now(),
+      elapsedSec: 0,
+      completedCount: null,
+      error: null,
+    });
     try {
       const response = await fetch("/api/root/gogetlinks/similarweb", {
         method: "POST",
@@ -254,16 +320,30 @@ export function SimilarwebCompetitorsWorkspace({
         );
       }
       const syncedCount = data.snapshots?.length ?? 1;
+      setSyncProgress((prev) =>
+        prev
+          ? {
+              ...prev,
+              active: false,
+              stepIndex: 4,
+              completedCount: syncedCount,
+              error: null,
+            }
+          : null,
+      );
       toast.success(
         syncedCount > 1
           ? `Обновлено доменов: ${syncedCount}`
-          : `Домен ${data.snapshot?.domain} проанализирован и добавлен в сверку`,
+          : `Домен ${data.snapshot?.domain} проанализирован`,
       );
       await notifyChange();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Ошибка синхронизации домена",
+      const msg =
+        err instanceof Error ? err.message : "Ошибка синхронизации домена";
+      setSyncProgress((prev) =>
+        prev ? { ...prev, active: false, error: msg } : null,
       );
+      toast.error(msg);
     } finally {
       setSyncingApiDomain(null);
     }
@@ -294,9 +374,7 @@ export function SimilarwebCompetitorsWorkspace({
       setSwCookieInput("");
       setSwApiKeyInput("");
       toast.success(
-        clear
-          ? "Сессия Similarweb очищена"
-          : "Сессия Similarweb сохранена",
+        clear ? "Сессия Similarweb очищена" : "Сессия Similarweb сохранена",
       );
       await loadMatrix();
     } catch (err) {
@@ -401,33 +479,33 @@ export function SimilarwebCompetitorsWorkspace({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Compact Toolbar: Add / Sync Competitor Domain */}
       <section className={SEO_CARD_CLASS}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[13px] font-semibold text-[#0b1024]">
-              Проверить конкурента:
+              Домен:
             </span>
             <input
               type="text"
               value={apiDomainInput}
               onChange={(e) => setApiDomainInput(e.target.value)}
-              placeholder="Например, rushaccp.ru"
-              className={`${SEO_INPUT_CLASS} !h-9 !w-52 !text-[13px]`}
+              placeholder="rushaccp.ru"
+              className={`${SEO_INPUT_CLASS} !h-9 !w-48 !text-[13px]`}
             />
             <button
               type="button"
               disabled={syncingApiDomain !== null}
               onClick={() => void handleSyncViaApiAnything([apiDomainInput])}
-              className={SEO_BTN_PRIMARY_CLASS}
+              className={`${SEO_BTN_PRIMARY_CLASS} !h-9 !px-3.5 !text-[13px]`}
             >
               {syncingApiDomain === apiDomainInput.trim().toLowerCase() ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <RefreshCw className="size-4" />
+                <RefreshCw className="size-3.5" />
               )}
-              Анализировать домен
+              Проверить
             </button>
 
             <div className="hidden h-5 w-px bg-[#dcdfed] sm:block" />
@@ -475,7 +553,7 @@ export function SimilarwebCompetitorsWorkspace({
               ) : (
                 <ImageUp className="size-3.5 text-[#5566f6]" />
               )}
-              {uploadingOcr ? "Распознаём…" : "Загрузить скриншот"}
+              {uploadingOcr ? "OCR…" : "Скриншот"}
             </button>
 
             <button
@@ -498,6 +576,152 @@ export function SimilarwebCompetitorsWorkspace({
           </div>
         </div>
 
+        {/* Step-by-Step AI Agent Competitor Loader */}
+        {syncProgress ? (
+          <div className="mt-3.5 rounded-2xl border border-[#c7d2fe] bg-[#eef1ff]/60 px-3.5 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[12px] font-semibold text-[#0b1024]">
+                {syncProgress.active ? (
+                  <Loader2 className="size-3.5 animate-spin text-[#5566f6]" />
+                ) : syncProgress.error ? (
+                  <span className="text-[#b91c1c]">✕</span>
+                ) : (
+                  <Check className="size-3.5 text-[#116b2a]" />
+                )}
+                <span>
+                  {syncProgress.active
+                    ? `ИИ-агент проверяет сайт конкурента ${syncProgress.targetLabel} (${syncProgress.elapsedSec} сек)…`
+                    : syncProgress.error
+                      ? `Ошибка проверки ${syncProgress.targetLabel}: ${syncProgress.error}`
+                      : `ИИ-агент проверил ${syncProgress.targetLabel} и обновил матрицу ключевиков и посадочных`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSyncProgress(null)}
+                className="text-[11px] text-[#6f7282] hover:text-[#0b1024]"
+              >
+                Скрыть
+              </button>
+            </div>
+            <div className="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  idx: 0,
+                  title: "1. Проверяет сайт конкурента",
+                  desc: `Визиты, 6 каналов трафика, рефералы и разделы ${syncProgress.targetLabel}`,
+                },
+                {
+                  idx: 1,
+                  title: "2. Ключевики SEO + Директ",
+                  desc: "Доли трафика, частотность Вордстат, CPC и растущие запросы",
+                },
+                {
+                  idx: 2,
+                  title: "3. Проверяет посадочные ссылки",
+                  desc: "Сопоставление с каноническими URL wesetup.ru (200 OK) без редиректов",
+                },
+                {
+                  idx: 3,
+                  title: "4. Сверка позиций Topvisor",
+                  desc: "Позиции Яндекс/Google и расчёт точек перехвата в план GGL",
+                },
+              ].map((step) => {
+                const isDone =
+                  !syncProgress.error &&
+                  (syncProgress.completedCount !== null ||
+                    syncProgress.stepIndex > step.idx);
+                const isCurrent =
+                  syncProgress.active && syncProgress.stepIndex === step.idx;
+                return (
+                  <div
+                    key={step.idx}
+                    className={`rounded-xl border px-2.5 py-1.5 text-[11px] ${
+                      isCurrent
+                        ? "border-[#5566f6] bg-white text-[#0b1024]"
+                        : isDone
+                          ? "border-[#bbf7d0] bg-[#ecfdf5]/80 text-[#0b1024]"
+                          : "border-[#dcdfed]/80 bg-white/70 text-[#6f7282]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      {isCurrent ? (
+                        <Loader2 className="size-3 shrink-0 animate-spin text-[#5566f6]" />
+                      ) : isDone ? (
+                        <Check className="size-3 shrink-0 text-[#116b2a]" />
+                      ) : (
+                        <span className="inline-block size-1.5 rounded-full bg-[#c4c8db]" />
+                      )}
+                      <span className="truncate">{step.title}</span>
+                    </div>
+                    <div className="mt-0.5 truncate text-[10.5px] text-[#6f7282]">
+                      {step.desc}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Summary KPI Strip */}
+        {benchmark ? (
+          <div className="mt-3.5 grid grid-cols-2 gap-2 border-t border-[#ececf4] pt-3.5 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="rounded-xl border border-[#dcdfed]/70 bg-[#fafbff] px-3 py-2">
+              <div className="text-[11px] text-[#6f7282]">Конкурентов</div>
+              <div className="text-[16px] font-semibold text-[#0b1024]">
+                {benchmark.summary.totalCompetitors}{" "}
+                <span className="text-[11.5px] font-normal text-[#6f7282]">
+                  сайта
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#dcdfed]/70 bg-[#fafbff] px-3 py-2">
+              <div className="text-[11px] text-[#6f7282]">Ключей в сверке</div>
+              <div className="text-[16px] font-semibold text-[#0b1024]">
+                {benchmark.summary.totalTrackedKeywords}{" "}
+                <span className="text-[11.5px] font-normal text-[#6f7282]">
+                  ({benchmark.summary.paidKeywordsCount} Директ)
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#dcdfed]/70 bg-[#fafbff] px-3 py-2">
+              <div className="text-[11px] text-[#6f7282]">Дожим в ТОП-3</div>
+              <div className="text-[16px] font-semibold text-[#3848c7]">
+                {benchmark.summary.pushTop3Count}{" "}
+                <span className="text-[11.5px] font-normal text-[#6f7282]">
+                  поз. 4–30
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#dcdfed]/70 bg-[#fafbff] px-3 py-2">
+              <div className="text-[11px] text-[#6f7282]">Не в ТОП-30</div>
+              <div className="text-[16px] font-semibold text-[#d97706]">
+                {benchmark.summary.gapNoRankCount}{" "}
+                <span className="text-[11.5px] font-normal text-[#6f7282]">
+                  точек роста
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#dcdfed]/70 bg-[#fafbff] px-3 py-2">
+              <div className="text-[11px] text-[#6f7282]">Мы в ТОП-3</div>
+              <div className="text-[16px] font-semibold text-[#116b2a]">
+                {benchmark.summary.leaderCount}{" "}
+                <span className="text-[11.5px] font-normal text-[#6f7282]">
+                  лидеры
+                </span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-[#bbf7d0] bg-[#ecfdf5]/70 px-3 py-2">
+              <div className="text-[11px] text-[#116b2a]">Потенциал перехвата</div>
+              <div className="text-[16px] font-semibold text-[#116b2a]">
+                +{benchmark.summary.totalPotentialMonthlyVisits.toLocaleString("ru-RU")}{" "}
+                <span className="text-[11.5px] font-normal">виз./мес</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {swSettingsOpen ? (
           <form
             method="post"
@@ -505,13 +729,8 @@ export function SimilarwebCompetitorsWorkspace({
             className="mt-4 space-y-3 rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div className="text-[13px] font-semibold text-[#0b1024]">
-                  Дополнительные настройки api-anything (Similarweb)
-                </div>
-                <p className="mt-0.5 text-[12px] text-[#6f7282]">
-                  Если Similarweb закрыт защитой CloudFront, система автоматически переключается на живую SERP-сверку через Topvisor и анализ структуры сайта конкурента.
-                </p>
+              <div className="text-[13px] font-semibold text-[#0b1024]">
+                Сессия Similarweb (api-anything)
               </div>
               {swConn ? (
                 <span
@@ -520,7 +739,7 @@ export function SimilarwebCompetitorsWorkspace({
                   )}`}
                 >
                   {swConn.configured
-                    ? `Кук сохранено: ${swConn.cookieCount}`
+                    ? `Кук: ${swConn.cookieCount}`
                     : "Авторежим (Topvisor SERP + api-anything)"}
                 </span>
               ) : null}
@@ -529,19 +748,19 @@ export function SimilarwebCompetitorsWorkspace({
             <div className="grid gap-3 md:grid-cols-3">
               <div className="md:col-span-2">
                 <label className="mb-1 block text-[11.5px] font-medium text-[#6f7282]">
-                  Сессионные куки Similarweb (необязательно)
+                  Куки Similarweb (Cookie header или JSON)
                 </label>
                 <textarea
                   rows={2}
                   value={swCookieInput}
                   onChange={(e) => setSwCookieInput(e.target.value)}
-                  placeholder="Cookie header или JSON массив кук"
+                  placeholder="aws-waf-token=...; sw_Session=..."
                   className={SEO_TEXTAREA_CLASS}
                 />
               </div>
               <div>
                 <label className="mb-1 block text-[11.5px] font-medium text-[#6f7282]">
-                  Similarweb REST API Key (необязательно)
+                  REST API Key
                 </label>
                 <input
                   type="password"
@@ -669,7 +888,7 @@ export function SimilarwebCompetitorsWorkspace({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-[#6f7282]">
-                  Поисковые запросы и посадочные wesetup.ru
+                  Ключевые запросы и посадочные wesetup.ru
                 </span>
                 <button
                   type="button"
@@ -800,18 +1019,13 @@ export function SimilarwebCompetitorsWorkspace({
         ) : null}
       </section>
 
-      {/* SECTION 1: КАНАЛЫ ПРИВЛЕЧЕНИЯ КОНКУРЕНТОВ (Простая и наглядная раскладка) */}
+      {/* SECTION 1: КАРТОЧКИ САЙТОВ (Трафик, 6 каналов Similarweb, Вовлечённость, ВСЕ ключевики, Топ страниц, Рефералы) */}
       {benchmark && benchmark.domains.length > 0 ? (
         <section className={SEO_CARD_CLASS}>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                <BarChart3 className="size-4 text-[#5566f6]" />
-                1. Каналы привлечения трафика конкурентов (Откуда они берут клиентов)
-              </div>
-              <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Разбивка месячного трафика каждого сайта по источникам (SEO-органика, Яндекс.Директ, прямые/реферальные переходы) и главный вывод по их стратегии.
-              </p>
+          <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              <BarChart3 className="size-4 text-[#5566f6]" />
+              1. Сравнение сайтов Similarweb
             </div>
 
             <button
@@ -832,67 +1046,127 @@ export function SimilarwebCompetitorsWorkspace({
               ) : (
                 <RefreshCw className="size-3.5 text-[#5566f6]" />
               )}
-              Обновить все домены
+              Обновить все
             </button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3.5 md:grid-cols-2">
             {benchmark.domains.map((dom) => {
               const orgWidth = Math.max(0, Math.min(100, dom.organicSharePct ?? 0));
               const paidWidth = Math.max(
                 0,
                 Math.min(100 - orgWidth, dom.paidSharePct ?? 0),
               );
-              const otherWidth = Math.max(0, 100 - orgWidth - paidWidth);
-              const topClusters = clustersByDomain.get(dom.domain) ?? [];
+              const directWidth = Math.max(
+                0,
+                Math.min(100 - orgWidth - paidWidth, dom.directSharePct ?? 0),
+              );
+              const refWidth = Math.max(
+                0,
+                Math.min(
+                  100 - orgWidth - paidWidth - directWidth,
+                  dom.referralsSharePct ?? 0,
+                ),
+              );
+              const otherWidth = Math.max(
+                0,
+                100 - orgWidth - paidWidth - directWidth - refWidth,
+              );
+
+              const allClusters = clustersByDomain.get(dom.domain) ?? [];
+              const isExpanded = Boolean(expandedDomains[dom.domain]);
+              const visibleClusters = isExpanded
+                ? allClusters
+                : allClusters.slice(0, 6);
 
               return (
                 <div
                   key={dom.domain}
-                  className={`flex flex-col justify-between rounded-2xl border p-4 ${
+                  className={`flex flex-col justify-between rounded-2xl border p-3.5 ${
                     dom.isWesetup
                       ? "border-[#d8deff] bg-[#eef1ff]/45"
                       : "border-[#dcdfed] bg-[#fafbff]"
                   }`}
                 >
                   <div>
+                    {/* Header row */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[16px] font-semibold text-[#0b1024]">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[15.5px] font-semibold text-[#0b1024]">
                           {dom.domain}
                         </span>
                         {dom.isWesetup ? (
-                          <span className="rounded-full bg-[#5566f6] px-2.5 py-0.5 text-[11px] font-medium text-white">
+                          <span className="rounded-full bg-[#5566f6] px-2 py-0.5 text-[10.5px] font-medium text-white">
                             Наш сайт
                           </span>
                         ) : (
-                          <span className="rounded-full border border-[#dcdfed] bg-white px-2.5 py-0.5 text-[11px] font-semibold text-[#0b1024]">
-                            {dom.visitsRatioVsWesetup}× к нашему трафику
+                          <span className="rounded-full border border-[#dcdfed] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#0b1024]">
+                            {dom.visitsRatioVsWesetup}×
                           </span>
                         )}
+                        {dom.countryRank ? (
+                          <span className="rounded-full border border-[#dcdfed] bg-white px-2 py-0.5 text-[10.5px] text-[#6f7282]">
+                            РФ #{dom.countryRank.toLocaleString("ru-RU")}
+                          </span>
+                        ) : null}
+                        {dom.nonBrandedSharePct !== null ? (
+                          <span
+                            className="rounded-full border border-[#d8deff] bg-white px-2 py-0.5 text-[10.5px] font-medium text-[#3848c7]"
+                            title="Доля небрендового и брендового поискового спроса"
+                          >
+                            Небренд {dom.nonBrandedSharePct}%
+                          </span>
+                        ) : null}
                       </div>
-                      <span className="text-[11.5px] text-[#6f7282]">
+                      <span className="text-[11px] text-[#6f7282]">
                         {dom.periodLabel}
                       </span>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
-                      <div>
-                        <span className="text-[22px] font-semibold text-[#0b1024]">
+                    {/* Visits & Engagement Compact Strip */}
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[20px] font-semibold text-[#0b1024]">
                           {dom.visitsMonthly.toLocaleString("ru-RU")}
-                        </span>{" "}
-                        <span className="text-[12.5px] text-[#6f7282]">
-                          визитов / мес
                         </span>
+                        <span className="text-[11.5px] text-[#6f7282]">
+                          виз./мес
+                        </span>
+                        {dom.visitsTrendPct !== null && dom.visitsTrendPct !== 0 ? (
+                          <span
+                            className={`rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold ${
+                              dom.visitsTrendPct > 0
+                                ? "bg-[#dcfce7] text-[#116b2a]"
+                                : "bg-[#fee2e2] text-[#991b1b]"
+                            }`}
+                          >
+                            {dom.visitsTrendPct > 0 ? `+${dom.visitsTrendPct}%` : `${dom.visitsTrendPct}%`}
+                          </span>
+                        ) : null}
                       </div>
-                      <span className="text-[12px] font-semibold text-[#3848c7]">
-                        {dom.primaryChannelLabel}
-                      </span>
+
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                        {dom.avgVisitDurationFormatted ? (
+                          <span className="rounded-lg border border-[#dcdfed]/80 bg-white px-2 py-0.5 text-[#3c4053]">
+                            Время: <strong>{dom.avgVisitDurationFormatted}</strong>
+                          </span>
+                        ) : null}
+                        {dom.pagesPerVisit !== null ? (
+                          <span className="rounded-lg border border-[#dcdfed]/80 bg-white px-2 py-0.5 text-[#3c4053]">
+                            Стр/виз: <strong>{dom.pagesPerVisit}</strong>
+                          </span>
+                        ) : null}
+                        {dom.bouncePct !== null ? (
+                          <span className="rounded-lg border border-[#dcdfed]/80 bg-white px-2 py-0.5 text-[#3c4053]">
+                            Отказы: <strong>{dom.bouncePct}%</strong>
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
 
-                    {/* Visual stacked channel bar */}
-                    <div className="mt-3">
-                      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-[#e4e7f5]">
+                    {/* Visual stacked channel bar (SEO / Paid / Direct / Referrals / Social) */}
+                    <div className="mt-2.5">
+                      <div className="flex h-2 w-full overflow-hidden rounded-full bg-[#e4e7f5]">
                         {orgWidth > 0 ? (
                           <div
                             style={{ width: `${orgWidth}%` }}
@@ -904,191 +1178,435 @@ export function SimilarwebCompetitorsWorkspace({
                           <div
                             style={{ width: `${paidWidth}%` }}
                             className="bg-[#d97706]"
-                            title={`Платная реклама: ${paidWidth}%`}
+                            title={`Директ (Paid): ${paidWidth}%`}
+                          />
+                        ) : null}
+                        {directWidth > 0 ? (
+                          <div
+                            style={{ width: `${directWidth}%` }}
+                            className="bg-[#5566f6]"
+                            title={`Прямые: ${directWidth}%`}
+                          />
+                        ) : null}
+                        {refWidth > 0 ? (
+                          <div
+                            style={{ width: `${refWidth}%` }}
+                            className="bg-[#0891b2]"
+                            title={`Рефералы: ${refWidth}%`}
                           />
                         ) : null}
                         {otherWidth > 0 ? (
                           <div
                             style={{ width: `${otherWidth}%` }}
                             className="bg-[#8b92b2]"
-                            title={`Прямые / Реферальные / Брендовые: ${otherWidth}%`}
+                            title={`Соцсети / Прочие: ${otherWidth.toFixed(1)}%`}
                           />
                         ) : null}
                       </div>
 
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-[11.5px]">
-                        <div className="rounded-xl border border-[#dcdfed]/70 bg-white px-2.5 py-1.5">
-                          <div className="flex items-center gap-1.5 text-[#6f7282]">
-                            <span className="size-2 rounded-full bg-[#116b2a]" />
-                            SEO Органика
-                          </div>
-                          <div className="mt-0.5 font-semibold text-[#0b1024]">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                        <span className="inline-flex items-center gap-1 text-[#0b1024]">
+                          <span className="size-2 rounded-full bg-[#116b2a]" />
+                          SEO:{" "}
+                          <strong>
                             {dom.organicSharePct !== null
                               ? `${dom.organicSharePct}%`
-                              : "—"}{" "}
-                            <span className="font-normal text-[#6f7282]">
-                              (~{dom.estimatedOrganicVisits.toLocaleString("ru-RU")})
-                            </span>
-                          </div>
-                        </div>
+                              : "—"}
+                          </strong>{" "}
+                          <span className="text-[#6f7282]">
+                            (~{dom.estimatedOrganicVisits.toLocaleString("ru-RU")})
+                          </span>
+                        </span>
 
-                        <div className="rounded-xl border border-[#dcdfed]/70 bg-white px-2.5 py-1.5">
-                          <div className="flex items-center gap-1.5 text-[#6f7282]">
-                            <span className="size-2 rounded-full bg-[#d97706]" />
-                            Реклама (Директ)
-                          </div>
-                          <div className="mt-0.5 font-semibold text-[#0b1024]">
+                        <span className="inline-flex items-center gap-1 text-[#0b1024]">
+                          <span className="size-2 rounded-full bg-[#d97706]" />
+                          Директ:{" "}
+                          <strong>
                             {dom.paidSharePct !== null
                               ? `${dom.paidSharePct}%`
-                              : "0%"}{" "}
-                            <span className="font-normal text-[#6f7282]">
-                              (~{dom.estimatedPaidVisits.toLocaleString("ru-RU")})
-                            </span>
-                          </div>
-                        </div>
+                              : "0%"}
+                          </strong>{" "}
+                          <span className="text-[#6f7282]">
+                            (~{dom.estimatedPaidVisits.toLocaleString("ru-RU")})
+                          </span>
+                        </span>
 
-                        <div className="rounded-xl border border-[#dcdfed]/70 bg-white px-2.5 py-1.5">
-                          <div className="flex items-center gap-1.5 text-[#6f7282]">
-                            <span className="size-2 rounded-full bg-[#8b92b2]" />
-                            Прямые / Прочие
-                          </div>
-                          <div className="mt-0.5 font-semibold text-[#0b1024]">
-                            {dom.otherSharePct}%{" "}
-                            <span className="font-normal text-[#6f7282]">
-                              (~{dom.estimatedOtherVisits.toLocaleString("ru-RU")})
-                            </span>
-                          </div>
-                        </div>
+                        {dom.directSharePct !== null ? (
+                          <span className="inline-flex items-center gap-1 text-[#0b1024]">
+                            <span className="size-2 rounded-full bg-[#5566f6]" />
+                            Прямые: <strong>{dom.directSharePct}%</strong>
+                          </span>
+                        ) : null}
+
+                        {dom.referralsSharePct !== null &&
+                        dom.referralsSharePct > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[#0b1024]">
+                            <span className="size-2 rounded-full bg-[#0891b2]" />
+                            Рефералы: <strong>{dom.referralsSharePct}%</strong>
+                          </span>
+                        ) : null}
+
+                        {dom.socialSharePct !== null && dom.socialSharePct > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[#6f7282]">
+                            Соцсети: {dom.socialSharePct}%
+                          </span>
+                        ) : null}
                       </div>
                     </div>
 
-                    {/* Clear diagnostic takeaway */}
-                    <div className="mt-3 rounded-xl border border-[#dcdfed]/80 bg-white p-3 text-[12.5px] leading-snug text-[#3c4053]">
-                      <strong className="text-[#0b1024]">Вывод по каналу:</strong>{" "}
-                      {dom.channelStrategySummary}
-                    </div>
+                    {/* All Search Keywords for this Domain */}
+                    {allClusters.length > 0 ? (
+                      <div className="mt-2.5 border-t border-[#dcdfed]/70 pt-2">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6f7282]">
+                            Ключевики ({allClusters.length})
+                          </span>
+                          {allClusters.length > 6 ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedDomains((prev) => ({
+                                  ...prev,
+                                  [dom.domain]: !isExpanded,
+                                }))
+                              }
+                              className="text-[11px] font-semibold text-[#3848c7] hover:underline"
+                            >
+                              {isExpanded
+                                ? "Свернуть"
+                                : `Все ${allClusters.length}`}
+                            </button>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-1">
+                          {visibleClusters.map((cl, i) => {
+                            const estVisits = Math.round(
+                              (dom.visitsMonthly * cl.trafficSharePct) / 100,
+                            );
+                            return (
+                              <div
+                                key={`${cl.phrase}-${i}`}
+                                className="flex items-center justify-between gap-2 rounded-lg bg-white/80 px-2 py-1 text-[11.5px]"
+                              >
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <span
+                                    className={`inline-block rounded px-1.5 py-0.2 text-[10px] font-semibold ${
+                                      cl.channel === "paid"
+                                        ? "bg-[#fef3c7] text-[#b45309]"
+                                        : "bg-[#dcfce7] text-[#116b2a]"
+                                    }`}
+                                  >
+                                    {cl.channel === "paid" ? "CPC" : "SEO"}
+                                  </span>
+                                  <span
+                                    className="truncate font-medium text-[#0b1024]"
+                                    title={cl.phrase}
+                                  >
+                                    {cl.phrase}
+                                  </span>
+                                </div>
+
+                                <div className="flex shrink-0 items-center gap-1.5 text-[11px]">
+                                  {cl.changePct !== null &&
+                                  cl.changePct !== undefined &&
+                                  cl.changePct > 0 ? (
+                                    <span
+                                      className="rounded bg-[#dcfce7] px-1 py-0.2 text-[10px] font-semibold text-[#116b2a]"
+                                      title="Рост трафика по ключу в Similarweb"
+                                    >
+                                      +{cl.changePct}%
+                                    </span>
+                                  ) : null}
+                                  {cl.volume ? (
+                                    <span
+                                      className="hidden rounded bg-[#f4f5fb] px-1.5 py-0.5 text-[10px] text-[#6f7282] sm:inline-block"
+                                      title="Частотность Вордстат"
+                                    >
+                                      WS {cl.volume.toLocaleString("ru-RU")}
+                                    </span>
+                                  ) : null}
+                                  <span className="font-semibold text-[#0b1024]">
+                                    {cl.trafficSharePct}%
+                                  </span>
+                                  <span className="text-[#6f7282]">
+                                    (~{estVisits.toLocaleString("ru-RU")})
+                                  </span>
+                                  <Link
+                                    href={`/root/seo/links?targetUrl=${encodeURIComponent(
+                                      cl.mappedTargetUrl,
+                                    )}&keyword=${encodeURIComponent(cl.phrase)}`}
+                                    className="font-medium text-[#3848c7] hover:underline"
+                                    title={`Запланировать ссылку на ${cl.mappedTargetUrl}`}
+                                  >
+                                    → {shortWesetupPath(cl.mappedTargetUrl)}
+                                  </Link>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
-                  {/* Top 3 search queries of this domain */}
-                  {topClusters.length > 0 ? (
-                    <div className="mt-3 space-y-1 border-t border-[#dcdfed]/70 pt-2.5">
-                      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6f7282]">
-                        Главные точки входа из поиска:
-                      </div>
-                      {topClusters.slice(0, 3).map((cl, i) => (
-                        <div
-                          key={`${cl.phrase}-${i}`}
-                          className="flex items-center justify-between gap-2 text-[12px]"
-                        >
-                          <span className="truncate text-[#0b1024]">
-                            • {cl.phrase}
+                  {/* Compact Bottom Strip: Subfolders + Top Pages + Referrals + Similar Sites */}
+                  {dom.topSubfolders.length > 0 ||
+                  dom.topPages.length > 0 ||
+                  dom.topReferrals.length > 0 ||
+                  dom.similarSites.length > 0 ? (
+                    <div className="mt-2.5 space-y-1.5 border-t border-[#dcdfed]/70 pt-2 text-[11px]">
+                      {dom.topSubfolders.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="inline-flex items-center gap-0.5 font-semibold text-[#6f7282]">
+                            <FolderTree className="size-3 text-[#5566f6]" />
+                            Разделы:
                           </span>
-                          <span className="shrink-0 text-[11px] font-medium text-[#3848c7]">
-                            {cl.trafficSharePct}% →{" "}
-                            {shortWesetupPath(cl.mappedTargetUrl)}
-                          </span>
+                          {dom.topSubfolders.slice(0, 3).map((sf) => (
+                            <span
+                              key={sf.subfolder}
+                              className="rounded-md border border-[#d8deff] bg-white px-1.5 py-0.5 text-[#3848c7]"
+                            >
+                              {sf.subfolder}{" "}
+                              <strong className="text-[#0b1024]">
+                                {sf.sharePct}%
+                              </strong>
+                            </span>
+                          ))}
                         </div>
-                      ))}
+                      ) : null}
+
+                      {dom.topPages.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="font-semibold text-[#6f7282]">
+                            Входы:
+                          </span>
+                          {dom.topPages.slice(0, 3).map((pg) => (
+                            <button
+                              key={pg.urlPath}
+                              type="button"
+                              onClick={() => {
+                                setDomainFilter(dom.domain);
+                                setKeywordSearch(
+                                  pg.urlPath.split("/").filter(Boolean).pop() ??
+                                    pg.urlPath,
+                                );
+                              }}
+                              className="rounded-md border border-[#dcdfed]/80 bg-white px-1.5 py-0.5 text-[#3c4053] hover:border-[#5566f6]"
+                              title="Фильтровать таблицу по этой посадочной конкурента"
+                            >
+                              {pg.urlPath}{" "}
+                              <strong className="text-[#0b1024]">
+                                {pg.sharePct}%
+                              </strong>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {dom.topReferrals.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="font-semibold text-[#6f7282]">
+                            Доноры:
+                          </span>
+                          {dom.topReferrals.slice(0, 4).map((ref) => (
+                            <span
+                              key={ref.domain}
+                              className="rounded-md border border-[#bae6fd] bg-[#f0f9ff] px-1.5 py-0.5 text-[#0369a1]"
+                            >
+                              {ref.domain} <strong>{ref.sharePct}%</strong>
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {dom.similarSites.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="font-semibold text-[#6f7282]">
+                            Похожие:
+                          </span>
+                          {dom.similarSites.slice(0, 4).map((sim) => (
+                            <button
+                              key={sim.domain}
+                              type="button"
+                              disabled={syncingApiDomain !== null}
+                              onClick={() => {
+                                setApiDomainInput(sim.domain);
+                                void handleSyncViaApiAnything([sim.domain]);
+                              }}
+                              className="rounded-md border border-[#dcdfed] bg-white px-1.5 py-0.5 text-[#3848c7] hover:border-[#5566f6] hover:bg-[#f5f6ff]"
+                              title="Нажмите, чтобы проанализировать домен"
+                            >
+                              {sim.domain}
+                              {sim.affinityPct ? ` (${sim.affinityPct}%)` : ""}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
               );
             })}
           </div>
+
+          {/* Aggregated Similarweb Discovery Strip: Referrals (Link Donors) & Similar Competitors */}
+          {benchmark.discoveredReferrals.length > 0 ||
+          benchmark.discoveredSimilarSites.length > 0 ? (
+            <div className="mt-3.5 grid gap-3 border-t border-[#ececf4] pt-3.5 md:grid-cols-2">
+              {benchmark.discoveredReferrals.length > 0 ? (
+                <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-3">
+                  <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#0b1024]">
+                    <Link2 className="size-3.5 text-[#0891b2]" />
+                    Реферальные доноры
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {benchmark.discoveredReferrals.map((ref) => (
+                      <span
+                        key={ref.domain}
+                        className="inline-flex items-center gap-1 rounded-xl border border-[#bae6fd] bg-white px-2.5 py-1 text-[11.5px] text-[#0b1024]"
+                        title={`Даёт трафик на: ${ref.targetCompetitors.join(", ")}`}
+                      >
+                        <Globe className="size-3 text-[#0891b2]" />
+                        <strong>{ref.domain}</strong>
+                        <span className="text-[#0369a1]">{ref.sharePct}%</span>
+                        <span className="text-[10.5px] text-[#6f7282]">
+                          → {ref.targetCompetitors.join(", ")}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {benchmark.discoveredSimilarSites.length > 0 ? (
+                <div className="rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-3">
+                  <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#0b1024]">
+                    <Compass className="size-3.5 text-[#5566f6]" />
+                    Похожие сайты (Affinity)
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {benchmark.discoveredSimilarSites.map((sim) => (
+                      <button
+                        key={sim.domain}
+                        type="button"
+                        disabled={syncingApiDomain !== null}
+                        onClick={() => {
+                          setApiDomainInput(sim.domain);
+                          void handleSyncViaApiAnything([sim.domain]);
+                        }}
+                        className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-[11.5px] transition-colors ${
+                          sim.alreadyTracked
+                            ? "border-[#d8deff] bg-[#eef1ff] text-[#3848c7]"
+                            : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]"
+                        }`}
+                      >
+                        <strong>{sim.domain}</strong>
+                        {sim.affinityPct ? (
+                          <span className="text-[11px] text-[#6f7282]">
+                            {sim.affinityPct}%
+                          </span>
+                        ) : null}
+                        {sim.alreadyTracked ? (
+                          <span className="text-[10px] font-semibold text-[#116b2a]">
+                            в базе
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-[#5566f6]">
+                            + проверить
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
-      {/* SECTION 2: ЧТО НАМ СДЕЛАТЬ ПО SEO (Конкретный план улучшений по результатам сверки) */}
+      {/* SECTION 2: БЫСТРЫЙ ПЛАН ДЕЙСТВИЙ (Компактные карточки без воды) */}
       {benchmark && benchmark.actionPlan && benchmark.actionPlan.length > 0 ? (
         <section className={SEO_CARD_CLASS}>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                <Sparkles className="size-4 text-[#5566f6]" />
-                2. Рекомендации и план улучшений SEO для wesetup.ru
-              </div>
-              <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Готовый список действий по приоритету: какие страницы дожать ссылками в ТОП-3, какие платные запросы конкурентов перехватить бесплатной органикой и какой контент расширить.
-              </p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              <Sparkles className="size-4 text-[#5566f6]" />
+              2. Точки перехвата ({benchmark.actionPlan.length})
             </div>
 
             {benchmark.summary.totalPotentialMonthlyVisits > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#bbf7d0] bg-[#ecfdf5] px-3.5 py-1 text-[12.5px] font-semibold text-[#116b2a]">
-                <Rocket className="size-3.5" />
-                Потенциал перехвата: +
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#bbf7d0] bg-[#ecfdf5] px-3 py-0.5 text-[11.5px] font-semibold text-[#116b2a]">
+                <Rocket className="size-3" />+
                 {benchmark.summary.totalPotentialMonthlyVisits.toLocaleString(
                   "ru-RU",
                 )}{" "}
-                целевых визитов/мес
+                виз./мес
               </span>
             ) : null}
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {benchmark.actionPlan.map((act, index) => (
               <div
                 key={act.id}
-                className="flex flex-col justify-between rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-4"
+                className="flex flex-col justify-between rounded-2xl border border-[#dcdfed] bg-[#fafbff] p-3"
               >
                 <div>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-1.5">
                     <span
-                      className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badgeToneClass(
+                      className={`inline-flex rounded-full border px-2 py-0.5 text-[10.5px] font-semibold ${badgeToneClass(
                         act.priority === "high" ? "indigo" : "amber",
                       )}`}
                     >
-                      Шаг {index + 1} · {act.badgeLabel}
+                      #{index + 1} · {act.badgeLabel}
                     </span>
-                    <span className="text-[12px] font-semibold text-[#116b2a]">
-                      ~{act.potentialVisitsMonthly.toLocaleString("ru-RU")} виз./мес у{" "}
-                      {act.competitorDomain}
+                    <span className="text-[11.5px] font-semibold text-[#116b2a]">
+                      +{act.potentialVisitsMonthly.toLocaleString("ru-RU")} виз.
                     </span>
                   </div>
 
-                  <div className="mt-2 text-[15px] font-semibold text-[#0b1024]">
+                  <div className="mt-1.5 text-[13.5px] font-semibold text-[#0b1024]">
                     {act.title}
                   </div>
 
-                  <p className="mt-1 text-[12.5px] leading-snug text-[#3c4053]">
+                  <div className="mt-0.5 text-[11.5px] text-[#6f7282]">
                     {act.whyText}
-                  </p>
-
-                  <div className="mt-3 space-y-1.5 rounded-xl border border-[#dcdfed]/80 bg-white p-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6f7282]">
-                      Что конкретно сделать:
-                    </div>
-                    {act.actionSteps.map((step, sIdx) => (
-                      <div
-                        key={sIdx}
-                        className="flex items-start gap-2 text-[12.5px] text-[#0b1024]"
-                      >
-                        <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-[#5566f6]" />
-                        <span>{step}</span>
-                      </div>
-                    ))}
+                    {act.volume
+                      ? ` · WS ${act.volume.toLocaleString("ru-RU")}`
+                      : ""}
                   </div>
+
+                  <ul className="mt-2 space-y-1 border-t border-[#dcdfed]/70 pt-1.5 text-[11.5px] text-[#3c4053]">
+                    {act.actionSteps.map((step, sIdx) => (
+                      <li key={sIdx} className="truncate" title={step}>
+                        • {step}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#dcdfed]/70 pt-3">
-                  <div className="flex items-center gap-3 text-[12px] text-[#6f7282]">
+                <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-[#dcdfed]/70 pt-2">
+                  <div className="flex items-center gap-2 text-[11px] text-[#6f7282]">
                     <a
                       href={`https://wesetup.ru${act.targetUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-semibold text-[#3848c7] hover:underline"
+                      className="font-semibold text-[#3848c7] hover:underline"
                     >
                       {act.targetUrl}
-                      <ExternalLink className="size-3" />
                     </a>
                     <span>
-                      Яндекс: <strong>{act.yandexPos ?? "—"}</strong> · Ссылок:{" "}
-                      <strong>{act.purchasedLinksCount}</strong>
+                      Я:{act.yandexPos ?? "—"} · Ссыл:{act.purchasedLinksCount}
                     </span>
                   </div>
 
-                  <Link href={act.ctaHref} className={SEO_BTN_SM_CLASS}>
+                  <Link
+                    href={act.ctaHref}
+                    className="inline-flex h-7 items-center gap-1 rounded-xl border border-[#d8deff] bg-[#eef1ff] px-2.5 text-[11px] font-semibold text-[#3848c7] hover:bg-[#dfe5ff]"
+                  >
                     {act.ctaLabel}
-                    <ArrowRight className="size-3.5 text-[#5566f6]" />
+                    <ArrowRight className="size-3" />
                   </Link>
                 </div>
               </div>
@@ -1097,65 +1615,49 @@ export function SimilarwebCompetitorsWorkspace({
         </section>
       ) : null}
 
-      {/* SECTION 3: СВЕРКА ПО ЗАПРОСАМ (Понятная таблица сравнения) */}
+      {/* SECTION 3: ПОЛНАЯ ТАБЛИЦА ВСЕХ КЛЮЧЕВИКОВ КОНКУРЕНТОВ */}
       {benchmark && benchmark.clusterGaps.length > 0 ? (
         <section className={SEO_CARD_CLASS}>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-                <TrendingUp className="size-4 text-[#5566f6]" />
-                3. Сверка по запросам: где конкуренты получают трафик и на каком месте мы
-              </div>
-              <p className="mt-0.5 text-[13px] text-[#6f7282]">
-                Каждый запрос конкурента сопоставлен с нашей посадочной страницей и текущим местом в Яндексе и Google.
-              </p>
-            </div>
-          </div>
-
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {(
-                [
-                  {
-                    key: "all",
-                    label: `Все запросы · ${benchmark.clusterGaps.length}`,
-                  },
-                  {
-                    key: "push_top3",
-                    label: `Быстрый дожим в ТОП-3 · ${benchmark.summary.pushTop3Count}`,
-                  },
-                  {
-                    key: "gap_no_rank",
-                    label: `Упущенные запросы · ${benchmark.summary.gapNoRankCount}`,
-                  },
-                  {
-                    key: "leader",
-                    label: `Мы уже в ТОП-3 · ${benchmark.summary.leaderCount}`,
-                  },
-                ] as Array<{ key: VerdictFilterKey; label: string }>
-              ).map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setVerdictFilter(f.key)}
-                  className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                    verdictFilter === f.key
-                      ? "border-[#5566f6] bg-[#5566f6] text-white"
-                      : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+              <TrendingUp className="size-4 text-[#5566f6]" />
+              3. Все ключевики конкурентов ({filteredGaps.length} из{" "}
+              {benchmark.clusterGaps.length})
             </div>
 
-            {competitorDomains.length > 1 ? (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[12px] text-[#6f7282]">Сайт конкурента:</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-2 size-3.5 text-[#9b9fb3]" />
+                <input
+                  type="text"
+                  value={keywordSearch}
+                  onChange={(e) => setKeywordSearch(e.target.value)}
+                  placeholder="Ключ или /url…"
+                  className={`${SEO_INPUT_CLASS} !h-8 !w-48 !pl-8 !text-[12px]`}
+                />
+              </div>
+
+              <select
+                value={channelFilter}
+                onChange={(e) =>
+                  setChannelFilter(e.target.value as ChannelFilterKey)
+                }
+                className={`${SEO_INPUT_CLASS} !h-8 !w-36 !text-[12px]`}
+              >
+                <option value="all">Все каналы</option>
+                <option value="paid">
+                  Директ CPC ({benchmark.summary.paidKeywordsCount})
+                </option>
+                <option value="organic">
+                  SEO Органика ({benchmark.summary.organicKeywordsCount})
+                </option>
+              </select>
+
+              {competitorDomains.length > 1 ? (
                 <select
                   value={domainFilter}
                   onChange={(e) => setDomainFilter(e.target.value)}
-                  className={`${SEO_INPUT_CLASS} !h-8 !w-44 !text-[12px]`}
+                  className={`${SEO_INPUT_CLASS} !h-8 !w-40 !text-[12px]`}
                 >
                   <option value="all">Все конкуренты</option>
                   {competitorDomains.map((d) => (
@@ -1164,69 +1666,198 @@ export function SimilarwebCompetitorsWorkspace({
                     </option>
                   ))}
                 </select>
-              </div>
-            ) : null}
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => {
+                  const header =
+                    "Запрос\tКанал\tКонкурент\tДоля %\tВизитов/мес\tВордстат\tCPC $\tПосадочная wesetup.ru\tЯндекс\tGoogle\tСтатус";
+                  const lines = filteredGaps.map((g) =>
+                    [
+                      g.phrase,
+                      g.competitorChannel,
+                      g.competitorDomain,
+                      g.competitorTrafficSharePct,
+                      g.estimatedMonthlyTraffic,
+                      g.volume ?? "",
+                      g.cpcUsd ?? "",
+                      g.mappedTargetUrl,
+                      g.yandexPos ?? "",
+                      g.googlePos ?? "",
+                      g.verdictLabel,
+                    ].join("\t"),
+                  );
+                  void navigator.clipboard
+                    .writeText([header, ...lines].join("\n"))
+                    .then(() =>
+                      toast.success(
+                        `Скопировано ключей: ${filteredGaps.length} (TSV для Excel/Таблиц)`,
+                      ),
+                    )
+                    .catch(() => toast.error("Не удалось скопировать"));
+                }}
+                className={SEO_BTN_SM_CLASS}
+                title="Скопировать отфильтрованные ключи в буфер обмена (TSV)"
+              >
+                <Copy className="size-3.5 text-[#5566f6]" />
+                Копировать TSV
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-3 flex flex-wrap items-center gap-1.5">
+            {(
+              [
+                {
+                  key: "all",
+                  label: `Все · ${benchmark.clusterGaps.length}`,
+                },
+                {
+                  key: "push_top3",
+                  label: `Дожим #4–30 · ${benchmark.summary.pushTop3Count}`,
+                },
+                {
+                  key: "gap_no_rank",
+                  label: `Не в ТОП-30 · ${benchmark.summary.gapNoRankCount}`,
+                },
+                {
+                  key: "leader",
+                  label: `Мы в ТОП-3 · ${benchmark.summary.leaderCount}`,
+                },
+              ] as Array<{ key: VerdictFilterKey; label: string }>
+            ).map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setVerdictFilter(f.key)}
+                className={`rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                  verdictFilter === f.key
+                    ? "border-[#5566f6] bg-[#5566f6] text-white"
+                    : "border-[#dcdfed] bg-white text-[#0b1024] hover:border-[#5566f6]/40"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setRisingOnlyFilter((v) => !v)}
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                risingOnlyFilter
+                  ? "border-[#116b2a] bg-[#116b2a] text-white"
+                  : "border-[#bbf7d0] bg-[#ecfdf5] text-[#116b2a] hover:border-[#116b2a]/50"
+              }`}
+            >
+              <Flame className="size-3" />
+              Растущие · {benchmark.summary.risingKeywordsCount}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setExclusiveOnlyFilter((v) => !v)}
+              className={`rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                exclusiveOnlyFilter
+                  ? "border-[#3848c7] bg-[#3848c7] text-white"
+                  : "border-[#d8deff] bg-[#eef1ff] text-[#3848c7] hover:border-[#3848c7]/50"
+              }`}
+            >
+              Только у конкурентов · {benchmark.summary.exclusiveKeywordsCount}
+            </button>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-[#ececf4]">
-            <table className="w-full min-w-[940px] text-[13px]">
+            <table className="w-full min-w-[980px] text-[12.5px]">
               <thead>
-                <tr className="bg-[#fafbff] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                  <th className="px-4 py-3">Поисковый запрос</th>
-                  <th className="px-4 py-3">Трафик у конкурента</th>
-                  <th className="px-4 py-3">Наша страница wesetup.ru</th>
-                  <th className="px-4 py-3">Наше место (Я / G)</th>
-                  <th className="px-4 py-3">Что делать</th>
+                <tr className="bg-[#fafbff] text-left text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#6f7282]">
+                  <th className="px-3.5 py-2.5">Ключевой запрос</th>
+                  <th className="px-3.5 py-2.5">Конкурент / Доля</th>
+                  <th className="px-3.5 py-2.5">Вордстат / CPC</th>
+                  <th className="px-3.5 py-2.5">Посадочная wesetup.ru</th>
+                  <th className="px-3.5 py-2.5">Позиции (Я / G)</th>
+                  <th className="px-3.5 py-2.5">Статус и действие</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredGaps.map((gap, idx) => (
                   <tr
                     key={`${gap.competitorDomain}:${gap.phrase}:${idx}`}
-                    className="border-t border-[#ececf4] align-top hover:bg-[#fafbff]/60"
+                    className="border-t border-[#ececf4] align-middle hover:bg-[#fafbff]/70"
                   >
-                    <td className="px-4 py-2.5">
-                      <div className="font-semibold text-[#0b1024]">
-                        «{gap.phrase}»
+                    <td className="px-3.5 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`inline-block shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                            gap.competitorChannel === "paid"
+                              ? "bg-[#fef3c7] text-[#b45309]"
+                              : "bg-[#dcfce7] text-[#116b2a]"
+                          }`}
+                        >
+                          {gap.competitorChannel === "paid" ? "CPC" : "SEO"}
+                        </span>
+                        <span className="font-semibold text-[#0b1024]">
+                          {gap.phrase}
+                        </span>
+                        {gap.changePct !== null && gap.changePct > 0 ? (
+                          <span className="rounded bg-[#dcfce7] px-1 py-0.2 text-[10px] font-semibold text-[#116b2a]">
+                            +{gap.changePct}%
+                          </span>
+                        ) : null}
                       </div>
-                      <div className="mt-0.5 text-[11.5px] text-[#6f7282]">
-                        {gap.competitorChannel === "paid"
-                          ? "Конкурент покупает в Директе"
-                          : "Конкурент получает из SEO"}
-                      </div>
+                      {gap.competitorUrl ? (
+                        <div
+                          className="mt-0.5 max-w-[280px] truncate text-[11px] text-[#6f7282]"
+                          title={gap.competitorUrl}
+                        >
+                          {gap.competitorPos ? `#${gap.competitorPos} · ` : ""}
+                          {gap.competitorUrl.replace(/^https?:\/\//, "")}
+                        </div>
+                      ) : null}
                     </td>
 
-                    <td className="px-4 py-2.5">
+                    <td className="whitespace-nowrap px-3.5 py-2">
                       <div className="font-medium text-[#0b1024]">
                         {gap.competitorDomain}
                       </div>
-                      <div className="mt-0.5 text-[12px] text-[#3848c7]">
-                        <strong>
-                          ~{gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")}{" "}
-                          виз./мес
-                        </strong>{" "}
-                        ({gap.competitorTrafficSharePct}%)
+                      <div className="text-[11.5px] text-[#3848c7]">
+                        <strong>{gap.competitorTrafficSharePct}%</strong> (~
+                        {gap.estimatedMonthlyTraffic.toLocaleString("ru-RU")}{" "}
+                        виз.)
                       </div>
                     </td>
 
-                    <td className="px-4 py-2.5">
+                    <td className="whitespace-nowrap px-3.5 py-2">
+                      <div className="font-semibold text-[#0b1024]">
+                        {gap.volume
+                          ? `${gap.volume.toLocaleString("ru-RU")} пок/мес`
+                          : "—"}
+                      </div>
+                      {gap.cpcUsd ? (
+                        <div className="text-[11px] text-[#6f7282]">
+                          CPC ~${gap.cpcUsd}
+                        </div>
+                      ) : null}
+                    </td>
+
+                    <td className="whitespace-nowrap px-3.5 py-2">
                       <a
                         href={`https://wesetup.ru${gap.mappedTargetUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-[#3848c7] underline-offset-2 hover:underline"
+                        className="inline-flex items-center gap-1 font-semibold text-[#3848c7] hover:underline"
                       >
                         {gap.mappedTargetUrl}
                         <ExternalLink className="size-3" />
                       </a>
-                      <div className="mt-0.5 text-[11.5px] text-[#6f7282]">
-                        Куплено ссылок: <strong>{gap.purchasedLinksCount}</strong>
+                      <div className="text-[11px] text-[#6f7282]">
+                        Ссылок: <strong>{gap.purchasedLinksCount}</strong>
                       </div>
                     </td>
 
-                    <td className="whitespace-nowrap px-4 py-2.5 text-[12.5px]">
+                    <td className="whitespace-nowrap px-3.5 py-2">
                       <span className="font-semibold text-[#0b1024]">
-                        {gap.yandexPos ? `#${gap.yandexPos}` : "вне ТОП-50"}
+                        {gap.yandexPos ? `#${gap.yandexPos}` : "—"}
                       </span>{" "}
                       <span className="text-[#9b9fb3]">/</span>{" "}
                       <span className="text-[#3c4053]">
@@ -1234,10 +1865,10 @@ export function SimilarwebCompetitorsWorkspace({
                       </span>
                     </td>
 
-                    <td className="max-w-[360px] px-4 py-2.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
+                    <td className="px-3.5 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
                         <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeToneClass(
+                          className={`inline-flex rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${badgeToneClass(
                             formatVerdictTone(gap.verdict),
                           )}`}
                         >
@@ -1248,14 +1879,14 @@ export function SimilarwebCompetitorsWorkspace({
                             href={`/root/seo/links?targetUrl=${encodeURIComponent(
                               gap.mappedTargetUrl,
                             )}&keyword=${encodeURIComponent(gap.phrase)}`}
-                            className="inline-flex items-center gap-1 rounded-xl border border-[#d8deff] bg-[#eef1ff] px-2.5 py-1 text-[11.5px] font-semibold text-[#3848c7] transition-colors hover:bg-[#dfe5ff]"
+                            className="inline-flex items-center gap-1 rounded-xl border border-[#d8deff] bg-[#eef1ff] px-2 py-0.5 text-[11px] font-semibold text-[#3848c7] hover:bg-[#dfe5ff]"
                           >
-                            Усилить ссылкой
+                            + Ссылка
                             <ArrowRight className="size-3" />
                           </Link>
                         ) : null}
                       </div>
-                      <div className="mt-1 text-[12px] leading-snug text-[#3c4053]">
+                      <div className="mt-0.5 text-[11px] text-[#6f7282]">
                         {gap.recommendation}
                       </div>
                     </td>
@@ -1267,16 +1898,11 @@ export function SimilarwebCompetitorsWorkspace({
         </section>
       ) : null}
 
-      {/* SECTION 4: Свернутая детальная матрица всех 25 посадочных (для глубокого просмотра по клику) */}
+      {/* SECTION 4: Свернутая матрица посадочных wesetup.ru */}
       <section className={SEO_CARD_CLASS}>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
-              Полный рейтинг всех посадочных страниц wesetup.ru ({priorityMatrix.length})
-            </div>
-            <p className="mt-0.5 text-[13px] text-[#6f7282]">
-              Детальная таблица скоринга для планировщика закупок ссылок.
-            </p>
+          <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6f7282]">
+            Посадочные wesetup.ru ({priorityMatrix.length})
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1298,12 +1924,12 @@ export function SimilarwebCompetitorsWorkspace({
               {showDetailedMatrix ? (
                 <>
                   <ChevronUp className="size-3.5" />
-                  Скрыть таблицу
+                  Скрыть
                 </>
               ) : (
                 <>
                   <ChevronDown className="size-3.5" />
-                  Показать все страницы
+                  Показать ({priorityMatrix.length})
                 </>
               )}
             </button>
@@ -1311,57 +1937,54 @@ export function SimilarwebCompetitorsWorkspace({
         </div>
 
         {showDetailedMatrix ? (
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-[#ececf4]">
-            <table className="w-full min-w-[920px] text-[13px]">
+          <div className="mt-3.5 overflow-x-auto rounded-2xl border border-[#ececf4]">
+            <table className="w-full min-w-[900px] text-[12.5px]">
               <thead>
-                <tr className="bg-[#fafbff] text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
-                  <th className="px-4 py-3">Посадочная wesetup.ru</th>
-                  <th className="px-4 py-3">Кластер спроса</th>
-                  <th className="px-4 py-3">Topvisor (Я / G)</th>
-                  <th className="px-4 py-3">Куплено ссылок</th>
-                  <th className="px-4 py-3">Приоритет и скоринг</th>
+                <tr className="bg-[#fafbff] text-left text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#6f7282]">
+                  <th className="px-3.5 py-2.5">Посадочная wesetup.ru</th>
+                  <th className="px-3.5 py-2.5">Главный ключ</th>
+                  <th className="px-3.5 py-2.5">Topvisor (Я / G)</th>
+                  <th className="px-3.5 py-2.5">Ссылок</th>
+                  <th className="px-3.5 py-2.5">Приоритет</th>
                 </tr>
               </thead>
               <tbody>
-                {priorityMatrix.slice(0, 25).map((row) => {
+                {priorityMatrix.slice(0, 30).map((row) => {
                   const tier = formatPriorityTier(row.priorityTier);
                   return (
                     <tr
                       key={row.targetUrl}
-                      className="border-t border-[#ececf4] align-top hover:bg-[#fafbff]/60"
+                      className="border-t border-[#ececf4] align-middle hover:bg-[#fafbff]/60"
                     >
-                      <td className="max-w-[260px] px-4 py-2.5">
+                      <td className="max-w-[260px] px-3.5 py-2">
                         <a
                           href={`https://wesetup.ru${row.targetUrl}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-semibold text-[#3848c7] underline-offset-2 hover:underline"
+                          className="inline-flex items-center gap-1 font-semibold text-[#3848c7] hover:underline"
                         >
                           {row.targetUrl}
                           <ExternalLink className="size-3" />
                         </a>
-                        <div className="mt-0.5 text-[11.5px] text-[#3c4053]">
+                        <div className="truncate text-[11px] text-[#6f7282]">
                           {row.title}
                         </div>
                       </td>
 
-                      <td className="px-4 py-2.5">
+                      <td className="px-3.5 py-2">
                         <div className="font-medium text-[#0b1024]">
                           «{row.primaryKeyword}»
                         </div>
                         {row.competitorDomain ? (
-                          <div className="mt-0.5 text-[11.5px] text-[#6f7282]">
+                          <div className="text-[11px] text-[#6f7282]">
                             {row.competitorDomain} ·{" "}
                             {row.competitorTrafficSharePct}% (
-                            {row.competitorChannel === "paid"
-                              ? "реклама"
-                              : "органика"}
-                            )
+                            {row.competitorChannel === "paid" ? "CPC" : "SEO"})
                           </div>
                         ) : null}
                       </td>
 
-                      <td className="whitespace-nowrap px-4 py-2.5 text-[12.5px]">
+                      <td className="whitespace-nowrap px-3.5 py-2">
                         <span className="font-semibold text-[#0b1024]">
                           {row.yandexPos ?? "—"}
                         </span>{" "}
@@ -1371,14 +1994,14 @@ export function SimilarwebCompetitorsWorkspace({
                         </span>
                       </td>
 
-                      <td className="whitespace-nowrap px-4 py-2.5 font-semibold text-[#0b1024]">
+                      <td className="whitespace-nowrap px-3.5 py-2 font-semibold text-[#0b1024]">
                         {row.existingLinksCount}
                       </td>
 
-                      <td className="max-w-[320px] px-4 py-2.5">
+                      <td className="px-3.5 py-2">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeToneClass(
+                            className={`inline-flex rounded-full border px-2 py-0.5 text-[10.5px] font-medium ${badgeToneClass(
                               tier.tone,
                             )}`}
                           >
@@ -1387,9 +2010,6 @@ export function SimilarwebCompetitorsWorkspace({
                           <span className="text-[11.5px] font-semibold text-[#0b1024]">
                             {Math.round(row.score)} балл.
                           </span>
-                        </div>
-                        <div className="mt-1 text-[11.5px] text-[#6f7282]">
-                          {row.selectionReason}
                         </div>
                       </td>
                     </tr>

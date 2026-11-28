@@ -26,6 +26,8 @@ import {
 import { ensureDefaultSimilarwebSnapshots } from "@/lib/seo/similarweb-seed";
 import {
   buildCompetitorBenchmarkReport,
+  decodeSimilarwebClustersPayload,
+  encodeSimilarwebClustersPayload,
   type SimilarwebConnectionStatus,
 } from "@/lib/seo/similarweb-client";
 import {
@@ -146,30 +148,16 @@ function parseSnapshotClusters(
   domain: string,
   rawClusters: unknown,
 ): CompetitorClusterInput[] {
-  if (!Array.isArray(rawClusters)) return [];
-  const out: CompetitorClusterInput[] = [];
-  for (const item of rawClusters) {
-    if (!item || typeof item !== "object") continue;
-    const rec = item as Record<string, unknown>;
-    const phrase = typeof rec.phrase === "string" ? rec.phrase.trim() : "";
-    const mappedTargetUrl =
-      typeof rec.mappedTargetUrl === "string" ? rec.mappedTargetUrl.trim() : "";
-    if (!phrase || !mappedTargetUrl) continue;
-    const rawShare = Number(rec.trafficSharePct ?? 0);
-    const trafficSharePct = Number.isFinite(rawShare) ? Math.max(0, rawShare) : 0;
-    const channel = rec.channel === "paid" ? "paid" : "organic";
-    const notes = typeof rec.notes === "string" ? rec.notes : null;
-    out.push({
-      snapshotId,
-      domain,
-      phrase,
-      trafficSharePct,
-      channel,
-      mappedTargetUrl,
-      notes,
-    });
-  }
-  return out;
+  const { clusters } = decodeSimilarwebClustersPayload(rawClusters);
+  return clusters.map((item) => ({
+    snapshotId,
+    domain,
+    phrase: item.phrase,
+    trafficSharePct: item.trafficSharePct,
+    channel: item.channel,
+    mappedTargetUrl: item.mappedTargetUrl,
+    notes: item.notes ?? null,
+  }));
 }
 
 async function loadLiveTopvisorRows(): Promise<{
@@ -519,8 +507,10 @@ export async function POST(request: Request) {
           );
           const periodLabel =
             parsedSync.data.periodLabel?.trim() || fetched.periodLabel;
-          const clustersJson =
-            fetched.clusters as unknown as Prisma.InputJsonValue;
+          const clustersJson = encodeSimilarwebClustersPayload(
+            fetched.clusters,
+            fetched.telemetry,
+          ) as unknown as Prisma.InputJsonValue;
 
           const saved = await db.seoCompetitorSnapshot.upsert({
             where: {
@@ -622,7 +612,10 @@ export async function POST(request: Request) {
       };
     }
 
-    const clustersJson = payload.clusters as unknown as Prisma.InputJsonValue;
+    const clustersJson = encodeSimilarwebClustersPayload(
+      payload.clusters,
+      payload.telemetry,
+    ) as unknown as Prisma.InputJsonValue;
 
     const saved = await db.seoCompetitorSnapshot.upsert({
       where: {

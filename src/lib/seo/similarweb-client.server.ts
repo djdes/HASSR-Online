@@ -469,12 +469,24 @@ async function enqueueSimilarweb<T>(
   return nextCall;
 }
 
+export type SimilarwebReadOperation =
+  | "getDomainOverview"
+  | "getWebsiteAnalysis"
+  | "getProSearchKeywords"
+  | "getProSearchBrandedSplit"
+  | "getProTrafficSources"
+  | "getProPopularPages"
+  | "getProSubfolders"
+  | "getProIncomingReferrals"
+  | "getProSimilarSites"
+  | "getProAudienceInterests";
+
 /**
  * Executes a read operation declared in `config/api-anything/sites/similarweb.json`
  * via `api-anything`'s `call("similarweb", opName, args)`.
  */
 export async function callSimilarwebRead<T = unknown>(
-  opName: "getDomainOverview" | "getWebsiteAnalysis" | "getProSearchKeywords",
+  opName: SimilarwebReadOperation,
   args: Record<string, string | number | boolean>,
   opts?: {
     fetchImpl?: typeof fetch;
@@ -675,8 +687,10 @@ export async function fetchSimilarwebSnapshotViaApiAnything(
     }
   }
 
-  // Best-effort enrichment from Similarweb Pro search keywords table if session cookies exist
+  // Best-effort enrichment from Similarweb Pro search keywords, traffic sources, and similar sites if session cookies exist
   let proKeywordsData: unknown = undefined;
+  let proTrafficSourcesData: unknown = undefined;
+  let proSimilarSitesData: unknown = undefined;
   const cookies = loadSimilarwebLocalSession();
   const hasProCookies = cookies.some((c) =>
     ["sw_Session", "sw_token", ".SGTOKEN", "sg_token"].includes(c.name),
@@ -694,6 +708,31 @@ export async function fetchSimilarwebSnapshotViaApiAnything(
     } catch {
       // Optional enrichment: keep overview keywords if Pro widget isn't accessible
     }
+
+    if (!opts?.fetchImpl) {
+      try {
+        proTrafficSourcesData = await callSimilarwebRead(
+          "getProTrafficSources",
+          { domain: cleanDomain },
+          {
+            minIntervalMs: opts?.minIntervalMs ?? 0,
+          },
+        );
+      } catch {
+        // Optional enrichment
+      }
+      try {
+        proSimilarSitesData = await callSimilarwebRead(
+          "getProSimilarSites",
+          { domain: cleanDomain },
+          {
+            minIntervalMs: opts?.minIntervalMs ?? 0,
+          },
+        );
+      } catch {
+        // Optional enrichment
+      }
+    }
   }
 
   const snapshot = parseSimilarwebApiPayload(
@@ -703,6 +742,8 @@ export async function fetchSimilarwebSnapshotViaApiAnything(
     {
       candidatePages: opts?.candidatePages,
       fallbackDate: opts?.fallbackDate,
+      trafficSourcesPayload: proTrafficSourcesData,
+      similarSitesPayload: proSimilarSitesData,
     },
   );
 
