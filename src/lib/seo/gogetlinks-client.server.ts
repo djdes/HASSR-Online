@@ -692,6 +692,69 @@ export async function readGglWebmasterSource(
 
 export type GglFirstMessageResult = "unavailable" | "duplicate" | "sent" | "unconfirmed";
 
+export type GglComposerAvailabilityResult = "open" | "closed" | "unknown";
+
+/** Read-only check whether GoGetLinks opens a personal message composer for this campaign and site. */
+export async function checkGglComposerAvailability(
+  input: { campaignId: number; siteId: number },
+  opts?: { fetchImpl?: typeof fetch; skipDbSync?: boolean; prismaClient?: unknown },
+): Promise<GglComposerAvailabilityResult> {
+  if ([input.campaignId, input.siteId].some(id => !Number.isSafeInteger(id) || id <= 0)) {
+    return "unknown";
+  }
+  initApiAnythingHome();
+  if (!opts?.skipDbSync) await syncSessionFromDb(opts?.prismaClient);
+  return enqueueGgl(async () => {
+    const base = "https://gogetlinks.net";
+    const pair = `comp_id/${input.campaignId}/site_id/${input.siteId}`;
+    const composer = `${base}/privateMessage/personal/${pair}`;
+    const sendPath = `/privateMessage/send/${pair}`;
+    const contentPath = `/privateMessage/contentPersonal/${pair}`;
+    const sourceFetch = createGglFetch(opts?.fetchImpl || getFetchImpl() || fetch);
+    const request = () => sourceFetch(composer, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(8_000),
+      headers: {
+        cookie: buildCookieHeader(loadLocalSession()),
+      },
+    });
+    const html = async (res: Response) => decodeModalResponseBuffer(
+      new Uint8Array(await res.arrayBuffer()), res.headers.get("content-type") ?? "",
+    );
+    const readComposer = async () => {
+      const response = await request();
+      const raw = await html(response);
+      const expired = response.status === 401 || REDIRECT_STATUSES.has(response.status) ||
+        /<form[^>]*(?:signIn|login)|name=["']password["']/i.test(raw);
+      return { response, raw, expired };
+    };
+    try {
+      let page = await readComposer();
+      if (!opts?.skipDbSync && page.expired && await attemptRelogin({ prismaClient: opts?.prismaClient, fetchImpl: opts?.fetchImpl })) {
+        page = await readComposer();
+      }
+      if (page.expired || !page.response.ok || REAL_INTERSTITIAL_RE.test(page.raw)) {
+        return "unknown";
+      }
+      const document = parse(page.raw);
+      const form = document.querySelector("#post_form");
+      const token = form?.querySelector('input[name="csrf_token"]')?.getAttribute("value");
+      const script = document.querySelectorAll("script")
+        .find(node => node.rawText.includes("PrivateMessagePersonalData.sendLink ="))?.rawText.replaceAll("\\/", "/");
+      const hasComposer = Boolean(
+        token &&
+        form?.querySelector('textarea[name="message_value"]') &&
+        script?.includes(`PrivateMessagePersonalData.sendLink = "${sendPath}"`) &&
+        script.includes(`PrivateMessagePersonalData.loadLink = "${contentPath}"`) &&
+        document.querySelector("#pm_content"),
+      );
+      return hasComposer ? "open" : "closed";
+    } catch {
+      return "unknown";
+    }
+  }, 300);
+}
+
 export async function readGglPersonalHistory(threadKey: string, opts?: { prismaClient?: unknown }) {
   const thread = parseGglPersonalThreadKey(threadKey);
   if (!thread) throw new GglCallError("Диалог не найден", "input");
