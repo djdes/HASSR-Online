@@ -50,15 +50,18 @@ export const revalidate = 0;
  *
  * Self-hosted (next/font/local): прод-сервер не имеет доступа к
  * fonts.gstatic.com, и next/font/google валил сборку («Failed to fetch
- * Manrope from Google Fonts»). Вариативный TTF (латиница + кириллица,
+ * Manrope from Google Fonts»). Вариативный шрифт (латиница + кириллица,
  * веса 200–800) лежит в репозитории — сборка не зависит от сети.
+ * Браузеру отдаём WOFF2 (54 КБ; тот же TTF — 165 КБ, 68 КБ в gzip), его
+ * перепаковка без потерь из `manrope-variable.ttf` (fontTools, flavor=woff2).
+ * TTF остаётся исходником для PDF (`src/lib/proposal/pdf-font.ts`).
  */
 const manrope = localFont({
-  src: "./fonts/manrope-variable.ttf",
+  src: "./fonts/manrope-variable.woff2",
   weight: "200 800",
   variable: "--font-manrope",
   display: "swap",
-  // Без preload: файл 68 КБ качается только там, где шрифт реально
+  // Без preload: файл 54 КБ качается только там, где шрифт реально
   // используется (кабинет), а публичные QR-формы на системном шрифте
   // не ждут его на медленной сети.
   preload: false,
