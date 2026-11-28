@@ -365,9 +365,10 @@ export function parseSlotDonorMetrics(raw: unknown): {
   cf: number | null;
   trust: number | null;
   dailyTraffic: number | null;
+  pmOpen: boolean | null;
 } {
   if (!raw || typeof raw !== "object") {
-    return { tf: null, cf: null, trust: null, dailyTraffic: null };
+    return { tf: null, cf: null, trust: null, dailyTraffic: null, pmOpen: null };
   }
   const rec = raw as Record<string, unknown>;
   const numOrNull = (val: unknown): number | null => {
@@ -379,6 +380,7 @@ export function parseSlotDonorMetrics(raw: unknown): {
     cf: numOrNull(rec.cf),
     trust: numOrNull(rec.trust),
     dailyTraffic: numOrNull(rec.dailyTraffic),
+    pmOpen: typeof rec.pmOpen === "boolean" ? rec.pmOpen : null,
   };
 }
 

@@ -1652,6 +1652,8 @@ export function PlannerTab({
                                     slotId={slot.id}
                                     siteId={slot.donorSiteId}
                                     domain={slot.donorDomain}
+                                    gglCampaignId={planCampaign.gglCampaignId}
+                                    initialPmOpen={donorMetrics.pmOpen}
                                     userId={viewer.userId}
                                     onSent={() => void onRefresh()}
                                   />
